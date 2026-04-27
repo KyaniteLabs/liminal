@@ -31,6 +31,8 @@ const P5_DRAW_BODY = `
   ellipse(mouseX, mouseY, 30, 30);
 `;
 
+const SAMPLE_SVG_CODE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#4A90D9"/></svg>`;
+
 describe('Exporter', () => {
   const TEST_EXPORT_DIR = 'test-export-temp';
 
@@ -118,6 +120,18 @@ ${P5_DRAW_BODY}}
       expect(content).toContain('<script>');
       expect(content).toContain(SAMPLE_P5_CODE);
       expect(content).toContain('</script>');
+    });
+
+    it('should inline raw SVG instead of wrapping it as p5 JavaScript', async () => {
+      const exporter = new Exporter();
+      const outputPath = path.join(TEST_EXPORT_DIR, 'circle.html');
+
+      await exporter.exportHTML(SAMPLE_SVG_CODE, outputPath);
+
+      const content = await fs.readFile(outputPath, 'utf-8');
+      expect(content).toContain(SAMPLE_SVG_CODE);
+      expect(content).not.toMatch(/p5\.min\.js/);
+      expect(content).not.toMatch(/<script>\s*<svg\b/i);
     });
 
     it('should create directory if it does not exist', async () => {

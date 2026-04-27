@@ -109,6 +109,18 @@ function clearRoleEnvVars() {
 // ──────────────────────────────────────────────────────────────
 
 describe('OpenAI provider pipeline', () => {
+  it('fails fast when no local model can be auto-detected', async () => {
+    mockFetch.mockRejectedValueOnce(new Error('connect ECONNREFUSED'));
+
+    const client = new LLMClient({
+      baseUrl: 'http://localhost:1234/v1',
+      model: 'auto',
+    });
+
+    await expect(client.generate('You are a coder.', 'Say hello.')).rejects.toThrow(/No local LLM model detected/);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
   it('parses a standard chat completion response', async () => {
     // Mock: /v1/models (auto-detect call) -> /v1/chat/completions
     mockFetch

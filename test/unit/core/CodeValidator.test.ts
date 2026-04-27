@@ -611,6 +611,17 @@ function setup() {
     });
   });
 
+  describe('SVG validation', () => {
+    it('should validate raw SVG as a first-class creative artifact', () => {
+      const code = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="18" fill="blue"/></svg>';
+      const result = CodeValidator.validate(code);
+
+      expect(result.valid).toBe(true);
+      expect(result.cleanedCode).toContain('<svg');
+      expect(result.cleanedCode).toContain('<circle');
+    });
+  });
+
   describe('Domain auto-detection', () => {
     it('should auto-detect p5 domain', () => {
       const code = `function setup() { createCanvas(400,400); }`;
@@ -652,6 +663,11 @@ function setup() {
       expect(CodeValidator.detectDomain(code)).toBe('html');
     });
 
+    it('should auto-detect svg domain', () => {
+      const code = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="18" fill="blue"/></svg>';
+      expect(CodeValidator.detectDomain(code)).toBe('svg');
+    });
+
     it('should auto-detect ascii domain', () => {
       const code = `
   /\\
@@ -688,6 +704,7 @@ function setup() {
       expect(CodeValidator.getMinSize('remotion')).toBe(500);
       expect(CodeValidator.getMinSize('html')).toBe(200);
       expect(CodeValidator.getMinSize('ascii')).toBe(50);
+      expect(CodeValidator.getMinSize('svg')).toBe(40);
     });
   });
 });

@@ -357,9 +357,14 @@ export async function getEffectiveConfig(configPath?: string, projectConfigPath?
     },
   ) ?? null;
 
-  // Provider: env > project llm > user file
+  // Provider: env > project llm > user file > available cloud key > local default
   const projectProvider = projectConfig?.llm?.provider;
-  const providerName = env('LLM_PROVIDER') || projectProvider || fileConfig?.defaultProvider || 'lmstudio';
+  const fileProviderName = fileConfig?.defaultProvider;
+  const rawFileProviderConfig = fileProviderName ? fileConfig?.providers?.[fileProviderName] || {} : {};
+  const usableFileProviderName = fileProviderName && !isPlaceholderProviderConfig(fileProviderName, rawFileProviderConfig)
+    ? fileProviderName
+    : undefined;
+  const providerName = env('LLM_PROVIDER') || projectProvider || usableFileProviderName || providerFromAvailableApiKey() || 'lmstudio';
 
   // Map provider names (including legacy aliases) to canonical types
   const providerMap: Record<string, NonNullable<EffectiveConfig['provider']>> = {
@@ -379,15 +384,52 @@ export async function getEffectiveConfig(configPath?: string, projectConfigPath?
 
   const provider = providerMap[providerName] || 'lmstudio';
 
-  const fileProviderConfig = fileConfig?.providers?.[providerName] || {};
+  const rawFileProviderConfigForProvider = fileConfig?.providers?.[providerName] || {};
+  const fileProviderConfig = isPlaceholderProviderConfig(providerName, rawFileProviderConfigForProvider)
+    ? {}
+    : rawFileProviderConfigForProvider;
   const projectLlm = projectConfig?.llm || {};
+  const providerDefaultConfig = providerDefaults(provider);
 
   return {
     provider,
-    baseUrl: env('LLM_BASE_URL') || projectLlm.baseUrl || fileProviderConfig.baseUrl,
-    model: env('LLM_MODEL') || projectLlm.model || fileProviderConfig.model || SERVICE_DEFAULTS.DEFAULT_MODEL,
+    baseUrl: env('LLM_BASE_URL') || projectLlm.baseUrl || fileProviderConfig.baseUrl || providerDefaultConfig.baseUrl,
+    model: env('LLM_MODEL') || projectLlm.model || fileProviderConfig.model || providerDefaultConfig.model || SERVICE_DEFAULTS.DEFAULT_MODEL,
     apiKey: env('LLM_API_KEY') || projectLlm.apiKey || fileProviderConfig.apiKey || process.env.OPENAI_API_KEY || process.env.GLM_API_KEY || process.env.MOONSHOT_API_KEY || process.env.MINIMAX_API_KEY,
   };
+}
+
+function providerDefaults(
+  provider: NonNullable<EffectiveConfig['provider']>,
+): { baseUrl?: string; model?: string } {
+  if (provider === 'minimax') {
+    return { baseUrl: SERVICE_DEFAULTS.MINIMAX_URL, model: 'MiniMax-M2.7' };
+  }
+  return {};
+}
+
+function providerFromAvailableApiKey(): string | undefined {
+  if (hasUsableApiKey(process.env.MINIMAX_API_KEY)) return 'minimax';
+  if (hasUsableApiKey(process.env.GLM_API_KEY)) return 'glm';
+  if (hasUsableApiKey(process.env.MOONSHOT_API_KEY)) return 'moonshot';
+  if (hasUsableApiKey(process.env.OPENAI_API_KEY)) return 'openai';
+  return undefined;
+}
+
+function hasUsableApiKey(value?: string): boolean {
+  const trimmed = value?.trim();
+  if (!trimmed) return false;
+  return !/^(test|fake|dummy|placeholder|sk-test)/i.test(trimmed);
+}
+
+function isPlaceholderProviderConfig(
+  providerName: string,
+  config: { baseUrl?: string; model?: string; apiKey?: string },
+): boolean {
+  const baseUrl = config.baseUrl?.toLowerCase() ?? '';
+  return providerName === 'test-provider'
+    || baseUrl === 'https://api.test.com/v1'
+    || baseUrl.includes('api.test.com');
 }
 
 /**

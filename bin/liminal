@@ -557,6 +557,7 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
     if (result.htmlPath) console.log('✅ HTML: ' + result.htmlPath);
     if (result.zipPath) console.log('✅ Archive: ' + result.zipPath);
     console.log('');
+    process.exit(0);
   }).catch(err => {
     console.error('');
     console.error('❌ Error:', err.message);

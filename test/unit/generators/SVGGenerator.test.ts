@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SVGGenerator } from '../../../src/generators/svg/SVGGenerator.js';
 import { sanitizeSVG } from '../../../src/generators/svg/SVGSanitizer.js';
 import { validateSVG } from '../../../src/generators/svg/SVGValidator.js';
+import { LLMClient } from '../../../src/llm/LLMClient.js';
 import {
   SVG_MODE_PROFILES,
   inferSVGMode,
@@ -136,6 +137,11 @@ describe('SVGValidator', () => {
 });
 
 describe('SVGGenerator', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    delete process.env.LIMINAL_LLM_BASE_URL;
+  });
+
   it('validates sanitized SVG output through the generator contract', () => {
     const gen = new TestableSVGGenerator();
     const result = gen.validateForTest('<svg width="64" height="64"><rect width="64" height="64" fill="#000"/></svg>');
@@ -167,5 +173,30 @@ describe('SVGGenerator', () => {
 
     expect(prompt).toContain('Gradients may be used');
     expect(prompt).toContain('Do not use filters');
+  });
+
+  it('bypasses the generic code tool loop for raw SVG generation', async () => {
+    process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
+    const llm = new LLMClient({ baseUrl: 'http://localhost:1234/v1', model: 'svg-test-model' });
+    const complete = vi.spyOn(llm, 'complete').mockResolvedValue({
+      text: '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="18" fill="blue"/></svg>',
+      success: true,
+    });
+    const toolLoop = vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValue({
+      content: '',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: false,
+      error: 'wrong path',
+    });
+
+    const gen = new SVGGenerator(llm);
+    const svg = await gen.generate('tiny blue SVG circle');
+
+    expect(toolLoop).not.toHaveBeenCalled();
+    expect(complete).toHaveBeenCalledOnce();
+    expect(complete.mock.calls[0]?.[0].maxTokens).toBe(1200);
+    expect(svg).toContain('<circle');
+    expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
   });
 });

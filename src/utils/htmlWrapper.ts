@@ -11,6 +11,7 @@
  * - tone: Tone.js audio (GenericWrapper)
  * - revideo: Revideo video compositions (GenericWrapper)
  * - remotion: [DEPRECATED] Remotion - use revideo instead
+ * - svg: Raw SVG documents displayed inline
  * - html: Complete HTML pages (pass-through)
  * - ascii: ASCII art display (GenericWrapper)
  */
@@ -19,7 +20,7 @@ import { P5Wrapper } from '../core/wrappers/P5Wrapper.js';
 import { ThreeWrapper } from '../core/wrappers/ThreeWrapper.js';
 import { GenericWrapper } from '../core/wrappers/GenericWrapper.js';
 
-export type Domain = 'p5' | 'shader' | 'three' | 'strudel' | 'hydra' | 'tone' | 'revideo' | 'remotion' | 'html' | 'ascii';
+export type Domain = 'p5' | 'shader' | 'three' | 'strudel' | 'hydra' | 'tone' | 'revideo' | 'remotion' | 'svg' | 'html' | 'ascii';
 
 export interface WrapOptions {
   domain?: Domain;
@@ -46,6 +47,15 @@ export class HTMLWrapper {
   private static injectSecurityHeaders(html: string): string {
     const headers = this.SECURITY_HEADERS.join('\n    ');
     return html.replace('</head>', `    ${headers}\n</head>`);
+  }
+
+  private static escapeHTML(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
   /**
@@ -105,6 +115,8 @@ export class HTMLWrapper {
     // Use GenericWrapper detection for most domains
     const genericDomain = GenericWrapper.detectDomain(code);
     if (genericDomain) return genericDomain;
+
+    if (/^<svg\b/i.test(code.trim())) return 'svg';
 
     // Use specific wrappers for P5 and Three
     if (ThreeWrapper.detect(code)) return 'three';
@@ -180,6 +192,9 @@ export class HTMLWrapper {
       case 'ascii':
         wrapped = GenericWrapper.wrap(code, { domain: 'ascii', asciiWidth });
         break;
+      case 'svg':
+        wrapped = this.wrapSVG(code, title);
+        break;
       case 'html':
         return code;
       case 'p5':
@@ -192,11 +207,49 @@ export class HTMLWrapper {
     return this.injectSecurityHeaders(wrapped);
   }
 
+  private static wrapSVG(code: string, title: string): string {
+    const svg = code.trim();
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${this.escapeHTML(title)}</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f8fafc;
+        }
+        main {
+            width: min(92vw, 900px);
+            min-height: min(92vh, 900px);
+            display: grid;
+            place-items: center;
+        }
+        svg {
+            max-width: 100%;
+            max-height: 92vh;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <main aria-label="Generated SVG">
+        ${svg}
+    </main>
+</body>
+</html>`;
+  }
+
   /**
    * Get all supported domains
    */
   static getSupportedDomains(): Domain[] {
-    return ['p5', 'shader', 'three', 'strudel', 'hydra', 'tone', 'revideo', 'remotion', 'html', 'ascii'];
+    return ['p5', 'shader', 'three', 'strudel', 'hydra', 'tone', 'revideo', 'remotion', 'svg', 'html', 'ascii'];
   }
 
   /**

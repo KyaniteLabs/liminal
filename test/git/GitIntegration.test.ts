@@ -96,6 +96,11 @@ describe('GitIntegration', () => {
     expect(disabled.isEnabled).toBe(false);
   });
 
+  it('defaults to disabled so ordinary generation cannot switch branches', () => {
+    const defaultIntegration = new GitIntegration({});
+    expect(defaultIntegration.isEnabled).toBe(false);
+  });
+
   // ── startRun ──
 
   describe('startRun', () => {

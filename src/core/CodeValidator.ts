@@ -23,6 +23,7 @@ import { RemotionValidator } from './validators/RemotionValidator.js';
 import { RevideoValidator } from './validators/RevideoValidator.js';
 import { HTMLValidator } from './validators/HTMLValidator.js';
 import { ASCIIValidator } from './validators/ASCIIValidator.js';
+import { validateSVG } from '../generators/svg/SVGValidator.js';
 import {
   type ValidationResult,
   type Domain,
@@ -43,6 +44,7 @@ const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
   'strudel': StrudelValidator.getMinSize(),
   'hydra': HydraValidator.getMinSize(),
   'tone': ToneValidator.getMinSize(),
+  'svg': 40,
   'remotion': RemotionValidator.getMinSize(),
   'revideo': RevideoValidator.getMinSize(),
   'html': HTMLValidator.getMinSize(),
@@ -79,6 +81,9 @@ function detectDomain(code: string): Domain {
     // Generic HTML
     return 'html';
   }
+
+  // Check for HTML document
+  if (/^<svg\b/i.test(code.trim())) return 'svg';
 
   // Check for HTML document
   const hasDoctype = code.trim().toUpperCase().startsWith('<!DOCTYPE');
@@ -168,6 +173,11 @@ function validateStructure(code: string, domain: Domain): string[] {
     case 'tone': {
       const result = ToneValidator.validate(trimmed);
       errors.push(...result.errors);
+      break;
+    }
+    case 'svg': {
+      const result = validateSVG(trimmed);
+      if (!result.valid && result.error) errors.push(result.error);
       break;
     }
     case 'remotion': {

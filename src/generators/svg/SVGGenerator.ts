@@ -18,7 +18,11 @@ export class SVGGenerator extends TierBasedGenerator {
   async generate(prompt: string, options?: SVGGeneratorOptions): Promise<string> {
     this.currentMode = options?.mode ?? inferSVGMode(prompt);
     const svgPrompt = this.buildSVGPrompt(prompt, { mode: this.currentMode });
-    const code = await super.generate(svgPrompt, options);
+    const code = await super.generate(svgPrompt, {
+      ...options,
+      maxTokens: options?.maxTokens ?? 1200,
+      useGeneratorTools: false,
+    });
     const sanitized = sanitizeSVG(code);
     const validation = validateSVG(sanitized, { mode: this.currentMode });
     if (!validation.valid) {

@@ -606,6 +606,47 @@ body::before {
   overflow-wrap: anywhere;
 }
 
+
+.liminal-cognitive-receipt {
+  grid-column: 1 / -1;
+}
+
+.liminal-cognitive-receipt ul {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.liminal-cognitive-receipt li {
+  display: grid;
+  grid-template-columns: minmax(64px, 0.7fr) auto;
+  gap: 3px 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--liminal-line);
+}
+
+.liminal-cognitive-receipt b {
+  color: var(--liminal-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.liminal-cognitive-receipt em {
+  justify-self: end;
+  color: var(--liminal-orchid);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-style: normal;
+}
+
+.liminal-cognitive-receipt li small {
+  grid-column: 1 / -1;
+  color: var(--liminal-muted);
+  line-height: 1.35;
+}
+
 .liminal-control-panel {
   display: grid;
   gap: 10px;

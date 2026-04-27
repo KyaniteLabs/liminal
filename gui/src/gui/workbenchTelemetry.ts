@@ -40,6 +40,12 @@ export interface WorkbenchClarificationRequest {
   reason: string;
 }
 
+export interface WorkbenchCognitiveReceipt {
+  heading: 'What Liminal learned';
+  loop: string;
+  items: Array<{ organ: string; status: string; detail: string }>;
+}
+
 export interface ImproveLaneProposal {
   id: string;
   title: string;
@@ -78,6 +84,26 @@ export function summarizeWorkbenchBridge(
     processSteps,
     recentActivity: summarizeRecentActivity(events),
     stageTimings: derived.stageTimings ?? [],
+  };
+}
+
+
+export function latestCognitiveReceipt(events: WorkbenchBridgeEvent[]): WorkbenchCognitiveReceipt | null {
+  const receipt = [...events].reverse().find((event) => event.type === 'generation.cognitive_receipt');
+  const rawItems = Array.isArray(receipt?.receipts) ? receipt.receipts : [];
+  if (!receipt || rawItems.length === 0) return null;
+
+  return {
+    heading: 'What Liminal learned',
+    loop: String(receipt.loop || 'creative'),
+    items: rawItems.map((item) => {
+      const record = item as { organ?: unknown; status?: unknown; detail?: unknown };
+      return {
+        organ: String(record.organ || 'organ'),
+        status: String(record.status || 'unknown'),
+        detail: String(record.detail || ''),
+      };
+    }),
   };
 }
 

@@ -26,7 +26,7 @@ import {
 import { summarizeAudioSync, type AudioSyncFrame } from './gui/audioSync';
 import { buildSyncPreviewHtml } from './gui/syncPreview';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
-import { latestClarificationRequest } from './gui/workbenchTelemetry';
+import { latestClarificationRequest, latestCognitiveReceipt } from './gui/workbenchTelemetry';
 import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
 
 // State types
@@ -761,6 +761,7 @@ export default function App() {
   const bridgePreview = bridge.preview;
   const bridgeCodePreview = bridge.codePreview;
   const clarificationRequest = activeMode.id === 'generate' ? latestClarificationRequest(bridge.events) : null;
+  const cognitiveReceipt = activeMode.id === 'generate' ? latestCognitiveReceipt(bridge.events) : null;
   const syncPreviewHtml = bridgeCodePreview?.code ? buildSyncPreviewHtml(bridgeCodePreview.code) : '';
   const hasDirectSyncTarget = Boolean(syncPreviewHtml);
   const hasSyncTarget = Boolean(previewUrl || bridgePreview || hasDirectSyncTarget);
@@ -928,6 +929,21 @@ export default function App() {
         <span>Iterations</span>
         <strong>{createMaxIterations}</strong>
       </div>
+      {cognitiveReceipt && (
+        <div className="liminal-cognitive-receipt">
+          <span>{cognitiveReceipt.heading}</span>
+          <strong>{cognitiveReceipt.loop}</strong>
+          <ul>
+            {cognitiveReceipt.items.map((item, index) => (
+              <li key={`${item.organ}-${index}`}>
+                <b>{item.organ}</b>
+                <em>{item.status}</em>
+                <small>{item.detail}</small>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {activeTab === 'create' && (
         <div className="liminal-control-panel">
           {bridge.error && <div className="atelier-alert atelier-alert--error">{bridge.error}</div>}

@@ -373,7 +373,7 @@ function renderReport(){
     if (state.notes) lines.push('- notes: '+state.notes);
     lines.push('');
   }
-  document.getElementById('report').textContent = lines.join('\n');
+  document.getElementById('report').textContent = lines.join('\\n');
 }
 document.getElementById('runChecks').addEventListener('click', () => { for (const domain of Object.keys(qaState)) inspectFrame(domain); renderReport(); });
 document.getElementById('copyReport').addEventListener('click', async () => { renderReport(); await navigator.clipboard.writeText(document.getElementById('report').textContent); });

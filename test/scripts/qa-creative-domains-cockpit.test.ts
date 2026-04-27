@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import vm from 'node:vm';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -56,6 +57,9 @@ describe('creative-domain QA cockpit script', () => {
         expect(cockpit).toContain(`data-domain="${domain}"`);
         expect(checklist).toContain(` ${domain} `);
       }
+      const scripts = [...cockpit.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map((match) => match[1]);
+      expect(scripts.length).toBeGreaterThan(0);
+      expect(() => scripts.forEach((script) => new vm.Script(script))).not.toThrow();
       expect(cockpit).toContain('Run machine checks');
       expect(cockpit).toContain('Manual checks that still need human senses');
       expect(cockpit).toContain('/artifact/p5');

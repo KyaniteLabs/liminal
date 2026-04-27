@@ -37,16 +37,39 @@ export interface WrapOptions {
 }
 
 export class HTMLWrapper {
-  private static readonly SECURITY_HEADERS = [
-    '<meta http-equiv="X-Frame-Options" content="DENY">',
+  private static readonly BASE_SECURITY_HEADERS = [
     '<meta http-equiv="X-Content-Type-Options" content="nosniff">',
     '<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">',
-    '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'self\' \'unsafe-inline\' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; style-src \'unsafe-inline\'; img-src \'self\' blob:; connect-src \'none\'; font-src \'self\';">',
   ];
 
-  private static injectSecurityHeaders(html: string): string {
-    const headers = this.SECURITY_HEADERS.join('\n    ');
-    return html.replace('</head>', `    ${headers}\n</head>`);
+  private static readonly DEFAULT_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; font-src 'self';";
+
+  private static readonly HYDRA_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://unpkg.com; font-src 'self';";
+
+  private static readonly STRUDEL_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://raw.githubusercontent.com https://unpkg.com; font-src 'self';";
+
+  private static securityHeadersFor(domain: Domain): string[] {
+    const csp = domain === 'hydra'
+      ? this.HYDRA_CSP
+      : domain === 'strudel'
+        ? this.STRUDEL_CSP
+        : this.DEFAULT_CSP;
+    return [
+      ...this.BASE_SECURITY_HEADERS,
+      `<meta http-equiv="Content-Security-Policy" content="${csp}">`,
+    ];
+  }
+
+  private static injectSecurityHeaders(html: string, domain: Domain): string {
+    const sanitized = this.stripInvalidMetaHeaders(html);
+    const headers = this.securityHeadersFor(domain).join('\n    ');
+    return sanitized.replace('</head>', `    ${headers}\n</head>`);
+  }
+
+  private static stripInvalidMetaHeaders(html: string): string {
+    return html
+      .replace(/^\s*<meta\s+http-equiv=["']X-Frame-Options["'][^>]*>\s*$/gim, '')
+      .replace(/^\s*<meta\s+http-equiv=["']Content-Security-Policy["'][^>]*>\s*$/gim, '');
   }
 
   private static escapeHTML(value: string): string {
@@ -158,7 +181,7 @@ export class HTMLWrapper {
 
     // Don't double-wrap
     if (this.isAlreadyWrapped(code)) {
-      return code;
+      return this.stripInvalidMetaHeaders(code);
     }
 
     // Detect domain if not specified
@@ -196,7 +219,7 @@ export class HTMLWrapper {
         wrapped = this.wrapSVG(code, title);
         break;
       case 'html':
-        return code;
+        return this.stripInvalidMetaHeaders(code);
       case 'p5':
       default:
         wrapped = P5Wrapper.wrap(code, { includeP5Sound, title });
@@ -204,7 +227,7 @@ export class HTMLWrapper {
     }
 
     // Inject security headers at a single central point for all wrapped outputs
-    return this.injectSecurityHeaders(wrapped);
+    return this.injectSecurityHeaders(wrapped, detectedDomain);
   }
 
   private static wrapSVG(code: string, title: string): string {

@@ -36,8 +36,8 @@ export class P5Wrapper {
     const hasTone = /\bTone\.|\bSynth\b|\bTransport\b/.test(code);
     const hasThree = /\bTHREE\.|\bScene\s*\(|\bCamera\s*\(/.test(code);
     const hasShader = /gl_FragColor|uniform\s+vec/.test(code);
-    const hasRemotion = /useCurrentFrame|AbsoluteFill|from\s+['"]remotion['"]/.test(code);
-    const hasASCII = /[█▓▒░@#%*+=\-~^]{10,}/.test(code) && !code.includes('function');
+    const hasRemotion = /useCurrentFrame|AbsoluteFill|from\s+['"]remotion['"]|@revideo\/(core|2d)|\bmakeScene\s*\(/.test(code);
+    const hasASCII = /[█▓▒░@#%*+=~^_/\\|-]{8,}/.test(code) && !/\b(function|const|let|var|import|export)\b/.test(code);
 
     return hasStrudel || hasHydra || hasTone || hasThree || hasShader || hasRemotion || hasASCII;
   }

@@ -5,7 +5,7 @@
 
 import { SECURITY_HEADERS } from './SecurityHeaders.js';
 
-const STRUDEL_CDN = 'https://unpkg.com/@strudel/repl@latest';
+const STRUDEL_CDN = 'https://unpkg.com/@strudel/repl@1.0.2';
 const HYDRA_CDN = 'https://unpkg.com/hydra-synth';
 const TONE_CDN = 'https://unpkg.com/tone@14.8.49/build/Tone.js';
 
@@ -29,6 +29,7 @@ export class GenericWrapper {
     if (this.isHydraCode(code)) return 'hydra';
     if (this.isToneJSCode(code)) return 'tone';
     if (this.isShaderCode(code)) return 'shader';
+    if (this.isRevideoCode(code)) return 'revideo';
     if (this.isRemotionCode(code)) return 'remotion';
     if (this.isASCIICode(code)) return 'ascii';
     return null;
@@ -94,18 +95,25 @@ export class GenericWrapper {
     return glslIndicators >= 2 && !code.includes('function setup()') && !code.includes('function draw()');
   }
 
+  private static isRevideoCode(code: string): boolean {
+    return /@revideo\/(core|2d)|\bmakeScene\s*\(|\bcreateRef\s*(?:<|\()|from\s+['"]@revideo\//.test(code);
+  }
+
   private static isRemotionCode(code: string): boolean {
     return /useCurrentFrame|AbsoluteFill|<Composition|from\s+['"]remotion['"]/.test(code);
   }
 
   private static isASCIICode(code: string): boolean {
     const lines = code.split('\n');
-    const hasMultipleLines = lines.length > 5;
-    const hasSpecialChars = /[█▓▒░@#%*+=\-~^]/.test(code);
-    const noJSFunctions = !code.includes('function ') && !code.includes('const ') && !code.includes('let ');
+    const nonEmptyLines = lines.filter((line) => line.trim().length > 0);
+    const hasMultipleLines = nonEmptyLines.length >= 3;
+    const artChars = code.match(/[█▓▒░@#%*+=~^_/\\|(){}[\].,:;'"-]/g)?.length ?? 0;
+    const visibleChars = code.replace(/\s/g, '').length || 1;
+    const hasAsciiArtDensity = artChars >= 8 && artChars / visibleChars > 0.35;
+    const noJSFunctions = !/\b(function|const|let|var|import|export)\b/.test(code);
     const noHTMLTags = !/<[a-z][\s\S]*>/i.test(code);
     
-    return hasMultipleLines && hasSpecialChars && noJSFunctions && noHTMLTags;
+    return hasMultipleLines && hasAsciiArtDensity && noJSFunctions && noHTMLTags;
   }
 
   /**
@@ -134,12 +142,9 @@ export class GenericWrapper {
     }
   }
 
-  private static wrapStrudel(code: string, autoPlay = false): string {
-    const safeCode = code.replace(/`/g, '\\`').replace(/\$/g, '\\$');
-    const playButton = autoPlay 
-      ? '<button id="playBtn" style="display:none">Play</button>'
-      : '<button id="playBtn" style="padding: 12px 24px; font-size: 16px; background: #ec4899; color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px;">▶ Play Pattern</button>';
-    
+  private static wrapStrudel(code: string, _autoPlay = false): string {
+    const safeCommentCode = code.replace(/-->/g, '--\\u003e');
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -149,131 +154,24 @@ export class GenericWrapper {
     <title>Strudel Pattern</title>
     <script src="${STRUDEL_CDN}"></script>
     <style>
-        body { 
-            margin: 0; 
-            background: #1a1a2e; 
-            color: #fff; 
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; 
+        body {
+            margin: 0;
+            background: #1a1a2e;
+            color: #fff;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             padding: 20px;
             min-height: 100vh;
         }
-        #code-display {
-            background: #0a0a0f;
-            padding: 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            line-height: 1.5;
-            overflow-x: auto;
-            white-space: pre;
-            color: #a5b4fc;
-            border: 1px solid #312e81;
-        }
-        .keyword { color: #c084fc; }
-        .string { color: #86efac; }
-        .function { color: #60a5fa; }
-        .number { color: #fbbf24; }
-        #status {
-            margin-top: 12px;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-size: 14px;
-            display: inline-block;
-        }
-        #status.ready { background: #1e3a5f; color: #60a5fa; }
-        #status.playing { background: #064e3b; color: #34d399; }
-        #status.error { background: #450a0a; color: #f87171; }
-        .controls { margin-top: 16px; }
+        strudel-editor { display: block; min-height: 420px; border: 1px solid #312e81; border-radius: 10px; overflow: hidden; }
+        .hint { margin: 0 0 12px; color: #f9a8d4; }
     </style>
 </head>
 <body>
-    <div style="max-width: 800px; margin: 0 auto;">
-        <h3 style="color: #ec4899; margin-bottom: 16px;">🎵 Strudel Live Coding Pattern</h3>
-        <div id="code-display"></div>
-        <div id="status" class="ready">Ready to play</div>
-        <div class="controls">
-            ${playButton}
-        </div>
-    </div>
-    <script type="module">
-        import { repl, controls } from '${STRUDEL_CDN}';
-        
-        const code = \`${safeCode}\`;
-        
-        const highlighted = code
-            .replace(/\b(stack|s|note|sound|cpm|fast|slow|gain|pan|room|delay|cutoff|resonance)\b/g, '<span class="keyword">$1</span>')
-            .replace(/("[^"]*"|'[^']*')/g, '<span class="string">$1</span>')
-            .replace(new RegExp('\\b(\\d+\\.?\\d*)\\b', 'g'), '<span class="number">$1</span>')
-            .replace(new RegExp('(\\w+)\\s*\\(', 'g'), '<span class="function">$1</span>(');
-        
-        document.getElementById('code-display').innerHTML = highlighted;
-        
-        const statusEl = document.getElementById('status');
-        const playBtn = document.getElementById('playBtn');
-        let isPlaying = false;
-        
-        async function initStrudel() {
-            try {
-                const app = await repl({
-                    code: code,
-                    onError: (err) => {
-                        Logger.error('GenericWrapper', 'Strudel error:', err);
-                        statusEl.className = 'error';
-                        statusEl.textContent = 'Error: ' + err.message;
-                    }
-                });
-                return app;
-            } catch (err) {
-                Logger.error('GenericWrapper', 'Failed to init Strudel:', err);
-                statusEl.className = 'error';
-                statusEl.textContent = 'Failed to initialize';
-                return null;
-            }
-        }
-        
-        let strudelApp = null;
-        
-        async function startPlayback() {
-            if (!strudelApp) {
-                strudelApp = await initStrudel();
-            }
-            if (strudelApp) {
-                await controls.start();
-                isPlaying = true;
-                statusEl.className = 'playing';
-                statusEl.textContent = '🔊 Playing (click to stop)';
-                playBtn.textContent = '⏹ Stop';
-            }
-        }
-        
-        async function stopPlayback() {
-            await controls.stop();
-            isPlaying = false;
-            statusEl.className = 'ready';
-            statusEl.textContent = 'Ready to play';
-            playBtn.textContent = '▶ Play Pattern';
-        }
-        
-        if (playBtn) {
-            playBtn.addEventListener('click', () => {
-                if (isPlaying) {
-                    stopPlayback();
-                } else {
-                    startPlayback();
-                }
-            });
-        }
-        
-        ${autoPlay ? 'setTimeout(startPlayback, 500);' : ''}
-        
-        statusEl.style.cursor = 'pointer';
-        statusEl.addEventListener('click', () => {
-            if (isPlaying) {
-                stopPlayback();
-            } else {
-                startPlayback();
-            }
-        });
-    </script>
+    <h3 style="color: #ec4899; margin-bottom: 8px;">🎵 Strudel Live Coding Pattern</h3>
+    <p class="hint">Use the embedded Strudel editor controls to evaluate and play. Browser audio still requires a user click.</p>
+    <strudel-editor><!--
+${safeCommentCode}
+    --></strudel-editor>
 </body>
 </html>`;
   }
@@ -334,11 +232,13 @@ export class GenericWrapper {
                 detectAudio: false,
                 enableStreamCapture: false
             });
+            const go = () => {};
+            const o = typeof o0 !== 'undefined' ? o0 : undefined;
             
             ${safeCode}
             
         } catch (err) {
-            Logger.error('GenericWrapper', 'Hydra error:', err);
+            console.error('Hydra error:', err);
             errorDiv.style.display = 'block';
             errorDiv.innerHTML = '<strong>Hydra Error:</strong><br>' + err.message;
         }
@@ -389,7 +289,7 @@ export class GenericWrapper {
             gl.shaderSource(shader, source);
             gl.compileShader(shader);
             if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                Logger.error('GenericWrapper', 'Shader compile error:', gl.getShaderInfoLog(shader));
+                console.error('Shader compile error:', gl.getShaderInfoLog(shader));
                 gl.deleteShader(shader);
                 return null;
             }
@@ -400,7 +300,7 @@ export class GenericWrapper {
         const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
         if (!vertexShader || !fragmentShader) {
-            Logger.error('GenericWrapper', 'Shader compilation failed');
+            console.error('Shader compilation failed');
             document.body.innerHTML = '<div style="color:#f66;padding:2rem;font-family:monospace;">Shader compile error — see console</div>';
         } else {
             const shaderProgram = gl.createProgram();
@@ -409,7 +309,7 @@ export class GenericWrapper {
             gl.linkProgram(shaderProgram);
 
             if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-                Logger.error('GenericWrapper', 'Program link error:', gl.getProgramInfoLog(shaderProgram));
+                console.error('Program link error:', gl.getProgramInfoLog(shaderProgram));
             } else {
                 const positions = new Float32Array([-1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0]);
                 const positionBuffer = gl.createBuffer();
@@ -453,14 +353,13 @@ export class GenericWrapper {
       .replace(/\biTime\b/g, 'u_time')
       .replace(/\biResolution\b/g, 'u_resolution');
 
-    if (/^\s*#version\s+300\s+es\b/m.test(normalized)) {
-      const outVar = normalized.match(/\bout\s+vec4\s+([A-Za-z_$][\w$]*)\s*;/)?.[1];
-      normalized = normalized
-        .replace(/^\s*#version\s+300\s+es\s*/m, '')
-        .replace(/\bout\s+vec4\s+[A-Za-z_$][\w$]*\s*;\s*/g, '');
-      if (outVar) {
-        normalized = normalized.replace(new RegExp(`\\b${outVar}\\b`, 'g'), 'gl_FragColor');
-      }
+    const outVar = normalized.match(/\bout\s+vec4\s+([A-Za-z_$][\w$]*)\s*;/)?.[1];
+    normalized = normalized
+      .replace(/^\s*#version\s+300\s+es\s*/m, '')
+      .replace(/\bout\s+vec4\s+[A-Za-z_$][\w$]*\s*;\s*/g, '');
+
+    if (outVar) {
+      normalized = normalized.replace(new RegExp(`\\b${outVar}\\b`, 'g'), 'gl_FragColor');
     }
 
     return normalized;
@@ -766,19 +665,19 @@ export class GenericWrapper {
             transition: all 0.3s;
             font-family: inherit;
         }
-        #playBtn {
+        #start {
             background: linear-gradient(135deg, #f59e0b, #ef4444);
             color: white;
         }
-        #playBtn:hover {
+        #start:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
         }
-        #stopBtn {
+        #stop {
             background: #334155;
             color: #e2e8f0;
         }
-        #stopBtn:hover {
+        #stop:hover {
             background: #475569;
         }
         #status {
@@ -800,15 +699,15 @@ export class GenericWrapper {
 <body>
     <h3>🎹 Tone.js Audio Synthesizer</h3>
     <div id="controls">
-        <button id="playBtn">▶ Play</button>
-        <button id="stopBtn">⏹ Stop</button>
+        <button id="start">▶ Play</button>
+        <button id="stop">⏹ Stop</button>
     </div>
     <div id="status" class="ready">Ready to play (click Start Audio)</div>
     <canvas id="visualizer"></canvas>
     <script>
         let isPlaying = false;
-        const playBtn = document.getElementById('playBtn');
-        const stopBtn = document.getElementById('stopBtn');
+        const playBtn = document.getElementById('start');
+        const stopBtn = document.getElementById('stop');
         const statusEl = document.getElementById('status');
         
         ${safeCode}

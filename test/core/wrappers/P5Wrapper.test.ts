@@ -47,6 +47,16 @@ describe('P5Wrapper', () => {
       const code = 's("bd sd").cpm(120);';
       expect(P5Wrapper.detect(code)).toBe(false);
     });
+
+    it('does not detect Revideo code as p5', () => {
+      const code = 'import { makeScene } from "@revideo/core"; export default makeScene("x", function* () {});';
+      expect(P5Wrapper.detect(code)).toBe(false);
+    });
+
+    it('does not detect line-art ASCII as p5', () => {
+      const code = ['   /\\', '  /  \\', ' /____\\'].join('\n');
+      expect(P5Wrapper.detect(code)).toBe(false);
+    });
   });
 
   describe('wrap', () => {

@@ -81,6 +81,13 @@ describe('GenericWrapper', () => {
       });
     });
 
+    describe('Revideo detection', () => {
+      it('detects Revideo imports before falling back to p5', () => {
+        const code = 'import { makeScene, createRef } from "@revideo/core"; export default makeScene("x", function* () {});';
+        expect(GenericWrapper.detectDomain(code)).toBe('revideo');
+      });
+    });
+
     describe('Remotion detection', () => {
       it('detects Remotion with useCurrentFrame', () => {
         const code = 'const frame = useCurrentFrame();';
@@ -104,9 +111,9 @@ describe('GenericWrapper', () => {
         expect(GenericWrapper.detectDomain(code)).toBe('ascii');
       });
 
-      it('requires multiple lines for ASCII', () => {
-        const code = '████\n▓▓▓▓\n▒▒▒▒'; // Only 3 lines
-        expect(GenericWrapper.detectDomain(code)).toBeNull();
+      it('detects line-art ASCII without block characters', () => {
+        const code = ['   /\\', '  /  \\', ' /____\\'].join('\n');
+        expect(GenericWrapper.detectDomain(code)).toBe('ascii');
       });
 
       it('does not detect JS code as ASCII', () => {
@@ -126,18 +133,13 @@ describe('GenericWrapper', () => {
       expect(result).toContain('Strudel Live Coding Pattern');
     });
 
-    it('includes play button by default', () => {
+    it('uses the official embedded Strudel editor element', () => {
       const code = 's("bd")';
       const result = GenericWrapper.wrap(code, { domain: 'strudel' });
       
-      expect(result).toContain('▶ Play Pattern');
-    });
-
-    it('hides play button when autoPlay is true', () => {
-      const code = 's("bd")';
-      const result = GenericWrapper.wrap(code, { domain: 'strudel', autoPlay: true });
-      
-      expect(result).toContain('display:none');
+      expect(result).toContain('<strudel-editor>');
+      expect(result).toContain('Browser audio still requires a user click');
+      expect(result).not.toContain('import { repl, controls }');
     });
   });
 
@@ -149,6 +151,7 @@ describe('GenericWrapper', () => {
       expect(result).toContain('<!DOCTYPE html>');
       expect(result).toContain('hydra-synth');
       expect(result).toContain('Hydra Visual Synthesizer');
+      expect(result).not.toContain('Logger.error');
     });
 
     it('uses default resolution', () => {
@@ -157,6 +160,8 @@ describe('GenericWrapper', () => {
       
       expect(result).toContain('width = 1280');
       expect(result).toContain('height = 720');
+      expect(result).toContain('const go = () => {}');
+      expect(result).toContain('const o = typeof o0');
     });
 
     it('uses custom resolution when provided', () => {
@@ -184,6 +189,8 @@ describe('GenericWrapper', () => {
       
       expect(result).toContain('▶ Play');
       expect(result).toContain('⏹ Stop');
+      expect(result).toContain('id="start"');
+      expect(result).toContain('id="stop"');
     });
   });
 
@@ -195,6 +202,7 @@ describe('GenericWrapper', () => {
       expect(result).toContain('<!DOCTYPE html>');
       expect(result).toContain('GLSL Shader');
       expect(result).toContain('webgl');
+      expect(result).not.toContain('Logger.error');
     });
 
     it('includes WebGL canvas', () => {
@@ -231,6 +239,17 @@ void main() {
       expect(result).toContain('uniform vec2 u_resolution');
       expect(result).toContain('gl_FragColor = vec4');
     });
+
+    it('normalizes GLSL out variables even when the model omits #version 300', () => {
+      const code = `precision highp float;
+uniform vec2 u_resolution;
+out vec4 fragColor;
+void main() { fragColor = vec4(1.0); }`;
+      const result = GenericWrapper.wrap(code, { domain: 'shader' });
+
+      expect(result).not.toContain('out vec4 fragColor');
+      expect(result).toContain('gl_FragColor = vec4(1.0)');
+    });
   });
 
   describe('wrap - Remotion', () => {
@@ -256,6 +275,17 @@ void main() {
       const result = GenericWrapper.wrap(code, { domain: 'remotion' });
       
       expect(result).toContain('&lt;div&gt;');
+    });
+  });
+
+  describe('wrap - Revideo', () => {
+    it('wraps Revideo source as inert readable code, not executable script', () => {
+      const code = 'import { makeScene } from "@revideo/core"; export default makeScene("x", function* () {});';
+      const result = GenericWrapper.wrap(code, { domain: 'revideo' });
+
+      expect(result).toContain('Revideo Composition');
+      expect(result).toContain('from "@revideo/core"');
+      expect(result).not.toContain('<script>\nimport { makeScene }');
     });
   });
 

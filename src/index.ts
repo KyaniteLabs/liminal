@@ -111,6 +111,10 @@ export const defaultConfig: LiminalConfig = {
   },
 };
 
+export function getSourceFileExtension(code: string): 'js' | 'svg' {
+  return CodeValidator.detectDomain(code) === 'svg' ? 'svg' : 'js';
+}
+
 /**
  * Main run function for Liminal
  *
@@ -159,6 +163,7 @@ export async function run(prompt: string, options: {
   outputDir: string;
   prompt: string;
   htmlPath?: string;
+  sourcePath?: string;
   jsPath?: string;
   zipPath?: string;
   thinking?: string;
@@ -240,9 +245,13 @@ export async function run(prompt: string, options: {
     const htmlPath = path.join(outputResolved, `${project}-final.html`);
     await exporter.exportHTML(finalCode, htmlPath);
 
-    // Export final code as JS
-    const jsPath = path.join(outputResolved, `${project}-final.js`);
-    await exporter.exportJS(finalCode, jsPath);
+    // Export final source with the right extension for non-JS artifact types.
+    const sourcePath = path.join(outputResolved, `${project}-final.${getSourceFileExtension(finalCode)}`);
+    if (sourcePath.endsWith('.svg')) {
+      await fs.writeFile(sourcePath, finalCode, 'utf-8');
+    } else {
+      await exporter.exportJS(finalCode, sourcePath);
+    }
 
     // Load project history from gallery for ZIP export
     const gallery = new Gallery(galleryDirResolved);
@@ -319,7 +328,8 @@ export async function run(prompt: string, options: {
       outputDir: outputResolved,
       prompt,
       htmlPath,
-      jsPath,
+      sourcePath,
+      jsPath: sourcePath,
       zipPath,
       thinking: loopResult.thinking,
       model: loopResult.model,

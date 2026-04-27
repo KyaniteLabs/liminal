@@ -24,9 +24,9 @@ export interface GitConfig {
   bridgeToCompost: boolean;
 }
 
-/** Default git configuration — ON by default, agent manages version control automatically */
+/** Default git configuration — opt-in so creative runs never mutate the caller's branch */
 export const DEFAULT_GIT_CONFIG: GitConfig = {
-  enabled: true,
+  enabled: false,
   autoCommit: true,
   branchPerRun: true,
   branchPrefix: 'liminal/',

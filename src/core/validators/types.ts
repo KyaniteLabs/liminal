@@ -24,6 +24,7 @@ export type Domain =
   | 'hydra' 
   | 'strudel' 
   | 'tone'
+  | 'svg'
   | 'kinetic'
   | 'html'
   | 'ascii'
@@ -64,6 +65,7 @@ export const CODE_START_PATTERNS: RegExp[] = [
   /^<html/i,
   /^<head/i,
   /^<body/i,
+  /^<svg\b/i,
   /^<script/i,
   /^<style/i,
   /^<canvas/i,

@@ -258,9 +258,9 @@ describe('getEffectiveConfig', () => {
 
   it('uses file config for model and base URL', async () => {
     const fileConfig = JSON.stringify({
-      defaultProvider: 'file-provider',
+      defaultProvider: 'custom',
       providers: {
-        'file-provider': {
+        custom: {
           baseUrl: 'http://file-url',
           model: 'file-model',
           apiKey: 'file-key',
@@ -273,6 +273,37 @@ describe('getEffectiveConfig', () => {
     expect(config.model).toBe('file-model');
     expect(config.baseUrl).toBe('http://file-url');
     expect(config.apiKey).toBe('file-key');
+  });
+
+  it('ignores placeholder test-provider config leaked into user config', async () => {
+    const fileConfig = JSON.stringify({
+      defaultProvider: 'test-provider',
+      providers: {
+        'test-provider': {
+          baseUrl: 'https://api.test.com/v1',
+          model: 'test-model',
+          apiKey: 'test-key-12345',
+        },
+      },
+    });
+    mockReadFile.mockResolvedValue(fileConfig);
+
+    const config = await getEffectiveConfig();
+    expect(config.provider).toBe('lmstudio');
+    expect(config.model).toBe('auto');
+    expect(config.baseUrl).toBeUndefined();
+    expect(config.apiKey).toBeUndefined();
+  });
+
+  it('uses MiniMax cloud defaults when only MINIMAX_API_KEY is available', async () => {
+    process.env.MINIMAX_API_KEY = 'real-minimax-key';
+    mockReadFile.mockResolvedValue('{}');
+
+    const config = await getEffectiveConfig();
+    expect(config.provider).toBe('minimax');
+    expect(config.model).toBe('MiniMax-M2.7');
+    expect(config.baseUrl).toBe('https://api.minimax.io/v1');
+    expect(config.apiKey).toBe('real-minimax-key');
   });
 
   it('uses project config when no file config overrides', async () => {

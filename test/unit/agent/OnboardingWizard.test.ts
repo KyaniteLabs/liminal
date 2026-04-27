@@ -10,15 +10,20 @@ import os from 'os';
 
 describe('OnboardingWizard', () => {
   let wizard: OnboardingWizard;
+  let tempHome: string;
   const originalEnv = { ...process.env };
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    tempHome = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-onboarding-'));
+    vi.spyOn(os, 'homedir').mockReturnValue(tempHome);
     wizard = new OnboardingWizard();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     // Restore env
     process.env = { ...originalEnv };
+    vi.restoreAllMocks();
+    await fs.rm(tempHome, { recursive: true, force: true });
   });
 
   it('has three steps: detect, validate, write', () => {

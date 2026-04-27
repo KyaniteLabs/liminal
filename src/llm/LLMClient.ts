@@ -19,6 +19,8 @@ import { env } from '../utils/env.js';
 import { Logger } from '../utils/Logger.js';
 import { Provider } from '../types/providers.js';
 
+const LOCAL_MODEL_DETECT_TIMEOUT_MS = 2500;
+
 // ── Provider system imports ──
 import { createProvider } from './ProviderFactory.js';
 import { BaseProvider } from './providers/BaseProvider.js';
@@ -596,7 +598,7 @@ export class LLMClient {
     }
 
     try {
-      const response = await fetch(`${baseUrl}/models`);
+      const response = await this.fetchLocalModels(baseUrl);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = await response.json() as { data?: Array<{ id: string }> };
@@ -612,9 +614,28 @@ export class LLMClient {
       Logger.info('LLMClient', `Auto-detect failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
+    if (this.config.model === SERVICE_DEFAULTS.DEFAULT_MODEL) {
+      throw new LLMError(
+        `No local LLM model detected at ${baseUrl}/models. Start LM Studio/Ollama with a loaded model, run "liminal --configure", or set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.`,
+        this.detectProvider(),
+        undefined,
+        false,
+      );
+    }
+
     this.resolvedModel = this.config.model;
-    Logger.info('LLMClient', `Using fallback model: ${this.resolvedModel}`);
+    Logger.info('LLMClient', `Using configured fallback model: ${this.resolvedModel}`);
     return this.resolvedModel;
+  }
+
+  private async fetchLocalModels(baseUrl: string): Promise<Response> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), LOCAL_MODEL_DETECT_TIMEOUT_MS);
+    try {
+      return await fetch(`${baseUrl}/models`, { signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   /** Sync resolved model back to config and provider */

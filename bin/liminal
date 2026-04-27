@@ -140,6 +140,7 @@ function printHelp() {
   console.log('  ledger <subcommand>         Task ledger: list, show, run, verify, accept, reject, status');
   console.log('  improve <scan|run>          Diagnose repair, hardening, and optimization proposals');
   console.log('  quality <subcommand>       Quality gate: run, gate');
+  console.log('  market status              Show honest market readiness status');
   console.log('  archive <subcommand>      Archive: inspect, lineage, branch, list');
   console.log('  preferences <subcommand>  Preferences: export, stats');
   console.log('  report cognition           Show creative body and cognitive architecture atlas');
@@ -308,6 +309,7 @@ const [
   { chatCommand },
   { commandPrompt, inferNaturalLanguagePrompt },
   { writeCliCognitiveReceipt },
+  { collectRepositoryMarketReadinessStatus, formatMarketReadinessStatus },
 ] = await Promise.all([
   import('../dist/index.js'),
   import('../dist/config/ConfigLoader.js'),
@@ -321,6 +323,7 @@ const [
   import('../dist/chat/commands/chat.js'),
   import('../dist/cli/PromptArgs.js'),
   import('../dist/cli/CognitiveReceiptReporter.js'),
+  import('../dist/market/MarketReadinessStatus.js'),
 ]);
 
 // Initialize Meta-Harness only after cheap help/version fast paths have exited.
@@ -978,6 +981,20 @@ else if (cmd === 'studio') {
     console.error('Failed to launch Liminal Studio:', err.message);
     process.exit(1);
   });
+}
+else if (cmd === 'market' && (!cmdArgs[0] || cmdArgs[0] === 'status')) {
+  const status = collectRepositoryMarketReadinessStatus(repoRoot);
+  console.log('');
+  console.log(formatMarketReadinessStatus(status));
+  console.log('');
+  process.exit(status.ready ? 0 : 2);
+}
+else if (cmd === 'readiness' && (!cmdArgs[0] || cmdArgs[0] === 'status')) {
+  const status = collectRepositoryMarketReadinessStatus(repoRoot);
+  console.log('');
+  console.log(formatMarketReadinessStatus(status));
+  console.log('');
+  process.exit(status.ready ? 0 : 2);
 }
 else if (cmd === 'quality') {
   const subCmd = cmdArgs[0];

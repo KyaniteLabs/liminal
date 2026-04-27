@@ -382,9 +382,10 @@ export class GeneratorHarnessTools {
    * Always returns a context object (never null).
    */
   prepare(domain: string): GeneratorHarnessContext {
-    const skeleton = this.sampleDomainSkeleton(domain);
-    const apis = this.sampleApis(domain, 3);
-    const hints = this.sampleHardeningHints(domain, 2);
+    const lookupDomain = this.normalizeDomain(domain);
+    const skeleton = this.sampleDomainSkeleton(lookupDomain);
+    const apis = this.sampleApis(lookupDomain, 3);
+    const hints = this.sampleHardeningHints(lookupDomain, 2);
 
     return {
       domain,
@@ -706,6 +707,10 @@ export class GeneratorHarnessTools {
     return null;
   }
 
+  private normalizeDomain(domain: string): string {
+    return domain === 'shader' ? 'glsl' : domain;
+  }
+
   private sampleApis(domain: string, count: number): string[] {
     const vocab = DOMAIN_API_VOCAB.find(v => v.domain === domain);
     if (!vocab || vocab.apis.length === 0) return [];
@@ -739,12 +744,12 @@ export class GeneratorHarnessTools {
   private getDomainApis(codeLower: string): string[] {
     const matches: string[] = [];
 
-    if (/Tone\.\w+|tone\.\w+/.test(codeLower)) matches.push('Tone.js');
-    if (/THREE\.\w+/.test(codeLower)) matches.push('THREE');
+    if (/tone\.\w+/.test(codeLower)) matches.push('Tone.js');
+    if (/three\.\w+/.test(codeLower)) matches.push('THREE');
     if (/\b(stack|sound|note|\.out)\b/.test(codeLower)) matches.push('strudel');
     if (/hydra|osc\(|\.out\(/.test(codeLower)) matches.push('hydra');
     if (/precision|uniform|void main/.test(codeLower)) matches.push('glsl');
-    if (/makeScene|@revideo\/core|useTime|createSignal/.test(codeLower)) matches.push('revideo');
+    if (/makescene|@revideo\/core|usetime|createsignal/.test(codeLower)) matches.push('revideo');
     if (/p5|setup\(\)|draw\(\)/.test(codeLower)) matches.push('p5');
     if (/^[\s.\-~+=*#%@]+$/.test(codeLower)) matches.push('ascii');
 

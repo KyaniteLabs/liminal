@@ -144,6 +144,50 @@ describe('ASCIIArtGenerator', () => {
     expect(lines.length).toBe(5);
     expect(lines[0].length).toBe(6);
   });
+
+  it('recovers ASCII line sketches from model thinking when the final channel is empty', () => {
+    const gen = new ASCIIArtGenerator();
+    const recovered = (gen as any).recoverASCIIFromModelText(`<think>
+Line1: "   *   *    "
+Line2: "    /\\\\     "
+Line3: "   /  \\\\    "
+Line4: "__/____\\\\__ "
+</think>`, 14, 4);
+
+    expect(recovered).toContain('/\\');
+    expect(recovered!.split('\n')).toHaveLength(4);
+  });
+
+  it('does not recover prose line counts as ASCII art', () => {
+    const gen = new ASCIIArtGenerator();
+    const recovered = (gen as any).recoverASCIIFromModelText(`6: .
+8: .
+But we need exactly 30 lines.`, 60, 3);
+
+    expect(recovered).toBeNull();
+  });
+
+  it('retries when the model returns ASCII-shaped prose instead of art', async () => {
+    mockGenerate
+      .mockResolvedValueOnce({
+        code: `We need to output ASCII art of a mountain landscape.
+- Exactly 4 lines.
+Let's design it now.
+Allowed characters are plain ASCII.`,
+        success: true,
+      })
+      .mockResolvedValueOnce({
+        code: ['  /\\', ' /  \\', '/____\\', '~~~~~~'].join('\n'),
+        success: true,
+      });
+
+    const gen = new ASCIIArtGenerator();
+    const result = await gen.generate('mountain', { width: 8, height: 4 });
+
+    expect(result).toContain('/\\');
+    expect(result).not.toContain('We need');
+    expect(mockGenerate).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('ASCIIArtGenerator.wrapForGallery', () => {

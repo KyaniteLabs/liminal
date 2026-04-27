@@ -199,4 +199,56 @@ describe('SVGGenerator', () => {
     expect(svg).toContain('<circle');
     expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
   });
+
+  it('falls back to a compact SVG prompt when the first direct path is empty', async () => {
+    process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
+    const llm = new LLMClient({ baseUrl: 'http://localhost:1234/v1', model: 'svg-test-model' });
+    const complete = vi.spyOn(llm, 'complete')
+      .mockResolvedValueOnce({ text: '', success: true })
+      .mockResolvedValueOnce({ text: '', success: true })
+      .mockResolvedValueOnce({
+        text: '<svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#111"/><path d="M20 50 L32 14 L44 50 Z" fill="#67e8f9"/></svg>',
+        success: true,
+      });
+    const toolLoop = vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValue({
+      content: '',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: false,
+    });
+
+    const gen = new SVGGenerator(llm);
+    const svg = await gen.generate('liminal doorway logo');
+
+    expect(toolLoop).not.toHaveBeenCalled();
+    expect(complete).toHaveBeenCalledTimes(3);
+    expect(svg).toContain('<path');
+    expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
+  });
+
+  it('tries a stricter raw-SVG retry when the compact retry still returns prose', async () => {
+    process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
+    const llm = new LLMClient({ baseUrl: 'http://localhost:1234/v1', model: 'svg-test-model' });
+    const complete = vi.spyOn(llm, 'complete')
+      .mockResolvedValueOnce({ text: '', success: true })
+      .mockResolvedValueOnce({ text: '', success: true })
+      .mockResolvedValueOnce({ text: 'I need to draw the logo first.', success: true })
+      .mockResolvedValueOnce({
+        text: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs><linearGradient id="g"><stop offset="0%" stop-color="#111827"/><stop offset="100%" stop-color="#67e8f9"/></linearGradient></defs><rect width="1024" height="1024" fill="#020617"/><path d="M352 816 L352 256 L672 256 L672 816 Z" fill="url(#g)"/><path d="M432 816 L432 384 L592 384 L592 816 Z" fill="#0f172a"/></svg>',
+        success: true,
+      });
+    vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValue({
+      content: '',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: false,
+    });
+
+    const gen = new SVGGenerator(llm);
+    const svg = await gen.generate('liminal doorway logo');
+
+    expect(complete).toHaveBeenCalledTimes(4);
+    expect(svg).toContain('<svg');
+    expect(svg).toContain('<path');
+  });
 });

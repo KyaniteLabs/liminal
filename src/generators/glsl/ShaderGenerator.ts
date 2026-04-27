@@ -4,6 +4,7 @@
 
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 import { Logger } from '../../utils/Logger.js';
+import { GLSLValidator } from '../../core/validators/GLSLValidator.js';
 
 export class ShaderGenerator extends TierBasedGenerator {
   constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {
@@ -38,6 +39,10 @@ export class ShaderGenerator extends TierBasedGenerator {
         };
       }
       Logger.warn('ShaderGenerator', 'Code may be truncated, attempting to use anyway');
+    }
+    const validation = GLSLValidator.validate(code);
+    if (!validation.valid) {
+      return { valid: false, error: validation.errors.join('; ') };
     }
     return { valid: true };
   }
@@ -143,7 +148,7 @@ export class ShaderGenerator extends TierBasedGenerator {
       extracted = extracted.replace(/\\n/g, '\n');
       return this.injectCommonHelpers(extracted);
     }
-    const htmlShader = code.match(/const\s+(?:fsSource|fragSrc|fs)\s*=\s*`([\s\S]*?)`/);
+    const htmlShader = code.match(/\b(?:const|let|var)\s+(?:fsSource|fragSrc|fs|fragmentShaderSource|fragmentSource|fragmentShader|shaderSource)\s*=\s*`([\s\S]*?)`/);
     if (htmlShader?.[1]) {
       return this.injectCommonHelpers(htmlShader[1].trim());
     }

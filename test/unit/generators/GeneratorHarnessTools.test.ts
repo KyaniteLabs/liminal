@@ -79,6 +79,13 @@ describe('GeneratorHarnessTools', () => {
       expect(ctx.sampledApis.length).toBeLessThanOrEqual(3);
     });
 
+    it('treats shader as the GLSL prompt-harness alias', () => {
+      const ctx = tools.prepare('shader');
+      expect(ctx.domain).toBe('shader');
+      expect(ctx.sampledApis.length).toBeGreaterThan(0);
+      expect(ctx.skeletonHint).toContain('GLSL fragment shader');
+    });
+
     it('includes hardening hints for known domains', () => {
       const ctx = tools.prepare('tone');
       if (ctx.hardeningHints.length > 0) {

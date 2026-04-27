@@ -44,7 +44,13 @@ export class RevideoGenerator extends TierBasedGenerator {
       `User request: ${prompt}`,
     ].join('\n');
 
-    return super.generate(revideoPrompt, options);
+    try {
+      return await super.generate(revideoPrompt, options);
+    } catch (error) {
+      const direct = await this.retryRevideoDirect(prompt, options);
+      if (direct) return direct;
+      throw error;
+    }
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
@@ -53,6 +59,24 @@ export class RevideoGenerator extends TierBasedGenerator {
       return { valid: false, error: result.errors.join('; ') };
     }
     return { valid: true };
+  }
+
+  private async retryRevideoDirect(prompt: string, options?: RevideoGeneratorOptions): Promise<string | null> {
+    const result = await this.llm.complete({
+      systemPrompt: 'You write Revideo scene source files. Output only TypeScript/TSX code.',
+      prompt: [
+        `Create a Revideo scene for: ${prompt}`,
+        'Return one source file using @revideo/core and @revideo/2d.',
+        'Required shape: export default makeScene("SceneName", function* (view) { view.add(...); yield* ...; });',
+        'Include imports for makeScene/createRef and Txt/Rect or Circle.',
+        'Do not use Remotion, React.FC, p5.js, setup(), draw(), markdown, prose, or HTML.',
+      ].join('\n'),
+      maxTokens: options?.maxTokens ?? 4000,
+      temperature: this.llm.getConfig().temperature,
+      signal: options?.signal,
+    });
+    if (!result.success || !result.text) return null;
+    return this.validateOutput(result.text).valid ? result.text.trim() : null;
   }
 
   wrapForGallery(code: string): string {

@@ -126,6 +126,7 @@ const strudelConfidence = (prompt: string): number => {
 /** Confidence for Hydra video synth patterns */
 const hydraConfidence = (prompt: string): number => {
   const lower = prompt.toLowerCase();
+  if (/\bglsl\b|\bfragment\s+shader\b|\bshader\b/.test(lower)) return 0;
   if (/hydra|video\s*synth|visual\s*synthesis/.test(lower)) return 0.95;
   if (/kaleid|oscillator|modulate.*video/.test(lower)) return 0.7;
   return 0;
@@ -220,7 +221,7 @@ const asciiEntry: GeneratorEntry = {
     return gen.generate(prompt, {
       style: 'abstract',
       width: 60,
-      height: 30,
+      height: 12,
       ...params,
     });
   },

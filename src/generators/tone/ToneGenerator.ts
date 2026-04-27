@@ -6,6 +6,8 @@
  */
 
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
+import { HTMLValidator } from '../../core/validators/HTMLValidator.js';
+import { ToneValidator } from '../../core/validators/ToneValidator.js';
 
 export type ToneSynthType = 'synth' | 'amsynth' | 'fmsynth' | 'polysynth' | 'membranesynth' | 'metalsynth';
 export type ToneEffect = 'reverb' | 'delay' | 'distortion' | 'chorus' | 'phaser' | 'tremolo';
@@ -23,15 +25,43 @@ export class ToneGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: ToneOptions): Promise<string> {
-    const code = await super.generate(prompt, options);
-    return this.sanitizeCode(code);
+    const tonePrompt = [
+      'Generate a complete Tone.js artifact for browser playback.',
+      'Use Tone.js APIs only. If returning HTML, include the Tone.js CDN script and close </body></html>.',
+      'Keep the output compact enough to finish in one response; no markdown fences or prose.',
+      '',
+      `User request: ${prompt}`,
+    ].join('\n');
+    try {
+      const code = await super.generate(tonePrompt, { ...options, maxTokens: options?.maxTokens ?? 8192 });
+      return this.sanitizeCode(code);
+    } catch (error) {
+      const direct = await this.retryToneDirect(prompt, options);
+      if (direct) return direct;
+      throw error;
+    }
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
+    const clean = this.sanitizeCode(code);
     // Must use Tone.js
-    if (!code.includes('Tone') && !code.includes('tone')) {
+    if (!clean.includes('Tone') && !clean.includes('tone')) {
       return { valid: false, error: 'Generated code does not use Tone.js' };
     }
+
+    if (/^(?:html\s*)?<!DOCTYPE|^(?:html\s*)?<html/i.test(clean)) {
+      const html = clean.replace(/^html\s*/i, '').trim();
+      const htmlValidation = HTMLValidator.validate(html);
+      if (!htmlValidation.valid) {
+        return { valid: false, error: htmlValidation.errors.join('; ') };
+      }
+    }
+
+    const toneValidation = ToneValidator.validate(clean);
+    if (!toneValidation.valid) {
+      return { valid: false, error: toneValidation.errors[0] };
+    }
+
     return { valid: true };
   }
 
@@ -54,6 +84,38 @@ export class ToneGenerator extends TierBasedGenerator {
     clean = clean.replace(/<!--[\s\S]*?-->/g, '');
     
     return clean.trim();
+  }
+
+  private async retryToneDirect(prompt: string, options?: ToneOptions): Promise<string | null> {
+    const prompts = [
+      [
+        `Create a complete browser-playable Tone.js artifact for: ${prompt}`,
+        'Return one complete HTML document with <!DOCTYPE html>, <html>, <head>, charset meta, title, <body>, and closing </body></html>.',
+        'Include the Tone.js CDN script in <head> and a user-click start button.',
+        'No markdown, prose, hidden reasoning, or partial fragments.',
+      ].join('\n'),
+      [
+        'Return raw complete HTML only. First characters must be <!DOCTYPE html> and final characters must be </html>.',
+        '<head> must contain <meta charset="UTF-8">, <title>Tone.js Patch</title>, and the Tone.js CDN script.',
+        '<body> must contain a button and a script that calls Tone.start() from a click handler and creates a Tone synth/drone.',
+        `User request: ${prompt}`,
+      ].join('\n'),
+    ];
+
+    for (const directPrompt of prompts) {
+      const result = await this.llm.complete({
+        systemPrompt: 'You write complete Tone.js browser artifacts. Output only runnable HTML or Tone.js source.',
+        prompt: directPrompt,
+        maxTokens: options?.maxTokens ?? 4096,
+        temperature: this.llm.getConfig().temperature,
+        signal: options?.signal,
+      });
+      if (!result.success || !result.text) continue;
+      const clean = this.sanitizeCode(result.text);
+      if (this.validateOutput(clean).valid) return clean;
+    }
+
+    return null;
   }
 
   /**

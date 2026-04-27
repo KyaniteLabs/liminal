@@ -31,6 +31,7 @@ import {
   stripReasoningText,
   isAlreadyWrapped,
   detectContamination,
+  REASONING_PATTERNS,
 } from './validators/types.js';
 
 // -----------------------------------------------------------------------------
@@ -90,14 +91,14 @@ function detectDomain(code: string): Domain {
   const hasHTMLTag = /<html[^>]*>/i.test(code);
   if (hasDoctype || hasHTMLTag) return 'html';
 
-  // Check for ASCII art
-  if (ASCIIValidator.detectASCII(code)) return 'ascii';
-
   // Check for GLSL
   const hasVoidMain = /void\s+main\s*\(/.test(code);
+  const hasMainImage = /void\s+mainImage\s*\(/.test(code);
   const hasFragColor = /gl_FragColor|out\s+vec4\s+fragColor/.test(code);
   const hasUniforms = /uniform\s+(vec2|vec3|vec4|float|int|mat)/.test(code);
-  const glslCount = [hasVoidMain, hasFragColor, hasUniforms].filter(Boolean).length;
+  const hasPrecision = /\bprecision\s+(?:lowp|mediump|highp)\s+float\s*;/.test(code);
+  const hasShaderBuiltins = /\b(?:gl_FragCoord|iResolution|iTime|fragCoord|fragColor)\b/.test(code);
+  const glslCount = [hasVoidMain, hasMainImage, hasFragColor, hasUniforms, hasPrecision, hasShaderBuiltins].filter(Boolean).length;
   if (glslCount >= 2 && !code.includes('function setup()') && !code.includes('function draw()')) return 'shader';
 
   // Check for Revideo (before Remotion)
@@ -125,6 +126,10 @@ function detectDomain(code: string): Domain {
   // Check for Three.js
   if (/\bTHREE\.|import.*three|new\s+THREE\./.test(code)) return 'three';
 
+  // Check for ASCII art after code/music domains. Multi-line Hydra/Strudel
+  // chains are plain ASCII too, so ASCII must not preempt executable domains.
+  if (ASCIIValidator.detectASCII(code)) return 'ascii';
+
   // Default to p5
   return 'p5';
 }
@@ -151,8 +156,10 @@ function validateStructure(code: string, domain: Domain): string[] {
     }
     case 'shader':
     case 'glsl': {
-      const result = GLSLValidator.validate(trimmed);
-      errors.push(...result.errors);
+      if (!isAlreadyWrapped(trimmed)) {
+        const result = GLSLValidator.validate(trimmed);
+        errors.push(...result.errors);
+      }
       break;
     }
     case 'three': {
@@ -234,9 +241,10 @@ function validateSelfContained(code: string, domain: Domain): string[] {
     }
     case 'tone': {
       // Tone.js should have its CDN or import
-      if (!/tone\.js|from\s+['"]tone['"]/.test(code)) {
+      if (!/tone(?:\.min)?\.js|\/tone\/|from\s+['"]tone['"]/i.test(code)) {
         errors.push('HTML-wrapped Tone.js should include Tone.js CDN or module import');
       }
+      errors.push(...HTMLValidator.validate(code).errors);
       break;
     }
     case 'revideo': {
@@ -269,7 +277,11 @@ export class CodeValidator {
       return { valid: false, cleanedCode: '', errors: ['No code provided'] };
     }
 
-    const cleaned = stripReasoningText(stripContamination(code));
+    const decontaminated = stripContamination(code);
+    const firstContentLine = decontaminated.split('\n').find(line => line.trim().length > 0)?.trim() ?? '';
+    const cleaned = ASCIIValidator.detectASCII(decontaminated) && !REASONING_PATTERNS.some(pattern => pattern.test(firstContentLine))
+      ? decontaminated.replace(/^\s*\n/, '').trimEnd()
+      : stripReasoningText(decontaminated);
     if (!cleaned.trim()) {
       return { valid: false, cleanedCode: '', errors: ['Code is empty after stripping LLM reasoning text'] };
     }

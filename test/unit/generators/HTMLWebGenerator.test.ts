@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const { mockGenerate, mockGenerateWithToolLoop } = vi.hoisted(() => ({
   mockGenerate: vi.fn().mockResolvedValue({
-    code: '<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Hello</h1></body></html>',
+    code: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Test</title></head><body><h1>Hello</h1></body></html>',
     success: true,
   }),
   mockGenerateWithToolLoop: vi.fn().mockImplementation(async () => {
@@ -57,39 +57,39 @@ describe('HTMLWebGenerator', () => {
 
   it('extracts HTML from markdown code fences', async () => {
     mockGenerate.mockResolvedValueOnce({
-      code: '```html\n<!DOCTYPE html><html><body>Hi</body></html>\n```',
+      code: '```html\n<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Hi</title></head><body>Hi</body></html>\n```',
       success: true,
     });
     const gen = new HTMLWebGenerator();
     const result = await gen.generate('simple page');
-    expect(result).toBe('<!DOCTYPE html><html><body>Hi</body></html>');
+    expect(result).toBe('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Hi</title></head><body>Hi</body></html>');
     expect(result).not.toContain('```');
   });
 
   it('returns raw HTML when no code fences present', async () => {
     mockGenerate.mockResolvedValueOnce({
-      code: '<!DOCTYPE html><html><body>Direct</body></html>',
+      code: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Direct</title></head><body>Direct</body></html>',
       success: true,
     });
     const gen = new HTMLWebGenerator();
     const result = await gen.generate('direct html');
-    expect(result).toBe('<!DOCTYPE html><html><body>Direct</body></html>');
+    expect(result).toBe('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Direct</title></head><body>Direct</body></html>');
   });
 
   it('strips an opening html fence even when the closing fence is missing', async () => {
     mockGenerate.mockResolvedValueOnce({
-      code: '```html\n<!DOCTYPE html><html><body>Unclosed fence</body></html>',
+      code: '```html\n<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Unclosed</title></head><body>Unclosed fence</body></html>',
       success: true,
     });
     const gen = new HTMLWebGenerator();
     const result = await gen.generate('html with unclosed fence');
-    expect(result).toBe('<!DOCTYPE html><html><body>Unclosed fence</body></html>');
+    expect(result).toBe('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Unclosed</title></head><body>Unclosed fence</body></html>');
     expect(result).not.toContain('```html');
   });
 
-  it('detects HTML with <html tag (no DOCTYPE)', async () => {
+  it('returns complete HTML documents with an <html> tag', async () => {
     mockGenerate.mockResolvedValueOnce({
-      code: '<html lang="en"><body>No doctype</body></html>',
+      code: '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>No doctype</title></head><body>No doctype</body></html>',
       success: true,
     });
     const gen = new HTMLWebGenerator();
@@ -110,7 +110,7 @@ describe('HTMLWebGenerator', () => {
 
   it('validateOutput accepts code with DOCTYPE', async () => {
     mockGenerate.mockResolvedValueOnce({
-      code: '<!DOCTYPE html><html><body>Valid</body></html>',
+      code: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Valid</title></head><body>Valid</body></html>',
       success: true,
     });
     const gen = new HTMLWebGenerator();
@@ -118,9 +118,16 @@ describe('HTMLWebGenerator', () => {
     expect(result).toContain('<!DOCTYPE html>');
   });
 
+  it('validateOutput rejects truncated HTML before RalphLoop sees it', async () => {
+    const gen = new HTMLWebGenerator();
+    const result = gen.validateOutput('<!DOCTYPE html><html><head><title>Broken</title>');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('closing </html>');
+  });
+
   it('passes options through to super.generate', async () => {
     mockGenerate.mockResolvedValueOnce({
-      code: '<!DOCTYPE html><html><body>Options test</body></html>',
+      code: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Options</title></head><body>Options test</body></html>',
       success: true,
     });
     const gen = new HTMLWebGenerator();

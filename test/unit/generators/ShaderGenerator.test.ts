@@ -59,6 +59,21 @@ describe('ShaderGenerator', () => {
     expect(wrapped).toContain('out vec4 fragColor');
   });
 
+  it('extracts fragment shader source from common WebGL wrapper variable names', () => {
+    const gen = new ShaderGenerator();
+    const sanitized = (gen as any).sanitizeShaderCode([
+      'function createShader() {}',
+      'const fragmentShaderSource = `precision mediump float;',
+      'uniform float u_time;',
+      'void main(){ gl_FragColor = vec4(vec3(sin(u_time)), 1.0); }`;',
+      'gl.shaderSource(shader, fragmentShaderSource);',
+    ].join('\n'));
+
+    expect(sanitized).not.toContain('function createShader');
+    expect(sanitized).toContain('uniform float u_time');
+    expect(sanitized).toContain('gl_FragColor');
+  });
+
   it('wraps mainImage shaders with a WebGL main entrypoint', () => {
     const gen = new ShaderGenerator();
     const wrapped = gen.wrapForGallery('void mainImage(out vec4 fragColor, in vec2 fragCoord) { fragColor = vec4(1.0); }');
@@ -111,13 +126,14 @@ describe('ShaderGenerator', () => {
     const code = [
       'precision highp float;',
       'uniform vec2 u_resolution;',
+      'uniform float u_time;',
       'float noise(vec2 p){ return p.x; }',
       'vec3 palette(float t) {',
       '  float n = noise(p * 0.5);',
       '  return vec3(n);',
       '}',
       'void main(){',
-      '  vec2 p = gl_FragCoord.xy / u_resolution.xy;',
+      '  vec2 p = gl_FragCoord.xy / u_resolution.xy + u_time * 0.01;',
       '  vec3 col = palette(p);',
       '  gl_FragColor = vec4(col, 1.0);',
       '}',

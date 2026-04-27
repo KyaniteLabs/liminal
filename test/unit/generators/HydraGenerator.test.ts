@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockToolLoop, mockGetConfig } = vi.hoisted(() => ({
+const { mockToolLoop, mockComplete, mockGetConfig } = vi.hoisted(() => ({
   mockToolLoop: vi.fn().mockResolvedValue({
     content: 'osc(10, 0.1, 1.0).out(o0)',
     iterations: 1,
     toolCallsMade: 0,
+    success: true,
+  }),
+  mockComplete: vi.fn().mockResolvedValue({
+    text: 'osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out(o0)',
     success: true,
   }),
   mockGetConfig: vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' }),
@@ -13,6 +17,7 @@ const { mockToolLoop, mockGetConfig } = vi.hoisted(() => ({
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
     generateWithToolLoop = mockToolLoop;
+    complete = mockComplete;
     getConfig = mockGetConfig;
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);
@@ -58,6 +63,7 @@ class TestableHydraGenerator extends HydraGenerator {
 describe('HydraGenerator', () => {
   beforeEach(() => {
     mockToolLoop.mockClear();
+    mockComplete.mockClear();
   });
 
   it('constructs with hydra domain', () => {
@@ -375,5 +381,44 @@ describe('HydraGenerator', () => {
     const gen = new HydraGenerator();
     const wrapped = gen.wrapForGallery('');
     expect(wrapped).toContain('<!DOCTYPE html>');
+  });
+
+  it('falls back to a compact direct prompt when generated Hydra code is invalid', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: 'osc(4, 0.1, 1.0)\\n.brightness(1.2)\\nosc(0.05, 0.05, 0.05)\\n.out()',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: true,
+    });
+    mockComplete.mockResolvedValueOnce({
+      text: 'osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out(o0)',
+      success: true,
+    });
+
+    const gen = new HydraGenerator();
+    const result = await gen.generate('kaleidoscope visual');
+
+    expect(result).toContain('.add(noise');
+    expect(result).toContain('render()');
+    expect(mockComplete).toHaveBeenCalledOnce();
+  });
+
+  it('recovers Hydra code from provider thinking during direct retry', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: 'osc(4, 0.1, 1.0)\\n.brightness(1.2)\\nosc(0.05, 0.05, 0.05)\\n.out()',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: true,
+    });
+    mockComplete.mockResolvedValueOnce({
+      text: '<think>`osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out(o0)`</think>',
+      success: true,
+    });
+
+    const gen = new HydraGenerator();
+    const result = await gen.generate('kaleidoscope visual');
+
+    expect(result).toContain('osc(4, 0.1, 1)');
+    expect(result).toContain('render()');
   });
 });

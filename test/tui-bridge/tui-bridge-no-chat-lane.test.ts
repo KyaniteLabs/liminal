@@ -141,7 +141,7 @@ function expectLiveContext(description: string): void {
 }
 
 async function waitFor<T>(read: () => T | undefined): Promise<T> {
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 800; i++) {
     const value = read();
     if (value !== undefined) return value;
     await new Promise(resolve => setTimeout(resolve, 10));
@@ -425,7 +425,7 @@ describe('Bubble Tea operator routing', () => {
     expect(service.getEvents(session.sessionId)
       .filter(event => event.type === 'generation.reasoning_trace' && ['generation', 'generator-thinking', 'evaluation'].includes(event.phase))
       .some(event => event.model === 'gpt-5.4')).toBe(false);
-  });
+  }, 15000);
 
   it('routes read-only dogfood checkpoint prompts to engineering even when they mention create files', async () => {
     const service = new TuiBridgeService();

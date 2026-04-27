@@ -119,9 +119,11 @@ function printHelp() {
   console.log('');
   console.log('USAGE:');
   console.log('  liminal [options] <command> [args]');
+  console.log('  liminal "natural language prompt"');
   console.log('');
   console.log('COMMANDS:');
-  console.log('  generate, gen, g <prompt>   Create p5.js art from prompt');
+  console.log('  <prompt>                    Natural-language creative request (no magic verb required)');
+  console.log('  generate, gen, g <prompt>   Create art/code from prompt');
   console.log('  tui                         Launch natural language TUI (Meta-Harness)');
   console.log('  bridge [port]               Start TUI bridge server (default: 3000)');
   console.log('  studio                     Launch GUI workbench (backend + browser app)');
@@ -178,6 +180,7 @@ function printHelp() {
   console.log('  --version                   Show version');
   console.log('');
   console.log('EXAMPLES:');
+  console.log('  liminal "icebergs dancing in the sky"');
   console.log('  liminal --prompt "blue particles"');
   console.log('  liminal --prompt "red circles" --provider lmstudio');
   console.log('  liminal --configure');
@@ -303,6 +306,7 @@ const [
   { LLMClient },
   { ModelRouter },
   { chatCommand },
+  { commandPrompt, inferNaturalLanguagePrompt },
 ] = await Promise.all([
   import('../dist/index.js'),
   import('../dist/config/ConfigLoader.js'),
@@ -314,6 +318,7 @@ const [
   import('../dist/llm/LLMClient.js'),
   import('../dist/compost/ModelRouter.js'),
   import('../dist/chat/commands/chat.js'),
+  import('../dist/cli/PromptArgs.js'),
 ]);
 
 // Initialize Meta-Harness only after cheap help/version fast paths have exited.
@@ -457,6 +462,11 @@ await initializeConfig();
 // Load role definitions for LLMClient
 await LLMClient.loadRoles();
 
+const naturalLanguagePrompt = inferNaturalLanguagePrompt(cmd, cmdArgs);
+if (naturalLanguagePrompt && flags.prompt === undefined) {
+  flags.prompt = naturalLanguagePrompt;
+}
+
 const hasOutputFlag = flags.output !== undefined;
 const hasPromptFlag = flags.prompt !== undefined;
 const isLiveMusic = flags.mode === 'live-music' || cmd === 'live-music';
@@ -468,7 +478,7 @@ if (hasOutputFlag && !hasPromptFlag && !cmd && !isLiveMusic) {
 
 // --- live-music mode: generateMusic + optional generateVisuals, write to --output, print paths ---
 if (isLiveMusic) {
-  const livePrompt = flags.prompt || cmdArgs[0];
+  const livePrompt = commandPrompt(flags.prompt, cmdArgs);
   if (!livePrompt) {
     console.error('Error: --prompt is required for live-music');
     process.exit(1);
@@ -511,7 +521,7 @@ if (isLiveMusic) {
 }
 
 if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
-  prompt = flags.prompt || cmdArgs[0];
+  prompt = commandPrompt(flags.prompt, cmdArgs);
   if (!prompt) {
     console.error('Error: --prompt is required');
     process.exit(1);
@@ -1996,6 +2006,6 @@ else if (cmd === 'prompt' && cmdArgs[0] === 'synthesize') {
 else {
   console.error('');
   console.error('Run "liminal --configure" to set up LM Studio');
-  console.error('Or use: liminal --prompt "your idea"');
+  console.error('Or use: liminal "your idea"');
   process.exit(1);
 }

@@ -42,3 +42,20 @@ export function inferNaturalLanguagePrompt(cmd: string | null, cmdArgs: string[]
   const joined = [cmd, ...cmdArgs].join(' ').trim();
   return joined.length > 0 ? joined : null;
 }
+
+const SELF_IMPROVEMENT_MARKERS = [
+  'improve yourself',
+  'self-improve',
+  'self improve',
+  'finish yourself',
+  'finish building yourself',
+  'improve your own',
+  'improve the actual liminal application',
+  'prompt -> liminal acts -> liminal improves itself',
+  'codex for art',
+];
+
+export function isSelfImprovementPrompt(prompt: string): boolean {
+  const normalized = prompt.toLowerCase();
+  return SELF_IMPROVEMENT_MARKERS.some(marker => normalized.includes(marker));
+}

@@ -307,7 +307,7 @@ const [
   { LLMClient },
   { ModelRouter },
   { chatCommand },
-  { commandPrompt, inferNaturalLanguagePrompt },
+  { commandPrompt, inferNaturalLanguagePrompt, isSelfImprovementPrompt },
   { writeCliCognitiveReceipt },
   { collectRepositoryMarketReadinessStatus, formatMarketReadinessStatus },
 ] = await Promise.all([
@@ -470,6 +470,50 @@ await LLMClient.loadRoles();
 const naturalLanguagePrompt = inferNaturalLanguagePrompt(cmd, cmdArgs);
 if (naturalLanguagePrompt && flags.prompt === undefined) {
   flags.prompt = naturalLanguagePrompt;
+}
+
+if (naturalLanguagePrompt && flags.prompt && isSelfImprovementPrompt(flags.prompt)) {
+  const { LLMModeSelfImprovementRuntime } = await import('../dist/runtime-core/SelfImprovementRuntime.js');
+  const outDir = flags.output || path.join('.omx', 'self-improvement', new Date().toISOString().replace(/[:.]/g, '-'));
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const runtime = new LLMModeSelfImprovementRuntime();
+  const llm = new LLMClient({ role: 'harness' });
+  const prepared = runtime.prepare({ llm, description: flags.prompt });
+  const taskJsonPath = path.join(outDir, 'self-improvement-task.json');
+  const taskMdPath = path.join(outDir, 'self-improvement-task.md');
+  fs.writeFileSync(taskJsonPath, `${JSON.stringify(prepared.task, null, 2)}\n`, 'utf-8');
+  fs.writeFileSync(taskMdPath, [
+    '# Liminal Self-Improvement Task Packet',
+    '',
+    `Task: ${prepared.task.title}`,
+    `Task ID: ${prepared.taskId}`,
+    `Model: ${prepared.modelName}`,
+    `Domain: ${prepared.task.domain}`,
+    `Focus file: ${prepared.task.fileHint}`,
+    '',
+    '## Working set',
+    ...prepared.task.workingSet.map((file) => `- ${file}`),
+    '',
+    '## Verification targets',
+    ...prepared.task.verificationTargets.map((target) => `- ${target.tool}${target.pattern ? ` (${target.pattern})` : ''}: ${target.reason}`),
+    '',
+    '## Description',
+    '',
+    prepared.task.description,
+    '',
+  ].join('\n'), 'utf-8');
+
+  console.log('');
+  console.log('🛠️ Liminal: Self-improvement request');
+  console.log('✅ Routed to self-improvement task preparation, not creative generation.');
+  console.log(`📁 Output: ${outDir}`);
+  console.log(`✅ Task JSON: ${taskJsonPath}`);
+  console.log(`✅ Task Markdown: ${taskMdPath}`);
+  console.log(`🎯 Focus file: ${prepared.task.fileHint}`);
+  console.log(`🧪 Verification: ${prepared.task.verificationTargets.map((target) => target.tool).join(', ')}`);
+  console.log('');
+  process.exit(0);
 }
 
 const hasOutputFlag = flags.output !== undefined;

@@ -1,0 +1,98 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+export type MarketReadinessCheckStatus = 'pass' | 'fail' | 'unknown';
+
+export interface MarketReadinessCheck {
+  id: string;
+  label: string;
+  status: MarketReadinessCheckStatus;
+  evidence: string;
+}
+
+export interface MarketReadinessStatus {
+  ready: boolean;
+  verdict: 'ready' | 'not-ready';
+  checks: MarketReadinessCheck[];
+  blockers: string[];
+}
+
+export function buildMarketReadinessStatus(input: { checks: MarketReadinessCheck[] }): MarketReadinessStatus {
+  const blockers = input.checks
+    .filter((check) => check.status !== 'pass')
+    .map((check) => `${check.label}: ${check.evidence}`);
+  const ready = blockers.length === 0;
+  return {
+    ready,
+    verdict: ready ? 'ready' : 'not-ready',
+    checks: input.checks,
+    blockers,
+  };
+}
+
+export function collectRepositoryMarketReadinessStatus(repoRoot = process.cwd()): MarketReadinessStatus {
+  const bin = read(path.join(repoRoot, 'bin', 'liminal'));
+  const telemetry = read(path.join(repoRoot, 'gui', 'src', 'gui', 'workbenchTelemetry.ts'));
+  const app = read(path.join(repoRoot, 'gui', 'src', 'App.tsx'));
+  const cliReceipt = read(path.join(repoRoot, 'src', 'cli', 'CognitiveReceiptReporter.ts'));
+  const wrappers = read(path.join(repoRoot, 'src', 'core', 'wrappers', 'GenericWrapper.ts'));
+  const packageJson = read(path.join(repoRoot, 'package.json'));
+
+  const checks: MarketReadinessCheck[] = [
+    sourceCheck('natural-cli', 'Natural CLI front door', bin, ['inferNaturalLanguagePrompt', 'liminal "natural language prompt"']),
+    sourceCheck('creative-wrappers', 'Creative domain wrapper breadth', wrappers, ['strudel-editor', 'wrapRevideo', 'Hydra', 'Tone']),
+    sourceCheck('studio-cognition', 'Studio learning receipts', `${telemetry}\n${app}`, ['latestCognitiveReceipt', 'What Liminal learned', 'liminal-cognitive-receipt']),
+    sourceCheck('cli-cognition', 'CLI learning receipts', `${bin}\n${cliReceipt}`, ['writeCliCognitiveReceipt', 'What Liminal learned']),
+    sourceCheck('studio-smoke-script', 'Studio smoke script', packageJson, ['proof:studio-smoke']),
+    liveProviderSmokeCheck(repoRoot),
+  ];
+
+  return buildMarketReadinessStatus({ checks });
+}
+
+export function formatMarketReadinessStatus(status: MarketReadinessStatus): string {
+  const lines = [
+    `Market readiness: ${status.ready ? 'READY' : 'NOT READY'}`,
+    '',
+    'Checks:',
+    ...status.checks.map((check) => `- ${check.label}: ${check.status} — ${check.evidence}`),
+  ];
+
+  if (status.blockers.length > 0) {
+    lines.push('', 'Blocking gaps:', ...status.blockers.map((blocker) => `- ${blocker}`));
+  }
+
+  return lines.join('\n');
+}
+
+function sourceCheck(id: string, label: string, source: string, needles: string[]): MarketReadinessCheck {
+  const missing = needles.filter((needle) => !source.includes(needle));
+  return {
+    id,
+    label,
+    status: missing.length === 0 ? 'pass' : 'fail',
+    evidence: missing.length === 0 ? `Found ${needles.join(', ')}` : `Missing ${missing.join(', ')}`,
+  };
+}
+
+function liveProviderSmokeCheck(repoRoot: string): MarketReadinessCheck {
+  const candidates = [
+    path.join(repoRoot, '.omx', 'proof', 'live-provider-smoke.json'),
+    path.join(repoRoot, '.omx', 'proof', 'market-readiness-live-smoke.json'),
+  ];
+  const found = candidates.find((filePath) => fs.existsSync(filePath));
+  return {
+    id: 'live-provider-smoke',
+    label: 'Live provider smoke',
+    status: found ? 'pass' : 'fail',
+    evidence: found ? `Found ${path.relative(repoRoot, found)}` : 'No current live provider smoke receipt found',
+  };
+}
+
+function read(filePath: string): string {
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return '';
+  }
+}

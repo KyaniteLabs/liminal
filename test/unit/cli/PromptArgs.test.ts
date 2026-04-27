@@ -9,6 +9,7 @@ describe('CLI natural-language prompt args', () => {
   it('does not steal known commands', () => {
     expect(inferNaturalLanguagePrompt('studio', [])).toBeNull();
     expect(inferNaturalLanguagePrompt('compost', ['status'])).toBeNull();
+    expect(inferNaturalLanguagePrompt('market', ['status'])).toBeNull();
   });
 
   it('preserves multi-word prompts for explicit generate commands', () => {

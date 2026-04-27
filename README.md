@@ -45,6 +45,39 @@ liminal improve scan
 
 ---
 
+## Ready-to-show market path
+
+Use this path when you want to try Liminal as a product instead of asking an agent to babysit a proof run. It keeps the full creative surface in scope: p5, GLSL, Three.js, SVG, Hydra, Strudel, Tone.js, Revideo, ASCII, Kinetic, and TextGen.
+
+```bash
+# 1. Install and build
+pnpm install
+pnpm build
+
+# 2. Configure a provider (or run liminal --configure)
+export LIMINAL_LLM_PROVIDER=glm
+export GLM_API_KEY=your-key
+
+# 3. Generate from natural language
+liminal "a luminous blue-green particle garden"
+
+# 4. Launch Studio for live preview, phases, artifacts, and learning receipts
+liminal studio
+
+# 5. Refresh the live provider receipt used by the market gate
+pnpm run proof:live-provider-smoke -- --provider=glm --timeout-ms=120000
+
+# 6. Sweep every creative domain with the active live provider
+pnpm exec tsx scripts/proof/creative-copilot-proof.ts --provider=glm --all --timeout-ms=120000 --max-tokens=4096 --out=.omx/proof/market-all-domain-sweep
+
+# 7. Ask the app for the plain answer
+liminal market status
+```
+
+Expected current result: `liminal market status` prints `Market readiness: READY` after the live smoke receipt exists. The all-domain sweep should report 11 pass, 0 fail, 0 blocked for the current GLM path. Strudel patterns are saved with an external playback link, Tone.js saves playable HTML, and Revideo code artifacts are generated; native rendered video/still capture is a separate follow-up.
+
+---
+
 ## What It Does
 
 **Core loop:** Generate → Evaluate → Iterate → Improve

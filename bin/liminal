@@ -307,6 +307,7 @@ const [
   { ModelRouter },
   { chatCommand },
   { commandPrompt, inferNaturalLanguagePrompt },
+  { writeCliCognitiveReceipt },
 ] = await Promise.all([
   import('../dist/index.js'),
   import('../dist/config/ConfigLoader.js'),
@@ -319,6 +320,7 @@ const [
   import('../dist/compost/ModelRouter.js'),
   import('../dist/chat/commands/chat.js'),
   import('../dist/cli/PromptArgs.js'),
+  import('../dist/cli/CognitiveReceiptReporter.js'),
 ]);
 
 // Initialize Meta-Harness only after cheap help/version fast paths have exited.
@@ -566,6 +568,15 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
     console.log('✅ Saved: ' + result.jsPath);
     if (result.htmlPath) console.log('✅ HTML: ' + result.htmlPath);
     if (result.zipPath) console.log('✅ Archive: ' + result.zipPath);
+    try {
+      const receiptLines = await writeCliCognitiveReceipt({ prompt, result });
+      console.log('');
+      for (const line of receiptLines) console.log(line);
+    } catch (receiptErr) {
+      const message = receiptErr instanceof Error ? receiptErr.message : String(receiptErr);
+      console.log('');
+      console.log('🧠 What Liminal learned: unavailable — ' + message);
+    }
     console.log('');
     process.exit(0);
   }).catch(err => {

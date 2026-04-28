@@ -124,7 +124,7 @@ describe('workbenchTelemetry', () => {
       { type: 'generation.complete', finalScore: 0, duration: 9000, model: 'qwen', reason: 'draft artifact ready (unscored)', qualityState: 'unscored', executionMode: 'draft', receivedAt: Date.parse('2026-04-22T12:00:09.000Z') },
     ]);
 
-    expect(summary.recentActivity.at(-1)?.label).toBe('Draft ready');
+    expect(summary.recentActivity.at(-1)?.label).toBe('Preview ready');
     expect(summary.active).toBe(false);
     expect(summary.stageTimings).toEqual([
       { label: 'Plan', durationLabel: '5s' },

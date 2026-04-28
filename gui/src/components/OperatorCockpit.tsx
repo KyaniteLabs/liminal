@@ -445,11 +445,11 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   const selectedDomain = selectedArtifactDomain || activeDomain;
   const activeWork = hasGenerationComplete && selectedDomain
     ? executionMode === 'draft'
-      ? `Draft ready from ${selectedDomain}; no more domains are running.`
+      ? `Preview ready from ${selectedDomain}; no more domains are running.`
       : `Run complete from ${selectedDomain}.`
     : activeDomain
       ? executionMode === 'draft'
-        ? `Drafting first usable preview; fallback route may try ${activeDomain} first.`
+        ? `Generating first usable preview; fallback route may try ${activeDomain} first.`
         : `Waiting for ${candidateCount} candidates in ${activeDomain}`
       : plan.length
         ? `Planning ${plan.length} domain attempts`

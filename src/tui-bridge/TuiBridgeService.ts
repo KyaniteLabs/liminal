@@ -1928,12 +1928,12 @@ export class TuiBridgeService {
       this.emit(sessionId, {
         type: 'activity.updated',
         sessionId,
-        message: 'Draft mode: generating a first artifact before scoring.',
+        message: 'Generating a first artifact before quality scoring.',
       });
       this.emitIntentBrief(sessionId, intentBrief);
       this.emitReasoningTrace(sessionId, {
         phase: 'analysis',
-        thought: 'Draft mode is prioritizing the first visible artifact and skipping the proof loop.',
+        thought: 'Fast generation is prioritizing the first visible artifact before quality scoring.',
         detail: intentBrief.requirements.join(' | '),
         model: harnessModelName,
         source: 'harness',
@@ -1966,9 +1966,9 @@ export class TuiBridgeService {
           loop: 'creative',
           receipts: [
             { organ: 'perception', status: 'observed', detail: `Captured ${intentBrief.requirements.length} requirement(s) from the prompt.` },
-            { organ: 'intuition', status: 'observed', detail: `Draft route selected ${domainPlan.join(' -> ')}.` },
+            { organ: 'intuition', status: 'observed', detail: `Generation route selected ${domainPlan.join(' -> ')}.` },
             ...memoryReceipts,
-            { organ: 'evaluation', status: 'pending', detail: 'Draft mode skips scoring until a prove run is requested.' },
+            { organ: 'evaluation', status: 'pending', detail: 'Quality scoring is deferred until the artist asks to polish.' },
           ],
         });
       });
@@ -1996,8 +1996,8 @@ export class TuiBridgeService {
         });
         this.emitReasoningTrace(sessionId, {
           phase: 'generation',
-          thought: `Calling ${generatorModelName} for a fast ${domain} draft.`,
-          detail: 'Draft mode skips evaluator scoring and repair so preview can appear immediately.',
+          thought: `Calling ${generatorModelName} for a fast ${domain} generation.`,
+          detail: 'Fast generation skips evaluator scoring and repair so preview can appear immediately.',
           model: generatorModelName,
           source: 'harness',
         });
@@ -2027,13 +2027,13 @@ export class TuiBridgeService {
               missingDetails: intentBrief.missingDetails,
               questions: attemptResult.clarifyingQuestions.map((question) => question.question),
               shouldClarify: true,
-              reason: `Draft generation needs clarification for ${domain}.`,
+              reason: `Generation needs clarification for ${domain}.`,
             };
             this.emitCreativeClarification(sessionId, clarificationBrief, conversation);
             return;
           }
           if (!attemptResult.code?.trim()) {
-            throw new Error('Draft generation produced no code');
+            throw new Error('Generation produced no code');
           }
           if (controller.signal.aborted) {
             this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
@@ -2068,7 +2068,7 @@ export class TuiBridgeService {
       }
 
       if (!result || result.needsClarification) {
-        throw lastError instanceof Error ? lastError : new Error(String(lastError ?? 'All draft generation attempts failed'));
+        throw lastError instanceof Error ? lastError : new Error(String(lastError ?? 'All generation attempts failed'));
       }
 
       this.emit(sessionId, { type: 'response.delta', sessionId, delta: result.code });
@@ -2088,7 +2088,7 @@ export class TuiBridgeService {
         this.emit(sessionId, { type: 'preview.completed', sessionId, content: codeContent, previewType: 'code' });
       }
 
-      conversation['recordMessage']('assistant', `Draft artifact ready:\n\n${result.code}`);
+      conversation['recordMessage']('assistant', `Generated artifact ready:\n\n${result.code}`);
       this.emit(sessionId, {
         type: 'generation.complete',
         sessionId,
@@ -2096,7 +2096,7 @@ export class TuiBridgeService {
         finalScore: 0,
         duration: Date.now() - generationStartedAt,
         model: result.model || generatorModelName,
-        reason: 'draft artifact ready (unscored)',
+        reason: 'generated artifact ready (unscored)',
         qualityState: 'unscored',
         executionMode: 'draft',
       });
@@ -2108,7 +2108,7 @@ export class TuiBridgeService {
         finalScore: 0,
         iterations: 1,
         model: result.model || generatorModelName,
-        reason: 'draft artifact ready (unscored)',
+        reason: 'generated artifact ready (unscored)',
         executionMode: 'draft',
       });
       this.emit(sessionId, {
@@ -2116,10 +2116,10 @@ export class TuiBridgeService {
         sessionId,
         loop: 'creative',
         receipts: [
-          { organ: 'perception', status: 'observed', detail: 'Prompt and draft artifact were captured in the session transcript.' },
-          { organ: 'intuition', status: 'observed', detail: `Draft route completed through ${activeDomain}.` },
-          { organ: 'evaluation', status: 'unavailable', detail: 'Draft mode intentionally did not run evaluator scoring.' },
-          { organ: 'immune-truth', status: 'observed', detail: 'Draft artifact is labeled unscored instead of presented as proven output.' },
+          { organ: 'perception', status: 'observed', detail: 'Prompt and generated artifact were captured in the session transcript.' },
+          { organ: 'intuition', status: 'observed', detail: `Generation route completed through ${activeDomain}.` },
+          { organ: 'evaluation', status: 'unavailable', detail: 'Initial generation intentionally did not run evaluator scoring.' },
+          { organ: 'immune-truth', status: 'observed', detail: 'Initial artifact is labeled unscored instead of presented as finished output.' },
           ...writeBack.receipts,
         ],
       });
@@ -2128,7 +2128,7 @@ export class TuiBridgeService {
         sessionId,
         status: this.sessions.update(sessionId, {
           mode: 'chat',
-          activeTask: 'Draft artifact ready',
+          activeTask: 'Generated artifact ready',
           model: result.model || generatorModelName,
         }),
       });
@@ -2156,7 +2156,7 @@ export class TuiBridgeService {
       signal.addEventListener('abort', onAbort, { once: true });
       removeAbortListener = () => signal.removeEventListener('abort', onAbort);
       timeoutId = setTimeout(() => {
-        reject(new Error(`Draft generation timed out after ${timeoutMinutes} minute${timeoutMinutes === 1 ? '' : 's'}`));
+        reject(new Error(`Generation timed out after ${timeoutMinutes} minute${timeoutMinutes === 1 ? '' : 's'}`));
       }, timeoutMinutes * 60_000);
     });
 

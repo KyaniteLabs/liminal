@@ -146,7 +146,7 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
   const selectedDomain = String((artifactEvent?.artifactLabel || '').split(' ')[0] || attemptEvent?.domain || rawDomains[0] || 'unknown').toLowerCase();
   const attemptLabel = completeEvent
     ? completeEvent.executionMode === 'draft'
-      ? `draft ready: selected ${selectedDomain}; route stopped`
+      ? `preview ready: selected ${selectedDomain}; route stopped`
       : `complete: selected ${selectedDomain}`
     : attemptEvent ? `attempt ${attemptEvent.attempt || 1}/${attemptEvent.attemptTotal || 1}` : 'waiting for model';
   const cognitiveDetail = summarizeCognitiveReceipt(events);
@@ -166,7 +166,7 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
     },
     {
       id: 'draft',
-      label: 'Draft',
+      label: 'Generate',
       detail: hasAttempt ? attemptLabel : 'model not called yet',
       status: hasError ? 'failed' : hasCandidate || hasPreview || hasComplete ? 'done' : hasAttempt ? 'active' : 'pending',
     },
@@ -185,7 +185,7 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
     {
       id: 'ready',
       label: 'Ready',
-      detail: hasComplete && completeEvent?.executionMode === 'draft' ? 'draft ready; waiting for your revise/new draft/prove choice' : hasComplete ? 'run completed' : 'not ready yet',
+      detail: hasComplete && completeEvent?.executionMode === 'draft' ? 'preview ready; waiting for your revise/new variation/polish choice' : hasComplete ? 'run completed' : 'not ready yet',
       status: hasComplete ? 'done' : hasError ? 'failed' : 'pending',
     },
   ];
@@ -253,7 +253,7 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
       }
       if (event.type === 'generation.complete') {
         if (event.qualityState === 'unscored') {
-          return { label: 'Draft ready', detail: String(event.reason || 'Preview ready without scoring'), status: 'ok' };
+          return { label: 'Preview ready', detail: String(event.reason || 'Preview ready without scoring'), status: 'ok' };
         }
         return { label: 'Complete', detail: `Score ${event.finalScore ?? 'n/a'} in ${event.duration ?? 0}ms`, status: 'ok' };
       }

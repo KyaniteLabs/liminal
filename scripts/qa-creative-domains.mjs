@@ -16,8 +16,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const DEFAULT_SMOKE_ROOT = path.join(ROOT, '.omx', 'runtime-smoke');
+const DEFAULT_LIVE_RECEIPT = path.join(ROOT, '.omx', 'proof', 'domain-gauntlet-live.json');
+const DEFAULT_LIVE_ARTIFACT_DIR = path.join(ROOT, '.omx', 'proof', 'live-creative-domains');
 const DEFAULT_OUT_ROOT = path.join(ROOT, '.omx', 'qa-cockpit');
-const DOMAIN_ORDER = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel', 'tone', 'revideo', 'html', 'ascii'];
+const DOMAIN_ORDER = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel', 'tone', 'revideo', 'html', 'ascii', 'kinetic', 'textgen'];
 
 const DOMAIN_EXPECTATIONS = {
   p5: 'canvas visible; animation or intentional still sketch loads without console errors',
@@ -30,6 +32,8 @@ const DOMAIN_EXPECTATIONS = {
   revideo: 'motion/video scene renders at least one frame and has plausible animation path',
   html: 'page layout renders without broken markup or obvious overflow',
   ascii: 'ASCII composition is visible, intentional, and not prose spillover',
+  kinetic: 'CSS kinetic typography renders visible animated text/elements without console errors',
+  textgen: 'generated text/concrete poetry is intentional, readable, and not placeholder/prose spillover',
 };
 
 const MIME_TYPES = {
@@ -50,10 +54,10 @@ const MIME_TYPES = {
 
 function usage() {
   return `Usage:
-  node scripts/qa-creative-domains.mjs [--input <artifact-dir>] [--out <out-dir>] [--port 4173] [--open] [--no-serve]
+  node scripts/qa-creative-domains.mjs [--input <artifact-dir-or-receipt.json>] [--out <out-dir>] [--port 4173] [--open] [--no-serve]
 
 Examples:
-  node scripts/qa-creative-domains.mjs --input .omx/runtime-smoke/domain-sweep-final-11 --open
+  node scripts/qa-creative-domains.mjs --input .omx/proof/domain-gauntlet-live.json --open
   node scripts/qa-creative-domains.mjs --input .omx/runtime-smoke/domain-sweep-final-11 --out /tmp/liminal-qa --no-serve
 
 Purpose:
@@ -72,7 +76,9 @@ function parseArgs(argv) {
 
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
-    if (arg === '--help' || arg === '-h') {
+    if (arg === '--') {
+      continue;
+    } else if (arg === '--help' || arg === '-h') {
       options.help = true;
     } else if (arg === '--input') {
       options.inputDir = path.resolve(argv[++index] || '');
@@ -120,6 +126,14 @@ function findLatestSmokeDir(smokeRoot = DEFAULT_SMOKE_ROOT) {
   return candidates[0]?.dir || null;
 }
 
+function findDefaultInput() {
+  if (fs.existsSync(DEFAULT_LIVE_RECEIPT)) return DEFAULT_LIVE_RECEIPT;
+  const latestSmoke = findLatestSmokeDir();
+  if (latestSmoke) return latestSmoke;
+  if (fs.existsSync(DEFAULT_LIVE_ARTIFACT_DIR)) return DEFAULT_LIVE_ARTIFACT_DIR;
+  return null;
+}
+
 function safeReadJson(filePath) {
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -146,10 +160,31 @@ function walkFiles(dir) {
 function firstExistingPath(values, inputDir) {
   for (const value of values) {
     if (!value || typeof value !== 'string') continue;
-    const absolute = path.isAbsolute(value) ? value : path.resolve(inputDir, value);
-    if (fs.existsSync(absolute) && fs.statSync(absolute).isFile()) return absolute;
+    const candidates = path.isAbsolute(value) ? [value] : [path.resolve(inputDir, value), path.resolve(ROOT, value), path.resolve(process.cwd(), value)];
+    for (const absolute of candidates) {
+      if (fs.existsSync(absolute) && fs.statSync(absolute).isFile()) return absolute;
+    }
   }
   return null;
+}
+
+function resolveInputSource(inputPath) {
+  const absolute = path.resolve(inputPath);
+  const stat = fs.statSync(absolute);
+  if (stat.isFile()) {
+    const receipt = safeReadJson(absolute);
+    const artifactRoot = path.dirname(absolute);
+    const siblingArtifactDir = path.join(artifactRoot, 'live-creative-domains');
+    return { inputDir: fs.existsSync(siblingArtifactDir) ? siblingArtifactDir : artifactRoot, receiptPath: absolute, summary: receipt };
+  }
+  const receiptPath = path.join(absolute, 'receipt.json');
+  const summaryPath = path.join(absolute, 'summary.json');
+  const rootReceiptPath = path.join(ROOT, '.omx', 'proof', 'domain-gauntlet-live.json');
+  return {
+    inputDir: absolute,
+    receiptPath: fs.existsSync(receiptPath) ? receiptPath : fs.existsSync(summaryPath) ? summaryPath : null,
+    summary: safeReadJson(receiptPath) || safeReadJson(summaryPath) || (absolute === DEFAULT_LIVE_ARTIFACT_DIR ? safeReadJson(rootReceiptPath) : null),
+  };
 }
 
 function pickArtifactFile(domain, inputDir, result = {}) {
@@ -168,7 +203,10 @@ function pickArtifactFile(domain, inputDir, result = {}) {
     path.join(inputDir, domain),
     path.join(inputDir, `${domain}`),
   ];
-  const files = candidateRoots.flatMap(walkFiles);
+  const files = [
+    ...candidateRoots.flatMap(walkFiles),
+    ...walkFiles(inputDir).filter((file) => path.basename(file).toLowerCase().startsWith(`${domain}.`)),
+  ];
   const preferred = ['.html', '.htm', '.svg', '.js', '.mjs', '.txt'];
   for (const ext of preferred) {
     const found = files.find((file) => path.extname(file).toLowerCase() === ext);
@@ -186,9 +224,11 @@ function normalizeSummaryResults(summary) {
   return [];
 }
 
-function discoverArtifacts(inputDir) {
-  const summaryPath = path.join(inputDir, 'summary.json');
-  const summary = safeReadJson(summaryPath);
+function discoverArtifacts(inputPath) {
+  const source = resolveInputSource(inputPath);
+  const inputDir = source.inputDir;
+  const summaryPath = source.receiptPath;
+  const summary = source.summary;
   const results = normalizeSummaryResults(summary);
   const byDomain = new Map();
 
@@ -214,7 +254,7 @@ function discoverArtifacts(inputDir) {
 
   return {
     inputDir,
-    summaryPath: fs.existsSync(summaryPath) ? summaryPath : null,
+    summaryPath,
     domains,
     missingDomains: domains.filter((item) => item.missing).map((item) => item.domain),
   };
@@ -391,6 +431,16 @@ function renderChecklist(discovery) {
     '',
     'Use this only as the final human-senses pass. If a box fails, copy the cockpit report and attach the artifact path.',
     '',
+    '## Recording order',
+    '',
+    '1. Show the Level 6 release gate summary and provider/model provenance.',
+    '2. Open the cockpit and click Run machine checks.',
+    '3. Visit only domains that need human senses: animation, audio, motion/video, beauty, recognizability.',
+    '4. Mark Human OK only after a real person sees/hears the artifact.',
+    '5. If anything fails, copy the cockpit report instead of retyping context.',
+    '',
+    '## Domain checks',
+    '',
   ];
   for (const item of discovery.domains) {
     lines.push(`- [ ] ${item.domain} — ${item.expected}`);
@@ -416,19 +466,25 @@ Input: ${discovery.inputDir}
 
 ## Can reproduce after refresh?
 
+## Marketing-recording impact
+
+- [ ] blocks recording
+- [ ] acceptable with voiceover caveat
+- [ ] cosmetic only
+
 `;
 }
 
 function buildCockpitFiles({ inputDir, outDir }) {
   if (!inputDir) {
-    inputDir = findLatestSmokeDir();
+    inputDir = findDefaultInput();
   }
   if (!inputDir) {
-    throw new Error('No artifact input found. Pass --input .omx/runtime-smoke/<sweep-dir>.');
+    throw new Error('No artifact input found. Run pnpm proof:live-creative-domains -- --all, or pass --input .omx/proof/domain-gauntlet-live.json.');
   }
   inputDir = path.resolve(inputDir);
-  if (!fs.existsSync(inputDir) || !fs.statSync(inputDir).isDirectory()) {
-    throw new Error(`Artifact input directory not found: ${inputDir}`);
+  if (!fs.existsSync(inputDir)) {
+    throw new Error(`Artifact input not found: ${inputDir}`);
   }
   outDir = path.resolve(outDir || path.join(DEFAULT_OUT_ROOT, timestamp()));
   fs.mkdirSync(outDir, { recursive: true });
@@ -548,6 +604,7 @@ export {
   buildCockpitFiles,
   discoverArtifacts,
   findLatestSmokeDir,
+  findDefaultInput,
   parseArgs,
   renderBugReport,
   renderChecklist,

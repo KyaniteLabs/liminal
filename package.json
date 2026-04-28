@@ -59,7 +59,9 @@
     "proof:model-assimilation": "tsx scripts/proof/model-assimilation-proof.ts",
     "proof:live-provider-smoke": "tsx scripts/proof/live-provider-smoke.ts",
     "proof:live-creative-domains": "tsx scripts/proof/live-creative-domain-execution.ts",
-    "proof:live-model-assimilation": "tsx scripts/proof/model-assimilation-proof.ts --live"
+    "proof:live-model-assimilation": "tsx scripts/proof/model-assimilation-proof.ts --live",
+    "qa:creative-domains": "node scripts/qa-creative-domains.mjs",
+    "qa:creative-domains:static": "node scripts/qa-creative-domains.mjs --no-serve"
   },
   "keywords": [
     "generative-art",

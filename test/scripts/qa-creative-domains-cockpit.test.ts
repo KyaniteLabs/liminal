@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../..');
 const scriptPath = path.join(repoRoot, 'scripts', 'qa-creative-domains.mjs');
 
-const domains = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel', 'tone', 'revideo', 'html', 'ascii'];
+const domains = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel', 'tone', 'revideo', 'html', 'ascii', 'kinetic', 'textgen'];
 
 describe('creative-domain QA cockpit script', () => {
   it('is valid JavaScript syntax', () => {
@@ -63,9 +63,49 @@ describe('creative-domain QA cockpit script', () => {
       expect(cockpit).toContain('Run machine checks');
       expect(cockpit).toContain('Manual checks that still need human senses');
       expect(cockpit).toContain('/artifact/p5');
+      expect(checklist).toContain('## Recording order');
       expect(bugReport).toContain('Expected vs actual');
-      expect(summary.domains).toHaveLength(10);
+      expect(bugReport).toContain('Marketing-recording impact');
+      expect(summary.domains).toHaveLength(12);
       expect(summary.missingDomains).toEqual([]);
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('builds from the live all-domain receipt shape', () => {
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-live-qa-cockpit-test-'));
+    try {
+      const proofDir = path.join(tempRoot, 'proof');
+      const artifactDir = path.join(proofDir, 'live-creative-domains');
+      const outDir = path.join(tempRoot, 'cockpit');
+      mkdirSync(artifactDir, { recursive: true });
+
+      const receipt = {
+        domains: domains.map((domain) => {
+          const ext = domain === 'svg' ? 'svg' : domain === 'ascii' || domain === 'textgen' ? 'txt' : 'html';
+          const artifactPath = path.join(artifactDir, `${domain}.${ext}`);
+          writeFileSync(
+            artifactPath,
+            ext === 'svg' ? `<svg><text>${domain}</text></svg>` : `<!doctype html><body>${domain}</body>`,
+          );
+          return { domain, status: 'pass', artifactPath };
+        }),
+      };
+      const receiptPath = path.join(proofDir, 'domain-gauntlet-live.json');
+      writeFileSync(receiptPath, JSON.stringify(receipt, null, 2));
+
+      execFileSync(process.execPath, [scriptPath, '--input', receiptPath, '--out', outDir, '--no-serve'], {
+        cwd: repoRoot,
+        encoding: 'utf8',
+        stdio: 'pipe',
+      });
+
+      const summary = JSON.parse(readFileSync(path.join(outDir, 'summary.json'), 'utf8'));
+      expect(summary.domains).toHaveLength(12);
+      expect(summary.missingDomains).toEqual([]);
+      expect(readFileSync(path.join(outDir, 'checklist.md'), 'utf8')).toContain('## Recording order');
+      expect(readFileSync(path.join(outDir, 'bug-report.md'), 'utf8')).toContain('Marketing-recording impact');
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
     }

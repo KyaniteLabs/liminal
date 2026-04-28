@@ -21,9 +21,10 @@ import { HydraGenerator } from '../../src/generators/hydra/HydraGenerator.js';
 import { HTMLWebGenerator } from '../../src/generators/html/HTMLWebGenerator.js';
 import { ASCIIArtGenerator } from '../../src/generators/ascii/ASCIIArtGenerator.js';
 import { TextGenerativeGenerator } from '../../src/generators/textgen/TextGenerativeGenerator.js';
+import { KineticGenerator } from '../../src/generators/kinetic/KineticGenerator.js';
 
 const DEFAULT_DOMAINS = ['p5', 'svg', 'strudel', 'tone', 'revideo'] as const;
-type Domain = typeof DEFAULT_DOMAINS[number] | 'glsl' | 'three' | 'hydra' | 'html' | 'ascii' | 'textgen';
+type Domain = typeof DEFAULT_DOMAINS[number] | 'glsl' | 'three' | 'hydra' | 'html' | 'ascii' | 'kinetic' | 'textgen';
 
 type GeneratorLike = { generate(prompt: string, options?: { signal?: AbortSignal; maxTokens?: number }): Promise<string> | string };
 
@@ -38,11 +39,12 @@ const PROMPTS: Record<Domain, string> = {
   hydra: 'create a Hydra video synth patch with oscillator and kaleidoscope modulation',
   html: 'create an HTML landing page hero for Liminal with one call to action',
   ascii: 'create ASCII art of a moonlit mountain landscape',
+  kinetic: 'create kinetic typography with animated words orbiting a luminous threshold',
   textgen: 'create concrete poetry word art about a machine dreaming in loops',
 };
 
 const EXTENSIONS: Record<Domain, string> = {
-  p5: 'js', svg: 'svg', strudel: 'js', tone: 'html', revideo: 'tsx', glsl: 'frag', three: 'js', hydra: 'js', html: 'html', ascii: 'txt', textgen: 'txt',
+  p5: 'js', svg: 'svg', strudel: 'js', tone: 'html', revideo: 'tsx', glsl: 'frag', three: 'js', hydra: 'js', html: 'html', ascii: 'txt', kinetic: 'html', textgen: 'txt',
 };
 
 interface DomainResult {
@@ -112,6 +114,7 @@ function createGenerator(domain: Domain, config: { baseUrl?: string; model?: str
     case 'hydra': return new HydraGenerator(config);
     case 'html': return new HTMLWebGenerator(config);
     case 'ascii': return new ASCIIArtGenerator(config);
+    case 'kinetic': return new KineticGenerator(config);
     case 'textgen': return new TextGenerativeGenerator(config);
   }
 }

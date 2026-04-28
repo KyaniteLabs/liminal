@@ -403,12 +403,12 @@ export class Gallery {
     }
     try {
       const files = await fs.readdir(projectDir);
-      const versionFiles = files.filter(f => /^v(\d+)\.js$/.test(f));
+      const versionFiles = files.filter(f => /^v(\d+)\.(js|json)$/.test(f));
 
       // Read all files and stats in parallel
       const results = await Promise.allSettled(
         versionFiles.map(async (file) => {
-          const match = file.match(/^v(\d+)\.js$/)!;
+          const match = file.match(/^v(\d+)\.(js|json)$/)!;
           const version = parseInt(match[1], 10);
           const filepath = normalizePath(projectDir, file);
           const [raw, stat] = await Promise.all([

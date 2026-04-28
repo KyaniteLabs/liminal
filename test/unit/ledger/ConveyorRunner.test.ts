@@ -2,15 +2,47 @@
  * Unit tests for ConveyorRunner — Phase 10 Lane 10-2
  *
  * Tests batch execution, failure classification, and retry logic.
- * Uses real LiminalFS (tmpdir) — no mocks on the ledger.
+ * Mocks at the external boundaries (RalphLoop, ScoringEngine, child_process)
+ * so ConveyorRunner is tested in isolation without real LLM or shell calls.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { TaskLedger } from '../../../src/ledger/TaskLedger.js';
 import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+
+// Mock RalphLoop.run (static method — LLM boundary)
+vi.mock('../../../src/core/RalphLoop.js', () => ({
+  RalphLoop: {
+    run: vi.fn().mockResolvedValue({
+      completed: false,
+      reason: 'no-llm-mock',
+      iterations: 0,
+      finalScore: 0,
+      code: null,
+      timestamp: new Date().toISOString(),
+    }),
+  },
+}));
+
+// Mock ScoringEngine as a real class (used with `new` in TaskVerifier)
+vi.mock('../../../src/core/ScoringEngine.js', () => ({
+  ScoringEngine: class MockScoringEngine {
+    score = vi.fn().mockResolvedValue({ score: 0, breakdown: {} });
+  },
+}));
+
+// Mock child_process (used by TaskVerifier for execFileSync)
+vi.mock('node:child_process', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:child_process')>();
+  return {
+    ...actual,
+    execFileSync: vi.fn().mockReturnValue('mock test output\n1 passed'),
+  };
+});
+
 import { ConveyorRunner } from '../../../src/ledger/ConveyorRunner.js';
 
 describe('ConveyorRunner', () => {
@@ -37,7 +69,6 @@ describe('ConveyorRunner', () => {
     });
 
     it('respects maxTasks limit', async () => {
-      // Create 3 pending tasks
       for (let i = 0; i < 3; i++) {
         ledger.createTask({
           id: `T${String(i + 1).padStart(3, '0')}`,
@@ -53,10 +84,9 @@ describe('ConveyorRunner', () => {
       }
 
       const runner = new ConveyorRunner(ledger);
-      // These tasks will fail (no real LLM), but we verify the limit is applied
       const result = await runner.runBatch({ maxTasks: 1, maxRetries: 1 });
       expect(result.tasksAttempted).toBe(1);
-    }, 15000);
+    });
 
     it('applies classFilter to restrict which tasks run', async () => {
       ledger.createTask({
@@ -78,7 +108,7 @@ describe('ConveyorRunner', () => {
       const result = await runner.runBatch({ classFilter: ['leaf'], maxRetries: 1 });
       expect(result.tasksAttempted).toBe(1);
       expect(result.results[0].taskId).toBe('L001');
-    }, 15000);
+    });
   });
 
   describe('failure classification', () => {
@@ -94,10 +124,9 @@ describe('ConveyorRunner', () => {
       const runner = new ConveyorRunner(ledger);
       const result = await runner.runBatch({ maxRetries: 1 });
 
-      // The task should fail (no LLM configured), failure breakdown should be populated
       expect(result.tasksAttempted).toBe(1);
       const totalFailures = Object.values(result.failureBreakdown).reduce((a, b) => a + b, 0);
-      expect(totalFailures).toBeGreaterThanOrEqual(0); // May or may not classify depending on error
+      expect(totalFailures).toBeGreaterThanOrEqual(0);
     });
   });
 });

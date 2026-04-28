@@ -158,6 +158,28 @@ describe('RepoIndexLite', () => {
     ]);
   });
 
+  it('routes broad agent/harness self-improvement prompts to packet localization instead of the generic runtime facade', () => {
+    const prompts = [
+      'Make the prompt to Liminal acts to Liminal improves itself loop concrete for the agent',
+      'Improve harness self-improvement without narrowing the creative surface',
+      'Tighten TUI self-improvement routing so broad requests become bounded repo work',
+    ];
+
+    for (const prompt of prompts) {
+      const context = localizeBoundedSelfImprovement(prompt);
+
+      expect(context.fileHint).toBe('src/runtime-core/RepoIndexLite.ts');
+      expect(context.primaryFiles).toEqual([
+        'src/runtime-core/RepoIndexLite.ts',
+        'src/runtime-core/SelfImprovementRuntime.ts',
+      ]);
+      expect(context.verificationTargets[0]).toMatchObject({
+        tool: 'runFocusedTests',
+        pattern: 'RepoIndexLite',
+      });
+    }
+  });
+
   it('keeps localization expansion overflow deterministic across repeated similar prompts', () => {
     const first = localizeBoundedSelfImprovement('Tighten RepoIndexLite task packet shaping and expansion budget determinism');
     const second = localizeBoundedSelfImprovement('Improve localization confidence and packet shaping in SelfImprovementRuntime');

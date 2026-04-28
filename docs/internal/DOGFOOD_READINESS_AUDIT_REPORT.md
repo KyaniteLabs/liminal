@@ -48,7 +48,7 @@
 ✅ strudel       - Algorithmic music
 ✅ hydra         - Video synthesis
 ✅ tone          - Audio synthesis
-✅ remotion      - Video generation
+✅ revideo       - Generative motion video
 ✅ html          - Web pages
 ✅ ascii         - ASCII art
 ```

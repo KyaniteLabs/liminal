@@ -115,7 +115,7 @@
         .tag-hydra { background: rgba(137, 87, 229, 0.15); color: #8957e5; }
         .tag-strudel { background: rgba(57, 197, 207, 0.15); color: #39c5cf; }
         .tag-tone { background: rgba(210, 153, 34, 0.15); color: #d29922; }
-        .tag-remotion { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
+        .tag-revideo { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
         .tag-ascii { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
         .tag-textgen { background: rgba(219, 171, 255, 0.15); color: #dbabff; }
         .tag-image { background: rgba(255, 123, 114, 0.15); color: #ff7b72; }
@@ -129,7 +129,7 @@
         .thumb-hydra { background: linear-gradient(135deg, #150a2d, #200a3d); }
         .thumb-strudel { background: linear-gradient(135deg, #0a1f1f, #0a2d2d); }
         .thumb-tone { background: linear-gradient(135deg, #1a1500, #2d1f00); }
-        .thumb-remotion { background: linear-gradient(135deg, #0a1520, #0a2035); }
+        .thumb-revideo { background: linear-gradient(135deg, #0a1520, #0a2035); }
         .thumb-ascii { background: linear-gradient(135deg, #0a1a0a, #0a2d0a); }
         .thumb-textgen { background: linear-gradient(135deg, #1a0a2d, #2d0a3d); }
         .thumb-image { background: linear-gradient(135deg, #1f0a0a, #2d0a0a); }
@@ -224,14 +224,14 @@
                     <tr><td>4</td><td>Hydra JS</td><td>Analog video synth code</td><td><code>src/generators/hydra/</code></td><td><span class="badge badge-done">Done</span></td></tr>
                     <tr><td>5</td><td>Strudel JS</td><td>Live music patterns (TidalCycles)</td><td><code>src/generators/strudel/</code></td><td><span class="badge badge-done">Done</span></td></tr>
                     <tr><td>6</td><td>Tone.js JS</td><td>Web Audio synthesis code</td><td><code>src/generators/tone/</code></td><td><span class="badge badge-done">Done</span></td></tr>
-                    <tr><td>7</td><td>Remotion TSX</td><td>React video components</td><td><code>src/generators/remotion/</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>7</td><td>Revideo TS</td><td>Generative motion graphics</td><td><code>src/generators/revideo/</code></td><td><span class="badge badge-done">Done</span></td></tr>
                     <tr><td>8</td><td>HTML</td><td>Standalone wrapped docs (9 templates)</td><td><code>src/utils/htmlWrapper.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
                     <tr><td>9</td><td>ASCII</td><td>Character-based visual art</td><td><code>src/generators/ascii/</code></td><td><span class="badge badge-done">Done</span></td></tr>
                     <tr><td>10</td><td>Gen. Text</td><td>Concrete poetry, word art</td><td><code>src/generators/textgen/</code></td><td><span class="badge badge-done">Done</span></td></tr>
                     <tr><td>11</td><td>Markdown</td><td>Digest reports, video scripts</td><td><code>src/compost/DigestGenerator.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
                     <tr><td>12</td><td>PNG</td><td>Canvas screenshots</td><td><code>src/render/Renderer.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
                     <tr><td>13</td><td>JPEG</td><td>Canvas screenshots</td><td><code>src/render/Renderer.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
-                    <tr><td>14</td><td>MP4</td><td>Rendered video (FFmpeg / Remotion)</td><td><code>src/render/CanvasRecorder.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>14</td><td>MP4</td><td>Rendered video (FFmpeg / Revideo / HyperFrames)</td><td><code>src/render/CanvasRecorder.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
                     <tr><td>15</td><td>WebM</td><td>Video export (FFmpeg)</td><td><code>src/export/VideoExporter.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
                     <tr><td>16</td><td>GIF</td><td>Animated GIF (FFmpeg)</td><td><code>src/export/VideoExporter.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
                     <tr><td>17</td><td>ZIP</td><td>Project bundles</td><td><code>src/export/Exporter.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
@@ -386,15 +386,15 @@
                     </ul>
                 </div>
 
-                <!-- Remotion -->
+                <!-- Revideo -->
                 <div class="infra-card">
-                    <h4>Remotion TSX + MP4</h4>
+                    <h4>Revideo TS + MP4</h4>
                     <ul>
-                        <li><strong>Runtime:</strong> Node.js + LLM API call + Remotion bundler</li>
-                        <li><strong>Output:</strong> React TSX components + rendered MP4 video</li>
-                        <li><strong>Build pipeline:</strong> <code>@remotion/bundler</code> (Webpack) &rarr; <code>@remotion/renderer</code> (headless Chrome)</li>
-                        <li><strong>Dependencies:</strong> <code>remotion</code>, <code>@remotion/cli</code>, Chrome/Chromium <span class="dep-badge dep-external">Heavy</span></li>
-                        <li><strong>Infrastructure weight:</strong> Heavy — requires full Remotion stack + headless Chrome + FFmpeg fallback</li>
+                        <li><strong>Runtime:</strong> Node.js + LLM API call + @revideo/renderer</li>
+                        <li><strong>Output:</strong> TypeScript motion graphics + rendered MP4 video</li>
+                        <li><strong>Build pipeline:</strong> <code>@revideo/core</code> + <code>@revideo/2d</code> &rarr; <code>@revideo/renderer</code> (in-process renderVideo)</li>
+                        <li><strong>Dependencies:</strong> <code>@revideo/core</code>, <code>@revideo/2d</code>, <code>@revideo/renderer</code> <span class="dep-badge dep-optional">Optional</span></li>
+                        <li><strong>Infrastructure weight:</strong> Medium — Revideo uses in-process rendering without a separate bundler</li>
                     </ul>
                 </div>
 
@@ -415,7 +415,8 @@
                     <h4>MP4 / WebM / GIF Video</h4>
                     <ul>
                         <li><strong>Pipeline A (Canvas):</strong> Puppeteer frame capture &rarr; PNG sequence &rarr; FFmpeg</li>
-                        <li><strong>Pipeline B (Remotion):</strong> React component &rarr; Remotion bundler &rarr; Remotion renderer</li>
+                        <li><strong>Pipeline B (Revideo):</strong> TypeScript motion graphics &rarr; @revideo/renderer (in-process)</li>
+                        <li><strong>Pipeline C (HyperFrames):</strong> HTML+GSAP compositing &rarr; @hyperframes/producer</li>
                         <li><strong>Transcoding:</strong> FFmpeg handles MP4, WebM, GIF conversion + resize + audio merge</li>
                         <li><strong>Dependencies:</strong> <code>ffmpeg</code> binary, <code>fluent-ffmpeg</code> npm <span class="dep-badge dep-external">Binary</span></li>
                         <li><strong>Infrastructure weight:</strong> Heavy — FFmpeg binary + headless browser + large temp storage for frames</li>
@@ -512,7 +513,8 @@
                     <tr><td><code>LLM API</code></td><td><span class="dep-badge dep-external">External</span></td><td>All generators, SemanticExtractor, CompostSoup collisions</td><td>API key + network</td></tr>
                     <tr><td><code>Puppeteer / Playwright</code></td><td><span class="dep-badge dep-external">Binary</span></td><td>Renderer, HeadlessRenderer, CanvasRecorder, VisualScorer</td><td>~300MB Chromium download</td></tr>
                     <tr><td><code>FFmpeg</code></td><td><span class="dep-badge dep-external">Binary</span></td><td>VideoExporter, CanvasRecorder, all video/GIF output</td><td>System binary via brew/apt</td></tr>
-                    <tr><td><code>Remotion</code></td><td><span class="dep-badge dep-runtime">Runtime</span></td><td>RemotionGenerator, RemotionRenderer, narrative pipeline</td><td>~200MB (bundler + renderer)</td></tr>
+                    <tr><td><code>@revideo/*</code></td><td><span class="dep-badge dep-optional">Optional</span></td><td>RevideoGenerator, RevideoRenderer, VideoPipeline</td><td>optionalDependencies</td></tr>
+                    <tr><td><code>@hyperframes/producer</code></td><td><span class="dep-badge dep-optional">Optional</span></td><td>HyperFramesGenerator, HyperFramesRenderer, VideoPipeline</td><td>optionalDependencies</td></tr>
                     <tr><td><code>better-sqlite3</code></td><td><span class="dep-badge dep-runtime">Runtime</span></td><td>EventStore, AssetStore, ProjectStore</td><td>Native build (node-gyp)</td></tr>
                     <tr><td><code>@xenova/transformers</code></td><td><span class="dep-badge dep-optional">Optional</span></td><td>EmbeddingService</td><td>~30MB model on first run</td></tr>
                     <tr><td><code>meyda</code></td><td><span class="dep-badge dep-optional">Optional</span></td><td>AudioExtractor (MFCC, spectral features)</td><td>Pure JS, no binary</td></tr>
@@ -825,46 +827,46 @@
             </div>
         </section>
 
-        <!-- ── Remotion ── -->
+        <!-- ── Revideo ── -->
         <section class="gallery-section">
-            <h3 class="domain-title"><span class="card-domain-tag tag-remotion">Remotion</span> Programmatic Video</h3>
-            <p class="domain-desc">React components rendered frame-by-frame to MP4. Liminal's RemotionGenerator produces TSX video components.</p>
+            <h3 class="domain-title"><span class="card-domain-tag tag-revideo">Revideo</span> Generative Motion Graphics</h3>
+            <p class="domain-desc">TypeScript-based motion graphics rendered to MP4 via @revideo/renderer. Liminal's RevideoGenerator produces programmatic animation code with full control over timing, easing, and visual elements.</p>
             <div class="card-grid">
-                <a class="link-card" href="https://www.remotion.dev" target="_blank" rel="noopener noreferrer">
-                    <div class="card-thumb-fallback thumb-remotion">🎬</div>
+                <a class="link-card" href="https://revideo.io" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-revideo">🎬</div>
                     <div class="card-body">
-                        <span class="card-domain-tag tag-remotion">Remotion</span>
-                        <div class="card-title">Jonny Burger — Remotion Creator</div>
-                        <div class="card-desc">Opened video production to the React ecosystem. Pure React with full DOM/CSS/SVG access per frame. The demo videos are a masterclass in programmatic motion design.</div>
+                        <span class="card-domain-tag tag-revideo">Revideo</span>
+                        <div class="card-title">Revideo — Programmatic Video Framework</div>
+                        <div class="card-desc">TypeScript-first motion graphics with React-like components. In-process rendering via @revideo/renderer — no external bundler required. Supports 2D shapes, text animation, and export to MP4/GIF.</div>
                         <div class="card-meta">
-                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=remotion.dev&sz=32" alt="" loading="lazy">
-                            <span class="card-url">remotion.dev</span>
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=revideo.io&sz=32" alt="" loading="lazy">
+                            <span class="card-url">revideo.io</span>
                             <span class="card-arrow">&rarr;</span>
                         </div>
                     </div>
                 </a>
-                <a class="link-card" href="https://github.com/remotion-dev/awesome-remotion" target="_blank" rel="noopener noreferrer">
-                    <div class="card-thumb-fallback thumb-remotion">📊</div>
+                <a class="link-card" href="https://github.com/redotvideo/revideo" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-revideo">📊</div>
                     <div class="card-body">
-                        <span class="card-domain-tag tag-remotion">Remotion</span>
-                        <div class="card-title">Awesome Remotion — Community Gallery</div>
-                        <div class="card-desc">Curated community projects: automated social media video generation, API-driven chart rendering, personalized video at scale.</div>
+                        <span class="card-domain-tag tag-revideo">Revideo</span>
+                        <div class="card-title">Revideo GitHub — Source &amp; Examples</div>
+                        <div class="card-desc">Open-source codebase with examples covering parametric animation, data-driven motion, and programmatic video generation. Apache 2.0 license.</div>
                         <div class="card-meta">
                             <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=github.com&sz=32" alt="" loading="lazy">
-                            <span class="card-url">github.com/remotion-dev/awesome-remotion</span>
+                            <span class="card-url">github.com/redotvideo/revideo</span>
                             <span class="card-arrow">&rarr;</span>
                         </div>
                     </div>
                 </a>
-                <a class="link-card" href="https://www.remotion.dev/showcase" target="_blank" rel="noopener noreferrer">
-                    <div class="card-thumb-fallback thumb-remotion">🏢</div>
+                <a class="link-card" href="https://docs.revideo.io" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-revideo">🏢</div>
                     <div class="card-body">
-                        <span class="card-domain-tag tag-remotion">Remotion</span>
-                        <div class="card-title">Remotion Showcase — Enterprise Adoptions</div>
-                        <div class="card-desc">Vercel uses Remotion for Next.js Conf animated diagrams. Enterprise adoption validates the tool for production-grade video automation.</div>
+                        <span class="card-domain-tag tag-revideo">Revideo</span>
+                        <div class="card-title">Revideo Docs — Guides &amp; API Reference</div>
+                        <div class="card-desc">Comprehensive documentation covering project setup, rendering pipeline, component API, and deployment patterns. Includes tutorials for generative art workflows.</div>
                         <div class="card-meta">
-                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=remotion.dev&sz=32" alt="" loading="lazy">
-                            <span class="card-url">remotion.dev/showcase</span>
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=docs.revideo.io&sz=32" alt="" loading="lazy">
+                            <span class="card-url">docs.revideo.io</span>
                             <span class="card-arrow">&rarr;</span>
                         </div>
                     </div>
@@ -1050,7 +1052,7 @@
         <!-- ── MP4 / WebM ── -->
         <section class="gallery-section">
             <h3 class="domain-title"><span class="card-domain-tag tag-video">MP4 / WebM</span> Creative Coding Video</h3>
-            <p class="domain-desc">Generative art rendered to video — from real-time visualizations to fully computed films. Liminal produces MP4 via Remotion or CanvasRecorder+FFmpeg, and WebM via FFmpeg.</p>
+            <p class="domain-desc">Generative art rendered to video — from real-time visualizations to fully computed films. Liminal produces MP4 via Revideo, HyperFrames, or CanvasRecorder+FFmpeg, and WebM via FFmpeg.</p>
             <div class="card-grid">
                 <a class="link-card" href="https://www.memo.tv/works/simple-harmonic-motion/" target="_blank" rel="noopener noreferrer">
                     <div class="card-thumb-fallback thumb-video"> pendulum</div>

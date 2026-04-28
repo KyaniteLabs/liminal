@@ -196,8 +196,8 @@ interface DesignConstraints {
 1. Determine domain (p5, shader, three, music, hydra, etc.)
 2. Select applicable critics:
    - Color: all visual domains
-   - Layout: p5, three, remotion
-   - Typography: p5, remotion (when text detected)
+   - Layout: p5, three, revideo
+   - Typography: p5, revideo (when text detected)
    - Sound: music, strudel domains
    - General aesthetic: all domains
 3. Run extractors to pull features from generated code

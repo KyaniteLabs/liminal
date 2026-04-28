@@ -363,6 +363,6 @@ Called once at startup. Logs available frameworks. The `Exporter` checks availab
 
 - **CLI subcommand** (`liminal render`) — deferred to follow-up
 - **Distributed rendering** (Revideo Lambda, HyperFrames Docker) — future work
-- **RemotionAdapter rewrite** — evaluate separately; may deprecate
+- **RemotionAdapter rewrite** — done. Removed entirely in PR #396 along with all Remotion dead code.
 - **Live preview server** for HyperFrames compositions — follow-up
 - **HyperFrames agent skills** (`/hyperframes` slash command) — follow-up after rendering is stable

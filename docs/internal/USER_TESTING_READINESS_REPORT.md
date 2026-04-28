@@ -185,7 +185,7 @@ export LIMINAL_LLM_MODEL=qwen2.5-coder-7b-instruct
 | Strudel (live music) | ✅ Ready | Algorithmic music |
 | Hydra (video synth) | ✅ Ready | Video synthesis |
 | Tone.js | ✅ Ready | Audio synthesis |
-| Remotion | ✅ Ready | Video generation |
+| Revideo | ✅ Ready | Generative motion video |
 | HTML | ✅ Ready | Web pages |
 | ASCII art | ✅ Ready | ASCII |
 | Compost Mill | ✅ Ready | Evolutionary code synthesis |

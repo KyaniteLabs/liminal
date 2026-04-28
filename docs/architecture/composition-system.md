@@ -246,7 +246,7 @@ interface LayerAdapter {
 | `StrudelAdapter` | Strudel | patterns, bpm | - |
 | `ASCIIArtAdapter` | ASCII | text output | p5.canvas |
 | `HTMLAdapter` | HTML/DOM | element references | - |
-| `RemotionAdapter` | Remotion | frame, duration | - |
+| `RemotionAdapter` | *(removed)* | frame, duration | Replaced by Revideo + HyperFrames |
 
 ### Creating Custom Adapters
 

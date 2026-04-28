@@ -43,7 +43,7 @@
 
 | Time (PT) | Platform | Content | Asset |
 |-----------|----------|---------|-------|
-| 8:00 AM | Twitter | Thread: "Why Remotion fails (and how we're fixing it)" | Remotion failure screenshots |
+| 8:00 AM | Twitter | Thread: "Why video generation fails (and how we're fixing it)" | Revideo failure screenshots |
 | 11:00 AM | LinkedIn | Carousel: "The dogfood methodology" | Dashboard screenshots |
 | 2:00 PM | Twitter | Single tweet: Score reveal of a mediocre output | Output + 0.45 score |
 | 5:00 PM | YouTube | Short: "Model Hunger Games: p5.js edition" | 3 models, same prompt |

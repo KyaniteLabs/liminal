@@ -1,5 +1,7 @@
 # Video Generation + Compositing Implementation Plan
 
+> **SUPERSEDED** — This design was based on Remotion, which was replaced by Revideo (generative motion) + HyperFrames (asset compositing) in PR #391 (April 2026). All Remotion source code was removed in PR #396. See `docs/ARCHITECTURE_QUICKREF.md` → Video Rendering for the current architecture.
+
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Add video generation (Remotion), video export (FFmpeg), and cross-domain compositing so Liminal can generate, combine, and layer any output type into a cohesive video.

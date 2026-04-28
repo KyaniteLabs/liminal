@@ -73,15 +73,9 @@ Each adapter task follows TDD:
   - Validation: check for valid HTML
   - HTML generation (pass-through)
 
-#### Task 3.7: RemotionAdapter
-- **File**: `src/composition/adapters/RemotionAdapter.ts`
-- **Tests**: `test/unit/composition/adapters/RemotionAdapter.test.ts`
-- **Requirements**:
-  - Render Remotion video composition
-  - Exports: frame number, composition config
-  - Imports: from all layers for composition
-  - Validation: check for Remotion components
-  - HTML generation with Remotion player
+#### Task 3.7: VideoAdapter (Revideo + HyperFrames)
+- **Status**: Replaced — RemotionAdapter was removed in PR #391. Video rendering now uses RevideoRenderer and HyperFramesRenderer via the shared VideoRenderer interface.
+- **See**: `docs/ARCHITECTURE_QUICKREF.md` → Video Rendering section for current architecture.
 
 #### Task 3.8: Register All Adapters
 - **File**: `src/composition/adapters/registerAdapters.ts`

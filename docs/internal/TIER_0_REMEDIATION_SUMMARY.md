@@ -91,7 +91,7 @@ All Tier 0 critical fixes have been successfully implemented and verified. The c
 - StrudelGenerator
 - HTMLWebGenerator
 - ASCIIArtGenerator
-- RemotionGenerator
+- RevideoGenerator (replaced RemotionGenerator in PR #391)
 
 ---
 

@@ -66,7 +66,7 @@ type DomainType =
   | 'strudel'   // Strudel live coding patterns
   | 'hydra'     // Hydra video synthesis
   | 'ascii'     // ASCII art
-  | 'remotion'  // Remotion video composition
+  | 'remotion'  // *(deprecated — use 'video' for Revideo/HyperFrames)*
   | 'video'     // Video playback/processing
   | 'html'      // HTML/DOM content
   | 'textgen'   // Generated text content
@@ -784,7 +784,7 @@ Liminal includes 9 built-in adapters:
 | `hydraAdapter` | `hydra` | Hydra video synthesis |
 | `asciiArtAdapter` | `ascii` | ASCII art rendering |
 | `htmlAdapter` | `html` | HTML/DOM content |
-| `remotionAdapter` | `remotion` | Remotion video |
+| `remotionAdapter` | `remotion` | *(removed — use Revideo/HyperFrames generators)* |
 
 ### Registering Adapters
 

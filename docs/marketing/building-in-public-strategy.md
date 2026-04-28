@@ -11,7 +11,7 @@ Most founders "build in public" by talking about what they *will* build. You hav
 - **2,496+ tests** with real pass/fail data
 - **A landing page** that literally says "no cherry-picking"
 - **A meta-harness** that observes failures and improves itself
-- **9 creative domains** (p5, GLSL, Three.js, Hydra, Strudel, Tone.js, Remotion, HTML, ASCII)
+- **11 creative domains** (p5, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, HTML, ASCII, TextGen)
 - **10+ LLM providers** tested head-to-head
 - **Visual outputs** ranging from bioluminescent jellyfish to 3D crystal caves
 
@@ -49,7 +49,7 @@ Show generated code executing. Not screenshots of code — the *result*. Fast cu
 **Best for:** TikTok/Reels/Shorts (15-30s)
 
 ### Pillar 2: "The Hall of Shame" (Honesty)
-Show failures. Broken shaders. Tone.js that sounds like a dial-up modem. Remotion that outputs a blank screen. Then show the meta-harness detecting the pattern and fixing it.
+Show failures. Broken shaders. Tone.js that sounds like a dial-up modem. Video generation that outputs a blank frame. Then show the meta-harness detecting the pattern and fixing it.
 
 **Best for:** Twitter threads, YouTube shorts, LinkedIn carousels
 
@@ -115,7 +115,7 @@ One sentence becomes a GLSL shader, a generative music loop, a 3D scene, a video
 ### Week 2: The Technical Deep Dive
 | Day | Content | Platform |
 |-----|---------|----------|
-| 8 | "Why Remotion is the hardest domain to generate for" (show 0/3 failures) | Twitter/YouTube |
+| 8 | "Why video generation is the hardest domain" (show 0/3 failures) | Twitter/YouTube |
 | 9 | Video: live generation of a jellyfish scene (use existing output) | TikTok |
 | 10 | "Comparing local vs cloud models for creative coding" | Twitter thread |
 | 11 | Carousel: architecture diagram + meta-harness flow | LinkedIn |
@@ -188,11 +188,11 @@ This bioluminescent jellyfish scene was generated from a single sentence prompt.
 **Tweet 4:**
 Some results are... less beautiful.
 
-This Remotion video composition failed 3 out of 3 times. The model kept generating React components that weren't valid Remotion code.
+This Revideo motion composition failed 3 out of 3 times. The model kept generating code that wasn't valid @revideo/core syntax.
 
-The meta-harness noticed. It now routes Remotion prompts to models with better React component performance.
+The meta-harness noticed. It now routes video prompts to models with better programmatic animation performance.
 
-[image: remotion failure or dashboard showing 0/3]
+[image: revideo failure or dashboard showing 0/3]
 
 ---
 
@@ -241,7 +241,7 @@ When a pattern of failures emerges (e.g., "all Three.js outputs are missing Orbi
 **Tweet 8:**
 9 creative domains. 10+ LLM providers. Local and cloud.
 
-p5.js | GLSL | Three.js | Hydra | Strudel | Tone.js | Remotion | HTML | ASCII
+p5.js | GLSL | Three.js | Hydra | Strudel | Tone.js | Revideo | HyperFrames | HTML | ASCII | TextGen
 
 Each has its own generator, validator, and scoring rubric.
 
@@ -329,9 +329,9 @@ Text: "Reply with a prompt. I'll generate it live."
 Show the dogfood dashboard.
 "2,496 tests. 1,847 passed. 649 failed. That's a 74% pass rate."
 
-**[0:15-0:25] Failure 1: Remotion**
-Show the 0/3 Remotion results.
-"Remotion video: total failure. The model generated React components, but none of them were valid Remotion compositions. Just... broken JSX."
+**[0:15-0:25] Failure 1: Video Generation**
+Show the 0/3 Revideo results.
+"Video generation: total failure. The model generated animation code, but none of it was valid @revideo/core syntax. Just... broken motion."
 
 **[0:25-0:35] Failure 2: ASCII Art**
 Show ASCII output with invalid characters.

@@ -47,7 +47,7 @@ Branch verification after test-stability fixes:
 - **False readiness drift:** older docs say the system is ready, but current full tests and launch path evidence contradicted that.
 - **Committed conflict markers:** this is a basic professional hygiene failure and especially damaging because it was in the marketing/operator launch path.
 - **Proof surfaces were brittle:** render/scoring, emergence hooks, guardrails, and audio/aesthetic tests are close to the public claims, so timeout-only failures and leaked global stubs needed to be treated as launch-readiness defects.
-- **Horizontal sprawl:** many domains, scripts, docs, and compatibility names exist at once, including stale Remotion/Revideo language.
+- **Horizontal sprawl:** many domains, scripts, docs, and compatibility names exist at once. *(Remotion/Revideo naming cleanup completed in PR #396.)*
 - **Unwired modules:** the orphan smoke check reports 28 likely-unwired files. Some may be false positives, but each needs an explicit disposition.
 - **Silent success risk:** `return null`, warning-only failures, and timeout-based tests make it too easy for a run to look successful without proof.
 - **Script surface outside typecheck:** JavaScript and Go launch surfaces need their own gates because TypeScript passing was not enough.
@@ -73,7 +73,7 @@ P0 until disproven:
 P1:
 
 1. Classify the 28 orphan smoke findings as `wire`, `future`, `test-only`, `false-positive`, or `delete`.
-2. Audit stale Remotion/Revideo naming and public docs before marketing.
+2. ~~Audit stale Remotion/Revideo naming and public docs before marketing.~~ *(Done — PR #396 cleaned src/test, doc updates in progress.)*
 3. Remove noisy jsdom canvas and recording prompts from automated verification output.
 4. Replace any remaining long-running timeout tests with deterministic assertions or explicit environment skips.
 

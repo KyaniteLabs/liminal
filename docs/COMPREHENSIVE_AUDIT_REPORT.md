@@ -151,7 +151,7 @@ ENOENT: no such file or directory, open '.../src/guardrails/compliance/package.j
 
 **Failures:** 5 tests fail
 
-**Error:**
+**Error:** *(Historical — Remotion was replaced by Revideo in PR #391)*
 ```
 [RalphLoop] Candidate 0 generation failed: RalphLoop: RemotionGenerator: 
 Generated code does not appear to be a valid Remotion component

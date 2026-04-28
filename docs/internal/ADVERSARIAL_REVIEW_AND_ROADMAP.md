@@ -86,9 +86,9 @@ The CompostMill is not exactly a VAE (0 exact matches in audit), but it captures
 
 **File:** `src/core/CreativeEvaluator.ts` — scores all 9 domains in one file
 
-**Problem:** One file scoring p5.js, Three.js, GLSL, Strudel, Hydra, Tone.js, Remotion, HTML, and ASCII art. Each domain has different quality criteria, but they share one scoring function with domain-specific branches.
+**Problem:** One file scoring p5.js, Three.js, GLSL, Strudel, Hydra, Tone.js, Revideo, HTML, and ASCII art. Each domain has different quality criteria, but they share one scoring function with domain-specific branches.
 
-**Fix:** Split into 9 domain modules (~180 lines each):
+**Fix:** Split into domain modules (~180 lines each):
 ```
 src/evaluators/
   p5Evaluator.ts
@@ -97,7 +97,7 @@ src/evaluators/
   strudelEvaluator.ts
   hydraEvaluator.ts
   tonejsEvaluator.ts
-  remotionEvaluator.ts
+  revideoEvaluator.ts
   htmlEvaluator.ts
   asciiEvaluator.ts
   EvaluatorRegistry.ts  // shared interface

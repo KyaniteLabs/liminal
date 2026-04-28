@@ -42,11 +42,11 @@ This bioluminescent jellyfish scene was generated from a single sentence prompt.
 
 Some results are... less beautiful.
 
-This Remotion video composition failed 3 out of 3 times. The model kept generating React components that weren't valid Remotion code.
+This Revideo motion composition failed 3 out of 3 times. The model kept generating code that wasn't valid @revideo/core syntax.
 
-The meta-harness noticed. It now routes Remotion prompts to models with better React component performance.
+The meta-harness noticed. It now routes video prompts to models with better programmatic animation performance.
 
-[📎 Attach: Screenshot of a Remotion failure from `dogfood-campaign-*/report.json` or use `artifacts/screenshots/gallery/index-gallery-stats.png` cropped to a FAIL card]
+[📎 Attach: Screenshot of a video generation failure from `dogfood-campaign-*/report.json` or use `artifacts/screenshots/gallery/index-gallery-stats.png` cropped to a FAIL card]
 
 ---
 
@@ -99,7 +99,7 @@ When a pattern of failures emerges (e.g., "all Three.js outputs are missing ligh
 
 9 creative domains. 10+ LLM providers. Local and cloud.
 
-p5.js | GLSL | Three.js | Hydra | Strudel | Tone.js | Remotion | HTML | ASCII
+p5.js | GLSL | Three.js | Hydra | Strudel | Tone.js | Revideo | HyperFrames | HTML | ASCII | TextGen
 
 Each has its own generator, validator, and scoring rubric.
 

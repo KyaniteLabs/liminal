@@ -41,7 +41,7 @@ Failures:   0
 **Bucket B - Generator LLM Mocks:**
 - `test/unit/shader-generator.test.ts` - Added vi.mock for LLMClient
 - `test/unit/three-generator.test.ts` - Added vi.mock for LLMClient
-- `test/unit/generators/RemotionGenerator.test.ts` - Added vi.mock
+- `test/unit/generators/RevideoGenerator.test.ts` - Added vi.mock
 - `test/generators/p5-generator.test.js` - vi.mock + async fixes
 
 **Bucket C - Ralph-loop + Misc:**
@@ -147,7 +147,7 @@ Auto-saves: Every 30s + on shutdown
 | HydraGenerator | Video | Context + memory | Hydra syntax check |
 | StrudelGenerator | Music | Context + memory | Pattern validation |
 | ToneGenerator | Audio | Context + memory | Tone.js check |
-| RemotionGenerator | Video | Context + memory | React component check |
+| RevideoGenerator | Video | Context + memory | @revideo/core import check |
 | HyperFramesGenerator | HyperFrames | Context + memory | GSAP + data-* validation |
 | ASCIIArtGenerator | ASCII | Context + memory | Character validation |
 
@@ -218,7 +218,7 @@ liminal/
 │   │   ├── hydra/HydraGenerator.ts
 │   │   ├── strudel/StrudelGenerator.ts
 │   │   ├── tone/ToneGenerator.ts
-│   │   ├── remotion/RemotionGenerator.ts
+│   │   ├── revideo/RevideoGenerator.ts
 │   │   ├── html/HTMLWebGenerator.ts
 │   │   └── ascii/ASCIIArtGenerator.ts
 │   ├── guardrails/      # M9-M11 (NEW)
@@ -328,7 +328,7 @@ export { RalphLoop };
 export { TierBasedGenerator };
 export { P5GeneratorV2, ShaderGenerator, ThreeGenerator };
 export { HydraGenerator, StrudelGenerator, ToneGenerator };
-export { RemotionGenerator, HTMLWebGenerator, ASCIIArtGenerator };
+export { RevideoGenerator, HTMLWebGenerator, ASCIIArtGenerator };
 export { HyperFramesGenerator };
 
 // Video Rendering (NEW — PR #391)

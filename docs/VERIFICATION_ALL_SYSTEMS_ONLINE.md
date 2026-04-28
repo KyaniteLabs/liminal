@@ -55,7 +55,7 @@ Duration:    59.05s
 | HydraGenerator | via TierBasedGenerator | ✅ |
 | StrudelGenerator | via TierBasedGenerator | ✅ |
 | ToneGenerator | via TierBasedGenerator | ✅ |
-| RemotionGenerator | via TierBasedGenerator | ✅ |
+| RevideoGenerator | via TierBasedGenerator | ✅ |
 | HTMLWebGenerator | via TierBasedGenerator | ✅ |
 | ASCIIArtGenerator | via TierBasedGenerator | ✅ |
 

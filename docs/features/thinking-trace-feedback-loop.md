@@ -125,7 +125,7 @@ The **Thinking-Trace Feedback Loop** is Liminal's mechanism for capturing, analy
 4. **StrudelGenerator** - Strudel music patterns
 5. **HydraGenerator** - Hydra video synthesis
 6. **ToneGenerator** - Tone.js audio
-7. **RemotionGenerator** - Remotion video
+7. **RevideoGenerator** - Revideo motion graphics
 8. **HTMLWebGenerator** - HTML/CSS
 9. **ASCIIArtGenerator** - ASCII art
 

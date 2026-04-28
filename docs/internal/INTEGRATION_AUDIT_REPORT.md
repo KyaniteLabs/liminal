@@ -172,7 +172,7 @@ import { registerAllGenerators } from '../generators/registerGenerators.js';
 **Components:** GeneratorRegistry, registerGenerators, 9 Domain Generators
 
 **Wiring Verification:**
-- ✅ All 9 generators registered (shader, three, remotion, html, ascii, textgen, strudel, hydra, tone, p5)
+- ✅ All generators registered (shader, three, revideo, html, ascii, textgen, strudel, hydra, tone, p5)
 - ✅ Confidence-based routing implemented
 - ✅ Plugin loader integration present
 
@@ -182,7 +182,7 @@ import { registerAllGenerators } from '../generators/registerGenerators.js';
 function registerStaticGenerators(): void {
   generatorRegistry.register(shaderEntry);
   generatorRegistry.register(threeEntry);
-  generatorRegistry.register(remotionEntry);
+  generatorRegistry.register(revideoEntry);  // was remotionEntry, renamed in PR #396
   generatorRegistry.register(htmlEntry);
   generatorRegistry.register(asciiEntry);
   generatorRegistry.register(textgenEntry);

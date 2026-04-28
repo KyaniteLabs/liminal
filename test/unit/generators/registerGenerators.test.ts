@@ -219,7 +219,7 @@ describe('registerGenerators', () => {
       await registerAllGenerators();
 
       // Should register all static generators
-      expect(mockRegister).toHaveBeenCalledTimes(11);
+      expect(mockRegister).toHaveBeenCalledTimes(12);
     });
 
     it('registers p5 with explicit-signal routing instead of always-on fallback confidence', async () => {

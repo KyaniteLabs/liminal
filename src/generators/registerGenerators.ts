@@ -16,6 +16,7 @@ import { generatorRegistry, GeneratorEntry } from './GeneratorRegistry.js';
 import { ShaderGenerator } from './glsl/ShaderGenerator.js';
 import { ThreeGenerator } from './three/ThreeGenerator.js';
 import { RevideoGenerator } from './revideo/RevideoGenerator.js';
+import { HyperFramesGenerator } from './hyperframes/HyperFramesGenerator.js';
 import { P5GeneratorV2 } from './p5/P5GeneratorV2.js';
 import { HTMLWebGenerator } from './html/HTMLWebGenerator.js';
 import { ASCIIArtGenerator } from './ascii/ASCIIArtGenerator.js';
@@ -156,6 +157,17 @@ const p5Confidence = (prompt: string): number => {
   return 0;
 };
 
+/** Confidence for HyperFrames asset compositing patterns */
+const hyperframesConfidence = (prompt: string): number => {
+  const lower = prompt.toLowerCase();
+  if (/\b(?:do not|don't|dont|never|avoid)\s+(?:use\s+)?hyperframes?\b/.test(lower)) return 0;
+  if (/\bhyperframes?\b/.test(lower)) return 0.95;
+  if (/\b(promo|trailer|slideshow|presentation|title\s*card|subtitle|caption|social\s*media)\b/.test(lower)) return 0.90;
+  if (/\b(composite|compose|assemble|overlay|watermark|intro|outro)\b/.test(lower)) return 0.85;
+  if (/\b(video|animation)\b/.test(lower) && /\b(images?|clips?|audio|music|narration)\b/.test(lower)) return 0.80;
+  return 0;
+};
+
 // --- Generator entries ---
 
 
@@ -186,6 +198,15 @@ const revideoEntry: GeneratorEntry = {
   },
   generate: async (prompt: string, params?: Record<string, unknown>) => {
     const gen = new RevideoGenerator();
+    return gen.generate(prompt, params);
+  },
+};
+
+const hyperframesEntry: GeneratorEntry = {
+  name: 'hyperframes',
+  canHandle: hyperframesConfidence,
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
+    const gen = new HyperFramesGenerator();
     return gen.generate(prompt, params);
   },
 };
@@ -318,6 +339,7 @@ function registerStaticGenerators(): void {
   generatorRegistry.register(shaderEntry);
   generatorRegistry.register(threeEntry);
   generatorRegistry.register(revideoEntry);
+  generatorRegistry.register(hyperframesEntry);
   generatorRegistry.register(svgEntry);
   generatorRegistry.register(htmlEntry);
   generatorRegistry.register(asciiEntry);
@@ -362,5 +384,6 @@ export {
   strudelConfidence,
   hydraConfidence,
   toneConfidence,
+  hyperframesConfidence,
   p5Confidence,
 };

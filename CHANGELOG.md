@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added — Dual Video Frameworks (PR #391)
+- **RevideoRenderer**: Rewritten to use in-process `renderVideo()` from `@revideo/renderer` (replaces broken CLI shell-out). Proper project scaffolding with npm install, try-catch cleanup, duration parsing from `yield* waitFor(N)`.
+- **HyperFramesRenderer**: New renderer for HTML+GSAP asset compositing via `createRenderJob`/`executeRenderJob` from `@hyperframes/producer`. Asset injection with `file://` URL conversion for headless browsers.
+- **VideoPipeline**: Multi-step orchestrator that chains Revideo→HyperFrames (generative output becomes compositing asset input).
+- **VideoCapabilityDetector**: ESM-compatible startup detection via `createRequire(import.meta.url)`.
+- **HyperFramesGenerator**: LLM code generator for HTML+GSAP compositions with `canHandle()` routing (promo, slideshow, overlay patterns) and generative keyword guard (particles, fractals → Revideo).
+- **HyperFramesValidator**: Validates GSAP timeline structure, blocks React/@revideo/p5/video.play() patterns.
+- **Exporter wiring**: Routes by domain ('revideo'/'hyperframes') with capability checks before render.
+- **registerGenerators wiring**: `hyperframesConfidence()` helper, mutual exclusion with revideo via generative keyword guard.
+- **uuid override**: Forces `uuid@^14.0.0` to fix transitive vulnerability from `@revideo/ffmpeg`.
+- Optional dependencies: `@revideo/*` (^0.10.4), `@hyperframes/producer` (^0.4.3).
+
 ### Added — Self-Hosting Task Ledger (Phase 9–10)
 - `src/ledger/` — Complete task management system with corpus, runner, and verifier
 - TaskRunner: Executes tasks from corpus with shell-free security (`execFileSync`)

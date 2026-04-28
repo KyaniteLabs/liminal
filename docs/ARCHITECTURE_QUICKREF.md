@@ -148,7 +148,7 @@ Auto-saves: Every 30s + on shutdown
 | StrudelGenerator | Music | Context + memory | Pattern validation |
 | ToneGenerator | Audio | Context + memory | Tone.js check |
 | RemotionGenerator | Video | Context + memory | React component check |
-| HTMLWebGenerator | Web | Context + memory | HTML structure check |
+| HyperFramesGenerator | HyperFrames | Context + memory | GSAP + data-* validation |
 | ASCIIArtGenerator | ASCII | Context + memory | Character validation |
 
 **Context Assembly:**
@@ -262,6 +262,62 @@ liminal/
 
 ---
 
+### 7. Video Rendering 🟢 (NEW — PR #391)
+
+Dual framework architecture: Revideo for generative motion, HyperFrames for asset compositing.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  VideoRenderer Interface (shared)                           │
+│  ├── render(code, outputPath, opts) → VideoRenderResult     │
+├─────────────────────────────────────────────────────────────┤
+│  RevideoRenderer          │  HyperFramesRenderer            │
+│  ├── @revideo/renderer    │  ├── @hyperframes/producer      │
+│  ├── In-process renderVideo│  ├── createRenderJob +          │
+│  ├── Project scaffolding  │  │   executeRenderJob           │
+│  └── Duration parsing     │  ├── HTML + GSAP compositing    │
+│                           │  ├── Asset injection (file://)   │
+│                           │  └── toFileUrl for headless      │
+├─────────────────────────────────────────────────────────────┤
+│  VideoPipeline (orchestrator)                               │
+│  ├── Chains: Revideo → HyperFrames (asset passthrough)      │
+│  └── Intermediate temp file cleanup                         │
+├─────────────────────────────────────────────────────────────┤
+│  VideoCapabilityDetector                                    │
+│  ├── detect() → { revideo, hyperframes }                    │
+│  └── ESM-compatible via createRequire(import.meta.url)      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Generator Routing:**
+
+| Prompt | Revideo | HyperFrames | Winner |
+|--------|---------|-------------|--------|
+| "particle system" | 0.80 | 0 | Revideo |
+| "promo from images" | 0 | 0.90 | HyperFrames |
+| "hyperframes comp" | 0 | 0.95 | HyperFrames |
+| "slideshow with music" | 0 | 0.90 | HyperFrames |
+
+**Files:**
+```
+src/render/
+├── VideoRenderer.ts          ← shared interface
+├── RevideoRenderer.ts        ← generative motion
+├── HyperFramesRenderer.ts    ← asset compositing
+├── VideoPipeline.ts          ← multi-step orchestrator
+├── VideoCapabilityDetector.ts ← startup detection
+└── index.ts                  ← public exports
+
+src/generators/hyperframes/
+├── HyperFramesGenerator.ts   ← HTML+GSAP codegen
+└── HyperFramesValidator.ts (in src/core/validators/)
+
+src/export/Exporter.ts        ← domain routing
+src/generators/registerGenerators.ts ← confidence helpers
+```
+
+---
+
 ## Key Exports
 
 ```typescript
@@ -273,6 +329,14 @@ export { TierBasedGenerator };
 export { P5GeneratorV2, ShaderGenerator, ThreeGenerator };
 export { HydraGenerator, StrudelGenerator, ToneGenerator };
 export { RemotionGenerator, HTMLWebGenerator, ASCIIArtGenerator };
+export { HyperFramesGenerator };
+
+// Video Rendering (NEW — PR #391)
+export { RevideoRenderer } from './render/RevideoRenderer.js';
+export { HyperFramesRenderer } from './render/HyperFramesRenderer.js';
+export type { VideoRenderer, VideoRenderOptions, VideoRenderResult } from './render/VideoRenderer.js';
+export { VideoPipeline } from './render/VideoPipeline.js';
+export { VideoCapabilityDetector } from './render/VideoCapabilityDetector.js';
 
 // Model Tiers
 export { detectModelTier, getModelProfile, getModelInfo };
@@ -326,7 +390,7 @@ npm test
 | Guardrails M1-M8 | 🟢 | 8/8 |
 | Guardrails M9-M11 | 🟢 | 3/3 |
 | Guardrails M12-M18 | ⚪ | 0/7 |
-| Generators | 🟢 | 9/9 |
+| Generators | 🟢 | 10/10 |
 | Memory Systems | 🟢 | 5/5 |
 
 ---

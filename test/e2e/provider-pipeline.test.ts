@@ -39,7 +39,7 @@ import type { ModelRole } from '../../src/config/RoleConfig.js';
 
 // ── Mock fetch globally ──
 
-const mockFetch = vi.fn();
+const mockFetch = vi.hoisted(() => vi.fn());
 
 beforeEach(() => {
   mockFetch.mockReset();

@@ -62,6 +62,10 @@ export interface ApplyEditParams {
   search?: string;
   /** Alias commonly emitted by model planners. */
   replace?: string;
+  /** Alias commonly emitted by model planners. */
+  oldText?: string;
+  /** Alias commonly emitted by model planners. */
+  newText?: string;
   createBackup?: boolean;
 }
 

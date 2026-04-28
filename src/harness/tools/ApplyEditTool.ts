@@ -22,10 +22,12 @@ export class ApplyEditTool extends Tool {
       newString: rawNewString,
       search,
       replace,
+      oldText,
+      newText,
       createBackup: shouldBackup = true,
     } = rawParams;
-    const oldString = rawOldString ?? search;
-    const newString = rawNewString ?? replace;
+    const oldString = rawOldString ?? search ?? oldText;
+    const newString = rawNewString ?? replace ?? newText;
     
     try {
       if (typeof filePath !== 'string' || filePath.trim() === '') {
@@ -49,7 +51,7 @@ export class ApplyEditTool extends Tool {
       if (typeof oldString !== 'string' || oldString === '') {
         return {
           success: false,
-          error: 'applyEdit requires params.oldString or params.search to be a non-empty string.',
+          error: 'applyEdit requires params.oldString, params.search, or params.oldText to be a non-empty string.',
           duration: Date.now() - startTime,
         };
       }
@@ -57,7 +59,7 @@ export class ApplyEditTool extends Tool {
       if (typeof newString !== 'string') {
         return {
           success: false,
-          error: 'applyEdit requires params.newString or params.replace to be a string.',
+          error: 'applyEdit requires params.newString, params.replace, or params.newText to be a string.',
           duration: Date.now() - startTime,
         };
       }

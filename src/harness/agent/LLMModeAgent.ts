@@ -106,7 +106,7 @@ export interface LLMTask {
   localizationConfidence?: 'high' | 'medium' | 'low';
   /** Preferred first verification actions for this bounded packet */
   verificationTargets?: Array<{
-    tool: 'runBuild' | 'runTests' | 'typeCheck';
+    tool: 'runBuild' | 'runTests' | 'runFocusedTests' | 'typeCheck';
     reason: string;
     pattern?: string;
     priority: number;
@@ -117,6 +117,8 @@ export interface LLMTask {
   approved: boolean;
   /** Deterministic completion policy for bounded runs */
   completionPolicy?: 'manual' | 'stop_after_verification';
+  /** When true, inspection-only/no-change exits are failures; the task must mutate and verify. */
+  requiresMutation?: boolean;
 }
 
 export interface ToolCall {
@@ -324,7 +326,9 @@ export class LLMModeAgent {
 
 Task ID: ${task.id}
 Title: ${task.title}
-Description: ${task.description}${preflightSection}${resumeSection}
+Description: ${task.description}${preflightSection}${resumeSection}${task.requiresMutation ? `
+
+Mutation requirement: this task is not complete until you make at least one successful writeFile/applyEdit mutation and then run the required verification target. Inspection-only/no-change outcomes are failures for this task.` : ''}
 
 You are in LLM-driven mode. Plan your own steps. ${isResume ? 'Continue from where the previous run left off.' : 'Start by reading the relevant file(s).'}
 If readFile returns truncated=true with startLine/endLine, continue that file with offset=endLine rather than rereading from the top.
@@ -398,15 +402,18 @@ When the task is complete and build passes, respond with tool "complete".`;
         if (this.shouldStopForBoundedInspection(session, maxSteps)) {
           Logger.info('LLMModeAgent', `Bounded-inspection guardrail triggered at step ${session.stepCount}/${maxSteps} - no mutations after 50% budget`);
           await clearRunState();
+          const requiresMutation = session.task.requiresMutation === true;
           session = this.stampSession(session, {
-            status: Status.SUCCESS,
-            exitReason: 'bounded-inspection',
+            status: requiresMutation ? Status.FAILED : Status.SUCCESS,
+            exitReason: requiresMutation ? 'bounded-no-mutation' : 'bounded-inspection',
             endTime: new Date().toISOString(),
           });
           eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
             process: 'agent-task',
-            success: true,
-            reason: 'bounded-inspection: no mutation warranted within budget',
+            success: !requiresMutation,
+            reason: requiresMutation
+              ? 'bounded-no-mutation: self-improvement execution inspected but did not mutate'
+              : 'bounded-inspection: no mutation warranted within budget',
             iterations: session.stepCount,
             durationMs: Date.now() - new Date(session.startTime).getTime(),
           });
@@ -824,27 +831,8 @@ When the task is complete and build passes, respond with tool "complete".`;
                         [null, text];
       const jsonStr = jsonMatch[1] || text;
 
-      const jsonText = this.extractFirstJsonObject(jsonStr);
-      if (!jsonText) {
-        const implicitComplete = this.tryImplicitCompletion(session, text);
-        if (implicitComplete) {
-          Logger.debug('LLMModeAgent', 'Using implicit completion fallback for late-stage plain-text response');
-          return implicitComplete;
-        }
-        if (this.currentSession) {
-          this.currentSession.lastPlanError = 'Failed to parse LLM response';
-        }
-        Logger.error('LLMModeAgent', 'No JSON object found in response');
-        return null;
-      }
-      const parsed = JSON.parse(jsonText);
-      
-      const toolCall = {
-        thought: parsed.thought || 'No thought provided',
-        tool: parsed.tool || 'unknown',
-        params: parsed.params || {},
-        expectedResult: parsed.expectedResult || 'No expectation set',
-      };
+      const toolCall = await this.parseToolCallText(session, text);
+      if (!toolCall) return null;
       
       // CAPTURE HARNESS THINKING - this is the harness LLM's reasoning about fixing the system
       // This is DIFFERENT from generator thinking and must be kept separate
@@ -882,6 +870,72 @@ When the task is complete and build passes, respond with tool "complete".`;
       }
       Logger.error('LLMModeAgent', `Failed to parse LLM response: ${e}`);
       Logger.error('LLMModeAgent', `Raw response: ${rateLimitResult.result.text}`);
+      return null;
+    }
+  }
+
+  private async parseToolCallText(session: LLMSession, text: string): Promise<ToolCall | null> {
+    const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) ||
+      text.match(/```\s*([\s\S]*?)```/) ||
+      [null, text];
+    const jsonStr = jsonMatch[1] || text;
+    const jsonText = this.extractFirstJsonObject(jsonStr);
+
+    if (!jsonText) {
+      if (session.task.requiresMutation === true) {
+        const repaired = await this.repairPlainTextToolCall(text);
+        if (repaired) return repaired;
+      }
+
+      const implicitComplete = this.tryImplicitCompletion(session, text);
+      if (implicitComplete) {
+        Logger.debug('LLMModeAgent', 'Using implicit completion fallback for late-stage plain-text response');
+        return implicitComplete;
+      }
+      if (this.currentSession) {
+        this.currentSession.lastPlanError = 'Failed to parse LLM response';
+      }
+      Logger.error('LLMModeAgent', 'No JSON object found in response');
+      return null;
+    }
+
+    const parsed = JSON.parse(jsonText);
+    return {
+      thought: parsed.thought || 'No thought provided',
+      tool: parsed.tool || 'unknown',
+      params: parsed.params || {},
+      expectedResult: parsed.expectedResult || 'No expectation set',
+    };
+  }
+
+  private async repairPlainTextToolCall(text: string): Promise<ToolCall | null> {
+    if (text.trim().length === 0) return null;
+    const response = await this.llmClient.complete({
+      systemPrompt: 'Convert the previous agent response into one valid Liminal tool-call JSON object. Return JSON only.',
+      prompt: `Previous response:
+${text.slice(0, 4000)}
+
+Return exactly one JSON object with keys thought, tool, params, expectedResult. Use only an allowed tool such as readFile, search, applyEdit, writeFile, runTests, runBuild, typeCheck, or complete.`,
+      maxTokens: 800,
+      temperature: 0,
+    }) as PlanningLLMResponse;
+    if (response.success === false || !response.text) return null;
+
+    const cleaned = response.text.replace(/<think\b[^>]*>[\s\S]*?<\/think>/gi, '')
+      .replace(/<thinkContent\b[^>]*>[\s\S]*?<\/thinkContent>/gi, '')
+      .replace(/<reasoning\b[^>]*>[\s\S]*?<\/reasoning>/gi, '')
+      .trim();
+    const jsonText = this.extractFirstJsonObject(cleaned);
+    if (!jsonText) return null;
+    try {
+      const parsed = JSON.parse(jsonText);
+      return {
+        thought: parsed.thought || 'Recovered plain-text tool plan',
+        tool: parsed.tool || 'unknown',
+        params: parsed.params || {},
+        expectedResult: parsed.expectedResult || 'Recovered next tool call',
+      };
+    } catch {
       return null;
     }
   }
@@ -1383,7 +1437,7 @@ When the task is complete and build passes, respond with tool "complete".`;
   }
 
   private isVerificationTool(tool: string): boolean {
-    return tool === 'runBuild' || tool === 'runTests' || tool === 'typeCheck';
+    return tool === 'runBuild' || tool === 'runTests' || tool === 'runFocusedTests' || tool === 'typeCheck';
   }
 
   private isBoundedInspectionRun(session: LLMSession): boolean {
@@ -1415,6 +1469,7 @@ When the task is complete and build passes, respond with tool "complete".`;
 
   private shouldClassifyAsBoundedNoChangeSuccess(session: LLMSession): boolean {
     if (!this.isBoundedInspectionRun(session)) return false;
+    if (session.task.requiresMutation === true) return false;
     if (session.mutatedFiles.size > 0 || session.backups.length > 0) return false;
     return this.hasConcreteSuccessfulInspection(session);
   }
@@ -1435,11 +1490,14 @@ When the task is complete and build passes, respond with tool "complete".`;
   }
 
   private matchesVerificationTarget(toolCall: Pick<ToolCall, 'tool' | 'params'>, target: NonNullable<LLMTask['verificationTargets']>[number]): boolean {
-    if (toolCall.tool !== target.tool) return false;
+    const toolMatches = toolCall.tool === target.tool || (target.tool === 'runTests' && toolCall.tool === 'runFocusedTests');
+    if (!toolMatches) return false;
     if (!target.pattern) return true;
-    if (target.tool === 'runTests') {
+    if (target.tool === 'runTests' || target.tool === 'runFocusedTests') {
       const pattern = typeof toolCall.params?.pattern === 'string' ? toolCall.params.pattern : '';
-      return pattern.includes(target.pattern);
+      const path = typeof toolCall.params?.path === 'string' ? toolCall.params.path : '';
+      const targets = Array.isArray(toolCall.params?.targets) ? toolCall.params.targets.join(' ') : '';
+      return [pattern, path, targets].some((value) => value.includes(target.pattern!));
     }
     return true;
   }
@@ -1465,7 +1523,13 @@ When the task is complete and build passes, respond with tool "complete".`;
   }
 
   private getCompletionGateError(session: LLMSession): string | null {
-    return this.getArtifactGateError(session) || this.getVerificationGateError(session);
+    return this.getMutationGateError(session) || this.getArtifactGateError(session) || this.getVerificationGateError(session);
+  }
+
+  private getMutationGateError(session: LLMSession): string | null {
+    if (session.task.requiresMutation !== true) return null;
+    if (session.mutatedFiles.size > 0 || session.backups.length > 0) return null;
+    return 'Mutation gate: execute at least one successful writeFile/applyEdit before completing this self-improvement task.';
   }
 
   private getRequiredArtifactPath(session: LLMSession): string | null {

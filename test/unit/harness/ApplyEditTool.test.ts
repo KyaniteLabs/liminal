@@ -47,6 +47,22 @@ describe('ApplyEditTool', () => {
     });
   });
 
+  it('accepts oldText/newText aliases emitted by model planners', async () => {
+    const tool = new ApplyEditTool();
+
+    await withFixture('__apply_edit_old_text_fixture__.txt', 'hello old world', async (file) => {
+      const result = await tool.execute({
+        path: file,
+        oldText: 'old',
+        newText: 'new',
+        createBackup: false,
+      });
+
+      expect(result.success).toBe(true);
+      await expect(fs.readFile(file, 'utf8')).resolves.toBe('hello new world');
+    });
+  });
+
   it('returns an actionable hint when old string params are missing', async () => {
     const tool = new ApplyEditTool();
 
@@ -57,7 +73,7 @@ describe('ApplyEditTool', () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain('params.oldString or params.search');
+    expect(result.error).toContain('params.oldString, params.search, or params.oldText');
   });
 
   it('allows empty replacement strings', async () => {

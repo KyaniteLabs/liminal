@@ -31,6 +31,10 @@ describe('RepoIndexLite', () => {
       expect(context.expansionStatus).toBe(context.deferredSecondaryFiles.length > 0 ? 'allowed' : 'exhausted');
       expect(context.verificationTargets.length).toBeGreaterThan(0);
       expect(context.verificationTargets[0].priority).toBe(1);
+      expect(Array.isArray(context.creativeDomains)).toBe(true);
+      expect(context.creativeDomains.length).toBeGreaterThan(0);
+      expect(context.preservationClause).toBeTruthy();
+      expect(typeof context.preservationClause).toBe('string');
     }
   });
 
@@ -141,9 +145,9 @@ describe('RepoIndexLite', () => {
     expect(context.localizationConfidence).toBe('high');
     expect(context.verificationTargets).toEqual([
       {
-        tool: 'runTests',
-        pattern: 'runtime-core',
-        reason: 'Runtime-core packet shaping changes should hit focused runtime tests first',
+        tool: 'runFocusedTests',
+        pattern: 'RepoIndexLite',
+        reason: 'RepoIndexLite packet-shaping changes should hit focused runtime tests first',
         priority: 1,
       },
       {

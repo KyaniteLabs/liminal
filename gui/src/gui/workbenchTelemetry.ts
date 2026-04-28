@@ -139,8 +139,16 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
   const hasError = events.some((event) => event.type === 'error' || event.type === 'generation.attempt.failed');
   const planEvent = [...events].reverse().find((event) => event.type === 'generation.domain_plan');
   const attemptEvent = [...events].reverse().find((event) => event.type === 'generation.attempt.started');
-  const domains = Array.isArray(planEvent?.domains) ? planEvent.domains.map(String).join(' -> ') : 'waiting for route';
-  const attemptLabel = attemptEvent ? `attempt ${attemptEvent.attempt || 1}/${attemptEvent.attemptTotal || 1}` : 'waiting for model';
+  const rawDomains = Array.isArray(planEvent?.domains) ? planEvent.domains.map(String) : [];
+  const domains = rawDomains.length > 0 ? `fallback order: ${rawDomains.join(' -> ')}` : 'waiting for route';
+  const completeEvent = [...events].reverse().find((event) => event.type === 'generation.complete');
+  const artifactEvent = [...events].reverse().find((event) => event.type === 'artifact.found');
+  const selectedDomain = String((artifactEvent?.artifactLabel || '').split(' ')[0] || attemptEvent?.domain || rawDomains[0] || 'unknown').toLowerCase();
+  const attemptLabel = completeEvent
+    ? completeEvent.executionMode === 'draft'
+      ? `draft ready: selected ${selectedDomain}; route stopped`
+      : `complete: selected ${selectedDomain}`
+    : attemptEvent ? `attempt ${attemptEvent.attempt || 1}/${attemptEvent.attemptTotal || 1}` : 'waiting for model';
   const cognitiveDetail = summarizeCognitiveReceipt(events);
 
   return [
@@ -153,7 +161,7 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
     {
       id: 'route',
       label: 'Route',
-      detail: domains,
+      detail: hasComplete && completeEvent?.executionMode === 'draft' ? `fallback order available; stopped after ${selectedDomain}` : domains,
       status: hasPlan || hasAttempt || hasComplete ? 'done' : hasIntent && !hasClarification ? 'active' : 'pending',
     },
     {
@@ -165,7 +173,7 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
     {
       id: 'preview',
       label: 'Preview',
-      detail: hasPreview ? 'artifact mounted' : hasCandidate || hasComplete ? 'rendering receipt' : 'waiting for artifact',
+      detail: hasPreview ? `artifact mounted${selectedDomain !== 'unknown' ? ` (${selectedDomain})` : ''}` : hasCandidate || hasComplete ? 'rendering receipt' : 'waiting for artifact',
       status: hasPreview ? 'done' : hasCandidate || hasComplete ? 'active' : 'pending',
     },
     ...(hasCognitiveReceipt ? [{
@@ -177,7 +185,7 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
     {
       id: 'ready',
       label: 'Ready',
-      detail: hasComplete ? 'run completed' : 'not ready yet',
+      detail: hasComplete && completeEvent?.executionMode === 'draft' ? 'draft ready; waiting for your revise/new draft/prove choice' : hasComplete ? 'run completed' : 'not ready yet',
       status: hasComplete ? 'done' : hasError ? 'failed' : 'pending',
     },
   ];

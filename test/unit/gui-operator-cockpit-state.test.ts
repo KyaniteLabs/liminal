@@ -39,4 +39,21 @@ describe('OperatorCockpit state derivation', () => {
     expect(state.humanReview.issueReport).toContain('memory:observed');
   });
 
+
+  it('marks completed draft previews as done instead of showing future fallback work', () => {
+    const state = deriveCockpit([
+      { type: 'generation.domain_plan', domains: ['p5', 'three', 'hydra', 'glsl'], startedAt: '2026-04-28T04:13:00.000Z', timeoutMinutes: 5, candidateCount: 1, executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 4, startedAt: '2026-04-28T04:13:01.000Z', timeoutMinutes: 5, candidateCount: 1, executionMode: 'draft' },
+      { type: 'generation.complete', iterations: 1, finalScore: 0, duration: 58000, model: 'MiniMax-M2.7', reason: 'draft artifact ready (unscored)', qualityState: 'unscored', executionMode: 'draft' },
+      { type: 'artifact.found', artifactLabel: 'three preview image', artifactPath: '/tmp/three.png' },
+      { type: 'preview.completed', content: 'abc', previewType: 'image', imageUrl: '/tmp/three.png' },
+    ], Date.parse('2026-04-28T04:14:30.000Z'));
+
+    expect(state.phase).toBe('complete');
+    expect(state.progressPercent).toBe(1);
+    expect(state.etaLabel).toBe('done');
+    expect(state.activeWork).toContain('no more domains are running');
+    expect(state.selectedDomain).toBe('three');
+  });
+
 });

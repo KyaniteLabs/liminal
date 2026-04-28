@@ -29,8 +29,18 @@ export interface OrganismIteration {
   timestamp: string;
 }
 
-/** Union: p5 (code) or organism (musicCode + visualCode). */
-export type GalleryIteration = Iteration | OrganismIteration;
+/** Video iteration: code + rendered video file path. */
+export interface VideoIteration {
+  version: number;
+  type: 'video';
+  code: string;
+  videoPath: string;
+  domain: 'revideo' | 'hyperframes';
+  timestamp: string;
+}
+
+/** Union: p5 (code), organism (musicCode + visualCode), or video. */
+export type GalleryIteration = Iteration | OrganismIteration | VideoIteration;
 
 /**
  * Parse raw file content: if valid JSON with type 'organism', return OrganismIteration; else p5 Iteration.
@@ -40,15 +50,26 @@ export function parseVersionContent(raw: string, version: number, timestamp: str
   if (!trimmed) return null;
   try {
     const data = JSON.parse(trimmed);
-    if (data && typeof data === 'object' && data.type === 'organism' &&
-        data.musicCode != null && data.visualCode != null) {
-      return {
-        version,
-        type: 'organism',
-        musicCode: String(data.musicCode),
-        visualCode: String(data.visualCode),
-        timestamp,
-      };
+    if (data && typeof data === 'object') {
+      if (data.type === 'organism' && data.musicCode != null && data.visualCode != null) {
+        return {
+          version,
+          type: 'organism',
+          musicCode: String(data.musicCode),
+          visualCode: String(data.visualCode),
+          timestamp,
+        };
+      }
+      if (data.type === 'video' && data.videoPath != null && data.domain != null) {
+        return {
+          version,
+          type: 'video',
+          code: String(data.code ?? ''),
+          videoPath: String(data.videoPath),
+          domain: data.domain,
+          timestamp,
+        };
+      }
     }
   } catch (parseError) {
     // Not JSON or invalid — treat as p5 code
@@ -108,6 +129,53 @@ export class Gallery {
       await fs.writeFile(filepath, code, 'utf-8');
     } catch (error) {
       throw new Error(`Failed to save iteration: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Save a video iteration to the gallery (code + video metadata).
+   * Stores JSON with type='video', code, videoPath, and domain.
+   */
+  async saveVideoIteration(
+    project: string,
+    version: number,
+    code: string,
+    videoPath: string,
+    domain: 'revideo' | 'hyperframes',
+  ): Promise<void> {
+    if (!project || typeof project !== 'string' || project.trim() === '') {
+      throw new Error('Project name is required and must be a non-empty string');
+    }
+    assertSafeSegment(project.trim(), 'Project name');
+    if (!version || typeof version !== 'number' || version <= 0 || !Number.isInteger(version)) {
+      throw new Error('Version must be a positive integer');
+    }
+
+    const date = new Date();
+    const dateStr = date.toISOString().split('T')[0];
+    const projectDirName = `${dateStr}--${project.trim()}`;
+    const projectDir = normalizePath(this.galleryDir, projectDirName);
+
+    try {
+      await fs.mkdir(projectDir, { recursive: true });
+    } catch (error) {
+      throw new Error(`Failed to create project directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
+    const filename = `v${version}.json`;
+    const filepath = normalizePath(projectDir, filename);
+    const data = JSON.stringify({
+      type: 'video',
+      code,
+      videoPath,
+      domain,
+      timestamp: new Date().toISOString(),
+    });
+
+    try {
+      await fs.writeFile(filepath, data, 'utf-8');
+    } catch (error) {
+      throw new Error(`Failed to save video iteration: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -335,12 +403,12 @@ export class Gallery {
     }
     try {
       const files = await fs.readdir(projectDir);
-      const versionFiles = files.filter(f => /^v(\d+)\.js$/.test(f));
+      const versionFiles = files.filter(f => /^v(\d+)\.(js|json)$/.test(f));
 
       // Read all files and stats in parallel
       const results = await Promise.allSettled(
         versionFiles.map(async (file) => {
-          const match = file.match(/^v(\d+)\.js$/)!;
+          const match = file.match(/^v(\d+)\.(js|json)$/)!;
           const version = parseInt(match[1], 10);
           const filepath = normalizePath(projectDir, file);
           const [raw, stat] = await Promise.all([

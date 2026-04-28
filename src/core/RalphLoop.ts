@@ -1303,6 +1303,31 @@ export class RalphLoop {
           await persistence.saveIteration(iteration, currentCode);
           await persistence.saveMergeStep(iteration);
           persistedCurrentIteration = true;
+
+          // Attempt video render for video-domain code (revideo/hyperframes)
+          try {
+            const detectedDomain = CodeValidator.detectDomain(currentCode);
+            if (detectedDomain === 'revideo' || detectedDomain === 'hyperframes') {
+              const { Exporter } = await import('../export/Exporter.js');
+              const videoFs = await import('node:fs/promises');
+              const videoOutDir = path.join(normalizedOptions.galleryDir, normalizedOptions.project, 'video');
+              await videoFs.mkdir(videoOutDir, { recursive: true });
+              const videoPath = path.join(videoOutDir, `v${iteration}-${detectedDomain}.mp4`);
+              const exporter = new Exporter();
+              await exporter.exportVideo(currentCode, videoPath, { domain: detectedDomain, fps: 30 });
+              Logger.info('RalphLoop', `Video rendered: ${videoPath}`);
+              // Save video metadata alongside code iteration
+              try {
+                const gallery = new (await import('../gallery/Gallery.js')).Gallery(normalizedOptions.galleryDir);
+                await gallery.saveVideoIteration(normalizedOptions.project, iteration, currentCode, videoPath, detectedDomain);
+              } catch (galleryErr) {
+                Logger.warn('RalphLoop', 'Failed to save video iteration metadata:', galleryErr instanceof Error ? galleryErr.message : galleryErr);
+              }
+            }
+          } catch (videoErr) {
+            // Non-blocking: video render failure should not stop the loop
+            Logger.warn('RalphLoop', 'Video render skipped:', videoErr instanceof Error ? videoErr.message : videoErr);
+          }
         }
 
         // Git: auto-commit iteration (agent manages this behind the scenes)

@@ -121,7 +121,7 @@ export async function loadRoleConfig(projectDir?: string): Promise<Record<ModelR
   let merged = mergeConfigs(fileConfig, projectConfig);
 
   // Fallback: UserConfig shape (defaultProvider/providers) → single role from effective config
-  if (!merged?.roles && 'defaultProvider' in (fileConfig as unknown as Record<string, unknown>)) {
+  if (!merged?.roles && fileConfig && 'defaultProvider' in (fileConfig as unknown as Record<string, unknown>)) {
     const effective = await getEffectiveConfig();
     if (effective.baseUrl || effective.model) {
       merged = {
@@ -159,6 +159,7 @@ function resolveRole(role: ModelRole, fileConfig: RoleConfigFile | null): Resolv
   const fileRole = fileConfig?.roles?.[role];
 
   // Environment variable fallbacks per role
+  // env() adds the LIMINAL_ prefix automatically, so these are the base names
   const envMap: Record<ModelRole, { baseUrl: string[]; model: string[]; apiKey: string[] }> = {
     generator: {
       baseUrl: ['LLM_BASE_URL'],

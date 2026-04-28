@@ -347,6 +347,19 @@ export class TuiBridgeService {
     this.emit(sessionId, { type: 'response.completed', sessionId, content });
     this.emit(sessionId, { type: 'response.committed', sessionId, content });
   }
+
+  /** Emit video render lifecycle events via SSE. */
+  emitVideoRenderStart(sessionId: string, domain: string): void {
+    this.emit(sessionId, { type: 'video:render:start', sessionId, domain });
+  }
+
+  emitVideoRenderComplete(sessionId: string, domain: string, videoPath: string): void {
+    this.emit(sessionId, { type: 'video:render:complete', sessionId, domain, videoPath });
+  }
+
+  emitVideoRenderError(sessionId: string, domain: string, error: string): void {
+    this.emit(sessionId, { type: 'video:render:error', sessionId, domain, error });
+  }
   // eslint-disable-next-line @typescript-eslint/require-await
   async submitInput(
     sessionId: string,

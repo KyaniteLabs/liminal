@@ -111,7 +111,7 @@ describe('VideoPipeline', () => {
     // HyperFrames should receive Revideo output as an asset
     const hyperCall = mockHyperFramesRender.mock.calls[0];
     const hyperOpts = hyperCall[2] as { assets?: Array<{ path: string; type: string }> };
-    expect(hyperOpts.assets).toBeDefined();
+    expect(hyperOpts.assets).toBeInstanceOf(Array);
     expect(hyperOpts.assets?.[0]?.path).toBe(revideoOutput);
     expect(hyperOpts.assets?.[0]?.type).toBe('video');
 

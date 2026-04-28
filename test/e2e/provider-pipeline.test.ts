@@ -14,6 +14,23 @@ process.env.LIMINAL_ALLOW_LOCALHOST_LLM = "true";
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import path from 'path';
+import os from 'os';
+
+// Block real ~/.liminal/config.json so env var tests are isolated
+const _userConfigPath = path.join(os.homedir(), '.liminal', 'config.json');
+vi.mock('fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('fs/promises')>();
+  return {
+    ...actual,
+    readFile: vi.fn(((...args: [string, ...unknown[]]) => {
+      if (args[0] === _userConfigPath) {
+        return Promise.reject(new Error('mock: no user config for tests'));
+      }
+      return actual.readFile(...args);
+    }) as unknown as typeof actual.readFile),
+  };
+});
 
 import { LLMClient, sanitizeOutput } from '../../src/llm/LLMClient.js';
 import { CapabilityRegistry } from '../../src/llm/CapabilityRegistry.js';
@@ -22,7 +39,7 @@ import type { ModelRole } from '../../src/config/RoleConfig.js';
 
 // ── Mock fetch globally ──
 
-const mockFetch = vi.fn();
+const mockFetch = vi.hoisted(() => vi.fn());
 
 beforeEach(() => {
   mockFetch.mockReset();

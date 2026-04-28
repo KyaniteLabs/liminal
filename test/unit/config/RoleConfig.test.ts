@@ -1,4 +1,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import fs from 'fs/promises';
+import path from 'path';
+import os from 'os';
+
+const _userConfigPath = path.join(os.homedir(), '.liminal', 'config.json');
+
+// Mock fs/promises.readFile to block the real user config from loading.
+// RoleConfig imports { readFile } from 'fs/promises' — this mock intercepts
+// only the ~/.liminal/config.json read and lets everything else through.
+vi.mock('fs/promises', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('fs/promises')>();
+  return {
+    ...actual,
+    readFile: vi.fn(((...args: [string, ...unknown[]]) => {
+      if (args[0] === _userConfigPath) {
+        return Promise.reject(new Error('mock: no user config for tests'));
+      }
+      return actual.readFile(...args);
+    }) as unknown as typeof actual.readFile),
+  };
+});
+
 import {
   detectProviderType,
   loadRoleConfig,
@@ -7,9 +29,6 @@ import {
   saveRoleConfig,
 } from '../../../src/config/RoleConfig.js';
 import type { ResolvedRoleConfig, RoleConfigFile } from '../../../src/config/RoleConfig.js';
-import fs from 'fs/promises';
-import path from 'path';
-import os from 'os';
 
 // ---------------------------------------------------------------------------
 // detectProviderType

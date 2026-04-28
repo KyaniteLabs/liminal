@@ -42,8 +42,7 @@ describe('PendingActionStore', () => {
     const store = new PendingActionStore();
     const created = store.create('structured', { id: 't', title: 'T', description: 'T', approved: false });
     const retrieved = store.get(created.id);
-    expect(retrieved).toBeDefined();
-    expect(retrieved!.id).toBe(created.id);
+    expect(retrieved?.id).toBe(created.id);
   });
 
   it('returns undefined for nonexistent ID', () => {
@@ -55,8 +54,7 @@ describe('PendingActionStore', () => {
     const store = new PendingActionStore();
     const created = store.create('structured', { id: 't', title: 'T', description: 'T', approved: false });
     const confirmed = store.confirm(created.id);
-    expect(confirmed).toBeDefined();
-    expect(confirmed!.id).toBe(created.id);
+    expect(confirmed?.id).toBe(created.id);
     expect(store.get(created.id)).toBeUndefined();
   });
 

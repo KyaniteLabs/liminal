@@ -110,8 +110,8 @@ describe('RevideoRenderer', () => {
     expect(projectContent).toContain("import scene from './scene.js'");
 
     const pkg = JSON.parse(await fs.readFile(packageFile, 'utf-8'));
-    expect(pkg.dependencies['@revideo/core']).toBeDefined();
-    expect(pkg.dependencies['@revideo/renderer']).toBeDefined();
+    expect(pkg.dependencies['@revideo/core']).toBeTruthy();
+    expect(pkg.dependencies['@revideo/renderer']).toBeTruthy();
     expect(pkg.type).toBe('module');
 
     const tsconfig = JSON.parse(await fs.readFile(tsconfigFile, 'utf-8'));

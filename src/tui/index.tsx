@@ -307,11 +307,28 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
       );
       const { Exporter } = await import(exporterPath);
       const exporter = new Exporter();
-      const htmlPath = path.join(outDir, "tui-export.html");
-      const jsPath = path.join(outDir, "tui-export.js");
-      await exporter.exportHTML(code, htmlPath);
-      await exporter.exportJS(code, jsPath);
-      addLog("success", `Exported to ${htmlPath} and ${jsPath}`);
+
+      // Detect domain to decide export path
+      const validatorPath = validateImportPath(
+        path.join(PROJECT_ROOT, "dist/core/CodeValidator.js"),
+        PROJECT_ROOT
+      );
+      const { CodeValidator } = await import(validatorPath);
+      const detectedDomain = CodeValidator.detectDomain(code);
+
+      const videoDomains = ['revideo', 'hyperframes'];
+      if (videoDomains.includes(detectedDomain)) {
+        const videoPath = path.join(outDir, `tui-export-${detectedDomain}.mp4`);
+        addLog("info", `Rendering ${detectedDomain} video...`);
+        await exporter.exportVideo(code, videoPath, { domain: detectedDomain, fps: 30 });
+        addLog("success", `Video exported to ${videoPath}`);
+      } else {
+        const htmlPath = path.join(outDir, "tui-export.html");
+        const jsPath = path.join(outDir, "tui-export.js");
+        await exporter.exportHTML(code, htmlPath);
+        await exporter.exportJS(code, jsPath);
+        addLog("success", `Exported to ${htmlPath} and ${jsPath}`);
+      }
     } catch (e: any) {
       addLog("error", `Export failed: ${e?.message || "unknown"}`);
     }

@@ -18,4 +18,25 @@ describe('OperatorCockpit state derivation', () => {
     expect(state.progressPercent).toBeLessThan(0.2);
     expect(state.activeWork).toContain('3 candidates');
   });
+
+  it('surfaces human-only review focus and copyable context after artifacts complete', () => {
+    const state = deriveCockpit([
+      { type: 'generation.domain_plan', domains: ['tone'], startedAt: '2026-04-22T12:00:00.000Z', candidateCount: 3 },
+      { type: 'generation.attempt.started', domain: 'tone', attempt: 1, attemptTotal: 1, startedAt: '2026-04-22T12:00:01.000Z' },
+      { type: 'artifact.found', artifactLabel: 'tone HTML preview', artifactPath: '.omx/proof/live-cognition/tone.html' },
+      {
+        type: 'generation.cognitive_receipt',
+        loop: 'creative',
+        receipts: [{ organ: 'memory', status: 'observed', detail: 'Retrieved prior tone run.' }],
+      },
+      { type: 'generation.complete', iterations: 1, finalScore: 0.82, duration: 1200, model: 'GLM-5v-turbo', reason: 'complete' },
+    ], Date.parse('2026-04-22T12:00:03.000Z'));
+
+    expect(state.humanReview.status).toBe('ready');
+    expect(state.humanReview.summary).toContain('humans should judge');
+    expect(state.humanReview.checks.some((check) => check.detail.includes('audio feel'))).toBe(true);
+    expect(state.humanReview.issueReport).toContain('tone HTML preview');
+    expect(state.humanReview.issueReport).toContain('memory:observed');
+  });
+
 });

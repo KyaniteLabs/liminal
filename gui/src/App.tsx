@@ -902,6 +902,21 @@ export default function App() {
           ))}
         </div>
       )}
+      {activeMode.id === 'generate' && bridgeSummary.humanReview.status !== 'waiting' && (
+        <div className={`liminal-human-review-strip liminal-human-review-strip--${bridgeSummary.humanReview.status}`}>
+          <div>
+            <span>Human review</span>
+            <strong>{bridgeSummary.humanReview.heading}</strong>
+            <small>{bridgeSummary.humanReview.summary}</small>
+          </div>
+          <button
+            type="button"
+            onClick={() => void navigator.clipboard?.writeText(bridgeSummary.humanReview.issueReport)}
+          >
+            Copy issue report
+          </button>
+        </div>
+      )}
       {hasSyncTarget && !hasDirectSyncTarget && <canvas ref={syncCanvasRef} className="liminal-sync-overlay" aria-hidden="true" />}
     </div>
   );
@@ -942,6 +957,15 @@ export default function App() {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+      {activeMode.id === 'generate' && (
+        <div className={`liminal-review-panel liminal-review-panel--${bridgeSummary.humanReview.status}`}>
+          <span>Manual Review Pack</span>
+          <strong>{bridgeSummary.humanReview.status === 'ready' ? 'human-only checks' : bridgeSummary.humanReview.status}</strong>
+          {bridgeSummary.humanReview.checks.map((check) => (
+            <small key={check.label}><b>{check.label}</b>: {check.detail}</small>
+          ))}
         </div>
       )}
       {activeTab === 'create' && (

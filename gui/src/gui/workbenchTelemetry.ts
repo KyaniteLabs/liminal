@@ -17,6 +17,13 @@ export interface WorkbenchBridgeSummary {
   processSteps: WorkbenchProcessStep[];
   recentActivity: Array<{ label: string; detail: string; status?: string }>;
   stageTimings: Array<{ label: string; durationLabel: string }>;
+  humanReview: {
+    status: 'waiting' | 'ready' | 'blocked';
+    heading: string;
+    summary: string;
+    checks: Array<{ label: string; status: string; detail: string }>;
+    issueReport: string;
+  };
 }
 
 export type WorkbenchProcessStatus = 'pending' | 'active' | 'done' | 'needs-input' | 'failed';
@@ -84,6 +91,7 @@ export function summarizeWorkbenchBridge(
     processSteps,
     recentActivity: summarizeRecentActivity(events),
     stageTimings: derived.stageTimings ?? [],
+    humanReview: derived.humanReview,
   };
 }
 

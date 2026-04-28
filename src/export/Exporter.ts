@@ -22,6 +22,8 @@ import { ValidationError } from '../errors/ValidationError.js';
 import { ExportError } from '../errors/index.js';
 import { CanvasRecorder } from '../render/CanvasRecorder.js';
 import { RevideoRenderer } from '../render/RevideoRenderer.js';
+import { HyperFramesRenderer } from '../render/HyperFramesRenderer.js';
+import { VideoCapabilityDetector } from '../render/VideoCapabilityDetector.js';
 
 export interface ProjectIteration {
   version: number;
@@ -266,11 +268,14 @@ export class Exporter {
       );
     }
 
-    // Revideo: write entry point then render via Revideo CLI
     if (domain === 'revideo') {
+      VideoCapabilityDetector.require('revideo');
       const renderer = new RevideoRenderer();
-      const projectDir = await renderer.writeEntryPoint(code);
-      await renderer.renderToVideo({ projectDir, outputPath, fps, width, height });
+      await renderer.render(code, outputPath, { fps, width, height });
+    } else if (domain === 'hyperframes') {
+      VideoCapabilityDetector.require('hyperframes');
+      const renderer = new HyperFramesRenderer();
+      await renderer.render(code, outputPath, { fps, width, height });
     } else {
       const recorder = new CanvasRecorder({ fps, duration, width, height });
       await recorder.record(code, domain as import('../types/domains.js').Domain, outputPath);

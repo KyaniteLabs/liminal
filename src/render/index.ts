@@ -20,3 +20,8 @@ export {
 export { Renderer } from './Renderer.js';
 export { CanvasRecorder } from './CanvasRecorder.js';
 export { PreviewServer } from './PreviewServer.js';
+export { RevideoRenderer } from './RevideoRenderer.js';
+export { HyperFramesRenderer } from './HyperFramesRenderer.js';
+export type { VideoRenderer, VideoRenderOptions, VideoRenderResult } from './VideoRenderer.js';
+export { VideoPipeline, type PipelineStep } from './VideoPipeline.js';
+export { VideoCapabilityDetector, type VideoCapabilities } from './VideoCapabilityDetector.js';

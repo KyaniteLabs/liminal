@@ -171,7 +171,7 @@ export async function runGenerationRegression(request: RegressionRequest): Promi
     maxTokens: 4000,
   });
 
-  const generator = await createGenerator(domain, llm);
+  const generator = createGenerator(domain, llm);
   const started = Date.now();
   const rawArtifact = await generateDomainArtifact(domain, generator, prompt);
   const durationMs = Date.now() - started;

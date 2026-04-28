@@ -30,7 +30,7 @@ export class EnvironmentValidator {
   async validate(): Promise<DiagnosticReport> {
     const checks: DiagnosticCheck[] = [];
 
-    checks.push(await this.checkNodeVersion());
+    checks.push(this.checkNodeVersion());
     checks.push(await this.checkGoToolchain());
     checks.push(await this.checkConfigFile());
     checks.push(this.checkProviderConfig());

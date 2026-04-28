@@ -168,8 +168,8 @@ export class AutoFixOrchestrator {
     const rolledBack = session.status === Status.ROLLED_BACK;
 
     if (session.status === Status.SUCCESS) {
-      buildPassed = await this.verifyBuild();
-      testsPassed = await this.verifyTests();
+      buildPassed = this.verifyBuild();
+      testsPassed = this.verifyTests();
 
       if (!buildPassed) {
         Logger.warn('AutoFixOrchestrator', `Build failed after fix — reporting failure`);
@@ -261,8 +261,8 @@ export class AutoFixOrchestrator {
     const rolledBack = session.status === Status.ROLLED_BACK;
 
     if (session.status === Status.SUCCESS) {
-      buildPassed = await this.verifyBuild();
-      testsPassed = await this.verifyTests();
+      buildPassed = this.verifyBuild();
+      testsPassed = this.verifyTests();
     }
 
     const result: FixResult = {

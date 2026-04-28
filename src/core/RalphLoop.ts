@@ -428,6 +428,7 @@ export class RalphLoop {
           try {
             entropyEngine = new MetabolicEntropyEngine({
               eventStore: { getRecent: () => [] },
+              // eslint-disable-next-line @typescript-eslint/require-await -- inline mock satisfies Promise<string[]> contract
               heap: { listFiles: async () => [] },
               telemetry: { getSummary: () => ({ successRate: 0, avgDurationMs: 0, totalTasks: 0, totalViolations: 0 }) },
             });

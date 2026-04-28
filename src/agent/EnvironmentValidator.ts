@@ -44,7 +44,7 @@ export class EnvironmentValidator {
     };
   }
 
-  private async checkNodeVersion(): Promise<DiagnosticCheck> {
+  private checkNodeVersion(): DiagnosticCheck {
     const version = process.version;
     const major = parseInt(version.slice(1).split('.')[0], 10);
 

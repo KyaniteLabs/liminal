@@ -119,7 +119,7 @@ function toEvaluation(result: ReturnType<typeof CreativeEvaluator.assess>): Regr
   };
 }
 
-async function createGenerator(domain: RegressionDomain, llm: LLMClient) {
+function createGenerator(domain: RegressionDomain, llm: LLMClient) {
   switch (domain) {
     case 'p5':
       return new P5GeneratorLLM(llm);

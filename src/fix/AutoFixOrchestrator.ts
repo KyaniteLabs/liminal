@@ -326,7 +326,7 @@ export class AutoFixOrchestrator {
    *
    * @returns Promise resolving to true if build passes, false otherwise
    */
-  async verifyBuild(): Promise<boolean> {
+  verifyBuild(): boolean {
     try {
       Logger.debug('AutoFixOrchestrator', 'Running build verification...');
       execSync('pnpm build', { stdio: 'pipe', timeout: 120_000 });
@@ -345,7 +345,7 @@ export class AutoFixOrchestrator {
    *
    * @returns Promise resolving to true if tests pass, false otherwise
    */
-  async verifyTests(): Promise<boolean> {
+  verifyTests(): boolean {
     try {
       Logger.debug('AutoFixOrchestrator', 'Running test verification...');
       execSync('pnpm test --run', { stdio: 'pipe', timeout: 180_000 });

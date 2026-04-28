@@ -111,7 +111,7 @@ export class HybridJudge {
   }
 
   /** Run aesthetic critique, falling back to sync path if LLM is not configured */
-  private async scoreAesthetic(code: string): Promise<import('../aesthetic/types.js').AestheticReport> {
+  private scoreAesthetic(code: string): import('../aesthetic/types.js').AestheticReport {
     // Use sync critique — no LLM dependency for the default path
     return this.aestheticCritic.critique(code);
   }

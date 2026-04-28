@@ -1,3 +1,4 @@
+/* eslint-disable no-console -- CLI entry point: console output is intentional */
 /**
  * Phase 9 Lane 2: Task Ledger CLI
  *

@@ -3,7 +3,6 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { RalphLoop } from '../../../src/core/RalphLoop.js';
-import { LLMClient } from '../../../src/llm/LLMClient.js';
 import { ScoringEngine } from '../../../src/core/ScoringEngine.js';
 import { LiminalFS } from '../../../src/fs/LiminalFS.js';
 import { LoopPersistence } from '../../../src/core/LoopPersistence.js';
@@ -14,7 +13,6 @@ describe('RalphLoop recordRun LiminalFS integration', () => {
   let galleryDir: string;
   let originalApiKey: string | undefined;
   let originalCwd: typeof process.cwd;
-  let generateSpy: ReturnType<typeof vi.spyOn>;
   let scoreSpy: ReturnType<typeof vi.spyOn>;
   let saveIterationSpy: ReturnType<typeof vi.spyOn>;
 
@@ -32,11 +30,12 @@ describe('RalphLoop recordRun LiminalFS integration', () => {
     process.cwd = () => projectRoot;
     generatorRegistry.clear();
 
-    generateSpy = vi.spyOn(LLMClient.prototype, 'generateWithToolLoop').mockResolvedValue({
-      content: 'function setup() { createCanvas(400, 400); noLoop(); frameRate(30); } function draw() { background(220); fill(255, 0, 0); circle(200, 200, 50); }',
-      iterations: 1,
-      toolCallsMade: 0,
-      success: true,
+    generatorRegistry.register({
+      name: 'test-p5',
+      canHandle: () => 1,
+      generate: async () => ({
+        code: 'function setup() { createCanvas(400, 400); noLoop(); frameRate(30); } function draw() { background(220); fill(255, 0, 0); circle(200, 200, 50); }',
+      }),
     });
 
     scoreSpy = vi.spyOn(ScoringEngine.prototype, 'scoreReliable').mockResolvedValue({
@@ -58,7 +57,6 @@ describe('RalphLoop recordRun LiminalFS integration', () => {
   afterEach(() => {
     RalphLoop.reset();
     generatorRegistry.clear();
-    generateSpy.mockRestore();
     scoreSpy.mockRestore();
     saveIterationSpy.mockRestore();
     process.env.OPENAI_API_KEY = originalApiKey;

@@ -1,3 +1,17 @@
+export const PRESERVED_CREATIVE_DOMAINS: readonly string[] = [
+  'p5',
+  'GLSL',
+  'Three.js',
+  'SVG',
+  'Hydra',
+  'Strudel',
+  'Tone.js',
+  'Revideo',
+  'ASCII',
+  'Kinetic',
+  'TextGen',
+] as const;
+
 export interface RepoIndexLiteContext {
   domain: string;
   fileHint: string;
@@ -10,10 +24,12 @@ export interface RepoIndexLiteContext {
   expansionStatus: 'allowed' | 'exhausted';
   localizationConfidence: 'high' | 'medium' | 'low';
   verificationTargets: VerificationTarget[];
+  creativeDomains: readonly string[];
+  preservationClause: string;
 }
 
 export interface VerificationTarget {
-  tool: 'runBuild' | 'runTests' | 'typeCheck';
+  tool: 'runBuild' | 'runTests' | 'runFocusedTests' | 'typeCheck';
   reason: string;
   pattern?: string;
   priority: number;
@@ -27,6 +43,8 @@ interface RepoIndexLiteProfile {
   expansionBudget: number;
   localizationConfidence: 'high' | 'medium' | 'low';
   verificationTargets: VerificationTarget[];
+  creativeDomains?: readonly string[];
+  preservationClause?: string;
 }
 
 const DEFAULT_RUNTIME_PROFILE: RepoIndexLiteProfile = {
@@ -82,7 +100,7 @@ const LOCALIZATION_PACKET_PROFILE: RepoIndexLiteProfile = {
   expansionBudget: 2,
   localizationConfidence: 'high',
   verificationTargets: [
-    { tool: 'runTests', pattern: 'runtime-core', reason: 'Runtime-core packet shaping changes should hit focused runtime tests first', priority: 1 },
+    { tool: 'runFocusedTests', pattern: 'RepoIndexLite', reason: 'RepoIndexLite packet-shaping changes should hit focused runtime tests first', priority: 1 },
     { tool: 'runBuild', reason: 'Full TypeScript build after packet-shaping edits', priority: 2 },
   ],
 };
@@ -97,6 +115,10 @@ function buildContext(profile: RepoIndexLiteProfile): RepoIndexLiteContext {
   const secondaryFiles = boundedCandidates.slice(0, profile.expansionBudget);
   const deferredSecondaryFiles = boundedCandidates.slice(profile.expansionBudget);
   const workingSet = [...primaryFiles, ...secondaryFiles];
+  const creativeDomains = profile.creativeDomains ?? PRESERVED_CREATIVE_DOMAINS;
+  const preservationClause =
+    profile.preservationClause ??
+    `Preserve all creative domains: ${PRESERVED_CREATIVE_DOMAINS.join(', ')}. Do not build a cockpit or proof theater.`;
 
   return {
     domain: profile.domain,
@@ -110,6 +132,8 @@ function buildContext(profile: RepoIndexLiteProfile): RepoIndexLiteContext {
     expansionStatus: deferredSecondaryFiles.length > 0 ? 'allowed' : 'exhausted',
     localizationConfidence: profile.localizationConfidence,
     verificationTargets: profile.verificationTargets,
+    creativeDomains,
+    preservationClause,
   };
 }
 
@@ -120,7 +144,7 @@ export function localizeBoundedSelfImprovement(description: string): RepoIndexLi
     return buildContext(CHECKPOINT_RESUME_PROFILE);
   }
 
-  if (/repoindexlite|selfimprovementruntime|task packet|working set|bounded localization|localization confidence|primary files|secondary files|expansion budget|packet shaping|localization/.test(normalized)) {
+  if (/repoindexlite|selfimprovementruntime|task packet|working set|bounded self.?improvement|\bloc\b.*(?:confidence|packet|shaping)|\bloc\b.*(?:primary|secondary).*files|packet shaping|\bloc\b(?=.*confidence)(?=.*packet)/i.test(normalized)) {
     return buildContext(LOCALIZATION_PACKET_PROFILE);
   }
 

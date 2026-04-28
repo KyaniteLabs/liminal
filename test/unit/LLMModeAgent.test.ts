@@ -379,6 +379,26 @@ describe('LLMModeAgent', () => {
     expect(session.lastPlanError).toBeUndefined();
   });
 
+  it('repairs plain-text planning responses into JSON tool calls once', async () => {
+    mockComplete
+      .mockResolvedValueOnce({ text: 'I should inspect the runtime packet first.' })
+      .mockResolvedValueOnce({ text: '{"tool":"readFile","params":{"path":"src/runtime-core/RepoIndexLite.ts"},"thought":"recover JSON","expectedResult":"read packet"}' });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-plain-text-repair',
+      title: 'Plain text repair',
+      description: 'desc',
+      approved: true,
+      maxSteps: 1,
+      requiresMutation: true,
+    });
+
+    expect(mockComplete).toHaveBeenCalledTimes(2);
+    expect(mockReadFile.execute).toHaveBeenCalledWith({ path: 'src/runtime-core/RepoIndexLite.ts' });
+    expect(session.status).toBe(Status.FAILED);
+  });
+
   it('executeTask sets FAILED when LLM response is unparseable', async () => {
     mockComplete.mockResolvedValue({ text: 'This is not JSON at all' });
     const agent = new LLMModeAgent(mockLLM as any);
@@ -770,6 +790,50 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.FAILED);
   });
 
+  it('accepts focused test verification for a runTests target after mutation', async () => {
+    queuePlans(
+      '{"tool":"applyEdit","params":{"path":"src/runtime-core/RepoIndexLite.ts","search":"const x = 1;","replace":"const x = 2;"},"thought":"edit","expectedResult":"changed"}',
+      '{"tool":"runFocusedTests","params":{"targets":["test/unit/runtime-core/RepoIndexLite.test.ts"]},"thought":"verify","expectedResult":"tests pass"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-focused-verification',
+      title: 'Focused verification',
+      description: 'desc',
+      approved: true,
+      maxSteps: 4,
+      completionPolicy: 'stop_after_verification',
+      verificationTargets: [{ tool: 'runFocusedTests', pattern: 'RepoIndexLite', reason: 'focused runtime tests', priority: 1 }],
+    });
+
+    expect(mockApplyEdit.execute).toHaveBeenCalled();
+    expect(mockRunFocusedTests.execute).toHaveBeenCalled();
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
+  it('does not accept a focused test run for the wrong required pattern', async () => {
+    queuePlans(
+      '{"tool":"applyEdit","params":{"path":"src/runtime-core/RepoIndexLite.ts","search":"const x = 1;","replace":"const x = 2;"},"thought":"edit","expectedResult":"changed"}',
+      '{"tool":"runFocusedTests","params":{"targets":["test/unit/runtime-core/SelfImprovementRuntime.test.ts"]},"thought":"verify wrong target","expectedResult":"tests pass"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-wrong-focused-verification',
+      title: 'Wrong focused verification',
+      description: 'desc',
+      approved: true,
+      maxSteps: 2,
+      completionPolicy: 'stop_after_verification',
+      verificationTargets: [{ tool: 'runFocusedTests', pattern: 'RepoIndexLite', reason: 'focused runtime tests', priority: 1 }],
+    });
+
+    expect(mockApplyEdit.execute).toHaveBeenCalled();
+    expect(mockRunFocusedTests.execute).toHaveBeenCalled();
+    expect(session.status).toBe(Status.SUSPENDED);
+  });
+
   it('auto-completes when the required verification target succeeds after mutation', async () => {
     queuePlans(
       '{"tool":"applyEdit","params":{"path":"src/runtime-core/SelfImprovementRuntime.ts","search":"x","replace":"y"},"thought":"edit","expectedResult":"changed"}',
@@ -993,6 +1057,24 @@ describe('LLMModeAgent', () => {
     expect(session.backups).toHaveLength(0);
     expect(session.status).toBe(Status.SUCCESS);
     expect(['bounded-no-change', 'bounded-inspection']).toContain(session.exitReason);
+  });
+
+  it('tells requiresMutation tasks that inspection-only completion is a failure', async () => {
+    queuePlans('{"tool":"runTests","params":{"pattern":"runtime-core"},"thought":"verify"}');
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    await agent.executeTask({
+      id: 'tui-self-requires-mutation-prompt',
+      title: 'Requires mutation prompt',
+      description: 'desc',
+      approved: true,
+      maxSteps: 1,
+      requiresMutation: true,
+    });
+
+    const userPrompt = mockComplete.mock.calls[0][0].prompt as string;
+    expect(userPrompt).toContain('Mutation requirement: this task is not complete until you make at least one successful writeFile/applyEdit mutation');
+    expect(userPrompt).toContain('Inspection-only/no-change outcomes are failures for this task.');
   });
 
   it('does not classify search-only bounded inspection as bounded-no-change success', async () => {

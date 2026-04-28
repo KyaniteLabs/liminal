@@ -22,7 +22,7 @@ export interface Level6ReleaseGateInput {
 
 export interface Level6ReleaseGateReport {
   ready: boolean;
-  level: 'level-6-candidate' | 'not-level-6';
+  level: 'level-6' | 'level-6-candidate' | 'not-level-6';
   checks: Level6ReleaseGateCheck[];
   blockers: string[];
 }
@@ -41,14 +41,14 @@ export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6
     mutatedFiles: [],
   });
   const model = runModelAssimilationGauntlet({ model: 'dry-run-model', provider: 'dry-run' });
-  const liveDomainEvidence = hasPassingReceipt(repoRoot, [
+  const liveDomainEvidence = findPassingReceipt(repoRoot, [
     '.omx/proof/domain-gauntlet-live.json',
     '.omx/domain-gauntlet-live.json',
-  ]);
-  const liveModelEvidence = hasPassingReceipt(repoRoot, [
+  ], { requiredMode: 'live-execution' });
+  const liveModelEvidence = findPassingReceipt(repoRoot, [
     '.omx/proof/model-assimilation-live.json',
     '.omx/model-assimilation-live.json',
-  ]);
+  ], { requiredMode: 'live' });
 
   const checks: Level6ReleaseGateCheck[] = [
     {
@@ -95,7 +95,7 @@ export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6
         label: 'Live creative-domain execution',
         status: liveDomainEvidence ? 'pass' : 'fail',
         evidence: liveDomainEvidence
-          ? 'Found passing live creative-domain execution receipt'
+          ? `Found passing live creative-domain execution receipt: ${liveDomainEvidence}`
           : 'No passing live creative-domain execution receipt found; source-contract gauntlet is not enough for completed Level 6.',
       },
       {
@@ -103,7 +103,7 @@ export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6
         label: 'Live model assimilation',
         status: liveModelEvidence ? 'pass' : 'fail',
         evidence: liveModelEvidence
-          ? 'Found passing live model-assimilation receipt'
+          ? `Found passing live model-assimilation receipt: ${liveModelEvidence}`
           : 'No passing live model-assimilation receipt found; dry-run audition is not enough for completed Level 6.',
       },
     );
@@ -122,21 +122,23 @@ export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6
   const blockers = checks.filter((check) => check.status !== 'pass').map((check) => `${check.label}: ${check.evidence}`);
   return {
     ready: blockers.length === 0,
-    level: blockers.length === 0 ? 'level-6-candidate' : 'not-level-6',
+    level: blockers.length === 0 ? (candidate ? 'level-6-candidate' : 'level-6') : 'not-level-6',
     checks,
     blockers,
   };
 }
 
-function hasPassingReceipt(repoRoot: string, relativePaths: string[]): boolean {
-  return relativePaths.some((relativePath) => {
+function findPassingReceipt(repoRoot: string, relativePaths: string[], options: { requiredMode: string }): string | null {
+  for (const relativePath of relativePaths) {
     const fullPath = path.join(repoRoot, relativePath);
-    if (!fs.existsSync(fullPath)) return false;
+    if (!fs.existsSync(fullPath)) continue;
     try {
-      const parsed = JSON.parse(fs.readFileSync(fullPath, 'utf8')) as { status?: unknown; ready?: unknown };
-      return parsed.status === 'pass' || parsed.ready === true;
+      const parsed = JSON.parse(fs.readFileSync(fullPath, 'utf8')) as { status?: unknown; ready?: unknown; mode?: unknown };
+      const passes = parsed.status === 'pass' || parsed.ready === true;
+      if (passes && parsed.mode === options.requiredMode) return relativePath;
     } catch {
-      return false;
+      continue;
     }
-  });
+  }
+  return null;
 }

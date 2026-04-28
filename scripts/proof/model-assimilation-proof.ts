@@ -8,7 +8,8 @@
  * silently changing routes. Live provider calls can feed the same report shape.
  */
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import fs from 'node:fs';
 import path from 'node:path';
 
 type Mode = 'fixture' | 'live';
@@ -38,6 +39,10 @@ interface ModelAssimilationReport {
   contract: 'liminal-model-assimilation-v1';
   generatedAt: string;
   mode: Mode;
+  status?: 'pass' | 'fail';
+  ready?: boolean;
+  liveEvidence?: Array<{ source: string; status: string; provider?: string; model?: string }>;
+  blockers?: string[];
   baselinePolicy: {
     promoteMargin: number;
     holdMargin: number;
@@ -129,7 +134,22 @@ function bestCandidate(role: Role, domain: Domain, candidates: CandidateEvidence
   return { role, domain, model: best.candidate.model, score: best.score, baseline, decision, reason };
 }
 
-function buildReport(mode: Mode): ModelAssimilationReport {
+async function readLiveEvidence(): Promise<{ evidence: Array<{ source: string; status: string; provider?: string; model?: string }>; blockers: string[] }> {
+  const liveSmokePath = path.join(process.cwd(), '.omx', 'proof', 'live-provider-smoke.json');
+  if (!fs.existsSync(liveSmokePath)) {
+    return { evidence: [], blockers: ['Missing .omx/proof/live-provider-smoke.json; run proof:live-provider-smoke first'] };
+  }
+  try {
+    const parsed = JSON.parse(await readFile(liveSmokePath, 'utf8')) as { status?: string; provider?: string; model?: string };
+    const evidence = [{ source: '.omx/proof/live-provider-smoke.json', status: String(parsed.status ?? 'unknown'), provider: parsed.provider, model: parsed.model }];
+    return { evidence, blockers: parsed.status === 'pass' ? [] : [`Live provider smoke status ${String(parsed.status ?? 'unknown')}`] };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return { evidence: [], blockers: [`Unreadable live provider smoke receipt: ${reason}`] };
+  }
+}
+
+async function buildReport(mode: Mode): Promise<ModelAssimilationReport> {
   const roles: Role[] = ['generator', 'evaluator', 'harness'];
   const recommendedAssignments = roles.flatMap(role => domains.map(domain => bestCandidate(role, domain, fixtureCandidates)));
   const fallbackProvenance = recommendedAssignments.map(item => {
@@ -140,10 +160,16 @@ function buildReport(mode: Mode): ModelAssimilationReport {
     return { role: item.role, domain: item.domain, chain: [item.model, ...fallback, `baseline:${item.role}:${item.domain}`] };
   });
 
+  const live = mode === 'live' ? await readLiveEvidence() : { evidence: [], blockers: [] };
+  const blockers = mode === 'live' ? live.blockers : [];
   return {
     contract: 'liminal-model-assimilation-v1',
     generatedAt: new Date().toISOString(),
     mode,
+    status: blockers.length === 0 ? 'pass' : 'fail',
+    ready: blockers.length === 0,
+    liveEvidence: live.evidence,
+    blockers,
     baselinePolicy,
     candidates: fixtureCandidates,
     recommendedAssignments,
@@ -183,11 +209,17 @@ function formatMarkdown(report: ModelAssimilationReport): string {
 
 async function main(): Promise<void> {
   const { out, mode } = parseArgs(process.argv.slice(2));
-  const report = buildReport(mode);
+  const report = await buildReport(mode);
   await mkdir(out, { recursive: true });
   await writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2), 'utf8');
   await writeFile(path.join(out, 'report.md'), formatMarkdown(report), 'utf8');
+  if (mode === 'live') {
+    const receiptPath = path.join(process.cwd(), '.omx', 'proof', 'model-assimilation-live.json');
+    await mkdir(path.dirname(receiptPath), { recursive: true });
+    await writeFile(receiptPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+  }
   console.log(`model-assimilation report: ${path.join(out, 'report.md')}`);
+  if (mode === 'live' && report.status !== 'pass') process.exit(1);
 }
 
 main().catch((error) => {

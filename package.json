@@ -57,7 +57,9 @@
     "check:orphans": "bash scripts/check-orphans.sh",
     "proof:cognitive-loop": "tsx scripts/proof/cognitive-loop-proof.ts",
     "proof:model-assimilation": "tsx scripts/proof/model-assimilation-proof.ts",
-    "proof:live-provider-smoke": "tsx scripts/proof/live-provider-smoke.ts"
+    "proof:live-provider-smoke": "tsx scripts/proof/live-provider-smoke.ts",
+    "proof:live-creative-domains": "tsx scripts/proof/live-creative-domain-execution.ts",
+    "proof:live-model-assimilation": "tsx scripts/proof/model-assimilation-proof.ts --live"
   },
   "keywords": [
     "generative-art",

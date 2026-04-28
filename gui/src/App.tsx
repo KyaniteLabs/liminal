@@ -689,6 +689,14 @@ export default function App() {
             model: evaluatorModel || undefined,
             apiKey: evaluatorApiKey || undefined,
           },
+          ...(config?.roles?.harness ? {
+            harness: {
+              provider: config.roles.harness.provider,
+              baseUrl: config.roles.harness.baseUrl,
+              model: config.roles.harness.model,
+              apiKey: config.roles.harness.apiKeyStored ? STORED_SECRET_SENTINEL : undefined,
+            },
+          } : {}),
         },
         loop: { maxIterations, timeoutMinutes },
         creative: { minQualityScore },
@@ -742,6 +750,7 @@ export default function App() {
 
   const activeMode = getWorkbenchMode(activeTab);
   const liveGenerator = bridge.session?.roles?.generator;
+  const liveHarness = bridge.session?.roles?.harness;
   const liveEvaluator = bridge.session?.roles?.evaluator;
   const providerLabel = liveGenerator
     ? `${liveGenerator.provider || 'unknown'} / ${liveGenerator.model || 'unknown'}`
@@ -749,6 +758,9 @@ export default function App() {
   const evaluatorLabel = liveEvaluator
     ? `${liveEvaluator.provider || 'unknown'} / ${liveEvaluator.model || 'unknown'}`
     : `${evaluatorProvider || 'unknown'} / ${evaluatorModel || 'unknown'}`;
+  const inspectorLabel = liveHarness
+    ? `${liveHarness.provider || 'unknown'} / ${liveHarness.model || 'unknown'}`
+    : `${config?.roles?.harness?.provider || provider || 'unknown'} / ${config?.roles?.harness?.model || model || 'unknown'}`;
   const runNeedsBridgeSession = activeMode.id === 'generate' && requiresBridgeSession(createMode);
   const runLabel = runNeedsBridgeSession && !bridge.session
     ? 'Connecting'
@@ -926,6 +938,11 @@ export default function App() {
       <div>
         <span>Generator</span>
         <strong>{providerLabel}</strong>
+      </div>
+      <div>
+        <span>Harness</span>
+        <strong>{inspectorLabel}</strong>
+        {liveHarness && <small>{liveHarness.purpose}</small>}
       </div>
       <div>
         <span>Evaluator</span>
@@ -1212,6 +1229,7 @@ export default function App() {
       audioSlot={audioSlot}
       providerLabel={providerLabel}
       evaluatorLabel={evaluatorLabel}
+      inspectorLabel={inspectorLabel}
       stageSlot={stageSlot}
       inspectorSlot={inspectorSlot}
       timelineSlot={timelineSlot}

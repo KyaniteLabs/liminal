@@ -15,6 +15,7 @@ interface WorkbenchShellProps {
   audioSlot?: React.ReactNode;
   providerLabel: string;
   evaluatorLabel: string;
+  inspectorLabel: string;
   stageSlot: React.ReactNode;
   inspectorSlot: React.ReactNode;
   timelineSlot: React.ReactNode;
@@ -36,6 +37,7 @@ export function WorkbenchShell({
   audioSlot,
   providerLabel,
   evaluatorLabel,
+  inspectorLabel,
   stageSlot,
   inspectorSlot,
   timelineSlot,
@@ -107,7 +109,7 @@ export function WorkbenchShell({
       <aside className="liminal-inspector">
         <div className="liminal-inspector__header">
           <span>Inspector</span>
-          <small>{evaluatorLabel}</small>
+          <small>{inspectorLabel}</small>
         </div>
         {inspectorSlot}
       </aside>

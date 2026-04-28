@@ -163,6 +163,7 @@ function printHelp() {
   console.log('  fix <file|description>      Auto-fix code issues with LLM assistance');
   console.log('  consolidate                 Run memory consolidation (L3→L2 compression)');
   console.log('  ledger <subcommand>         Task ledger: list, show, run, verify, accept, reject, status');
+  console.log('  self-improve gauntlet       Run headless self-improvement reflex/capability gauntlet');
   console.log('  improve <scan|run>          Diagnose repair, hardening, and optimization proposals');
   console.log('  quality <subcommand>       Quality gate: run, gate');
   console.log('  market status              Show honest market readiness status');
@@ -225,6 +226,34 @@ if (flags.help) {
 if (flags.version) {
   console.log(`Liminal v${packageJson.version}`);
   process.exit(0);
+}
+
+if (cmd === 'self-improve') {
+  const subCmd = cmdArgs[0] || 'gauntlet';
+  if (subCmd === 'gauntlet') {
+    const { runSelfImprovementGauntlet } = await import('../dist/runtime-core/SelfImprovementReflexes.js');
+    const report = runSelfImprovementGauntlet();
+    console.log('');
+    console.log('=== Self-improvement gauntlet ===');
+    console.log(`Level: ${report.level}`);
+    console.log(`Prompts: ${report.passed}/${report.total} passed`);
+    console.log(`Organs: ${report.organsTouched.join(', ')}`);
+    console.log('');
+    for (const result of report.results) {
+      console.log(`${result.status === 'pass' ? 'PASS' : 'FAIL'} ${result.id}`);
+      console.log(`  domain=${result.domain} focus=${result.fileHint}`);
+      console.log(`  reflex=${result.recommendedReflex.nextAction} organs=${result.organs.join(', ')}`);
+    }
+    if (flags.output) {
+      fs.writeFileSync(flags.output, `${JSON.stringify(report, null, 2)}\n`, 'utf-8');
+      console.log('');
+      console.log(`Wrote gauntlet report: ${flags.output}`);
+    }
+    console.log('');
+    process.exit(report.failed === 0 ? 0 : 1);
+  }
+  console.error('Usage: liminal self-improve gauntlet [--output report.json]');
+  process.exit(1);
 }
 
 // Keep improvement scans on a narrow startup path. The general CLI initializes

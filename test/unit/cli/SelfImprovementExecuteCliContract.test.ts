@@ -22,4 +22,14 @@ describe('self-improvement CLI execution contract', () => {
     expect(bin).toContain('self-improvement-session.json');
     expect(bin).toContain('prepared.task.requiresMutation = true');
   });
+
+  it('exposes a headless gauntlet command for self-improvement reflex reliability', () => {
+    const bin = readRepoFile('bin/liminal');
+
+    expect(bin).toContain("cmd === 'self-improve'");
+    expect(bin).toContain("subCmd === 'gauntlet'");
+    expect(bin).toContain('runSelfImprovementGauntlet');
+    expect(bin).toContain('Self-improvement gauntlet');
+    expect(bin).toContain('Level:');
+  });
 });

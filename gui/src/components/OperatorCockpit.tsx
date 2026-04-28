@@ -324,6 +324,8 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   let previewCompletedAt = 0;
   let generationCompletedAt = 0;
   let completedDuration = 0;
+  let hasGenerationComplete = false;
+  let selectedArtifactDomain = '';
   let latestIterationStageTimings: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }> = [];
   const artifacts: Array<{ label: string; path: string }> = [];
   const failures: string[] = [];
@@ -403,8 +405,10 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       });
     }
     if (event.type === 'artifact.found' && event.artifactPath) {
-      phase = 'artifact';
-      artifacts.push({ label: event.artifactLabel || 'artifact', path: event.artifactPath });
+      if (!hasGenerationComplete) phase = 'artifact';
+      const artifactLabel = event.artifactLabel || 'artifact';
+      selectedArtifactDomain = String(artifactLabel).split(' ')[0].toLowerCase() || selectedArtifactDomain;
+      artifacts.push({ label: artifactLabel, path: event.artifactPath });
     }
     if (event.type === 'generation.cognitive_receipt' && Array.isArray(event.receipts)) {
       for (const item of event.receipts) {
@@ -412,10 +416,11 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       }
     }
     if (event.type === 'preview.completed') {
-      phase = 'previewed';
+      if (!hasGenerationComplete) phase = 'previewed';
       previewCompletedAt = readEventTime(event) || previewCompletedAt;
     }
     if (event.type === 'generation.complete') {
+      hasGenerationComplete = true;
       phase = 'complete';
       completedDuration = event.duration || 0;
       executionMode = event.executionMode || executionMode;
@@ -431,19 +436,24 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   const boundedTotalMs = Math.max(1, (attemptTotal || plan.length || 1) * timeoutMs);
   const activeElapsedMs = activeAttemptStartedAt ? Math.max(0, now - activeAttemptStartedAt) : 0;
   const spentMs = currentAttempt > 0 ? ((currentAttempt - 1) * timeoutMs) + activeElapsedMs : elapsedMs;
-  const progressPercent = phase === 'complete'
+  const progressPercent = hasGenerationComplete || phase === 'complete' || phase === 'previewed'
     ? 1
     : currentAttempt > 0
       ? Math.min(0.96, Math.max(0.03, spentMs / boundedTotalMs))
       : 0;
-  const remainingMs = phase === 'complete' ? 0 : Math.max(0, boundedTotalMs - spentMs);
-  const activeWork = activeDomain
+  const remainingMs = hasGenerationComplete || phase === 'complete' || phase === 'previewed' ? 0 : Math.max(0, boundedTotalMs - spentMs);
+  const selectedDomain = selectedArtifactDomain || activeDomain;
+  const activeWork = hasGenerationComplete && selectedDomain
     ? executionMode === 'draft'
-      ? `Drafting first preview in ${activeDomain}`
-      : `Waiting for ${candidateCount} candidates in ${activeDomain}`
-    : plan.length
-      ? `Planning ${plan.length} domain attempts`
-      : 'Idle';
+      ? `Draft ready from ${selectedDomain}; no more domains are running.`
+      : `Run complete from ${selectedDomain}.`
+    : activeDomain
+      ? executionMode === 'draft'
+        ? `Drafting first usable preview; fallback route may try ${activeDomain} first.`
+        : `Waiting for ${candidateCount} candidates in ${activeDomain}`
+      : plan.length
+        ? `Planning ${plan.length} domain attempts`
+        : 'Idle';
   const stageTimings: Array<{ label: string; durationLabel: string }> = [];
   const renderEndAt = previewCompletedAt || generationCompletedAt;
   if (generationStartedAt && activeAttemptStartedAt > generationStartedAt) {
@@ -461,7 +471,6 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   }
 
   const attemptedDomains = uniqueStrings([
-    ...plan,
     ...[...attempts.values()].map((attempt) => attempt.domain),
     ...artifacts.map((artifact) => artifact.label.split(' ')[0]),
     activeDomain,
@@ -509,9 +518,11 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
     phase,
     latestMessage,
     elapsedLabel: elapsedMs ? formatDuration(elapsedMs) : '0s',
-    etaLabel: phase === 'complete' ? 'done' : `up to ${formatDuration(remainingMs)} left`,
+    etaLabel: hasGenerationComplete || phase === 'complete' || phase === 'previewed' ? 'done' : `up to ${formatDuration(remainingMs)} left`,
     progressPercent,
     activeWork,
+    selectedDomain,
+    fallbackRoute: plan,
     artifacts: artifacts.slice(-8),
     stageTimings,
     humanReview,

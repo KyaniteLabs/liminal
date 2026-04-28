@@ -2,7 +2,7 @@
 
 **Date:** 2026-04-27
 **Issue:** #384
-**Status:** Approved
+**Status:** Implemented (PR #391, merged 2026-04-28)
 
 ## Summary
 
@@ -343,6 +343,21 @@ Called once at startup. Logs available frameworks. The `Exporter` checks availab
 | Exporter (hyperframes) | Integration | End-to-end with mocked producer, domain routing |
 | Exporter (revideo fix) | Integration | End-to-end with mocked renderer, proper project creation |
 | Routing overlap | Unit | Verify 20+ prompts have clear winners (no 0.7+ for both generators) |
+
+## Verification (2026-04-28)
+
+**Build:** `pnpm build` — clean, zero TS errors
+**Tests:** 144 render-related tests pass (HyperFramesRenderer 6, RevideoRenderer 8, VideoPipeline 7, VideoCapabilityDetector 9, HyperFramesValidator 15, registerGenerators 35)
+
+**Runtime verification:**
+- `RevideoRenderer`: instantiates, `getCompositionConfig('yield* waitFor(2); yield* waitFor(3);', 30)` → duration=5s, fps=30, 1920x1080
+- `HyperFramesRenderer`: instantiates, `render`/`writeComposition`/`cleanup` functional
+- `VideoPipeline`: instantiates, `execute` chains steps
+- `VideoCapabilityDetector`: revideo=true, hyperframes=false (simulated API)
+- `HyperFramesValidator`: valid HTML passes, blocked patterns rejected
+- `HyperFramesGenerator.canHandle`: promo=0.9, particles=0, hyperframes=0.95, slideshow=0.9
+
+**Code review:** All P1/P2/critical items from Kilo Code Review addressed. CI passes (build, tests, docs, security audit).
 
 ## Out of Scope
 

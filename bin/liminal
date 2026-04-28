@@ -164,6 +164,9 @@ function printHelp() {
   console.log('  consolidate                 Run memory consolidation (L3→L2 compression)');
   console.log('  ledger <subcommand>         Task ledger: list, show, run, verify, accept, reject, status');
   console.log('  self-improve gauntlet       Run headless self-improvement reflex/capability gauntlet');
+  console.log('  domains gauntlet            Run preserved creative-domain gauntlet');
+  console.log('  model audition <model>      Dry-run model assimilation audition');
+  console.log('  release gate                Run Level 6 release gate');
   console.log('  improve <scan|run>          Diagnose repair, hardening, and optimization proposals');
   console.log('  quality <subcommand>       Quality gate: run, gate');
   console.log('  market status              Show honest market readiness status');
@@ -253,6 +256,88 @@ if (cmd === 'self-improve') {
     process.exit(report.failed === 0 ? 0 : 1);
   }
   console.error('Usage: liminal self-improve gauntlet [--output report.json]');
+  process.exit(1);
+}
+
+if (cmd === 'domains') {
+  const subCmd = cmdArgs[0] || 'gauntlet';
+  if (subCmd === 'gauntlet') {
+    const { runCreativeDomainGauntlet } = await import('../dist/runtime-core/CreativeDomainGauntlet.js');
+    const report = runCreativeDomainGauntlet(repoRoot);
+    console.log('');
+    console.log('=== Creative domain gauntlet ===');
+    console.log(`Domains: ${report.passed}/${report.total} passed`);
+    for (const domain of report.domains) {
+      console.log(`${domain.status === 'pass' ? 'PASS' : 'FAIL'} ${domain.label}`);
+      console.log(`  prompt=${domain.prompt}`);
+      console.log(`  verification=${domain.verification}`);
+    }
+    if (flags.output) {
+      fs.writeFileSync(flags.output, `${JSON.stringify(report, null, 2)}\n`, 'utf-8');
+      console.log('');
+      console.log(`Wrote domain gauntlet report: ${flags.output}`);
+    }
+    console.log('');
+    process.exit(report.ready ? 0 : 1);
+  }
+  console.error('Usage: liminal domains gauntlet [--output report.json]');
+  process.exit(1);
+}
+
+if (cmd === 'model') {
+  const subCmd = cmdArgs[0] || 'audition';
+  if (subCmd === 'audition') {
+    const model = cmdArgs[1] || flags.model || 'dry-run-model';
+    const provider = flags.provider || (flags.dryRun ? 'dry-run' : 'dry-run');
+    const { runModelAssimilationGauntlet } = await import('../dist/runtime-core/ModelAssimilationGauntlet.js');
+    const report = runModelAssimilationGauntlet({ model, provider });
+    console.log('');
+    console.log('=== Model assimilation audition ===');
+    console.log(`Model: ${report.model}`);
+    console.log(`Provider: ${report.provider}`);
+    console.log(`Ready: ${report.ready ? 'YES' : 'NO'}`);
+    for (const check of report.checks) {
+      console.log(`${check.status === 'pass' ? 'PASS' : 'FAIL'} ${check.label}: ${check.evidence}`);
+    }
+    console.log(`Recommendation: ${report.recommendation}`);
+    if (flags.output) {
+      fs.writeFileSync(flags.output, `${JSON.stringify(report, null, 2)}\n`, 'utf-8');
+      console.log('');
+      console.log(`Wrote model audition report: ${flags.output}`);
+    }
+    console.log('');
+    process.exit(report.ready ? 0 : 1);
+  }
+  console.error('Usage: liminal model audition <model> [--provider name] [--output report.json]');
+  process.exit(1);
+}
+
+if (cmd === 'release') {
+  const subCmd = cmdArgs[0] || 'gate';
+  if (subCmd === 'gate') {
+    const { runLevel6ReleaseGate } = await import('../dist/runtime-core/Level6ReleaseGate.js');
+    const report = runLevel6ReleaseGate({ repoRoot });
+    console.log('');
+    console.log('=== Level 6 release gate ===');
+    console.log(`Level: ${report.level}`);
+    console.log(`Ready: ${report.ready ? 'YES' : 'NO'}`);
+    for (const check of report.checks) {
+      console.log(`${check.status === 'pass' ? 'PASS' : 'FAIL'} ${check.label}: ${check.evidence}`);
+    }
+    if (report.blockers.length > 0) {
+      console.log('');
+      console.log('Blockers:');
+      for (const blocker of report.blockers) console.log(`- ${blocker}`);
+    }
+    if (flags.output) {
+      fs.writeFileSync(flags.output, `${JSON.stringify(report, null, 2)}\n`, 'utf-8');
+      console.log('');
+      console.log(`Wrote Level 6 release gate report: ${flags.output}`);
+    }
+    console.log('');
+    process.exit(report.ready ? 0 : 1);
+  }
+  console.error('Usage: liminal release gate [--output report.json]');
   process.exit(1);
 }
 

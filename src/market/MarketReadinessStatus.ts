@@ -36,6 +36,7 @@ export function collectRepositoryMarketReadinessStatus(repoRoot = process.cwd())
   const app = read(path.join(repoRoot, 'gui', 'src', 'App.tsx'));
   const cliReceipt = read(path.join(repoRoot, 'src', 'cli', 'CognitiveReceiptReporter.ts'));
   const wrappers = read(path.join(repoRoot, 'src', 'core', 'wrappers', 'GenericWrapper.ts'));
+  const level6Gate = read(path.join(repoRoot, 'src', 'runtime-core', 'Level6ReleaseGate.ts'));
   const packageJson = read(path.join(repoRoot, 'package.json'));
 
   const checks: MarketReadinessCheck[] = [
@@ -44,6 +45,7 @@ export function collectRepositoryMarketReadinessStatus(repoRoot = process.cwd())
     sourceCheck('studio-cognition', 'Studio learning receipts', `${telemetry}\n${app}`, ['latestCognitiveReceipt', 'What Liminal learned', 'liminal-cognitive-receipt']),
     sourceCheck('cli-cognition', 'CLI learning receipts', `${bin}\n${cliReceipt}`, ['writeCliCognitiveReceipt', 'What Liminal learned']),
     sourceCheck('studio-smoke-script', 'Studio smoke script', packageJson, ['proof:studio-smoke']),
+    sourceCheck('level6-gate', 'Level 6 release gate', `${bin}\n${level6Gate}`, ['release gate', 'runLevel6ReleaseGate', 'self-improvement-gauntlet', 'creative-domain-gauntlet']),
     liveProviderSmokeCheck(repoRoot),
   ];
 

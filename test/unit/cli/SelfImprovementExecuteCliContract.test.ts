@@ -32,4 +32,15 @@ describe('self-improvement CLI execution contract', () => {
     expect(bin).toContain('Self-improvement gauntlet');
     expect(bin).toContain('Level:');
   });
+
+  it('exposes Level 6 product gates from the real CLI', () => {
+    const bin = readRepoFile('bin/liminal');
+
+    expect(bin).toContain("cmd === 'domains'");
+    expect(bin).toContain('runCreativeDomainGauntlet');
+    expect(bin).toContain("cmd === 'model'");
+    expect(bin).toContain('runModelAssimilationGauntlet');
+    expect(bin).toContain("cmd === 'release'");
+    expect(bin).toContain('runLevel6ReleaseGate');
+  });
 });

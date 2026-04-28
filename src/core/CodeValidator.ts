@@ -23,6 +23,7 @@ import { RemotionValidator } from './validators/RemotionValidator.js';
 import { RevideoValidator } from './validators/RevideoValidator.js';
 import { HTMLValidator } from './validators/HTMLValidator.js';
 import { ASCIIValidator } from './validators/ASCIIValidator.js';
+import { HyperFramesValidator } from './validators/HyperFramesValidator.js';
 import { validateSVG } from '../generators/svg/SVGValidator.js';
 import {
   type ValidationResult,
@@ -48,6 +49,7 @@ const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
   'svg': 40,
   'remotion': RemotionValidator.getMinSize(),
   'revideo': RevideoValidator.getMinSize(),
+  'hyperframes': HyperFramesValidator.getMinSize(),
   'html': HTMLValidator.getMinSize(),
   'ascii': ASCIIValidator.getMinSize(),
   'kinetic': 100,
@@ -103,6 +105,10 @@ function detectDomain(code: string): Domain {
 
   // Check for Revideo (before Remotion)
   if (/\bmakeScene|@revideo\/core/.test(code)) return 'revideo';
+
+  // Check for HyperFrames (HTML+GSAP compositing)
+  if (/data-composition-id/.test(code) && /gsap\.timeline|gsap\.to\(/.test(code)) return 'hyperframes';
+  if (/window\.__timelines/.test(code) && /class="clip"/.test(code)) return 'hyperframes';
 
   // Check for Remotion
   if (/useCurrentFrame|AbsoluteFill|<Composition|from\s+['"]remotion['"]/.test(code)) return 'remotion';
@@ -197,6 +203,11 @@ function validateStructure(code: string, domain: Domain): string[] {
       errors.push(...result.errors);
       break;
     }
+    case 'hyperframes': {
+      const result = HyperFramesValidator.validate(trimmed);
+      errors.push(...result.errors);
+      break;
+    }
     case 'html': {
       const result = HTMLValidator.validate(trimmed);
       errors.push(...result.errors);
@@ -249,6 +260,10 @@ function validateSelfContained(code: string, domain: Domain): string[] {
     }
     case 'revideo': {
       // Revideo is JSX source, not HTML-wrapped
+      break;
+    }
+    case 'hyperframes': {
+      // HyperFrames is standalone HTML+GSAP, self-contained by design
       break;
     }
     case 'html': {

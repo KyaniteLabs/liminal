@@ -13,16 +13,17 @@ export interface DomainValidationResult {
   errors: string[];
 }
 
-export type Domain = 
-  | 'p5' 
-  | 'shader' 
-  | 'glsl' 
-  | 'three' 
+export type Domain =
+  | 'p5'
+  | 'shader'
+  | 'glsl'
+  | 'three'
   | 'remotion'
-  | 'revideo' 
-  | 'music' 
-  | 'hydra' 
-  | 'strudel' 
+  | 'revideo'
+  | 'hyperframes'
+  | 'music'
+  | 'hydra'
+  | 'strudel'
   | 'tone'
   | 'svg'
   | 'kinetic'

@@ -9,7 +9,7 @@ const STRUDEL_CDN = 'https://unpkg.com/@strudel/repl@1.0.2';
 const HYDRA_CDN = 'https://unpkg.com/hydra-synth';
 const TONE_CDN = 'https://unpkg.com/tone@14.8.49/build/Tone.js';
 
-export type GenericDomain = 'strudel' | 'hydra' | 'tone' | 'shader' | 'revideo' | 'remotion' | 'ascii';
+export type GenericDomain = 'strudel' | 'hydra' | 'tone' | 'shader' | 'revideo' | 'remotion' | 'ascii' | 'hyperframes';
 
 export interface GenericWrapOptions {
   domain: GenericDomain;
@@ -135,6 +135,8 @@ export class GenericWrapper {
         return this.wrapRemotion(code, options.showPreview ?? false);
       case 'revideo':
         return this.wrapRevideo(code, options.showPreview ?? false);
+      case 'hyperframes':
+        return this.wrapHyperframes(code, options.showPreview ?? false);
       case 'ascii':
         return this.wrapASCII(code, options.asciiWidth ?? 60);
       default:
@@ -459,8 +461,7 @@ ${safeCommentCode}
     </div>
     <pre><code>${escaped}</code></pre>
     <p class="note">
-        💡 <strong>Note:</strong> Remotion compositions require the Remotion CLI or bundler to render. 
-        Use <code>npx remotion render</code> to generate the video from this code.
+        💡 <strong>Note:</strong> Legacy Remotion project. Consider migrating to Revideo or HyperFrames.
     </p>
 </body>
 </html>`;
@@ -560,9 +561,39 @@ ${safeCommentCode}
     </div>
     <pre><code>${escaped}</code></pre>
     <p class="note">
-        💡 <strong>Note:</strong> Revideo compositions require the Revideo CLI to render.
-        Use <code>npx revideo render</code> to generate the video from this code.
+        💡 <strong>Note:</strong> Revideo scene — renders via @revideo/renderer (in-process).
+        Use <code>Exporter.exportVideo()</code> for MP4 output.
     </p>
+</body>
+</html>`;
+  }
+
+  private static wrapHyperframes(code: string, _showPreview = false): string {
+    const escaped = code
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HyperFrames Composition</title>
+  <style>
+    body { margin: 0; background: #1a1a2e; font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    h2 { color: #e0e0e0; margin-bottom: 16px; }
+    .preview { width: 960px; height: 540px; border: 2px solid #333; border-radius: 8px; background: #fff; }
+    pre { white-space: pre-wrap; word-wrap: break-word; background: #0f0f1a; padding: 1.5rem; border-radius: 8px; border: 1px solid #1e293b; max-width: 960px; overflow-x: auto; color: #e0e0e0; font-size: 0.85rem; }
+    .info { color: #888; margin-top: 12px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h2>HyperFrames Composition</h2>
+  <iframe class="preview" srcdoc="${escaped}" sandbox="allow-scripts"></iframe>
+  <p class="info">Renders via @hyperframes/producer — use Exporter.exportVideo() for MP4 output</p>
 </body>
 </html>`;
   }

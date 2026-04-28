@@ -258,8 +258,8 @@ void main() { fragColor = vec4(1.0); }`;
       const result = GenericWrapper.wrap(code, { domain: 'remotion' });
       
       expect(result).toContain('<!DOCTYPE html>');
-      expect(result).toContain('Remotion Composition');
-      expect(result).toContain('npx remotion render');
+      expect(result).toContain('Remotion');
+      expect(result).toContain('Legacy Remotion');
     });
 
     it('extracts metadata from code', () => {

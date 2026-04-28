@@ -158,4 +158,8 @@ export type TuiBridgeEvent =
   | { type: 'cortex.dashboard'; sessionId: string; content: string }
   // Gardener events: autonomous taste/dream/emergence cycle results
   | { type: 'gardener.cycle'; sessionId: string; cycle: number; mode: string; actions: number; budgetRemaining: number; taskBreakdown?: { fresh: number; replay: number; dream: number }; health: unknown }
+  // Video render events: emitted during video export lifecycle
+  | { type: 'video:render:start'; sessionId: string; domain: string }
+  | { type: 'video:render:complete'; sessionId: string; domain: string; videoPath: string }
+  | { type: 'video:render:error'; sessionId: string; domain: string; error: string }
   | { type: 'error'; sessionId: string; message: string };

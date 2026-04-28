@@ -27,4 +27,11 @@ describe('runCreativeDomainGauntlet', () => {
     ]);
     expect(result.domains.every((domain) => domain.checks.route && domain.checks.implementation && domain.checks.verification)).toBe(true);
   });
+
+  it('labels the default gauntlet as a source-contract check rather than live generation', () => {
+    const result = runCreativeDomainGauntlet();
+
+    expect(result.mode).toBe('source-contract');
+    expect(result.domains.every((domain) => domain.checks.liveExecution === false)).toBe(true);
+  });
 });

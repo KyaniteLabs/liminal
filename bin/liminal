@@ -205,6 +205,7 @@ function printHelp() {
   console.log('  --test-failures             Auto-detect and fix test failures');
   console.log('  --test-file <path>          Fix based on specific test file pattern');
   console.log('  --dry-run                   Show what would be fixed without making changes');
+  console.log('                              With release gate: report Level 6 candidate gates without requiring live receipts');
   console.log('  --confirm <auto|ask|never>  Confirmation level for fix command (default: ask)');
   console.log('  --help, -h                  Show this help message');
   console.log('  --version                   Show version');
@@ -316,7 +317,11 @@ if (cmd === 'release') {
   const subCmd = cmdArgs[0] || 'gate';
   if (subCmd === 'gate') {
     const { runLevel6ReleaseGate } = await import('../dist/runtime-core/Level6ReleaseGate.js');
-    const report = runLevel6ReleaseGate({ repoRoot });
+    const report = runLevel6ReleaseGate({
+      repoRoot,
+      candidate: flags.dryRun === true,
+      includeMarketReadiness: flags.dryRun === true ? false : undefined,
+    });
     console.log('');
     console.log('=== Level 6 release gate ===');
     console.log(`Level: ${report.level}`);

@@ -11,6 +11,7 @@ export interface CreativeDomainGauntletDomain {
 }
 
 export interface CreativeDomainGauntletResult {
+  mode: 'source-contract';
   ready: boolean;
   total: number;
   passed: number;
@@ -22,6 +23,7 @@ export interface CreativeDomainGauntletResult {
       implementation: boolean;
       verification: boolean;
       preserved: boolean;
+      liveExecution: boolean;
     };
   }>;
 }
@@ -45,18 +47,19 @@ export function runCreativeDomainGauntlet(repoRoot = process.cwd()): CreativeDom
     const implementation = domain.implementationFiles.every((file) => fs.existsSync(path.join(repoRoot, file)));
     const route = domain.prompt.length > 0 && domain.id.length > 0;
     const verification = domain.verification.length > 0;
+    const liveExecution = false;
     const preserved = PRESERVED_CREATIVE_DOMAINS.some((preservedDomain) =>
       preservedDomain.toLowerCase().replace(/\.js$/, '') === domain.label.toLowerCase().replace(/\.js$/, '')
       || preservedDomain.toLowerCase() === domain.label.toLowerCase(),
     );
-    const checks = { route, implementation, verification, preserved };
+    const checks = { route, implementation, verification, preserved, liveExecution };
     return {
       ...domain,
       checks,
-      status: Object.values(checks).every(Boolean) ? 'pass' as const : 'fail' as const,
+      status: route && implementation && verification && preserved ? 'pass' as const : 'fail' as const,
     };
   });
   const passed = domains.filter((domain) => domain.status === 'pass').length;
   const failed = domains.length - passed;
-  return { ready: failed === 0, total: domains.length, passed, failed, domains };
+  return { mode: 'source-contract', ready: failed === 0, total: domains.length, passed, failed, domains };
 }

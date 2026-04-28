@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { collectRepositoryMarketReadinessStatus } from '../market/MarketReadinessStatus.js';
 import { runCreativeDomainGauntlet } from './CreativeDomainGauntlet.js';
 import { buildCognitiveRunReceipt } from './CognitiveRunReceipt.js';
@@ -14,6 +16,8 @@ export interface Level6ReleaseGateCheck {
 export interface Level6ReleaseGateInput {
   repoRoot?: string;
   includeMarketReadiness?: boolean;
+  /** Candidate mode keeps dry-run/source-contract gates explicit instead of treating them as full live Level 6 proof. */
+  candidate?: boolean;
 }
 
 export interface Level6ReleaseGateReport {
@@ -25,6 +29,7 @@ export interface Level6ReleaseGateReport {
 
 export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6ReleaseGateReport {
   const repoRoot = input.repoRoot || process.cwd();
+  const candidate = input.candidate === true;
   const selfImprovement = runSelfImprovementGauntlet();
   const domains = runCreativeDomainGauntlet(repoRoot);
   const cognitiveReceipt = buildCognitiveRunReceipt({
@@ -36,6 +41,14 @@ export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6
     mutatedFiles: [],
   });
   const model = runModelAssimilationGauntlet({ model: 'dry-run-model', provider: 'dry-run' });
+  const liveDomainEvidence = hasPassingReceipt(repoRoot, [
+    '.omx/proof/domain-gauntlet-live.json',
+    '.omx/domain-gauntlet-live.json',
+  ]);
+  const liveModelEvidence = hasPassingReceipt(repoRoot, [
+    '.omx/proof/model-assimilation-live.json',
+    '.omx/model-assimilation-live.json',
+  ]);
 
   const checks: Level6ReleaseGateCheck[] = [
     {
@@ -48,7 +61,7 @@ export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6
       id: 'creative-domain-gauntlet',
       label: 'Creative-domain gauntlet',
       status: domains.ready ? 'pass' : 'fail',
-      evidence: `${domains.passed}/${domains.total} domains passed`,
+      evidence: `${domains.passed}/${domains.total} domains passed (${domains.mode})`,
     },
     {
       id: 'cognitive-receipts',
@@ -75,6 +88,27 @@ export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6
     },
   ];
 
+  if (!candidate) {
+    checks.push(
+      {
+        id: 'live-creative-domain-execution',
+        label: 'Live creative-domain execution',
+        status: liveDomainEvidence ? 'pass' : 'fail',
+        evidence: liveDomainEvidence
+          ? 'Found passing live creative-domain execution receipt'
+          : 'No passing live creative-domain execution receipt found; source-contract gauntlet is not enough for completed Level 6.',
+      },
+      {
+        id: 'live-model-assimilation',
+        label: 'Live model assimilation',
+        status: liveModelEvidence ? 'pass' : 'fail',
+        evidence: liveModelEvidence
+          ? 'Found passing live model-assimilation receipt'
+          : 'No passing live model-assimilation receipt found; dry-run audition is not enough for completed Level 6.',
+      },
+    );
+  }
+
   if (input.includeMarketReadiness !== false) {
     const market = collectRepositoryMarketReadinessStatus(repoRoot);
     checks.push({
@@ -92,4 +126,17 @@ export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6
     checks,
     blockers,
   };
+}
+
+function hasPassingReceipt(repoRoot: string, relativePaths: string[]): boolean {
+  return relativePaths.some((relativePath) => {
+    const fullPath = path.join(repoRoot, relativePath);
+    if (!fs.existsSync(fullPath)) return false;
+    try {
+      const parsed = JSON.parse(fs.readFileSync(fullPath, 'utf8')) as { status?: unknown; ready?: unknown };
+      return parsed.status === 'pass' || parsed.ready === true;
+    } catch {
+      return false;
+    }
+  });
 }

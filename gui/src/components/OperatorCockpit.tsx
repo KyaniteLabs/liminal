@@ -37,6 +37,7 @@ type BridgeEvent = {
   success?: boolean;
   receivedAt?: number;
   action?: { id: string; title: string };
+  receipts?: Array<{ organ?: string; status?: string; detail?: string }>;
 };
 
 type SessionStatus = {
@@ -136,6 +137,7 @@ export function OperatorCockpit() {
   }
 
   const derived = useMemo(() => deriveCockpit(events, now), [events, now]);
+  const [copiedReport, setCopiedReport] = useState(false);
   const status = session ? `${session.provider || 'unknown'} / ${session.model || 'unknown'}` : 'No session';
   const roles = session?.roles ? Object.values(session.roles) : [];
 
@@ -228,6 +230,35 @@ export function OperatorCockpit() {
         </section>
 
         <section className="cockpit-card cockpit-card--wide">
+          <div className="cockpit-card-heading">
+            <h3 className="atelier-heading">Human Review Readiness</h3>
+            <button
+              className="atelier-btn atelier-btn--secondary"
+              type="button"
+              onClick={() => {
+                void navigator.clipboard?.writeText(derived.humanReview.issueReport);
+                setCopiedReport(true);
+                window.setTimeout(() => setCopiedReport(false), 1400);
+              }}
+            >
+              {copiedReport ? 'Copied' : 'Copy report'}
+            </button>
+          </div>
+          <div className={`cockpit-review-status cockpit-review-status--${derived.humanReview.status}`}>
+            <strong>{derived.humanReview.heading}</strong>
+            <span>{derived.humanReview.summary}</span>
+          </div>
+          <div className="cockpit-review-checks">
+            {derived.humanReview.checks.map((check) => (
+              <div className={`cockpit-review-check cockpit-review-check--${check.status}`} key={check.label}>
+                <span>{check.label}</span>
+                <small>{check.detail}</small>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="cockpit-card cockpit-card--wide">
           <h3 className="atelier-heading">Timeline</h3>
           <div className="cockpit-timeline">
             {events.slice(-24).map((event, index) => (
@@ -252,6 +283,30 @@ export function OperatorCockpit() {
   );
 }
 
+
+const HUMAN_DOMAIN_CHECKS: Record<string, string[]> = {
+  p5: ['motion quality', 'visual taste', 'recognizability'],
+  svg: ['shape recognizability', 'composition', 'brand fit'],
+  glsl: ['motion quality', 'color/taste', 'shader is not blank'],
+  three: ['3D readability', 'camera/lighting', 'motion quality'],
+  hydra: ['video-synth motion', 'aesthetic taste', 'not blank'],
+  strudel: ['audio groove', 'play affordance', 'timing feel'],
+  tone: ['audio feel', 'play affordance', 'mix/timbre'],
+  revideo: ['motion/video timing', 'text readability', 'recording usefulness'],
+  html: ['layout quality', 'marketing readability', 'responsive fit'],
+  ascii: ['intentional composition', 'readability', 'not prose spillover'],
+  kinetic: ['animated typography', 'readability', 'motion taste'],
+  textgen: ['poetic quality', 'readability', 'not placeholder text'],
+};
+
+function humanChecksForDomain(domain: string): string[] {
+  return HUMAN_DOMAIN_CHECKS[domain.toLowerCase()] || ['taste', 'domain fit', 'recording usefulness'];
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values.filter(Boolean))];
+}
+
 export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   const planEvent = [...events].reverse().find((event) => event.type === 'generation.domain_plan');
   const plan = Array.isArray(planEvent?.domains) ? planEvent!.domains! : [];
@@ -271,6 +326,8 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   let completedDuration = 0;
   let latestIterationStageTimings: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }> = [];
   const artifacts: Array<{ label: string; path: string }> = [];
+  const failures: string[] = [];
+  const receipts: Array<{ organ: string; status: string; detail: string }> = [];
 
   for (const event of events) {
     if (event.type === 'activity.updated' && event.message) latestMessage = event.message;
@@ -336,6 +393,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       phase = 'fallback';
       currentAttempt = event.attempt || currentAttempt;
       attemptTotal = event.attemptTotal || attemptTotal;
+      failures.push(`${event.domain || 'unknown'}: ${event.error || event.message || 'attempt failed'}`);
       attempts.set(`${event.attempt}-${event.domain}`, {
         attempt: event.attempt || 0,
         total: event.attemptTotal || 0,
@@ -347,6 +405,11 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
     if (event.type === 'artifact.found' && event.artifactPath) {
       phase = 'artifact';
       artifacts.push({ label: event.artifactLabel || 'artifact', path: event.artifactPath });
+    }
+    if (event.type === 'generation.cognitive_receipt' && Array.isArray(event.receipts)) {
+      for (const item of event.receipts) {
+        receipts.push({ organ: String(item.organ || 'organ'), status: String(item.status || 'unknown'), detail: String(item.detail || '') });
+      }
     }
     if (event.type === 'preview.completed') {
       phase = 'previewed';
@@ -397,6 +460,48 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
     stageTimings.push({ label: 'Render', durationLabel: formatDuration(previewCompletedAt - generationCompletedAt) });
   }
 
+  const attemptedDomains = uniqueStrings([
+    ...plan,
+    ...[...attempts.values()].map((attempt) => attempt.domain),
+    ...artifacts.map((artifact) => artifact.label.split(' ')[0]),
+    activeDomain,
+  ].map((value) => String(value || '').toLowerCase()));
+  const humanFocus = uniqueStrings(attemptedDomains.flatMap(humanChecksForDomain));
+  const latestArtifact = artifacts.at(-1);
+  const humanReviewStatus = failures.length > 0 ? 'blocked' : phase === 'complete' || phase === 'previewed' || artifacts.length > 0 ? 'ready' : 'waiting';
+  const humanReview = {
+    status: humanReviewStatus as 'waiting' | 'ready' | 'blocked',
+    heading: humanReviewStatus === 'blocked' ? 'Fix machine blockers before humans' : humanReviewStatus === 'ready' ? 'Ready for human-only judgment' : 'Not ready for humans yet',
+    summary: humanReviewStatus === 'ready'
+      ? 'Machine context is collected; humans should judge taste, audio, motion, recognizability, and recording usefulness.'
+      : humanReviewStatus === 'blocked'
+        ? failures[failures.length - 1]
+        : 'Wait for artifact, preview, and receipt context before spending human time.',
+    checks: [
+      { label: 'Machine blockers', status: failures.length > 0 ? 'blocked' : 'ready', detail: failures.length > 0 ? failures.slice(-2).join(' | ') : 'No attempt failures in this run.' },
+      { label: 'Artifact context', status: artifacts.length > 0 ? 'ready' : 'waiting', detail: latestArtifact ? `${latestArtifact.label}: ${latestArtifact.path}` : 'Waiting for artifact path.' },
+      { label: 'Human-only focus', status: humanFocus.length > 0 ? 'ready' : 'waiting', detail: humanFocus.length > 0 ? humanFocus.slice(0, 6).join(', ') : 'Waiting for domain route.' },
+      { label: 'Cognitive context', status: receipts.length > 0 ? 'ready' : 'waiting', detail: receipts.length > 0 ? receipts.map((item) => `${item.organ}:${item.status}`).join(', ') : 'Waiting for memory/compost/dreaming/intuition receipt.' },
+    ],
+    issueReport: [
+      '# Liminal run review report',
+      '',
+      `phase: ${phase}`,
+      `domains: ${attemptedDomains.join(' -> ') || 'unknown'}`,
+      `active work: ${activeWork}`,
+      `latest message: ${latestMessage || 'none'}`,
+      `artifact: ${latestArtifact ? `${latestArtifact.label} ${latestArtifact.path}` : 'none'}`,
+      `machine blockers: ${failures.length ? failures.join(' | ') : 'none'}`,
+      `human-only checks: ${humanFocus.join(', ') || 'unknown'}`,
+      `cognitive receipts: ${receipts.length ? receipts.map((item) => `${item.organ}:${item.status}`).join(', ') : 'none'}`,
+      '',
+      'Human finding:',
+      '- expected vs actual:',
+      '- taste/audio/motion/recognizability issue:',
+      '- recording impact: blocks / caveat / cosmetic',
+    ].join('\n'),
+  };
+
   return {
     plan,
     attempts: [...attempts.values()],
@@ -409,6 +514,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
     activeWork,
     artifacts: artifacts.slice(-8),
     stageTimings,
+    humanReview,
   };
 }
 

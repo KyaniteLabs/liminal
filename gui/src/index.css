@@ -1464,3 +1464,104 @@ body::before {
   color: var(--atelier-accent);
   border-color: var(--atelier-border-strong);
 }
+
+/* Human review and recording readiness on existing surfaces */
+.liminal-human-review-strip {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--atelier-border);
+  background: rgba(10, 12, 18, 0.86);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+  z-index: 4;
+}
+
+.liminal-human-review-strip span,
+.liminal-review-panel span {
+  display: block;
+  color: var(--atelier-text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.liminal-human-review-strip strong,
+.liminal-review-panel strong { display: block; color: var(--atelier-text); }
+.liminal-human-review-strip small { display: block; color: var(--atelier-text-muted); max-width: 760px; }
+.liminal-human-review-strip--ready { border-color: rgba(90, 155, 110, 0.45); }
+.liminal-human-review-strip--blocked { border-color: rgba(199, 93, 93, 0.55); }
+.liminal-human-review-strip button {
+  border: 1px solid var(--atelier-border);
+  border-radius: 999px;
+  background: var(--atelier-surface-raised);
+  color: var(--atelier-text);
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.liminal-review-panel,
+.cockpit-review-status,
+.cockpit-review-check {
+  border: 1px solid var(--atelier-border);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.035);
+}
+
+.liminal-review-panel {
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  grid-column: 1 / -1;
+}
+
+.liminal-review-panel small { color: var(--atelier-text-muted); line-height: 1.35; }
+.liminal-review-panel--ready { border-color: rgba(90, 155, 110, 0.45); }
+.liminal-review-panel--blocked { border-color: rgba(199, 93, 93, 0.55); }
+
+.cockpit-card-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.cockpit-review-status {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.cockpit-review-status strong { color: var(--atelier-text); }
+.cockpit-review-status span { color: var(--atelier-text-muted); font-size: 0.875rem; }
+.cockpit-review-status--ready { border-color: rgba(90, 155, 110, 0.45); }
+.cockpit-review-status--blocked { border-color: rgba(199, 93, 93, 0.55); }
+
+.cockpit-review-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.cockpit-review-check {
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  font-size: 0.8125rem;
+}
+
+.cockpit-review-check span { font-weight: 700; }
+.cockpit-review-check small { color: var(--atelier-text-muted); }
+.cockpit-review-check--ready { border-left: 3px solid var(--atelier-success); }
+.cockpit-review-check--blocked { border-left: 3px solid var(--atelier-error); }
+.cockpit-review-check--waiting { border-left: 3px solid #e8c95a; }

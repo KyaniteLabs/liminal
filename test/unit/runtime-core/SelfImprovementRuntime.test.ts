@@ -183,9 +183,9 @@ describe('LLMModeSelfImprovementRuntime', () => {
       localizationConfidence: 'high',
       verificationTargets: [
         {
-          tool: 'runTests',
-          pattern: 'runtime-core',
-          reason: 'Runtime-core packet shaping changes should hit focused runtime tests first',
+          tool: 'runFocusedTests',
+          pattern: 'RepoIndexLite',
+          reason: 'RepoIndexLite packet-shaping changes should hit focused runtime tests first',
           priority: 1,
         },
         {

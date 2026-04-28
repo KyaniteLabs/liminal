@@ -113,6 +113,31 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
+
+function isIsolatedWorktree(cwd = process.cwd()) {
+  return cwd.includes(`${path.sep}.worktrees${path.sep}`)
+    || cwd.includes(`${path.sep}.claude${path.sep}worktrees${path.sep}`);
+}
+
+function summarizeSession(session) {
+  return {
+    status: session.status,
+    exitReason: session.exitReason,
+    startTime: session.startTime,
+    endTime: session.endTime,
+    stepCount: session.stepCount,
+    mutatedFiles: Array.from(session.mutatedFiles || []),
+    successfulMutatedFiles: Array.from(session.successfulMutatedFiles || []),
+    exploredPaths: Array.from(session.exploredPaths || []),
+    messages: (session.messages || []).map((message) => ({
+      role: message.role,
+      content: typeof message.content === 'string' ? message.content.slice(0, 4000) : message.content,
+      toolCall: message.toolCall,
+      toolResult: message.toolResult,
+    })),
+  };
+}
+
 function printHelp() {
   console.log('');
   console.log('🎨 Liminal: Creative Coding Agent');
@@ -250,7 +275,7 @@ if (cmd === 'improve') {
       process.exit(1);
     }
 
-    const inWorktree = process.cwd().includes(`${path.sep}.worktrees${path.sep}`);
+    const inWorktree = isIsolatedWorktree();
     if (!inWorktree && process.env.LIMINAL_ALLOW_MAIN_WORKTREE_IMPROVE !== '1') {
       console.error('Refusing to mutate the main worktree. Create an isolated worktree, then rerun this command there.');
       console.error('Override only for deliberate local experiments: LIMINAL_ALLOW_MAIN_WORKTREE_IMPROVE=1');
@@ -512,8 +537,46 @@ if (naturalLanguagePrompt && flags.prompt && isSelfImprovementPrompt(flags.promp
   console.log(`✅ Task Markdown: ${taskMdPath}`);
   console.log(`🎯 Focus file: ${prepared.task.fileHint}`);
   console.log(`🧪 Verification: ${prepared.task.verificationTargets.map((target) => target.tool).join(', ')}`);
+
+  const executeRequested = flags.confirm === 'auto' || flags.force === true;
+  if (!executeRequested) {
+    console.log('ℹ️  Add --confirm auto to execute this bounded self-improvement task in an isolated worktree.');
+    console.log('');
+    process.exit(0);
+  }
+
+  if (!isIsolatedWorktree() && process.env.LIMINAL_ALLOW_MAIN_WORKTREE_IMPROVE !== '1') {
+    console.error('❌ Refusing to execute self-improvement in the main worktree.');
+    console.error('   Create an isolated worktree, then rerun with --confirm auto.');
+    process.exit(2);
+  }
+
+  prepared.task.requiresMutation = true;
+  console.log('🚀 Executing bounded self-improvement task...');
+  const result = await prepared.execute();
+  const sessionSummary = summarizeSession(result);
+  const sessionJsonPath = path.join(outDir, 'self-improvement-session.json');
+  const sessionMdPath = path.join(outDir, 'self-improvement-session.md');
+  fs.writeFileSync(sessionJsonPath, `${JSON.stringify(sessionSummary, null, 2)}\n`, 'utf-8');
+  fs.writeFileSync(sessionMdPath, [
+    '# Liminal Self-Improvement Session',
+    '',
+    `Status: ${sessionSummary.status}`,
+    `Exit reason: ${sessionSummary.exitReason || 'n/a'}`,
+    `Steps: ${sessionSummary.stepCount}`,
+    `Mutated files: ${sessionSummary.mutatedFiles.length > 0 ? sessionSummary.mutatedFiles.join(', ') : 'none'}`,
+    `Successful mutated files: ${sessionSummary.successfulMutatedFiles.length > 0 ? sessionSummary.successfulMutatedFiles.join(', ') : 'none'}`,
+    '',
+    `Session JSON: ${sessionJsonPath}`,
+    '',
+  ].join('\n'), 'utf-8');
+  console.log(`✅ Session JSON: ${sessionJsonPath}`);
+  console.log(`✅ Session Markdown: ${sessionMdPath}`);
+  console.log(`📊 Status: ${sessionSummary.status}`);
+  console.log(`📊 Steps: ${sessionSummary.stepCount}`);
+  console.log(`✏️  Mutated files: ${sessionSummary.mutatedFiles.length > 0 ? sessionSummary.mutatedFiles.join(', ') : 'none'}`);
   console.log('');
-  process.exit(0);
+  process.exit(sessionSummary.status === 'success' ? 0 : 1);
 }
 
 const hasOutputFlag = flags.output !== undefined;

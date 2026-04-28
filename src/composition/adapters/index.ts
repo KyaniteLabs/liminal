@@ -113,7 +113,6 @@ export { StrudelAdapter, strudelAdapter } from './StrudelAdapter.js';
 export { ShaderAdapter, shaderAdapter } from './ShaderAdapter.js';
 export { ThreeAdapter, threeAdapter } from './ThreeAdapter.js';
 export { HTMLAdapter, htmlAdapter } from './HTMLAdapter.js';
-export { RemotionAdapter, remotionAdapter } from './RemotionAdapter.js';
 export { HydraAdapter, hydraAdapter } from './HydraAdapter.js';
 export { P5Adapter, p5Adapter } from './P5Adapter.js';
 export { ToneAdapter, toneAdapter } from './ToneAdapter.js';

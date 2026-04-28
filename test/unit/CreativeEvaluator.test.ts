@@ -149,19 +149,19 @@ export default makeScene2D(function* (view) {
       expect(result.issues).not.toContain('Missing draw() function');
     });
 
-    it('should evaluate legacy Remotion component code with specialized video scoring', () => {
-      const code = `import React from 'react';
-import {useCurrentFrame, interpolate, AbsoluteFill} from 'remotion';
+    it('should evaluate Revideo scene code with specialized video scoring', () => {
+      const code = `import { makeScene, useTime, createSignal } from '@revideo/core';
+import { Txt, Rect, Circle } from '@revideo/2d';
 
-export const TypingText = () => {
-  const frame = useCurrentFrame();
-  const opacity = interpolate(frame, [0, 30], [0, 1]);
-  return (
-    <AbsoluteFill style={{ backgroundColor: 'black', opacity }}>
-      <div>Hello Video</div>
-    </AbsoluteFill>
+export default makeScene('TypingText', function* (view) {
+  const opacity = createSignal(0);
+  view.add(
+    <Rect layout size={400} fill={'black'}>
+      <Txt text={'Hello Video'} opacity={opacity} fontSize={48} fill={'white'} />
+    </Rect>
   );
-};`;
+  yield* opacity(1, 1);
+});`;
       const result = CreativeEvaluator.assess(code, { domain: 'revideo' });
       expect(result.technicalScore).toBeGreaterThan(0);
       expect(result.creativeScore).toBeGreaterThan(0);
@@ -171,16 +171,12 @@ export const TypingText = () => {
     });
 
     it('should keep obviously broken video-component code below the pass threshold', () => {
-      const code = `import {useCurrentFrame, AbsoluteFill} from 'remotion';
+      const code = `import { makeScene } from '@revideo/core';
 
-export const BrokenComp = () => {
-  const frame = useCurrentFrame();
-  return (
-    <AbsoluteFill duration={150}>
-      <Video frame={frame.value} />
-    </AbsoluteFill>
-  );
-};`;
+export default makeScene('BrokenComp', function* (view) {
+  const frame = frame.value;
+  yield* view.add(<Video />);
+});`;
       const result = CreativeEvaluator.assess(code, { domain: 'revideo' });
       expect(result.score).toBeLessThan(0.7);
     });

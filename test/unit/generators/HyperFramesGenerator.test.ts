@@ -163,7 +163,7 @@ describe('HyperFramesGenerator', () => {
         { prompt: 'watermark overlay on image', owner: 'hf' },
         { prompt: 'generative motion graphics in revideo', owner: 'rv' },
         { prompt: 'p5.js interactive sketch', owner: 'neither' },
-        { prompt: 'remotion composition with React', owner: 'rv' },
+        { prompt: 'revideo composition with React', owner: 'rv' },
         { prompt: 'social media clip with captions', owner: 'hf' },
         { prompt: 'presentation with subtitle tracks', owner: 'hf' },
         { prompt: 'do not use hyperframes', owner: 'neither' },

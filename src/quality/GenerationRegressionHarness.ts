@@ -26,7 +26,7 @@ export type RegressionDomain =
 export interface RegressionRequest {
   provider: string;
   model: string;
-  domain: RegressionDomain | 'remotion';
+  domain: RegressionDomain;
   prompt?: string;
   baseUrl?: string;
   apiKey?: string;
@@ -69,7 +69,7 @@ const DEFAULT_PROMPTS: Record<RegressionDomain, string> = {
 };
 
 export function normalizeRegressionDomain(domain: RegressionRequest['domain']): RegressionDomain {
-  return domain === 'remotion' ? 'revideo' : domain;
+  return domain;
 }
 
 export function inferRegressionBaseUrl(provider: string, explicitBaseUrl?: string): string {

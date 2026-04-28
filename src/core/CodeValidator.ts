@@ -8,7 +8,6 @@
  * - StrudelValidator: src/core/validators/StrudelValidator.ts
  * - HydraValidator: src/core/validators/HydraValidator.ts
  * - ToneValidator: src/core/validators/ToneValidator.ts
- * - RemotionValidator: src/core/validators/RemotionValidator.ts
  * - HTMLValidator: src/core/validators/HTMLValidator.ts
  * - ASCIIValidator: src/core/validators/ASCIIValidator.ts
  */
@@ -19,7 +18,6 @@ import { ThreeValidator } from './validators/ThreeValidator.js';
 import { StrudelValidator } from './validators/StrudelValidator.js';
 import { HydraValidator } from './validators/HydraValidator.js';
 import { ToneValidator } from './validators/ToneValidator.js';
-import { RemotionValidator } from './validators/RemotionValidator.js';
 import { RevideoValidator } from './validators/RevideoValidator.js';
 import { HTMLValidator } from './validators/HTMLValidator.js';
 import { ASCIIValidator } from './validators/ASCIIValidator.js';
@@ -47,7 +45,6 @@ const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
   'hydra': HydraValidator.getMinSize(),
   'tone': ToneValidator.getMinSize(),
   'svg': 40,
-  'remotion': RemotionValidator.getMinSize(),
   'revideo': RevideoValidator.getMinSize(),
   'hyperframes': HyperFramesValidator.getMinSize(),
   'html': HTMLValidator.getMinSize(),
@@ -71,9 +68,6 @@ function detectDomain(code: string): Domain {
 
     const hasToneImport = /from\s+['"]tone['"]/.test(code) || /\bTone\./.test(code);
     if (hasToneImport) return 'tone';
-
-    const hasRemotion = /from\s+['"]remotion['"]/.test(code) || /useCurrentFrame|AbsoluteFill/.test(code);
-    if (hasRemotion) return 'remotion';
 
     const hasP5Import = /p5\.js|p5\.min\.js/.test(code);
     if (hasP5Import) return 'p5';
@@ -103,15 +97,12 @@ function detectDomain(code: string): Domain {
   const glslCount = [hasVoidMain, hasMainImage, hasFragColor, hasUniforms, hasPrecision, hasShaderBuiltins].filter(Boolean).length;
   if (glslCount >= 2 && !code.includes('function setup()') && !code.includes('function draw()')) return 'shader';
 
-  // Check for Revideo (before Remotion)
+  // Check for Revideo
   if (/\bmakeScene|@revideo\/core/.test(code)) return 'revideo';
 
   // Check for HyperFrames (HTML+GSAP compositing)
   if (/data-composition-id/.test(code) && /gsap\.timeline|gsap\.to\(/.test(code)) return 'hyperframes';
   if (/window\.__timelines/.test(code) && /class="clip"/.test(code)) return 'hyperframes';
-
-  // Check for Remotion
-  if (/useCurrentFrame|AbsoluteFill|<Composition|from\s+['"]remotion['"]/.test(code)) return 'remotion';
 
   // Check for Hydra
   if (/\b(osc|src|noise|shape|gradient|solid|voronoi)\s*\(/.test(code) && /\.out\(/.test(code) && !/\$:/.test(code)) {
@@ -191,11 +182,6 @@ function validateStructure(code: string, domain: Domain): string[] {
     case 'svg': {
       const result = validateSVG(trimmed);
       if (!result.valid && result.error) errors.push(result.error);
-      break;
-    }
-    case 'remotion': {
-      const result = RemotionValidator.validate(trimmed);
-      errors.push(...result.errors);
       break;
     }
     case 'revideo': {

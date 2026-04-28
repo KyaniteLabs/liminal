@@ -5,44 +5,44 @@ describe('HTMLWrapper Security Headers', () => {
   it('should produce valid HTML documents for all wrappers', () => {
     const p5Html = HTMLWrapper.wrap('function setup() {}', 'p5');
     const shaderHtml = HTMLWrapper.wrap('void main() { gl_FragColor = vec4(1.0); }', 'shader');
-    const remotionHtml = HTMLWrapper.wrap('export const MyComp = () => <div />;', 'remotion');
+    const revideoHtml = HTMLWrapper.wrap('export const MyComp = () => <div />;', 'revideo');
 
     expect(p5Html).toContain('<!DOCTYPE html>');
     expect(p5Html).toContain('</html>');
     expect(shaderHtml).toContain('<!DOCTYPE html>');
     expect(shaderHtml).toContain('</html>');
-    expect(remotionHtml).toContain('<!DOCTYPE html>');
-    expect(remotionHtml).toContain('</html>');
+    expect(revideoHtml).toContain('<!DOCTYPE html>');
+    expect(revideoHtml).toContain('</html>');
   });
 
   it('should include charset meta tag in all wrappers', () => {
     const p5Html = HTMLWrapper.wrap('function setup() {}', 'p5');
     const shaderHtml = HTMLWrapper.wrap('void main() { gl_FragColor = vec4(1.0); }', 'shader');
-    const remotionHtml = HTMLWrapper.wrap('export const MyComp = () => <div />;', 'remotion');
+    const revideoHtml = HTMLWrapper.wrap('export const MyComp = () => <div />;', 'revideo');
 
     expect(p5Html).toContain('charset="UTF-8"');
     expect(shaderHtml).toContain('charset="UTF-8"');
-    expect(remotionHtml).toContain('charset="UTF-8"');
+    expect(revideoHtml).toContain('charset="UTF-8"');
   });
 
   it('should include viewport meta tag in all wrappers', () => {
     const p5Html = HTMLWrapper.wrap('function setup() {}', 'p5');
     const shaderHtml = HTMLWrapper.wrap('void main() { gl_FragColor = vec4(1.0); }', 'shader');
-    const remotionHtml = HTMLWrapper.wrap('export const MyComp = () => <div />;', 'remotion');
+    const revideoHtml = HTMLWrapper.wrap('export const MyComp = () => <div />;', 'revideo');
 
     expect(p5Html).toContain('viewport');
     expect(shaderHtml).toContain('viewport');
-    expect(remotionHtml).toContain('viewport');
+    expect(revideoHtml).toContain('viewport');
   });
 
   it('should include lang attribute on html element', () => {
     const p5Html = HTMLWrapper.wrap('function setup() {}', 'p5');
     const shaderHtml = HTMLWrapper.wrap('void main() { gl_FragColor = vec4(1.0); }', 'shader');
-    const remotionHtml = HTMLWrapper.wrap('export const MyComp = () => <div />;', 'remotion');
+    const revideoHtml = HTMLWrapper.wrap('export const MyComp = () => <div />;', 'revideo');
 
     expect(p5Html).toContain('<html lang="en">');
     expect(shaderHtml).toContain('<html lang="en">');
-    expect(remotionHtml).toContain('<html lang="en">');
+    expect(revideoHtml).toContain('<html lang="en">');
   });
 
   it('should use trusted CDN for p5.js scripts', () => {

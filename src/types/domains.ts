@@ -18,8 +18,6 @@ export enum Domain {
   CODE = 'code',
   REVIEWD = 'revideo', // Revideo v0.12+ active video composition framework
   HYPERFRAMES = 'hyperframes', // HTML+GSAP asset compositing via @hyperframes/producer
-  /** @deprecated Use REVIEWD instead - kept as legacy alias only */
-  REMOTION = 'remotion',
   EMPTY = ''
 }
 
@@ -53,6 +51,6 @@ export const SHADER_DOMAINS = [Domain.GLSL, Domain.SHADER, Domain.WEBGL];
 export const MUSIC_DOMAINS = [Domain.TONE, Domain.STRUDEL, Domain.HYDRA];
 
 /**
- * Domains for video composition (active: revideo, legacy alias: remotion)
+ * Domains for video composition
  */
 export const VIDEO_DOMAINS = [Domain.REVIEWD, Domain.HYPERFRAMES];

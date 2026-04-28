@@ -12,7 +12,6 @@ import './music.js';
 import './hydra.js';
 import './swarm.js';
 import './compost.js';
-import './remotion.js';
 import './audio.js';
 import './aesthetic.js';
 

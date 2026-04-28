@@ -101,7 +101,7 @@ OUTPUT FORMAT — respond with ONLY valid JSON matching this schema (no markdown
  * and its creative domain context.
  *
  * @param code     - The generated source code to evaluate.
- * @param domain   - The creative domain (e.g. "p5.js", "hydra", "three.js", "glsl", "remotion").
+ * @param domain   - The creative domain (e.g. "p5.js", "hydra", "three.js", "glsl", "revideo").
  * @param criteria - Optional partial override of the default evaluation criteria.
  * @returns A fully-formed user prompt string ready to send to the LLM.
  */

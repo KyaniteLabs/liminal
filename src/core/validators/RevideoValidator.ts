@@ -3,8 +3,8 @@
  *
  * Revideo is the active programmatic video framework. The supported contract is
  * makeScene(name, function* (view) { ... }) with @revideo/core and @revideo/2d
- * scene components. It must not use Remotion, @revideo/react, React.FC, or
- * Remotion's useCurrentFrame/AbsoluteFill/Composition API.
+ * scene components. It must not use @revideo/react, React.FC, or
+ * useCurrentFrame/AbsoluteFill/Composition API.
  */
 
 export interface RevideoValidationResult {
@@ -67,10 +67,10 @@ export class RevideoValidator {
       errors.push('Revideo code must not import @revideo/react; use @revideo/core and @revideo/2d');
     }
     if (/\bremotion\b|from\s+['"]remotion['"]/.test(code)) {
-      errors.push('Revideo code must not import or reference Remotion');
+      errors.push('Revideo code must not import or reference the remotion package');
     }
     if (/\b(useFrame|useCurrentFrame|React\.FC)\b/.test(code)) {
-      errors.push('Revideo code must not use React/Remotion hooks like useFrame/useCurrentFrame or React.FC');
+      errors.push('Revideo code must not use React hooks like useFrame/useCurrentFrame or React.FC');
     }
     if (/\bcreateCanvas\b|function\s+setup\s*\(|function\s+draw\s*\(|\bp5\b|p5\.js/i.test(code)) {
       errors.push('Revideo code must not use p5.js APIs such as createCanvas, setup(), or draw()');

@@ -1,6 +1,6 @@
 /**
  * Generic HTML wrapper for non-P5/Three domains
- * Handles: Strudel, Hydra, Tone.js, Shader, Remotion, ASCII
+ * Handles: Strudel, Hydra, Tone.js, Shader, Revideo, ASCII
  */
 
 import { SECURITY_HEADERS } from './SecurityHeaders.js';
@@ -9,7 +9,7 @@ const STRUDEL_CDN = 'https://unpkg.com/@strudel/repl@1.0.2';
 const HYDRA_CDN = 'https://unpkg.com/hydra-synth';
 const TONE_CDN = 'https://unpkg.com/tone@14.8.49/build/Tone.js';
 
-export type GenericDomain = 'strudel' | 'hydra' | 'tone' | 'shader' | 'revideo' | 'remotion' | 'ascii' | 'hyperframes';
+export type GenericDomain = 'strudel' | 'hydra' | 'tone' | 'shader' | 'revideo' | 'ascii' | 'hyperframes';
 
 export interface GenericWrapOptions {
   domain: GenericDomain;
@@ -30,7 +30,6 @@ export class GenericWrapper {
     if (this.isToneJSCode(code)) return 'tone';
     if (this.isShaderCode(code)) return 'shader';
     if (this.isRevideoCode(code)) return 'revideo';
-    if (this.isRemotionCode(code)) return 'remotion';
     if (this.isASCIICode(code)) return 'ascii';
     return null;
   }
@@ -99,10 +98,6 @@ export class GenericWrapper {
     return /@revideo\/(core|2d)|\bmakeScene\s*\(|\bcreateRef\s*(?:<|\()|from\s+['"]@revideo\//.test(code);
   }
 
-  private static isRemotionCode(code: string): boolean {
-    return /useCurrentFrame|AbsoluteFill|<Composition|from\s+['"]remotion['"]/.test(code);
-  }
-
   private static isASCIICode(code: string): boolean {
     const lines = code.split('\n');
     const nonEmptyLines = lines.filter((line) => line.trim().length > 0);
@@ -131,8 +126,6 @@ export class GenericWrapper {
         return this.wrapToneJS(code);
       case 'shader':
         return this.wrapShader(code);
-      case 'remotion':
-        return this.wrapRemotion(code, options.showPreview ?? false);
       case 'revideo':
         return this.wrapRevideo(code, options.showPreview ?? false);
       case 'hyperframes':
@@ -365,106 +358,6 @@ ${safeCommentCode}
     }
 
     return normalized;
-  }
-
-  private static wrapRemotion(code: string, _showPreview = false): string {
-    const escaped = code
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-    
-    const durationMatch = code.match(/durationInFrames[=:]\s*(\d+)/);
-    const fpsMatch = code.match(/fps[=:]\s*(\d+)/);
-    const widthMatch = code.match(/width[=:]\s*(\d+)/);
-    const heightMatch = code.match(/height[=:]\s*(\d+)/);
-    
-    const duration = durationMatch ? parseInt(durationMatch[1]) : 150;
-    const fps = fpsMatch ? parseInt(fpsMatch[1]) : 30;
-    const width = widthMatch ? parseInt(widthMatch[1]) : 1920;
-    const height = heightMatch ? parseInt(heightMatch[1]) : 1080;
-    const durationSec = (duration / fps).toFixed(1);
-    
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    ${SECURITY_HEADERS.trim()}
-    <title>Remotion Composition</title>
-    <style>
-        body { 
-            margin: 0; 
-            padding: 2rem; 
-            background: #0a0a0f; 
-            color: #e0e0e0; 
-            font-family: 'Monaco', 'Menlo', monospace; 
-            font-size: 0.85rem; 
-            line-height: 1.6;
-        }
-        .header {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(139, 92, 246, 0.3);
-        }
-        .badge { 
-            display: inline-block; 
-            padding: 0.25rem 0.75rem; 
-            border-radius: 6px; 
-            background: rgba(139, 92, 246, 0.3); 
-            color: #a78bfa; 
-            font-size: 0.8rem; 
-            margin-right: 0.5rem;
-        }
-        .meta {
-            display: flex;
-            gap: 1.5rem;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-        }
-        .meta-item {
-            color: #94a3b8;
-        }
-        .meta-value {
-            color: #e2e8f0;
-            font-weight: 600;
-        }
-        pre { 
-            white-space: pre-wrap; 
-            word-wrap: break-word;
-            background: #0f0f1a;
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid #1e293b;
-            overflow-x: auto;
-        }
-        .note { 
-            color: #94a3b8; 
-            font-size: 0.8rem; 
-            margin-top: 1rem;
-            padding: 1rem;
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 6px;
-            border-left: 3px solid #3b82f6;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <span class="badge">Remotion</span>
-        <span class="badge">React</span>
-        <div class="meta">
-            <div class="meta-item">Duration: <span class="meta-value">${durationSec}s</span> (${duration} frames @ ${fps}fps)</div>
-            <div class="meta-item">Resolution: <span class="meta-value">${width}×${height}</span></div>
-        </div>
-    </div>
-    <pre><code>${escaped}</code></pre>
-    <p class="note">
-        💡 <strong>Note:</strong> Legacy Remotion project. Consider migrating to Revideo or HyperFrames.
-    </p>
-</body>
-</html>`;
   }
 
   private static wrapRevideo(code: string, _showPreview = false): string {

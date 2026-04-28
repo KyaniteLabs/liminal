@@ -10,7 +10,6 @@
  * - hydra: Hydra video synthesizer patterns (GenericWrapper)
  * - tone: Tone.js audio (GenericWrapper)
  * - revideo: Revideo video compositions (GenericWrapper)
- * - remotion: [DEPRECATED] Remotion - use revideo instead
  * - svg: Raw SVG documents displayed inline
  * - html: Complete HTML pages (pass-through)
  * - ascii: ASCII art display (GenericWrapper)
@@ -20,7 +19,7 @@ import { P5Wrapper } from '../core/wrappers/P5Wrapper.js';
 import { ThreeWrapper } from '../core/wrappers/ThreeWrapper.js';
 import { GenericWrapper } from '../core/wrappers/GenericWrapper.js';
 
-export type Domain = 'p5' | 'shader' | 'three' | 'strudel' | 'hydra' | 'tone' | 'revideo' | 'remotion' | 'hyperframes' | 'svg' | 'html' | 'ascii';
+export type Domain = 'p5' | 'shader' | 'three' | 'strudel' | 'hydra' | 'tone' | 'revideo' | 'hyperframes' | 'svg' | 'html' | 'ascii';
 
 export interface WrapOptions {
   domain?: Domain;
@@ -28,7 +27,7 @@ export interface WrapOptions {
   includeP5Sound?: boolean;
   /** For Strudel: auto-start playback */
   autoPlay?: boolean;
-  /** For Remotion: show code or try to render preview */
+  /** For Revideo: show code or try to render preview */
   showPreview?: boolean;
   /** For ASCII: use monospace styling */
   asciiWidth?: number;
@@ -126,7 +125,6 @@ export class HTMLWrapper {
         return 'three';
       }
       if (code.includes('makeScene') || code.includes('createSignal') || code.includes('useTime') || code.includes('@revideo/core')) return 'revideo';
-      if (code.includes('remotion') || code.includes('useCurrentFrame')) return 'remotion';
       if (code.includes('font-family: monospace') && code.includes('<pre>') && !code.includes('createCanvas')) {
         const bodyMatch = code.match(/<pre[^>]*>([\s\S]*?)<\/pre>/);
         if (bodyMatch && /[█▓▒░@#%]/.test(bodyMatch[1])) return 'ascii';
@@ -208,10 +206,6 @@ export class HTMLWrapper {
       case 'revideo':
         wrapped = GenericWrapper.wrap(code, { domain: 'revideo', showPreview });
         break;
-      case 'remotion':
-        // Deprecated: use revideo instead
-        wrapped = GenericWrapper.wrap(code, { domain: 'revideo', showPreview });
-        break;
       case 'ascii':
         wrapped = GenericWrapper.wrap(code, { domain: 'ascii', asciiWidth });
         break;
@@ -272,7 +266,7 @@ export class HTMLWrapper {
    * Get all supported domains
    */
   static getSupportedDomains(): Domain[] {
-    return ['p5', 'shader', 'three', 'strudel', 'hydra', 'tone', 'revideo', 'remotion', 'svg', 'html', 'ascii'];
+    return ['p5', 'shader', 'three', 'strudel', 'hydra', 'tone', 'revideo', 'svg', 'html', 'ascii'];
   }
 
   /**

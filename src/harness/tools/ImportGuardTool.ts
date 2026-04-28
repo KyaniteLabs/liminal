@@ -12,7 +12,7 @@ import { Tool, type ToolResult } from './types.js';
 
 export interface ImportGuardParams {
   code: string;
-  domain: 'p5' | 'shader' | 'three' | 'node' | 'hydra' | 'strudel' | 'remotion';
+  domain: 'p5' | 'shader' | 'three' | 'node' | 'hydra' | 'strudel' | 'revideo';
 }
 
 export interface ImportGuardResult {
@@ -33,7 +33,7 @@ const ALLOWED_IMPORTS: Record<string, string[]> = {
   node: ['fs', 'path', 'http', 'https', 'child_process', 'os', 'crypto', 'util', 'stream', 'events', 'url', 'querystring'],
   hydra: ['hydra-synth'],
   strudel: ['@strudel/*', 'strudel'],
-  remotion: ['remotion', '@remotion/*', 'react', 'react-dom'],
+  revideo: ['@revideo/core', '@revideo/2d'],
 };
 
 // Dangerous imports that should never be in browser code

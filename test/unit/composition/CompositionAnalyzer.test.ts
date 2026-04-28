@@ -124,13 +124,13 @@ describe('CompositionAnalyzer', () => {
       expect(htmlResult).not.toBeNull();
     });
 
-    it('should detect remotion domain from video export keyword', () => {
+    it('should detect revideo domain from video export keyword', () => {
       const analyzer = new CompositionAnalyzer();
       const results = analyzer.analyzeWithKeywords('Create video export');
-      
+
       expect(results.length).toBeGreaterThan(0);
-      const remotionResult = results.find(r => r.domain === 'remotion');
-      expect(remotionResult).not.toBeNull();
+      const revideoResult = results.find(r => r.domain === 'revideo');
+      expect(revideoResult).not.toBeNull();
     });
 
     it('should return empty array for unknown prompts', () => {

@@ -35,18 +35,6 @@ describe('detectDomain', () => {
     expect(detectDomain('const scene = new THREE.Scene();')).toBe('three');
   });
 
-  it('detects Remotion from useCurrentFrame', () => {
-    expect(detectDomain('const frame = useCurrentFrame();')).toBe('remotion');
-  });
-
-  it('detects Remotion from AbsoluteFill', () => {
-    expect(detectDomain('<AbsoluteFill>hello</AbsoluteFill>')).toBe('remotion');
-  });
-
-  it('detects Remotion from Sequence', () => {
-    expect(detectDomain('<Sequence>content</Sequence>')).toBe('remotion');
-  });
-
   it('detects Hydra from .out(', () => {
     expect(detectDomain('osc(10).out(o0)')).toBe('hydra');
   });
@@ -140,7 +128,7 @@ describe('detectDomain', () => {
     expect(detectDomain('')).toBe('p5');
   });
 
-  // Priority ordering: GLSL > Three > Remotion > Hydra > Strudel > ASCII > HTML > music > p5
+  // Priority ordering: GLSL > Three > Hydra > Strudel > ASCII > HTML > music > p5
   it('GLSL takes priority over Three.js', () => {
     const code = "void main() { gl_FragColor = vec4(1.0); }\nimport * as THREE from 'three';";
     expect(detectDomain(code)).toBe('glsl');
@@ -157,9 +145,9 @@ describe('detectDomain', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 describe('extractBehavior', () => {
-  it('returns a 72-element vector (9 domains x 8 features)', () => {
+  it('returns a 64-element vector (8 domains x 8 features)', () => {
     const vec = extractBehavior('const x = 1;');
-    expect(vec).toHaveLength(72);
+    expect(vec).toHaveLength(64);
   });
 
   it('all values are between 0 and 1', () => {
@@ -174,7 +162,7 @@ describe('extractBehavior', () => {
     const vec = extractBehavior('const x = 1;', 'p5');
     // p5 features should be non-zero if p5 patterns exist
     // With no p5 patterns, p5 features are all 0 except maybe complexity
-    expect(vec).toHaveLength(72);
+    expect(vec).toHaveLength(64);
   });
 
   it('p5 domain extracts setup feature', () => {
@@ -370,104 +358,69 @@ describe('extractBehavior', () => {
     expect(vec[46]).toBe(1); // hasContent (offset 40+6)
   });
 
-  it('Remotion domain extracts frame feature', () => {
-    const vec = extractBehavior('useCurrentFrame()', 'remotion');
-    expect(vec[48]).toBe(1); // usesFrame (offset 48 = remotion start)
-  });
-
-  it('Remotion domain extracts video config feature', () => {
-    const vec = extractBehavior('useVideoConfig()', 'remotion');
-    expect(vec[49]).toBe(1); // usesVideoConfig
-  });
-
-  it('Remotion domain extracts AbsoluteFill feature', () => {
-    const vec = extractBehavior('<AbsoluteFill>hi</AbsoluteFill>', 'remotion');
-    expect(vec[50]).toBe(1); // usesAbsoluteFill
-  });
-
-  it('Remotion domain extracts Sequence feature', () => {
-    const vec = extractBehavior('<Sequence></Sequence>', 'remotion');
-    expect(vec[51]).toBe(1); // usesSequence
-  });
-
-  it('Remotion domain extracts animation feature', () => {
-    const vec = extractBehavior('interpolate(spring())', 'remotion');
-    expect(vec[52]).toBe(1); // usesAnimation
-  });
-
-  it('Remotion domain extracts import feature', () => {
-    const vec = extractBehavior("from 'remotion'", 'remotion');
-    expect(vec[53]).toBe(1); // importsRemotion
-  });
-
-  it('Remotion domain extracts component feature', () => {
-    const vec = extractBehavior('export default function', 'remotion');
-    expect(vec[54]).toBe(1); // hasComponent
-  });
-
   it('Hydra domain extracts output feature', () => {
     const vec = extractBehavior('osc(10).out(o0)', 'hydra');
-    expect(vec[56]).toBe(1); // hasOutput (offset 56 = hydra start)
+    expect(vec[48]).toBe(1); // hasOutput (offset 48 = hydra start)
   });
 
   it('Hydra domain extracts oscillator feature', () => {
     const vec = extractBehavior('osc(10)', 'hydra');
-    expect(vec[57]).toBe(1); // usesOscillator
+    expect(vec[49]).toBe(1); // usesOscillator
   });
 
   it('Hydra domain extracts shape feature', () => {
     const vec = extractBehavior('shape(4)', 'hydra');
-    expect(vec[58]).toBe(1); // usesShape
+    expect(vec[50]).toBe(1); // usesShape
   });
 
   it('Hydra domain extracts kaleidoscope feature', () => {
     const vec = extractBehavior('kaleid(3)', 'hydra');
-    expect(vec[59]).toBe(1); // usesKaleidoscope
+    expect(vec[51]).toBe(1); // usesKaleidoscope
   });
 
   it('Hydra domain extracts scroll feature', () => {
     const vec = extractBehavior('scrollX(10)', 'hydra');
-    expect(vec[60]).toBe(1); // usesScroll
+    expect(vec[52]).toBe(1); // usesScroll
   });
 
   it('Hydra domain extracts source feature', () => {
     const vec = extractBehavior('src(o0)', 'hydra');
-    expect(vec[61]).toBe(1); // usesSource
+    expect(vec[53]).toBe(1); // usesSource
   });
 
   it('Hydra domain extracts effects feature', () => {
     const vec = extractBehavior('modulate(o0)', 'hydra');
-    expect(vec[62]).toBe(1); // usesEffects
+    expect(vec[54]).toBe(1); // usesEffects
   });
 
   it('Strudel domain extracts sound feature', () => {
     const vec = extractBehavior('sound("kick")', 'strudel');
-    expect(vec[68]).toBe(1); // usesSound (offset 64+4 = 68)
+    expect(vec[60]).toBe(1); // usesSound (offset 56+4 = 60)
   });
 
   it('Strudel domain extracts stack feature', () => {
     const vec = extractBehavior('stack(s("bd"))', 'strudel');
-    expect(vec[65]).toBe(1); // usesStack
+    expect(vec[57]).toBe(1); // usesStack
   });
 
   it('Strudel domain extracts sequence feature', () => {
     const vec = extractBehavior('seq("bd")', 'strudel');
-    expect(vec[66]).toBe(1); // usesSequence
+    expect(vec[58]).toBe(1); // usesSequence
   });
 
   it('Strudel domain extracts notes feature', () => {
     const vec = extractBehavior('note("c3")', 'strudel');
-    expect(vec[67]).toBe(1); // usesNotes
+    expect(vec[59]).toBe(1); // usesNotes
   });
 
   it('Strudel domain extracts sound feature', () => {
     const vec = extractBehavior('sound("kick")', 'strudel');
-    expect(vec[68]).toBe(1); // usesSound
+    expect(vec[60]).toBe(1); // usesSound
   });
 
   it('Strudel domain extracts tempo feature', () => {
     const vec = extractBehavior('120 bpm', 'strudel');
-    expect(vec[69]).toBe(1); // usesTempo
+    expect(vec[61]).toBe(1); // usesTempo
   });
 
   it('complexity feature is 0 for simple code', () => {

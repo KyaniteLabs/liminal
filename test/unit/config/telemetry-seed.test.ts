@@ -14,7 +14,7 @@ describe('SEED_TELEMETRY', () => {
 
   it('covers all 8 expected domains', () => {
     const domains = [...new Set(SEED_TELEMETRY.map(e => e.domain))].sort();
-    expect(domains).toEqual(['ascii', 'glsl', 'html', 'hydra', 'p5', 'remotion', 'strudel', 'three']);
+    expect(domains).toEqual(['ascii', 'glsl', 'html', 'hydra', 'p5', 'revideo', 'strudel', 'three']);
   });
 
   it('covers all 6 expected model IDs', () => {
@@ -100,7 +100,7 @@ describe('SEED_TELEMETRY', () => {
   });
 
   it('each LLM-generated domain has exactly 6 entries (one per model)', () => {
-    const llmDomains = ['p5', 'glsl', 'three', 'hydra', 'strudel', 'remotion'];
+    const llmDomains = ['p5', 'glsl', 'three', 'hydra', 'strudel', 'revideo'];
     for (const domain of llmDomains) {
       const entries = SEED_TELEMETRY.filter(e => e.domain === domain);
       expect(entries.length, `domain ${domain} should have 6 entries`).toBe(6);

@@ -182,7 +182,7 @@ describe('GeneratorBanditRouter', () => {
   describe('MAX_ARMS safety', () => {
     it('evicts least-pulled arm when MAX_ARMS is reached', () => {
       // Force-create 100+ arms by recording outcomes across many domain/model combos
-      const domains = ['ascii', 'music', 'code', 'visual', 'remotion', 'html', 'webdev'] as const;
+      const domains = ['ascii', 'music', 'code', 'visual', 'revideo', 'html', 'webdev'] as const;
       const models = ['local', 'cloud', 'hybrid'] as const;
       // 7 domains × 3 models = 21 unique arms, well under 100
       // Let's create 101 unique keys by adding extra record calls that create arms

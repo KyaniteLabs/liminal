@@ -12,9 +12,9 @@ import type { LayerAdapter } from '../../../../src/composition/adapters/index.js
 
 describe('registerAdapters', () => {
   describe('registerAllAdapters', () => {
-    it('should register all 9 adapters', () => {
+    it('should register all adapters', () => {
       const engine = new CompositionEngine();
-      
+
       // Should not throw and should complete successfully
       expect(() => registerAllAdapters(engine)).not.toThrow();
     });
@@ -31,7 +31,7 @@ describe('registerAdapters', () => {
   });
 
   describe('allAdapters singleton', () => {
-    it('should have all 9 adapter instances', () => {
+    it('should have all 8 adapter instances', () => {
       expect(allAdapters.p5).not.toBeNull();
       expect(allAdapters.tone).not.toBeNull();
       expect(allAdapters.three).not.toBeNull();
@@ -40,7 +40,6 @@ describe('registerAdapters', () => {
       expect(allAdapters.hydra).not.toBeNull();
       expect(allAdapters.asciiArt).not.toBeNull();
       expect(allAdapters.html).not.toBeNull();
-      expect(allAdapters.remotion).not.toBeNull();
     });
 
     it('should export singleton instances that do not change', () => {
@@ -61,7 +60,6 @@ describe('registerAdapters', () => {
         allAdapters.hydra,
         allAdapters.asciiArt,
         allAdapters.html,
-        allAdapters.remotion,
       ];
 
       for (const adapter of adapters) {
@@ -110,11 +108,6 @@ describe('registerAdapters', () => {
     it('should export htmlAdapter singleton', () => {
       expect(allAdapters.html).not.toBeNull();
       expect(typeof allAdapters.html.render).toBe('function');
-    });
-
-    it('should export remotionAdapter singleton', () => {
-      expect(allAdapters.remotion).not.toBeNull();
-      expect(typeof allAdapters.remotion.render).toBe('function');
     });
   });
 });

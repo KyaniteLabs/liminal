@@ -15,7 +15,7 @@ export interface GenerationTelemetry {
   id: string;
   /** Timestamp */
   timestamp: Date;
-  /** Domain (p5, glsl, three, hydra, strudel, remotion, etc.) */
+  /** Domain (p5, glsl, three, hydra, strudel, revideo, etc.) */
   domain: string;
   /** Model ID used */
   modelId: string;
@@ -152,7 +152,6 @@ export class TelemetryAggregator {
       'three': 800,
       'hydra': 150,
       'strudel': 100,
-      'remotion': 500,
       'default': 200,
     },
     maxGenerationTimeSeconds: 120,  // Alert if generation takes > 2 minutes

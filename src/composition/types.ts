@@ -17,7 +17,6 @@ export type DomainType =
   | 'strudel'
   | 'hydra'
   | 'ascii'
-  | 'remotion'
   | 'video'
   | 'html'
   | 'textgen'

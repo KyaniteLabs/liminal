@@ -29,8 +29,8 @@ export function buildCreativeDomainPlan(prompt: string): Domain[] {
 export function previewDomainForCode(code: string, requestedDomain: Domain): PreviewDomain {
   if (/\bTHREE\.|import\s+.*\bthree\b|new\s+THREE\./.test(code)) return 'three';
   const detected = CodeValidator.detectDomain(code);
-  if (detected === 'shader' || detected === 'three' || detected === 'hydra' || detected === 'tone' || detected === 'strudel' || detected === 'ascii' || detected === 'html' || detected === 'revideo' || detected === 'remotion') {
-    return detected === 'remotion' ? 'revideo' : detected;
+  if (detected === 'shader' || detected === 'three' || detected === 'hydra' || detected === 'tone' || detected === 'strudel' || detected === 'ascii' || detected === 'html' || detected === 'revideo') {
+    return detected;
   }
   if (requestedDomain === Domain.THREE) return 'three';
   if (requestedDomain === Domain.GLSL || requestedDomain === Domain.SHADER || requestedDomain === Domain.WEBGL) return 'shader';

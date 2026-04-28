@@ -47,7 +47,7 @@ export const GENERATOR_TOOLS: ToolDefinition[] = [
       type: 'object',
       properties: {
         code: { type: 'string', description: 'The code to check imports in' },
-        domain: { type: 'string', description: 'Target domain: p5, three, glsl, hydra, strudel, tone, html, remotion' },
+        domain: { type: 'string', description: 'Target domain: p5, three, glsl, hydra, strudel, tone, html, revideo' },
       },
       required: ['code', 'domain'],
     },

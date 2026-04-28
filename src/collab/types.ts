@@ -166,7 +166,7 @@ export type DomainType =
   | 'p5'
   | 'glsl'
   | 'three'
-  | 'remotion'
+  | 'revideo'
   | 'shader'
   | 'hydra'
   | 'tone'

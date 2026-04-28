@@ -231,7 +231,7 @@ vi.mock('../../../src/evolution/NoveltyArchive.js', () => ({
 }));
 
 vi.mock('../../../src/types/domains.js', () => ({
-  Domain: { P5: 'p5', GLSL: 'glsl', HYDRA: 'hydra', STRUDEL: 'strudel', REMOTION: 'remotion' },
+  Domain: { P5: 'p5', GLSL: 'glsl', HYDRA: 'hydra', STRUDEL: 'strudel', REVIDEO: 'revideo' },
 }));
 
 vi.mock('../../../src/core/lir/GeneratedCodeParser.js', () => ({
@@ -1590,21 +1590,19 @@ describe('RalphLoop — comprehensive', () => {
       expect(result.reason).not.toContain('quality threshold not met');
     });
 
-    it('detects remotion domain from prompt keywords', async () => {
+    it('detects revideo domain from prompt keywords', async () => {
       let scoreCount = 0;
       mockScoringEngineScoreReliable.mockImplementation(async () => {
         scoreCount++;
-        // remotion has no specific threshold, uses default minQualityScore
         return { score: 0.55, issues: [] };
       });
 
-      const result = await RalphLoop.run('create remotion title sequence', {
+      const result = await RalphLoop.run('create revideo title sequence', {
         maxIterations: 4,
-        minQualityScore: 0.5, // Lower threshold so remotion passes
+        minQualityScore: 0.5,
         _disableIterationExtension: true,
       });
 
-      // With minQualityScore 0.5, score 0.55 should pass quality gate
       expect(result.reason).not.toContain('quality threshold not met');
     });
   });

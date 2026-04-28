@@ -7,7 +7,6 @@ import { StrudelAdapter, strudelAdapter } from '../../../src/composition/adapter
 import { ThreeAdapter, threeAdapter } from '../../../src/composition/adapters/ThreeAdapter.js';
 import { ToneAdapter, toneAdapter } from '../../../src/composition/adapters/ToneAdapter.js';
 import { ShaderAdapter, shaderAdapter } from '../../../src/composition/adapters/ShaderAdapter.js';
-import { RemotionAdapter, remotionAdapter } from '../../../src/composition/adapters/RemotionAdapter.js';
 import { AdapterRegistry } from '../../../src/composition/adapters/index.js';
 import type { Layer } from '../../../src/composition/types.js';
 
@@ -649,87 +648,6 @@ describe('ShaderAdapter', () => {
 });
 
 // ===========================================================================
-// RemotionAdapter
-// ===========================================================================
-
-describe('RemotionAdapter', () => {
-  describe('validate', () => {
-    it('requires remotion imports', () => {
-      const layer = makeLayer({ code: 'export const Comp = () => <div/>' });
-      const adapter = new RemotionAdapter();
-      const result = adapter.validate(layer);
-
-      expect(result.valid).toBe(false);
-      expect(result.errors?.some(e => e.includes('remotion'))).toBe(true);
-    });
-
-    it('requires useCurrentFrame hook', () => {
-      const layer = makeLayer({ code: 'import { Composition } from "remotion";\nexport const Comp = () => <AbsoluteFill/>' });
-      const adapter = new RemotionAdapter();
-      const result = adapter.validate(layer);
-
-      expect(result.valid).toBe(false);
-      expect(result.errors?.some(e => e.includes('useCurrentFrame'))).toBe(true);
-    });
-
-    it('requires AbsoluteFill or Sequence', () => {
-      const layer = makeLayer({
-        code: 'import { useCurrentFrame } from "remotion";\nexport const Comp = () => <div/>',
-      });
-      const adapter = new RemotionAdapter();
-      const result = adapter.validate(layer);
-
-      expect(result.valid).toBe(false);
-      expect(result.errors?.some(e => e.includes('AbsoluteFill'))).toBe(true);
-    });
-
-    it('accepts complete Remotion code', () => {
-      const layer = makeLayer({
-        code: `
-          import { useCurrentFrame, AbsoluteFill } from "remotion";
-          export const Comp = () => {
-            const frame = useCurrentFrame();
-            return <AbsoluteFill />;
-          };
-        `,
-      });
-      const adapter = new RemotionAdapter();
-      const result = adapter.validate(layer);
-
-      expect(result.valid).toBe(true);
-      expect(result.errors).toBeUndefined();
-    });
-  });
-
-  describe('getImports', () => {
-    it('returns imports from p5, tone, and three', () => {
-      const adapter = new RemotionAdapter();
-      const imports = adapter.getImports();
-
-      expect(imports.length).toBeGreaterThan(0);
-      expect(imports.some(i => i.from === 'p5')).toBe(true);
-      expect(imports.some(i => i.from === 'tone')).toBe(true);
-      expect(imports.some(i => i.from === 'three')).toBe(true);
-    });
-  });
-
-  describe('generateScript', () => {
-    it('includes Remotion CDN with settings', () => {
-      const layer = makeLayer({
-        code: 'import { useCurrentFrame } from "remotion";',
-        config: { zIndex: 1, opacity: 1, blendMode: 'normal' },
-      });
-      const adapter = new RemotionAdapter();
-      const script = adapter.generateScript(layer, { width: 1920, height: 1080, frameRate: 30 } as any);
-
-      expect(script).toContain('remotion');
-      expect(script).toContain('1920');
-      expect(script).toContain('1080');
-    });
-  });
-});
-
-// ===========================================================================
 // AdapterRegistry
 // ===========================================================================
 
@@ -806,9 +724,5 @@ describe('Singleton adapter instances', () => {
 
   it('shaderAdapter is an instance of ShaderAdapter', () => {
     expect(shaderAdapter).toBeInstanceOf(ShaderAdapter);
-  });
-
-  it('remotionAdapter is an instance of RemotionAdapter', () => {
-    expect(remotionAdapter).toBeInstanceOf(RemotionAdapter);
   });
 });

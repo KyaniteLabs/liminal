@@ -82,11 +82,6 @@ const DOMAIN_INTEGRATION_PATTERNS: Partial<Record<
       'Use p5 graphics as input for ASCII character mapping',
       'Create ASCII overlays on p5 generated visuals',
     ],
-    remotion: [
-      'Use p5 animations as Remotion video components',
-      'Sync p5 frame updates to Remotion timeline',
-      'Export p5 canvas frames for Remotion composition',
-    ],
     html: [
       'Embed p5 canvas within HTML layout structure',
       'Use HTML elements to control p5 sketch parameters',
@@ -144,11 +139,6 @@ const DOMAIN_INTEGRATION_PATTERNS: Partial<Record<
       'Use ASCII art to represent 3D depth information',
       'Create stylized 3D-to-text rendering effects',
     ],
-    remotion: [
-      'Use Three.js scenes as Remotion video layers',
-      'Sync 3D animation to Remotion composition timeline',
-      'Export 3D render sequences for video editing',
-    ],
     html: [
       'Embed Three.js canvas within HTML page structure',
       'Use HTML UI controls for 3D scene parameters',
@@ -195,11 +185,6 @@ const DOMAIN_INTEGRATION_PATTERNS: Partial<Record<
       'Use shader to generate ASCII art effects',
       'Apply character-based post-processing in shaders',
       'Create stylized text-rendering shader effects',
-    ],
-    remotion: [
-      'Use shaders for video effects in Remotion',
-      'Export shader animations as video sequences',
-      'Apply shader transitions between Remotion scenes',
     ],
     html: [
       'Render shader output to HTML canvas element',
@@ -248,11 +233,6 @@ const DOMAIN_INTEGRATION_PATTERNS: Partial<Record<
       'Use text density to control sound density',
       'Map character values to frequency data',
     ],
-    remotion: [
-      'Generate audio tracks for Remotion videos',
-      'Sync sound effects to video timeline events',
-      'Use Tone.js for procedural video soundtracks',
-    ],
     html: [
       'Control Tone.js parameters with HTML UI elements',
       'Use DOM events to trigger audio events',
@@ -299,11 +279,6 @@ const DOMAIN_INTEGRATION_PATTERNS: Partial<Record<
       'Convert Strudel patterns to ASCII animations',
       'Use musical density to control text complexity',
       'Map pattern structure to character layouts',
-    ],
-    remotion: [
-      'Generate music patterns for video soundtracks',
-      'Sync Remotion timeline to Strudel patterns',
-      'Use patterns to trigger video event markers',
     ],
     html: [
       'Display Strudel pattern visualizations in HTML',
@@ -352,11 +327,6 @@ const DOMAIN_INTEGRATION_PATTERNS: Partial<Record<
       'Use video brightness for character selection',
       'Create animated ASCII from video synthesis',
     ],
-    remotion: [
-      'Use Hydra for video effects in Remotion',
-      'Export video synthesis for video editing',
-      'Apply live coding visuals to recorded video',
-    ],
     html: [
       'Embed Hydra canvas within HTML page structure',
       'Use DOM events to control video synthesis',
@@ -404,11 +374,6 @@ const DOMAIN_INTEGRATION_PATTERNS: Partial<Record<
       'Use video brightness for character density',
       'Create animated ASCII from video sources',
     ],
-    remotion: [
-      'Generate ASCII art for video titles and effects',
-      'Create retro text animations for video',
-      'Use ASCII for stylized video transitions',
-    ],
     html: [
       'Display ASCII art within HTML page layout',
       'Use DOM elements for character rendering',
@@ -423,58 +388,6 @@ const DOMAIN_INTEGRATION_PATTERNS: Partial<Record<
       'Layer multiple ASCII art layers with blend modes',
       'Combine different character sets and styles',
       'Create composite ASCII from multiple sources',
-    ],
-  },
-  remotion: {
-    p5: [
-      'Use p5 animations as Remotion video components',
-      'Sync p5 frame rendering to video timeline',
-      'Export generative art as video sequences',
-    ],
-    three: [
-      'Use Three.js scenes as Remotion 3D layers',
-      'Sync 3D animation to video composition',
-      'Export 3D renders for video editing',
-    ],
-    shader: [
-      'Apply shader effects in Remotion videos',
-      'Use procedural shaders for video transitions',
-      'Export shader animations as video',
-    ],
-    tone: [
-      'Generate procedural audio for video soundtracks',
-      'Sync sound effects to video timeline',
-      'Use Tone.js for video music composition',
-    ],
-    strudel: [
-      'Generate music patterns for video soundtracks',
-      'Sync pattern changes to video events',
-      'Use live coding for dynamic video music',
-    ],
-    hydra: [
-      'Use video synthesis for Remotion effects',
-      'Export Hydra output as video clips',
-      'Apply live coding visuals to recorded video',
-    ],
-    ascii: [
-      'Create ASCII art titles and transitions',
-      'Use text art for retro video effects',
-      'Generate stylized text animations',
-    ],
-    html: [
-      'Use HTML components in Remotion videos',
-      'Export web page animations to video',
-      'Combine DOM and canvas rendering',
-    ],
-    textgen: [
-      'Generate narrative text for video content',
-      'Use AI text for titles and captions',
-      'Create text-driven video sequences',
-    ],
-    remotion: [
-      'Compose multiple Remotion video layers',
-      'Coordinate timing across video sequences',
-      'Share assets and compositions between scenes',
     ],
   },
   html: {
@@ -512,11 +425,6 @@ const DOMAIN_INTEGRATION_PATTERNS: Partial<Record<
       'Display ASCII art in HTML elements',
       'Use DOM for character-based rendering',
       'Coordinate ASCII with page styling',
-    ],
-    remotion: [
-      'Use HTML content in Remotion videos',
-      'Export web animations to video format',
-      'Combine DOM and video rendering',
     ],
     textgen: [
       'Display generated text in HTML layout',
@@ -565,11 +473,6 @@ const DOMAIN_INTEGRATION_PATTERNS: Partial<Record<
       'Use text content for typographic effects',
       'Create stylized text presentations',
     ],
-    remotion: [
-      'Generate video narration and titles',
-      'Use AI text for video content',
-      'Create text-driven video sequences',
-    ],
     html: [
       'Display generated text in web pages',
       'Use HTML for text layout and styling',
@@ -616,11 +519,6 @@ const DOMAIN_INTEGRATION_PATTERNS: Partial<Record<
       'Convert ASCII patterns to musical patterns',
       'Use text density to control sound density',
       'Map character values to musical notes',
-    ],
-    remotion: [
-      'Generate musical soundtracks for videos',
-      'Sync music to video timeline and events',
-      'Create procedural video music',
     ],
     html: [
       'Control music with HTML UI elements',
@@ -678,11 +576,6 @@ const DOMAIN_INTEGRATION_PATTERNS: Partial<Record<
       'Convert video to ASCII art',
       'Use video frames for character animation',
       'Create ASCII video effects',
-    ],
-    remotion: [
-      'Use Remotion for video composition',
-      'Export Remotion to video formats',
-      'Coordinate video layers in compositions',
     ],
     html: [
       'Embed video in HTML pages',
@@ -964,11 +857,6 @@ export class PromptEnhancer {
       ascii: [
         /char|pixel/,
         /density|brightness/,
-      ],
-      remotion: [
-        /useCurrentFrame|useVideoConfig/,
-        /Composition|Sequence/,
-        /interpolate/,
       ],
       html: [
         /<[a-z]+/,

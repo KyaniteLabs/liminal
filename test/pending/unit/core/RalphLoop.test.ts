@@ -216,7 +216,7 @@ vi.mock('../../../src/evolution/NoveltyArchive.js', () => ({
 }));
 
 vi.mock('../../../src/types/domains.js', () => ({
-  Domain: { P5: 'p5', GLSL: 'glsl', HYDRA: 'hydra', STRUDEL: 'strudel', REMOTION: 'remotion' },
+  Domain: { P5: 'p5', GLSL: 'glsl', HYDRA: 'hydra', STRUDEL: 'strudel', REVIDEO: 'revideo' },
 }));
 
 vi.mock('../../../src/core/lir/GeneratedCodeParser.js', () => ({

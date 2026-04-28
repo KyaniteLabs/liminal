@@ -372,7 +372,7 @@ export class CreativeBoard {
     let scoreAdjustment = 0;
 
     // Check for proper setup/draw lifecycle (p5-like domains)
-    const isCreativeDomain = ['p5', 'three', 'glsl', 'remotion'].includes(domain);
+    const isCreativeDomain = ['p5', 'three', 'glsl', 'revideo'].includes(domain);
     if (isCreativeDomain) {
       const hasSetup = /\bsetup\s*\(|function\s+setup\b/.test(code);
       const hasDraw = /\bdraw\s*\(|function\s+draw\b/.test(code);

@@ -88,23 +88,6 @@ describe('GenericWrapper', () => {
       });
     });
 
-    describe('Remotion detection', () => {
-      it('detects Remotion with useCurrentFrame', () => {
-        const code = 'const frame = useCurrentFrame();';
-        expect(GenericWrapper.detectDomain(code)).toBe('remotion');
-      });
-
-      it('detects Remotion with AbsoluteFill', () => {
-        const code = '<AbsoluteFill>';
-        expect(GenericWrapper.detectDomain(code)).toBe('remotion');
-      });
-
-      it('detects Remotion imports', () => {
-        const code = 'import { Composition } from "remotion";';
-        expect(GenericWrapper.detectDomain(code)).toBe('remotion');
-      });
-    });
-
     describe('ASCII detection', () => {
       it('detects ASCII art', () => {
         const code = '█▓▒░\n████\n▓▓▓▓\n▒▒▒▒\n░░░░\n████';
@@ -252,29 +235,12 @@ void main() { fragColor = vec4(1.0); }`;
     });
   });
 
-  describe('wrap - Remotion', () => {
-    it('wraps Remotion code', () => {
-      const code = 'export const MyComp = () => <div />;';
-      const result = GenericWrapper.wrap(code, { domain: 'remotion' });
-      
+  describe('wrap - Revideo', () => {
+    it('wraps Revideo code', () => {
+      const code = 'import { makeScene } from "@revideo/core";';
+      const result = GenericWrapper.wrap(code, { domain: 'revideo' });
+
       expect(result).toContain('<!DOCTYPE html>');
-      expect(result).toContain('Remotion');
-      expect(result).toContain('Legacy Remotion');
-    });
-
-    it('extracts metadata from code', () => {
-      const code = 'durationInFrames: 150, fps: 30, width: 1920, height: 1080';
-      const result = GenericWrapper.wrap(code, { domain: 'remotion' });
-      
-      expect(result).toContain('150 frames');
-      expect(result).toContain('1920×1080');
-    });
-
-    it('escapes HTML entities', () => {
-      const code = '<div>test</div>';
-      const result = GenericWrapper.wrap(code, { domain: 'remotion' });
-      
-      expect(result).toContain('&lt;div&gt;');
     });
   });
 

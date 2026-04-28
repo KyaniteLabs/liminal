@@ -574,7 +574,7 @@ describe('PromptEnhancer', () => {
         'strudel',
         'hydra',
         'ascii',
-        'remotion',
+        'revideo',
         'html',
         'textgen',
       ];

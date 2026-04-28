@@ -11,18 +11,18 @@ describe('ImportGuardTool', () => {
   });
 
   describe('safe imports', () => {
-    it('allows React imports in remotion domain', async () => {
+    it('allows Revideo imports in revideo domain', async () => {
       const code = `
-        import React from 'react';
-        import { Composition } from 'remotion';
+        import { makeScene, useTime } from '@revideo/core';
+        import { Txt, Rect } from '@revideo/2d';
       `;
 
-      const result = await tool.execute({ code, domain: 'remotion' });
+      const result = await tool.execute({ code, domain: 'revideo' });
 
       expect(result.success).toBe(true);
       expect(result.data!.safe).toBe(true);
-      expect(result.data!.allowed).toContain('react');
-      expect(result.data!.allowed).toContain('remotion');
+      expect(result.data!.allowed).toContain('@revideo/core');
+      expect(result.data!.allowed).toContain('@revideo/2d');
       expect(result.data!.blocked).toEqual([]);
     });
 
@@ -103,10 +103,10 @@ describe('ImportGuardTool', () => {
       expect(result.data!.blocked[0].source).toBe('child_process');
     });
 
-    it('blocks vm module in remotion domain', async () => {
+    it('blocks vm module in revideo domain', async () => {
       const code = `import vm from 'vm';`;
 
-      const result = await tool.execute({ code, domain: 'remotion' });
+      const result = await tool.execute({ code, domain: 'revideo' });
 
       expect(result.data!.safe).toBe(false);
       expect(result.data!.blocked[0].source).toBe('vm');
@@ -165,29 +165,29 @@ describe('ImportGuardTool', () => {
       expect(result.data!.allowed).toContain('@tonejs/piano');
     });
 
-    it('allows @remotion scoped packages in remotion domain', async () => {
-      const code = `import { useCurrentFrame } from '@remotion/core';`;
+    it('allows @revideo scoped packages in revideo domain', async () => {
+      const code = `import { makeScene } from '@revideo/core';`;
 
-      const result = await tool.execute({ code, domain: 'remotion' });
+      const result = await tool.execute({ code, domain: 'revideo' });
 
       expect(result.data!.safe).toBe(true);
-      expect(result.data!.allowed).toContain('@remotion/core');
+      expect(result.data!.allowed).toContain('@revideo/core');
     });
   });
 
   describe('multiple imports in same file', () => {
     it('evaluates mixed safe and dangerous imports together', async () => {
       const code = `
-        import React from 'react';
+        import { makeScene } from '@revideo/core';
         import fs from 'fs';
         import lodash from 'lodash';
       `;
 
-      const result = await tool.execute({ code, domain: 'remotion' });
+      const result = await tool.execute({ code, domain: 'revideo' });
 
-      // react: allowed, fs: blocked (dangerous), lodash: blocked (not whitelisted)
+      // @revideo/core: allowed, fs: blocked (dangerous), lodash: blocked (not whitelisted)
       expect(result.data!.safe).toBe(false);
-      expect(result.data!.allowed).toContain('react');
+      expect(result.data!.allowed).toContain('@revideo/core');
       expect(result.data!.blocked).toHaveLength(2);
 
       const blockedSources = result.data!.blocked.map(b => b.source);

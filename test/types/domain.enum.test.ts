@@ -54,8 +54,8 @@ describe('Domain enum', () => {
     expect(Domain.CODE).toBe('code');
   });
   
-  it('should have REMOTION = remotion', () => {
-    expect(Domain.REMOTION).toBe('remotion');
+  it('should have REVIEWD = revideo', () => {
+    expect(Domain.REVIEWD).toBe('revideo');
   });
   
   it('should have EMPTY = ""', () => {
@@ -72,7 +72,7 @@ describe('Domain enum', () => {
     expect(values).toContain('ascii');
     expect(values).toContain('music');
     expect(values).toContain('code');
-    expect(values).toContain('remotion');
+    expect(values).toContain('revideo');
   });
 });
 

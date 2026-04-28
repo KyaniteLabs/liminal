@@ -411,49 +411,6 @@ const reverb = new Tone.FakeReverb();
     });
   });
 
-  describe('Remotion structural validation', () => {
-    it('should validate valid Remotion code', () => {
-      const code = `import { useCurrentFrame, AbsoluteFill, interpolate } from 'remotion';
-import { useEffect, useState } from 'react';
-
-export default function MyComp() {
-  const frame = useCurrentFrame();
-  const opacity = interpolate(frame, [0, 100], [0, 1]);
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-    const items = Array.from({ length: 20 }, (_, i) => ({
-      id: i, x: Math.random() * 100, y: Math.random() * 100
-    }));
-    setData(items);
-  }, []);
-
-  return (
-    <AbsoluteFill style={{ backgroundColor: '#1a1a2e' }}>
-      <div style={{ opacity, fontSize: 48, color: 'white' }}>
-        Frame {frame}
-      </div>
-      {data.map(item => (
-        <div key={item.id} style={{
-          position: 'absolute', left: item.x, top: item.y,
-          width: 10, height: 10, background: 'cyan', borderRadius: '50%'
-        }} />
-      ))}
-    </AbsoluteFill>
-  );
-}`;
-      const result = CodeValidator.validate(code, 'remotion');
-      expect(result.valid).toBe(true);
-    });
-
-    it('should reject non-Remotion code', () => {
-      const code = `function setup() { createCanvas(400,400); }`;
-      const result = CodeValidator.validate(code, 'remotion');
-      expect(result.valid).toBe(false);
-      expect(result.errors[0]).toContain('Remotion');
-    });
-  });
-
   describe('HTML structural validation', () => {
     it('should validate valid HTML document', () => {
       const code = `<!DOCTYPE html>
@@ -770,9 +727,9 @@ function render(){ requestAnimationFrame(render); }
       expect(CodeValidator.detectDomain(code)).toBe('tone');
     });
 
-    it('should auto-detect remotion domain', () => {
-      const code = `import { useCurrentFrame } from 'remotion';`;
-      expect(CodeValidator.detectDomain(code)).toBe('remotion');
+    it('should auto-detect revideo domain', () => {
+      const code = `import { makeScene, useTime } from '@revideo/core';`;
+      expect(CodeValidator.detectDomain(code)).toBe('revideo');
     });
 
     it('should auto-detect html domain', () => {
@@ -818,7 +775,7 @@ function render(){ requestAnimationFrame(render); }
       expect(CodeValidator.getMinSize('strudel')).toBe(100);
       expect(CodeValidator.getMinSize('hydra')).toBe(150);
       expect(CodeValidator.getMinSize('tone')).toBe(100);
-      expect(CodeValidator.getMinSize('remotion')).toBe(500);
+      expect(CodeValidator.getMinSize('revideo')).toBe(500);
       expect(CodeValidator.getMinSize('html')).toBe(200);
       expect(CodeValidator.getMinSize('ascii')).toBe(50);
       expect(CodeValidator.getMinSize('svg')).toBe(40);

@@ -50,7 +50,7 @@ describe('Compositor', () => {
     })).toThrow('positive');
   });
 
-  it('generates Remotion multi-layer composition code', () => {
+  it('generates video multi-layer composition code', () => {
     const compositor = new Compositor();
     const spec: CompositionSpec = {
       width: 1920,
@@ -62,11 +62,11 @@ describe('Compositor', () => {
         { type: 'video', source: '/overlay.mp4', blend: 'screen', opacity: 0.7, x: 100, y: 50 },
       ],
     };
-    const remotionCode = compositor.generateRemotionComposition(spec);
-    expect(remotionCode).toContain('useCurrentFrame');
-    expect(remotionCode).toContain('AbsoluteFill');
-    expect(remotionCode).toContain('1920');
-    expect(remotionCode).toContain('1080');
+    const videoCode = compositor.generateVideoComposition(spec);
+    expect(videoCode).toContain('makeScene');
+    expect(videoCode).toContain('Rect');
+    expect(videoCode).toContain('1920');
+    expect(videoCode).toContain('1080');
   });
 
   it('handles blend mode mapping to CSS mix-blend-mode', () => {

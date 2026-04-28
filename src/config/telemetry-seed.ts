@@ -426,12 +426,12 @@ export const SEED_TELEMETRY: GenerationTelemetry[] = [
   },
 
   // ============================================
-  // Remotion - 6 successful
+  // Revideo - 6 successful
   // ============================================
   {
-    id: 'audit-remotion-minimax-m2.7',
+    id: 'audit-revideo-minimax-m2.7',
     timestamp: new Date('2026-03-31'),
-    domain: 'remotion',
+    domain: 'revideo',
     modelId: 'minimax-m2.7',
     provider: 'minimax',
     prompt: 'Create a video component with animation',
@@ -442,9 +442,9 @@ export const SEED_TELEMETRY: GenerationTelemetry[] = [
     success: true,
   },
   {
-    id: 'audit-remotion-minimax-m2.5',
+    id: 'audit-revideo-minimax-m2.5',
     timestamp: new Date('2026-03-31'),
-    domain: 'remotion',
+    domain: 'revideo',
     modelId: 'minimax-m2.5',
     provider: 'minimax',
     prompt: 'Create a video component with animation',
@@ -455,9 +455,9 @@ export const SEED_TELEMETRY: GenerationTelemetry[] = [
     success: true,
   },
   {
-    id: 'audit-remotion-qwen35-9b',
+    id: 'audit-revideo-qwen35-9b',
     timestamp: new Date('2026-03-31'),
-    domain: 'remotion',
+    domain: 'revideo',
     modelId: 'qwen3.5-9b',
     provider: 'qwen',
     prompt: 'Create a video component with animation',
@@ -468,9 +468,9 @@ export const SEED_TELEMETRY: GenerationTelemetry[] = [
     success: true,
   },
   {
-    id: 'audit-remotion-qwen-coder-40b',
+    id: 'audit-revideo-qwen-coder-40b',
     timestamp: new Date('2026-03-31'),
-    domain: 'remotion',
+    domain: 'revideo',
     modelId: 'qwen3-coder-40b',
     provider: 'qwen',
     prompt: 'Create a video component with animation',
@@ -481,9 +481,9 @@ export const SEED_TELEMETRY: GenerationTelemetry[] = [
     success: true,
   },
   {
-    id: 'audit-remotion-gemma3-4b',
+    id: 'audit-revideo-gemma3-4b',
     timestamp: new Date('2026-03-31'),
-    domain: 'remotion',
+    domain: 'revideo',
     modelId: 'gemma3-4b',
     provider: 'ollama',
     prompt: 'Create a video component with animation',
@@ -494,9 +494,9 @@ export const SEED_TELEMETRY: GenerationTelemetry[] = [
     success: true,
   },
   {
-    id: 'audit-remotion-kimi-k2.5',
+    id: 'audit-revideo-kimi-k2.5',
     timestamp: new Date('2026-03-31'),
-    domain: 'remotion',
+    domain: 'revideo',
     modelId: 'kimi-k2.5',
     provider: 'kimi',
     prompt: 'Create a video component with animation',

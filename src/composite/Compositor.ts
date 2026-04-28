@@ -1,5 +1,5 @@
 /**
- * Compatibility stub for the removed Remotion compositor path.
+ * Compatibility stub for the removed video compositor path.
  *
  * This preserves a stable import surface for old CLI code and historical
  * callers while making the removal explicit at runtime.
@@ -38,7 +38,7 @@ export interface CompositionSpec {
 
 function removedError(action: string): Error {
   return new Error(
-    `Remotion compositor support has been removed from the active product surface. ` +
+    `Video compositor support has been removed from the active product surface. ` +
       `${action} is no longer available in mainline.`
   );
 }
@@ -65,8 +65,8 @@ export class Compositor {
     throw removedError('Video compositing');
   }
 
-  generateRemotionComposition(_spec: CompositionSpec): never {
-    throw removedError('Remotion composition generation');
+  generateVideoComposition(_spec: CompositionSpec): never {
+    throw removedError('Video composition generation');
   }
 
   async composite(_spec: CompositionSpec, _outputPath: string): Promise<never> {

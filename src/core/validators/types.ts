@@ -18,7 +18,6 @@ export type Domain =
   | 'shader'
   | 'glsl'
   | 'three'
-  | 'remotion'
   | 'revideo'
   | 'hyperframes'
   | 'music'

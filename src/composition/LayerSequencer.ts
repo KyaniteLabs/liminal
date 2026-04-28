@@ -69,7 +69,7 @@ const DOMAIN_CATEGORIES: Record<string, number> = {
 
   // Video/effects layers (render after base)
   hydra: 3,
-  remotion: 3,
+  revideo: 3,
 
   // Text/content layers (usually on top)
   html: 4,

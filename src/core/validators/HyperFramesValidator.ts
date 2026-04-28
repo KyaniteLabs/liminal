@@ -3,7 +3,7 @@
  *
  * Validates that generated code follows the HyperFrames contract:
  * a single HTML file with GSAP timelines, data-* attributes on clips,
- * and window.__timelines registration. Blocks React, Remotion, p5, and
+ * and window.__timelines registration. Blocks React, p5, and
  * Revideo APIs.
  */
 

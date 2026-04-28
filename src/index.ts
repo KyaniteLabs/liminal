@@ -633,7 +633,6 @@ export { sanitizeSVG } from './generators/svg/SVGSanitizer.js';
 export { validateSVG, type SVGValidationOptions, type SVGValidationResult } from './generators/svg/SVGValidator.js';
 export { StrudelGenerator } from './generators/strudel/StrudelGenerator.js';
 export { ToneGenerator } from './generators/tone/ToneGenerator.js';
-export { RemotionGenerator } from './generators/remotion/RemotionGenerator.js';
 export { RevideoGenerator } from './generators/revideo/RevideoGenerator.js';
 export { HTMLWebGenerator } from './generators/html/HTMLWebGenerator.js';
 export { ASCIIArtGenerator } from './generators/ascii/ASCIIArtGenerator.js';

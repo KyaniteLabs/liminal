@@ -5,8 +5,8 @@ import {
 } from '../../../src/quality/GenerationRegressionHarness.js';
 
 describe('GenerationRegressionHarness', () => {
-  it('normalizes remotion to revideo', () => {
-    expect(normalizeRegressionDomain('remotion')).toBe('revideo');
+  it('preserves revideo domain', () => {
+    expect(normalizeRegressionDomain('revideo')).toBe('revideo');
   });
 
   it('preserves normal domains', () => {

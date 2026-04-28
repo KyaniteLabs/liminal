@@ -55,10 +55,6 @@ const EXPECTED_IDS = [
   'compost.seed-extraction',
   'compost.synthesis',
 
-  // Remotion prompts (2)
-  'remotion.generate',
-  'remotion.improve',
-
   // Aesthetic / Audio / Chat (3)
   'aesthetic.constraints',
   'audio.voice-to-visual',
@@ -67,7 +63,7 @@ const EXPECTED_IDS = [
 
 describe('Prompt Library Validation', () => {
   describe('registration completeness', () => {
-    it('should have exactly 39 prompts registered', () => {
+    it('should have exactly 37 prompts registered', () => {
       const all = PromptLibrary.list();
       expect(all.length).toBe(EXPECTED_IDS.length);
     });

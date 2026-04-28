@@ -414,7 +414,7 @@ export class GeneratorHarnessTools {
 
     // wrong_domain: error mentions wrong framework, OR code contains contamination
     if (
-      /\b(p5|hydra|strudel|tone|three|remotion|revideo|glsl|shader|canvas|svg)\b/.test(errorLower) &&
+      /\b(p5|hydra|strudel|tone|three|revideo|glsl|shader|canvas|svg)\b/.test(errorLower) &&
       /wrong|incorrect|not valid|does not use|framework/i.test(error)
     ) {
       return {

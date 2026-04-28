@@ -77,7 +77,7 @@ export const DEFAULT_KEYWORD_MAPPINGS: KeywordMapping = {
   hydra: ['video', 'feedback', 'webcam', 'hydra', 'video synth', 'live video'],
   ascii: ['ascii', 'text art', 'character', 'ascii art', 'text graphics'],
   html: ['dom', 'css', 'web page', 'ui', 'html', 'website', 'div', 'styled'],
-  remotion: ['video export', 'render', 'composition', 'remotion', 'video production', 'mp4 export'],
+  video: ['video export', 'render', 'composition', 'revideo', 'video production', 'mp4 export'],
   textgen: ['text', 'poem', 'story', 'generate text', 'creative writing'],
 };
 
@@ -119,7 +119,7 @@ export const DOMAIN_RENDER_ORDER: DomainType[] = [
   'ascii',     // ASCII overlays
   'tone',      // Audio (can sync with visuals)
   'strudel',   // Pattern music
-  'remotion',  // Video composition
+  'video',     // Video composition
   'textgen',   // Text content
 ];
 

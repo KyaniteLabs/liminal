@@ -28,7 +28,7 @@ describe('MODEL_IDS', () => {
 describe('DOMAIN_ROUTING', () => {
   it('defines routing for all 8 domains', () => {
     const domains = Object.keys(DOMAIN_ROUTING).sort();
-    expect(domains).toEqual(['ascii', 'glsl', 'html', 'hydra', 'p5', 'remotion', 'strudel', 'three']);
+    expect(domains).toEqual(['ascii', 'glsl', 'html', 'hydra', 'p5', 'revideo', 'strudel', 'three']);
   });
 
   it('every domain has required routing fields with valid data', () => {
@@ -156,7 +156,7 @@ describe('getMinSizeForDomain', () => {
     expect(getMinSizeForDomain('three')).toBe(1000);
     expect(getMinSizeForDomain('hydra')).toBe(200);
     expect(getMinSizeForDomain('strudel')).toBe(100);
-    expect(getMinSizeForDomain('remotion')).toBe(800);
+    expect(getMinSizeForDomain('revideo')).toBe(800);
     expect(getMinSizeForDomain('html')).toBe(600);
     expect(getMinSizeForDomain('ascii')).toBe(1500);
   });

@@ -1170,7 +1170,7 @@ export class RalphLoop {
           const promptLower = prompt.toLowerCase();
           if (promptLower.includes('ascii') || promptLower.includes('text art')) domain = 'ascii';
           else if (promptLower.includes('music') || promptLower.includes('strudel') || promptLower.includes('hydra')) domain = 'music';
-          else if (promptLower.includes('remotion') || promptLower.includes('video') || promptLower.includes('motion graphics') || promptLower.includes('title sequence')) domain = 'remotion';
+          else if (promptLower.includes('revideo') || promptLower.includes('video') || promptLower.includes('motion graphics') || promptLower.includes('title sequence')) domain = 'revideo';
           // Keep 'p5' for visual/shader/three since they're handled by the same generator
         }
         const qualityThreshold = normalizedOptions.domainQualityThresholds?.[domain] ?? normalizedOptions.minQualityScore;
@@ -1286,7 +1286,7 @@ export class RalphLoop {
         // Record routing outcome for dynamic routing
         try {
           await recordRoutingOutcome({
-            domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual' | 'remotion',
+            domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual',
             model: normalizedOptions.useSwarm ? 'hybrid' : 'local',
             qualityScore: evaluation.score,
             timestamp: new Date().toISOString(),
@@ -1633,7 +1633,7 @@ export class RalphLoop {
 /**
  * Detect output type from generated code
  */
-function detectOutputType(code: string): 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'remotion' | 'unknown' {
+function detectOutputType(code: string): 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'revideo' | 'unknown' {
   if (code.includes('function setup()') || code.includes('createCanvas')) {
     return 'p5';
   }
@@ -1649,8 +1649,8 @@ function detectOutputType(code: string): 'p5' | 'three' | 'glsl' | 'hydra' | 'st
   if (code.includes('.s(') && (code.includes('stack') || code.includes('$:'))) {
     return 'strudel';
   }
-  if (code.includes('Remotion') || code.includes('useCurrentFrame')) {
-    return 'remotion';
+  if (code.includes('makeScene') || code.includes('@revideo')) {
+    return 'revideo';
   }
   return 'unknown';
 }

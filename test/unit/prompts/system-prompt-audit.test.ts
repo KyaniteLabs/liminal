@@ -39,14 +39,6 @@ describe('system prompt audit guardrails', () => {
     expect(glslPrompt?.systemPrompt).not.toContain('at least 1000 characters');
   });
 
-  it('remotion.improve separates prior code without markdown fences', () => {
-    const remotionPrompt = PromptLibrary.get('remotion.improve');
-
-    expect(remotionPrompt?.userPromptTemplate).toContain('<previous_code>');
-    expect(remotionPrompt?.userPromptTemplate).toContain('</previous_code>');
-    expect(remotionPrompt?.userPromptTemplate).not.toContain('```');
-  });
-
   it('self-improve prompt stays concise while preserving the JSON tool contract', () => {
     expect(SELF_IMPROVE_SYSTEM_PROMPT.length).toBeLessThan(3200);
     expect(SELF_IMPROVE_SYSTEM_PROMPT).toContain('Return JSON only');

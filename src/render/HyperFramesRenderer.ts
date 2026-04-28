@@ -18,19 +18,27 @@ export interface HyperFramesRenderOptions extends VideoRenderOptions {
   assets?: AssetDescriptor[];
 }
 
+function toFileUrl(absolutePath: string): string {
+  if (absolutePath.startsWith('file://') || absolutePath.startsWith('http://') || absolutePath.startsWith('https://')) {
+    return absolutePath;
+  }
+  return `file://${absolutePath}`;
+}
+
 function buildAssetInjectionScript(assets: AssetDescriptor[]): string {
   const elements: string[] = [];
 
   for (let i = 0; i < assets.length; i++) {
     const asset = assets[i];
+    const src = toFileUrl(asset.path);
     const attrs = `data-start="${asset.startAt}" data-duration="${asset.duration}" data-track-index="${i}"`;
 
     if (asset.type === 'video') {
-      elements.push(`<video src="${asset.path}" ${attrs} style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></video>`);
+      elements.push(`<video src="${src}" ${attrs} style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></video>`);
     } else if (asset.type === 'image') {
-      elements.push(`<img src="${asset.path}" ${attrs} style="position:absolute;top:0;left:0;max-width:100%;max-height:100%;pointer-events:none;">`);
+      elements.push(`<img src="${src}" ${attrs} style="position:absolute;top:0;left:0;max-width:100%;max-height:100%;pointer-events:none;">`);
     } else if (asset.type === 'audio') {
-      elements.push(`<audio src="${asset.path}" ${attrs}></audio>`);
+      elements.push(`<audio src="${src}" ${attrs}></audio>`);
     }
   }
 
@@ -93,19 +101,28 @@ export class HyperFramesRenderer implements VideoRenderer {
     try {
       compDir = await this.writeComposition(html);
 
+      await fs.mkdir(path.dirname(outputPath), { recursive: true });
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let renderFrame: (config: any) => Promise<any>;
+      let createRenderJob: (config: any) => any;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let executeRenderJob: (job: any, ...args: any[]) => Promise<any>;
       try {
-        // @ts-expect-error — optional dependency, not installed in all environments
-        const mod = await import('@hyperframes/producer');
-        renderFrame = mod.render;
+        // Dynamic import via variable prevents TS from following into broken @hyperframes/engine types
+        const producerModule = '@hyperframes/producer';
+        const mod = await import(producerModule);
+        createRenderJob = mod.createRenderJob;
+        executeRenderJob = mod.executeRenderJob;
+        if (!createRenderJob || !executeRenderJob) {
+          throw new Error('createRenderJob/executeRenderJob not exported');
+        }
       } catch {
         throw new Error(
           'HyperFrames rendering requires @hyperframes/producer. Install with: pnpm add @hyperframes/producer'
         );
       }
 
-      const result = await renderFrame({
+      const job = createRenderJob({
         input: path.join(compDir, 'index.html'),
         output: outputPath,
         fps,
@@ -115,7 +132,7 @@ export class HyperFramesRenderer implements VideoRenderer {
         duration: opts.duration,
       });
 
-      await fs.mkdir(path.dirname(outputPath), { recursive: true });
+      const result = await executeRenderJob(job, compDir, outputPath);
 
       const ext = path.extname(outputPath).slice(1) as 'mp4' | 'webm' | 'mov';
       const duration = opts.duration ?? (result?.duration ?? 0);

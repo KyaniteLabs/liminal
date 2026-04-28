@@ -106,7 +106,7 @@ describe('HyperFramesValidator', () => {
     const code = VALID_COMPOSITION.replace('</head>', '<script>import {} from "@revideo/core";</script></head>');
     const result = HyperFramesValidator.validate(code);
     expect(result.valid).toBe(false);
-    expect(result.errors).toEqual(expect.arrayContaining([expect.stringContaining('@revideo/core')]));
+    expect(result.errors).toEqual(expect.arrayContaining([expect.stringContaining('@revideo/')]));
   });
 
   it('rejects code under minimum size', () => {

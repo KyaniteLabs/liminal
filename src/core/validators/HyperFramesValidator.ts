@@ -16,13 +16,13 @@ export class HyperFramesValidator {
   private static readonly BLOCKED_PATTERNS: Array<{ pattern: RegExp; message: string }> = [
     { pattern: /video\.play\s*\(/, message: 'HyperFrames must not call video.play() — use GSAP to control playback' },
     { pattern: /audio\.currentTime/, message: 'HyperFrames must not set audio.currentTime directly' },
-    { pattern: /import\s+React/, message: 'HyperFrames must not import React' },
+    { pattern: /\bReact\b/, message: 'HyperFrames must not use React' },
     { pattern: /from\s+['"]remotion['"]/, message: 'HyperFrames must not import from Remotion' },
     { pattern: /\bcreateCanvas\b/, message: 'HyperFrames must not use createCanvas (p5.js)' },
     { pattern: /function\s+setup\s*\(/, message: 'HyperFrames must not use p5.js setup()' },
     { pattern: /function\s+draw\s*\(/, message: 'HyperFrames must not use p5.js draw()' },
     { pattern: /\bmakeScene\b/, message: 'HyperFrames must not use Revideo makeScene' },
-    { pattern: /@revideo\/core/, message: 'HyperFrames must not use @revideo/core' },
+    { pattern: /@revideo\//, message: 'HyperFrames must not use @revideo/* packages' },
   ];
 
   static validate(code: string): HyperFramesValidationResult {

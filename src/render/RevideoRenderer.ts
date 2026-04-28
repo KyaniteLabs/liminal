@@ -80,12 +80,25 @@ export class RevideoRenderer implements VideoRenderer {
       )
     );
 
-    execSync('npm install --loglevel=error', { cwd: projectDir, stdio: 'pipe' });
+    try {
+      execSync('npm install --loglevel=error', {
+        cwd: projectDir,
+        stdio: 'pipe',
+        timeout: 120_000,
+      });
+    } catch (err) {
+      await fs.rm(projectDir, { recursive: true, force: true }).catch(() => {});
+      throw new Error(`Failed to install Revideo project dependencies: ${err instanceof Error ? err.message : String(err)}`);
+    }
 
     return projectDir;
   }
 
   async render(code: string, outputPath: string, opts: VideoRenderOptions = {}): Promise<VideoRenderResult> {
+    const fps = opts.fps ?? DEFAULT_FPS;
+    const width = opts.width ?? DEFAULT_WIDTH;
+    const height = opts.height ?? DEFAULT_HEIGHT;
+
     let projectDir: string | undefined;
     try {
       projectDir = await this.writeProject(code);
@@ -93,7 +106,6 @@ export class RevideoRenderer implements VideoRenderer {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const renderVideoFn: (config: any) => Promise<any> = await (async () => {
         try {
-          // @ts-expect-error — optional dependency, not installed in all environments
           const mod = await import('@revideo/renderer');
           return mod.renderVideo;
         } catch {
@@ -109,17 +121,20 @@ export class RevideoRenderer implements VideoRenderer {
           outFile: outputPath,
           workers: 1,
           puppeteer: { args: ['--no-sandbox'] },
+          fps,
+          width,
+          height,
         },
       });
 
-      const config = this.getCompositionConfig(code);
+      const config = this.getCompositionConfig(code, fps);
       const ext = path.extname(outputPath).slice(1) as 'mp4' | 'webm' | 'mov';
 
       return {
         outputPath,
-        duration: config.durationInFrames / (opts.fps ?? DEFAULT_FPS),
-        width: opts.width ?? config.width,
-        height: opts.height ?? config.height,
+        duration: config.durationInFrames / fps,
+        width,
+        height,
         format: ext || 'mp4',
       };
     } finally {
@@ -129,7 +144,7 @@ export class RevideoRenderer implements VideoRenderer {
     }
   }
 
-  getCompositionConfig(code: string): CompositionConfig {
+  getCompositionConfig(code: string, fps: number = DEFAULT_FPS): CompositionConfig {
     const waitForValues = [...code.matchAll(/yield\*\s*waitFor\((\d+(?:\.\d+)?)\)/g)]
       .map((m) => parseFloat(m[1]));
     const durationValues = [...code.matchAll(/\.duration\((\d+(?:\.\d+)?)\)/g)]
@@ -137,8 +152,8 @@ export class RevideoRenderer implements VideoRenderer {
     const totalSeconds = waitForValues.reduce((a, b) => a + b, 0)
       + durationValues.reduce((a, b) => a + b, 0);
     const durationInFrames = totalSeconds > 0
-      ? Math.ceil(totalSeconds * DEFAULT_FPS)
-      : 300;
+      ? Math.ceil(totalSeconds * fps)
+      : fps * 10;
 
     const rectMatch = code.match(/Rect[^>]*width=\{(\d+)\}[^>]*height=\{(\d+)\}/);
     const viewMatch = code.match(/view\.fill\([^)]*\)/);
@@ -157,7 +172,7 @@ export class RevideoRenderer implements VideoRenderer {
 
     return {
       id: 'GeneratedScene',
-      fps: DEFAULT_FPS,
+      fps,
       durationInFrames,
       width,
       height,

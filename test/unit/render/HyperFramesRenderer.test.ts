@@ -4,10 +4,9 @@ import path from 'path';
 import os from 'os';
 
 // ── Hoisted mocks ──────────────────────────────────────────────────
-const mockRender = vi.hoisted(() =>
-  vi.fn(async (config: { input: string; output: string; fps: number; width: number; height: number; quality: string; duration?: number }) => ({
-    duration: config.duration ?? 5,
-  }))
+const mockCreateRenderJob = vi.hoisted(() => vi.fn((config) => config));
+const mockExecuteRenderJob = vi.hoisted(() =>
+  vi.fn(async (job) => ({ duration: job?.duration ?? 5 }))
 );
 
 let shouldThrowOnImport = false;
@@ -16,7 +15,10 @@ vi.mock('@hyperframes/producer', () => {
   if (shouldThrowOnImport) {
     throw new Error('Cannot find module @hyperframes/producer');
   }
-  return { render: mockRender };
+  return {
+    createRenderJob: mockCreateRenderJob,
+    executeRenderJob: mockExecuteRenderJob,
+  };
 });
 
 // ── System under test ──────────────────────────────────────────────
@@ -28,7 +30,10 @@ describe('HyperFramesRenderer', () => {
 
   beforeEach(async () => {
     shouldThrowOnImport = false;
-    mockRender.mockClear();
+    mockCreateRenderJob.mockClear();
+    mockExecuteRenderJob.mockClear();
+    mockCreateRenderJob.mockImplementation((config) => config);
+    mockExecuteRenderJob.mockImplementation(async (job) => ({ duration: job?.duration ?? 5 }));
     tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'hfr-test-'));
     renderer = new HyperFramesRenderer({ tempDir });
   });
@@ -39,7 +44,7 @@ describe('HyperFramesRenderer', () => {
 
   it('returns VideoRenderResult with correct outputPath, duration, and dimensions on success', async () => {
     const outputPath = path.join(tempDir, 'out.mp4');
-    mockRender.mockResolvedValue({ duration: 7 });
+    mockExecuteRenderJob.mockResolvedValue({ duration: 7 });
 
     const result = await renderer.render('<html><body>scene</body></html>', outputPath, {
       fps: 60,
@@ -57,12 +62,8 @@ describe('HyperFramesRenderer', () => {
 
   it('throws with install instructions when @hyperframes/producer is missing', async () => {
     shouldThrowOnImport = true;
-    // Re-import to pick up the throwing mock.
-    // The dynamic import inside render() will hit the mock's throw path.
-    // We need to bust the module cache so the mock re-evaluates.
     vi.resetModules();
 
-    // Re-mock after reset
     vi.doMock('@hyperframes/producer', () => {
       throw new Error('Cannot find module @hyperframes/producer');
     });
@@ -79,7 +80,10 @@ describe('HyperFramesRenderer', () => {
 
     // Restore for remaining tests
     vi.resetModules();
-    vi.doMock('@hyperframes/producer', () => ({ render: mockRender }));
+    vi.doMock('@hyperframes/producer', () => ({
+      createRenderJob: mockCreateRenderJob,
+      executeRenderJob: mockExecuteRenderJob,
+    }));
     await import('../../../src/render/HyperFramesRenderer.js');
   });
 
@@ -110,8 +114,11 @@ describe('HyperFramesRenderer', () => {
 
     // Capture the HTML at render time — before cleanup deletes the temp dir
     let capturedHtml = '';
-    mockRender.mockImplementation(async (config: { input: string }) => {
-      capturedHtml = await fs.readFile(config.input, 'utf-8');
+    mockExecuteRenderJob.mockImplementation(async (job) => {
+      const inputPath = typeof job === 'object' && job !== null ? job.input : '';
+      if (inputPath) {
+        capturedHtml = await fs.readFile(inputPath, 'utf-8');
+      }
       return { duration: 3 };
     });
 
@@ -123,18 +130,18 @@ describe('HyperFramesRenderer', () => {
 
     await renderer.render('<html><body>scene</body></html>', outputPath, { assets, duration: 3 });
 
-    // Video element with data attributes
-    expect(capturedHtml).toContain('<video src="/clips/intro.mp4"');
+    // Video element with data attributes — paths converted to file:// URLs
+    expect(capturedHtml).toContain('<video src="file:///clips/intro.mp4"');
     expect(capturedHtml).toContain('data-start="0"');
     expect(capturedHtml).toContain('data-duration="5"');
     expect(capturedHtml).toContain('data-track-index="0"');
 
     // Image element
-    expect(capturedHtml).toContain('<img src="/images/logo.png"');
+    expect(capturedHtml).toContain('<img src="file:///images/logo.png"');
     expect(capturedHtml).toContain('data-track-index="1"');
 
     // Audio element
-    expect(capturedHtml).toContain('<audio src="/audio/bgm.wav"');
+    expect(capturedHtml).toContain('<audio src="file:///audio/bgm.wav"');
     expect(capturedHtml).toContain('data-track-index="2"');
 
     // Injection container
@@ -143,11 +150,11 @@ describe('HyperFramesRenderer', () => {
 
   it('defaults fps to 30 and quality to standard', async () => {
     const outputPath = path.join(tempDir, 'out.mp4');
-    mockRender.mockResolvedValue({ duration: 0 });
+    mockExecuteRenderJob.mockResolvedValue({ duration: 0 });
 
     await renderer.render('<html></html>', outputPath);
 
-    const callConfig = mockRender.mock.calls[0][0] as {
+    const callConfig = mockCreateRenderJob.mock.calls[0][0] as {
       fps: number;
       quality: string;
     };

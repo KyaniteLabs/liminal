@@ -19,6 +19,11 @@ export class HyperFramesGenerator extends TierBasedGenerator {
   canHandle(prompt: string): number {
     const lower = prompt.toLowerCase();
     if (/\b(?:do not|don't|dont|never|avoid)\s+(?:use\s+)?hyperframes?\b/.test(lower)) return 0;
+
+    // Generative keywords belong to Revideo, not HyperFrames
+    const generative = /\b(particle|fractal|algorithmic|generative\s*(motion|art|animation)|data\s*vis|flow\s*field|cellular\s*automata|lenia)\b/;
+    if (generative.test(lower)) return 0;
+
     if (/\bhyperframes?\b/.test(lower)) return 0.95;
     if (/\b(promo|trailer|slideshow|presentation|title\s*card|subtitle|caption|social\s*media)\b/.test(lower)) return 0.90;
     if (/\b(composite|compose|assemble|overlay|watermark|intro|outro)\b/.test(lower)) return 0.85;

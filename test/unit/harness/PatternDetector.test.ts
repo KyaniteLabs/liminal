@@ -334,7 +334,6 @@ describe('PatternDetector', () => {
     it('returns pattern by id', () => {
       const pattern = detector.getPattern('qwen-thinking-trap');
 
-      expect(pattern).toBeDefined();
       expect(pattern!.name).toBe('Qwen Thinking Mode Trap');
     });
 

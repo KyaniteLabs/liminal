@@ -57,14 +57,14 @@ describe('Default Personas', () => {
 
   it('should have Nova as Synthesizer', () => {
     const nova = DEFAULT_PERSONAS.find(p => p.id === 'nova');
-    expect(nova).toBeDefined();
+
     expect(nova!.displayName).toBe('The Synthesizer');
     expect(nova!.model).toBe('gemma3:4b');
   });
 
   it('should have Max as Distiller with lowest temperature', () => {
     const max = DEFAULT_PERSONAS.find(p => p.id === 'max');
-    expect(max).toBeDefined();
+
     expect(max!.displayName).toBe('The Distiller');
     expect(max!.temperature).toBeLessThanOrEqual(0.5);
   });

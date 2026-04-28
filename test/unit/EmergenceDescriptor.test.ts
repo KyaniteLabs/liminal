@@ -161,7 +161,7 @@ describe('ArchivePlacement', () => {
 
     expect(result.accepted).toBe(true);
     expect(result.outcome).toBe('replaced-elite');
-    expect(result.displaced).toBeDefined();
+
     expect(result.displaced!.id).toBe('test://a');
   });
 

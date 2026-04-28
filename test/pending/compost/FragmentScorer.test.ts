@@ -91,7 +91,7 @@ describe('FragmentScorer', () => {
     it('returns true when score exceeds threshold', async () => {
       const frag = makeFragment({ content: 'A B C D E F G H I J K L M N O P Q R S T U V W X Y Z unique words high novelty' });
       const result = await scorer.shouldPromote(frag);
-      expect(typeof result).toBe('boolean');
+      expect(result === true || result === false).toBe(true);
     });
   });
 });

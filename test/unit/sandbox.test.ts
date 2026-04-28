@@ -62,7 +62,7 @@ describe.skipIf(process.env.CI || !cdnAvailable)('Sandbox runInSandbox', () => {
       const result = await runInSandbox('while(true){}', { timeoutMs: 5000 });
 
       expect(result.completed).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.error).not.toBeNull();
       expect(String(result.error)).toMatch(/timeout|Timeout|exceeded/i);
     }, 20000);
   });

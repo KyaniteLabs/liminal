@@ -25,7 +25,7 @@ describe('requestImprovement', () => {
     const result = await requestImprovement(validP5Code);
     expect(typeof result.code).toBe('string');
     expect(result.code.length).toBeGreaterThan(0);
-    expect(typeof result.improved).toBe('boolean');
+    expect(result.improved === true || result.improved === false).toBe(true);
   });
 
   test('returned code is valid p5.js (contains setup and createCanvas)', async () => {

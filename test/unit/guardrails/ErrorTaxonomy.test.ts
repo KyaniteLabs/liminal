@@ -61,7 +61,7 @@ describe('ERROR_TAXONOMY', () => {
 
   it('contains all expected error categories', () => {
     for (const type of expectedTypes) {
-      expect(ERROR_TAXONOMY[type], `Missing taxonomy entry for ${type}`).toBeDefined();
+      expect(ERROR_TAXONOMY[type], `Missing taxonomy entry for ${type}`).not.toBeNull();
     }
   });
 
@@ -120,7 +120,7 @@ describe('ERROR_PATTERNS', () => {
       expect(
         ERROR_TAXONOMY[ep.type],
         `Pattern references unknown taxonomy type "${ep.type}"`,
-      ).toBeDefined();
+      ).not.toBeNull();
     }
   });
 

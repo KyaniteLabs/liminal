@@ -73,12 +73,12 @@ describe('PitchColorMapper', () => {
   describe('frequencyToScaleColor', () => {
     it('maps 440Hz in pentatonic scale', () => {
       const color = frequencyToScaleColor(440, 'pentatonic', 0);
-      expect(color.h).toBeDefined();
+      expect(color.h).not.toBeNull();
     });
 
     it('falls back to chromatic for unknown scale', () => {
       const color = frequencyToScaleColor(440, 'unknown_scale', 0);
-      expect(color.h).toBeDefined();
+      expect(color.h).not.toBeNull();
     });
   });
 

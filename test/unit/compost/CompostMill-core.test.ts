@@ -323,17 +323,17 @@ describe('CompostMill', () => {
   describe('constructor', () => {
     it('creates a mill with soup disabled', () => {
       const noSoupMill = new CompostMill(mockLLM, { soupEnabled: false });
-      expect(noSoupMill).toBeDefined();
+      expect(noSoupMill).not.toBeNull();
     });
 
     it('creates a mill with default config', () => {
       const defaultMill = new CompostMill(mockLLM, { entropy: mockEntropyInstance as any });
-      expect(defaultMill).toBeDefined();
+      expect(defaultMill).not.toBeNull();
     });
 
     it('uses fastLLM fallback when not provided', () => {
       const noFastMill = new CompostMill(mockLLM, { fastLLM: undefined, entropy: mockEntropyInstance as any });
-      expect(noFastMill).toBeDefined();
+      expect(noFastMill).not.toBeNull();
     });
 
     it('throws when entropy is missing and soup is enabled', () => {
@@ -459,7 +459,7 @@ describe('CompostMill', () => {
       const result = await mill.digest();
 
       const collisionSeed = result.seeds.find(s => s.id.startsWith('collision-'));
-      expect(collisionSeed).toBeDefined();
+
       expect(collisionSeed!.source.collisionType).toBe('semantic-bridge');
       expect(collisionSeed!.source.domains).toEqual(['code', 'music']);
     });

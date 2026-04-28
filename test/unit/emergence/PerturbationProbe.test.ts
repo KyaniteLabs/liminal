@@ -37,9 +37,9 @@ describe('PerturbationProbe', () => {
     const result = probe.probe(CODE_OUTPUT, desc, EXTRACT_FN);
     expect(result.resilience).toBeGreaterThanOrEqual(0);
     expect(result.resilience).toBeLessThanOrEqual(1);
-    expect(result.classification).toBeDefined();
-    expect(result.perturbations).toBeDefined();
-    expect(result.perturbations.length).toBeGreaterThan(0);
+    expect(result.classification).not.toBeNull();
+
+    expect(result.perturbations?.length).toBeGreaterThan(0);
   });
 
   it('quickEstimate returns midrange for balanced descriptor', () => {

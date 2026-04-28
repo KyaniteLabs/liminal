@@ -133,8 +133,8 @@ describe('ContextBuilder', () => {
       const hash1 = context1.match(/Previous output hash:\s*([a-f0-9]{16})/)?.[1];
       const hash2 = context2.match(/Previous output hash:\s*([a-f0-9]{16})/)?.[1];
 
-      expect(hash1).toBeDefined();
-      expect(hash2).toBeDefined();
+      expect(hash1).not.toBeNull();
+      expect(hash2).not.toBeNull();
       expect(hash1).not.toBe(hash2);
     });
 

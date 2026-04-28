@@ -89,7 +89,7 @@ describe('ReplayBundle', () => {
       const rec = bundle.recommendRetry('L001');
 
       expect(rec.taskId).toBe('L001');
-      expect(rec.action).toBeDefined();
+      expect(rec.action).not.toBeNull();
       expect(rec.rationale.length).toBeGreaterThan(0);
       expect(rec.suggestedChanges.length).toBeGreaterThan(0);
     });
@@ -107,7 +107,7 @@ describe('ReplayBundle', () => {
       const rec = bundle.recommendRetry('W001');
 
       expect(rec.taskId).toBe('W001');
-      expect(rec.failureClass).toBeDefined();
+      expect(rec.failureClass).not.toBeNull();
     });
   });
 });

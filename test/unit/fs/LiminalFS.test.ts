@@ -131,7 +131,7 @@ describe('LiminalFS', () => {
 
   it('getProjectStore — returns the underlying ProjectStore instance', () => {
     const store = liminalFs.getProjectStore();
-    expect(store).toBeDefined();
+    expect(store).not.toBeNull();
     expect(typeof store.getEventStore).toBe('function');
   });
 

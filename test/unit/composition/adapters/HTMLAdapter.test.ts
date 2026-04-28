@@ -109,7 +109,7 @@ describe('HTMLAdapter', () => {
       
       const result = adapter.render(mockLayer, mockContainer, mockContext);
 
-      expect(result.container.style.setProperty).toBeDefined();
+      expect(result.container.style.setProperty).not.toBeNull();
     });
 
     it('should apply string imports as CSS custom properties', () => {
@@ -118,14 +118,14 @@ describe('HTMLAdapter', () => {
       
       const result = adapter.render(mockLayer, mockContainer, mockContext);
 
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
     });
 
     it('should handle missing imports gracefully', () => {
       // No imports registered
       const result = adapter.render(mockLayer, mockContainer, mockContext);
 
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
     });
   });
 
@@ -134,16 +134,15 @@ describe('HTMLAdapter', () => {
       const result = adapter.render(mockLayer, mockContainer, mockContext);
 
       expect(mockContainer.appendChild).toHaveBeenCalled();
-      expect(result).toBeDefined();
-      expect(result.container).toBeDefined();
-      expect(result.elements).toBeDefined();
+      expect(result).not.toBeNull();
+      expect(result.container).not.toBeNull();
+      expect(result.elements).not.toBeNull();
     });
 
     it('should create a wrapper div for the HTML content', () => {
       const result = adapter.render(mockLayer, mockContainer, mockContext);
 
-      expect(result.container).toBeDefined();
-      expect(result.container.tagName).toBe('DIV');
+      expect(result.container?.tagName).toBe('DIV');
     });
 
     it('should parse and store references to DOM elements', () => {
@@ -158,7 +157,7 @@ describe('HTMLAdapter', () => {
     it('should apply layer styles to wrapper', () => {
       const result = adapter.render(mockLayer, mockContainer, mockContext);
 
-      expect(result.container.style).toBeDefined();
+      expect(result.container.style).not.toBeNull();
     });
 
     it('should handle empty HTML gracefully', () => {
@@ -166,8 +165,7 @@ describe('HTMLAdapter', () => {
 
       const result = adapter.render(mockLayer, mockContainer, mockContext);
 
-      expect(result).toBeDefined();
-      expect(result.elements.size).toBe(0);
+      expect(result?.elements.size).toBe(0);
     });
 
     it('should handle HTML with multiple root elements', () => {
@@ -175,8 +173,8 @@ describe('HTMLAdapter', () => {
 
       const result = adapter.render(mockLayer, mockContainer, mockContext);
 
-      expect(result).toBeDefined();
-      expect(result.container).toBeDefined();
+      expect(result).not.toBeNull();
+      expect(result.container).not.toBeNull();
     });
 
     it('should inject CSS if present in layer code', () => {
@@ -189,15 +187,15 @@ describe('HTMLAdapter', () => {
 
       const result = adapter.render(mockLayer, mockContainer, mockContext);
 
-      expect(result).toBeDefined();
-      expect(result.styles).toBeDefined();
+      expect(result).not.toBeNull();
+      expect(result.styles).not.toBeNull();
     });
 
     it('should use context settings for dimensions', () => {
       const result = adapter.render(mockLayer, mockContainer, mockContext);
 
-      expect(result.container.style.width).toBeDefined();
-      expect(result.container.style.height).toBeDefined();
+      expect(result.container.style.width).not.toBeNull();
+      expect(result.container.style.height).not.toBeNull();
     });
   });
 
@@ -222,7 +220,7 @@ describe('HTMLAdapter', () => {
       const exports = adapter.getExports(mockLayer);
 
       const containerExport = exports.find(e => e.name === 'container');
-      expect(containerExport).toBeDefined();
+
       expect(containerExport?.type).toBe('object');
       expect(typeof containerExport?.getter).toBe('function');
     });
@@ -232,7 +230,7 @@ describe('HTMLAdapter', () => {
       const exports = adapter.getExports(mockLayer);
 
       const elementsExport = exports.find(e => e.name === 'elements');
-      expect(elementsExport).toBeDefined();
+
       expect(elementsExport?.type).toBe('object');
     });
 
@@ -241,7 +239,7 @@ describe('HTMLAdapter', () => {
       const exports = adapter.getExports(mockLayer);
 
       const stylesExport = exports.find(e => e.name === 'computedStyles');
-      expect(stylesExport).toBeDefined();
+
       expect(stylesExport?.type).toBe('object');
     });
   });
@@ -280,8 +278,8 @@ describe('HTMLAdapter', () => {
 
       const mouseXImport = imports.find(i => i.name === 'mouseX');
       if (mouseXImport) {
-        expect(mouseXImport.as).toBeDefined();
-        expect(mouseXImport.as.length).toBeGreaterThan(0);
+
+        expect(mouseXImport.as?.length).toBeGreaterThan(0);
       }
     });
   });
@@ -306,7 +304,7 @@ describe('HTMLAdapter', () => {
       const result = adapter.validate(mockLayer);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toBeDefined();
+
       expect(result.errors?.length).toBeGreaterThan(0);
     });
 
@@ -315,7 +313,7 @@ describe('HTMLAdapter', () => {
       const result = adapter.validate(mockLayer);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toBeDefined();
+      expect(result.errors).not.toBeNull();
     });
 
     it('should return invalid for empty HTML', () => {
@@ -346,7 +344,7 @@ describe('HTMLAdapter', () => {
       const result = adapter.validate(mockLayer);
 
       if (!result.valid) {
-        expect(result.errors).toBeDefined();
+        expect(result.errors).not.toBeNull();
       }
     });
   });
@@ -407,7 +405,7 @@ describe('HTMLAdapter', () => {
       mockLayer.code = '<div>Special quotes</div>';
       const result = adapter.generateScript(mockLayer, mockSettings);
 
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
       expect(result).toContain('Special');
     });
   });
@@ -418,7 +416,7 @@ describe('HTMLAdapter', () => {
       
       adapter.destroy(mockLayer, instance);
 
-      expect(instance.container).toBeDefined();
+      expect(instance.container).not.toBeNull();
     });
 
     it('should remove stored instance', () => {
@@ -460,7 +458,7 @@ describe('HTMLAdapter', () => {
 
   describe('singleton instance', () => {
     it('should export singleton htmlAdapter', () => {
-      expect(htmlAdapter).toBeDefined();
+      expect(htmlAdapter).not.toBeNull();
       expect(htmlAdapter).toBeInstanceOf(HTMLAdapter);
     });
 

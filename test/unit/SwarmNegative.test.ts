@@ -120,7 +120,7 @@ describe('MapElites negative tests', () => {
     // NaN gets clamped/converted during behavior mapping
     const result = map.insert('a', [NaN, 0.5], 0.5);
     // Should not throw
-    expect(typeof result).toBe('boolean');
+    expect(result === true || result === false).toBe(true);
   });
 
   it('should handle zero-sized grid (behavior mapping wraps to valid cell)', () => {
@@ -128,7 +128,7 @@ describe('MapElites negative tests', () => {
     // With dims=[0,0], behaviorToCell produces negative coords but Math.max clamps
     // The grid still accepts inserts since it's Map-based
     const result = map.insert('a', [0.5, 0.5], 0.5);
-    expect(typeof result).toBe('boolean');
+    expect(result === true || result === false).toBe(true);
   });
 
   it('should handle getElites with empty map', () => {

@@ -61,11 +61,10 @@ describe('RalphLoop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result).toBeDefined();
-      expect(result.iterations).toBe(1);
-      expect(result.code).toBeDefined();
+      expect(result?.iterations).toBe(1);
+
       expect(typeof result.code).toBe('string');
-      expect(result.code.length).toBeGreaterThan(0);
+      expect(result.code?.length).toBeGreaterThan(0);
     });
 
     test('should run multiple iterations', async () => {
@@ -77,9 +76,8 @@ describe('RalphLoop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result).toBeDefined();
-      expect(result.iterations).toBe(3);
-      expect(result.code).toBeDefined();
+      expect(result?.iterations).toBe(3);
+      expect(result.code).not.toBeNull();
     });
 
     test('should terminate on promise detection', async () => {
@@ -91,8 +89,7 @@ describe('RalphLoop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result).toBeDefined();
-      expect(result.completed).toBe(true);
+      expect(result?.completed).toBe(true);
       expect(result.reason).toContain('promise');
     });
 
@@ -105,8 +102,7 @@ describe('RalphLoop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result).toBeDefined();
-      expect(result.iterations).toBe(5);
+      expect(result?.iterations).toBe(5);
       expect(result.completed).toBe(false);
       expect(result.reason).toContain('max iterations');
     });
@@ -123,15 +119,15 @@ describe('RalphLoop Integration Tests', () => {
       });
 
       const history = ContextAccumulation.getHistory();
-      expect(history).toBeDefined();
-      expect(history.length).toBe(3);
+
+      expect(history?.length).toBe(3);
 
       // Each context entry should have expected structure
       history.forEach((context, index) => {
-        expect(context).toBeDefined();
-        expect(context.iteration).toBe(index + 1);
-        expect(context.code).toBeDefined();
-        expect(context.timestamp).toBeDefined();
+
+        expect(context?.iteration).toBe(index + 1);
+        expect(context.code).not.toBeNull();
+        expect(context.timestamp).not.toBeNull();
       });
     });
 
@@ -148,8 +144,8 @@ describe('RalphLoop Integration Tests', () => {
 
       // Second iteration should have access to first iteration's code
       expect(history.length).toBe(2);
-      expect(history[0].code).toBeDefined();
-      expect(history[1].code).toBeDefined();
+      expect(history[0].code).not.toBeNull();
+      expect(history[1].code).not.toBeNull();
 
       // When LLM is configured, code should evolve; when template fallback is used, same code each time
       if (LLMClient.isConfigured()) {
@@ -197,8 +193,7 @@ describe('RalphLoop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result).toBeDefined();
-      expect(result.iterations).toBe(1);
+      expect(result?.iterations).toBe(1);
     });
 
     test('should handle null/undefined options', async () => {
@@ -208,7 +203,7 @@ describe('RalphLoop Integration Tests', () => {
       // Should not throw with null options
       const result = await RalphLoop.run(prompt, null);
 
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
     });
 
     test('should handle generator errors gracefully', async () => {
@@ -222,7 +217,7 @@ describe('RalphLoop Integration Tests', () => {
         tolerateErrors: true
       });
 
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
     });
   });
 
@@ -239,13 +234,13 @@ describe('RalphLoop Integration Tests', () => {
       });
 
       const history = await gallery.loadHistory(projectName);
-      expect(history).toBeDefined();
-      expect(history.length).toBe(3);
+
+      expect(history?.length).toBe(3);
 
       history.forEach((iteration, index) => {
         expect(iteration.version).toBe(index + 1);
-        expect(iteration.code).toBeDefined();
-        expect(iteration.code.length).toBeGreaterThan(0);
+
+        expect(iteration.code?.length).toBeGreaterThan(0);
       });
     });
 
@@ -264,7 +259,7 @@ describe('RalphLoop Integration Tests', () => {
 
       // Check directory exists
       const stats = await fs.stat(projectPath);
-      expect(stats).toBeDefined();
+      expect(stats).not.toBeNull();
       expect(stats.isDirectory()).toBe(true);
     });
 
@@ -280,8 +275,8 @@ describe('RalphLoop Integration Tests', () => {
       });
 
       // Should complete iteration even if save fails
-      expect(result).toBeDefined();
-      expect(result.iterations).toBe(1);
+
+      expect(result?.iterations).toBe(1);
     });
 
     test('should throw error when gallery save fails and tolerateErrors is false', async () => {
@@ -308,12 +303,12 @@ describe('RalphLoop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
 
       // Check that quality was evaluated
       const history = ContextAccumulation.getHistory();
       history.forEach(context => {
-        expect(context.evaluation).toBeDefined();
+        expect(context.evaluation).not.toBeNull();
         expect(context.evaluation.score).toBeGreaterThanOrEqual(0);
         expect(context.evaluation.score).toBeLessThanOrEqual(1);
       });
@@ -332,8 +327,8 @@ describe('RalphLoop Integration Tests', () => {
 
       // Quality scores should be tracked
       const scores = history.map(h => h.evaluation.score);
-      expect(scores).toBeDefined();
-      expect(scores.length).toBe(5);
+
+      expect(scores?.length).toBe(5);
 
       // All scores should be valid
       scores.forEach(score => {
@@ -485,8 +480,7 @@ describe('RalphLoop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result.code).toBeDefined();
-      expect(result.code.length).toBeGreaterThan(0);
+      expect(result.code?.length).toBeGreaterThan(0);
 
       // Final code should be valid JavaScript
       expect(() => {
@@ -504,8 +498,8 @@ describe('RalphLoop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result.timestamp).toBeDefined();
-      expect(result.duration).toBeDefined();
+      expect(result.timestamp).not.toBeNull();
+      expect(result.duration).not.toBeNull();
       expect(result.duration).toBeGreaterThanOrEqual(0);
     });
   });
@@ -520,8 +514,7 @@ describe('RalphLoop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result).toBeDefined();
-      expect(result.iterations).toBe(1);
+      expect(result?.iterations).toBe(1);
     });
 
     test('should handle unicode in prompts', async () => {
@@ -533,8 +526,7 @@ describe('RalphLoop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result).toBeDefined();
-      expect(result.iterations).toBe(1);
+      expect(result?.iterations).toBe(1);
     });
 
     test('should handle special characters in project name', async () => {
@@ -547,7 +539,7 @@ describe('RalphLoop Integration Tests', () => {
         project: 'test-project-123'
       });
 
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
     });
 
     test('should handle concurrent loop executions', async () => {
@@ -563,8 +555,8 @@ describe('RalphLoop Integration Tests', () => {
 
       expect(results).toHaveLength(3);
       results.forEach(result => {
-        expect(result).toBeDefined();
-        expect(result.iterations).toBe(1);
+
+        expect(result?.iterations).toBe(1);
       });
     });
   });
@@ -584,16 +576,16 @@ describe('RalphLoop Integration Tests', () => {
       });
 
       const state = RalphLoop.getState();
-      expect(state).toBeDefined();
-      expect(state.iteration).toBe(3);
-      expect(state.history).toBeDefined();
-      expect(state.history.length).toBe(3);
+
+      expect(state?.iteration).toBe(3);
+
+      expect(state.history?.length).toBe(3);
     });
 
     test('getState should return empty state when no loop run', () => {
       const state = RalphLoop.getState();
-      expect(state).toBeDefined();
-      expect(state.iteration).toBe(0);
+
+      expect(state?.iteration).toBe(0);
       expect(state.history).toEqual([]);
     });
 
@@ -647,10 +639,10 @@ describe('RalphLoop Integration Tests', () => {
       });
 
       const progress = RalphLoop.getProgress();
-      expect(progress).toBeDefined();
+
       expect(progress).not.toBeNull();
-      expect(progress.iteration).toBe(5);
-      expect(progress.maxIterations).toBeDefined();
+      expect(progress?.iteration).toBe(5);
+      expect(progress.maxIterations).not.toBeNull();
       expect(progress.progress).toBe(1); // 5/5 = 1 (complete)
     });
 
@@ -665,8 +657,8 @@ describe('RalphLoop Integration Tests', () => {
       });
 
       const progress = RalphLoop.getProgress();
-      expect(progress).toBeDefined();
-      expect(progress.iteration).toBeGreaterThan(0);
+
+      expect(progress?.iteration).toBeGreaterThan(0);
       expect(progress.iteration).toBeLessThanOrEqual(maxIter);
       expect(progress.maxIterations).toBe(maxIter);
       // Progress should be 1.0 if loop ran to completion (max iterations or promise detected)

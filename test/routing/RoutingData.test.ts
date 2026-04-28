@@ -17,7 +17,7 @@ describe('RoutingData', () => {
       const domains: DomainType[] = ['ascii', 'music', 'code', 'visual'];
 
       for (const domain of domains) {
-        expect(AB_TEST_RESULTS[domain]).toBeDefined();
+        expect(AB_TEST_RESULTS[domain]).not.toBeNull();
         expect(AB_TEST_RESULTS[domain]).toHaveProperty('local');
         expect(AB_TEST_RESULTS[domain]).toHaveProperty('cloud');
         expect(AB_TEST_RESULTS[domain]).toHaveProperty('hybrid');
@@ -57,7 +57,7 @@ describe('RoutingData', () => {
       const domains: DomainType[] = ['ascii', 'music', 'code', 'visual'];
 
       for (const domain of domains) {
-        expect(DOMAIN_ROUTING_DATA[domain]).toBeDefined();
+        expect(DOMAIN_ROUTING_DATA[domain]).not.toBeNull();
         expect(DOMAIN_ROUTING_DATA[domain]).toHaveProperty('optimalModel');
         expect(DOMAIN_ROUTING_DATA[domain]).toHaveProperty('confidence');
         expect(DOMAIN_ROUTING_DATA[domain]).toHaveProperty('advantage');
@@ -115,9 +115,9 @@ describe('RoutingData', () => {
       const domains: DomainType[] = ['ascii', 'music', 'code', 'visual'];
 
       for (const domain of domains) {
-        expect(DOMAIN_KEYWORDS[domain]).toBeDefined();
+
         expect(Array.isArray(DOMAIN_KEYWORDS[domain])).toBe(true);
-        expect(DOMAIN_KEYWORDS[domain].length).toBeGreaterThan(0);
+        expect(DOMAIN_KEYWORDS[domain]?.length).toBeGreaterThan(0);
       }
     });
 

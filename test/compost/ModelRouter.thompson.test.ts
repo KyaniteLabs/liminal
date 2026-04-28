@@ -257,7 +257,7 @@ describe('Thompson Sampling', () => {
       // Stagnation detection should trigger exploration mode
       // Note: This may or may not trigger depending on random variance
       // So we just verify the system doesn't crash
-      expect(stats.thompson.explorationMode).toBeDefined();
+      expect(stats.thompson.explorationMode).not.toBeNull();
     });
 
     it('should support manual exploration mode toggle', () => {
@@ -345,7 +345,7 @@ describe('Thompson Sampling', () => {
       
       const response = await router.route(task);
       
-      expect(response.qualityScore).toBeDefined();
+      expect(response.qualityScore).not.toBeNull();
       expect(response.qualityScore).toBeGreaterThanOrEqual(0);
       expect(response.qualityScore).toBeLessThanOrEqual(1);
     });

@@ -47,7 +47,7 @@ describe('AestheticCritic: real heuristic evaluation', () => {
     expect(report.score).toBeGreaterThanOrEqual(0);
     expect(report.score).toBeLessThanOrEqual(1);
     // Passed is a specific boolean, not just "a boolean"
-    expect(typeof report.passed).toBe('boolean');
+    expect(report.passed === true || report.passed === false).toBe(true);
     // Timestamp is a positive integer (Date.now())
     expect(report.timestamp).toBeGreaterThan(0);
     // Violations is an array (may be empty for well-formed code)
@@ -122,7 +122,7 @@ describe('AestheticStrategy → ScoringEngine: strategy plugin wiring', () => {
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(1);
     expect(result.strategy).toBe('aesthetic');
-    expect(result.dimensions).toBeDefined();
+    expect(result.dimensions).not.toBeNull();
     expect(result.dimensions?.aesthetic).toBeGreaterThanOrEqual(0);
     expect(result.dimensions?.aesthetic).toBeLessThanOrEqual(1);
   });
@@ -134,7 +134,7 @@ describe('AestheticStrategy → ScoringEngine: strategy plugin wiring', () => {
     const engine = new ScoringEngine();
     engine.register(new AestheticStrategy());
     const strategy = engine.getStrategy('aesthetic');
-    expect(strategy).toBeDefined();
+    expect(strategy).not.toBeNull();
 
     // Use code that triggers violations
     const result = await strategy!.score({

@@ -40,14 +40,14 @@ describe('AmbiguityDetector', () => {
     it('detects "cooler"', () => {
       const issues = detector.detect('make it cooler');
       const vague = issues.find((i) => i.description.includes('cooler'));
-      expect(vague).toBeDefined();
+
       expect(vague!.suggestedQuestion).toContain('aesthetic');
     });
 
     it('detects "make it pop"', () => {
       const issues = detector.detect('make it pop');
       const vague = issues.find((i) => i.description.includes('make it pop'));
-      expect(vague).toBeDefined();
+
       expect(vague!.suggestedQuestion).toContain('color contrast');
     });
 
@@ -60,38 +60,38 @@ describe('AmbiguityDetector', () => {
     it('detects "more interesting"', () => {
       const issues = detector.detect('make this more interesting');
       const vague = issues.find((i) => i.description.includes('more interesting'));
-      expect(vague).toBeDefined();
+      expect(vague).not.toBeNull();
     });
 
     it('detects "faster"', () => {
       const issues = detector.detect('make it faster');
       const vague = issues.find((i) => i.description.includes('faster'));
-      expect(vague).toBeDefined();
+
       expect(vague!.suggestedQuestion).toContain('performance target');
     });
 
     it('detects "improve"', () => {
       const issues = detector.detect('improve the visual');
       const vague = issues.find((i) => i.description.includes('improve'));
-      expect(vague).toBeDefined();
+      expect(vague).not.toBeNull();
     });
 
     it('detects "nicer"', () => {
       const issues = detector.detect('make it nicer');
       const vague = issues.find((i) => i.description.includes('nicer'));
-      expect(vague).toBeDefined();
+      expect(vague).not.toBeNull();
     });
 
     it('detects "something"', () => {
       const issues = detector.detect('add something');
       const vague = issues.find((i) => i.description.includes('something'));
-      expect(vague).toBeDefined();
+      expect(vague).not.toBeNull();
     });
 
     it('detects "fix it"', () => {
       const issues = detector.detect('fix it');
       const vague = issues.find((i) => i.description.includes('fix it'));
-      expect(vague).toBeDefined();
+
       expect(vague!.suggestedQuestion).toContain('broken');
     });
 
@@ -114,19 +114,19 @@ describe('AmbiguityDetector', () => {
     it('flags "this" in a short request', () => {
       const issues = detector.detect('improve this');
       const mc = issues.find((i) => i.type === 'missing_context' && i.description.includes('this'));
-      expect(mc).toBeDefined();
+      expect(mc).not.toBeNull();
     });
 
     it('flags "that" in a short request', () => {
       const issues = detector.detect('change that');
       const mc = issues.find((i) => i.type === 'missing_context' && i.description.includes('that'));
-      expect(mc).toBeDefined();
+      expect(mc).not.toBeNull();
     });
 
     it('flags "they" in a short request', () => {
       const issues = detector.detect('update they quickly');
       const mc = issues.find((i) => i.type === 'missing_context' && i.description.includes('they'));
-      expect(mc).toBeDefined();
+      expect(mc).not.toBeNull();
     });
 
     it('does not flag pronouns in long requests with clear referents', () => {
@@ -157,7 +157,7 @@ describe('AmbiguityDetector', () => {
     it('detects simple vs complex', () => {
       const issues = detector.detect('create a simple but complex animation');
       const contra = issues.find((i) => i.type === 'contradiction');
-      expect(contra).toBeDefined();
+
       expect(contra!.severity).toBe('high');
       expect(contra!.description).toContain('simple');
       expect(contra!.description).toContain('complex');
@@ -166,25 +166,25 @@ describe('AmbiguityDetector', () => {
     it('detects minimal vs detailed', () => {
       const issues = detector.detect('make a minimal yet detailed visualization');
       const contra = issues.find((i) => i.type === 'contradiction' && i.description.includes('minimal'));
-      expect(contra).toBeDefined();
+      expect(contra).not.toBeNull();
     });
 
     it('detects fast vs thorough', () => {
       const issues = detector.detect('I want a fast but thorough analysis');
       const contra = issues.find((i) => i.type === 'contradiction' && i.description.includes('fast'));
-      expect(contra).toBeDefined();
+      expect(contra).not.toBeNull();
     });
 
     it('detects bright vs dark', () => {
       const issues = detector.detect('create a bright and dark themed page');
       const contra = issues.find((i) => i.type === 'contradiction' && i.description.includes('bright'));
-      expect(contra).toBeDefined();
+      expect(contra).not.toBeNull();
     });
 
     it('detects calm vs energetic', () => {
       const issues = detector.detect('a calm but energetic rhythm');
       const contra = issues.find((i) => i.type === 'contradiction' && i.description.includes('calm'));
-      expect(contra).toBeDefined();
+      expect(contra).not.toBeNull();
     });
 
     it('does not flag when only one side is present', () => {
@@ -199,7 +199,7 @@ describe('AmbiguityDetector', () => {
     it('detects auth vs login', () => {
       const issues = detector.detect('implement auth and login system');
       const ma = issues.find((i) => i.type === 'multiple_approaches');
-      expect(ma).toBeDefined();
+
       expect(ma!.severity).toBe('medium');
       expect(ma!.description).toContain('Authentication');
     });
@@ -207,25 +207,25 @@ describe('AmbiguityDetector', () => {
     it('detects database vs storage', () => {
       const issues = detector.detect('use database and storage for persistence');
       const ma = issues.find((i) => i.type === 'multiple_approaches' && i.description.includes('persistence'));
-      expect(ma).toBeDefined();
+      expect(ma).not.toBeNull();
     });
 
     it('detects animation vs interactive', () => {
       const issues = detector.detect('create animation and interactive elements');
       const ma = issues.find((i) => i.type === 'multiple_approaches' && i.description.includes('Interaction'));
-      expect(ma).toBeDefined();
+      expect(ma).not.toBeNull();
     });
 
     it('detects 2d vs 3d', () => {
       const issues = detector.detect('render in 2d and 3d space');
       const ma = issues.find((i) => i.type === 'multiple_approaches' && i.description.includes('Rendering'));
-      expect(ma).toBeDefined();
+      expect(ma).not.toBeNull();
     });
 
     it('detects music vs visual', () => {
       const issues = detector.detect('combine music and visual elements');
       const ma = issues.find((i) => i.type === 'multiple_approaches' && i.description.includes('Media'));
-      expect(ma).toBeDefined();
+      expect(ma).not.toBeNull();
     });
 
     it('does not flag when only one side is present', () => {

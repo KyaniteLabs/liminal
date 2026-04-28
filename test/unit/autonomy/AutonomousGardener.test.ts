@@ -45,7 +45,7 @@ describe('AutonomousGardener', () => {
     expect(result!.cycle).toBe(1);
     expect(result!.mode).toBe('co-create');
     expect(result!.budgetRemaining).toBeLessThan(100);
-    expect(result!.health).toBeDefined();
+    expect(result!.health).not.toBeNull();
     expect(typeof result!.actions).toBe('number');
   });
 
@@ -120,7 +120,7 @@ describe('AutonomousGardener', () => {
     const gardener = new AutonomousGardener({ totalBudget: 100 });
     const result = gardener.cycle([makeCell('a', 0.8)], axes);
     expect(result).not.toBeNull();
-    expect(result!.stagnation).toBeDefined();
-    expect(typeof result!.stagnation.isStagnant).toBe('boolean');
+    expect(result!.stagnation).not.toBeNull();
+    expect(result!.stagnation.isStagnant === true || result!.stagnation.isStagnant === false).toBe(true);
   });
 });

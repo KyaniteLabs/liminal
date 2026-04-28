@@ -18,7 +18,7 @@ describe('Fix 8: Consolidate Triple Redundancy', () => {
       const engine = new CollaborationEngine({
         callLLM: async (prompt: string) => `Response: ${prompt}`,
       });
-      expect(engine).toBeDefined();
+      expect(engine).not.toBeNull();
       expect(typeof engine.run).toBe('function');
     });
 
@@ -39,7 +39,7 @@ describe('Fix 8: Consolidate Triple Redundancy', () => {
       // Should run without throwing
       // Note: This will actually call the swarm, so we just verify it doesn't throw
       // on construction and has the right interface
-      expect(engine.run).toBeDefined();
+      expect(engine.run).not.toBeNull();
     });
   });
 
@@ -51,7 +51,7 @@ describe('Fix 8: Consolidate Triple Redundancy', () => {
     });
 
     it('should have ScoringEngine as THE scoring system', () => {
-      expect(scoringEngine).toBeDefined();
+      expect(scoringEngine).not.toBeNull();
       expect(typeof scoringEngine.score).toBe('function');
       expect(typeof scoringEngine.register).toBe('function');
     });
@@ -99,7 +99,7 @@ describe('Fix 8: Consolidate Triple Redundancy', () => {
       expect(result.strategy).toBe('creative');
       expect(result.score).toBeGreaterThanOrEqual(0);
       expect(result.score).toBeLessThanOrEqual(1);
-      expect(result.dimensions.creative).toBeDefined();
+      expect(result.dimensions.creative).not.toBeNull();
     });
 
     it('should support aesthetic scoring strategy', async () => {
@@ -119,7 +119,7 @@ describe('Fix 8: Consolidate Triple Redundancy', () => {
       expect(result.strategy).toBe('aesthetic');
       expect(result.score).toBeGreaterThanOrEqual(0);
       expect(result.score).toBeLessThanOrEqual(1);
-      expect(result.dimensions.aesthetic).toBeDefined();
+      expect(result.dimensions.aesthetic).not.toBeNull();
     });
 
     it('should allow unregistering strategies', () => {
@@ -138,7 +138,7 @@ describe('Fix 8: Consolidate Triple Redundancy', () => {
 
   describe('3. Memory System Consolidation', () => {
     it('should have HarnessMemory as THE memory system', () => {
-      expect(harnessMemory).toBeDefined();
+      expect(harnessMemory).not.toBeNull();
       expect(harnessMemory).toBeInstanceOf(HarnessMemory);
     });
 
@@ -152,7 +152,7 @@ describe('Fix 8: Consolidate Triple Redundancy', () => {
         tags: ['test', 'particle'],
       });
 
-      expect(episodeId).toBeDefined();
+      expect(episodeId).not.toBeNull();
       expect(typeof episodeId).toBe('string');
 
       const episodes = harnessMemory.getRecentEpisodes(10);
@@ -185,7 +185,7 @@ describe('Fix 8: Consolidate Triple Redundancy', () => {
         description: 'Test task',
       });
 
-      expect(taskId).toBeDefined();
+      expect(taskId).not.toBeNull();
       expect(typeof taskId).toBe('string');
 
       const tasks = harnessMemory.getTasks();
@@ -201,7 +201,7 @@ describe('Fix 8: Consolidate Triple Redundancy', () => {
         success: true,
       });
 
-      expect(adaptationId).toBeDefined();
+      expect(adaptationId).not.toBeNull();
       expect(typeof adaptationId).toBe('string');
 
       const adaptations = harnessMemory.getAdaptations();
@@ -230,7 +230,7 @@ describe('Fix 8: Consolidate Triple Redundancy', () => {
 
     it('HarnessMemory should provide all memory functionality', () => {
       // HarnessMemory is the consolidated memory system
-      expect(harnessMemory).toBeDefined();
+      expect(harnessMemory).not.toBeNull();
       expect(typeof harnessMemory.initialize).toBe('function');
       expect(typeof harnessMemory.save).toBe('function');
       expect(typeof harnessMemory.getRelevantEpisodes).toBe('function');

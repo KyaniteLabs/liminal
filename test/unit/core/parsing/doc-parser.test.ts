@@ -374,14 +374,14 @@ Content.
       const result = parser.parse(markdown, 'test.md');
 
       const token = result[0];
-      expect(token.id).toBeDefined();
+      expect(token.id).not.toBeNull();
       expect(token.type).toBe('doc');
       expect(token.domain).toBe('documentation');
       expect(token.layer).toBe('content');
       expect(token.metadata).toEqual({});
       expect(token.tags).toEqual([]);
-      expect(token.location).toBeDefined();
-      expect(token.location.file).toBe('test.md');
+
+      expect(token.location?.file).toBe('test.md');
     });
 
     it('should generate unique IDs for each section', () => {
@@ -460,8 +460,8 @@ Just some words without periods
       const result = parser.parse(markdown, 'test.md');
 
       // Should use first line or part of content
-      expect(result[0].summary).toBeDefined();
-      expect(result[0].summary.length).toBeGreaterThan(0);
+
+      expect(result[0].summary?.length).toBeGreaterThan(0);
     });
   });
 });

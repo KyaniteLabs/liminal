@@ -32,8 +32,7 @@ describe('LayerGroups', () => {
     it('should create a group from layer IDs', () => {
       const group = manager.createGroup('My Group', [layer1.id, layer2.id]);
 
-      expect(group).toBeDefined();
-      expect(group.isGroup).toBe(true);
+      expect(group?.isGroup).toBe(true);
       expect(group.name).toBe('My Group');
       expect(group.children).toEqual([layer1.id, layer2.id]);
     });
@@ -64,7 +63,6 @@ describe('LayerGroups', () => {
       const allLayers = manager.getLayers();
       const groupLayer = allLayers.find(l => l.id === group.id);
 
-      expect(groupLayer).toBeDefined();
       expect(groupLayer?.isGroup).toBe(true);
     });
 
@@ -335,8 +333,8 @@ describe('LayerGroups', () => {
       const updatedLayer1 = manager.getLayer(layer1.id);
       const updatedLayer2 = manager.getLayer(layer2.id);
 
-      expect(updatedLayer1).toBeDefined();
-      expect(updatedLayer2).toBeDefined();
+      expect(updatedLayer1).not.toBeNull();
+      expect(updatedLayer2).not.toBeNull();
       expect(updatedLayer1?.parentLayerId).toBeUndefined();
       expect(updatedLayer2?.parentLayerId).toBeUndefined();
     });

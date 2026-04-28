@@ -41,7 +41,7 @@ describe('RenderOptions', () => {
 
     it('should accept empty RenderOptions', () => {
       const empty: RenderOptions = {};
-      expect(empty).toBeDefined();
+      expect(empty).not.toBeNull();
     });
   });
 

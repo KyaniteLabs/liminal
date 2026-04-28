@@ -73,7 +73,7 @@ describe('ResourceLimiter', () => {
         expect(r).toHaveProperty('current');
         expect(r).toHaveProperty('limit');
         expect(r).toHaveProperty('message');
-        expect(typeof r.allowed).toBe('boolean');
+        expect(r.allowed === true || r.allowed === false).toBe(true);
         expect(typeof r.resource).toBe('string');
         expect(typeof r.current).toBe('number');
         expect(typeof r.limit).toBe('number');
@@ -85,7 +85,6 @@ describe('ResourceLimiter', () => {
       const results = limiter.checkAll();
       const tokenCheck = results.find(r => r.resource === 'tokensUsed');
 
-      expect(tokenCheck).toBeDefined();
       expect(tokenCheck!.allowed).toBe(false);
       expect(tokenCheck!.current).toBe(1001);
       expect(tokenCheck!.limit).toBe(1000);
@@ -96,7 +95,6 @@ describe('ResourceLimiter', () => {
       const results = limiter.checkAll();
       const apiCheck = results.find(r => r.resource === 'apiCalls');
 
-      expect(apiCheck).toBeDefined();
       expect(apiCheck!.allowed).toBe(false);
       expect(apiCheck!.current).toBe(11);
       expect(apiCheck!.limit).toBe(10);
@@ -132,7 +130,6 @@ describe('ResourceLimiter', () => {
       limiter.recordTokens(1001);
       const violation = limiter.getFirstViolation();
 
-      expect(violation).toBeDefined();
       expect(violation!.allowed).toBe(false);
       expect(violation!.resource).toBe('tokensUsed');
       expect(violation!.current).toBe(1001);
@@ -396,7 +393,7 @@ describe('global ResourceLimiter factory', () => {
 
   it('removeResourceLimiter deletes the stored limiter', () => {
     createResourceLimiter('task-2');
-    expect(getResourceLimiter('task-2')).toBeDefined();
+    expect(getResourceLimiter('task-2')).not.toBeNull();
 
     removeResourceLimiter('task-2');
     expect(getResourceLimiter('task-2')).toBeUndefined();
@@ -408,7 +405,7 @@ describe('global ResourceLimiter factory', () => {
 
     all.delete('task-3');
     // Original should still be there
-    expect(getResourceLimiter('task-3')).toBeDefined();
+    expect(getResourceLimiter('task-3')).not.toBeNull();
 
     // Clean up
     removeResourceLimiter('task-3');

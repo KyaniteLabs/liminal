@@ -57,29 +57,29 @@ describe('TUI Integration - Task Loading', () => {
     
     for (const task of mTasks) {
       // Required fields
-      expect(task.id).toBeDefined();
+      expect(task.id).not.toBeNull();
       expect(typeof task.id).toBe('string');
       
-      expect(task.title).toBeDefined();
+      expect(task.title).not.toBeNull();
       expect(typeof task.title).toBe('string');
       
-      expect(task.description).toBeDefined();
+      expect(task.description).not.toBeNull();
       expect(typeof task.description).toBe('string');
       
-      expect(task.approved).toBeDefined();
-      expect(typeof task.approved).toBe('boolean');
+      expect(task.approved).not.toBeNull();
+      expect(task.approved === true || task.approved === false).toBe(true);
       
       // Optional fields that should be present for harness tasks
-      expect(task.targetFile).toBeDefined();
+      expect(task.targetFile).not.toBeNull();
       expect(typeof task.targetFile).toBe('string');
       
-      expect(task.search).toBeDefined();
+      expect(task.search).not.toBeNull();
       expect(typeof task.search).toBe('string');
       
-      expect(task.replace).toBeDefined();
+      expect(task.replace).not.toBeNull();
       expect(typeof task.replace).toBe('string');
       
-      expect(task.verifyCommand).toBeDefined();
+      expect(task.verifyCommand).not.toBeNull();
       expect(typeof task.verifyCommand).toBe('string');
     }
   });

@@ -38,8 +38,8 @@ describe('SeedArchive', () => {
       const seed1 = archive.generateSeed();
       const seed2 = archive.generateSeed();
 
-      expect(seed1).toBeDefined();
-      expect(seed2).toBeDefined();
+      expect(seed1).not.toBeNull();
+      expect(seed2).not.toBeNull();
       expect(seed1).not.toBe(seed2);
     });
 
@@ -218,7 +218,7 @@ describe('SeedArchive', () => {
 
       for (const seed of seeds) {
         const loaded = await archive.loadSeed(seed);
-        expect(loaded).toBeDefined();
+        expect(loaded).not.toBeNull();
       }
     });
   });

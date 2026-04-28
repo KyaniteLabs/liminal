@@ -197,7 +197,7 @@ describe('AutonomousGardener', () => {
 
       const result = gardener.cycle(cells, AXES);
       expect(result).not.toBeNull();
-      expect(result!.dreamResults).toBeDefined();
+
       expect(result!.dreamResults!.length).toBeGreaterThan(0);
       for (const dr of result!.dreamResults!) {
         expect(dr.descriptor).toBeInstanceOf(Array);

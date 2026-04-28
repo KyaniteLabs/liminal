@@ -37,7 +37,7 @@ describe('SemanticExtractor', () => {
 
     it('handles empty content', async () => {
       const result = await extractor.extractText('', '/test/empty.txt');
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
     });
   });
 

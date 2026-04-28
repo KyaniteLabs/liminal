@@ -32,15 +32,15 @@ describe('registerAdapters', () => {
 
   describe('allAdapters singleton', () => {
     it('should have all 9 adapter instances', () => {
-      expect(allAdapters.p5).toBeDefined();
-      expect(allAdapters.tone).toBeDefined();
-      expect(allAdapters.three).toBeDefined();
-      expect(allAdapters.shader).toBeDefined();
-      expect(allAdapters.strudel).toBeDefined();
-      expect(allAdapters.hydra).toBeDefined();
-      expect(allAdapters.asciiArt).toBeDefined();
-      expect(allAdapters.html).toBeDefined();
-      expect(allAdapters.remotion).toBeDefined();
+      expect(allAdapters.p5).not.toBeNull();
+      expect(allAdapters.tone).not.toBeNull();
+      expect(allAdapters.three).not.toBeNull();
+      expect(allAdapters.shader).not.toBeNull();
+      expect(allAdapters.strudel).not.toBeNull();
+      expect(allAdapters.hydra).not.toBeNull();
+      expect(allAdapters.asciiArt).not.toBeNull();
+      expect(allAdapters.html).not.toBeNull();
+      expect(allAdapters.remotion).not.toBeNull();
     });
 
     it('should export singleton instances that do not change', () => {
@@ -65,7 +65,7 @@ describe('registerAdapters', () => {
       ];
 
       for (const adapter of adapters) {
-        expect(adapter).toBeDefined();
+        expect(adapter).not.toBeNull();
         expect(typeof adapter.render).toBe('function');
       }
     });
@@ -73,47 +73,47 @@ describe('registerAdapters', () => {
 
   describe('individual adapter exports', () => {
     it('should export p5Adapter singleton', () => {
-      expect(allAdapters.p5).toBeDefined();
+      expect(allAdapters.p5).not.toBeNull();
       expect(typeof allAdapters.p5.render).toBe('function');
     });
 
     it('should export toneAdapter singleton', () => {
-      expect(allAdapters.tone).toBeDefined();
+      expect(allAdapters.tone).not.toBeNull();
       expect(typeof allAdapters.tone.render).toBe('function');
     });
 
     it('should export threeAdapter singleton', () => {
-      expect(allAdapters.three).toBeDefined();
+      expect(allAdapters.three).not.toBeNull();
       expect(typeof allAdapters.three.render).toBe('function');
     });
 
     it('should export shaderAdapter singleton', () => {
-      expect(allAdapters.shader).toBeDefined();
+      expect(allAdapters.shader).not.toBeNull();
       expect(typeof allAdapters.shader.render).toBe('function');
     });
 
     it('should export strudelAdapter singleton', () => {
-      expect(allAdapters.strudel).toBeDefined();
+      expect(allAdapters.strudel).not.toBeNull();
       expect(typeof allAdapters.strudel.render).toBe('function');
     });
 
     it('should export hydraAdapter singleton', () => {
-      expect(allAdapters.hydra).toBeDefined();
+      expect(allAdapters.hydra).not.toBeNull();
       expect(typeof allAdapters.hydra.render).toBe('function');
     });
 
     it('should export asciiArtAdapter singleton', () => {
-      expect(allAdapters.asciiArt).toBeDefined();
+      expect(allAdapters.asciiArt).not.toBeNull();
       expect(typeof allAdapters.asciiArt.render).toBe('function');
     });
 
     it('should export htmlAdapter singleton', () => {
-      expect(allAdapters.html).toBeDefined();
+      expect(allAdapters.html).not.toBeNull();
       expect(typeof allAdapters.html.render).toBe('function');
     });
 
     it('should export remotionAdapter singleton', () => {
-      expect(allAdapters.remotion).toBeDefined();
+      expect(allAdapters.remotion).not.toBeNull();
       expect(typeof allAdapters.remotion.render).toBe('function');
     });
   });

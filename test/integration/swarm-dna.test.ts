@@ -166,7 +166,7 @@ describe('Scavenger + Swarm integration', () => {
 
     generatorRegistry.registerDNA(dna);
     const retrieved = generatorRegistry.getDNA('creative-coding');
-    expect(retrieved).toBeDefined();
+
     expect(retrieved!.coreLogic).toContain('ray marching');
   });
 
@@ -185,7 +185,7 @@ describe('Scavenger + Swarm integration', () => {
     };
 
     DNAExtractor.registerDNA(dna, registry);
-    expect(registry.get('generative-art')).toBeDefined();
+    expect(registry.get('generative-art')).not.toBeNull();
     expect(registry.size).toBe(1);
   });
 });
@@ -210,7 +210,7 @@ describe('Swarm + MiningEngine integration', () => {
     for (const frag of fragments) {
       expect(frag.score).toBeGreaterThanOrEqual(8);
       expect(frag.source).toBe('integration-test');
-      expect(frag.persona).toBeDefined();
+      expect(frag.persona).not.toBeNull();
     }
   });
 

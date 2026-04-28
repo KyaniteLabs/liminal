@@ -24,7 +24,7 @@ describe('RoutineChannel', () => {
       // Broadcast one message to trigger stats
       ch.broadcast('a', 'propose', 'hello', 1, ['b']);
       // compressThreshold=1 means any round with 1+ messages is compressible
-      expect(ch.getCompressedExchange(1)).toBeDefined();
+      expect(ch.getCompressedExchange(1)).not.toBeNull();
     });
   });
 
@@ -111,7 +111,7 @@ describe('RoutineChannel', () => {
     // Add second message in same round — meets threshold
     ch.directMessage('b', 'a', 'critique', 'nice', 1);
     const summary = ch.getCompressedExchange(1);
-    expect(summary).toBeDefined();
+
     expect(summary!.messages).toHaveLength(2);
     expect(summary!.winner).toBeTruthy();
 

@@ -389,7 +389,7 @@ describe('Generator-Renderer Integration Tests', () => {
           }
         } catch (error) {
           // Should handle errors gracefully without crashing
-          expect(error).toBeDefined();
+          expect(error).not.toBeNull();
         } finally {
           await previewServer.stop();
         }

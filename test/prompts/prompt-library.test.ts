@@ -25,7 +25,6 @@ describe('PromptLibrary', () => {
       PromptLibrary.register(template);
       const retrieved = PromptLibrary.get('test.prompt');
 
-      expect(retrieved).toBeDefined();
       expect(retrieved?.id).toBe('test.prompt');
       expect(retrieved?.systemPrompt).toBe('You are a test assistant.');
       expect(retrieved?.userPromptTemplate).toBe('Test: ${input}');

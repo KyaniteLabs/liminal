@@ -228,11 +228,11 @@ describe('TransparencyViewer', () => {
     const parsed = JSON.parse(json);
 
     expect(parsed.mode).toBe('test-mode');
-    expect(parsed.events).toBeDefined();
-    expect(parsed.events.length).toBe(2);
-    expect(parsed.startTime).toBeDefined();
-    expect(parsed.endTime).toBeDefined();
-    expect(parsed.duration).toBeDefined();
+
+    expect(parsed.events?.length).toBe(2);
+    expect(parsed.startTime).not.toBeNull();
+    expect(parsed.endTime).not.toBeNull();
+    expect(parsed.duration).not.toBeNull();
   });
 
   it('exportToJson supports pretty printing', () => {

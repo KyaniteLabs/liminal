@@ -43,7 +43,7 @@ describe('KeyframeAnimation', () => {
 
       const animation = animator.createAnimation('layer1', 1000, keyframes);
 
-      expect(animation.id).toBeDefined();
+      expect(animation.id).not.toBeNull();
       expect(animation.layerId).toBe('layer1');
       expect(animation.duration).toBe(1000);
       expect(animation.keyframes).toHaveLength(2);
@@ -162,12 +162,12 @@ describe('KeyframeAnimation', () => {
     it('should apply back-in easing (overshoot)', () => {
       const eased = animator.applyEasing(0.5, 'back-in');
       // back-in should go negative initially
-      expect(eased).toBeDefined();
+      expect(eased).not.toBeNull();
     });
 
     it('should apply back-out easing (overshoot)', () => {
       const eased = animator.applyEasing(0.5, 'back-out');
-      expect(eased).toBeDefined();
+      expect(eased).not.toBeNull();
       expect(eased).toBeGreaterThan(0.5);
     });
 
@@ -571,7 +571,7 @@ describe('KeyframeAnimation', () => {
       const result = animator.interpolate(animation, 0.5);
 
       // Empty properties should not affect interpolation
-      expect(result.opacity).toBeDefined();
+      expect(result.opacity).not.toBeNull();
     });
 
     it('should handle blendMode interpolation', () => {

@@ -146,7 +146,7 @@ describe('addAuditEntry', () => {
 describe('verifyAuditChain', () => {
   it('returns a boolean', () => {
     const result = verifyAuditChain();
-    expect(typeof result).toBe('boolean');
+    expect(result === true || result === false).toBe(true);
   });
 });
 

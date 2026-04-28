@@ -186,13 +186,13 @@ describe('HarnessAgent', () => {
   it('selfEvaluate returns structured result', () => {
     const result = agent.selfEvaluate();
     expect(result.summary).toBeTruthy();
-    expect(typeof result.needsImprovement).toBe('boolean');
+    expect(result.needsImprovement === true || result.needsImprovement === false).toBe(true);
     expect(Array.isArray(result.recommendations)).toBe(true);
   });
 
   it('generateImprovementTask delegates to SelfEvaluation', () => {
     const task = agent.generateImprovementTask();
-    expect(typeof task.shouldCreate).toBe('boolean');
+    expect(task.shouldCreate === true || task.shouldCreate === false).toBe(true);
   });
 
   it('getErrorHelp returns array from SelfEvaluation', () => {

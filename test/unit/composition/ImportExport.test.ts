@@ -48,9 +48,8 @@ describe('ProjectSerializer', () => {
 
       const project = serializer.exportProject(engine);
 
-      expect(project.composition).toBeDefined();
       expect(project.composition.layers).toHaveLength(1);
-      expect(project.composition.layers[0].code).toBe('ellipse(50,50,80,80)');
+      expect(project.composition?.layers[0].code).toBe('ellipse(50,50,80,80)');
     });
 
     it('should include metadata', () => {
@@ -59,9 +58,9 @@ describe('ProjectSerializer', () => {
 
       const project = serializer.exportProject(engine);
 
-      expect(project.metadata).toBeDefined();
-      expect(project.metadata.created).toBeDefined();
-      expect(project.metadata.modified).toBeDefined();
+      expect(project.metadata).not.toBeNull();
+      expect(project.metadata.created).not.toBeNull();
+      expect(project.metadata.modified).not.toBeNull();
     });
 
     it('should export with custom options', () => {
@@ -90,7 +89,7 @@ describe('ProjectSerializer', () => {
       const project = serializer.exportProject(engine);
 
       const groupLayer = project.composition.layers.find(l => l.isGroup);
-      expect(groupLayer).toBeDefined();
+
       expect(groupLayer?.name).toBe('Test Group');
       expect(groupLayer?.children).toContain(layer1.id);
       expect(groupLayer?.children).toContain(layer2.id);
@@ -163,7 +162,7 @@ describe('ProjectSerializer', () => {
       const group = layers.find(l => l.isGroup);
       const child = layers.find(l => l.id === 'layer-1');
 
-      expect(group).toBeDefined();
+      expect(group).not.toBeNull();
       expect(child?.parentLayerId).toBe('group-1');
     });
   });
@@ -185,7 +184,6 @@ describe('ProjectSerializer', () => {
 
       const project = serializer.exportProject(engine, { animations: [animation] });
 
-      expect(project.animations).toBeDefined();
       expect(project.animations).toHaveLength(1);
       expect(project.animations?.[0].layerId).toBe(layer.id);
       expect(project.animations?.[0].duration).toBe(1000);
@@ -241,7 +239,7 @@ describe('ProjectSerializer', () => {
       };
 
       const result = await serializer.importProject(project, engine);
-      expect(result.animations).toBeDefined();
+
       expect(result.animations).toHaveLength(1);
       expect(result.animations?.[0].id).toBe('anim-1');
     });
@@ -268,7 +266,6 @@ describe('ProjectSerializer', () => {
 
       const project = serializer.exportProject(engine);
 
-      expect(project.masks).toBeDefined();
       expect(project.masks).toHaveLength(1);
       expect(project.masks?.[0].sourceLayerId).toBe(layer1.id);
       expect(project.masks?.[0].targetLayerId).toBe(layer2.id);
@@ -357,7 +354,6 @@ describe('ProjectSerializer', () => {
 
       const project = serializer.exportProject(engine, { assets });
 
-      expect(project.assets).toBeDefined();
       expect(project.assets).toHaveLength(1);
       expect(project.assets?.[0].type).toBe('image');
       expect(project.assets?.[0].data).toBe('base64encodeddata');

@@ -114,15 +114,15 @@ describe('E2E full loop (local Ollama)', () => {
         project,
       });
 
-      expect(result).toBeDefined();
-      expect(result.code).toBeDefined();
+      expect(result).not.toBeNull();
+      expect(result.code).not.toBeNull();
       expect(typeof result.code).toBe('string');
       expect(result.code).toMatch(/function\s+setup\s*\(/);
       expect(result.code).toMatch(/function\s+draw\s*\(/);
       expect(result.iterations).toBeGreaterThanOrEqual(1);
 
-      expect(result.jsPath).toBeDefined();
-      expect(result.htmlPath).toBeDefined();
+      expect(result.jsPath).not.toBeNull();
+      expect(result.htmlPath).not.toBeNull();
       const jsExists = await fs.access(result.jsPath!).then(() => true).catch(() => false);
       const htmlExists = await fs.access(result.htmlPath!).then(() => true).catch(() => false);
       expect(jsExists).toBe(true);

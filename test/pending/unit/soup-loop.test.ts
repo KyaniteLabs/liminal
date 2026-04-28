@@ -19,12 +19,12 @@ describe('SoupLoop (W1-S)', () => {
       project: 'soup-test',
       onStep: (data) => steps.push({ populationSize: data.population.length, merged: data.merged }),
     });
-    expect(result.population).toBeDefined();
-    expect(result.population.length).toBe(3);
+
+    expect(result.population?.length).toBe(3);
     expect(steps.length).toBeGreaterThanOrEqual(1);
     // Each step should attempt a merge (merged may be false if the merge scores lower)
     expect(steps.every((s) => s.populationSize === 3)).toBe(true);
-    expect(result.bestCode).toBeDefined();
+    expect(result.bestCode).not.toBeNull();
     expect(result.bestScore).toBeGreaterThanOrEqual(0);
   });
 });

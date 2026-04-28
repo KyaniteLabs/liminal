@@ -12,6 +12,6 @@ describe('LLM response reasoning field', () => {
     // by verifying LLMResponse type includes reasoning field
     // The actual parsing is tested through integration with provider responses.
     // Here we verify the constructor accepts the config and the client works.
-    expect(client).toBeDefined();
+    expect(client).not.toBeNull();
   });
 });

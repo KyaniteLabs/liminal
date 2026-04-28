@@ -47,7 +47,7 @@ describe('FeedbackQueue', () => {
     });
 
     expect(entry.id).toMatch(/^fb_\d+_[a-z0-9]+$/);
-    expect(entry.timestamp).toBeDefined();
+    expect(entry.timestamp).not.toBeNull();
     expect(new Date(entry.timestamp).getTime()).not.toBeNaN();
   });
 

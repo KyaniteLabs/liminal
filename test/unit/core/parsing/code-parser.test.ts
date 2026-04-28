@@ -133,30 +133,30 @@ export class ScientificCalculator extends Calculator {
 
       // First class
       const calculator = result.find((t) => t.name === 'Calculator');
-      expect(calculator).toBeDefined();
+
       expect(calculator!.kind).toBe('class');
       expect(calculator!.relationships.exports).toEqual([]);
       expect(calculator!.relationships.extends).toEqual([]);
 
       // Calculator methods
       const add = result.find((t) => t.name === 'add');
-      expect(add).toBeDefined();
+
       expect(add!.kind).toBe('method');
 
       const subtract = result.find((t) => t.name === 'subtract');
-      expect(subtract).toBeDefined();
+
       expect(subtract!.kind).toBe('method');
 
       // Second class (with inheritance)
       const scientific = result.find((t) => t.name === 'ScientificCalculator');
-      expect(scientific).toBeDefined();
+
       expect(scientific!.kind).toBe('class');
       expect(scientific!.relationships.exports).toEqual(['ScientificCalculator']);
       expect(scientific!.relationships.extends).toEqual(['Calculator']);
 
       // Scientific calculator method
       const square = result.find((t) => t.name === 'square');
-      expect(square).toBeDefined();
+
       expect(square!.kind).toBe('method');
     });
 
@@ -227,12 +227,12 @@ function App() {
 
       // Should have { callee, module } structure
       const reactImport = importGraph.find((ig) => ig.module === 'react');
-      expect(reactImport).toBeDefined();
-      expect(reactImport!.callee).toBeDefined();
+      expect(reactImport).not.toBeNull();
+      expect(reactImport!.callee).not.toBeNull();
 
       const bunImport = importGraph.find((ig) => ig.module === 'bun');
-      expect(bunImport).toBeDefined();
-      expect(bunImport!.callee).toBeDefined();
+      expect(bunImport).not.toBeNull();
+      expect(bunImport!.callee).not.toBeNull();
     });
   });
 
@@ -255,7 +255,7 @@ function main() {
 
       // main() should call helper()
       const main = result.find((t) => t.name === 'main');
-      expect(main).toBeDefined();
+
       expect(main!.relationships.calls).toContain('helper');
     });
 
@@ -593,7 +593,7 @@ function broken() {
       const result = parser.parse(typescript, 'test.ts');
 
       const token = result[0];
-      expect(token.id).toBeDefined();
+      expect(token.id).not.toBeNull();
       expect(token.type).toBe('code');
       expect(token.domain).toBe('code');
       expect(token.layer).toBe('implementation');
@@ -633,8 +633,7 @@ function add(x: number, y: number): number {
       const parser = new CodeParser();
       const result = parser.parse(typescript, 'test.ts');
 
-      expect(result[0].summary).toBeDefined();
-      expect(result[0].summary.length).toBeGreaterThan(0);
+      expect(result[0].summary?.length).toBeGreaterThan(0);
     });
   });
 
@@ -703,11 +702,11 @@ export interface Product {
       expect(result.length).toBeGreaterThanOrEqual(2);
 
       const user = result.find((t) => t.name === 'User');
-      expect(user).toBeDefined();
+
       expect(user!.kind).toBe('interface');
 
       const product = result.find((t) => t.name === 'Product');
-      expect(product).toBeDefined();
+
       expect(product!.kind).toBe('interface');
       expect(product!.relationships.exports).toEqual(['Product']);
     });
@@ -728,11 +727,11 @@ export type Config = {
       expect(result.length).toBeGreaterThanOrEqual(2);
 
       const id = result.find((t) => t.name === 'ID');
-      expect(id).toBeDefined();
+
       expect(id!.kind).toBe('type');
 
       const config = result.find((t) => t.name === 'Config');
-      expect(config).toBeDefined();
+
       expect(config!.kind).toBe('type');
     });
 
@@ -757,11 +756,11 @@ export enum Status {
       expect(result.length).toBeGreaterThanOrEqual(2);
 
       const color = result.find((t) => t.name === 'Color');
-      expect(color).toBeDefined();
+
       expect(color!.kind).toBe('enum');
 
       const status = result.find((t) => t.name === 'Status');
-      expect(status).toBeDefined();
+
       expect(status!.kind).toBe('enum');
     });
   });

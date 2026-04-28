@@ -19,8 +19,7 @@ describe('LayerMaskManager', () => {
     it('should create a mask with default mode (alpha)', () => {
       const mask = manager.createMask('layer-1', 'layer-2');
 
-      expect(mask).toBeDefined();
-      expect(mask.id).toMatch(/^mask_/);
+      expect(mask?.id).toMatch(/^mask_/);
       expect(mask.sourceLayerId).toBe('layer-1');
       expect(mask.targetLayerId).toBe('layer-2');
       expect(mask.mode).toBe('alpha');

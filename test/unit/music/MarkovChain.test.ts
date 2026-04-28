@@ -20,14 +20,14 @@ describe('buildTransitionMatrix', () => {
 
     it('"60" maps to {62: 1.0} — only one outgoing transition', () => {
       const transitions = matrix.get('60');
-      expect(transitions).toBeDefined();
+
       expect(transitions!.get(62)).toBeCloseTo(1.0);
       expect(transitions!.size).toBe(1);
     });
 
     it('"62" maps to {64: 0.5, 60: 0.5}', () => {
       const transitions = matrix.get('62');
-      expect(transitions).toBeDefined();
+      expect(transitions).not.toBeNull();
       expect(transitions!.get(64)).toBeCloseTo(0.5);
       expect(transitions!.get(60)).toBeCloseTo(0.5);
       expect(transitions!.size).toBe(2);
@@ -35,7 +35,7 @@ describe('buildTransitionMatrix', () => {
 
     it('"64" maps to {62: 1.0}', () => {
       const transitions = matrix.get('64');
-      expect(transitions).toBeDefined();
+
       expect(transitions!.get(62)).toBeCloseTo(1.0);
       expect(transitions!.size).toBe(1);
     });
@@ -58,19 +58,19 @@ describe('buildTransitionMatrix', () => {
 
     it('"60,62" maps to {64: 1.0}', () => {
       const transitions = matrix.get('60,62');
-      expect(transitions).toBeDefined();
+      expect(transitions).not.toBeNull();
       expect(transitions!.get(64)).toBeCloseTo(1.0);
     });
 
     it('"62,64" maps to {62: 1.0}', () => {
       const transitions = matrix.get('62,64');
-      expect(transitions).toBeDefined();
+      expect(transitions).not.toBeNull();
       expect(transitions!.get(62)).toBeCloseTo(1.0);
     });
 
     it('"64,62" maps to {60: 1.0}', () => {
       const transitions = matrix.get('64,62');
-      expect(transitions).toBeDefined();
+      expect(transitions).not.toBeNull();
       expect(transitions!.get(60)).toBeCloseTo(1.0);
     });
 
@@ -83,7 +83,7 @@ describe('buildTransitionMatrix', () => {
     it('seed [60, 60, 60] order 1: "60" maps to {60: 1.0}', () => {
       const matrix = buildTransitionMatrix([60, 60, 60], 1);
       const transitions = matrix.get('60');
-      expect(transitions).toBeDefined();
+
       expect(transitions!.size).toBe(1);
       expect(transitions!.get(60)).toBeCloseTo(1.0);
     });
@@ -137,7 +137,7 @@ describe('buildTransitionMatrix', () => {
       const matrix = buildTransitionMatrix([60, 62, 64, 65, 67], 4);
       expect(matrix.size).toBe(1);
       const transitions = matrix.get('60,62,64,65');
-      expect(transitions).toBeDefined();
+      expect(transitions).not.toBeNull();
       expect(transitions!.get(67)).toBeCloseTo(1.0);
     });
 

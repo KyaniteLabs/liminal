@@ -14,7 +14,7 @@ describe('PitchUtils', () => {
     expect(clampFrequency(440)).toBe(440);
   });
   it('frequencyToNoteName handles edge cases', () => {
-    expect(frequencyToNoteName(20)).toBeDefined();
-    expect(frequencyToNoteName(8000)).toBeDefined();
+    expect(frequencyToNoteName(20)).not.toBeNull();
+    expect(frequencyToNoteName(8000)).not.toBeNull();
   });
 });

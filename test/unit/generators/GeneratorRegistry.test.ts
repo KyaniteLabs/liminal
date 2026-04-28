@@ -295,7 +295,7 @@ describe('GeneratorRegistry', () => {
   describe('routeByPrompt', () => {
     it('detects domain and routes accordingly', () => {
       const decision = generatorRegistry.routeByPrompt('create a music beat');
-      expect(decision.model).toBeDefined();
+      expect(decision.model).not.toBeNull();
       expect(decision.confidence).toBeGreaterThan(0);
     });
 
@@ -344,8 +344,8 @@ describe('GeneratorRegistry', () => {
   describe('getAllDomainKeywords', () => {
     it('includes built-in domain keywords', () => {
       const kw = generatorRegistry.getAllDomainKeywords();
-      expect(kw.music).toBeDefined();
-      expect(kw.music.length).toBeGreaterThan(0);
+
+      expect(kw.music?.length).toBeGreaterThan(0);
     });
 
     it('includes dynamic domain keywords', () => {

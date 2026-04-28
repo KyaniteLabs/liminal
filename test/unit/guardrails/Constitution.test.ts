@@ -236,7 +236,7 @@ describe('Constitution.applyPrevention', () => {
     // that are not common stop words, producing: /Unexpected.*token.*line/i
     const result = await constitution.applyPrevention(ctx, 'Unexpected token at line 5');
     expect(result.prevented).toBe(true);
-    expect(result.ruleId).toBeDefined();
+    expect(result.ruleId).not.toBeNull();
     expect(result.reason).toContain('validation');
   });
 
@@ -351,7 +351,7 @@ describe('Constitution.getRemediationSuggestion', () => {
       new Error('Unexpected token at line 1'),
       ctx,
     );
-    expect(result.suggestion).toBeDefined();
+    expect(result.suggestion).not.toBeNull();
     expect(result.confidence).toBe(0.5);
   });
 });
@@ -601,7 +601,7 @@ describe('Constitution import/export', () => {
     fresh.import(exported);
 
     const importedRule = fresh.getRule(ruleId);
-    expect(importedRule).toBeDefined();
+
     expect(importedRule!.confidence).toBe(constitution.getRule(ruleId)!.confidence);
   });
 });

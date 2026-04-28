@@ -32,7 +32,7 @@ describe('SwarmOrchestrator', () => {
   describe('constructor', () => {
     it('should create with default config', () => {
       const orchestrator = new SwarmOrchestrator();
-      expect(orchestrator).toBeDefined();
+      expect(orchestrator).not.toBeNull();
     });
 
     it('should create with custom config', () => {
@@ -44,7 +44,7 @@ describe('SwarmOrchestrator', () => {
       };
 
       const orchestrator = new SwarmOrchestrator(config);
-      expect(orchestrator).toBeDefined();
+      expect(orchestrator).not.toBeNull();
     });
   });
 
@@ -57,8 +57,7 @@ describe('SwarmOrchestrator', () => {
 
       const result = await orchestrator.run('Write about light');
 
-      expect(result).toBeDefined();
-      expect(result.rounds.length).toBeGreaterThan(0);
+      expect(result?.rounds.length).toBeGreaterThan(0);
       expect(result.finalOutput).toBeTruthy();
       expect(result.totalDurationMs).toBeGreaterThanOrEqual(0);
       expect(result.mode).toBe(SwarmMode.HYBRID);

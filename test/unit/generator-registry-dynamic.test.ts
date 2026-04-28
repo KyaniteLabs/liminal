@@ -41,7 +41,7 @@ describe('GeneratorRegistry - Dynamic Domain Registration', () => {
       const allEntries = generatorRegistry.getAll();
       const poetryEntry = allEntries.find(e => e.name === 'poetry');
 
-      expect(poetryEntry).toBeDefined();
+      expect(poetryEntry).not.toBeNull();
       expect(poetryEntry!.canHandle('write a haiku')).toBe(0.7);
       expect(poetryEntry!.canHandle('create a sonnet')).toBe(0.7);
       expect(poetryEntry!.canHandle('draw a picture')).toBe(0);
@@ -313,7 +313,7 @@ describe('GeneratorRegistry - Dynamic Domain Registration', () => {
 
       expect(allKeywords.custom1).toEqual(['kw1', 'kw2']);
       expect(allKeywords.custom2).toEqual(['kw3']);
-      expect(allKeywords.music).toBeDefined(); // Built-in should still be there
+      expect(allKeywords.music).not.toBeNull(); // Built-in should still be there
     });
 
     it('should recognize dynamic domains in isDomainSupported()', () => {

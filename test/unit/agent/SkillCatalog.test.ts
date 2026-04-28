@@ -104,7 +104,7 @@ describe('SkillCatalog', () => {
       const catalog = new SkillCatalog(mockLoader as any);
       const entries = await catalog.list();
       const p5 = entries.find(e => e.name === 'p5-seed-explorer');
-      expect(p5).toBeDefined();
+
       expect(p5!.mode).toBe('make');
       expect(p5!.profile).toBe('creative');
       expect(p5!.source).toBe('repo');

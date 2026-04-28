@@ -228,8 +228,8 @@ describe('IntuitionStrategy', () => {
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(1);
     expect(result.strategy).toBe('intuition');
-    expect(result.dimensions.intuition).toBeDefined();
-    expect(result.dimensions.novelty).toBeDefined();
+    expect(result.dimensions.intuition).not.toBeNull();
+    expect(result.dimensions.novelty).not.toBeNull();
   });
 
   it('should report intuition dimension in 0-1 range', async () => {
@@ -554,8 +554,8 @@ describe('MemoryConsolidator', () => {
     const result = consolidator.consolidate(episodes);
     expect(result.episodesProcessed).toBe(3);
     expect(result.patternsCreated).toBeGreaterThanOrEqual(1);
-    expect(result.byDomain.p5).toBeDefined();
-    expect(result.byDomain.p5.episodes).toBe(3);
+
+    expect(result.byDomain.p5?.episodes).toBe(3);
   });
 
   it('should group by domain, model, and strategy', () => {
@@ -1845,17 +1845,17 @@ describe('IntuitionEngine', () => {
   });
 
   it('should expose all component accessors', () => {
-    expect(engine.getModelSampler()).toBeDefined();
-    expect(engine.getStrategySampler()).toBeDefined();
-    expect(engine.getPrototype()).toBeDefined();
-    expect(engine.getCache()).toBeDefined();
-    expect(engine.getConsolidator()).toBeDefined();
-    expect(engine.getWorldModel()).toBeDefined();
-    expect(engine.getDreamEngine()).toBeDefined();
-    expect(engine.getSleepScheduler()).toBeDefined();
-    expect(engine.getForgettingCurve()).toBeDefined();
-    expect(engine.getMemoryBudget()).toBeDefined();
-    expect(engine.getProceduralTier()).toBeDefined();
+    expect(engine.getModelSampler()).not.toBeNull();
+    expect(engine.getStrategySampler()).not.toBeNull();
+    expect(engine.getPrototype()).not.toBeNull();
+    expect(engine.getCache()).not.toBeNull();
+    expect(engine.getConsolidator()).not.toBeNull();
+    expect(engine.getWorldModel()).not.toBeNull();
+    expect(engine.getDreamEngine()).not.toBeNull();
+    expect(engine.getSleepScheduler()).not.toBeNull();
+    expect(engine.getForgettingCurve()).not.toBeNull();
+    expect(engine.getMemoryBudget()).not.toBeNull();
+    expect(engine.getProceduralTier()).not.toBeNull();
   });
 
   it('should wire LLM callbacks to DreamEngine when llm is provided', async () => {

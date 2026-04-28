@@ -121,8 +121,8 @@ This is a project description.
       const token1 = stringToLIR('test.ts', 'content1');
       const token2 = stringToLIR('test.ts', 'content2');
 
-      expect(token1.id).toBeDefined();
-      expect(token2.id).toBeDefined();
+      expect(token1.id).not.toBeNull();
+      expect(token2.id).not.toBeNull();
       expect(token1.id).not.toBe(token2.id);
     });
 
@@ -224,8 +224,7 @@ describe('CompatibilityAdapter: lirToString', () => {
 
       const result = lirToString(minimalCode);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
     });
   });
 
@@ -358,7 +357,7 @@ describe('CompatibilityAdapter: round-trip conversion', () => {
     const reconstructed = lirToString(token);
 
     // Should preserve language and core content
-    expect(reconstructed).toBeDefined();
+    expect(reconstructed).not.toBeNull();
     expect(token.type).toBe('code');
   });
 
@@ -382,7 +381,7 @@ describe('CompatibilityAdapter: round-trip conversion', () => {
     const reconstructed = lirToString(token);
 
     // Should preserve text content
-    expect(reconstructed).toBeDefined();
+    expect(reconstructed).not.toBeNull();
     expect(token.type).toBe('text');
   });
 });
@@ -391,15 +390,13 @@ describe('CompatibilityAdapter: edge cases', () => {
   it('handles empty strings gracefully', () => {
     const result = stringToLIR('test.ts', '');
 
-    expect(result).toBeDefined();
-    expect(result.source).toBe('');
+    expect(result?.source).toBe('');
   });
 
   it('handles whitespace-only content', () => {
     const result = stringToLIR('test.js', '   \n\n   ');
 
-    expect(result).toBeDefined();
-    expect(result.source).toBe('   \n\n   ');
+    expect(result?.source).toBe('   \n\n   ');
   });
 
   it('handles very long file paths', () => {
@@ -408,15 +405,13 @@ describe('CompatibilityAdapter: edge cases', () => {
 
     const result = stringToLIR(longPath, content);
 
-    expect(result).toBeDefined();
-    expect(result.type).toBe('code');
+    expect(result?.type).toBe('code');
   });
 
   it('handles special characters in content', () => {
     const content = 'const emoji = "🎉";\nconst quotes = \'"\';';
     const result = stringToLIR('test.ts', content);
 
-    expect(result).toBeDefined();
-    expect(result.source).toBe(content);
+    expect(result?.source).toBe(content);
   });
 });

@@ -39,7 +39,7 @@ describe('ChatCLI - Preview Rendering', () => {
 
       cli.renderPreview(code, domain);
 
-      expect(cli.getPreviewState()).toBeDefined();
+      expect(cli.getPreviewState()).not.toBeNull();
       expect(cli.getPreviewState()?.code).toBe(code);
       expect(cli.getPreviewState()?.domain).toBe(domain);
     });

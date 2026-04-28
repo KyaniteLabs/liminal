@@ -12,7 +12,7 @@ import { generateVisuals } from '../../src/generateVisuals.js';
 describe('generateVisuals', () => {
   it('returns object with code string', async () => {
     const result = await generateVisuals({ prompt: 'reactive' });
-    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
     expect(result).toHaveProperty('code');
     expect(typeof result.code).toBe('string');
     expect(result.code.length).toBeGreaterThan(0);
@@ -64,15 +64,15 @@ describe('generateVisuals', () => {
 
   it('prompt "glitch" returns distinct Hydra code (glitch-like)', async () => {
     const result = await generateVisuals({ prompt: 'glitch', platform: 'hydra' });
-    expect(result.code).toBeDefined();
-    expect(result.code.length).toBeGreaterThan(0);
+
+    expect(result.code?.length).toBeGreaterThan(0);
     expect(result.code).toMatch(/noise|pixelate|repeat|modulate|glitch/i);
   });
 
   it('prompt "reactive" returns distinct Hydra code', async () => {
     const result = await generateVisuals({ prompt: 'reactive', platform: 'hydra' });
-    expect(result.code).toBeDefined();
-    expect(result.code.length).toBeGreaterThan(0);
+
+    expect(result.code?.length).toBeGreaterThan(0);
     expect(result.code).toMatch(/reactive|osc|out/i);
   });
 

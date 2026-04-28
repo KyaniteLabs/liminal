@@ -139,7 +139,7 @@ describeIfBrowser('HeadlessRenderer rendering', () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.screenshot).toBeDefined();
+
     expect(result.screenshot?.success).toBe(true);
     expect(result.screenshot?.buffer.length).toBeGreaterThan(0);
   }, 30000);
@@ -332,7 +332,7 @@ describeIfBrowser('RenderAndScorePipeline', () => {
     expect(result.score).toBeLessThanOrEqual(1);
     expect(result.domain).toBe('p5');
     expect(result.duration).toBeGreaterThan(0);
-    expect(result.visual).toBeDefined();
+    expect(result.visual).not.toBeNull();
   }, 30000);
 
   it('should detect domain automatically', async () => {
@@ -345,7 +345,7 @@ describeIfBrowser('RenderAndScorePipeline', () => {
     // Domain hint overrides detection
     expect(result.domain).toBe('three');
     // Note: three.js code with imports may timeout, that's expected
-    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
   }, 60000);
 
   it('should handle invalid code gracefully', async () => {
@@ -355,7 +355,7 @@ describeIfBrowser('RenderAndScorePipeline', () => {
     const result = await pipeline.process(simpleInvalidCode);
 
     // Should not throw, but may not succeed
-    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
     expect(result.duration).toBeGreaterThanOrEqual(0);
   }, 30000);
 
@@ -370,7 +370,7 @@ describeIfBrowser('RenderAndScorePipeline', () => {
     expect(result.allResults.length).toBe(2);
     expect(result.bestIndex).toBeGreaterThanOrEqual(0);
     expect(result.bestIndex).toBeLessThan(2);
-    expect(result.bestResult).toBeDefined();
+    expect(result.bestResult).not.toBeNull();
   }, 60000);
 
   describe('score blending', () => {
@@ -417,7 +417,7 @@ describeIfBrowser('RenderAndScorePipeline', () => {
     const result = await visualPipeline.process(sampleP5Code, 'p5');
 
     expect(result.success).toBe(true);
-    expect(result.visual).toBeDefined();
+    expect(result.visual).not.toBeNull();
     expect(result.audio).toBeUndefined();
   }, 30000);
 

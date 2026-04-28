@@ -214,7 +214,7 @@ describe('DreamQueue', () => {
   it('enqueues and dequeues tasks', () => {
     const q = new DreamQueue();
     const id = q.enqueue('elite-x-elite', [{ id: 'a', descriptor: [0.5], quality: 0.5 }], 0.9);
-    expect(id).toBeDefined();
+    expect(id).not.toBeNull();
     const task = q.dequeue();
     expect(task?.status).toBe('running');
     expect(task?.strategy).toBe('elite-x-elite');

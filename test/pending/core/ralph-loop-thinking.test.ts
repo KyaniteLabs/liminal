@@ -318,7 +318,7 @@ describe('RalphLoop Thinking Trace Propagation', () => {
 
       // The result should include thinking from the generator
       expect(result.code).toContain('Generated with thinking');
-      expect(result.thinking).toBeDefined();
+
       expect(result.thinking).toBe('I analyzed the prompt and decided to create a simple canvas with default background.');
       expect(result.model).toBe('test-model-v1');
     });
@@ -356,7 +356,6 @@ describe('RalphLoop Thinking Trace Propagation', () => {
           call => call.prompt === 'create thinking test sketch'
         );
 
-        expect(metaCall).toBeDefined();
         expect(metaCall!.thinking).toBe('I analyzed the prompt and decided to create a simple canvas with default background.');
         expect(metaCall!.model).toBe('test-model-v1');
       } finally {
@@ -385,8 +384,7 @@ describe('RalphLoop Thinking Trace Propagation', () => {
         project: 'basic-test',
       });
 
-      expect(result.code).toBeDefined();
-      expect(result.code.length).toBeGreaterThan(0);
+      expect(result.code?.length).toBeGreaterThan(0);
       expect(result.iterations).toBe(1);
       // completed may be false if promise not detected - that's OK for this test
       expect(result.finalScore).toBeGreaterThan(0);

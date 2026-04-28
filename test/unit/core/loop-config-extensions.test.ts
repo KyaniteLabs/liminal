@@ -15,8 +15,8 @@ describe('LoopConfig audio + aesthetic extensions', () => {
 
   it('accepts aestheticConfig with preset', () => {
     const opts = normalizeOptions({ aestheticConfig: { preset: 'cinematic' } });
-    expect(opts.aestheticConfig).toBeDefined();
-    expect(opts.aestheticConfig.preset).toBe('cinematic');
+
+    expect(opts.aestheticConfig?.preset).toBe('cinematic');
   });
 
   it('accepts visualMappingParams option', () => {
@@ -28,7 +28,7 @@ describe('LoopConfig audio + aesthetic extensions', () => {
       composition: { focalWeight: 0.6, balance: 0.5 }
     };
     const opts = normalizeOptions({ visualMappingParams: params });
-    expect(opts.visualMappingParams).toBeDefined();
+    expect(opts.visualMappingParams).not.toBeNull();
   });
 
   it('defaults aestheticConfig to empty object', () => {
@@ -43,8 +43,8 @@ describe('LoopConfig RenderOptions integration', () => {
       canvas: { width: 1920, height: 1080 },
     };
     const opts = normalizeOptions({ render });
-    expect(opts.render).toBeDefined();
-    expect(opts.render.canvas).toEqual({ width: 1920, height: 1080 });
+
+    expect(opts.render?.canvas).toEqual({ width: 1920, height: 1080 });
   });
 
   it('accepts render option with recording config', () => {

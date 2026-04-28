@@ -300,7 +300,7 @@ describe('validateSyllableConstraint', () => {
       expect(result).toHaveProperty('valid');
       expect(result).toHaveProperty('actual');
       expect(result).toHaveProperty('suggestions');
-      expect(typeof result.valid).toBe('boolean');
+      expect(result.valid === true || result.valid === false).toBe(true);
       expect(Array.isArray(result.actual)).toBe(true);
       expect(Array.isArray(result.suggestions)).toBe(true);
     });

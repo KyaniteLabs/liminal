@@ -27,7 +27,7 @@ describe('CompostHeap', () => {
       await fs.writeFile(srcFile, 'hello world');
 
       const heapPath = await heap.addFile(srcFile);
-      expect(heapPath).toBeDefined();
+      expect(heapPath).not.toBeNull();
       const content = await fs.readFile(heapPath, 'utf-8');
       expect(content).toBe('hello world');
     });

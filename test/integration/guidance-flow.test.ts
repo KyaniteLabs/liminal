@@ -40,13 +40,13 @@ describe('Guidance Flow Integration', () => {
 
   describe('ConversationManager initialization', () => {
     it('creates GuidanceEngine instance on initialization', () => {
-      expect((conversationManager as any).guidance).toBeDefined();
+      expect((conversationManager as any).guidance).not.toBeNull();
       expect((conversationManager as any).guidance).toBeInstanceOf(GuidanceEngine);
     });
 
     it('creates SemanticArtMemory instance if not provided', () => {
       const managerWithoutArtBrain = new ConversationManager();
-      expect((managerWithoutArtBrain as any).artBrain).toBeDefined();
+      expect((managerWithoutArtBrain as any).artBrain).not.toBeNull();
       expect((managerWithoutArtBrain as any).artBrain).toBeInstanceOf(SemanticArtMemory);
     });
   });
@@ -80,7 +80,7 @@ describe('Guidance Flow Integration', () => {
 
       // Note: We're not actually running the full loop as it would take too long
       // Instead, we verify the mechanism is in place
-      expect((conversationManager as any).guidance).toBeDefined();
+      expect((conversationManager as any).guidance).not.toBeNull();
     });
 
     it('emits suggestions via onSuggestion callback', () => {
@@ -227,9 +227,9 @@ describe('Guidance Flow Integration', () => {
         guidanceEngine: guidance,
         onSuggestion: (suggestion: any) => {
           // Callback receives suggestion
-          expect(suggestion).toBeDefined();
-          expect(suggestion.type).toBeDefined();
-          expect(suggestion.title).toBeDefined();
+          expect(suggestion).not.toBeNull();
+          expect(suggestion.type).not.toBeNull();
+          expect(suggestion.title).not.toBeNull();
         },
       };
 
@@ -267,10 +267,10 @@ describe('Guidance Flow Integration', () => {
 
       // Verify suggestion structure
       const firstSuggestion = receivedSuggestions[0];
-      expect(firstSuggestion.type).toBeDefined();
-      expect(firstSuggestion.title).toBeDefined();
-      expect(firstSuggestion.description).toBeDefined();
-      expect(firstSuggestion.priority).toBeDefined();
+      expect(firstSuggestion.type).not.toBeNull();
+      expect(firstSuggestion.title).not.toBeNull();
+      expect(firstSuggestion.description).not.toBeNull();
+      expect(firstSuggestion.priority).not.toBeNull();
       expect(['high', 'medium', 'low']).toContain(firstSuggestion.priority);
     });
   });

@@ -96,11 +96,10 @@ describe('SeedBank.getRandomSeed()', () => {
 
     const result = await bank.getRandomSeed();
 
-    expect(result).toBeDefined();
     expect(result!.id).toBe('frag-test-1');
     expect(result!.content).toBe('raw content');
     expect(result!.score).toBe(8.5);
-    expect(result!.lir).toBeDefined();
+
     expect(result!.lir!.type).toBe('code');
     expect(result!.lir!.name).toBe('fibonacci');
   });
@@ -120,8 +119,8 @@ describe('SeedBank.getRandomSeed()', () => {
 
     const result = await bank.getRandomSeed();
 
-    expect(result).toBeDefined();
-    expect(result!.lir).toBeDefined();
+    expect(result).not.toBeNull();
+    expect(result!.lir).not.toBeNull();
   });
 
   it('should return a seed from the bank when multiple seeds exist', async () => {
@@ -131,7 +130,7 @@ describe('SeedBank.getRandomSeed()', () => {
 
     const result = await bank.getRandomSeed();
 
-    expect(result).toBeDefined();
+    expect(result).not.toBeNull();
     expect(['seed-a', 'seed-b']).toContain(result!.id);
   });
 });

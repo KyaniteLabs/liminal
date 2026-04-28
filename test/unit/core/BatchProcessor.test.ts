@@ -25,7 +25,7 @@ describe('BatchProcessor', () => {
     it('accepts processor in constructor', () => {
       const b = new BatchProcessor<string, number>(undefined, async (s) => s.length);
       const id = b.submit('hello');
-      expect(id).toBeDefined();
+      expect(id).not.toBeNull();
     });
 
     it('accepts partial config overrides', () => {
@@ -53,7 +53,7 @@ describe('BatchProcessor', () => {
     it('creates job with PENDING status and correct input', () => {
       const id = bp.submit('hello');
       const job = bp.getStatus(id);
-      expect(job).toBeDefined();
+
       expect(job!.status).toBe(Status.PENDING);
       expect(job!.input).toBe('hello');
       expect(job!.priority).toBe(0);
@@ -209,7 +209,7 @@ describe('BatchProcessor', () => {
     it('returns the job by ID', () => {
       const id = bp.submit('test');
       const job = bp.getStatus(id);
-      expect(job).toBeDefined();
+
       expect(job!.id).toBe(id);
     });
 

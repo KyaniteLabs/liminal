@@ -326,8 +326,8 @@ describe('GenerationOrchestrator', () => {
       const orchestrator = new GenerationOrchestrator(options, gallery, null);
       const result = await orchestrator.generate('make it cooler', 'make it cooler') as any;
       expect(result.needsClarification).toBe(true);
-      expect(result.clarifyingQuestions).toBeDefined();
-      expect(result.clarifyingQuestions.length).toBeGreaterThan(0);
+
+      expect(result.clarifyingQuestions?.length).toBeGreaterThan(0);
     });
 
     it('falls through to P5 when no dispatch match and prompt is NOT ambiguous', async () => {

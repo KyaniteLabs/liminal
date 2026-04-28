@@ -27,9 +27,9 @@ describe('DGF Full System Smoke Test', () => {
       defaultTier: GuardrailTier.ENFORCING,
     });
 
-    expect(system.registry).toBeDefined();
-    expect(system.telemetry).toBeDefined();
-    expect(system.resourceLimiter).toBeDefined();
+    expect(system.registry).not.toBeNull();
+    expect(system.telemetry).not.toBeNull();
+    expect(system.resourceLimiter).not.toBeNull();
   });
 
   it('should register and evaluate Phase 1 catastrophic guardrails', async () => {
@@ -108,7 +108,7 @@ describe('DGF Full System Smoke Test', () => {
   it('should work with Phase 2 remediation layer', () => {
     // classifyError is a standalone function
     const classification = classifyError('timeout');
-    expect(classification).toBeDefined();
+
     expect(classification?.type).toBe('TIMEOUT');
   });
 
@@ -145,7 +145,7 @@ describe('DGF Full System Smoke Test', () => {
     };
 
     const learnedRule = await constitution.learnFromFailure(failure);
-    expect(learnedRule).toBeDefined();
+
     expect(learnedRule?.pattern.errorType).toBe('TYPE_ERROR');
     expect(learnedRule?.confidence).toBeGreaterThan(0);
   });
@@ -249,7 +249,7 @@ describe('DGF Full System Smoke Test', () => {
     };
 
     const learnedRule = await constitution.learnFromFailure(failure);
-    expect(learnedRule).toBeDefined();
+    expect(learnedRule).not.toBeNull();
     expect(constitution.getActiveRules().length).toBe(1);
 
     // Step 3: Get statistics

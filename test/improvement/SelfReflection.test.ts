@@ -197,11 +197,9 @@ describe('SelfReflectionEngine', () => {
       const p5Gap = gaps.find(g => g.description.includes("'p5'"));
       const glslGap = gaps.find(g => g.description.includes("'glsl'"));
 
-      expect(p5Gap).toBeDefined();
       expect(p5Gap?.type).toBe('domain_gap');
       expect(p5Gap?.description).toContain('only 1 entries');
 
-      expect(glslGap).toBeDefined();
       expect(glslGap?.description).toContain('only 1 entries');
     });
 
@@ -213,7 +211,6 @@ describe('SelfReflectionEngine', () => {
       const gaps = engine.detectDomainGaps();
       const p5Gap = gaps.find(g => g.description.includes("'p5'"));
 
-      expect(p5Gap).toBeDefined();
       expect(p5Gap?.type).toBe('domain_gap');
       expect(p5Gap?.description).toContain('low average quality: 0.30');
       expect(p5Gap?.suggestedAction).toContain('target is 0.5');

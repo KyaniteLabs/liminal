@@ -79,25 +79,25 @@ describe('Rate Limiting', () => {
 describe('Rate Limiter Configuration', () => {
   it('should return export limiter for /api/export endpoint', () => {
     const limiter = getLimiterForEndpoint('/api/export');
-    expect(limiter).toBeDefined();
+    expect(limiter).not.toBeNull();
     expect(typeof limiter).toBe('function');
   });
 
   it('should return sandbox limiter for /api/sandbox endpoint', () => {
     const limiter = getLimiterForEndpoint('/api/sandbox');
-    expect(limiter).toBeDefined();
+    expect(limiter).not.toBeNull();
     expect(typeof limiter).toBe('function');
   });
 
   it('should return standard limiter for other endpoints', () => {
     const limiter = getLimiterForEndpoint('/api/gallery');
-    expect(limiter).toBeDefined();
+    expect(limiter).not.toBeNull();
     expect(typeof limiter).toBe('function');
   });
 
   it('should return standard limiter for unknown endpoints', () => {
     const limiter = getLimiterForEndpoint('/api/unknown');
-    expect(limiter).toBeDefined();
+    expect(limiter).not.toBeNull();
     expect(typeof limiter).toBe('function');
   });
 
@@ -107,9 +107,9 @@ describe('Rate Limiter Configuration', () => {
     const standardLimiter = getLimiterForEndpoint('/api/gallery');
     
     // Each endpoint should have a limiter
-    expect(exportLimiter).toBeDefined();
-    expect(sandboxLimiter).toBeDefined();
-    expect(standardLimiter).toBeDefined();
+    expect(exportLimiter).not.toBeNull();
+    expect(sandboxLimiter).not.toBeNull();
+    expect(standardLimiter).not.toBeNull();
     
     // They should be different middleware functions
     expect(exportLimiter).not.toBe(standardLimiter);

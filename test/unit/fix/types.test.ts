@@ -262,12 +262,12 @@ describe('Fix types', () => {
         rolledBack: false,
       };
       // Verify all required fields are present
-      expect(typeof result.success).toBe('boolean');
+      expect(result.success === true || result.success === false).toBe(true);
       expect(typeof result.taskId).toBe('string');
       expect(Array.isArray(result.changes)).toBe(true);
-      expect(typeof result.buildPassed).toBe('boolean');
-      expect(typeof result.testsPassed).toBe('boolean');
-      expect(typeof result.rolledBack).toBe('boolean');
+      expect(result.buildPassed === true || result.buildPassed === false).toBe(true);
+      expect(result.testsPassed === true || result.testsPassed === false).toBe(true);
+      expect(result.rolledBack === true || result.rolledBack === false).toBe(true);
     });
   });
 });

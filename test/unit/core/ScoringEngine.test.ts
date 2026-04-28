@@ -954,7 +954,7 @@ describe('ScoringEngine', () => {
       expect(result.score).toBe(0.5);
       expect(result.confidence).toBe(0);
       expect(result.failureClass).toBe('scorer');
-      expect(result.repairAdvice).toBeDefined();
+      expect(result.repairAdvice).not.toBeNull();
     });
 
     it('uses provided LLM and parses JSON response', async () => {
@@ -1083,7 +1083,7 @@ describe('ScoringEngine', () => {
       expect(result.score).toBe(0.5);
       expect(result.confidence).toBe(0);
       expect(result.failureClass).toBe('scorer');
-      expect(result.repairAdvice).toBeDefined();
+      expect(result.repairAdvice).not.toBeNull();
     });
 
     it('returns fallback evaluation when JSON.parse throws', async () => {
@@ -1101,7 +1101,7 @@ describe('ScoringEngine', () => {
       expect(result.score).toBe(0.5);
       expect(result.confidence).toBe(0);
       expect(result.failureClass).toBe('scorer');
-      expect(result.repairAdvice).toBeDefined();
+      expect(result.repairAdvice).not.toBeNull();
       expect(mockLoggerWarn).toHaveBeenCalledWith(
         'ScoringEngine',
         'Rendered evidence LLM scoring failed:',

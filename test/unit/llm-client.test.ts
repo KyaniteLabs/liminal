@@ -48,7 +48,7 @@ describe('LLMClient Configuration', () => {
     });
 
     // Client should be created successfully
-    expect(client).toBeDefined();
+    expect(client).not.toBeNull();
   });
 
   test('should create client with Ollama Cloud config (with API key)', () => {
@@ -59,7 +59,7 @@ describe('LLMClient Configuration', () => {
       apiKey: 'test-ollama-key',
     });
 
-    expect(client).toBeDefined();
+    expect(client).not.toBeNull();
   });
 
   test('isConfigured returns true when LIMINAL_LLM_API_KEY is set', () => {
@@ -106,7 +106,7 @@ describe('LLMClient OpenAI (W0-L)', () => {
     expect((opts?.headers as Record<string, string>)?.['Content-Type']).toBe('application/json');
     const body = JSON.parse((opts?.body as string) ?? '{}');
     expect(body.model).toBe('gpt-4o-mini');
-    expect(body.messages).toBeDefined();
+    expect(body.messages).not.toBeNull();
     expect(Array.isArray(body.messages)).toBe(true);
   });
 });
@@ -135,6 +135,6 @@ describe('LLMClient MiniMax', () => {
     expect((opts?.headers as Record<string, string>)?.['Authorization']).toBe('Bearer test-minimax-key');
     const body = JSON.parse((opts?.body as string) ?? '{}');
     expect(body.model).toBe('mini-model');
-    expect(body.messages).toBeDefined();
+    expect(body.messages).not.toBeNull();
   });
 });

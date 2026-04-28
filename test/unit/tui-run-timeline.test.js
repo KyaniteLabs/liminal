@@ -32,9 +32,9 @@ describe('TUI Run and Iteration Timeline', () => {
       expect(timelineEntries[0]).toMatchObject({ version: 1, score: 0.6, promiseDetected: false });
       expect(timelineEntries[1]).toMatchObject({ version: 2, score: 0.75, promiseDetected: false });
       expect(timelineEntries[2]).toMatchObject({ version: 3, score: 0.9, promiseDetected: true });
-      expect(timelineEntries[0].timestamp).toBeDefined();
-      expect(timelineEntries[1].timestamp).toBeDefined();
-      expect(timelineEntries[2].timestamp).toBeDefined();
+      expect(timelineEntries[0].timestamp).not.toBeNull();
+      expect(timelineEntries[1].timestamp).not.toBeNull();
+      expect(timelineEntries[2].timestamp).not.toBeNull();
     });
 
     test('timeline updates incrementally during run (progress callback)', async () => {

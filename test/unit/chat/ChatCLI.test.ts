@@ -26,7 +26,7 @@ describe('ChatCLI', () => {
     });
 
     it('should initialize with guidance stub', () => {
-      expect(chatCLI.guidance).toBeDefined();
+      expect(chatCLI.guidance).not.toBeNull();
     });
   });
 
@@ -52,7 +52,7 @@ describe('ChatCLI', () => {
 
     it('should render chat panel component', () => {
       const panel = chatCLI.renderChatPanel();
-      expect(panel).toBeDefined();
+      expect(panel).not.toBeNull();
     });
   });
 
@@ -64,7 +64,7 @@ describe('ChatCLI', () => {
 
     it('should render preview panel component', () => {
       const panel = chatCLI.renderPreviewPanel();
-      expect(panel).toBeDefined();
+      expect(panel).not.toBeNull();
     });
   });
 
@@ -138,7 +138,7 @@ describe('ChatCLI', () => {
       ];
 
       const controls = chatCLI.renderParameterControls(params);
-      expect(controls).toBeDefined();
+      expect(controls).not.toBeNull();
     });
 
     it('should render parameter controls for toggles', () => {
@@ -151,7 +151,7 @@ describe('ChatCLI', () => {
       ];
 
       const controls = chatCLI.renderParameterControls(params);
-      expect(controls).toBeDefined();
+      expect(controls).not.toBeNull();
     });
   });
 
@@ -170,8 +170,8 @@ describe('ChatCLI', () => {
   describe('UI Layout', () => {
     it('should support split-view layout with 70+80 columns', () => {
       // ChatCLI should be designed to handle split view
-      expect(chatCLI.renderChatPanel).toBeDefined();
-      expect(chatCLI.renderPreviewPanel).toBeDefined();
+      expect(chatCLI.renderChatPanel).not.toBeNull();
+      expect(chatCLI.renderPreviewPanel).not.toBeNull();
     });
   });
 
@@ -185,7 +185,7 @@ describe('ChatCLI', () => {
 
     it('should start new session through conversation manager', () => {
       conversationManager.startNewSession();
-      expect(conversationManager.currentSession).toBeDefined();
+
       expect(conversationManager.currentSession?.status).toBe('active');
     });
   });

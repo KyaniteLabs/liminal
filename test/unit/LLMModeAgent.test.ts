@@ -199,8 +199,8 @@ describe('LLMModeAgent', () => {
       id: 't1', title: 'Test', description: 'desc', approved: true,
     });
     // Due to double-wrapping in getLLMPlan, parsing fails → null plan → loop breaks → FAILED
-    expect(session).toBeDefined();
-    expect(session.task.id).toBe('t1');
+
+    expect(session?.task.id).toBe('t1');
   });
 
   it('getAllSessions returns all executed sessions', async () => {
@@ -248,9 +248,9 @@ describe('LLMModeAgent', () => {
     });
     // Session should have system prompt + task description as initial messages
     const systemMsg = session.messages.find(m => m.role === 'system');
-    expect(systemMsg).toBeDefined();
+    expect(systemMsg).not.toBeNull();
     const userMsg = session.messages.find(m => m.role === 'user' && m.content.includes('t1'));
-    expect(userMsg).toBeDefined();
+
     expect(userMsg!.content).toContain('Fix the bug');
   });
 
@@ -407,7 +407,7 @@ describe('LLMModeAgent', () => {
     });
     // Unparseable → getLLMPlan returns null → loop breaks → FAILED (max steps reached)
     expect(session.status).toBe(Status.FAILED);
-    expect(session.endTime).toBeDefined();
+    expect(session.endTime).not.toBeNull();
   });
 
   it('parses the first complete JSON object when model adds trailing braces', async () => {
@@ -473,7 +473,6 @@ describe('LLMModeAgent', () => {
     // With null plan, the loop breaks on first iteration (stepCount = 1)
     expect(session.stepCount).toBeGreaterThanOrEqual(1);
   });
-
 
   it('suspends and saves run state when max steps reached after a mutation', async () => {
     mockComplete.mockResolvedValue({
@@ -593,7 +592,7 @@ describe('LLMModeAgent', () => {
     expect(mockReadFile.execute).not.toHaveBeenCalled();
     expect(mockApplyEdit.execute).not.toHaveBeenCalled();
     expect(session.status).toBe(Status.FAILED);
-    expect(session.endTime).toBeDefined();
+    expect(session.endTime).not.toBeNull();
     expect(session.stepCount).toBe(0);
     expect(Array.from(session.exploredPaths)).toEqual([]);
     expect(Array.from(session.mutatedFiles)).toEqual([]);
@@ -720,7 +719,7 @@ describe('LLMModeAgent', () => {
     const gateMessage = session.messages.find((message) =>
       message.role === 'tool' && message.content.includes('Artifact gate: create or overwrite .omx/proof/operator-trust-proof-20260418.md with writeFile'),
     );
-    expect(gateMessage).toBeDefined();
+    expect(gateMessage).not.toBeNull();
     expect(mockWriteFile.execute).not.toHaveBeenCalled();
     expect(session.status).toBe(Status.FAILED);
   });

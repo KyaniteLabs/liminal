@@ -98,8 +98,8 @@ describe('E2E full loop (cloud LLM)', () => {
       throw err;
     }
 
-    expect(result).toBeDefined();
-    expect(result.code).toBeDefined();
+    expect(result).not.toBeNull();
+    expect(result.code).not.toBeNull();
     expect(typeof result.code).toBe('string');
 
     // Skip assertions if the LLM backend was unreachable (code contains error comment)
@@ -111,8 +111,8 @@ describe('E2E full loop (cloud LLM)', () => {
     expect(result.iterations).toBeGreaterThanOrEqual(1);
     expect(result.code).toMatch(/function\s+setup\s*\(/);
     expect(result.code).toMatch(/function\s+draw\s*\(/);
-    expect(result.htmlPath).toBeDefined();
-    expect(result.jsPath).toBeDefined();
+    expect(result.htmlPath).not.toBeNull();
+    expect(result.jsPath).not.toBeNull();
     expect(fs.existsSync(result.htmlPath!)).toBe(true);
     expect(fs.existsSync(result.jsPath!)).toBe(true);
   }, E2E_TIMEOUT_MS + 5000);

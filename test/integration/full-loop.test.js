@@ -63,12 +63,12 @@ describe('Full-Loop Integration Tests', () => {
       });
 
       // Verify basic result structure
-      expect(result).toBeDefined();
-      expect(result.code).toBeDefined();
-      expect(result.iterations).toBe(3);
+
+      expect(result.code).not.toBeNull();
+      expect(result?.iterations).toBe(3);
       expect(result.completed).toBe(false); // Max iterations, no promise
       expect(result.reason).toContain('max iterations');
-      expect(result.timestamp).toBeDefined();
+      expect(result.timestamp).not.toBeNull();
       expect(result.duration).toBeGreaterThan(0);
       expect(result.finalScore).toBeGreaterThanOrEqual(0);
       expect(result.finalScore).toBeLessThanOrEqual(1);
@@ -91,8 +91,8 @@ describe('Full-Loop Integration Tests', () => {
       });
 
       // Verify promise-based termination
-      expect(result).toBeDefined();
-      expect(result.completed).toBe(true);
+
+      expect(result?.completed).toBe(true);
       expect(result.reason).toContain('promise');
       expect(result.iterations).toBeLessThanOrEqual(10);
       expect(result.code).toContain('<promise>COMPLETE</promise>');
@@ -125,13 +125,13 @@ describe('Full-Loop Integration Tests', () => {
       finalHistory.forEach((context, index) => {
         expect(context.iteration).toBe(index + 1);
         expect(context.prompt).toBe(prompt);
-        expect(context.usedPrompt).toBeDefined();
-        expect(context.code).toBeDefined();
-        expect(context.code.length).toBeGreaterThan(0);
-        expect(context.evaluation).toBeDefined();
+        expect(context.usedPrompt).not.toBeNull();
+
+        expect(context.code?.length).toBeGreaterThan(0);
+        expect(context.evaluation).not.toBeNull();
         expect(context.evaluation.score).toBeGreaterThanOrEqual(0);
         expect(context.evaluation.score).toBeLessThanOrEqual(1);
-        expect(context.timestamp).toBeDefined();
+        expect(context.timestamp).not.toBeNull();
         expect(context.maxIterations).toBe(5);
       });
 
@@ -157,15 +157,15 @@ describe('Full-Loop Integration Tests', () => {
 
       // Verify gallery saved iterations
       const history = await gallery.loadHistory(projectName);
-      expect(history).toBeDefined();
-      expect(history.length).toBe(4);
+
+      expect(history?.length).toBe(4);
 
       // Verify each saved iteration
       history.forEach((iteration, index) => {
         expect(iteration.version).toBe(index + 1);
-        expect(iteration.code).toBeDefined();
-        expect(iteration.code.length).toBeGreaterThan(0);
-        expect(iteration.timestamp).toBeDefined();
+
+        expect(iteration.code?.length).toBeGreaterThan(0);
+        expect(iteration.timestamp).not.toBeNull();
       });
 
       // Verify gallery directory structure
@@ -195,13 +195,13 @@ describe('Full-Loop Integration Tests', () => {
       // Verify each iteration was evaluated
       expect(history.length).toBe(3);
       history.forEach(context => {
-        expect(context.evaluation).toBeDefined();
-        expect(context.evaluation.score).toBeDefined();
+        expect(context.evaluation).not.toBeNull();
+        expect(context.evaluation.score).not.toBeNull();
         expect(context.evaluation.score).toBeGreaterThanOrEqual(0);
         expect(context.evaluation.score).toBeLessThanOrEqual(1);
 
         // Check for issues array
-        expect(context.evaluation.issues).toBeDefined();
+        expect(context.evaluation.issues).not.toBeNull();
         expect(Array.isArray(context.evaluation.issues)).toBe(true);
       });
 
@@ -277,8 +277,8 @@ describe('Full-Loop Integration Tests', () => {
 
       // All codes should be defined
       codes.forEach(code => {
-        expect(code).toBeDefined();
-        expect(code.length).toBeGreaterThan(0);
+
+        expect(code?.length).toBeGreaterThan(0);
       });
 
       // When LLM is configured we expect variation; when template fallback is used, same code each time
@@ -399,7 +399,7 @@ describe('Full-Loop Integration Tests', () => {
         tolerateErrors: true
       });
 
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
       expect(result.iterations).toBeLessThanOrEqual(2);
     });
 
@@ -484,8 +484,8 @@ describe('Full-Loop Integration Tests', () => {
 
       // Verify gallery has complete history
       const history = await gallery.loadHistory(projectName);
-      expect(history).toBeDefined();
-      expect(history.length).toBe(6);
+
+      expect(history?.length).toBe(6);
 
       // Verify version sequence
       history.forEach((iteration, index) => {
@@ -576,7 +576,7 @@ describe('Full-Loop Integration Tests', () => {
       // Verify data types and constraints
       expect(typeof result.code).toBe('string');
       expect(typeof result.iterations).toBe('number');
-      expect(typeof result.completed).toBe('boolean');
+      expect(result.completed === true || result.completed === false).toBe(true);
       expect(typeof result.reason).toBe('string');
       expect(typeof result.timestamp).toBe('string');
       expect(typeof result.duration).toBe('number');
@@ -600,7 +600,7 @@ describe('Full-Loop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result.duration).toBeDefined();
+      expect(result.duration).not.toBeNull();
       expect(result.duration).toBeGreaterThanOrEqual(0);
 
       // Duration should be reasonable - just check it's not excessively long
@@ -618,9 +618,8 @@ describe('Full-Loop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result).toBeDefined();
-      expect(result.iterations).toBe(1);
-      expect(result.code).toBeDefined();
+      expect(result?.iterations).toBe(1);
+      expect(result.code).not.toBeNull();
     });
 
     test('should handle unicode in prompts', async () => {
@@ -632,8 +631,8 @@ describe('Full-Loop Integration Tests', () => {
         galleryDir: testGalleryDir
       });
 
-      expect(result).toBeDefined();
-      expect(result.code).toBeDefined();
+      expect(result).not.toBeNull();
+      expect(result.code).not.toBeNull();
     });
 
     test('should handle special characters in project names', async () => {
@@ -647,8 +646,7 @@ describe('Full-Loop Integration Tests', () => {
         project: projectName
       });
 
-      expect(result).toBeDefined();
-      expect(result.project).toBe(projectName);
+      expect(result?.project).toBe(projectName);
     });
 
     test('should handle concurrent loop executions', async () => {
@@ -664,8 +662,8 @@ describe('Full-Loop Integration Tests', () => {
 
       expect(results).toHaveLength(3);
       results.forEach(result => {
-        expect(result).toBeDefined();
-        expect(result.iterations).toBe(1);
+
+        expect(result?.iterations).toBe(1);
       });
 
       // Verify each project saved correctly

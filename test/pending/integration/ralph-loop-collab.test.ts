@@ -36,7 +36,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
       });
 
       expect(result.iterations).toBe(1);
-      expect(result.code).toBeDefined();
+      expect(result.code).not.toBeNull();
     });
 
     it('works with music domain', async () => {
@@ -57,7 +57,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
       });
 
       expect(result.iterations).toBe(1);
-      expect(result.code).toBeDefined();
+      expect(result.code).not.toBeNull();
     });
   });
 

@@ -435,7 +435,7 @@ describe('NicheQuotaPolicy', () => {
 
     const allocations = policy.computeAllocations([cell], ['order-chaos']);
     const overRep = allocations.find(a => a.reason === 'over-represented');
-    expect(overRep).toBeDefined();
+    expect(overRep).not.toBeNull();
   });
 
   it('marks empty niches for exploration', () => {
@@ -514,7 +514,7 @@ describe('ArchiveTaskPlanner', () => {
 
     const plan = planner.plan(cells, ['order-chaos']);
     const improvement = plan.tasks.find(t => t.type === 'perturbation-probe');
-    expect(improvement).toBeDefined();
+    expect(improvement).not.toBeNull();
   });
 
   it('plans replay for user-pinned entries', () => {
@@ -534,7 +534,7 @@ describe('ArchiveTaskPlanner', () => {
 
     const plan = planner.plan(cells, ['order-chaos'], prefs);
     const replay = plan.tasks.find(t => t.type === 'replay-promising');
-    expect(replay).toBeDefined();
+
     expect(replay!.reason).toContain('user-pinned');
   });
 
@@ -547,7 +547,7 @@ describe('ArchiveTaskPlanner', () => {
   it('includes archive summary', () => {
     const planner = new ArchiveTaskPlanner();
     const plan = planner.plan([], ['order-chaos']);
-    expect(plan.archiveSummary).toBeDefined();
+    expect(plan.archiveSummary).not.toBeNull();
     expect(typeof plan.archiveSummary.totalCells).toBe('number');
     expect(typeof plan.archiveSummary.balanceScore).toBe('number');
   });

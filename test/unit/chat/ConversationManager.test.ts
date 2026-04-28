@@ -41,7 +41,7 @@ describe('ConversationManager', () => {
       manager.startNewSession();
 
       expect(manager.currentSession).not.toBeNull();
-      expect(manager.currentSession?.id).toBeDefined();
+      expect(manager.currentSession?.id).not.toBeNull();
       expect(typeof manager.currentSession?.id).toBe('string');
     });
 
@@ -145,7 +145,6 @@ describe('ConversationManager', () => {
       const session = manager.sessionHistory[0];
       const userMessage = session.messages.find(m => m.role === 'user');
 
-      expect(userMessage).toBeDefined();
       expect(userMessage?.content).toBe('test message');
     });
 
@@ -210,7 +209,7 @@ describe('ConversationManager', () => {
       const response = await manager.processUserMessage('Create art');
 
       expect(response.type).toBe('question');
-      expect(response.message).toBeDefined();
+      expect(response.message).not.toBeNull();
     });
 
     it('should return agent response with generating type for confirmation', async () => {
@@ -302,7 +301,7 @@ describe('ConversationManager', () => {
 
       const brief = manager.buildCreativeBrief();
 
-      expect(brief.complexity).toBeDefined();
+      expect(brief.complexity).not.toBeNull();
     });
 
     it('should default to p5 domain', () => {

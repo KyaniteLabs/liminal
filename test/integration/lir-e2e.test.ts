@@ -108,10 +108,10 @@ describe('LIR E2E — full pipeline verification', () => {
     const token = codeSeeds[0].lir as LIRCodeToken;
     expect(token.type).toBe('code');
     // Must have core fields
-    expect(token.name).toBeDefined();
-    expect(token.kind).toBeDefined();
-    expect(token.signature).toBeDefined();
-    expect(token.source).toBeDefined();
+    expect(token.name).not.toBeNull();
+    expect(token.kind).not.toBeNull();
+    expect(token.signature).not.toBeNull();
+    expect(token.source).not.toBeNull();
     expect(token.language).toBe('typescript');
     // Must have metrics
     expect(token.metrics.loc).toBeGreaterThan(0);
@@ -138,11 +138,11 @@ describe('LIR E2E — full pipeline verification', () => {
 
     const token = docSeeds[0].lir as LIRDocToken;
     expect(token.type).toBe('doc');
-    expect(token.heading).toBeDefined();
+    expect(token.heading).not.toBeNull();
     expect(typeof token.level).toBe('number');
-    expect(token.content).toBeDefined();
+    expect(token.content).not.toBeNull();
     // Must have hierarchy
-    expect(token.hierarchy).toBeDefined();
+    expect(token.hierarchy).not.toBeNull();
     expect(typeof token.metrics.wordCount).toBe('number');
   });
 
@@ -162,7 +162,7 @@ describe('LIR E2E — full pipeline verification', () => {
 
     const token = textSeeds[0].lir as LIRTextToken;
     expect(token.type).toBe('text');
-    expect(token.content).toBeDefined();
+    expect(token.content).not.toBeNull();
     expect(token.metrics.wordCount).toBeGreaterThan(0);
     expect(token.metrics.paragraphCount).toBeGreaterThan(0);
     expect(Array.isArray(token.structure.headings)).toBe(true);

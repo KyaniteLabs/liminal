@@ -6,7 +6,6 @@ describe('WorkspaceManager', () => {
     const mgr = new WorkspaceManager();
     const config = mgr.create('test-project');
 
-    expect(config).toBeDefined();
     expect(config!.name).toBe('test-project');
     expect(config!.createdAt).toBeTruthy();
     expect(config!.skillPreferences).toEqual([]);
@@ -25,7 +24,7 @@ describe('WorkspaceManager', () => {
     const mgr = new WorkspaceManager();
     mgr.create('get-test');
     const config = mgr.get('get-test');
-    expect(config).toBeDefined();
+
     expect(config!.name).toBe('get-test');
   });
 
@@ -40,7 +39,6 @@ describe('WorkspaceManager', () => {
     mgr.create('ws2');
     const config = mgr.switchTo('ws2');
 
-    expect(config).toBeDefined();
     expect(config!.name).toBe('ws2');
     expect(mgr.activeName).toBe('ws2');
   });
@@ -57,7 +55,6 @@ describe('WorkspaceManager', () => {
     mgr.switchTo('active-ws');
     const active = mgr.getActive();
 
-    expect(active).toBeDefined();
     expect(active!.name).toBe('active-ws');
   });
 

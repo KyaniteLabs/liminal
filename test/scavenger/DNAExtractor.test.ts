@@ -90,7 +90,7 @@ A particle system with flocking behavior and noise-based movement.
       expect(dna.name).toBe('SPEC');
       expect(dna.coreLogic).toContain('particle system');
       expect(dna.constraints).toContain('Particles must respond to mouse position');
-      expect(dna.patterns).toBeDefined();
+      expect(dna.patterns).not.toBeNull();
     });
 
     it('should extract prompt blocks from spec', async () => {

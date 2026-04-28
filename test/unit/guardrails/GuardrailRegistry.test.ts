@@ -225,7 +225,7 @@ describe('GuardrailRegistry', () => {
       expect(result.passed).toBe(true);
       expect(result.remediatedResults).toHaveLength(1);
       expect(result.blockingResults).toEqual([]);
-      expect(result.modifiedContext).toBeDefined();
+
       expect(result.modifiedContext!.step).toBe(2);
     });
 
@@ -408,7 +408,6 @@ describe('GuardrailRegistry', () => {
 
       const result = await registry.checkGuardrail('target', makeContext());
 
-      expect(result).toBeDefined();
       expect(result!.passed).toBe(true);
     });
 

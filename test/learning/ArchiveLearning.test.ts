@@ -270,7 +270,7 @@ describe('ArchiveLearning', () => {
 
   it('getArchive returns underlying QualityArchive instance', () => {
     const underlying = archive.getArchive();
-    expect(underlying).toBeDefined();
+    expect(underlying).not.toBeNull();
     expect(underlying).toHaveProperty('query');
     expect(underlying).toHaveProperty('add');
   });

@@ -14,7 +14,7 @@ describe('CreativeEvaluator novelty + aesthetic integration', () => {
 
       const result = CreativeEvaluator.assess(sampleCode, { noveltyArchive: archive });
 
-      expect(result.noveltyScore).toBeDefined();
+      expect(result.noveltyScore).not.toBeNull();
       expect(typeof result.noveltyScore).toBe('number');
       expect(result.noveltyScore).toBeGreaterThanOrEqual(0);
       expect(result.noveltyScore).toBeLessThanOrEqual(1);
@@ -37,7 +37,7 @@ describe('CreativeEvaluator novelty + aesthetic integration', () => {
 
       const result = CreativeEvaluator.assess(sampleCode, { aestheticModel: model });
 
-      expect(result.aestheticScore).toBeDefined();
+      expect(result.aestheticScore).not.toBeNull();
       expect(typeof result.aestheticScore).toBe('number');
       expect(result.aestheticScore).toBeGreaterThanOrEqual(0);
       expect(result.aestheticScore).toBeLessThanOrEqual(1);
@@ -87,7 +87,7 @@ describe('CreativeEvaluator novelty + aesthetic integration', () => {
         aestheticModel: model,
       });
 
-      expect(withModel.aestheticScore).toBeDefined();
+      expect(withModel.aestheticScore).not.toBeNull();
       expect(withModel.score).toBe(withModel.aestheticScore!);
     });
   });
@@ -96,13 +96,13 @@ describe('CreativeEvaluator novelty + aesthetic integration', () => {
     it('assess works without novelty/aesthetic options', () => {
       const result = CreativeEvaluator.assess(sampleCode);
 
-      expect(result.passed).toBeDefined();
+      expect(result.passed).not.toBeNull();
       expect(result.score).toBeGreaterThanOrEqual(0);
       expect(result.score).toBeLessThanOrEqual(1);
       expect(result.technicalScore).toBeGreaterThanOrEqual(0);
       expect(result.creativeScore).toBeGreaterThanOrEqual(0);
-      expect(result.issues).toBeDefined();
-      expect(result.metrics).toBeDefined();
+      expect(result.issues).not.toBeNull();
+      expect(result.metrics).not.toBeNull();
       expect(result.noveltyScore).toBeUndefined();
       expect(result.aestheticScore).toBeUndefined();
     });

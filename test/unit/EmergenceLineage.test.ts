@@ -51,7 +51,7 @@ describe('LineageTracker', () => {
     const tracker = new LineageTracker({ lineageDir: tmpDir });
     const record = await tracker.record({ provenance: 'fresh-generation', artifactId: 'lookup-test' });
     const retrieved = await tracker.get('lookup-test');
-    expect(retrieved).toBeDefined();
+
     expect(retrieved!.artifactId).toBe('lookup-test');
   });
 
@@ -111,7 +111,7 @@ describe('LineageTracker', () => {
 
     const tracker2 = new LineageTracker({ lineageDir: dir });
     const record = await tracker2.get('persist-test');
-    expect(record).toBeDefined();
+
     expect(record!.artifactId).toBe('persist-test');
   });
 });

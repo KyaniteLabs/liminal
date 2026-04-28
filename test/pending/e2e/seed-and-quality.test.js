@@ -62,10 +62,10 @@ describe('E2E: seed and quality gate', () => {
       throw err;
     }
 
-    expect(result).toBeDefined();
-    expect(result.code).toBeDefined();
+    expect(result).not.toBeNull();
+
     expect(typeof result.code).toBe('string');
-    expect(result.code.length).toBeGreaterThan(0);
+    expect(result.code?.length).toBeGreaterThan(0);
     // First or final code reflects seed: createCanvas(400,400) or evolved (createCanvas + setup/draw)
     const hasCreateCanvas = /\bcreateCanvas\s*\(/.test(result.code);
     const hasSetupDraw = /function\s+setup\s*\(/.test(result.code) && /function\s+draw\s*\(/.test(result.code);
@@ -97,8 +97,8 @@ describe('E2E: seed and quality gate', () => {
       throw err;
     }
 
-    expect(result).toBeDefined();
-    expect(result.reason).toBeDefined();
+    expect(result).not.toBeNull();
+    expect(result.reason).not.toBeNull();
     expect(result.reason.toLowerCase()).toContain('quality');
     expect(result.iterations).toBeLessThan(maxIterations);
   }, LLM_REQUEST_TIMEOUT_MS + 5000);

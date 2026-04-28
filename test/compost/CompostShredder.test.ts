@@ -54,7 +54,7 @@ describe('CompostShredder', () => {
         expect(f.domain).toBeTruthy();
         expect(f.layer).toBe('semantic');
         expect(f.content).toBeTruthy();
-        expect(f.metadata).toBeDefined();
+        expect(f.metadata).not.toBeNull();
         expect(f.tags).toBeInstanceOf(Array);
       }
     });

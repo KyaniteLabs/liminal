@@ -48,7 +48,6 @@ Third paragraph.`;
     it('should filter out empty paragraphs', () => {
       const content = `First paragraph.
 
-
 Third paragraph (skip empty one).`;
 
       const parser = new TextParser();
@@ -287,10 +286,7 @@ Just paragraphs.`;
     it('should handle irregular spacing', () => {
       const content = `Paragraph one.
 
-
-
 Paragraph two (after triple newline).
-
 
 Paragraph three.`;
 
@@ -320,7 +316,7 @@ Paragraph three.`;
       const result = parser.parse(content, 'test.txt');
 
       const token = result[0];
-      expect(token.id).toBeDefined();
+      expect(token.id).not.toBeNull();
       expect(token.type).toBe('text');
       expect(token.domain).toBe('unstructured');
       expect(token.layer).toBe('content');

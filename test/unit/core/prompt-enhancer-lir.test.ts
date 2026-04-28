@@ -204,10 +204,9 @@ describe('PromptEnhancer LIR integration', () => {
 
         const result = await bank.getRandomSeed();
 
-        expect(result).toBeDefined();
         expect(result!.id).toBe('frag-abc123');
         expect(result!.content).toBe('raw content here');
-        expect(result!.lir).toBeDefined();
+
         expect(result!.lir!.type).toBe('code');
         expect(result!.lir!.name).toBe('fibonacci');
       } finally {
@@ -224,7 +223,6 @@ describe('PromptEnhancer LIR integration', () => {
 
         const result = await bank.getRandomSeed();
 
-        expect(result).toBeDefined();
         expect(result!.id).toBe('frag-abc123');
         expect(result!.lir).toBeUndefined();
       } finally {

@@ -222,7 +222,7 @@ export function localizeBoundedSelfImprovement(description: string): RepoIndexLi
     return buildContext(COGNITIVE_LOOP_PROFILE);
   }
 
-  if (/repoindexlite|selfimprovementruntime|task packet|working set|bounded self.?improvement|\bloc\b.*(?:confidence|packet|shaping)|\bloc\b.*(?:primary|secondary).*files|packet shaping|\bloc\b(?=.*confidence)(?=.*packet)|agent.?self.?improvement|harness.?self.?improvement|tui.?self.?improvement|self.?improv.*agent|self.?improv.*harness|self.?improv.*tui|improv(?:e|es).*itself.*agent|agent.*improv(?:e|es).*itself|prompt.*liminal.*acts.*improv/i.test(normalized)) {
+  if (/repoindexlite|selfimprovementruntime|task packet|working set|bounded self.?improvement|\bloc\b.*(?:confidence|packet|shaping)|\bloc\b.*(?:primary|secondary).*files|packet shaping|\bloc\b(?=.*confidence)(?=.*packet)|agent.?self.?improvement|harness.?self.?improvement|tui.?self.?improvement|self.?improv.*agent|self.?improv.*harness|self.?improv.*tui|improv(?:e|es).*itself.*agent|agent.*improv(?:e|es).*itself|prompt.*liminal.*acts.*improv|liminal.*improv(?:es|ing).*itself|self.?improv(?:e|ement|ing)?.*loop/i.test(normalized)) {
     return buildContext(LOCALIZATION_PACKET_PROFILE);
   }
 

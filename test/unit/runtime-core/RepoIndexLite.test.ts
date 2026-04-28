@@ -180,6 +180,16 @@ describe('RepoIndexLite', () => {
     }
   });
 
+  it('does not steal ordinary concrete loop requests into self-improvement packet localization', () => {
+    const context = localizeBoundedSelfImprovement('Make the render retry loop concrete for failed previews');
+
+    expect(context.fileHint).not.toBe('src/runtime-core/RepoIndexLite.ts');
+    expect(context.primaryFiles).not.toEqual([
+      'src/runtime-core/RepoIndexLite.ts',
+      'src/runtime-core/SelfImprovementRuntime.ts',
+    ]);
+  });
+
   it('routes cognitive-organ self-improvement to memory compost dreaming and intuition files', () => {
     const context = localizeBoundedSelfImprovement('Improve the way memory compost dreaming and intuition feed the self-improvement loop');
 

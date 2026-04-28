@@ -105,6 +105,72 @@ const LOCALIZATION_PACKET_PROFILE: RepoIndexLiteProfile = {
   ],
 };
 
+const COGNITIVE_LOOP_PROFILE: RepoIndexLiteProfile = {
+  domain: 'cognitive-loop',
+  intro: 'Start with the cognitive architecture map, then connect the smallest runtime hook to the relevant learning-inspired organs:',
+  primaryFiles: [
+    'src/reporting/CognitiveArchitectureAtlas.ts',
+    'src/runtime-core/SelfImprovementRuntime.ts',
+  ],
+  secondaryCandidates: [
+    'src/compost/CompostMill.ts',
+    'src/dreaming/DreamPlanner.ts',
+    'src/intuition/IntuitionEngine.ts',
+    'src/harness/HarnessMemory.ts',
+  ],
+  expansionBudget: 2,
+  localizationConfidence: 'high',
+  verificationTargets: [
+    { tool: 'runFocusedTests', pattern: 'CognitiveArchitectureAtlas|SelfImprovementRuntime', reason: 'Cognitive-loop changes should preserve the architecture contract and self-improvement packet shape', priority: 1 },
+    { tool: 'runBuild', reason: 'Full TypeScript build after cognitive-loop edits', priority: 2 },
+  ],
+};
+
+const MODEL_ASSIMILATION_PROFILE: RepoIndexLiteProfile = {
+  domain: 'model-assimilation',
+  intro: 'Start in provider/model routing surfaces before changing harness execution. Keep model-upgrade work evidence-driven and role-aware:',
+  primaryFiles: [
+    'src/harness/MultiProviderConfig.ts',
+    'src/config/RoleConfig.ts',
+  ],
+  secondaryCandidates: [
+    'src/llm/LLMClient.ts',
+    'src/improvement/OpportunityScanner.ts',
+    'test/unit/harness/MultiProviderConfig.test.ts',
+  ],
+  expansionBudget: 2,
+  localizationConfidence: 'high',
+  verificationTargets: [
+    { tool: 'runFocusedTests', pattern: 'MultiProviderConfig|RoleConfig', reason: 'Model-assimilation changes should hit provider and role-routing tests first', priority: 1 },
+    { tool: 'runBuild', reason: 'Full TypeScript build after model-assimilation edits', priority: 2 },
+  ],
+};
+
+const CREATIVE_DOMAIN_RUNTIME_PROFILE: RepoIndexLiteProfile = {
+  domain: 'creative-domain-runtime',
+  intro: 'Start in the generator registry and the named domain generators. Preserve breadth before optimizing any one domain:',
+  primaryFiles: [
+    'src/generators/GeneratorRegistry.ts',
+    'src/generators/registerGenerators.ts',
+  ],
+  secondaryCandidates: [
+    'src/generators/strudel/StrudelGenerator.ts',
+    'src/generators/tone/ToneGenerator.ts',
+    'src/generators/revideo/RevideoGenerator.ts',
+    'src/generators/svg/SVGGenerator.ts',
+    'src/generators/hydra/HydraGenerator.ts',
+    'src/generators/three/ThreeGenerator.ts',
+    'src/generators/glsl/ShaderGenerator.ts',
+    'src/generators/p5/P5Generator.ts',
+  ],
+  expansionBudget: 4,
+  localizationConfidence: 'high',
+  verificationTargets: [
+    { tool: 'runFocusedTests', pattern: 'GeneratorRegistry|registerGenerators|Strudel|Tone|Revideo|SVG|Hydra', reason: 'Creative-domain runtime changes must preserve registry breadth and named generators', priority: 1 },
+    { tool: 'runBuild', reason: 'Full TypeScript build after creative-domain runtime edits', priority: 2 },
+  ],
+};
+
 function dedupeFiles(files: string[]): string[] {
   return Array.from(new Set(files));
 }
@@ -142,6 +208,18 @@ export function localizeBoundedSelfImprovement(description: string): RepoIndexLi
 
   if (/checkpoint|resume|fingerprint|workspace drift|suspend|run state/.test(normalized)) {
     return buildContext(CHECKPOINT_RESUME_PROFILE);
+  }
+
+  if (/(new model|provider|model.?assimilat|model.?evaluat|model.?upgrade|role.?routing|model comes out|better every time.*model)/i.test(normalized)) {
+    return buildContext(MODEL_ASSIMILATION_PROFILE);
+  }
+
+  if (/(strudel|tone|revideo|svg|hydra|three|glsl|p5|generator|creative domain)/i.test(normalized)) {
+    return buildContext(CREATIVE_DOMAIN_RUNTIME_PROFILE);
+  }
+
+  if (/(memory|compost|dream|dreaming|intuition|instinct|reflex|cognitive organ|architecture.*loop|learning-inspired|procedural memory)/i.test(normalized)) {
+    return buildContext(COGNITIVE_LOOP_PROFILE);
   }
 
   if (/repoindexlite|selfimprovementruntime|task packet|working set|bounded self.?improvement|\bloc\b.*(?:confidence|packet|shaping)|\bloc\b.*(?:primary|secondary).*files|packet shaping|\bloc\b(?=.*confidence)(?=.*packet)|agent.?self.?improvement|harness.?self.?improvement|tui.?self.?improvement|self.?improv.*agent|self.?improv.*harness|self.?improv.*tui|improv(?:e|es).*itself.*agent|agent.*improv(?:e|es).*itself|prompt.*liminal.*acts.*improv/i.test(normalized)) {

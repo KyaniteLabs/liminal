@@ -180,6 +180,53 @@ describe('RepoIndexLite', () => {
     }
   });
 
+  it('routes cognitive-organ self-improvement to memory compost dreaming and intuition files', () => {
+    const context = localizeBoundedSelfImprovement('Improve the way memory compost dreaming and intuition feed the self-improvement loop');
+
+    expect(context.domain).toBe('cognitive-loop');
+    expect(context.fileHint).toBe('src/reporting/CognitiveArchitectureAtlas.ts');
+    expect(context.primaryFiles).toEqual([
+      'src/reporting/CognitiveArchitectureAtlas.ts',
+      'src/runtime-core/SelfImprovementRuntime.ts',
+    ]);
+    expect(context.workingSet).toContain('src/compost/CompostMill.ts');
+    expect(context.workingSet).toContain('src/dreaming/DreamPlanner.ts');
+    expect(context.deferredSecondaryFiles).toContain('src/intuition/IntuitionEngine.ts');
+    expect(context.preservationClause).toContain('Preserve all creative domains');
+  });
+
+  it('routes model assimilation requests to provider/model evaluation surfaces', () => {
+    const context = localizeBoundedSelfImprovement('Make yourself get better every time a new model or provider comes out');
+
+    expect(context.domain).toBe('model-assimilation');
+    expect(context.fileHint).toBe('src/harness/MultiProviderConfig.ts');
+    expect(context.primaryFiles).toEqual([
+      'src/harness/MultiProviderConfig.ts',
+      'src/config/RoleConfig.ts',
+    ]);
+    expect(context.verificationTargets[0]).toMatchObject({
+      tool: 'runFocusedTests',
+      pattern: 'MultiProviderConfig|RoleConfig',
+    });
+  });
+
+  it('routes creative-domain improvement requests to the generator registry without dropping domains', () => {
+    const context = localizeBoundedSelfImprovement('Improve Strudel Tone Revideo SVG and Hydra capability without narrowing the creative surface');
+
+    expect(context.domain).toBe('creative-domain-runtime');
+    expect(context.fileHint).toBe('src/generators/GeneratorRegistry.ts');
+    expect(context.workingSet).toEqual([
+      'src/generators/GeneratorRegistry.ts',
+      'src/generators/registerGenerators.ts',
+      'src/generators/strudel/StrudelGenerator.ts',
+      'src/generators/tone/ToneGenerator.ts',
+      'src/generators/revideo/RevideoGenerator.ts',
+      'src/generators/svg/SVGGenerator.ts',
+    ]);
+    expect(context.deferredSecondaryFiles).toContain('src/generators/hydra/HydraGenerator.ts');
+    expect(context.creativeDomains).toEqual(expect.arrayContaining(['Strudel', 'Tone.js', 'Revideo', 'SVG', 'Hydra']));
+  });
+
   it('keeps localization expansion overflow deterministic across repeated similar prompts', () => {
     const first = localizeBoundedSelfImprovement('Tighten RepoIndexLite task packet shaping and expansion budget determinism');
     const second = localizeBoundedSelfImprovement('Improve localization confidence and packet shaping in SelfImprovementRuntime');

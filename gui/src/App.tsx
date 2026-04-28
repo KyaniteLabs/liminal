@@ -767,8 +767,8 @@ export default function App() {
     : activeMode.id === 'improve'
       ? improveLoading ? 'Scanning' : 'Scan'
     : bridge.submitting || runStatus === 'running'
-      ? createExecutionMode === 'draft' ? 'Drafting' : 'Proving'
-      : createExecutionMode === 'draft' ? 'Draft' : 'Prove';
+      ? createExecutionMode === 'draft' ? 'Generating' : 'Polishing'
+      : createExecutionMode === 'draft' ? 'Generate' : 'Polish';
   const bridgeSummary = bridge.summary;
   const bridgePreview = bridge.preview;
   const bridgeCodePreview = bridge.codePreview;
@@ -818,9 +818,9 @@ export default function App() {
   };
 
   const submitDraftFollowup = (instruction: string, executionMode: WorkbenchExecutionMode) => {
-    const basePrompt = createPrompt.trim() || 'Continue the current draft.';
+    const basePrompt = createPrompt.trim() || 'Continue the current artifact.';
     const codeContext = bridgeCodePreview?.code
-      ? `\n\nCurrent draft code excerpt:\n${bridgeCodePreview.code.slice(0, 5000)}`
+      ? `\n\nCurrent artifact code excerpt:\n${bridgeCodePreview.code.slice(0, 5000)}`
       : '';
     const followupPrompt = `${basePrompt}\n\n${instruction}${codeContext}`;
     const followupMode = detectPromptCreateMode(followupPrompt) ?? createMode;
@@ -836,7 +836,7 @@ export default function App() {
   const handleDraftAdjustment = () => {
     const adjustment = draftAdjustment.trim();
     if (!adjustment) return;
-    submitDraftFollowup(`Adjust the current draft: ${adjustment}`, 'draft');
+    submitDraftFollowup(`Adjust the current artifact: ${adjustment}`, 'draft');
   };
 
   const handleWorkbenchModeChange = (mode: WorkbenchMode) => {
@@ -1004,10 +1004,10 @@ export default function App() {
               value={createExecutionMode}
               onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setCreateExecutionMode(event.target.value as WorkbenchExecutionMode)}
             >
-              <option value="draft">Draft</option>
-              <option value="prove">Prove</option>
+              <option value="draft">Generate</option>
+              <option value="prove">Polish</option>
             </select>
-            <small>{createExecutionMode === 'draft' ? 'Fast first artifact with immediate preview.' : 'Runs scoring, repair, and proof telemetry.'}</small>
+            <small>{createExecutionMode === 'draft' ? 'Fast first artifact with immediate preview.' : 'Runs quality scoring, repair, and preview checks.'}</small>
           </label>
           <label>
             <span>Max iterations</span>
@@ -1117,7 +1117,7 @@ export default function App() {
             placeholder="Example: a glowing iceberg city with blue glass, slow drifting fog"
           />
           <button type="submit" disabled={bridge.submitting || !clarificationAnswer.trim()}>
-            Answer and draft
+            Answer and generate
           </button>
         </form>
       )}
@@ -1130,7 +1130,7 @@ export default function App() {
           }}
         >
           <div>
-            <span>Draft ready</span>
+            <span>Preview ready</span>
             <strong>Adjust direction</strong>
             <small>{bridgePreview?.label || bridgeCodePreview?.label || 'first artifact mounted'}</small>
           </div>
@@ -1141,21 +1141,21 @@ export default function App() {
             placeholder="Make it darker, slower, bigger, stranger..."
           />
           <button type="submit" disabled={bridge.submitting || !draftAdjustment.trim()}>
-            Revise draft
+            Revise
           </button>
           <button
             type="button"
-            onClick={() => submitDraftFollowup('Make a fresh draft variation with a different composition while preserving the core idea.', 'draft')}
+            onClick={() => submitDraftFollowup('Make a fresh variation with a different composition while preserving the core idea.', 'draft')}
             disabled={bridge.submitting}
           >
-            New draft
+            New variation
           </button>
           <button
             type="button"
-            onClick={() => submitDraftFollowup('Polish and prove this direction with scoring, repair, and preview evidence.', 'prove')}
+            onClick={() => submitDraftFollowup('Polish this direction with quality scoring, repair, and preview checks.', 'prove')}
             disabled={bridge.submitting}
           >
-            Prove
+            Polish
           </button>
         </form>
       )}
@@ -1487,7 +1487,7 @@ export default function App() {
             disabled={runStatus === 'running' || !createPrompt.trim()}
             className="atelier-btn atelier-btn--primary"
           >
-            {runStatus === 'running' ? (createExecutionMode === 'draft' ? 'Drafting…' : 'Proving…') : (createExecutionMode === 'draft' ? 'Draft' : 'Prove')}
+            {runStatus === 'running' ? (createExecutionMode === 'draft' ? 'Generating…' : 'Polishing…') : (createExecutionMode === 'draft' ? 'Generate' : 'Polish')}
           </button>
           {runStatus === 'done' && runResult && (
             <div className="atelier-alert atelier-alert--success" style={{ marginTop: 16 }}>

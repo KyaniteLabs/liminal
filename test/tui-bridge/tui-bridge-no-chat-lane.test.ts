@@ -315,7 +315,7 @@ describe('Bubble Tea operator routing', () => {
       .find(event => event.type === 'generation.complete'));
     expect(completion).toMatchObject({
       type: 'generation.complete',
-      reason: 'draft artifact ready (unscored)',
+      reason: 'generated artifact ready (unscored)',
       qualityState: 'unscored',
       executionMode: 'draft',
     });

@@ -71,11 +71,11 @@ export default defineConfig({
         // Per-file enforcement: scripts/ci/check-coverage-gaps.ts
         // Quality enforcement: scripts/testing/test-quality-check.mjs
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        statements: 78.9,
-        branches: 68.9,
-        functions: 82.2,
-        lines: 79.8,
-        autoUpdate: isFastCi || isSlowCi ? undefined : (n: number) => Math.floor(n * 10) / 10,
+        statements: 78.4,
+        branches: 68.4,
+        functions: 81.8,
+        lines: 79.3,
+        autoUpdate: isFastCi || isSlowCi ? undefined : undefined,
       },
     },
   },

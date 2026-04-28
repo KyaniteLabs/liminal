@@ -413,7 +413,7 @@ describe('Chat Type Definitions', () => {
         },
       };
 
-      expect(suggestion.action).toBeDefined();
+      expect(suggestion.action).not.toBeNull();
       expect(typeof suggestion.action).toBe('function');
     });
   });

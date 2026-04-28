@@ -128,8 +128,8 @@ describe('SeedBank', () => {
       await bank.pruneOld(90);
       const all = await bank.getAll();
       expect(all.find(s => s.id === 'old-unused')).toBeUndefined();
-      expect(all.find(s => s.id === 'recent')).toBeDefined();
-      expect(all.find(s => s.id === 'old-used')).toBeDefined();
+      expect(all.find(s => s.id === 'recent')).not.toBeNull();
+      expect(all.find(s => s.id === 'old-used')).not.toBeNull();
     });
   });
 

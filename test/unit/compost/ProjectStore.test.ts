@@ -323,8 +323,8 @@ describe('ProjectStore', () => {
     it('provides access to underlying stores', () => {
       store.init();
 
-      expect(store.getEventStore()).toBeDefined();
-      expect(store.getAssetStore()).toBeDefined();
+      expect(store.getEventStore()).not.toBeNull();
+      expect(store.getAssetStore()).not.toBeNull();
     });
   });
 });

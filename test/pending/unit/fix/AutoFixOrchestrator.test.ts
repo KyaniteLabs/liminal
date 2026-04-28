@@ -86,8 +86,7 @@ describe('AutoFixOrchestrator', () => {
         target: 'Test fix',
       });
 
-      expect(result).toBeDefined();
-      expect(result.taskId).toMatch(/^fix-\d+-[a-z0-9]+$/);
+      expect(result?.taskId).toMatch(/^fix-\d+-[a-z0-9]+$/);
     });
   });
 

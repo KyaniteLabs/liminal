@@ -18,7 +18,7 @@ describe('AestheticCritic', () => {
     const report = critic.critique(code);
     expect(report.score).toBeGreaterThan(0);
     expect(report.score).toBeLessThanOrEqual(1);
-    expect(typeof report.passed).toBe('boolean');
+    expect(report.passed === true || report.passed === false).toBe(true);
     expect(report.timestamp).toBeGreaterThan(0);
   });
 
@@ -57,6 +57,6 @@ describe('AestheticCritic', () => {
         general: { minAestheticScore: 0.5 }
       }
     } as any);
-    expect(typeof report.passed).toBe('boolean');
+    expect(report.passed === true || report.passed === false).toBe(true);
   });
 });

@@ -133,7 +133,7 @@ describe('M12-M18 Compliance Guardrails', () => {
       const result = await SupplyChainGuardrail.evaluate(context);
 
       expect(result.guardrailId).toBe('guardrail-m14-supply-chain');
-      expect(typeof result.passed).toBe('boolean');
+      expect(result.passed === true || result.passed === false).toBe(true);
       expect(result.message.length).toBeGreaterThan(0);
     }, 30000);
   });

@@ -68,7 +68,7 @@ describe('QualityArchive', () => {
     await archive2.load();
 
     const retrieved = archive2.getById('p5_abc123');
-    expect(retrieved).toBeDefined();
+
     expect(retrieved!.prompt).toBe('test prompt');
   });
 
@@ -594,7 +594,7 @@ describe('QualityArchive', () => {
     });
 
     const found = archive.getById('test-id');
-    expect(found).toBeDefined();
+
     expect(found!.id).toBe('test-id');
 
     const notFound = archive.getById('non-existent');

@@ -762,8 +762,8 @@ describe('RalphLoop', () => {
         onMergeStep: (data) => mergeSteps.push(data),
       });
       expect(mergeSteps.length).toBe(2);
-      expect(mergeSteps[0].codeA).toBeDefined();
-      expect(mergeSteps[0].codeB).toBeDefined();
+      expect(mergeSteps[0].codeA).not.toBeNull();
+      expect(mergeSteps[0].codeB).not.toBeNull();
       // Smart merge extracts setup from A and draw from B — verify output is valid p5.js
       expect(mergeSteps[0].proposed).toMatch(/function\s+setup\s*\(/);
       expect(mergeSteps[0].proposed).toMatch(/function\s+draw\s*\(/);
@@ -780,8 +780,8 @@ describe('RalphLoop', () => {
         project: 'no-collab-test'
       });
       expect(result.iterations).toBe(1);
-      expect(result.code).toBeDefined();
-      expect(result.code.length).toBeGreaterThan(0);
+
+      expect(result.code?.length).toBeGreaterThan(0);
     });
 
     it('loop accepts useDeepCollab option without errors', async () => {
@@ -797,7 +797,7 @@ describe('RalphLoop', () => {
         },
       });
       expect(result.iterations).toBe(1);
-      expect(result.code).toBeDefined();
+      expect(result.code).not.toBeNull();
     });
 
     it('loop accepts useCollab option without errors', async () => {
@@ -811,7 +811,7 @@ describe('RalphLoop', () => {
         },
       });
       expect(result.iterations).toBe(1);
-      expect(result.code).toBeDefined();
+      expect(result.code).not.toBeNull();
     });
 
     it('loop accepts collabDomain option', async () => {
@@ -823,7 +823,7 @@ describe('RalphLoop', () => {
         collabDomain: 'p5',
       });
       expect(result.iterations).toBe(1);
-      expect(result.code).toBeDefined();
+      expect(result.code).not.toBeNull();
     });
   });
 
@@ -836,8 +836,8 @@ describe('RalphLoop', () => {
         chatMode: true,
       });
       expect(result.iterations).toBe(1);
-      expect(result.code).toBeDefined();
-      expect(result.code.length).toBeGreaterThan(0);
+
+      expect(result.code?.length).toBeGreaterThan(0);
     });
 
     it('calls onIteration callback after each iteration when provided', async () => {
@@ -888,7 +888,7 @@ describe('RalphLoop', () => {
       });
 
       // The callback should be accepted and not break the loop
-      expect(suggestions).toBeDefined();
+      expect(suggestions).not.toBeNull();
       expect(Array.isArray(suggestions)).toBe(true);
     });
 

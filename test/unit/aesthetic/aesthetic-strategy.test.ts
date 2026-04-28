@@ -15,14 +15,14 @@ describe('AestheticStrategy', () => {
     const result = await strategy.score({ output: 'fill("#ff0000"); rect(10, 10, 100, 100);' });
     expect(result.score).toBeGreaterThanOrEqual(0);
     expect(result.score).toBeLessThanOrEqual(1);
-    expect(result.dimensions.aesthetic).toBeDefined();
+    expect(result.dimensions.aesthetic).not.toBeNull();
     expect(result.strategy).toBe('aesthetic');
   });
 
   it('can be registered into ScoringEngine', () => {
     const engine = new ScoringEngine();
     engine.register(new AestheticStrategy());
-    expect(engine.getStrategy('aesthetic')).toBeDefined();
+    expect(engine.getStrategy('aesthetic')).not.toBeNull();
   });
 
   it('maps violations to issues', async () => {
@@ -31,7 +31,7 @@ describe('AestheticStrategy', () => {
     const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ff8800', '#8800ff', '#ff6633', '#33ff66'];
     const code = colors.map(c => `fill('${c}');`).join(' ');
     const result = await strategy.score({ output: code });
-    expect(result.issues).toBeDefined();
+    expect(result.issues).not.toBeNull();
     expect(Array.isArray(result.issues)).toBe(true);
   });
 });

@@ -220,10 +220,10 @@ describe('Semantic Search with Embeddings', () => {
 
       const retrieved = await bank.getAll();
       expect(retrieved).toHaveLength(1);
-      expect(retrieved[0].embedding).toBeDefined();
+
       expect(retrieved[0].embedding).toHaveLength(384);
       expect(retrieved[0].embeddingModel).toBe('mock-model');
-      expect(retrieved[0].embeddedAt).toBeDefined();
+      expect(retrieved[0].embeddedAt).not.toBeNull();
       expect(mockEmbeddingService.embed).toHaveBeenCalled();
     });
 
@@ -280,7 +280,7 @@ describe('Semantic Search with Embeddings', () => {
       expect(updated).toBe(1);
 
       retrieved = await noEmbedBank.getAll();
-      expect(retrieved[0].embedding).toBeDefined();
+      expect(retrieved[0].embedding).not.toBeNull();
     });
 
     it('should embed text directly', async () => {
@@ -370,8 +370,8 @@ describe('Semantic Search with Embeddings', () => {
       mapElites.insertWithEmbedding('test-cell', 10, embedding);
 
       const cell = mapElites.getAllCells()[0];
-      expect(cell).toBeDefined();
-      expect(cell.creationId).toBe('test-cell');
+
+      expect(cell?.creationId).toBe('test-cell');
       expect(cell.embedding).toEqual(embedding);
       expect(cell.behavior).toHaveLength(2);
     });

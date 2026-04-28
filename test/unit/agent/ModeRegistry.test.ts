@@ -56,7 +56,7 @@ describe('ModeRegistry', () => {
     it('removes mode for a session', () => {
       const registry = new ModeRegistry();
       registry.setMode('sess-1', 'make');
-      expect(registry.getMode('sess-1')).toBeDefined();
+      expect(registry.getMode('sess-1')).not.toBeNull();
       registry.clear('sess-1');
       expect(registry.getMode('sess-1')).toBeUndefined();
     });

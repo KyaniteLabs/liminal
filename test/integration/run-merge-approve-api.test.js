@@ -87,18 +87,18 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
 
       expect(status).toBe(200);
       expect(body.ok).toBe(true);
-      expect(body.result).toBeDefined();
+      expect(body.result).not.toBeNull();
       expect(body.projectDirName).toContain(projectName);
 
       const dateStr = new Date().toISOString().split('T')[0];
       const dirName = `${dateStr}--${projectName}`;
       const iterations = await get(`/api/gallery/${encodeURIComponent(dirName)}`);
-      expect(iterations.iterations).toBeDefined();
+      expect(iterations.iterations).not.toBeNull();
       expect(iterations.iterations.length).toBeGreaterThanOrEqual(1);
       const first = iterations.iterations[0];
       expect(first.type).toBe('organism');
-      expect(first.musicCode).toBeDefined();
-      expect(first.visualCode).toBeDefined();
+      expect(first.musicCode).not.toBeNull();
+      expect(first.visualCode).not.toBeNull();
     });
   });
 
@@ -123,9 +123,9 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
       });
 
       expect(status).toBe(200);
-      expect(body.proposed).toBeDefined();
-      expect(body.proposed.musicCode).toBeDefined();
-      expect(body.proposed.visualCode).toBeDefined();
+      expect(body.proposed).not.toBeNull();
+      expect(body.proposed.musicCode).not.toBeNull();
+      expect(body.proposed.visualCode).not.toBeNull();
     });
   });
 
@@ -181,9 +181,9 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
       });
 
       expect(status).toBe(200);
-      expect(body.proposed).toBeDefined();
-      expect(body.proposed.musicCode).toBeDefined();
-      expect(body.proposed.visualCode).toBeDefined();
+      expect(body.proposed).not.toBeNull();
+      expect(body.proposed.musicCode).not.toBeNull();
+      expect(body.proposed.visualCode).not.toBeNull();
     });
   });
 });

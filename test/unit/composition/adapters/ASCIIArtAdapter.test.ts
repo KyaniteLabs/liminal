@@ -94,7 +94,7 @@ describe('ASCIIArtAdapter', () => {
       const layer = createASCIILayer(code);
       const instance = adapter.render(layer, container);
 
-      expect(instance).toBeDefined();
+      expect(instance).not.toBeNull();
       expect(instance).toBeInstanceOf(HTMLElement);
     });
 
@@ -123,7 +123,6 @@ describe('ASCIIArtAdapter', () => {
       const exports = adapter.getExports(layer);
       const charDataExport = exports.find(e => e.name === 'characterData');
 
-      expect(charDataExport).toBeDefined();
       expect(charDataExport?.type).toBe('string');
       expect(charDataExport?.getter()).toBe(code);
     });
@@ -137,11 +136,9 @@ describe('ASCIIArtAdapter', () => {
       const widthExport = exports.find(e => e.name === 'width');
       const heightExport = exports.find(e => e.name === 'height');
 
-      expect(widthExport).toBeDefined();
       expect(widthExport?.type).toBe('number');
       expect(widthExport?.getter()).toBe(5); // Longest line
 
-      expect(heightExport).toBeDefined();
       expect(heightExport?.type).toBe('number');
       expect(heightExport?.getter()).toBe(3); // Number of lines
     });
@@ -154,7 +151,6 @@ describe('ASCIIArtAdapter', () => {
       const exports = adapter.getExports(layer);
       const lineCountExport = exports.find(e => e.name === 'lineCount');
 
-      expect(lineCountExport).toBeDefined();
       expect(lineCountExport?.type).toBe('number');
       expect(lineCountExport?.getter()).toBe(4);
     });
@@ -167,7 +163,6 @@ describe('ASCIIArtAdapter', () => {
       const exports = adapter.getExports(layer);
       const maxLineLengthExport = exports.find(e => e.name === 'maxLineLength');
 
-      expect(maxLineLengthExport).toBeDefined();
       expect(maxLineLengthExport?.type).toBe('number');
       expect(maxLineLengthExport?.getter()).toBe(14); // 'VERY LONG LINE'.length === 14
     });
@@ -187,7 +182,7 @@ describe('ASCIIArtAdapter', () => {
       const exports = adapter.getExports(layer);
 
       exports.forEach(exp => {
-        expect(exp.description).toBeDefined();
+
         expect(exp.description?.length).toBeGreaterThan(0);
       });
     });
@@ -209,7 +204,7 @@ describe('ASCIIArtAdapter', () => {
       const result = adapter.validate(layer);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toBeDefined();
+
       expect(result.errors?.length).toBeGreaterThan(0);
       expect(result.errors?.[0]).toContain('non-ASCII');
     });
@@ -220,7 +215,7 @@ describe('ASCIIArtAdapter', () => {
       const result = adapter.validate(layer);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toBeDefined();
+      expect(result.errors).not.toBeNull();
     });
 
     it('should allow box drawing characters (extended ASCII subset)', () => {
@@ -382,7 +377,7 @@ describe('ASCIIArtAdapter', () => {
 
     it('should be the same instance across imports', () => {
       // Testing that singleton pattern works
-      expect(asciiArtAdapter).toBeDefined();
+      expect(asciiArtAdapter).not.toBeNull();
     });
   });
 });

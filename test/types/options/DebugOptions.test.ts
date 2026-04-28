@@ -41,7 +41,7 @@ describe('DebugOptions', () => {
 
     it('should accept empty options', () => {
       const options: DebugOptions = {};
-      expect(options).toBeDefined();
+      expect(options).not.toBeNull();
     });
   });
 

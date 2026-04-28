@@ -48,7 +48,7 @@ describe('DreamPlanner', () => {
     ];
     const plan = planner.plan(cells, ['order-chaos', 'sparse-dense']);
     const eliteTask = plan.tasks.find(t => t.strategy === 'elite-x-elite');
-    expect(eliteTask).toBeDefined();
+
     expect(eliteTask!.priority).toBe(0.9);
   });
 
@@ -62,7 +62,7 @@ describe('DreamPlanner', () => {
     ];
     const plan = planner.plan(cells, ['order-chaos', 'sparse-dense']);
     const distant = plan.tasks.find(t => t.strategy === 'distant-niche-x-distant');
-    expect(distant).toBeDefined();
+    expect(distant).not.toBeNull();
   });
 
   it('creates cross-modal task for different domains', () => {
@@ -74,7 +74,7 @@ describe('DreamPlanner', () => {
     ];
     const plan = planner.plan(cells, ['order-chaos']);
     const crossModal = plan.tasks.find(t => t.strategy === 'cross-modal');
-    expect(crossModal).toBeDefined();
+    expect(crossModal).not.toBeNull();
   });
 
   it('respects maxTasks limit', () => {

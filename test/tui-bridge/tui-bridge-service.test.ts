@@ -33,7 +33,7 @@ describe('TuiBridgeService', () => {
     const service = new TuiBridgeService();
     const status = service.createSession();
 
-    expect(status.sessionId).toBeDefined();
+    expect(status.sessionId).not.toBeNull();
     expect(status.mode).toBe('chat');
     expect(status.trust.level).toBe('untrusted');
   });
@@ -247,9 +247,9 @@ describe('TuiBridgeService', () => {
 
       const events = service.getEvents(session.sessionId);
       const turnEvent = events.find(e => e.type === 'session.turn');
-      expect(turnEvent).toBeDefined();
+
       if (turnEvent && turnEvent.type === 'session.turn') {
-        expect(turnEvent.intent).toBe('direct');
+        expect(turnEvent?.intent).toBe('direct');
         expect(turnEvent.delegatedTo).toBe('echo');
         expect(turnEvent.durationMs).toBeGreaterThanOrEqual(0);
       }
@@ -266,9 +266,9 @@ describe('TuiBridgeService', () => {
 
       const events = service.getEvents(session.sessionId);
       const turnEvent = events.find(e => e.type === 'session.turn');
-      expect(turnEvent).toBeDefined();
+
       if (turnEvent && turnEvent.type === 'session.turn') {
-        expect(turnEvent.intent).toBe('creative');
+        expect(turnEvent?.intent).toBe('creative');
         expect(turnEvent.delegatedTo).toBe('echo');
       }
     });
@@ -284,9 +284,9 @@ describe('TuiBridgeService', () => {
 
       const events = service.getEvents(session.sessionId);
       const turnEvent = events.find(e => e.type === 'session.turn');
-      expect(turnEvent).toBeDefined();
+
       if (turnEvent && turnEvent.type === 'session.turn') {
-        expect(turnEvent.intent).toBe('engineering');
+        expect(turnEvent?.intent).toBe('engineering');
         expect(turnEvent.delegatedTo).toBe('echo');
       }
     });
@@ -302,9 +302,9 @@ describe('TuiBridgeService', () => {
 
       const events = service.getEvents(session.sessionId);
       const turnEvent = events.find(e => e.type === 'session.turn');
-      expect(turnEvent).toBeDefined();
+
       if (turnEvent && turnEvent.type === 'session.turn') {
-        expect(turnEvent.intent).toBe('hybrid');
+        expect(turnEvent?.intent).toBe('hybrid');
         expect(turnEvent.delegatedTo).toBe('echo');
       }
     });

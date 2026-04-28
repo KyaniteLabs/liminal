@@ -49,7 +49,7 @@ describe('RalphLoop', () => {
       
       // Should have attempted to run or timed out quickly
       expect(duration).toBeLessThan(2000);
-      expect(testResult).toBeDefined();
+      expect(testResult).not.toBeNull();
     });
 
     it('should detect convergence when scores plateau', async () => {

@@ -243,7 +243,7 @@ describe('E2E Guardrails with Real LLM', () => {
 
       for (const { error, expectedType } of testCases) {
         const classification = classifyError(error);
-        expect(classification).toBeDefined();
+
         expect(classification?.type).toBe(expectedType);
       }
     });
@@ -281,7 +281,7 @@ describe('E2E Guardrails with Real LLM', () => {
       };
 
       const rule = await constitution.learnFromFailure(failure);
-      expect(rule).toBeDefined();
+
       expect(rule?.confidence).toBeGreaterThan(0);
       expect(constitution.getActiveRules().length).toBeGreaterThan(0);
 
@@ -329,7 +329,7 @@ describe('E2E Guardrails with Real LLM', () => {
         failure.context
       );
 
-      expect(suggestion.suggestion).toBeDefined();
+      expect(suggestion.suggestion).not.toBeNull();
       expect(suggestion.confidence).toBeGreaterThan(0);
     });
 
@@ -363,7 +363,7 @@ describe('E2E Guardrails with Real LLM', () => {
       };
 
       const rule = await constitution.learnFromFailure(failure);
-      expect(rule).toBeDefined();
+      expect(rule).not.toBeNull();
       
       const initialConfidence = rule!.confidence;
       
@@ -417,8 +417,7 @@ Output only the code, no explanation.`;
         expect.unreachable('LLM generation should not fail when test is configured to run');
       }
 
-      expect(generatedCode).toBeDefined();
-      expect(generatedCode.length).toBeGreaterThan(0);
+      expect(generatedCode?.length).toBeGreaterThan(0);
 
       // Validate through guardrails
       const guardrailResult = await system.registry.evaluate({

@@ -165,8 +165,8 @@ describe.skipIf(!runModelComparison)('Model Comparison Suite', () => {
               results.push(testResult);
 
               // Assertions - record data, don't necessarily fail
-              expect(result.code).toBeDefined();
-              expect(result.code.length).toBeGreaterThan(0);
+
+              expect(result.code?.length).toBeGreaterThan(0);
               
               // Key assertion: no contamination
               expect(hasThinkTags).toBe(false);

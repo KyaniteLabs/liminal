@@ -68,7 +68,7 @@ describe('HarnessAgent', () => {
     const agent = new HarnessAgent(mockLLM as unknown as import('../../src/llm/LLMClient.js').LLMClient);
     const task = agent.generateImprovementTask();
     expect(task).toHaveProperty('shouldCreate');
-    expect(typeof task.shouldCreate).toBe('boolean');
+    expect(task.shouldCreate === true || task.shouldCreate === false).toBe(true);
   });
 
   it('getErrorHelp returns array of suggestions', () => {

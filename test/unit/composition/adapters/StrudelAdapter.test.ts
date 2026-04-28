@@ -92,7 +92,7 @@ bpm(120)
     it('should initialize Strudel pattern and return instance', async () => {
       const result = adapter.render(mockLayer, mockContainer);
       
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
       expect(result).toHaveProperty('pattern');
       expect(result).toHaveProperty('startTime');
       expect(result).toHaveProperty('bpm', 120);
@@ -117,13 +117,13 @@ bpm(120)
       adapter.render(mockLayer, mockContainer);
       
       const controls = mockContainer.querySelector('div');
-      expect(controls).toBeDefined();
+      expect(controls).not.toBeNull();
       
       const startBtn = mockContainer.querySelector(`#strudel-start-${mockLayer.id}`);
       const stopBtn = mockContainer.querySelector(`#strudel-stop-${mockLayer.id}`);
       
-      expect(startBtn).toBeDefined();
-      expect(stopBtn).toBeDefined();
+      expect(startBtn).not.toBeNull();
+      expect(stopBtn).not.toBeNull();
     });
 
     it('should evaluate pattern code when rendering', async () => {
@@ -139,8 +139,8 @@ bpm(120)
       
       // Verify instance is stored by checking exports work
       const exports = adapter.getExports(mockLayer);
-      expect(exports).toBeDefined();
-      expect(exports.length).toBeGreaterThan(0);
+
+      expect(exports?.length).toBeGreaterThan(0);
     });
   });
 
@@ -153,7 +153,7 @@ bpm(120)
       const exports = adapter.getExports(mockLayer);
       
       const patternExport = exports.find(e => e.name === 'pattern');
-      expect(patternExport).toBeDefined();
+
       expect(patternExport?.type).toBe('object');
       expect(typeof patternExport?.getter).toBe('function');
     });
@@ -162,7 +162,7 @@ bpm(120)
       const exports = adapter.getExports(mockLayer);
       
       const bpmExport = exports.find(e => e.name === 'bpm');
-      expect(bpmExport).toBeDefined();
+
       expect(bpmExport?.type).toBe('number');
       expect(bpmExport?.getter()).toBe(120);
     });
@@ -171,7 +171,7 @@ bpm(120)
       const exports = adapter.getExports(mockLayer);
       
       const cycleExport = exports.find(e => e.name === 'cyclePosition');
-      expect(cycleExport).toBeDefined();
+
       expect(cycleExport?.type).toBe('number');
     });
 
@@ -179,7 +179,7 @@ bpm(120)
       const exports = adapter.getExports(mockLayer);
       
       const playingExport = exports.find(e => e.name === 'isPlaying');
-      expect(playingExport).toBeDefined();
+
       expect(playingExport?.type).toBe('boolean');
     });
 
@@ -187,7 +187,7 @@ bpm(120)
       const exports = adapter.getExports(mockLayer);
       
       const timeExport = exports.find(e => e.name === 'elapsedTime');
-      expect(timeExport).toBeDefined();
+
       expect(timeExport?.type).toBe('number');
     });
 
@@ -204,7 +204,7 @@ bpm(120)
       const imports = adapter.getImports(mockLayer);
       
       const bpmImport = imports.find(i => i.name === 'bpm' && i.from === 'tone');
-      expect(bpmImport).toBeDefined();
+
       expect(bpmImport?.as).toBe('syncBpm');
     });
 
@@ -212,7 +212,7 @@ bpm(120)
       const imports = adapter.getImports(mockLayer);
       
       const playingImport = imports.find(i => i.name === 'isPlaying' && i.from === 'tone');
-      expect(playingImport).toBeDefined();
+
       expect(playingImport?.as).toBe('tonePlaying');
     });
 
@@ -220,7 +220,7 @@ bpm(120)
       const imports = adapter.getImports(mockLayer);
       
       const frameImport = imports.find(i => i.name === 'frameCount' && i.from === 'p5');
-      expect(frameImport).toBeDefined();
+
       expect(frameImport?.as).toBe('syncFrame');
     });
 
@@ -228,7 +228,7 @@ bpm(120)
       const imports = adapter.getImports(mockLayer);
       
       const mouseXImport = imports.find(i => i.name === 'mouseX' && i.from === 'p5');
-      expect(mouseXImport).toBeDefined();
+
       expect(mouseXImport?.as).toBe('modulationX');
     });
 
@@ -236,7 +236,7 @@ bpm(120)
       const imports = adapter.getImports(mockLayer);
       
       const mouseYImport = imports.find(i => i.name === 'mouseY' && i.from === 'p5');
-      expect(mouseYImport).toBeDefined();
+
       expect(mouseYImport?.as).toBe('modulationY');
     });
   });
@@ -377,7 +377,7 @@ $: note("c3"
 
   describe('singleton export', () => {
     it('should export a singleton instance', () => {
-      expect(strudelAdapter).toBeDefined();
+      expect(strudelAdapter).not.toBeNull();
       expect(strudelAdapter).toBeInstanceOf(StrudelAdapter);
     });
   });

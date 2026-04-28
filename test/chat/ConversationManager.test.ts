@@ -35,9 +35,9 @@ describe('ConversationManager - Input Handling', () => {
 
       const response = await manager.processUserMessage('I want to create a p5 sketch');
 
-      expect(response).toBeDefined();
-      expect(response.message).toBeDefined();
-      expect(response.type).toBeDefined();
+      expect(response).not.toBeNull();
+      expect(response.message).not.toBeNull();
+      expect(response.type).not.toBeNull();
     });
 
     it('should store user messages in session', async () => {

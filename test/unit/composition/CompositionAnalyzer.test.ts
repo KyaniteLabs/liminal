@@ -14,7 +14,7 @@ describe('CompositionAnalyzer', () => {
   describe('constructor', () => {
     it('should create analyzer with default options', () => {
       const analyzer = new CompositionAnalyzer();
-      expect(analyzer).toBeDefined();
+      expect(analyzer).not.toBeNull();
       expect(analyzer.getKeywordMappings()).toEqual(DEFAULT_KEYWORD_MAPPINGS);
       expect(analyzer.getDependencyRules()).toEqual(DOMAIN_DEPENDENCIES);
     });
@@ -22,7 +22,7 @@ describe('CompositionAnalyzer', () => {
     it('should create analyzer with custom options', () => {
       const options = { keywordThreshold: 0.7, useLLM: false };
       const analyzer = new CompositionAnalyzer(options);
-      expect(analyzer).toBeDefined();
+      expect(analyzer).not.toBeNull();
     });
 
     it('should create analyzer with custom keyword mappings', () => {
@@ -66,7 +66,7 @@ describe('CompositionAnalyzer', () => {
       
       expect(results.length).toBeGreaterThan(0);
       const threeResult = results.find(r => r.domain === 'three');
-      expect(threeResult).toBeDefined();
+
       expect(threeResult!.confidence).toBeGreaterThan(0.5);
     });
 
@@ -76,7 +76,7 @@ describe('CompositionAnalyzer', () => {
       
       expect(results.length).toBeGreaterThan(0);
       const toneResult = results.find(r => r.domain === 'tone');
-      expect(toneResult).toBeDefined();
+      expect(toneResult).not.toBeNull();
     });
 
     it('should detect shader domain from glsl keyword', () => {
@@ -85,7 +85,7 @@ describe('CompositionAnalyzer', () => {
       
       expect(results.length).toBeGreaterThan(0);
       const shaderResult = results.find(r => r.domain === 'shader');
-      expect(shaderResult).toBeDefined();
+      expect(shaderResult).not.toBeNull();
     });
 
     it('should detect hydra domain from video keyword', () => {
@@ -94,7 +94,7 @@ describe('CompositionAnalyzer', () => {
       
       expect(results.length).toBeGreaterThan(0);
       const hydraResult = results.find(r => r.domain === 'hydra');
-      expect(hydraResult).toBeDefined();
+      expect(hydraResult).not.toBeNull();
     });
 
     it('should detect strudel domain from pattern keyword', () => {
@@ -103,7 +103,7 @@ describe('CompositionAnalyzer', () => {
       
       expect(results.length).toBeGreaterThan(0);
       const strudelResult = results.find(r => r.domain === 'strudel');
-      expect(strudelResult).toBeDefined();
+      expect(strudelResult).not.toBeNull();
     });
 
     it('should detect ascii domain from text art keyword', () => {
@@ -112,7 +112,7 @@ describe('CompositionAnalyzer', () => {
       
       expect(results.length).toBeGreaterThan(0);
       const asciiResult = results.find(r => r.domain === 'ascii');
-      expect(asciiResult).toBeDefined();
+      expect(asciiResult).not.toBeNull();
     });
 
     it('should detect html domain from web page keyword', () => {
@@ -121,7 +121,7 @@ describe('CompositionAnalyzer', () => {
       
       expect(results.length).toBeGreaterThan(0);
       const htmlResult = results.find(r => r.domain === 'html');
-      expect(htmlResult).toBeDefined();
+      expect(htmlResult).not.toBeNull();
     });
 
     it('should detect remotion domain from video export keyword', () => {
@@ -130,7 +130,7 @@ describe('CompositionAnalyzer', () => {
       
       expect(results.length).toBeGreaterThan(0);
       const remotionResult = results.find(r => r.domain === 'remotion');
-      expect(remotionResult).toBeDefined();
+      expect(remotionResult).not.toBeNull();
     });
 
     it('should return empty array for unknown prompts', () => {
@@ -156,7 +156,7 @@ describe('CompositionAnalyzer', () => {
       const results = analyzer.analyzeWithKeywords('Create a p5.js sketch');
       
       const p5Result = results.find(r => r.domain === 'p5');
-      expect(p5Result).toBeDefined();
+
       expect(p5Result!.confidence).toBeGreaterThan(0.6);
     });
 
@@ -165,7 +165,7 @@ describe('CompositionAnalyzer', () => {
       const results = analyzer.analyzeWithKeywords('Create circles and particles');
       
       const p5Result = results.find(r => r.domain === 'p5');
-      expect(p5Result).toBeDefined();
+
       expect(p5Result!.reason).toContain('circle');
       expect(p5Result!.reason).toContain('particle');
     });
@@ -179,7 +179,7 @@ describe('CompositionAnalyzer', () => {
       const analyzer = new CompositionAnalyzer();
       const results = await analyzer.analyzeWithLLM('Create something complex');
       
-      expect(results).toBeDefined();
+      expect(results).not.toBeNull();
       expect(Array.isArray(results)).toBe(true);
     });
 
@@ -270,7 +270,7 @@ describe('CompositionAnalyzer', () => {
       
       const toneResult = results.find(r => r.domain === 'tone');
       if (toneResult && toneResult.dependencies.length > 0) {
-        expect(toneResult.reason).toBeDefined();
+        expect(toneResult.reason).not.toBeNull();
       }
     });
   });
@@ -333,19 +333,19 @@ describe('CompositionAnalyzer', () => {
   // ==========================================================================
   describe('exports', () => {
     it('should export DEFAULT_KEYWORD_MAPPINGS', () => {
-      expect(DEFAULT_KEYWORD_MAPPINGS).toBeDefined();
-      expect(DEFAULT_KEYWORD_MAPPINGS.p5).toContain('canvas');
+
+      expect(DEFAULT_KEYWORD_MAPPINGS?.p5).toContain('canvas');
       expect(DEFAULT_KEYWORD_MAPPINGS.three).toContain('3d');
       expect(DEFAULT_KEYWORD_MAPPINGS.tone).toContain('audio');
     });
 
     it('should export DOMAIN_DEPENDENCIES', () => {
-      expect(DOMAIN_DEPENDENCIES).toBeDefined();
+      expect(DOMAIN_DEPENDENCIES).not.toBeNull();
       expect(Array.isArray(DOMAIN_DEPENDENCIES)).toBe(true);
     });
 
     it('should export DOMAIN_RENDER_ORDER', () => {
-      expect(DOMAIN_RENDER_ORDER).toBeDefined();
+      expect(DOMAIN_RENDER_ORDER).not.toBeNull();
       expect(Array.isArray(DOMAIN_RENDER_ORDER)).toBe(true);
       expect(DOMAIN_RENDER_ORDER).toContain('p5');
       expect(DOMAIN_RENDER_ORDER).toContain('three');

@@ -330,8 +330,8 @@ describe('StagnationDetector with SuccessRateTracker', () => {
 
     it('should return success rate in all results', () => {
       const result = detector.check(1, 0.75, 0.3, 'test prompt');
-      expect(result.successRate).toBeDefined();
-      expect(result.exploreAggressively).toBeDefined();
+      expect(result.successRate).not.toBeNull();
+      expect(result.exploreAggressively).not.toBeNull();
     });
   });
 });

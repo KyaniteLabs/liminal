@@ -12,19 +12,19 @@ describe('generateMusicToVisual', () => {
   it("returns both musicCode and visualCode for prompt 'ambient glitch'", async () => {
     const result = await generateMusicToVisual('ambient glitch');
 
-    expect(result).toBeDefined();
-    expect(result.musicCode).toBeDefined();
+    expect(result).not.toBeNull();
+
     expect(typeof result.musicCode).toBe('string');
-    expect(result.musicCode.length).toBeGreaterThan(0);
-    expect(result.visualCode).toBeDefined();
+    expect(result.musicCode?.length).toBeGreaterThan(0);
+
     expect(typeof result.visualCode).toBe('string');
-    expect(result.visualCode.length).toBeGreaterThan(0);
+    expect(result.visualCode?.length).toBeGreaterThan(0);
   });
 
   it('includes audioInput when music generates something', async () => {
     const result = await generateMusicToVisual('ambient glitch');
 
-    expect(result.audioInput).toBeDefined();
+    expect(result.audioInput).not.toBeNull();
     expect(result.audioInput).toHaveProperty('bpm');
     expect(typeof (result.audioInput as { bpm?: number }).bpm).toBe('number');
     expect(result.audioInput).toHaveProperty('fft');
@@ -37,8 +37,8 @@ describe('generateMusicToVisual', () => {
       visualPlatform: 'hydra',
     });
 
-    expect(result.musicCode).toBeDefined();
-    expect(result.visualCode).toBeDefined();
+    expect(result.musicCode).not.toBeNull();
+    expect(result.visualCode).not.toBeNull();
   });
 
   it('accepts traits (bpm, palette) and passes them to generators', async () => {
@@ -46,9 +46,9 @@ describe('generateMusicToVisual', () => {
       traits: { bpm: 90, palette: 'mono' },
     });
 
-    expect(result.musicCode).toBeDefined();
-    expect(result.visualCode).toBeDefined();
-    expect(result.audioInput).toBeDefined();
+    expect(result.musicCode).not.toBeNull();
+    expect(result.visualCode).not.toBeNull();
+
     expect(result.audioInput!.bpm).toBe(90);
   });
 });

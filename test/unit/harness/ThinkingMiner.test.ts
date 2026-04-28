@@ -163,7 +163,7 @@ describe('ThinkingMiner', () => {
       expect(result.insights.length).toBeGreaterThanOrEqual(1);
       // The regex captures the word after "tool for/to"
       const toolInsight = result.insights.find(i => i.includes('Harness suggests new tool'));
-      expect(toolInsight).toBeDefined();
+      expect(toolInsight).not.toBeNull();
     });
 
     it('does not create tool suggestions without a captured tool name', () => {

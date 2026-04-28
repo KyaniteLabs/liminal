@@ -65,8 +65,8 @@ describe("TransparencyPanel", () => {
         <TransparencyPanel events={[]} height={20} maxWidth={80} />
       );
 
-      expect(getByText(/No events yet/)).toBeDefined();
-      expect(getByText(/TRANSPARENCY/)).toBeDefined();
+      expect(getByText(/No events yet/)).not.toBeNull();
+      expect(getByText(/TRANSPARENCY/)).not.toBeNull();
     });
 
     test("should render event count in header", () => {
@@ -74,7 +74,7 @@ describe("TransparencyPanel", () => {
         <TransparencyPanel events={mockEvents} height={20} maxWidth={80} />
       );
 
-      expect(getByText(/\(5 events\)/)).toBeDefined();
+      expect(getByText(/\(5 events\)/)).not.toBeNull();
     });
 
     test("should group events by phase", () => {
@@ -82,10 +82,10 @@ describe("TransparencyPanel", () => {
         <TransparencyPanel events={mockEvents} height={20} maxWidth={80} />
       );
 
-      expect(getByText(/DIVERGENCE/)).toBeDefined();
-      expect(getByText(/ANALYSIS/)).toBeDefined();
-      expect(getByText(/SYNTHESIS/)).toBeDefined();
-      expect(getByText(/ITERATION/)).toBeDefined();
+      expect(getByText(/DIVERGENCE/)).not.toBeNull();
+      expect(getByText(/ANALYSIS/)).not.toBeNull();
+      expect(getByText(/SYNTHESIS/)).not.toBeNull();
+      expect(getByText(/ITERATION/)).not.toBeNull();
     });
 
     test("should show phase event counts", () => {
@@ -93,7 +93,7 @@ describe("TransparencyPanel", () => {
         <TransparencyPanel events={mockEvents} height={20} maxWidth={80} />
       );
 
-      expect(getByText(/\(2\)/)).toBeDefined(); // Divergence has 2 events
+      expect(getByText(/\(2\)/)).not.toBeNull(); // Divergence has 2 events
     });
 
     test("should display timestamps", () => {
@@ -101,8 +101,8 @@ describe("TransparencyPanel", () => {
         <TransparencyPanel events={mockEvents} height={20} maxWidth={80} />
       );
 
-      expect(getByText(/12:00:00/)).toBeDefined();
-      expect(getByText(/12:00:05/)).toBeDefined();
+      expect(getByText(/12:00:00/)).not.toBeNull();
+      expect(getByText(/12:00:05/)).not.toBeNull();
     });
 
     test("should display model names", () => {
@@ -110,9 +110,9 @@ describe("TransparencyPanel", () => {
         <TransparencyPanel events={mockEvents} height={20} maxWidth={80} />
       );
 
-      expect(getByText(/\[Local\]/)).toBeDefined();
-      expect(getByText(/\[Cloud\]/)).toBeDefined();
-      expect(getByText(/\[Both\]/)).toBeDefined();
+      expect(getByText(/\[Local\]/)).not.toBeNull();
+      expect(getByText(/\[Cloud\]/)).not.toBeNull();
+      expect(getByText(/\[Both\]/)).not.toBeNull();
     });
 
     test("should display event titles", () => {
@@ -120,8 +120,8 @@ describe("TransparencyPanel", () => {
         <TransparencyPanel events={mockEvents} height={20} maxWidth={80} />
       );
 
-      expect(getByText(/Creator generating initial work/)).toBeDefined();
-      expect(getByText(/Technical analysis/)).toBeDefined();
+      expect(getByText(/Creator generating initial work/)).not.toBeNull();
+      expect(getByText(/Technical analysis/)).not.toBeNull();
     });
   });
 
@@ -162,7 +162,7 @@ describe("TransparencyPanel", () => {
         <TransparencyPanel events={[shortContentEvent]} height={20} maxWidth={80} />
       );
 
-      expect(getByText(/Short/)).toBeDefined();
+      expect(getByText(/Short/)).not.toBeNull();
       expect(getByText("...")).toBeUndefined();
     });
   });
@@ -200,7 +200,7 @@ describe("TransparencyPanel", () => {
         <TransparencyPanel events={[noContentEvent]} height={20} maxWidth={80} />
       );
 
-      expect(getByText(/No content event/)).toBeDefined();
+      expect(getByText(/No content event/)).not.toBeNull();
       // Should not crash on empty content
     });
 
@@ -219,7 +219,7 @@ describe("TransparencyPanel", () => {
         <TransparencyPanel events={[noModelEvent]} height={20} maxWidth={80} />
       );
 
-      expect(getByText(/No model event/)).toBeDefined();
+      expect(getByText(/No model event/)).not.toBeNull();
       // Should not display empty model brackets
     });
 
@@ -239,7 +239,7 @@ describe("TransparencyPanel", () => {
       );
 
       // Should still render content
-      expect(getByText(/Some content/)).toBeDefined();
+      expect(getByText(/Some content/)).not.toBeNull();
     });
   });
 
@@ -258,8 +258,8 @@ describe("TransparencyPanel", () => {
       const analysisIndex = analysis.parentElement?.innerHTML.indexOf(analysis.textContent || "") || 0;
 
       // This is a weak assertion but checks basic ordering
-      expect(divergence).toBeDefined();
-      expect(analysis).toBeDefined();
+      expect(divergence).not.toBeNull();
+      expect(analysis).not.toBeNull();
     });
   });
 });

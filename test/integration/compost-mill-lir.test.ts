@@ -135,8 +135,8 @@ describe('CompostMill LIR integration', () => {
     // Verify the code token structure
     const codeToken = codeSeeds[0].lir as LIRCodeToken;
     expect(codeToken.type).toBe('code');
-    expect(codeToken.kind).toBeDefined();
-    expect(codeToken.metrics).toBeDefined();
+    expect(codeToken.kind).not.toBeNull();
+    expect(codeToken.metrics).not.toBeNull();
     expect(typeof codeToken.metrics.loc).toBe('number');
   });
 
@@ -162,8 +162,8 @@ describe('CompostMill LIR integration', () => {
 
     const docToken = docSeeds[0].lir as LIRDocToken;
     expect(docToken.type).toBe('doc');
-    expect(docToken.heading).toBeDefined();
-    expect(docToken.metrics).toBeDefined();
+    expect(docToken.heading).not.toBeNull();
+    expect(docToken.metrics).not.toBeNull();
   });
 
   it('digest with lirEnabled: true — .txt file produces LIRTextToken on seeds', async () => {
@@ -188,8 +188,8 @@ describe('CompostMill LIR integration', () => {
 
     const textToken = textSeeds[0].lir as LIRTextToken;
     expect(textToken.type).toBe('text');
-    expect(textToken.content).toBeDefined();
-    expect(textToken.metrics).toBeDefined();
+    expect(textToken.content).not.toBeNull();
+    expect(textToken.metrics).not.toBeNull();
   });
 
   it('digest with lirEnabled: false — no LIR tokens on seeds (backward compat)', async () => {

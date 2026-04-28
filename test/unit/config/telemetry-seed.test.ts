@@ -43,9 +43,9 @@ describe('SEED_TELEMETRY', () => {
       expect(entry.generationTimeMs).toBeGreaterThanOrEqual(0);
       expect(typeof entry.outputSizeBytes).toBe('number');
       expect(entry.outputSizeBytes).toBeGreaterThan(0);
-      expect(typeof entry.validationPassed).toBe('boolean');
+      expect(entry.validationPassed === true || entry.validationPassed === false).toBe(true);
       expect(Array.isArray(entry.validationErrors)).toBe(true);
-      expect(typeof entry.success).toBe('boolean');
+      expect(entry.success === true || entry.success === false).toBe(true);
     }
   });
 

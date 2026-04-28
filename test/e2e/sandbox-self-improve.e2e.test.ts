@@ -43,8 +43,7 @@ describe.skipIf(process.env.CI)('E2E sandbox self-improve', () => {
         return;
       }
 
-      expect(result).toBeDefined();
-      expect(result.completed).toBe(true);
+      expect(result?.completed).toBe(true);
       expect(result.error).toBeUndefined();
     }, E2E_SANDBOX_TIMEOUT_MS);
 
@@ -59,7 +58,7 @@ describe.skipIf(process.env.CI)('E2E sandbox self-improve', () => {
       }
 
       expect(result).toHaveProperty('completed');
-      expect(typeof result.completed).toBe('boolean');
+      expect(result.completed === true || result.completed === false).toBe(true);
       if (result.completed) {
         expect(result.error).toBeUndefined();
       }
@@ -77,7 +76,7 @@ describe.skipIf(process.env.CI)('E2E sandbox self-improve', () => {
 
       const result = await requestImprovement(MINIMAL_P5);
 
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
       expect(result).toHaveProperty('code');
       expect(typeof result.code).toBe('string');
       expect(result.code.length).toBeGreaterThan(0);

@@ -35,8 +35,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(tsFile);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('code');
       expect(result[0].name).toBe('test');
     });
@@ -50,8 +49,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(tsxFile);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('code');
     });
 
@@ -61,8 +59,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(jsFile);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('code');
       expect(result[0].name).toBe('test');
     });
@@ -76,8 +73,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(jsxFile);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('code');
     });
 
@@ -90,8 +86,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(mdFile);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('doc');
       expect(result[0].heading).toBe('Test Header');
     });
@@ -105,8 +100,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(markdownFile);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('doc');
     });
 
@@ -116,8 +110,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(txtFile);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('text');
       expect(result[0].content).toBe('This is plain text content.');
     });
@@ -128,8 +121,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(csvFile);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('text');
     });
 
@@ -139,8 +131,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(unknownFile);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('text');
     });
   });
@@ -264,7 +255,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(tsFile);
 
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
       // CodeParser returns empty array for files with no symbols
       expect(Array.isArray(result)).toBe(true);
     });
@@ -275,7 +266,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(txtFile);
 
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
       expect(Array.isArray(result)).toBe(true);
     });
 
@@ -285,8 +276,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(noExtFile);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('text');
     });
 
@@ -296,8 +286,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(upperCaseFile);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('code');
     });
 
@@ -307,8 +296,7 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(mixedCaseFile);
 
-      expect(result).toBeDefined();
-      expect(result.length).toBeGreaterThan(0);
+      expect(result?.length).toBeGreaterThan(0);
       expect(result[0].type).toBe('code');
     });
   });
@@ -323,16 +311,16 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(tsFile);
 
-      expect(result[0].id).toBeDefined();
+      expect(result[0].id).not.toBeNull();
       expect(result[0].type).toBe('code');
       expect(result[0].name).toBe('test');
       expect(result[0].kind).toBe('function');
-      expect(result[0].signature).toBeDefined();
-      expect(result[0].source).toBeDefined();
+      expect(result[0].signature).not.toBeNull();
+      expect(result[0].source).not.toBeNull();
       expect(result[0].language).toBe('typescript');
-      expect(result[0].location).toBeDefined();
-      expect(result[0].relationships).toBeDefined();
-      expect(result[0].metrics).toBeDefined();
+      expect(result[0].location).not.toBeNull();
+      expect(result[0].relationships).not.toBeNull();
+      expect(result[0].metrics).not.toBeNull();
     });
 
     it('should preserve all DocParser token properties', async () => {
@@ -344,13 +332,13 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(mdFile);
 
-      expect(result[0].id).toBeDefined();
+      expect(result[0].id).not.toBeNull();
       expect(result[0].type).toBe('doc');
       expect(result[0].heading).toBe('Test');
       expect(result[0].level).toBe(1);
-      expect(result[0].content).toBeDefined();
-      expect(result[0].hierarchy).toBeDefined();
-      expect(result[0].metrics).toBeDefined();
+      expect(result[0].content).not.toBeNull();
+      expect(result[0].hierarchy).not.toBeNull();
+      expect(result[0].metrics).not.toBeNull();
     });
 
     it('should preserve all TextParser token properties', async () => {
@@ -359,11 +347,11 @@ describe('CompostParser', () => {
 
       const result = await parser.parseFile(txtFile);
 
-      expect(result[0].id).toBeDefined();
+      expect(result[0].id).not.toBeNull();
       expect(result[0].type).toBe('text');
       expect(result[0].content).toBe('Plain text content here.');
-      expect(result[0].structure).toBeDefined();
-      expect(result[0].metrics).toBeDefined();
+      expect(result[0].structure).not.toBeNull();
+      expect(result[0].metrics).not.toBeNull();
     });
   });
 });

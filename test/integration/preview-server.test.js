@@ -48,7 +48,6 @@ describe('PreviewServer Integration Tests', () => {
       expect(result).toBe(true);
     });
 
-
     it('should handle multiple start calls gracefully', async () => {
       await startPreviewServer();
       await expect(previewServer.start(TEST_PORT)).rejects.toThrow('Server is already running');
@@ -91,7 +90,7 @@ describe('PreviewServer Integration Tests', () => {
 
     it('should handle stop when server not started', async () => {
       const result = await previewServer.stop();
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
     });
 
     it('should handle multiple stop calls gracefully', async () => {
@@ -99,7 +98,7 @@ describe('PreviewServer Integration Tests', () => {
       await previewServer.stop();
       const secondStop = await previewServer.stop();
 
-      expect(secondStop).toBeDefined();
+      expect(secondStop).not.toBeNull();
     });
   });
 

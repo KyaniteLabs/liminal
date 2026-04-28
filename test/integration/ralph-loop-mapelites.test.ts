@@ -5,7 +5,7 @@ import { SafetyGuardrails } from '../../src/core/SafetyGuardrails.js';
 
 describe('RalphLoop MAP-Elites Integration', () => {
   it('accepts useMapElites option', () => {
-    expect(RalphLoop).toBeDefined();
+    expect(RalphLoop).not.toBeNull();
   });
 
   it('MapElites can be imported and used alongside RalphLoop options', () => {

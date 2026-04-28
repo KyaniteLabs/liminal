@@ -20,13 +20,13 @@ function draw() {
     expect(tokens.length).toBeGreaterThan(0);
 
     const setupToken = tokens.find(t => t.name === 'setup');
-    expect(setupToken).toBeDefined();
+
     expect(setupToken!.type).toBe('code');
     expect(setupToken!.kind).toBe('function');
     expect(setupToken!.relationships.calls).toContain('createCanvas');
 
     const drawToken = tokens.find(t => t.name === 'draw');
-    expect(drawToken).toBeDefined();
+
     expect(drawToken!.relationships.calls).toContain('background');
     expect(drawToken!.relationships.calls).toContain('fill');
     expect(drawToken!.relationships.calls).toContain('ellipse');
@@ -44,7 +44,7 @@ function draw() {
 `;
     const tokens = parser.parse(code);
     const drawToken = tokens.find(t => t.name === 'draw');
-    expect(drawToken).toBeDefined();
+
     expect(drawToken!.metrics.loc).toBeGreaterThan(0);
     expect(drawToken!.metrics.cyclomaticComplexity).toBeGreaterThanOrEqual(3); // for + if + %
     expect(drawToken!.metrics.nestingDepth).toBeGreaterThanOrEqual(2);
@@ -90,10 +90,10 @@ class Particle {
 `;
     const tokens = parser.parse(code);
     const particleClass = tokens.find(t => t.name === 'Particle' && t.kind === 'class');
-    expect(particleClass).toBeDefined();
+
     expect(particleClass!.metrics.loc).toBeGreaterThan(0);
 
     const updateMethod = tokens.find(t => t.name === 'update' && t.kind === 'method');
-    expect(updateMethod).toBeDefined();
+    expect(updateMethod).not.toBeNull();
   });
 });

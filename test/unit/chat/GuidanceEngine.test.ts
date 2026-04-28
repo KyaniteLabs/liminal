@@ -33,19 +33,19 @@ describe('GuidanceEngine', () => {
 
   describe('constructor', () => {
     it('initializes with artBrain', () => {
-      expect(guidance).toBeDefined();
+
       expect(guidance['artBrain']).toBe(artBrain);
     });
 
     it('accepts optional compostMill', () => {
       const mockMill = createMockCompostMill(5);
       const guidanceWithCompost = new GuidanceEngine(artBrain, mockMill as CompostMill);
-      expect(guidanceWithCompost).toBeDefined();
+      expect(guidanceWithCompost).not.toBeNull();
     });
 
     it('accepts optional swarmOrchestrator', () => {
       const guidanceWithSwarm = new GuidanceEngine(artBrain, undefined, {} as any);
-      expect(guidanceWithSwarm).toBeDefined();
+      expect(guidanceWithSwarm).not.toBeNull();
     });
   });
 
@@ -81,7 +81,7 @@ describe('GuidanceEngine', () => {
       const suggestions = guidance.suggestNextAction(context);
 
       const swarmSuggestion = suggestions.find(s => s.type === 'swarm');
-      expect(swarmSuggestion).toBeDefined();
+
       expect(swarmSuggestion?.title).toContain('approach');
     });
 
@@ -100,7 +100,7 @@ describe('GuidanceEngine', () => {
       const suggestions = guidanceWithCompost.suggestNextAction(context);
 
       const compostSuggestion = suggestions.find(s => s.type === 'compost');
-      expect(compostSuggestion).toBeDefined();
+      expect(compostSuggestion).not.toBeNull();
     });
 
     it('suggests technique when iterating without progress', () => {
@@ -118,7 +118,7 @@ describe('GuidanceEngine', () => {
       const suggestions = guidance.suggestNextAction(context);
 
       const techniqueSuggestion = suggestions.find(s => s.type === 'technique');
-      expect(techniqueSuggestion).toBeDefined();
+      expect(techniqueSuggestion).not.toBeNull();
     });
 
     it('suggests evolution when scores are plateauing', () => {
@@ -136,7 +136,7 @@ describe('GuidanceEngine', () => {
       const suggestions = guidance.suggestNextAction(context);
 
       const evolutionSuggestion = suggestions.find(s => s.type === 'parameter');
-      expect(evolutionSuggestion).toBeDefined();
+
       expect(evolutionSuggestion?.title).toContain('diversity');
     });
 

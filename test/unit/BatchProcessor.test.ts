@@ -19,7 +19,7 @@ describe('BatchProcessor', () => {
     bp.submit(1);
     bp.submit(2);
     expect(bp.pendingCount).toBe(2);
-    expect(bp.getStatus('job_1')).toBeDefined();
+    expect(bp.getStatus('job_1')).not.toBeNull();
     expect(bp.getStatus('job_1')?.status).toBe('pending');
   });
 

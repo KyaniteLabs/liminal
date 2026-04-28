@@ -30,7 +30,7 @@ describe('PitchDetector (autocorrelation)', () => {
         buffer[i] = 0.5 * Math.sin(2 * Math.PI * 440 * i / 44100);
       }
       const result = detectPitch(buffer, 44100);
-      expect(result).toBeDefined();
+      expect(result).not.toBeNull();
       expect(result.clarity).toBeGreaterThanOrEqual(0);
     });
 

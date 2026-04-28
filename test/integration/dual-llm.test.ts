@@ -96,7 +96,7 @@ describe.skipIf(process.env.CI)('Dual LLM (cloud vs local)', () => {
     }
 
     expect(response.success).toBe(true);
-    expect(response.code).toBeDefined();
+    expect(response.code).not.toBeNull();
     expect(typeof response.code).toBe('string');
     expect(response.code).toMatch(/function\s+setup\s*\(/);
     expect(response.code).toMatch(/function\s+draw\s*\(/);
@@ -149,7 +149,7 @@ describe.skipIf(process.env.CI)('Dual LLM (cloud vs local)', () => {
     }
 
     expect(response.success).toBe(true);
-    expect(response.code).toBeDefined();
+    expect(response.code).not.toBeNull();
     expect(typeof response.code).toBe('string');
     expect(response.code).toMatch(/function\s+setup\s*\(/);
     expect(response.code).toMatch(/function\s+draw\s*\(/);

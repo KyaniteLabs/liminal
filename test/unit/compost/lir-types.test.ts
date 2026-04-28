@@ -65,7 +65,6 @@ describe('Compost LIR Type Extensions', () => {
         lir: mockLIRToken,
       };
 
-      expect(seed.lir).toBeDefined();
       expect(seed.lir?.type).toBe('code');
       expect(seed.lir?.id).toBe('test-code-token-1');
     });
@@ -154,7 +153,6 @@ describe('Compost LIR Type Extensions', () => {
         lir: [mockLIRToken],
       };
 
-      expect(extractionResult.lir).toBeDefined();
       expect(extractionResult.lir?.[0]?.type).toBe('code');
       expect(extractionResult.lir?.[0]?.name).toBe('extractData');
     });
@@ -249,7 +247,6 @@ describe('Compost LIR Type Extensions', () => {
       // Deserialize back
       const parsedSeed = JSON.parse(json) as Seed;
 
-      expect(parsedSeed.lir).toBeDefined();
       expect(parsedSeed.lir?.id).toBe('json-test-token');
       expect(parsedSeed.lir?.type).toBe('code');
       expect(parsedSeed.lir?.name).toBe('serializeTest');
@@ -323,7 +320,6 @@ describe('Compost LIR Type Extensions', () => {
       // Deserialize back
       const parsedResult = JSON.parse(json) as ExtractionResult;
 
-      expect(parsedResult.lir).toBeDefined();
       expect(parsedResult.lir?.[0]?.id).toBe('json-extraction-token');
       expect(parsedResult.lir?.[0]?.type).toBe('code');
       expect(parsedResult.lir?.[0]?.name).toBe('processExtraction');

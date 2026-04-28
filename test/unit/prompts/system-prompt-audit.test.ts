@@ -24,7 +24,7 @@ describe('system prompt audit guardrails', () => {
 
   it('three.generate uses a consistent modern OrbitControls module path', () => {
     const threePrompt = PromptLibrary.get('three.generate');
-    expect(threePrompt).toBeDefined();
+
     expect(threePrompt?.systemPrompt).toContain('three/addons/controls/OrbitControls.js');
     expect(threePrompt?.systemPrompt).toContain('import map');
     expect(threePrompt?.systemPrompt).toContain('module script');
@@ -34,14 +34,14 @@ describe('system prompt audit guardrails', () => {
 
   it('glsl.generate aligns complexity guidance with validator minimum size', () => {
     const glslPrompt = PromptLibrary.get('glsl.generate');
-    expect(glslPrompt).toBeDefined();
+
     expect(glslPrompt?.systemPrompt).toContain('at least 800 characters');
     expect(glslPrompt?.systemPrompt).not.toContain('at least 1000 characters');
   });
 
   it('remotion.improve separates prior code without markdown fences', () => {
     const remotionPrompt = PromptLibrary.get('remotion.improve');
-    expect(remotionPrompt).toBeDefined();
+
     expect(remotionPrompt?.userPromptTemplate).toContain('<previous_code>');
     expect(remotionPrompt?.userPromptTemplate).toContain('</previous_code>');
     expect(remotionPrompt?.userPromptTemplate).not.toContain('```');
@@ -56,7 +56,7 @@ describe('system prompt audit guardrails', () => {
 
   it('chat.assistant uses explicit context tags instead of ad-hoc separators', () => {
     const chatPrompt = PromptLibrary.get('chat.assistant');
-    expect(chatPrompt).toBeDefined();
+    expect(chatPrompt).not.toBeNull();
 
     const rendered = PromptLibrary.render('chat.assistant', { userPrompt: 'hello' });
     expect(chatPrompt?.systemPrompt).toContain('Return valid JSON only');
@@ -72,7 +72,7 @@ describe('system prompt audit guardrails', () => {
 
     for (const id of criticIds) {
       const prompt = PromptLibrary.get(id);
-      expect(prompt).toBeDefined();
+
       expect(prompt?.systemPrompt).not.toContain('Think step by step');
       expect(prompt?.systemPrompt).toContain('evidence-backed');
     }
@@ -89,13 +89,12 @@ describe('system prompt audit guardrails', () => {
 
   it('hydra.generate does not describe .speed() as a chain method or color() as a source', () => {
     const hydraPrompt = PromptLibrary.get('hydra.generate');
-    expect(hydraPrompt).toBeDefined();
+
     expect(hydraPrompt?.systemPrompt).toContain('GLOBAL SETTINGS:');
     expect(hydraPrompt?.systemPrompt).not.toContain('Use .speed(), .scale(), .scrollX/Y() for animation');
     expect(hydraPrompt?.systemPrompt).not.toContain('Use timing: .speed(), .scrollX(), .scrollY() for motion');
     expect(hydraPrompt?.systemPrompt).not.toContain('Use sources: osc(), src(), noise(), shape(), color(), gradient(), solid()');
   });
-
 
   describe('canonical source alignment', () => {
     it('swarm persona prompts in PromptLibrary match the canonical catalog', async () => {

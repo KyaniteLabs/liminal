@@ -108,8 +108,8 @@ describe('CompostShredder — LIR-aware shredding', () => {
       const fragments = CompostShredder.shredLIR(token, 'calc.ts');
 
       const frag = fragments[0];
-      expect(frag.metadata).toBeDefined();
-      expect(frag.metadata.symbolKind).toBe('function');
+
+      expect(frag.metadata?.symbolKind).toBe('function');
       expect(frag.metadata.loc).toBe(3);
       expect(frag.metadata.cyclomaticComplexity).toBe(1);
     });

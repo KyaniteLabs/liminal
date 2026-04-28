@@ -22,11 +22,11 @@ function makeTimbre(overrides: Partial<TimbreData> = {}): TimbreData {
 describe('AudioToVisualMapper', () => {
   it('returns VisualMappingParams with all sub-objects', () => {
     const result = mapToVisualParams(makeFeatures(), makePitch(), makeTimbre());
-    expect(result.palette).toBeDefined();
-    expect(result.motion).toBeDefined();
-    expect(result.form).toBeDefined();
-    expect(result.dynamics).toBeDefined();
-    expect(result.composition).toBeDefined();
+    expect(result.palette).not.toBeNull();
+    expect(result.motion).not.toBeNull();
+    expect(result.form).not.toBeNull();
+    expect(result.dynamics).not.toBeNull();
+    expect(result.composition).not.toBeNull();
   });
 
   it('pitch maps to chromatic-circle hues via pitch class', () => {
@@ -73,8 +73,8 @@ describe('AudioToVisualMapper', () => {
 
   it('null pitch produces sensible defaults', () => {
     const result = mapToVisualParams(makeFeatures(), null, makeTimbre());
-    expect(result.palette.hues).toBeDefined();
-    expect(result.palette.hues.length).toBeGreaterThan(0);
+
+    expect(result.palette.hues?.length).toBeGreaterThan(0);
   });
 
   it('rhythm is one of smooth, pulsing, chaotic', () => {

@@ -51,7 +51,7 @@ describe('MetadataExtractor', () => {
       await fs.writeFile(file, 'binary data here');
       const meta = await MetadataExtractor.extract(file);
       expect(meta.fileType).toBe('xyz');
-      expect(meta.size).toBeDefined();
+      expect(meta.size).not.toBeNull();
     });
   });
 

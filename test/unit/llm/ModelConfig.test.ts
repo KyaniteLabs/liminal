@@ -346,9 +346,9 @@ describe('ModelConfig', () => {
   describe('loadModelConfig', () => {
     it('returns all three role configs with defaults', () => {
       const config = loadModelConfig();
-      expect(config.harness).toBeDefined();
-      expect(config.generation).toBeDefined();
-      expect(config.evaluator).toBeDefined();
+      expect(config.harness).not.toBeNull();
+      expect(config.generation).not.toBeNull();
+      expect(config.evaluator).not.toBeNull();
       expect(config.fallbackToGeneration).toBe(true);
     });
 

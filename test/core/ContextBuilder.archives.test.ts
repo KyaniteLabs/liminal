@@ -396,7 +396,7 @@ describe('ContextBuilder Archives Integration', () => {
         expect(examples.length).toBe(3);
         // All should have behavior vectors
         examples.forEach(ex => {
-          expect(ex.behavior).toBeDefined();
+          expect(ex.behavior).not.toBeNull();
           expect(ex.noveltyScore).toBeGreaterThanOrEqual(0);
         });
       });

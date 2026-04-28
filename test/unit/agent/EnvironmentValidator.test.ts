@@ -16,14 +16,14 @@ describe('EnvironmentValidator', () => {
     const report = await validator.validate();
     expect(report.checks).toBeInstanceOf(Array);
     expect(report.checks.length).toBe(4); // Node, Go, Config, Provider
-    expect(typeof report.allPassed).toBe('boolean');
+    expect(report.allPassed === true || report.allPassed === false).toBe(true);
     expect(typeof report.timestamp).toBe('string');
   });
 
   it('checks Node.js version', async () => {
     const report = await validator.validate();
     const nodeCheck = report.checks.find(c => c.name === 'Node.js');
-    expect(nodeCheck).toBeDefined();
+
     expect(nodeCheck!.status).toMatch(/^(pass|fail)$/);
     // We're running on Node 18+, so it should pass
     expect(nodeCheck!.status).toBe('pass');
@@ -33,7 +33,7 @@ describe('EnvironmentValidator', () => {
   it('checks Go toolchain', async () => {
     const report = await validator.validate();
     const goCheck = report.checks.find(c => c.name === 'Go');
-    expect(goCheck).toBeDefined();
+
     // Go may or may not be installed — either pass or warn
     expect(goCheck!.status).toMatch(/^(pass|warn)$/);
   });
@@ -41,14 +41,14 @@ describe('EnvironmentValidator', () => {
   it('checks config file presence', async () => {
     const report = await validator.validate();
     const configCheck = report.checks.find(c => c.name === 'Config');
-    expect(configCheck).toBeDefined();
+
     expect(configCheck!.status).toMatch(/^(pass|warn)$/);
   });
 
   it('checks provider config', async () => {
     const report = await validator.validate();
     const providerCheck = report.checks.find(c => c.name === 'Provider');
-    expect(providerCheck).toBeDefined();
+
     expect(providerCheck!.status).toMatch(/^(pass|warn)$/);
   });
 

@@ -142,7 +142,7 @@ describe('GeneratorRegistry', () => {
       };
       generatorRegistry.registerDNA(dna);
       const retrieved = generatorRegistry.getDNA('generative-art');
-      expect(retrieved).toBeDefined();
+
       expect(retrieved!.name).toBe('test');
     });
 

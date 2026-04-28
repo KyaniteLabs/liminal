@@ -53,7 +53,7 @@ describe('TraceFSAdapter', () => {
     const parsed = JSON.parse(content?.toString('utf-8') ?? '{}');
     expect(parsed.traceId).toBe('trace-content');
     expect(parsed.runId).toBe('run-content');
-    expect(parsed.linkedAt).toBeDefined();
+    expect(parsed.linkedAt).not.toBeNull();
   });
 
   it('linkThinkingTrace — returns LinkedTrace with correct traceId and runId', () => {
@@ -73,7 +73,7 @@ describe('TraceFSAdapter', () => {
     const artifactEvent = events.find(
       e => e.payload.action === 'artifact_write' && e.payload.hash === ref.hash,
     );
-    expect(artifactEvent).toBeDefined();
+    expect(artifactEvent).not.toBeNull();
     expect(artifactEvent?.payload.metadata).toMatchObject({
       traceId: 'think-2',
       runId: 'run-2',
@@ -98,7 +98,7 @@ describe('TraceFSAdapter', () => {
     expect(parsed.traceId).toBe('think-src');
     expect(parsed.runId).toBe('run-src');
     expect(parsed.source).toBe('gemini');
-    expect(parsed.linkedAt).toBeDefined();
+    expect(parsed.linkedAt).not.toBeNull();
   });
 
   // ── Edge cases ──────────────────────────────────────────────────────

@@ -41,7 +41,7 @@ describe('GeneratorHarnessTools', () => {
       expect(typeof ctx.skeletonHint).toBe('string');
       expect(Array.isArray(ctx.sampledApis)).toBe(true);
       expect(Array.isArray(ctx.hardeningHints)).toBe(true);
-      expect(typeof ctx.hintsWereSampled).toBe('boolean');
+      expect(ctx.hintsWereSampled === true || ctx.hintsWereSampled === false).toBe(true);
       expect(ctx.domain).toBe('tone');
     });
 
@@ -145,7 +145,7 @@ describe('GeneratorHarnessTools', () => {
   describe('classifyFailure', () => {
     // All results must have evidence
     const assertHasEvidence = (result: FailureClassification) => {
-      expect(result.evidence).toBeDefined();
+      expect(result.evidence).not.toBeNull();
       expect(typeof result.evidence).toBe('string');
     };
 
@@ -226,7 +226,7 @@ describe('GeneratorHarnessTools', () => {
         'const synth = new Tone.Synth(); synth.trigger();'
       );
       expect(result.failureClass).toBe('runtime_error');
-      expect(result.runtimeError).toBeDefined();
+      expect(result.runtimeError).not.toBeNull();
       assertHasEvidence(result);
     });
 

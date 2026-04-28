@@ -132,7 +132,7 @@ describe('PromisingStateSelector', () => {
 
     const selected = selector.select(elites, prefs, 2);
     const pinnedResult = selected.find(s => s.entry.id === 'pinned');
-    expect(pinnedResult).toBeDefined();
+
     expect(pinnedResult!.reason).toBe('user-pinned');
   });
 

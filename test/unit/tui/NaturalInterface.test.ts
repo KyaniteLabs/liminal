@@ -184,7 +184,6 @@ describe('NaturalInterface', () => {
     });
   });
 
-
   // ── handleDiagnostic ────────────────────────────────────────────────
 
   describe('handleDiagnostic', () => {
@@ -369,7 +368,7 @@ describe('NaturalInterface', () => {
       const result = await iface.processInput('make it cooler');
       expect(llmAgent.executeTask).not.toHaveBeenCalled();
       expect(result.type).toBe('ambiguous');
-      expect(result.clarifyingQuestions).toBeDefined();
+
       expect(result.clarifyingQuestions!.length).toBeGreaterThan(0);
     });
 

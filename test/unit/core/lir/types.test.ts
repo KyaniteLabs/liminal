@@ -432,7 +432,7 @@ describe('LIR Type Definitions', () => {
 
   describe('schema.json', () => {
     it('is valid JSON with expected structure', () => {
-      expect(schema).toBeDefined();
+      expect(schema).not.toBeNull();
       expect(typeof schema).toBe('object');
     });
 

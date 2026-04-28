@@ -18,12 +18,12 @@ describe('ArtKnowledgeGraph', () => {
       const id1 = graph.addConcept('Generative Art', 'movement');
       const id2 = graph.addConcept('Perlin Noise', 'technique');
 
-      expect(id1).toBeDefined();
-      expect(id2).toBeDefined();
+      expect(id1).not.toBeNull();
+      expect(id2).not.toBeNull();
       expect(id1).not.toBe(id2);
 
       const concept1 = graph.getConcept(id1);
-      expect(concept1).toBeDefined();
+
       expect(concept1?.name).toBe('Generative Art');
       expect(concept1?.type).toBe('movement');
       expect(concept1?.id).toBe(id1);
@@ -104,7 +104,6 @@ describe('ArtKnowledgeGraph', () => {
       const id = graph.addConcept('Generative Art', 'movement');
       const concept = graph.getConcept(id);
 
-      expect(concept).toBeDefined();
       expect(concept?.id).toBe(id);
       expect(concept?.name).toBe('Generative Art');
     });
@@ -114,7 +113,7 @@ describe('ArtKnowledgeGraph', () => {
       graph.addConcept('Perlin Noise', 'technique');
 
       const concept = graph.getConcept('Generative Art');
-      expect(concept).toBeDefined();
+
       expect(concept?.name).toBe('Generative Art');
       expect(concept?.type).toBe('movement');
     });
@@ -270,32 +269,32 @@ describe('ArtKnowledgeGraph', () => {
 
       // Check for specific movements
       const generativeArt = graph.getConcept('Generative Art');
-      expect(generativeArt).toBeDefined();
+
       expect(generativeArt?.type).toBe('movement');
 
       // Check for specific techniques
       const perlinNoise = graph.getConcept('Perlin Noise');
-      expect(perlinNoise).toBeDefined();
+
       expect(perlinNoise?.type).toBe('technique');
 
       // Check for specific movements
       const minimalism = graph.getConcept('Minimalism');
-      expect(minimalism).toBeDefined();
+
       expect(minimalism?.type).toBe('movement');
 
       // Check for specific principles
       const balance = graph.getConcept('Balance');
-      expect(balance).toBeDefined();
+
       expect(balance?.type).toBe('principle');
 
       // Check for color concepts
       const complementary = graph.getConcept('Complementary');
-      expect(complementary).toBeDefined();
+
       expect(complementary?.type).toBe('color');
 
       // Check for composition concepts
       const ruleOfThirds = graph.getConcept('Rule of Thirds');
-      expect(ruleOfThirds).toBeDefined();
+
       expect(ruleOfThirds?.type).toBe('composition');
     });
 

@@ -159,7 +159,7 @@ describe('SchemaValidator', () => {
 
       expect(result.success).toBe(false);
       const emailError = result.errors.find(e => e.path === '.user.email');
-      expect(emailError).toBeDefined();
+
       expect(emailError!.code).toBe('REQUIRED');
     });
   });
@@ -253,7 +253,7 @@ describe('SchemaValidator', () => {
 
       expect(result.success).toBe(false);
       const minErr = result.errors.find(e => e.code === 'MIN_ITEMS');
-      expect(minErr).toBeDefined();
+
       expect(minErr!.message).toContain('min 1');
     });
 
@@ -463,7 +463,7 @@ describe('SchemaValidator', () => {
 
       expect(result.success).toBe(false);
       const codeError = result.errors.find(e => e.path === '.code');
-      expect(codeError).toBeDefined();
+      expect(codeError).not.toBeNull();
     });
 
     it('testResult schema rejects wrong type for passed', () => {

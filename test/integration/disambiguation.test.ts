@@ -33,11 +33,11 @@ describe('disambiguation flow — integration', () => {
     // System should return clarification signal
     expect(result.type).toBe('ambiguous');
     expect(result.response).toContain('Clarifying questions');
-    expect(result.clarifyingQuestions).toBeDefined();
+
     expect(result.clarifyingQuestions!.length).toBeGreaterThan(0);
 
     // Domain hints should be included
-    expect(result.suggestions).toBeDefined();
+    expect(result.suggestions).not.toBeNull();
   });
 
   it('specific natural language routes directly to agent without clarification', async () => {
@@ -73,7 +73,7 @@ describe('disambiguation flow — integration', () => {
     expect(result.type).toBe('ambiguous');
     // The clarifyingQuestions array is populated; suggestions may or may not be present
     // depending on whether domain keywords are detected in the input
-    expect(result.clarifyingQuestions).toBeDefined();
+
     expect(result.clarifyingQuestions!.length).toBeGreaterThan(0);
     // The first question should be about the vague term "cooler"
     expect(result.clarifyingQuestions![0].question).toMatch(/cooler|aesthetic|cool/i);

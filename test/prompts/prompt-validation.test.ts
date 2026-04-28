@@ -74,7 +74,7 @@ describe('Prompt Library Validation', () => {
 
     it('should have all expected prompt IDs registered', () => {
       for (const id of EXPECTED_IDS) {
-        expect(PromptLibrary.get(id)).toBeDefined();
+        expect(PromptLibrary.get(id)).not.toBeNull();
       }
     });
 
@@ -98,16 +98,16 @@ describe('Prompt Library Validation', () => {
     it('every prompt should have a version', () => {
       const all = PromptLibrary.list();
       for (const template of all) {
-        expect(template.version).toBeDefined();
-        expect(template.version.length).toBeGreaterThan(0);
+
+        expect(template.version?.length).toBeGreaterThan(0);
       }
     });
 
     it('every prompt should have a category', () => {
       const all = PromptLibrary.list();
       for (const template of all) {
-        expect(template.category).toBeDefined();
-        expect(template.category.length).toBeGreaterThan(0);
+
+        expect(template.category?.length).toBeGreaterThan(0);
       }
     });
   });
@@ -116,8 +116,8 @@ describe('Prompt Library Validation', () => {
     it('every prompt should have created and updated dates', () => {
       const all = PromptLibrary.list();
       for (const template of all) {
-        expect(template.created).toBeDefined();
-        expect(template.updated).toBeDefined();
+        expect(template.created).not.toBeNull();
+        expect(template.updated).not.toBeNull();
         expect(template.created).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(template.updated).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       }
@@ -126,7 +126,7 @@ describe('Prompt Library Validation', () => {
     it('every prompt should have tags', () => {
       const all = PromptLibrary.list();
       for (const template of all) {
-        expect(template.tags).toBeDefined();
+
         expect(template.tags!.length).toBeGreaterThan(0);
       }
     });
@@ -210,8 +210,8 @@ describe('Prompt Library Validation', () => {
       const exported = PromptLibrary.exportAll();
       expect(Object.keys(exported).length).toBe(EXPECTED_IDS.length);
       for (const id of EXPECTED_IDS) {
-        expect(exported[id]).toBeDefined();
-        expect(exported[id].systemPrompt.length).toBeGreaterThan(0);
+
+        expect(exported[id]?.systemPrompt.length).toBeGreaterThan(0);
       }
     });
 

@@ -274,9 +274,9 @@ describe('EpisodicMemory', () => {
 
       const preferences = episodicMemory.getPreferences();
 
-      expect(preferences).toBeDefined();
-      expect(preferences.preferredMoods).toBeDefined();
-      expect(preferences.preferredTechniques).toBeDefined();
+      expect(preferences).not.toBeNull();
+      expect(preferences.preferredMoods).not.toBeNull();
+      expect(preferences.preferredTechniques).not.toBeNull();
       expect(preferences.preferredDomains).toBeInstanceOf(Map);
     });
 

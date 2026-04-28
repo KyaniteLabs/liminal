@@ -111,7 +111,6 @@ describe('EvaluationFabric', () => {
 
       const result = await fabric.evaluateWithSuite({ code: 'test' }, suite);
 
-      expect(result.suiteResult).toBeDefined();
       expect(result.suiteResult!.suiteName).toBe('test-suite');
       expect(result.suiteResult!.total).toBe(2);
       expect(result.suiteResult!.passed).toBe(1);

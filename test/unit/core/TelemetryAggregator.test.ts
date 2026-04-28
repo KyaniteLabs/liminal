@@ -188,7 +188,7 @@ describe('TelemetryAggregator', () => {
       agg.record(makeTelemetry({ domain: 'p5', modelId: 'm1', success: false }));
       const alerts = agg.checkForIssues();
       const domainAlert = alerts.find(a => a.type === 'failure_spike' && !a.modelId);
-      expect(domainAlert).toBeDefined();
+
       expect(domainAlert!.severity).toBe('high');
       expect(domainAlert!.domain).toBe('p5');
     });
@@ -199,7 +199,7 @@ describe('TelemetryAggregator', () => {
       agg.record(makeTelemetry({ domain: 'glsl', modelId: 'slow-model', success: false }));
       const alerts = agg.checkForIssues();
       const modelAlert = alerts.find(a => a.modelId === 'slow-model');
-      expect(modelAlert).toBeDefined();
+
       expect(modelAlert!.severity).toBe('critical');
     });
 
@@ -209,7 +209,7 @@ describe('TelemetryAggregator', () => {
       agg.record(makeTelemetry({ domain: 'hydra', modelId: 'm1', success: true }));
       const alerts = agg.checkForIssues();
       const modelAlert = alerts.find(a => a.modelId === 'm1' && a.type === 'failure_spike');
-      expect(modelAlert).toBeDefined();
+
       expect(modelAlert!.severity).toBe('high');
     });
 
@@ -222,7 +222,7 @@ describe('TelemetryAggregator', () => {
       }
       const alerts = agg.checkForIssues();
       const sizeAlert = alerts.find(a => a.type === 'size_regression');
-      expect(sizeAlert).toBeDefined();
+
       expect(sizeAlert!.severity).toBe('medium');
       expect(sizeAlert!.message).toContain('tiny-model');
     });
@@ -241,7 +241,7 @@ describe('TelemetryAggregator', () => {
       }));
       const alerts = agg.checkForIssues();
       const slowAlert = alerts.find(a => a.type === 'slow_generation');
-      expect(slowAlert).toBeDefined();
+
       expect(slowAlert!.severity).toBe('low');
     });
 
@@ -387,7 +387,7 @@ describe('TelemetryAggregator', () => {
         recoveredFromThinking: false,
       }));
       const trends = agg.getTrends();
-      expect(trends.reasoning).toBeDefined();
+
       expect(trends.reasoning!.length).toBe(1);
       const r = trends.reasoning![0];
       expect(r.total).toBe(2);

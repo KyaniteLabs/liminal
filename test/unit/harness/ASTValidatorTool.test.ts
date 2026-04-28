@@ -48,12 +48,12 @@ describe('ASTValidatorTool', () => {
       // Only the default export (which uses ExportDefaultDeclaration) is detected.
       // Default export: export default greet — Identifier, so name is 'greet'
       const defaultExport = result.data!.exports.find(e => e.type === 'default');
-      expect(defaultExport).toBeDefined();
+
       expect(defaultExport!.name).toBe('greet');
 
       // Check functions
       const fn = result.data!.functions.find(f => f.name === 'greet');
-      expect(fn).toBeDefined();
+
       expect(fn!.async).toBe(false);
       expect(fn!.params).toBe(1);
       expect(fn!.line).toBe(6);
@@ -69,7 +69,7 @@ describe('ASTValidatorTool', () => {
       expect(result.success).toBe(false);
       expect(result.data!.valid).toBe(false);
       expect(result.error).toContain('Syntax error');
-      expect(result.data!.syntaxError).toBeDefined();
+
       expect(result.data!.syntaxError!.message).toBeTruthy();
       expect(result.data!.issues).toHaveLength(1);
       expect(result.data!.issues[0]).toContain('Syntax error');
@@ -82,7 +82,7 @@ describe('ASTValidatorTool', () => {
 
       expect(result.success).toBe(false);
       // Babel may or may not provide line/column depending on error type
-      expect(result.data!.syntaxError).toBeDefined();
+
       expect(result.data!.syntaxError!.message).toBeTruthy();
     });
   });
@@ -112,10 +112,10 @@ describe('ASTValidatorTool', () => {
       expect(lodashImport!.specifiers).toEqual(['debounce']);
 
       const expressRequire = result.data!.imports.find(i => i.source === 'express' && i.type === 'require');
-      expect(expressRequire).toBeDefined();
+      expect(expressRequire).not.toBeNull();
 
       const pathRequire = result.data!.imports.find(i => i.source === 'path' && i.type === 'require');
-      expect(pathRequire).toBeDefined();
+      expect(pathRequire).not.toBeNull();
     });
   });
 
@@ -143,7 +143,7 @@ describe('ASTValidatorTool', () => {
       // Default export from class: ExportDefaultDeclaration only checks Identifier
       // and FunctionDeclaration, so class App is reported as 'default'.
       const defaultExport = result.data!.exports.find(e => e.type === 'default');
-      expect(defaultExport).toBeDefined();
+
       expect(defaultExport!.name).toBe('default');
     });
   });

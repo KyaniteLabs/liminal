@@ -127,9 +127,9 @@ describe('GeneratorBanditRouter', () => {
   describe('getDomainStats', () => {
     it('returns stats for all models', () => {
       const stats = router.getDomainStats('code');
-      expect(stats.local).toBeDefined();
-      expect(stats.cloud).toBeDefined();
-      expect(stats.hybrid).toBeDefined();
+      expect(stats.local).not.toBeNull();
+      expect(stats.cloud).not.toBeNull();
+      expect(stats.hybrid).not.toBeNull();
       expect(stats.local.pulls).toBe(0);
       expect(stats.local.meanReward).toBe(0);
     });

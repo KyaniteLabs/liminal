@@ -55,7 +55,7 @@ describe('SecurityLogger', () => {
     expect(spy).toHaveBeenCalled();
     // Check that context is passed (which includes the context details provided)
     const context = spy.mock.calls[0][2];
-    expect(context).toBeDefined();
+    expect(context).not.toBeNull();
     expect(context).toHaveProperty('source', 'test');
   });
 

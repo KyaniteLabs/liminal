@@ -149,7 +149,7 @@ describe('ThreeAdapter', () => {
       await adapter.initialize();
       const instance = adapter.render(mockLayer, mockContainer, mockContext);
       
-      expect(instance).toBeDefined();
+      expect(instance).not.toBeNull();
       expect(mockTHREE.Scene).toHaveBeenCalled();
       expect(mockTHREE.PerspectiveCamera).toHaveBeenCalled();
       expect(mockTHREE.WebGLRenderer).toHaveBeenCalled();
@@ -204,7 +204,7 @@ describe('ThreeAdapter', () => {
       
       const exports = adapter.getExports?.(mockLayer);
       
-      expect(exports).toBeDefined();
+      expect(exports).not.toBeNull();
       expect(exports?.some(e => e.name === 'cameraX')).toBe(true);
       expect(exports?.some(e => e.name === 'cameraY')).toBe(true);
       expect(exports?.some(e => e.name === 'cameraZ')).toBe(true);
@@ -248,7 +248,7 @@ describe('ThreeAdapter', () => {
     it('should request mouseX from p5', () => {
       const imports = adapter.getImports?.(mockLayer);
       
-      expect(imports).toBeDefined();
+      expect(imports).not.toBeNull();
       expect(imports?.some(i => i.from === 'p5' && i.name === 'mouseX')).toBe(true);
     });
 
@@ -418,7 +418,7 @@ describe('ThreeAdapter', () => {
       const instance = adapter.render(mockLayer, mockContainer, mockContext);
       
       // Check that instance has an animation ID
-      expect(instance).toBeDefined();
+      expect(instance).not.toBeNull();
       
       // Verify destroy doesn't throw (it calls cancelAnimationFrame internally)
       expect(() => adapter.destroy?.(mockLayer, instance)).not.toThrow();

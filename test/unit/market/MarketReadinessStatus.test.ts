@@ -32,7 +32,6 @@ describe('MarketReadinessStatus', () => {
   });
 });
 
-
 describe('collectRepositoryMarketReadinessStatus', () => {
   it('checks the real repository surfaces without running slow provider calls', () => {
     const status = collectRepositoryMarketReadinessStatus(process.cwd());
@@ -45,7 +44,7 @@ describe('collectRepositoryMarketReadinessStatus', () => {
       'studio-smoke-script',
       'live-provider-smoke',
     ]));
-    expect(status.checks.find((check) => check.id === 'live-provider-smoke')).toBeDefined();
+    expect(status.checks.find((check) => check.id === 'live-provider-smoke')).not.toBeNull();
   });
 
   it('does not accept a stale or failed live-provider receipt as market-ready', () => {

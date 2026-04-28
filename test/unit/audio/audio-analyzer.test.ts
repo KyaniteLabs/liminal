@@ -18,11 +18,11 @@ describe('AudioAnalyzer', () => {
     for (let i = 0; i < 2048; i++) buffer[i] = Math.sin(2 * Math.PI * 440 * i / 44100);
     const result = analyzer.analyze(buffer, 44100);
     const mapping = analyzer.getVisualMapping(result);
-    expect(mapping.palette).toBeDefined();
-    expect(mapping.motion).toBeDefined();
-    expect(mapping.form).toBeDefined();
-    expect(mapping.dynamics).toBeDefined();
-    expect(mapping.composition).toBeDefined();
+    expect(mapping.palette).not.toBeNull();
+    expect(mapping.motion).not.toBeNull();
+    expect(mapping.form).not.toBeNull();
+    expect(mapping.dynamics).not.toBeNull();
+    expect(mapping.composition).not.toBeNull();
   });
 
   it('handles silent buffer gracefully', () => {

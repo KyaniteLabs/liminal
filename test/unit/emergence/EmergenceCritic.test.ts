@@ -109,8 +109,8 @@ describe('EmergenceCritic', () => {
 
   it('exposes sub-components via getters', () => {
     const critic = new EmergenceCritic();
-    expect(critic.getNoveltyIndex()).toBeDefined();
-    expect(critic.getTemporalAnalyzer()).toBeDefined();
-    expect(critic.getPerturbationProbe()).toBeDefined();
+    expect(critic.getNoveltyIndex()).not.toBeNull();
+    expect(critic.getTemporalAnalyzer()).not.toBeNull();
+    expect(critic.getPerturbationProbe()).not.toBeNull();
   });
 });

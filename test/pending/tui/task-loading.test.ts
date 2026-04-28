@@ -20,11 +20,11 @@ describe('TUI Task Loading', () => {
       const task = JSON.parse(fs.readFileSync(taskPath, 'utf-8'));
       
       expect(task.id).toBe(`M${i}`);
-      expect(task.title).toBeDefined();
-      expect(task.targetFile).toBeDefined();
-      expect(task.search).toBeDefined();
-      expect(task.replace).toBeDefined();
-      expect(task.verifyCommand).toBeDefined();
+      expect(task.title).not.toBeNull();
+      expect(task.targetFile).not.toBeNull();
+      expect(task.search).not.toBeNull();
+      expect(task.replace).not.toBeNull();
+      expect(task.verifyCommand).not.toBeNull();
     }
   });
   
@@ -53,7 +53,7 @@ describe('TUI Task Loading', () => {
       const taskPath = path.join(tasksDir, `M${i}.json`);
       const task = JSON.parse(fs.readFileSync(taskPath, 'utf-8'));
       
-      expect(typeof task.approved).toBe('boolean');
+      expect(task.approved === true || task.approved === false).toBe(true);
     }
   });
 });

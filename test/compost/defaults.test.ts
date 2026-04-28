@@ -7,21 +7,21 @@ import { DEFAULT_CONFIG, mergeConfig } from '../../src/compost/defaults.js';
 
 describe('DEFAULT_CONFIG', () => {
   it('has all required fields', () => {
-    expect(DEFAULT_CONFIG.heapDir).toBeDefined();
-    expect(DEFAULT_CONFIG.maxHeapSizeBytes).toBeDefined();
-    expect(DEFAULT_CONFIG.digestDir).toBeDefined();
-    expect(DEFAULT_CONFIG.seedDir).toBeDefined();
-    expect(DEFAULT_CONFIG.digestSchedule).toBeDefined();
-    expect(DEFAULT_CONFIG.digestDayOfWeek).toBeDefined();
-    expect(DEFAULT_CONFIG.soupEnabled).toBeDefined();
-    expect(DEFAULT_CONFIG.soupPopulationSize).toBeDefined();
-    expect(DEFAULT_CONFIG.soupMaxStepsPerCycle).toBeDefined();
-    expect(DEFAULT_CONFIG.soupSeedPromotionThreshold).toBeDefined();
-    expect(DEFAULT_CONFIG.soupCycleIntervalMs).toBeDefined();
-    expect(DEFAULT_CONFIG.llm).toBeDefined();
-    expect(DEFAULT_CONFIG.seedPromotionThreshold).toBeDefined();
-    expect(DEFAULT_CONFIG.maxSeedsPerDigest).toBeDefined();
-    expect(DEFAULT_CONFIG.nuggetRetentionDays).toBeDefined();
+    expect(DEFAULT_CONFIG.heapDir).not.toBeNull();
+    expect(DEFAULT_CONFIG.maxHeapSizeBytes).not.toBeNull();
+    expect(DEFAULT_CONFIG.digestDir).not.toBeNull();
+    expect(DEFAULT_CONFIG.seedDir).not.toBeNull();
+    expect(DEFAULT_CONFIG.digestSchedule).not.toBeNull();
+    expect(DEFAULT_CONFIG.digestDayOfWeek).not.toBeNull();
+    expect(DEFAULT_CONFIG.soupEnabled).not.toBeNull();
+    expect(DEFAULT_CONFIG.soupPopulationSize).not.toBeNull();
+    expect(DEFAULT_CONFIG.soupMaxStepsPerCycle).not.toBeNull();
+    expect(DEFAULT_CONFIG.soupSeedPromotionThreshold).not.toBeNull();
+    expect(DEFAULT_CONFIG.soupCycleIntervalMs).not.toBeNull();
+    expect(DEFAULT_CONFIG.llm).not.toBeNull();
+    expect(DEFAULT_CONFIG.seedPromotionThreshold).not.toBeNull();
+    expect(DEFAULT_CONFIG.maxSeedsPerDigest).not.toBeNull();
+    expect(DEFAULT_CONFIG.nuggetRetentionDays).not.toBeNull();
   });
 
   it('has correct default values', () => {

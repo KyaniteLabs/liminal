@@ -155,7 +155,7 @@ ${fragmentShader}`;
     it('should create WebGL canvas in container', () => {
       const instance = adapter.render(mockLayer, mockContainer, mockContext);
 
-      expect(instance).toBeDefined();
+      expect(instance).not.toBeNull();
       expect(mockContainer.querySelector('canvas')).toBeTruthy();
     });
 
@@ -195,7 +195,7 @@ ${fragmentShader}`;
 
       const instance = adapter.render(mockLayer, mockContainer, mockContext);
 
-      expect(instance).toBeDefined();
+      expect(instance).not.toBeNull();
       expect(mockGl.createShader).toHaveBeenCalled();
     });
 
@@ -213,9 +213,8 @@ ${fragmentShader}`;
       adapter.render(mockLayer, mockContainer, mockContext);
       const exports = adapter.getExports(mockLayer);
 
-      expect(exports).toBeDefined();
       expect(Array.isArray(exports)).toBe(true);
-      expect(exports.length).toBeGreaterThan(0);
+      expect(exports?.length).toBeGreaterThan(0);
     });
 
     it('should export time uniform', () => {
@@ -223,7 +222,7 @@ ${fragmentShader}`;
       const exports = adapter.getExports(mockLayer);
 
       const timeExport = exports.find(e => e.name === 'u_time');
-      expect(timeExport).toBeDefined();
+
       expect(timeExport?.type).toBe('number');
     });
 
@@ -232,7 +231,7 @@ ${fragmentShader}`;
       const exports = adapter.getExports(mockLayer);
 
       const resolutionExport = exports.find(e => e.name === 'u_resolution');
-      expect(resolutionExport).toBeDefined();
+
       expect(resolutionExport?.type).toBe('object');
     });
 
@@ -241,7 +240,7 @@ ${fragmentShader}`;
       const exports = adapter.getExports(mockLayer);
 
       const canvasExport = exports.find(e => e.name === 'canvas');
-      expect(canvasExport).toBeDefined();
+
       expect(canvasExport?.type).toBe('canvas');
     });
 
@@ -289,7 +288,7 @@ ${fragmentShader}`;
       const result = adapter.validate(mockLayer);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toBeDefined();
+      expect(result.errors).not.toBeNull();
       expect(result.errors?.some(e => e.toLowerCase().includes('fragment'))).toBe(true);
     });
 
@@ -299,7 +298,7 @@ ${fragmentShader}`;
       const result = adapter.validate(mockLayer);
 
       expect(result.valid).toBe(false);
-      expect(result.errors).toBeDefined();
+      expect(result.errors).not.toBeNull();
       expect(result.errors?.some(e => e.toLowerCase().includes('vertex'))).toBe(true);
     });
 
@@ -539,7 +538,7 @@ void main() {
       mockLayer.code = vertexShader + '\n' + fragmentShader;
 
       const instance = adapter.render(mockLayer, mockContainer, mockContext);
-      expect(instance).toBeDefined();
+      expect(instance).not.toBeNull();
     });
   });
 

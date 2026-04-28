@@ -24,7 +24,7 @@ describe('MetaMode', () => {
 
     for (const exp of experiments) {
       expect(exp.name).toMatch(/^exp-\d+$/);
-      expect(exp.params).toBeDefined();
+      expect(exp.params).not.toBeNull();
       expect(typeof exp.params.noveltyWeight).toBe('number');
       expect(typeof exp.params.qualityWeight).toBe('number');
       expect(typeof exp.params.temperature).toBe('number');
@@ -55,7 +55,7 @@ describe('MetaMode', () => {
     const experiments = meta.generateHypotheses(0.5);
     await meta.runExperiment(experiments[0]);
 
-    expect(experiments[0].experimentScore).toBeDefined();
+    expect(experiments[0].experimentScore).not.toBeNull();
     expect(typeof experiments[0].experimentScore).toBe('number');
   });
 
@@ -63,7 +63,6 @@ describe('MetaMode', () => {
     const experiments = meta.generateHypotheses(0.5);
     await meta.runExperiment(experiments[0]);
 
-    expect(experiments[0].improvement).toBeDefined();
     expect(typeof experiments[0].improvement).toBe('number');
     expect(experiments[0].improvement).toBe(
       experiments[0].experimentScore! - experiments[0].baselineScore,
@@ -146,8 +145,8 @@ describe('MetaMode', () => {
 
     // Every experiment should have been scored
     for (const exp of experiments) {
-      expect(exp.experimentScore).toBeDefined();
-      expect(exp.improvement).toBeDefined();
+      expect(exp.experimentScore).not.toBeNull();
+      expect(exp.improvement).not.toBeNull();
     }
   });
 });

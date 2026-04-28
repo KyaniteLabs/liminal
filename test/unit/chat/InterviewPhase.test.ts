@@ -43,14 +43,14 @@ describe('InterviewPhase', () => {
 
         expect(typeof question.id).toBe('string');
         expect(typeof question.question).toBe('string');
-        expect(typeof question.required).toBe('boolean');
+        expect(question.required === true || question.required === false).toBe(true);
 
         expect(['greeting', 'discovery', 'confirm', 'generating']).toContain(question.phase);
         expect(['text', 'choice', 'multiple']).toContain(question.type);
 
         // If type is choice or multiple, options should be present
         if (question.type === 'choice' || question.type === 'multiple') {
-          expect(question.options).toBeDefined();
+
           expect(Array.isArray(question.options)).toBe(true);
           expect(question.options!.length).toBeGreaterThan(0);
         }
@@ -168,43 +168,38 @@ describe('InterviewPhase', () => {
       const questions = getAllQuestions();
       const contextQuestion = questions.find(q => q.id === 'context');
 
-      expect(contextQuestion).toBeDefined();
       expect(contextQuestion?.phase).toBe('discovery');
-      expect(contextQuestion?.question).toBeDefined();
+      expect(contextQuestion?.question).not.toBeNull();
     });
 
     it('should include mood question in discovery phase', () => {
       const questions = getAllQuestions();
       const moodQuestion = questions.find(q => q.id === 'mood');
 
-      expect(moodQuestion).toBeDefined();
       expect(moodQuestion?.phase).toBe('discovery');
-      expect(moodQuestion?.question).toBeDefined();
+      expect(moodQuestion?.question).not.toBeNull();
     });
 
     it('should include references question in discovery phase', () => {
       const questions = getAllQuestions();
       const referencesQuestion = questions.find(q => q.id === 'references');
 
-      expect(referencesQuestion).toBeDefined();
       expect(referencesQuestion?.phase).toBe('discovery');
-      expect(referencesQuestion?.question).toBeDefined();
+      expect(referencesQuestion?.question).not.toBeNull();
     });
 
     it('should include constraints question in discovery phase', () => {
       const questions = getAllQuestions();
       const constraintsQuestion = questions.find(q => q.id === 'constraints');
 
-      expect(constraintsQuestion).toBeDefined();
       expect(constraintsQuestion?.phase).toBe('discovery');
-      expect(constraintsQuestion?.question).toBeDefined();
+      expect(constraintsQuestion?.question).not.toBeNull();
     });
 
     it('should include confirm question in confirm phase', () => {
       const questions = getAllQuestions();
       const confirmQuestion = questions.find(q => q.id === 'confirmed');
 
-      expect(confirmQuestion).toBeDefined();
       expect(confirmQuestion?.phase).toBe('confirm');
       expect(confirmQuestion?.type).toBe('choice');
     });
@@ -213,7 +208,6 @@ describe('InterviewPhase', () => {
       const questions = getAllQuestions();
       const generatingQuestion = questions.find(q => q.id === 'generating');
 
-      expect(generatingQuestion).toBeDefined();
       expect(generatingQuestion?.phase).toBe('generating');
       expect(generatingQuestion?.required).toBe(false);
     });

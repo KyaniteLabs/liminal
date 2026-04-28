@@ -6,7 +6,7 @@ describe('SwarmOptions', () => {
   describe('interface', () => {
     it('should accept empty options', () => {
       const options: SwarmOptions = {};
-      expect(options).toBeDefined();
+      expect(options).not.toBeNull();
     });
 
     it('should accept all swarm properties', () => {

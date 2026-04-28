@@ -45,7 +45,7 @@ describe('StagnationDetector', () => {
     ];
     const result = detector.detect(history);
     const fertilitySignal = result.signals.find(s => s.metric === 'fertility');
-    expect(fertilitySignal).toBeDefined();
+    expect(fertilitySignal).not.toBeNull();
   });
 
   it('detects niche occupancy plateau', () => {
@@ -56,7 +56,7 @@ describe('StagnationDetector', () => {
     ];
     const result = detector.detect(history);
     const nicheSignal = result.signals.find(s => s.metric === 'nicheOccupancy');
-    expect(nicheSignal).toBeDefined();
+    expect(nicheSignal).not.toBeNull();
   });
 
   it('detects declining health', () => {
@@ -68,7 +68,7 @@ describe('StagnationDetector', () => {
     ];
     const result = detector.detect(history);
     const healthSignal = result.signals.find(s => s.metric === 'healthScore');
-    expect(healthSignal).toBeDefined();
+    expect(healthSignal).not.toBeNull();
   });
 
   it('detects taste alignment drop', () => {
@@ -79,7 +79,7 @@ describe('StagnationDetector', () => {
     ];
     const result = detector.detect(history);
     const tasteSignal = result.signals.find(s => s.metric === 'tasteAlignment');
-    expect(tasteSignal).toBeDefined();
+    expect(tasteSignal).not.toBeNull();
   });
 
   it('detects archive size stagnation', () => {
@@ -90,7 +90,7 @@ describe('StagnationDetector', () => {
     ];
     const result = detector.detect(history);
     const archiveSignal = result.signals.find(s => s.metric === 'archiveSize');
-    expect(archiveSignal).toBeDefined();
+    expect(archiveSignal).not.toBeNull();
   });
 
   it('declares stagnant when 2+ signals fire', () => {

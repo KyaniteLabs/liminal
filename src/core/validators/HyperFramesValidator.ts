@@ -23,6 +23,10 @@ export class HyperFramesValidator {
     { pattern: /function\s+draw\s*\(/, message: 'HyperFrames must not use p5.js draw()' },
     { pattern: /\bmakeScene\b/, message: 'HyperFrames must not use Revideo makeScene' },
     { pattern: /@revideo\//, message: 'HyperFrames must not use @revideo/* packages' },
+    // Intentionally lexical, including comments: generated artifacts should not
+    // preserve deprecated GSAP migration examples that can be copied back into
+    // runnable timelines and break the HyperFrames preview player.
+    { pattern: /\.stagger(?:From|To|FromTo)\s*\(/, message: 'HyperFrames must use GSAP 3 timeline methods such as tl.from() with a stagger property, not deprecated tl.staggerFrom()' },
   ];
 
   static validate(code: string): HyperFramesValidationResult {

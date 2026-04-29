@@ -92,6 +92,18 @@ describe('StrudelGenerator', () => {
     expect(result).toContain('s(');
   });
 
+  it('sanitizeCode strips HTML script loader tags while preserving Strudel source', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: '<script src="https://cdn.jsdelivr.net/npm/@strudel/web@latest"></script>\nstack(s("bd"), note("c3")).out()',
+      iterations: 1, toolCallsMade: 0, success: true,
+    });
+    const gen = new StrudelGenerator();
+    const result = await gen.generate('drum pattern');
+
+    expect(result).not.toContain('<script');
+    expect(result).toContain('stack(s("bd"), note("c3")).out()');
+  });
+
   it('sanitizeCode returns empty string for empty input', async () => {
     mockToolLoop.mockResolvedValueOnce({
       content: '',

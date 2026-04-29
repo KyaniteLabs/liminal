@@ -14,4 +14,13 @@ describe('visual output preview contract matrix', () => {
     expect(script).toContain("if (domain === 'hyperframes') return HTMLWrapper.wrap");
     expect(script).toContain('hyperframesPreviewShell');
   });
+
+  it('fails visual proof if Strudel code is not visible or Tone visuals are not tempo-synced', () => {
+    expect(script).toContain('strudelCodeVisible');
+    expect(script).toContain('Strudel preview is missing visible source code');
+    expect(script).toContain('toneTempoSynced');
+    expect(script).toContain('Tone preview is missing tempo-synced visual feedback');
+    expect(script).toContain('toneEmbeddedPlayableControl');
+    expect(script).toContain('Tone preview is missing the generated playback control');
+  });
 });

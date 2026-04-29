@@ -226,15 +226,24 @@ async function main() {
       audioCount: document.querySelectorAll('audio').length,
       buttonCount: document.querySelectorAll('button,[role="button"]').length,
       bodyTextLength: (document.body?.innerText || '').trim().length,
+      strudelCodeVisible: Boolean(document.querySelector('[data-strudel-source-code]')?.textContent?.trim()),
       revideoTimelinePreview: Boolean(document.querySelector('[data-revideo-timeline-preview]')),
       tonePreviewShell: Boolean(document.querySelector('[data-tone-preview-shell], #visualizer, #liminal-tone-visualizer')),
+      toneTempoSynced: Boolean(document.querySelector('[data-tone-tempo-sync="true"][data-tone-bpm]')),
+      toneEmbeddedPlayableControl: Boolean(
+        !document.querySelector('#tone-artifact-surface') ||
+        document.querySelector('#tone-artifact-surface button, #tone-artifact-surface [role="button"]')
+      ),
       hyperframesPreviewShell: Boolean(document.querySelector('[data-hyperframes-preview-shell]')),
       monitor: (window as unknown as { __liminalVisualProof?: { errors?: Array<{ level: string; message: string }> } }).__liminalVisualProof || {},
     }));
     const monitorErrors = (metrics.monitor.errors || []).filter((entry: { level: string; message: string }) => entry.level === 'error');
     const contractErrors = [
+      item.domain === 'strudel' && !metrics.strudelCodeVisible ? 'Strudel preview is missing visible source code' : '',
       item.domain === 'revideo' && !metrics.revideoTimelinePreview ? 'Revideo preview is missing the rendered timeline shell' : '',
       item.domain === 'tone' && !metrics.tonePreviewShell ? 'Tone preview is missing the polished audio shell' : '',
+      item.domain === 'tone' && !metrics.toneTempoSynced ? 'Tone preview is missing tempo-synced visual feedback' : '',
+      item.domain === 'tone' && !metrics.toneEmbeddedPlayableControl ? 'Tone preview is missing the generated playback control' : '',
       item.domain === 'hyperframes' && !metrics.hyperframesPreviewShell ? 'HyperFrames preview is missing the composition shell' : '',
     ].filter(Boolean);
     results.push({

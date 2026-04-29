@@ -125,4 +125,26 @@ describe('HyperFramesValidator', () => {
     const result = HyperFramesValidator.validate(code);
     expect(result.errors).not.toEqual(expect.arrayContaining([expect.stringContaining('GSAP')]));
   });
+
+  it('rejects deprecated staggerFrom timeline calls that fail in GSAP 3 previews', () => {
+    const code = VALID_COMPOSITION.replace(
+      'tl.from("#title", { opacity: 0, duration: 1 }, 0);',
+      'tl.staggerFrom(".clip", { opacity: 0, duration: 1 }, 0.3, 2);'
+    );
+    const result = HyperFramesValidator.validate(code);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('HyperFrames must use GSAP 3 timeline methods such as tl.from() with a stagger property, not deprecated tl.staggerFrom()');
+  });
+
+  it('rejects deprecated staggerFrom references even in comments', () => {
+    const code = VALID_COMPOSITION.replace(
+      '</script>',
+      '// Do not document tl.staggerFrom(".clip", { opacity: 0 }, 0.3) in generated artifacts.\\n</script>'
+    );
+    const result = HyperFramesValidator.validate(code);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('HyperFrames must use GSAP 3 timeline methods such as tl.from() with a stagger property, not deprecated tl.staggerFrom()');
+  });
 });

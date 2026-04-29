@@ -52,6 +52,12 @@ export class StrudelGenerator extends TierBasedGenerator {
     // Strip HTML-style comments
     clean = clean.replace(/<!--[\s\S]*?-->/g, '');
 
+    // Strudel artifacts should be source patterns, not HTML loader snippets.
+    clean = clean
+      .replace(/<script\b[^>]*\bsrc=["'][^"']*(?:strudel|@strudel)[^"']*["'][^>]*>\s*<\/script>/gi, '')
+      .replace(/<script\b[^>]*>/gi, '')
+      .replace(/<\/script>/gi, '');
+
     // If the model returned an HTML wrapper page, prefer extracting visible
     // Strudel code from a code/output container or from inline helper scripts.
     const codeDivMatch = clean.match(/<div[^>]*class=["'][^"']*code[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);

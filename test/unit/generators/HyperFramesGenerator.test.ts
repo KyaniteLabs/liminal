@@ -122,6 +122,16 @@ describe('HyperFramesGenerator', () => {
     });
   });
 
+  describe('prompt contract', () => {
+    it('instructs models not to pull random remote stock images into HyperFrames previews', () => {
+      const source = require('node:fs').readFileSync('src/generators/hyperframes/HyperFramesGenerator.ts', 'utf8');
+
+      expect(source).toContain('Do not use random remote image URLs');
+      expect(source).toContain('Use CSS gradients, generated shapes, or explicit user-provided asset URLs');
+      expect(source).not.toContain('picsum.photos');
+    });
+  });
+
   describe('wrapForGallery', () => {
     it('returns original code when viewport meta already present', () => {
       const code = '<html><head><meta name="viewport" content="width=device-width"></head><body>Hello</body></html>';

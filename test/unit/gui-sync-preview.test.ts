@@ -29,4 +29,19 @@ describe('syncPreview', () => {
     expect(html).toContain('window.__liminalAudio');
     expect(html).toContain('import * as THREE');
   });
+
+  it('provides a stable canvas binding for Three.js snippets that expect one', () => {
+    const html = buildSyncPreviewHtml('const renderer = new THREE.WebGLRenderer({ canvas }); renderer.render(new THREE.Scene(), new THREE.PerspectiveCamera());');
+
+    expect(html).toContain('id="liminal-three-canvas"');
+    expect(html).toContain("const canvas = document.getElementById('liminal-three-canvas')");
+  });
+
+  it('does not redeclare canvas when a Three.js snippet already destructures one', () => {
+    const html = buildSyncPreviewHtml('const opts = {}; const { canvas } = opts; const renderer = new THREE.WebGLRenderer({ canvas });');
+
+    expect(html).not.toContain('id="liminal-three-canvas"');
+    expect(html).not.toContain("const canvas = document.getElementById('liminal-three-canvas')");
+  });
+
 });

@@ -63,7 +63,8 @@
     "proof:user-surface-controls": "tsx scripts/proof/user-surface-controls.ts",
     "proof:gui-bundle-budget": "tsx scripts/proof/gui-bundle-budget.ts",
     "qa:creative-domains": "node scripts/qa-creative-domains.mjs",
-    "qa:creative-domains:static": "node scripts/qa-creative-domains.mjs --no-serve"
+    "qa:creative-domains:static": "node scripts/qa-creative-domains.mjs --no-serve",
+    "proof:visual-output-previews": "tsx scripts/proof/visual-output-preview-contract.ts"
   },
   "keywords": [
     "generative-art",

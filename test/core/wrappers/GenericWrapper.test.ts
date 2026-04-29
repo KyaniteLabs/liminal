@@ -107,6 +107,13 @@ describe('GenericWrapper', () => {
   });
 
   describe('wrap - Strudel', () => {
+    it('allows the Strudel editor to fetch its sample manifest without broadening every wrapper', () => {
+      const result = GenericWrapper.wrap('s("bd sd")', { domain: 'strudel' });
+
+      expect(result).toContain('connect-src https://raw.githubusercontent.com');
+      expect(result).not.toContain("connect-src 'none'");
+    });
+
     it('wraps Strudel code', () => {
       const code = 's("bd sd")';
       const result = GenericWrapper.wrap(code, { domain: 'strudel' });
@@ -127,6 +134,13 @@ describe('GenericWrapper', () => {
   });
 
   describe('wrap - Hydra', () => {
+    it('permits Hydra synth eval while keeping network connections blocked', () => {
+      const result = GenericWrapper.wrap('osc(20).out()', { domain: 'hydra' });
+
+      expect(result).toContain("script-src 'self' 'unsafe-inline' 'unsafe-eval'");
+      expect(result).toContain("connect-src 'none'");
+    });
+
     it('wraps Hydra code', () => {
       const code = 'osc(20).out()';
       const result = GenericWrapper.wrap(code, { domain: 'hydra' });
@@ -157,6 +171,13 @@ describe('GenericWrapper', () => {
   });
 
   describe('wrap - Tone.js', () => {
+    it('allows Tone.js browser audio workers without opening network connections', () => {
+      const result = GenericWrapper.wrap('const synth = new Tone.Synth();', { domain: 'tone' });
+
+      expect(result).toContain('worker-src blob:');
+      expect(result).toContain("connect-src 'none'");
+    });
+
     it('wraps Tone.js code', () => {
       const code = 'const synth = new Tone.Synth();';
       const result = GenericWrapper.wrap(code, { domain: 'tone' });

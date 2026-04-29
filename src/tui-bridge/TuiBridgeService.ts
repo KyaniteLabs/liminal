@@ -2543,7 +2543,7 @@ export class TuiBridgeService {
     const domainInstruction = domain === Domain.THREE
       ? 'Return raw Three.js scene code only. Do not return SVG, p5, prose, or markdown. Expose an audio-reactive object by reading window.__liminalAudio each animation frame; map rms/energy to scale/brightness and centroid/brightness to hue/material intensity.'
       : domain === Domain.P5
-        ? 'Return raw p5.js sketch code only. Do not return SVG, Three.js, prose, or markdown. Read window.__liminalAudio inside draw(); map rms/energy to scale/brightness and centroid/brightness to hue/motion.'
+        ? 'Return raw p5.js sketch code only. Do not return any other framework, markup, prose, or markdown. Read window.__liminalAudio inside draw(); map rms/energy to scale/brightness and centroid/brightness to hue/motion.'
         : domain === Domain.GLSL || domain === Domain.SHADER || domain === Domain.WEBGL
           ? 'Return raw GLSL fragment shader code only. Do not return SVG, p5, prose, or markdown.'
           : domain === Domain.HYDRA

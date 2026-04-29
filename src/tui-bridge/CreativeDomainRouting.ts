@@ -7,6 +7,7 @@ const VISUAL_FALLBACKS: Domain[] = [Domain.THREE, Domain.P5, Domain.HYDRA, Domai
 export function inferCreativeDomain(prompt: string): Domain {
   const lower = prompt.toLowerCase();
 
+  if (/\bp5\.?js\b|\bp5js\b|\bp5\s+sketch\b|\bp5\s+code\b/.test(lower)) return Domain.P5;
   if (/\bthree\.js\b|\bthreejs\b|\bthree\b|\b3d\b|\bwebgl\b|\bscene\b|\bcamera\b|\bmesh\b|\bgeometry\b|\borbit(?:ing)?\b/.test(lower)) {
     return Domain.THREE;
   }

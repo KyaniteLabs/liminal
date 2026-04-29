@@ -29,8 +29,9 @@ export class AestheticStrategy implements ScoringStrategy {
     // Thread LIR context through if available on the input
     const report = this.critic.critique(
       input.output,
-      undefined,
+      input.criticConfig,
       input.lirContext,
+      input.domain,
     );
 
     return {

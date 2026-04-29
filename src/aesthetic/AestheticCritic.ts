@@ -14,7 +14,7 @@ import type {
   LIREvaluationContext,
   LIRAwareAestheticReport,
 } from './types.js';
-import { DEFAULT_DESIGN_CONSTRAINTS } from './types.js';
+import { DEFAULT_DESIGN_CONSTRAINTS, PRESET_PROFILES } from './types.js';
 import { analyzeColorHarmony } from './critics/ColorHarmonyCritic.js';
 import { analyzeLayout } from './critics/LayoutCritic.js';
 import { analyzeTypography } from './critics/TypographyCritic.js';
@@ -23,6 +23,43 @@ import { analyzeWithLLMJudge, type LLMClientLike, type LLMJudgeResult } from './
 import type { CalibrationWeights, CalibrationResult } from '../calibration/CalibrationSuite.js';
 import { CorrelationCalculator } from '../calibration/CorrelationCalculator.js';
 import type { HarnessMemory } from '../harness/HarnessMemory.js';
+
+
+function buildDesignConstraints(config?: Partial<CriticConfig>): DesignConstraints {
+  const presetConstraints = config?.preset ? PRESET_PROFILES[config.preset] : undefined;
+  const overrides = config?.constraints;
+
+  return {
+    ...DEFAULT_DESIGN_CONSTRAINTS,
+    ...presetConstraints,
+    ...overrides,
+    color: {
+      ...DEFAULT_DESIGN_CONSTRAINTS.color,
+      ...presetConstraints?.color,
+      ...overrides?.color,
+    },
+    layout: {
+      ...DEFAULT_DESIGN_CONSTRAINTS.layout,
+      ...presetConstraints?.layout,
+      ...overrides?.layout,
+    },
+    typography: {
+      ...DEFAULT_DESIGN_CONSTRAINTS.typography,
+      ...presetConstraints?.typography,
+      ...overrides?.typography,
+    },
+    sound: {
+      ...DEFAULT_DESIGN_CONSTRAINTS.sound,
+      ...presetConstraints?.sound,
+      ...overrides?.sound,
+    },
+    general: {
+      ...DEFAULT_DESIGN_CONSTRAINTS.general,
+      ...presetConstraints?.general,
+      ...overrides?.general,
+    },
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Critic registry
@@ -94,15 +131,7 @@ export class AestheticCritic {
       return this.critique(code, config);
     }
 
-    const constraints: DesignConstraints = {
-      ...DEFAULT_DESIGN_CONSTRAINTS,
-      ...config?.constraints,
-      color: { ...DEFAULT_DESIGN_CONSTRAINTS.color, ...config?.constraints?.color },
-      layout: { ...DEFAULT_DESIGN_CONSTRAINTS.layout, ...config?.constraints?.layout },
-      typography: { ...DEFAULT_DESIGN_CONSTRAINTS.typography, ...config?.constraints?.typography },
-      sound: { ...DEFAULT_DESIGN_CONSTRAINTS.sound, ...config?.constraints?.sound },
-      general: { ...DEFAULT_DESIGN_CONSTRAINTS.general, ...config?.constraints?.general },
-    };
+    const constraints = buildDesignConstraints(config);
 
     // Run both paths in parallel: heuristic + LLM
     const heuristicReport = this.critique(code, config);
@@ -146,15 +175,7 @@ export class AestheticCritic {
       return { score: 0, violations: [], passed: false, timestamp: Date.now() };
     }
 
-    const constraints: DesignConstraints = {
-      ...DEFAULT_DESIGN_CONSTRAINTS,
-      ...config?.constraints,
-      color: { ...DEFAULT_DESIGN_CONSTRAINTS.color, ...config?.constraints?.color },
-      layout: { ...DEFAULT_DESIGN_CONSTRAINTS.layout, ...config?.constraints?.layout },
-      typography: { ...DEFAULT_DESIGN_CONSTRAINTS.typography, ...config?.constraints?.typography },
-      sound: { ...DEFAULT_DESIGN_CONSTRAINTS.sound, ...config?.constraints?.sound },
-      general: { ...DEFAULT_DESIGN_CONSTRAINTS.general, ...config?.constraints?.general },
-    };
+    const constraints = buildDesignConstraints(config);
     const enabledCritics = config?.enabledCritics ?? ALL_CRITICS.map(c => c.name);
 
     const critics = ALL_CRITICS.filter(c => enabledCritics.includes(c.name));

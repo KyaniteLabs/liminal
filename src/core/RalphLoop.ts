@@ -1030,12 +1030,27 @@ export class RalphLoop {
               }
             }
 
-            // Emit aesthetic score in evaluation event
+            const { evaluateCodePerception } = await import('../perception/index.js');
+            const perceptionReport = evaluateCodePerception(
+              currentCode,
+              String(normalizedOptions.collabDomain || normalizedOptions.mode || 'p5'),
+            );
+            if (!perceptionReport.passed) {
+              evaluation.score = evaluation.score * 0.85;
+              const perceptionIssues = perceptionReport.issues
+                .filter(issue => issue.severity === 'error' || issue.severity === 'warning')
+                .map(issue => `[human-perception] ${issue.id}: ${issue.message}`);
+              evaluation.issues = [...(evaluation.issues ?? []), ...perceptionIssues];
+            }
+
+            // Emit aesthetic and human-perception scores in evaluation event
             eventBus.emit(EventTypes.LOOP_EVALUATION, 'RalphLoop', {
               iteration,
               overallScore: evaluation.score,
               technicalScore: evaluation.dimensions?.technical ?? 0,
               aestheticScore: aestheticReport.score,
+              humanPerceptionPassed: perceptionReport.passed,
+              humanPerceptionIssues: perceptionReport.issues.map(issue => issue.id),
               noveltyScore: evaluation.dimensions?.novelty ?? 0,
             });
           } catch (e) {

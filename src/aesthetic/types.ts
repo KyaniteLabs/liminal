@@ -115,6 +115,8 @@ export interface CriticConfig {
   enabledCritics: string[];
   strictness: CriticStrictness;
   constraints: DesignConstraints;
+  /** Optional creative-preference preset. This is Layer 2 vocabulary, not a hard human-perception guardrail. */
+  preset?: AestheticPreset | string;
 }
 
 // ---------------------------------------------------------------------------

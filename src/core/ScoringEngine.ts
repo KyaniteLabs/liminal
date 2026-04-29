@@ -294,7 +294,8 @@ class AestheticStrategy implements ScoringStrategy {
     const report = this.critic.critique(
       input.output,
       input.criticConfig,
-      input.lirContext
+      input.lirContext,
+      input.domain,
     );
 
     // Map aesthetic dimensions
@@ -524,9 +525,10 @@ export class ScoringEngine {
   async scoreAesthetic(
     input: string,
     criticConfig?: Partial<CriticConfig>,
-    lirContext?: LIREvaluationContext
+    lirContext?: LIREvaluationContext,
+    domain?: Domain,
   ): Promise<ScoringResult> {
-    return this.score({ output: input, criticConfig, lirContext }, 'aesthetic');
+    return this.score({ output: input, criticConfig, lirContext, domain }, 'aesthetic');
   }
 
   /** Set the default strategy. */

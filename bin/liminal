@@ -119,6 +119,19 @@ function isIsolatedWorktree(cwd = process.cwd()) {
     || cwd.includes(`${path.sep}.claude${path.sep}worktrees${path.sep}`);
 }
 
+function loadAestheticConfig(configPath) {
+  if (!configPath) return undefined;
+  const resolvedPath = path.resolve(configPath);
+  try {
+    return JSON.parse(fs.readFileSync(resolvedPath, 'utf-8'));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`Error: failed to load --aesthetic-config from ${resolvedPath}: ${message}`);
+    process.exit(1);
+  }
+}
+
+
 function summarizeSession(session) {
   return {
     status: session.status,
@@ -197,8 +210,8 @@ function printHelp() {
   console.log('  --verbose, -v               Verbose output');
   console.log('  --voice                     Enable voice-driven visual mapping');
   console.log('  --voice-file <path>         Audio file for voice-to-visual analysis');
-  console.log('  --aesthetic <preset>        Aesthetic guardrail preset (lenient|moderate|strict)');
-  console.log('  --aesthetic-config <json>   Aesthetic guardrail configuration');
+  console.log('  --aesthetic <preset>        Creative preference preset (minimalist|vibrant|cinematic|playful|free)');
+  console.log('  --aesthetic-config <path>  Path to aesthetic/perception config JSON');
   console.log('  --intuition                 Enable intuition scoring dimension');
   console.log('  --consolidate               Run memory consolidation (L3→L2 compression)');
   console.log('  --error <text>              Error description for fix command');
@@ -772,6 +785,11 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
   console.log('Generating:', prompt);
   console.log('');
   
+  const aestheticConfig = {
+    ...(loadAestheticConfig(flags.aestheticConfig) || {}),
+    ...(flags.aesthetic ? { preset: flags.aesthetic } : {}),
+  };
+
   run(prompt, {
     maxIterations: maxIterations,
     output: outDir,
@@ -780,7 +798,7 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
     swarmMode: flags.swarmMode,
     swarmConfig: flags.swarmRounds ? { maxRounds: flags.swarmRounds } : undefined,
     useAestheticGuardrails: !!(flags.aesthetic || flags.aestheticConfig),
-    aestheticConfig: flags.aesthetic ? { preset: flags.aesthetic } : undefined,
+    aestheticConfig: (flags.aesthetic || flags.aestheticConfig) ? aestheticConfig : undefined,
     useIntuition: !!flags.intuition,
     voiceFile: flags.voiceFile,
     voice: flags.voice,

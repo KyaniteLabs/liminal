@@ -14,6 +14,7 @@ import { applyBridgeProviderEnv, resolveBridgeProviderConfig, summarizeBridgeRun
 import { LLMClient } from '../dist/llm/LLMClient.js';
 import { logSecurityEvent } from '../dist/security/SecurityLogger.js';
 import { collectRepositoryOpportunityEvidence, scanGreenSystemOpportunities } from '../dist/improvement/OpportunityScanner.js';
+import { buildGuiBridgeInput } from './bridgeInput.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cwd = process.cwd();
@@ -374,11 +375,7 @@ export function createApp(configPath, port = 5174) {
 
   app.post('/api/tui/session/:id/input', async (req, res) => {
     try {
-      const result = await tuiBridge.submitInput(req.params.id, {
-        mode: req.body?.mode || 'chat',
-        text: req.body?.text || '',
-        clientIntent: req.body?.clientIntent,
-      }, createGuiBridgeLLM());
+      const result = await tuiBridge.submitInput(req.params.id, buildGuiBridgeInput(req.body), createGuiBridgeLLM());
       res.status(200).json(result);
     } catch (err) {
       res.status(400).json({ error: err.message || String(err) });

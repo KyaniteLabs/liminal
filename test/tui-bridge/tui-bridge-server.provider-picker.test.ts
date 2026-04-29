@@ -70,6 +70,24 @@ describe('TuiBridgeServer model picker', () => {
     vi.clearAllMocks();
   });
 
+  it('destroys bridge runtime timers when the server stops', async () => {
+    const port = await getFreePort();
+    const service = new TuiBridgeService();
+    const destroySpy = vi.spyOn(service, 'destroy');
+    const server = new TuiBridgeServer(service, {
+      host: '127.0.0.1',
+      port,
+      llm: {
+        getConfig: () => ({ baseUrl: 'https://openrouter.ai/api/v1', model: 'anthropic/claude-sonnet-4-6' }),
+      } as any,
+    });
+
+    await server.start();
+    await server.stop();
+
+    expect(destroySpy).toHaveBeenCalledTimes(1);
+  });
+
   it('lists model choices and marks the current one', async () => {
     const port = await getFreePort();
     const service = new TuiBridgeService();

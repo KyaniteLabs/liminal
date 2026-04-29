@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
 
 import {
   buildCreativeDomainPlan,
@@ -8,6 +9,22 @@ import {
 import { Domain } from '../../../src/types/domains.js';
 
 describe('TuiBridgeService creative domain routing', () => {
+  it('honors explicit p5 prompts even when visual wording sounds three-dimensional', () => {
+    const prompt = 'Create a concise p5.js sketch: luminous blue-green particles orbit a dark center, with visible motion, setup(), draw(), and createCanvas().';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.P5);
+    expect(buildCreativeDomainPlan(prompt).slice(0, 2)).toEqual([Domain.P5, Domain.THREE]);
+  });
+
+  it('keeps the p5 generation instruction from accidentally retriggering Three dispatch', () => {
+    const source = fs.readFileSync('src/tui-bridge/TuiBridgeService.ts', 'utf8');
+    const p5Instruction = source.match(/Return raw p5\.js sketch code only\.[^']+/)?.[0] ?? '';
+
+    expect(p5Instruction).toContain('p5.js sketch code only');
+    expect(p5Instruction).not.toContain('SVG');
+    expect(p5Instruction).not.toContain('Three.js');
+  });
+
   it('routes explicit Three.js prompts to Three instead of p5 or svg', () => {
     const prompt = 'Generate a Three.js scene: an impossible greenhouse orbiting inside a black hole with glass flowers.';
 

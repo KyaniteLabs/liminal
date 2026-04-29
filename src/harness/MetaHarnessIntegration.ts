@@ -40,6 +40,21 @@ export interface MetaHarnessStatus {
   memory: ReturnType<typeof harnessMemory.getStatus>;
 }
 
+export async function withShutdownTimeout<T>(operation: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((_, reject) => {
+        timeout = setTimeout(() => reject(new Error('Shutdown timeout')), timeoutMs);
+        timeout.unref?.();
+      }),
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
 export class MetaHarnessIntegration {
   private initialized = false;
   private appliedAdaptations: string[] = []; // Pattern names that were detected
@@ -604,7 +619,7 @@ export const metaHarness = new MetaHarnessIntegration();
 // Auto-initialize if in CLI context
 if (typeof process !== 'undefined' && process.stdout?.isTTY) {
   // Delay initialization to avoid circular dependencies during module load
-  setTimeout(() => {
+  const autoInitTimer = setTimeout(() => {
     void (async () => {
       try {
         await metaHarness.initialize();
@@ -613,6 +628,7 @@ if (typeof process !== 'undefined' && process.stdout?.isTTY) {
       }
     })();
   }, 100);
+  autoInitTimer.unref?.();
 }
 
 // Ensure shutdown on exit
@@ -623,12 +639,7 @@ if (typeof process !== 'undefined') {
   process.on('beforeExit', () => {
     void (async () => {
       try {
-        await Promise.race([
-          metaHarness.shutdown(),
-          new Promise<void>((_, reject) =>
-            setTimeout(() => reject(new Error('Shutdown timeout')), SHUTDOWN_TIMEOUT_MS)
-          ),
-        ]);
+        await withShutdownTimeout(metaHarness.shutdown(), SHUTDOWN_TIMEOUT_MS);
       } catch (err) {
         Logger.error('MetaHarnessIntegration', 'Shutdown failed on beforeExit:', err);
       }
@@ -638,12 +649,7 @@ if (typeof process !== 'undefined') {
   process.on('SIGINT', () => {
     void (async () => {
       try {
-        await Promise.race([
-          metaHarness.shutdown(),
-          new Promise<void>((_, reject) => 
-            setTimeout(() => reject(new Error('Shutdown timeout')), SHUTDOWN_TIMEOUT_MS)
-          ),
-        ]);
+        await withShutdownTimeout(metaHarness.shutdown(), SHUTDOWN_TIMEOUT_MS);
         process.exit(0);
       } catch (err) {
         Logger.error('MetaHarnessIntegration', 'Shutdown failed on SIGINT:', err);
@@ -655,12 +661,7 @@ if (typeof process !== 'undefined') {
   process.on('SIGTERM', () => {
     void (async () => {
       try {
-        await Promise.race([
-          metaHarness.shutdown(),
-          new Promise<void>((_, reject) => 
-            setTimeout(() => reject(new Error('Shutdown timeout')), SHUTDOWN_TIMEOUT_MS)
-          ),
-        ]);
+        await withShutdownTimeout(metaHarness.shutdown(), SHUTDOWN_TIMEOUT_MS);
         process.exit(0);
       } catch (err) {
         Logger.error('MetaHarnessIntegration', 'Shutdown failed on SIGTERM:', err);

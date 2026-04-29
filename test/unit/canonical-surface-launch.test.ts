@@ -7,7 +7,8 @@ describe('canonical user-surface launch contract', () => {
   it('keeps exactly one blessed GUI command and one blessed operator TUI command', () => {
     const pkg = JSON.parse(read('package.json')) as { scripts: Record<string, string> };
 
-    expect(pkg.scripts.gui).toBe('node scripts/utils/start-studio.js');
+    expect(pkg.scripts.build).toBe('tsc --incremental false');
+    expect(pkg.scripts.gui).toBe('npm run build && node scripts/utils/start-studio.js');
     expect(pkg.scripts.studio).toBe('npm run gui');
     expect(pkg.scripts.tui).toBe('npm run build && node scripts/start-bubbletea-tui.mjs');
     expect(pkg.scripts['tui:ink']).toBe('node scripts/compat/ink-tui-compat.mjs');

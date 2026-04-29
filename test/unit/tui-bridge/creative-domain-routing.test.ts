@@ -69,6 +69,13 @@ describe('TuiBridgeService creative domain routing', () => {
     expect(buildCreativeDomainPlan(prompt)[0]).toBe(Domain.KINETIC);
   });
 
+  it('routes moving type prompts to Kinetic when no explicit framework is requested', () => {
+    const prompt = 'Create moving type with expressive letter spacing as a complete animated HTML artifact.';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.KINETIC);
+    expect(buildCreativeDomainPlan(prompt)[0]).toBe(Domain.KINETIC);
+  });
+
   it('honors explicit Three.js cues before broad kinetic typography matching', () => {
     const prompt = 'Create a Three.js scene with animated text orbiting the camera.';
 

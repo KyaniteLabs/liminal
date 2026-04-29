@@ -9,7 +9,7 @@ export function inferCreativeDomain(prompt: string): Domain {
   const hasExplicitFrameworkCue = /\bhyperframes?\b|\bthree\.js\b|\bthreejs\b|\b3d\b|\bwebgl\b|\bscene\b|\bcamera\b|\bmesh\b|\bgeometry\b|\bshader\b|\bglsl\b|\bstrudel\b|\bhydra\b|\btone\.?js\b|\btonejs\b|\bweb\s*audio\b/.test(lower);
 
   if (/\bp5\.?js\b|\bp5js\b|\bp5\s+sketch\b|\bp5\s+code\b/.test(lower)) return Domain.P5;
-  if (!hasExplicitFrameworkCue && /\bkinetic\s+(typography|type|text|css)\b|\bcss\s+kinetic\b|\b(animated|moving|orbiting|spinning|pulsing)\s+(words?|letters?|typography|text)\b|\b(typography|text)\b.*\b(animated|moving|kinetic|orbiting|spinning|pulsing)\b/.test(lower)) {
+  if (!hasExplicitFrameworkCue && /\bkinetic\s+(typography|type|text|css)\b|\bcss\s+kinetic\b|\b(animated|moving|orbiting|spinning|pulsing)\s+(words?|letters?|typography|text|type)\b|\b(typography|text|type)\b.*\b(animated|moving|kinetic|orbiting|spinning|pulsing)\b/.test(lower)) {
     return Domain.KINETIC;
   }
   if (/\bhyperframes?\b|\b(promo|trailer|slideshow|title\s*card|subtitle|caption|social\s*media)\b|\b(composite|assemble|overlay|watermark|intro|outro)\b/.test(lower)) {

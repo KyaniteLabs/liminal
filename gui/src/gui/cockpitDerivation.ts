@@ -28,6 +28,8 @@ export type BridgeEvent = {
   phase?: string;
   thought?: string;
   source?: string;
+  previewType?: string;
+  checks?: string[];
   toolName?: string;
   displayLabel?: string;
   argsSummary?: string;
@@ -110,6 +112,16 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
     if (event.type === 'tool.completed') {
       latestMessage = String(event.resultSummary || latestMessage);
     }
+    if (event.type === 'generation.route.selected') {
+      activeDomain = event.domain || activeDomain;
+      phase = 'route selected';
+      latestMessage = Array.isArray(event.domains)
+        ? `Selected ${event.domain || event.domains[0] || 'domain'}; fallback order ${event.domains.join(' -> ')}`
+        : latestMessage;
+      timeoutMinutes = event.timeoutMinutes || timeoutMinutes;
+      candidateCount = event.candidateCount || candidateCount;
+      executionMode = event.executionMode || executionMode;
+    }
     if (event.type === 'generation.domain_plan') {
       generationStartedAt = readEventTime(event) || generationStartedAt;
       timeoutMinutes = event.timeoutMinutes || timeoutMinutes;
@@ -173,6 +185,13 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       if (!hasGenerationComplete) phase = 'previewed';
       previewCompletedAt = readEventTime(event) || previewCompletedAt;
     }
+    if (event.type === 'preview.verified') {
+      if (!hasGenerationComplete) phase = 'verified preview';
+      previewCompletedAt = readEventTime(event) || previewCompletedAt || now;
+      latestMessage = Array.isArray(event.checks) && event.checks.length > 0
+        ? `Preview verified: ${event.checks.join(', ')}`
+        : 'Preview verified';
+    }
     if (event.type === 'generation.complete') {
       hasGenerationComplete = true;
       phase = 'complete';
@@ -195,9 +214,12 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
     : currentAttempt > 0
       ? Math.min(0.96, Math.max(0.03, spentMs / boundedTotalMs))
       : 0;
-  const remainingMs = hasGenerationComplete || phase === 'complete' || phase === 'previewed' ? 0 : Math.max(0, boundedTotalMs - spentMs);
+  const remainingMs = hasGenerationComplete || phase === 'complete' || phase === 'previewed' || phase === 'verified preview' ? 0 : Math.max(0, boundedTotalMs - spentMs);
   const selectedDomain = selectedArtifactDomain || activeDomain;
-  const activeWork = hasGenerationComplete && selectedDomain
+  const hasVerifiedPreview = events.some((event) => event.type === 'preview.verified');
+  const activeWork = hasVerifiedPreview && !hasGenerationComplete
+    ? `Preview verified${selectedDomain ? ` for ${selectedDomain}` : ''}.`
+    : hasGenerationComplete && selectedDomain
     ? executionMode === 'draft'
       ? `Preview ready from ${selectedDomain}; no more domains are running.`
       : `Run complete from ${selectedDomain}.`

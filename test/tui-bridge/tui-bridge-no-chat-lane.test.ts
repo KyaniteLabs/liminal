@@ -289,6 +289,43 @@ describe('Bubble Tea operator routing', () => {
       .some(event => event.type === 'generation.clarification_needed')).toBe(false);
   });
 
+  it('emits an explicit route-selected event before model attempts for workbench generation', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'p5 sketch of fireflies orbiting a moonlit willow tree',
+        clientIntent: 'creative',
+        executionMode: 'draft',
+        maxIterations: 1,
+        candidateCount: 1,
+        timeoutMinutes: 1,
+      },
+      fakeLlm() as never,
+    );
+
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'generation.complete'));
+    const events = service.getEvents(session.sessionId);
+    const routeIndex = events.findIndex(event => event.type === 'generation.route.selected');
+    const attemptIndex = events.findIndex(event => event.type === 'generation.attempt.started');
+
+    expect(routeIndex).toBeGreaterThanOrEqual(0);
+    expect(attemptIndex).toBeGreaterThan(routeIndex);
+    expect(events[routeIndex]).toMatchObject({
+      type: 'generation.route.selected',
+      domain: expect.any(String),
+      domains: expect.arrayContaining([expect.any(String)]),
+      executionMode: 'draft',
+      candidateCount: 1,
+      timeoutMinutes: 1,
+    });
+    expect((events[routeIndex] as any).domains[0]).toBe((events[routeIndex] as any).domain);
+  });
+
   it('defaults workbench creative runs to the draft lane without invoking RalphLoop', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession();

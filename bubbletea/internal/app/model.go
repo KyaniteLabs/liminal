@@ -1191,6 +1191,22 @@ func (m Model) CancelPendingAction() tea.Cmd {
 	}
 }
 
+// CancelActiveRun sends a cancellation request for the active generation stream.
+func (m Model) CancelActiveRun() tea.Cmd {
+	if !m.Connected || m.SessionID == "" {
+		return nil
+	}
+	client := m.Bridge
+	sessionID := m.SessionID
+	return func() tea.Msg {
+		err := client.CancelRun(context.Background(), sessionID)
+		if err != nil {
+			return actionErrorMsg{err: err}
+		}
+		return runCancelledMsg{}
+	}
+}
+
 // containsCode checks if content has code blocks.
 func containsCode(content string) bool {
 	return strings.Contains(content, "```") ||

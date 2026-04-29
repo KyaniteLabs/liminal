@@ -1,4 +1,4 @@
-import { deriveCockpit } from '../components/OperatorCockpit';
+import { deriveCockpit } from './cockpitDerivation';
 
 export type WorkbenchBridgeEvent = {
   type: string;

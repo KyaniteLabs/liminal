@@ -66,6 +66,26 @@ const tuiBridge = new TuiBridgeService();
 
 const P5_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js';
 
+function setPreviewSecurityHeaders(res) {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Content-Security-Policy', [
+    "default-src 'none'",
+    "upgrade-insecure-requests",
+    "script-src 'unsafe-inline' https://cdnjs.cloudflare.com",
+    "style-src 'unsafe-inline'",
+    "img-src * data: blob:",
+    "media-src * data: blob:",
+    "connect-src 'none'",
+    "font-src 'none'",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'",
+  ].join('; '));
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+}
+
 function resolveGuiBridgeProvider() {
   const providerConfig = resolveBridgeProviderConfig();
   applyBridgeProviderEnv(process.env, providerConfig);
@@ -289,17 +309,28 @@ export function createApp(configPath, port = 5174) {
       res.setHeader('Referrer-Policy', 'no-referrer');
       res.flushHeaders();
 
-      for (const event of tuiBridge.getEvents(sessionId)) {
-        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      const lastEventId = Number(req.headers['last-event-id'] || 0) || 0;
+
+      for (const stored of tuiBridge.getEventsSince(sessionId, lastEventId)) {
+        res.write(`id: ${stored.id}\n`);
+        res.write(`data: ${JSON.stringify(stored.event)}\n\n`);
       }
 
-      const unsubscribe = tuiBridge.subscribe(sessionId, (event) => {
-        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      const unsubscribe = tuiBridge.subscribeWithId(sessionId, (stored) => {
+        res.write(`id: ${stored.id}\n`);
+        res.write(`data: ${JSON.stringify(stored.event)}\n\n`);
       });
+      const heartbeat = setInterval(() => {
+        res.write(': ping\n\n');
+      }, 15000);
 
-      req.on('close', () => unsubscribe());
-      req.on('error', () => unsubscribe());
-      res.on('error', () => unsubscribe());
+      const cleanup = () => {
+        clearInterval(heartbeat);
+        unsubscribe();
+      };
+      req.on('close', cleanup);
+      req.on('error', cleanup);
+      res.on('error', cleanup);
     } catch (err) {
       res.status(400).json({ error: err.message || String(err) });
     }
@@ -421,7 +452,28 @@ export function createApp(configPath, port = 5174) {
   // Serve preview page (p5 + stored code) so iframe can show the sketch
   app.get('/preview', (req, res) => {
     const version = Math.max(1, parseInt(String(req.query.version), 10) || 1);
-    const code = previewStore.get(version) || 'function setup(){ createCanvas(400,400); } function draw(){ background(100); }';
+    const code = previewStore.get(version);
+    if (typeof code !== 'string') {
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Permissions-Policy" content="accelerometer=(), gyroscope=(), magnetometer=(), deviceorientation=(), devicemotion=()">
+  <title>Preview unavailable</title>
+  <style>body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #07090d; color: #eef3ff; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; } main { max-width: 560px; padding: 24px; border: 1px solid rgba(145, 161, 190, 0.34); border-radius: 16px; background: rgba(18, 23, 32, 0.92); } h1 { margin: 0 0 8px; font-size: 20px; } p { margin: 0; color: #9aa7bd; line-height: 1.5; }</style>
+</head>
+<body>
+  <main>
+    <h1>Preview expired or missing</h1>
+    <p>This preview no longer has stored code. Run the artifact again from Liminal Studio to create a fresh sandboxed preview.</p>
+  </main>
+</body>
+</html>`;
+      setPreviewSecurityHeaders(res);
+      res.status(404).send(html);
+      return;
+    }
     const escaped = code.replace(/<\/script>/gi, '<\\/script>');
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -449,24 +501,7 @@ export function createApp(configPath, port = 5174) {
   </script>
 </body>
 </html>`;
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    // Wave 3 isolation: CSP + security headers to sandbox the preview
-    res.setHeader('Content-Security-Policy', [
-      "default-src 'none'",
-      "upgrade-insecure-requests",
-      "script-src 'unsafe-inline' https://cdnjs.cloudflare.com",  // p5 CDN + inline generated code
-      "style-src 'unsafe-inline'",
-      "img-src * data: blob:",
-      "media-src * data: blob:",
-      "connect-src 'none'",
-      "font-src 'none'",
-      "frame-src 'none'",
-      "object-src 'none'",
-      "base-uri 'none'",
-      "form-action 'none'",
-    ].join('; '));
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Referrer-Policy', 'no-referrer');
+    setPreviewSecurityHeaders(res);
     res.send(html);
   });
 

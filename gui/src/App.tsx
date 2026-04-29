@@ -1,4 +1,4 @@
-import { useState, useEffect, useReducer, useRef } from 'react';
+import React, { Suspense, useState, useEffect, useReducer, useRef } from 'react';
 import {
   liveOrganismReducer,
   INITIAL_LIVE_ORGANISM_STATE,
@@ -6,10 +6,6 @@ import {
   setPreviewRunResult,
   type GuiTab,
 } from './gui/liveOrganismState';
-import { CuratorMode } from './components/CuratorMode';
-import { ActivityDashboard } from './components/ActivityDashboard';
-import { CompostVisualizer } from './components/CompostVisualizer';
-import { OperatorCockpit } from './components/OperatorCockpit';
 import { WorkbenchShell } from './components/WorkbenchShell';
 import { useEventStream } from './components/activity/hooks';
 import {
@@ -28,6 +24,11 @@ import { buildSyncPreviewHtml } from './gui/syncPreview';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 import { latestClarificationRequest, latestCognitiveReceipt } from './gui/workbenchTelemetry';
 import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
+
+const CuratorMode = React.lazy(() => import('./components/CuratorMode').then((module) => ({ default: module.CuratorMode })));
+const ActivityDashboard = React.lazy(() => import('./components/ActivityDashboard').then((module) => ({ default: module.ActivityDashboard })));
+const CompostVisualizer = React.lazy(() => import('./components/CompostVisualizer').then((module) => ({ default: module.CompostVisualizer })));
+const OperatorCockpit = React.lazy(() => import('./components/OperatorCockpit').then((module) => ({ default: module.OperatorCockpit })));
 
 // State types
 interface MergeProposal {
@@ -530,7 +531,7 @@ export default function App() {
         setMergeProposal({ proposed: data.proposed, versionA: vA, versionB: vB });
       } else {
         setMergeProposal(null);
-        setMergeApiError(res.status === 404 ? 'Backend not running? Start with: node scripts/start-gui.js' : (data.error || 'Merge failed'));
+        setMergeApiError(res.status === 404 ? 'Backend not running? Start with: pnpm gui' : (data.error || 'Merge failed'));
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Request failed';
@@ -555,7 +556,7 @@ export default function App() {
         setMergeProposal({ proposed: data.proposed });
       } else {
         setMergeProposal(null);
-        setMergeApiError(res.status === 404 ? 'Backend not running? Start with: node scripts/start-gui.js' : (data.error || 'Mutate failed'));
+        setMergeApiError(res.status === 404 ? 'Backend not running? Start with: pnpm gui' : (data.error || 'Mutate failed'));
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Request failed';
@@ -1236,6 +1237,7 @@ export default function App() {
       leftSlot={leftSlot}
     >
       {shouldRenderLegacyPanel(activeTab) && (
+      <Suspense fallback={<div className="atelier-panel">Loading Studio surface…</div>}>
       <>
       {activeTab === 'config' && (
         <form id="atelier-config-form" onSubmit={(e: React.FormEvent) => e.preventDefault()} className="atelier-panel" style={{ maxWidth: 560 }} autoComplete="off">
@@ -1408,103 +1410,12 @@ export default function App() {
         </form>
       )}
 
-      {activeTab === 'create' && (
-        <div className="atelier-panel" style={{ maxWidth: 560 }}>
-          <h2 className="atelier-heading">Generate art</h2>
-          <p style={{ color: 'var(--atelier-text-muted)', fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>
-            Run the Ralph loop: same prompt every iteration, context accumulates. Use a rich prompt and an LLM in Config for varied, creative output.
-          </p>
-          <label style={{ display: 'block', marginBottom: 12 }}>
-            <span className="atelier-label">Prompt</span>
-            <textarea
-              value={createPrompt}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setCreatePrompt(e.target.value)}
-              placeholder="e.g. Create a calming blue particle system with soft gradients"
-              rows={3}
-              className="atelier-textarea"
-            />
-          </label>
-          <label style={{ display: 'block', marginBottom: 12 }}>
-            <span className="atelier-label" style={{ marginRight: 8 }}>Max iterations</span>
-            <input
-              type="number"
-              min={1}
-              max={20}
-              value={createMaxIterations}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateMaxIterations(Number(e.target.value))}
-              className="atelier-input"
-              style={{ width: 72 }}
-            />
-          </label>
-          <label style={{ display: 'block', marginBottom: 12 }}>
-            <span className="atelier-label" style={{ marginRight: 8 }}>Run mode</span>
-            <select
-              value={createMode}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCreateMode(e.target.value as CreateModeId)}
-              className="atelier-select"
-              style={{ width: 'auto', minWidth: 200 }}
-            >
-              {CREATE_MODE_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>{option.label}</option>
-              ))}
-            </select>
-            <small className="atelier-help" style={{ display: 'block', marginTop: 4 }}>
-              {promptOverridesMode
-                ? `Prompt says ${createModeOption.label}; using it instead of ${selectedCreateModeOption.label}.`
-                : `Default target: ${createModeOption.stageLabel}. Explicit prompt words override this.`}
-            </small>
-          </label>
-          {usesOrganismApi(effectiveCreateMode) && (
-            <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
-              <label>
-                <span className="atelier-label" style={{ marginRight: 4 }}>BPM</span>
-                <input
-                  type="number"
-                  min={60}
-                  max={240}
-                  value={createTraits.bpm || 120}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateTraits((t) => ({ ...t, bpm: Number(e.target.value) }))}
-                  className="atelier-input"
-                  style={{ width: 80, marginLeft: 4 }}
-                />
-              </label>
-              <label>
-                <span className="atelier-label" style={{ marginRight: 4 }}>Palette</span>
-                <input
-                  type="text"
-                  placeholder="e.g. warm, mono"
-                  value={createTraits.palette || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCreateTraits((t) => ({ ...t, palette: e.target.value }))}
-                  className="atelier-input"
-                  style={{ width: 120, marginLeft: 4 }}
-                />
-              </label>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={handleCreateRun}
-            disabled={runStatus === 'running' || !createPrompt.trim()}
-            className="atelier-btn atelier-btn--primary"
-          >
-            {runStatus === 'running' ? (createExecutionMode === 'draft' ? 'Generating…' : 'Polishing…') : (createExecutionMode === 'draft' ? 'Generate' : 'Polish')}
-          </button>
-          {runStatus === 'done' && runResult && (
-            <div className="atelier-alert atelier-alert--success" style={{ marginTop: 16 }}>
-              Done: {runResult.result?.iterations} iterations, score {runResult.result?.finalScore?.toFixed(2)}. Go to Live organism and select &quot;{runResult.projectDirName}&quot;.
-            </div>
-          )}
-          {runStatus === 'error' && createRunError && (
-            <div className="atelier-alert atelier-alert--error" style={{ marginTop: 16 }}>{createRunError}</div>
-          )}
-        </div>
-      )}
 
       {activeTab === 'liveMusic' && (
         <div className="atelier-panel" style={{ maxWidth: 960, width: '100%' }}>
           <h2 className="atelier-heading">Live Music</h2>
           <p style={{ color: 'var(--atelier-text-muted)', fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>
-            Generate Strudel (music) and Hydra (visuals). Music runs in the embedded REPL; visuals run live below.
+            Generate Strudel (music) and Hydra (visuals). Music runs in the embedded REPL; visuals are shown as sandbox-pending code until an isolated Hydra runtime is available.
           </p>
           <label style={{ display: 'block', marginBottom: 12 }}>
             <span className="atelier-label">Prompt</span>
@@ -1567,7 +1478,7 @@ export default function App() {
 
           {visualsCode && (
             <div style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 13, color: 'var(--atelier-visual)', marginBottom: 8, fontFamily: 'var(--font-body)', fontWeight: 600 }}>Hydra — code scrolling, visuals below</h3>
+              <h3 style={{ fontSize: 13, color: 'var(--atelier-visual)', marginBottom: 8, fontFamily: 'var(--font-body)', fontWeight: 600 }}>Hydra — sandbox-pending code</h3>
               <div
                 style={{
                   overflow: 'hidden',
@@ -1634,7 +1545,7 @@ export default function App() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {galleryApiFailed && (
             <div className="atelier-alert atelier-alert--warn">
-              Gallery API not reachable. Start the backend: <code style={{ background: 'rgba(0,0,0,0.2)', padding: '2px 6px', borderRadius: 4 }}>node scripts/start-gui.js</code> (then reload). Backend must run on port 5174.
+              Gallery API not reachable. Start the backend: <code style={{ background: 'rgba(0,0,0,0.2)', padding: '2px 6px', borderRadius: 4 }}>pnpm gui</code> (then reload). Backend must run on port 5174.
             </div>
           )}
           <div className="atelier-panel" style={{ padding: 16 }}>
@@ -1764,6 +1675,7 @@ export default function App() {
         </div>
       )}
       </>
+      </Suspense>
       )}
     </WorkbenchShell>
   );

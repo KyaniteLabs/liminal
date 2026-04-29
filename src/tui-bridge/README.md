@@ -1,6 +1,6 @@
 # TUI Bridge
 
-Shared bridge layer for Bubble Tea and existing TypeScript runtime.
+Shared bridge layer for the Bubble Tea operator cockpit and existing TypeScript runtime.
 
 ## Operator model
 - Bubble Tea is the **coding/operator harness**
@@ -22,5 +22,5 @@ Shared bridge layer for Bubble Tea and existing TypeScript runtime.
 
 ## Non-goals for MVP
 - WebSocket transport
-- Ink parity
+- Legacy Ink parity; Ink is compatibility-only
 - advanced dashboards

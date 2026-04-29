@@ -107,6 +107,20 @@ func (c *Client) CancelAction(ctx context.Context, sessionID, actionID string) e
 	return nil
 }
 
+func (c *Client) CancelRun(ctx context.Context, sessionID string) error {
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, fmt.Sprintf("%s/api/tui/session/%s/cancel", c.BaseURL, sessionID), nil)
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	_, _ = io.Copy(io.Discard, resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("cancel run returned status %d", resp.StatusCode)
+	}
+	return nil
+}
+
 func (c *Client) StreamEvents(ctx context.Context, sessionID string, onEvent func(Event)) error {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/api/tui/session/%s/events", c.BaseURL, sessionID), nil)
 	if lastID := c.getLastEventID(sessionID); lastID != "" {

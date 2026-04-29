@@ -49,6 +49,30 @@ func TestClientConfirmAndCancelAction(t *testing.T) {
 	}
 }
 
+func TestClientCancelRunSendsSessionCancel(t *testing.T) {
+	sessionID := "s3"
+	cancelRunCalled := false
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/tui/session/"+sessionID+"/cancel" && r.Method == http.MethodPost {
+			cancelRunCalled = true
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"ok":true}`)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL)
+	if err := client.CancelRun(context.Background(), sessionID); err != nil {
+		t.Fatal(err)
+	}
+	if !cancelRunCalled {
+		t.Fatal("expected session cancel endpoint to be called")
+	}
+}
+
 func TestClientConfirmActionReturnsErrorOnBadStatus(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
@@ -90,22 +114,40 @@ func TestClientSessionStatusAndSSE(t *testing.T) {
 	client := NewClient(server.URL)
 	ctx := context.Background()
 	status, err := client.CreateSession(ctx)
-	if err != nil { t.Fatal(err) }
-	if status.SessionID != sessionID { t.Fatalf("expected session id %s, got %s", sessionID, status.SessionID) }
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status.SessionID != sessionID {
+		t.Fatalf("expected session id %s, got %s", sessionID, status.SessionID)
+	}
 
 	status, err = client.GetStatus(ctx, sessionID)
-	if err != nil { t.Fatal(err) }
-	if status.Mode != "chat" { t.Fatalf("expected chat mode, got %s", status.Mode) }
+	if err != nil {
+		t.Fatal(err)
+	}
+	if status.Mode != "chat" {
+		t.Fatalf("expected chat mode, got %s", status.Mode)
+	}
 
-	if err := client.SubmitInput(ctx, sessionID, "chat", "hello", "chat"); err != nil { t.Fatal(err) }
+	if err := client.SubmitInput(ctx, sessionID, "chat", "hello", "chat"); err != nil {
+		t.Fatal(err)
+	}
 
 	events := make([]Event, 0, 2)
 	streamCtx, cancel := context.WithTimeout(ctx, 200*time.Millisecond)
 	defer cancel()
-	if err := client.StreamEvents(streamCtx, sessionID, func(e Event) { events = append(events, e) }); err != nil { t.Fatal(err) }
-	if len(events) != 2 { t.Fatalf("expected 2 events, got %d", len(events)) }
-	if events[0].Delta != "hello" { t.Fatalf("expected delta hello, got %q", events[0].Delta) }
-	if events[1].Content != "hello" { t.Fatalf("expected committed hello, got %q", events[1].Content) }
+	if err := client.StreamEvents(streamCtx, sessionID, func(e Event) { events = append(events, e) }); err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 2 {
+		t.Fatalf("expected 2 events, got %d", len(events))
+	}
+	if events[0].Delta != "hello" {
+		t.Fatalf("expected delta hello, got %q", events[0].Delta)
+	}
+	if events[1].Content != "hello" {
+		t.Fatalf("expected committed hello, got %q", events[1].Content)
+	}
 }
 
 func TestClientStreamEventsResumesFromLastEventID(t *testing.T) {

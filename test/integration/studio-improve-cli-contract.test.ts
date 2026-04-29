@@ -29,7 +29,11 @@ describe('studio and improve CLI contract', () => {
   });
 
   it('has a canonical studio script for the GUI workbench', () => {
-    expect(pkg().scripts.studio).toBe('npm run build && concurrently -k -n api,gui "node gui/start.js" "npm run gui:dev"');
+    const scripts = pkg().scripts;
+
+    expect(scripts.gui).toBe('node scripts/utils/start-studio.js');
+    expect(scripts.studio).toBe('npm run gui');
+    expect(scripts['gui:all']).toBeUndefined();
   });
 
   it('has launch-risk proof scripts and docs for explicit risk ownership', () => {

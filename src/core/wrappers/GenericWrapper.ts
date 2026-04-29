@@ -68,6 +68,9 @@ export class GenericWrapper {
   }
 
   private static retargetToneDomWrites(script: string): string {
+    // Retarget only page-level document replacement writes. Local element
+    // updates such as querySelector(...).innerHTML stay authored so generated
+    // controls do not lose their own internal rendering behavior.
     return script.replace(
       /\bdocument\.(?:body|documentElement)\.innerHTML\b/g,
       "document.getElementById('tone-artifact-surface').innerHTML",
@@ -75,9 +78,10 @@ export class GenericWrapper {
   }
 
   private static extractToneBpm(code: string): number | null {
-    const bpmMatch = code.match(/\b(?:Tone\.)?Transport\.bpm\.value\s*=\s*([0-9]+(?:\.[0-9]+)?)/);
-    if (!bpmMatch) return null;
-    const bpm = Number(bpmMatch[1]);
+    const bpmMatches = [...code.matchAll(/\b(?:Tone\.)?Transport\.bpm\.value\s*=\s*([0-9]+(?:\.[0-9]+)?)/g)];
+    const lastBpmMatch = bpmMatches.at(-1);
+    if (!lastBpmMatch) return null;
+    const bpm = Number(lastBpmMatch[1]);
     if (!Number.isFinite(bpm) || bpm < 30 || bpm > 300) return null;
     return Math.round(bpm);
   }

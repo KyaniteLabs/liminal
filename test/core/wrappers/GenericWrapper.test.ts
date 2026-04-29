@@ -265,6 +265,14 @@ document.body.innerHTML = ` + '`' + `<button id="startButton">Start Ambient Sequ
       expect(startBlock).not.toContain('Tone.Transport.bpm.value = liminalToneBpm');
     });
 
+    it('uses the last literal Tone.Transport BPM as the initial visual fallback', () => {
+      const code = 'Tone.Transport.bpm.value = 90; Tone.Transport.bpm.value = 180;';
+      const result = GenericWrapper.wrap(code, { domain: 'tone' });
+
+      expect(result).toContain('data-tone-bpm="180"');
+      expect(result).toContain('let liminalToneBpm = 180;');
+    });
+
     it('wraps raw Tone HTML in a polished preview shell instead of showing a bare button page', () => {
       const code = `<!DOCTYPE html>
 <html>

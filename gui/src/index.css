@@ -631,6 +631,7 @@ body::before {
 .liminal-inspector-grid > div {
   display: grid;
   gap: 4px;
+  min-width: 0;
   padding: 10px;
   border-radius: 8px;
   background: var(--liminal-surface-2);
@@ -641,11 +642,17 @@ body::before {
   font-size: 0.75rem;
 }
 
+.liminal-inspector-grid strong,
+.liminal-inspector-grid small,
+.liminal-review-panel small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .liminal-inspector-grid strong {
   color: var(--liminal-text);
   font-family: var(--font-mono);
   font-size: 0.78rem;
-  overflow-wrap: anywhere;
 }
 
 
@@ -663,7 +670,7 @@ body::before {
 
 .liminal-cognitive-receipt li {
   display: grid;
-  grid-template-columns: minmax(64px, 0.7fr) auto;
+  grid-template-columns: minmax(0, 0.7fr) auto;
   gap: 3px 8px;
   padding-top: 6px;
   border-top: 1px solid var(--liminal-line);

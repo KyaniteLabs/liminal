@@ -26,8 +26,10 @@ describe('syncPreview', () => {
     const html = buildSyncPreviewHtml('function setup(){createCanvas(160,120)}');
 
     expect(html).toContain('data-liminal-sync-preview="p5"');
-    expect(html).toContain('main > canvas');
-    expect(html).toContain('width: min(100vw, 960px)');
+    expect(html).toContain('main > canvas,body > canvas');
+    expect(html).toContain('window.__liminalAdoptP5Canvas');
+    expect(html).toContain("document.querySelectorAll('body > canvas')");
+    expect(html).toContain('transform:translate(-50%,-50%)!important');
   });
 
   it('wraps Three.js code with import map and audio API', () => {

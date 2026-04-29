@@ -158,6 +158,52 @@ Tone.Transport.start();
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
+
+    it('should reject scheduled Tone parts that are never started', () => {
+      const code = `
+const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+const melody = new Tone.Part((time, note) => {
+  synth.triggerAttackRelease(note, "16n", time);
+}, [{ time: "0:0", note: "C3" }]);
+melody.loop = true;
+Tone.Transport.start();
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Tone.js: Scheduled Tone.Part "melody" is never started; call melody.start(0) before Tone.Transport.start()');
+    });
+
+    it('should accept started scheduled events with dollar signs in variable names', () => {
+      const code = `
+const synth = new Tone.Synth().toDestination();
+const seq$ = new Tone.Sequence((time, note) => {
+  synth.triggerAttackRelease(note, "8n", time);
+}, ["C4", "E4"], "4n").start(0);
+Tone.Transport.start();
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should accept long generated inline scheduled events that start after a large config block', () => {
+      const longConfig = Array.from({ length: 90 }, (_, index) => `{ time: "0:${index % 4}", note: "C4" }`).join(',\n');
+      const code = `
+const synth = new Tone.Synth().toDestination();
+const sequence = new Tone.Sequence((time, note) => {
+  synth.triggerAttackRelease(note.note, "8n", time);
+}, [
+${longConfig}
+], "4n").start(0);
+Tone.Transport.start();
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
   });
 
   describe('getMinSize', () => {

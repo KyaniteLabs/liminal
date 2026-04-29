@@ -114,6 +114,8 @@ export function useTuiBridgeSession() {
       timeoutMinutes?: number;
       clientIntent?: 'creative' | 'chat' | 'inspect' | 'action';
       executionMode?: 'draft' | 'prove';
+      creativePreferences?: Record<string, unknown>;
+      guidanceAnswers?: Record<string, unknown>;
     } = {},
   ) {
     if (!session || !text.trim()) return;

@@ -79,12 +79,15 @@ const P5_SENSOR_POLICY_SCRIPT = `
     })();
   </script>`;
 
-function setPreviewSecurityHeaders(res) {
+function setPreviewSecurityHeaders(res, options = {}) {
+  const organism = options.profile === 'organism';
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Content-Security-Policy', [
     "default-src 'none'",
     "upgrade-insecure-requests",
-    "script-src 'unsafe-inline' https://cdnjs.cloudflare.com",
+    organism
+      ? "script-src 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://unpkg.com"
+      : "script-src 'unsafe-inline' https://cdnjs.cloudflare.com",
     "style-src 'unsafe-inline'",
     "img-src * data: blob:",
     "media-src * data: blob:",
@@ -97,6 +100,104 @@ function setPreviewSecurityHeaders(res) {
   ].join('; '));
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'no-referrer');
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeScript(value) {
+  return String(value).replace(/<\/script>/gi, '<\\/script>');
+}
+
+function parseOrganismPreview(code) {
+  try {
+    const parsed = JSON.parse(code);
+    if (parsed?.type !== 'organism') return null;
+    return {
+      musicCode: typeof parsed.musicCode === 'string' ? parsed.musicCode : '',
+      visualCode: typeof parsed.visualCode === 'string' ? parsed.visualCode : '',
+    };
+  } catch {
+    return null;
+  }
+}
+
+function renderOrganismPreview({ musicCode, visualCode }, version) {
+  const safeMusic = escapeHtml(musicCode || 'No Strudel layer was saved.');
+  const safeVisual = escapeHtml(visualCode || 'No Hydra visual layer was saved.');
+  const runnableVisual = visualCode ? escapeScript(visualCode) : '';
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Permissions-Policy" content="accelerometer=(), gyroscope=(), magnetometer=(), deviceorientation=(), devicemotion=()">
+  <title>Organism Preview v${version}</title>
+  <script src="https://unpkg.com/hydra-synth"></script>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #05070d; color: #eaf2ff; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .organism { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 420px); }
+    .visual { position: relative; min-height: 100vh; background: #000; overflow: hidden; }
+    #hydra-canvas { width: 100%; height: 100%; display: block; }
+    .panel { border-left: 1px solid rgba(143, 166, 210, 0.26); background: rgba(10, 14, 24, 0.92); padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+    h1, h2 { margin: 0; }
+    h1 { font-size: 20px; }
+    h2 { color: #66e7ff; font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; }
+    pre { white-space: pre-wrap; word-break: break-word; margin: 0; padding: 14px; border: 1px solid rgba(143, 166, 210, 0.24); border-radius: 12px; background: rgba(3, 6, 13, 0.84); color: #d8f6ff; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .error { position: absolute; left: 24px; bottom: 24px; max-width: min(640px, calc(100% - 48px)); color: #ff8585; background: rgba(0, 0, 0, 0.82); border: 1px solid rgba(255, 120, 120, 0.42); border-radius: 12px; padding: 12px; font: 12px/1.4 ui-monospace, monospace; display: none; }
+  </style>
+</head>
+<body>
+  <main class="organism">
+    <section class="visual" aria-label="Hydra visual layer">
+      <canvas id="hydra-canvas"></canvas>
+      <pre id="hydra-error" class="error"></pre>
+    </section>
+    <aside class="panel" aria-label="Organism source layers">
+      <div>
+        <h2>Organism Preview</h2>
+        <h1>Strudel + Hydra organism</h1>
+      </div>
+      <section>
+        <h2>Strudel layer</h2>
+        <pre>${safeMusic}</pre>
+      </section>
+      <section>
+        <h2>Hydra visual layer</h2>
+        <pre>${safeVisual}</pre>
+      </section>
+    </aside>
+  </main>
+  <script>
+    window.fetch = undefined;
+    window.XMLHttpRequest = undefined;
+    window.WebSocket = undefined;
+    window.EventSource = undefined;
+    window.open = undefined;
+    const errorEl = document.getElementById('hydra-error');
+    try {
+      const canvas = document.getElementById('hydra-canvas');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const hydra = new Hydra({ canvas, detectAudio: false, enableStreamCapture: false });
+      const go = () => {};
+      const o = typeof o0 !== 'undefined' ? o0 : undefined;
+      ${runnableVisual}
+    } catch (e) {
+      errorEl.style.display = 'block';
+      errorEl.textContent = 'Hydra preview error: ' + e.message;
+    }
+  </script>
+</body>
+</html>`;
 }
 
 function resolveGuiBridgeProvider() {
@@ -486,6 +587,12 @@ export function createApp(configPath, port = 5174) {
 </html>`;
       setPreviewSecurityHeaders(res);
       res.status(404).send(html);
+      return;
+    }
+    const organismPreview = parseOrganismPreview(code);
+    if (organismPreview) {
+      setPreviewSecurityHeaders(res, { profile: 'organism' });
+      res.send(renderOrganismPreview(organismPreview, version));
       return;
     }
     const escaped = code.replace(/<\/script>/gi, '<\\/script>');

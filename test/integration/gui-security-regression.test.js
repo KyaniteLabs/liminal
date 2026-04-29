@@ -301,6 +301,31 @@ describe('Security regression — Wave 3 preview isolation', () => {
     expect(html).not.toContain('function setup(){ createCanvas(400,400); }');
   });
 
+  it('renders saved organism artifacts as organism previews instead of executing JSON as p5 code', async () => {
+    const code = JSON.stringify({
+      type: 'organism',
+      musicCode: '$: s("bd sd").gain(0.7)',
+      visualCode: 'osc(10, 0.1, 1).kaleid(4).out()',
+    });
+    await jsonFetch(`http://127.0.0.1:${port}/api/preview/run`, {
+      method: 'POST',
+      body: JSON.stringify({ code, version: 77 }),
+    });
+
+    const res = await realFetch(`http://127.0.0.1:${port}/preview?version=77`);
+    const html = await res.text();
+    const csp = res.headers.get('Content-Security-Policy') || '';
+
+    expect(res.status).toBe(200);
+    expect(html).toContain('Organism Preview');
+    expect(html).toContain('Strudel layer');
+    expect(html).toContain('Hydra visual layer');
+    expect(html).toContain('osc(10, 0.1, 1).kaleid(4).out()');
+    expect(html).not.toContain('p5.min.js');
+    expect(csp).toContain("'unsafe-eval'");
+    expect(csp).toContain('https://unpkg.com');
+  });
+
   it('preview response includes CSP header', async () => {
     const res = await realFetch(`http://127.0.0.1:${port}/preview?version=1`);
     const csp = res.headers.get('Content-Security-Policy') || '';

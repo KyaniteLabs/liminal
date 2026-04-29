@@ -8,6 +8,12 @@ import { SECURITY_HEADERS } from './SecurityHeaders.js';
 const STRUDEL_CDN = 'https://unpkg.com/@strudel/repl@1.0.2';
 const HYDRA_CDN = 'https://unpkg.com/hydra-synth';
 const TONE_CDN = 'https://unpkg.com/tone@14.8.49/build/Tone.js';
+const STRUDEL_SECURITY_HEADERS = SECURITY_HEADERS
+  .replace("connect-src 'none'", 'connect-src https://raw.githubusercontent.com');
+const HYDRA_SECURITY_HEADERS = SECURITY_HEADERS
+  .replace("script-src 'self' 'unsafe-inline'", "script-src 'self' 'unsafe-inline' 'unsafe-eval'");
+const TONE_SECURITY_HEADERS = SECURITY_HEADERS
+  .replace("media-src 'self';", "media-src 'self'; worker-src blob:;");
 
 export type GenericDomain = 'strudel' | 'hydra' | 'tone' | 'shader' | 'revideo' | 'ascii' | 'hyperframes';
 
@@ -145,7 +151,7 @@ export class GenericWrapper {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    ${SECURITY_HEADERS.trim()}
+    ${STRUDEL_SECURITY_HEADERS.trim()}
     <title>Strudel Pattern</title>
     <script src="${STRUDEL_CDN}"></script>
     <style>
@@ -179,7 +185,7 @@ ${safeCommentCode}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    ${SECURITY_HEADERS.trim()}
+    ${HYDRA_SECURITY_HEADERS.trim()}
     <title>Hydra Visual Synthesizer</title>
     <script src="${HYDRA_CDN}"></script>
     <style>
@@ -555,7 +561,7 @@ ${safeCommentCode}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    ${SECURITY_HEADERS.trim()}
+    ${TONE_SECURITY_HEADERS.trim()}
     <title>Tone.js Audio Synthesizer</title>
     <script src="${TONE_CDN}"></script>
     <style>

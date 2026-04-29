@@ -256,18 +256,24 @@ export class HTMLWrapper {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #f8fafc;
+            background: radial-gradient(circle at 20% 16%, rgba(125, 211, 252, 0.22), transparent 30%), #0b1020;
         }
         main {
             width: min(92vw, 900px);
             min-height: min(92vh, 900px);
             display: grid;
             place-items: center;
+            padding: clamp(28px, 5vw, 72px);
+            border-radius: 28px;
+            background: #ffffff;
+            box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
         }
         svg {
-            max-width: 100%;
-            max-height: 92vh;
+            width: min(72vmin, 760px);
+            max-width: 82vw;
+            max-height: 82vh;
             height: auto;
+            display: block;
         }
     </style>
 </head>

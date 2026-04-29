@@ -8,6 +8,7 @@ import {
   strudelConfidence,
   hydraConfidence,
   toneConfidence,
+  kineticConfidence,
   p5Confidence,
 } from '../../../src/generators/registerGenerators.js';
 
@@ -235,6 +236,25 @@ describe('textgenConfidence', () => {
 
   it('returns 0 for empty string', () => {
     expect(textgenConfidence('')).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// kineticConfidence
+// ---------------------------------------------------------------------------
+describe('kineticConfidence', () => {
+  it('returns 0.95 for explicit kinetic typography prompts', () => {
+    expect(kineticConfidence('kinetic typography poster')).toBe(0.95);
+    expect(kineticConfidence('css kinetic text')).toBe(0.95);
+  });
+
+  it('returns 0.85 for animated word prompts', () => {
+    expect(kineticConfidence('animated words orbiting a threshold')).toBe(0.85);
+    expect(kineticConfidence('moving typography')).toBe(0.85);
+  });
+
+  it('returns 0 for unrelated prompts', () => {
+    expect(kineticConfidence('glsl shader noise')).toBe(0);
   });
 });
 

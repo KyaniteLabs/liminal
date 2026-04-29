@@ -35,6 +35,7 @@ import {
   hydraConfidence,
   svgConfidence,
   toneConfidence,
+  kineticConfidence,
   p5Confidence,
 } from '../../../src/generators/registerGenerators.js';
 
@@ -195,6 +196,18 @@ describe('registerGenerators', () => {
       });
     });
 
+    describe('kineticConfidence', () => {
+      it('routes kinetic typography and CSS motion prompts to KineticGenerator', () => {
+        expect(kineticConfidence('kinetic typography')).toBe(0.95);
+        expect(kineticConfidence('css kinetic text')).toBe(0.95);
+        expect(kineticConfidence('animated words orbiting')).toBe(0.85);
+      });
+
+      it('returns 0 for unrelated prompts', () => {
+        expect(kineticConfidence('draw a circle')).toBe(0);
+      });
+    });
+
     describe('p5Confidence', () => {
       it('returns 0.95 for explicit p5.js mentions', () => {
         expect(p5Confidence('create a p5.js sketch')).toBe(0.95);
@@ -219,7 +232,8 @@ describe('registerGenerators', () => {
       await registerAllGenerators();
 
       // Should register all static generators
-      expect(mockRegister).toHaveBeenCalledTimes(12);
+      expect(mockRegister).toHaveBeenCalledTimes(13);
+      expect(mockRegister.mock.calls.map(([entry]) => entry.name)).toContain('kinetic');
     });
 
     it('registers p5 with explicit-signal routing instead of always-on fallback confidence', async () => {

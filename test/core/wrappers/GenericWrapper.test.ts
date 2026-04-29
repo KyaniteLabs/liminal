@@ -434,5 +434,14 @@ export default makeScene2D(function* (view) {
       
       expect(result).toContain('font-family: \'Courier New\'');
     });
+
+    it('renders ASCII as a large artist-facing preview surface', () => {
+      const code = ' /\\\n/__\\';
+      const result = GenericWrapper.wrap(code, { domain: 'ascii' });
+
+      expect(result).toContain('data-ascii-preview-shell');
+      expect(result).toContain('font-size: clamp');
+      expect(result).toContain('min-width: min(760px, 92vw)');
+    });
   });
 });

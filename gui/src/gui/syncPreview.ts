@@ -96,13 +96,13 @@ export function buildSyncPreviewHtml(code: string): string {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Liminal Sync Stage</title>
-  <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070a}main{width:100%;height:100%;display:grid;place-items:center}</style>
+  <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070a}main{width:100%;height:100%;display:grid;place-items:center}main > canvas{width: min(100vw, 960px) !important;height:auto !important;max-width:100vw;max-height:100vh;object-fit:contain}</style>
   <script>${sensorPolicyBootstrap()}</script>
   <script>${audioBootstrap()}</script>
   <script src="${P5_CDN}"></script>
 </head>
 <body>
-  <main></main>
+  <main data-liminal-sync-preview="p5"></main>
   <script>${escapeScript(code)}</script>
 </body>
 </html>`;

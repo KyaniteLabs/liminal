@@ -603,11 +603,32 @@ export function createApp(configPath, port = 5174) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Permissions-Policy" content="accelerometer=(), gyroscope=(), magnetometer=(), deviceorientation=(), devicemotion=()">
   <title>Preview v${version}</title>
-  <style>body { margin: 0; padding: 0; overflow: hidden; } canvas { display: block; }</style>
+  <style>
+    :root { color-scheme: dark; }
+    html, body {
+      margin: 0;
+      min-height: 100vh;
+      background: #05070d;
+      overflow: hidden;
+    }
+    body {
+      display: grid;
+      place-items: center;
+    }
+    canvas {
+      display: block;
+      max-width: 100vw;
+      max-height: 100vh;
+      width: min(100vw, 960px) !important;
+      height: auto !important;
+      background: #05070d;
+      box-shadow: 0 22px 80px rgba(0, 0, 0, 0.34);
+    }
+  </style>
   ${P5_SENSOR_POLICY_SCRIPT}
   <script src="${P5_CDN}" integrity="sha384-bOv+b6RV+dlZvdQAx6+cJ+FK9ab8JCSVWyJ1JPhMVQjPW+4C8V2cOKK+qZDfnRnx" crossorigin="anonymous"></script>
 </head>
-<body>
+<body data-liminal-p5-preview-shell>
   <script>
     // Wave 3 isolation: strip network access before running generated code
     window.fetch = undefined;

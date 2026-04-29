@@ -10,7 +10,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../..');
 const scriptPath = path.join(repoRoot, 'scripts', 'qa-creative-domains.mjs');
 
-const domains = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel', 'tone', 'revideo', 'html', 'ascii', 'kinetic', 'textgen'];
+const domains = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel', 'tone', 'revideo', 'hyperframes', 'ascii', 'kinetic', 'textgen'];
 
 describe('creative-domain QA cockpit script', () => {
   it('is valid JavaScript syntax', () => {

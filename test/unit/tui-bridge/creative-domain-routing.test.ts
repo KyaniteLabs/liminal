@@ -53,6 +53,21 @@ describe('TuiBridgeService creative domain routing', () => {
     expect(buildCreativeDomainPlan(prompt)[0]).toBe(Domain.HYDRA);
   });
 
+
+
+  it('routes explicit HyperFrames prompts to the HyperFrames video composition domain', () => {
+    const prompt = 'Create a HyperFrames promo slideshow with image clips and GSAP timeline.';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.HYPERFRAMES);
+    expect(buildCreativeDomainPlan(prompt)[0]).toBe(Domain.HYPERFRAMES);
+  });
+
+  it('chooses HyperFrames preview shell for generated HyperFrames HTML', () => {
+    const hyperframesCode = '<!doctype html><html><body><div data-composition-id="demo"><h1 class="clip" data-start="0" data-duration="3" data-track-index="0">Title</h1></div><script>const tl = gsap.timeline({ paused: true }); window.__timelines = { demo: tl };</script></body></html>';
+
+    expect(previewDomainForCode(hyperframesCode, Domain.P5)).toBe('hyperframes');
+  });
+
   it('chooses preview domain from actual output code over requested fallback domain', () => {
     const threeCode = 'const scene = new THREE.Scene(); const renderer = new THREE.WebGLRenderer(); renderer.render(scene, new THREE.PerspectiveCamera());';
 

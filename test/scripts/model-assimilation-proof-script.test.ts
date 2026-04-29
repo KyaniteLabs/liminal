@@ -47,14 +47,14 @@ describe('model-assimilation proof script', () => {
       'gpt-5.4-nano',
       'glm-4.5-air',
     ]));
-    const finishLineDomains = ['svg', 'p5', 'glsl', 'hydra', 'three', 'tone', 'strudel', 'revideo', 'html', 'ascii', 'kinetic', 'textgen'];
+    const finishLineDomains = ['svg', 'p5', 'glsl', 'hydra', 'three', 'tone', 'strudel', 'revideo', 'hyperframes', 'ascii', 'kinetic', 'textgen'];
     expect(new Set(report.recommendedAssignments.map(item => item.domain))).toEqual(new Set(finishLineDomains));
     expect(report.recommendedAssignments).toHaveLength(finishLineDomains.length * 3);
     expect(report.fallbackProvenance).toHaveLength(finishLineDomains.length * 3);
     expect(report.recommendedAssignments).toEqual(expect.arrayContaining([
       expect.objectContaining({ role: 'generator', domain: 'svg', decision: 'promote' }),
       expect.objectContaining({ role: 'generator', domain: 'tone', decision: 'hold' }),
-      expect.objectContaining({ role: 'generator', domain: 'html' }),
+      expect.objectContaining({ role: 'generator', domain: 'hyperframes' }),
       expect.objectContaining({ role: 'evaluator', domain: 'ascii' }),
       expect.objectContaining({ role: 'harness', domain: 'kinetic' }),
       expect.objectContaining({ role: 'generator', domain: 'textgen' }),

@@ -63,6 +63,37 @@ function kineticFixture(): string {
   return `<!doctype html><html><head><meta charset="utf-8"><title>Kinetic preview</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#030405;color:white;font:800 48px system-ui}.word{animation:spin 5s linear infinite;text-shadow:0 0 20px #9ff}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><div class="word">ORBIT</div></body></html>`;
 }
 
+function hyperframesFixture(): string {
+  return HTMLWrapper.wrap(`<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>HyperFrames fixture</title>
+  <style>
+    body { margin: 0; background: #050816; color: white; font-family: Inter, system-ui, sans-serif; }
+    [data-composition-id] { position: relative; width: 100vw; height: 100vh; overflow: hidden; background: radial-gradient(circle at 24% 24%, #22d3ee, transparent 28%), linear-gradient(135deg, #08111f, #2e1065); }
+    .clip { position: absolute; border-radius: 28px; }
+    .hero { left: 9%; top: 16%; font-size: clamp(52px, 8vw, 118px); font-weight: 900; letter-spacing: -.07em; text-shadow: 0 0 30px rgba(103,232,249,.55); }
+    .panel { right: 10%; bottom: 13%; width: 36%; height: 34%; background: linear-gradient(135deg, rgba(45,212,191,.88), rgba(129,140,248,.72)); box-shadow: 0 30px 80px rgba(34,211,238,.22); }
+  </style>
+</head>
+<body>
+  <div data-composition-id="liminal-promo" data-width="1920" data-height="1080">
+    <h1 class="clip hero" data-start="0" data-duration="4" data-track-index="0">Open the threshold</h1>
+    <div class="clip panel" data-start="1" data-duration="3" data-track-index="1"></div>
+  </div>
+  <script>
+    window.gsap = window.gsap || { timeline: () => ({ from: () => window.gsap.timeline(), to: () => window.gsap.timeline() }) };
+    const tl = gsap.timeline({ paused: true });
+    tl.from(".hero", { opacity: 0, y: 70, duration: 1 }, 0);
+    tl.to(".panel", { x: -80, scale: 1.08, duration: 2 }, 1);
+    window.__timelines = window.__timelines || {};
+    window.__timelines["liminal-promo"] = tl;
+  </script>
+</body>
+</html>`, { domain: 'hyperframes', title: 'Liminal HyperFrames Preview' });
+}
+
 function fixtureItems(): RenderItem[] {
   return [
     { domain: 'p5', sourceLabel: 'fixture p5', html: buildSyncPreviewHtml('function setup(){createCanvas(480,320)} function draw(){background(5,8,16); fill(80,220,255); circle(width/2+sin(frameCount*.05)*80,height/2,38)}') },
@@ -73,7 +104,7 @@ function fixtureItems(): RenderItem[] {
     { domain: 'strudel', sourceLabel: 'fixture strudel', html: GenericWrapper.wrap('s("bd sd hh*2").slow(2)', { domain: 'strudel' }) },
     { domain: 'tone', sourceLabel: 'fixture tone raw html', html: HTMLWrapper.wrap('<!DOCTYPE html><html><body><button id="startButton">Start Ambient Sequence</button><script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script><script>const synth = new Tone.Synth().toDestination(); document.getElementById("startButton").addEventListener("click", () => synth.triggerAttackRelease("C4", "8n"));</script></body></html>', { domain: 'tone', title: 'Liminal Tone Preview' }) },
     { domain: 'revideo', sourceLabel: 'fixture revideo', html: GenericWrapper.wrap('import { makeScene } from "@revideo/core"; export default makeScene("x", function* () {});', { domain: 'revideo' }) },
-    { domain: 'html', sourceLabel: 'fixture html', html: '<!doctype html><html><head><title>HTML preview</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#284b8f;color:white;font:700 44px system-ui}</style></head><body>Liminal</body></html>' },
+    { domain: 'hyperframes', sourceLabel: 'fixture hyperframes', html: hyperframesFixture() },
     { domain: 'ascii', sourceLabel: 'fixture ascii', html: GenericWrapper.wrap('/\\\n/  \\\n----', { domain: 'ascii' }) },
     { domain: 'kinetic', sourceLabel: 'fixture kinetic', html: kineticFixture() },
     { domain: 'textgen', sourceLabel: 'fixture textgen', html: textPreview('Text art', 'D R E A M\n  MACHINE\n    IN LOOPS') },
@@ -89,6 +120,7 @@ function domainHtml(domain: string, filePath: string): string {
   if (domain === 'strudel') return GenericWrapper.wrap(code, { domain: 'strudel' });
   if (domain === 'tone') return HTMLWrapper.wrap(code, { domain: 'tone', title: 'Liminal Tone Preview' });
   if (domain === 'revideo') return GenericWrapper.wrap(code, { domain: 'revideo' });
+  if (domain === 'hyperframes') return HTMLWrapper.wrap(code, { domain: 'hyperframes', title: 'Liminal HyperFrames Preview' });
   if (domain === 'ascii') return GenericWrapper.wrap(code, { domain: 'ascii' });
   if (domain === 'html' || domain === 'kinetic') return code;
   return textPreview(domain, code);
@@ -184,7 +216,7 @@ async function main() {
     page.on('pageerror', (error) => browserErrors.push(error.message));
     await page.goto(item.url || `${url}/${encodeURIComponent(item.domain)}`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
     if (item.domain === 'tone') await page.locator('button').first().click({ timeout: 5_000 }).catch(() => undefined);
-    await page.waitForTimeout(['p5', 'three', 'glsl', 'hydra', 'kinetic'].includes(item.domain) ? 2_000 : 1_000);
+    await page.waitForTimeout(['p5', 'three', 'glsl', 'hydra', 'kinetic', 'hyperframes'].includes(item.domain) ? 2_000 : 1_000);
     const screenshot = path.join(screenshotDir, `${item.domain}.png`);
     await page.screenshot({ path: screenshot, fullPage: true });
     const metrics = await page.evaluate(() => ({
@@ -196,12 +228,14 @@ async function main() {
       bodyTextLength: (document.body?.innerText || '').trim().length,
       revideoTimelinePreview: Boolean(document.querySelector('[data-revideo-timeline-preview]')),
       tonePreviewShell: Boolean(document.querySelector('[data-tone-preview-shell], #visualizer, #liminal-tone-visualizer')),
+      hyperframesPreviewShell: Boolean(document.querySelector('[data-hyperframes-preview-shell]')),
       monitor: (window as unknown as { __liminalVisualProof?: { errors?: Array<{ level: string; message: string }> } }).__liminalVisualProof || {},
     }));
     const monitorErrors = (metrics.monitor.errors || []).filter((entry: { level: string; message: string }) => entry.level === 'error');
     const contractErrors = [
       item.domain === 'revideo' && !metrics.revideoTimelinePreview ? 'Revideo preview is missing the rendered timeline shell' : '',
       item.domain === 'tone' && !metrics.tonePreviewShell ? 'Tone preview is missing the polished audio shell' : '',
+      item.domain === 'hyperframes' && !metrics.hyperframesPreviewShell ? 'HyperFrames preview is missing the composition shell' : '',
     ].filter(Boolean);
     results.push({
       domain: item.domain,

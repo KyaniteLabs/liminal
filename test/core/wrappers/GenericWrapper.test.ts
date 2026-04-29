@@ -106,6 +106,15 @@ describe('GenericWrapper', () => {
     });
   });
 
+
+
+    describe('HyperFrames detection', () => {
+      it('detects GSAP timeline HTML with composition clips', () => {
+        const code = '<div data-composition-id="demo"><h1 class="clip" data-start="0" data-duration="3" data-track-index="0">Title</h1></div><script>const tl = gsap.timeline({ paused: true }); window.__timelines = { demo: tl };</script>';
+        expect(GenericWrapper.detectDomain(code)).toBe('hyperframes');
+      });
+    });
+
   describe('wrap - Strudel', () => {
     it('allows the Strudel editor to fetch its sample manifest without broadening every wrapper', () => {
       const result = GenericWrapper.wrap('s("bd sd")', { domain: 'strudel' });
@@ -204,6 +213,25 @@ describe('GenericWrapper', () => {
       expect(result).toContain('⏹ Stop');
       expect(result).toContain('id="start"');
       expect(result).toContain('id="stop"');
+    });
+
+
+
+    it('wraps Tone HTML fragments that start with script tags without injecting script tags into the preview runtime', () => {
+      const code = `<script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
+<script>
+const synth = new Tone.Synth().toDestination();
+document.body.innerHTML = ` + '`' + `<button id="startButton">Start Ambient Sequence</button>` + '`' + `;
+</script>
+</body>
+</html>`;
+      const result = GenericWrapper.wrap(code, { domain: 'tone' });
+
+      expect(result).toContain('data-tone-preview-shell');
+      expect(result).toContain('id="liminal-tone-visualizer"');
+      const runtimeBlock = result.slice(result.indexOf('try {'), result.indexOf('} catch (error)'));
+      expect(runtimeBlock).not.toContain('<script');
+      expect(runtimeBlock).not.toContain('document.body.innerHTML');
     });
 
     it('wraps raw Tone HTML in a polished preview shell instead of showing a bare button page', () => {
@@ -317,6 +345,20 @@ export default makeScene2D(function* (view) {
       expect(result).toContain('class="timeline-playhead"');
       expect(result).toContain('Liminal title');
       expect(result.indexOf('data-revideo-timeline-preview')).toBeLessThan(result.indexOf('<details'));
+    });
+  });
+
+
+
+  describe('wrap - HyperFrames', () => {
+    it('wraps HyperFrames code as a polished composition preview shell with source details collapsed', () => {
+      const code = '<div data-composition-id="demo"><h1 class="clip" data-start="0" data-duration="3" data-track-index="0">Title</h1></div><script>const tl = gsap.timeline({ paused: true }); window.__timelines = { demo: tl };</script>';
+      const result = GenericWrapper.wrap(code, { domain: 'hyperframes', title: 'HyperFrames Preview' });
+
+      expect(result).toContain('data-hyperframes-preview-shell');
+      expect(result).toContain('class="hyperframes-stage"');
+      expect(result).toContain('HyperFrames Preview');
+      expect(result.indexOf('data-hyperframes-preview-shell')).toBeLessThan(result.indexOf('<details'));
     });
   });
 

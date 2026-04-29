@@ -7,6 +7,7 @@ export const PRESERVED_CREATIVE_DOMAINS: readonly string[] = [
   'Strudel',
   'Tone.js',
   'Revideo',
+  'HyperFrames',
   'ASCII',
   'Kinetic',
   'TextGen',
@@ -159,6 +160,7 @@ const CREATIVE_DOMAIN_RUNTIME_PROFILE: RepoIndexLiteProfile = {
     'src/generators/revideo/RevideoGenerator.ts',
     'src/generators/svg/SVGGenerator.ts',
     'src/generators/hydra/HydraGenerator.ts',
+    'src/generators/hyperframes/HyperFramesGenerator.ts',
     'src/generators/three/ThreeGenerator.ts',
     'src/generators/glsl/ShaderGenerator.ts',
     'src/generators/p5/P5Generator.ts',
@@ -166,7 +168,7 @@ const CREATIVE_DOMAIN_RUNTIME_PROFILE: RepoIndexLiteProfile = {
   expansionBudget: 4,
   localizationConfidence: 'high',
   verificationTargets: [
-    { tool: 'runFocusedTests', pattern: 'GeneratorRegistry|registerGenerators|Strudel|Tone|Revideo|SVG|Hydra', reason: 'Creative-domain runtime changes must preserve registry breadth and named generators', priority: 1 },
+    { tool: 'runFocusedTests', pattern: 'GeneratorRegistry|registerGenerators|Strudel|Tone|Revideo|SVG|Hydra|HyperFrames', reason: 'Creative-domain runtime changes must preserve registry breadth and named generators', priority: 1 },
     { tool: 'runBuild', reason: 'Full TypeScript build after creative-domain runtime edits', priority: 2 },
   ],
 };

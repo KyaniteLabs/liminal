@@ -45,20 +45,32 @@ export class GenericWrapper {
     return /^<!doctype\s+html/i.test(trimmed) || /^<html\b/i.test(trimmed) || /<body\b/i.test(trimmed);
   }
 
+  private static isHTMLFragment(code: string): boolean {
+    return /<\/?(?:script|style|button|div|main|section|canvas|audio|body|html)\b/i.test(code);
+  }
+
   private static extractBodyFragment(html: string): string {
-    return html.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)?.[1] ?? html;
+    const body = html.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)?.[1];
+    if (body) return body;
+    return html
+      .replace(/<!doctype\s+html[^>]*>/gi, '')
+      .replace(/<html\b[^>]*>|<\/html>/gi, '')
+      .replace(/<head\b[\s\S]*?<\/head>/gi, '')
+      .replace(/<body\b[^>]*>|<\/body>/gi, '');
   }
 
   private static extractInlineScripts(html: string): string[] {
     return [...html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]
       .map(match => match[1])
-      .filter(script => script.trim().length > 0);
+      .filter(script => script.trim().length > 0)
+      .filter(script => !/\bdocument\.(?:body|documentElement)\.innerHTML\b|\bdocument\.write\s*\(/.test(script));
   }
 
   private static stripExecutableHTML(fragment: string): string {
     return fragment
       .replace(/<script\b[\s\S]*?<\/script>/gi, '')
       .replace(/<style\b[\s\S]*?<\/style>/gi, '')
+      .replace(/<\/?(?:html|body)\b[^>]*>/gi, '')
       .trim();
   }
 
@@ -89,6 +101,7 @@ export class GenericWrapper {
    * Detect domain from code content for generic wrappers
    */
   static detectDomain(code: string): GenericDomain | null {
+    if (this.isHyperframesCode(code)) return 'hyperframes';
     if (this.isStrudelCode(code)) return 'strudel';
     if (this.isHydraCode(code)) return 'hydra';
     if (this.isToneJSCode(code)) return 'tone';
@@ -96,6 +109,13 @@ export class GenericWrapper {
     if (this.isRevideoCode(code)) return 'revideo';
     if (this.isASCIICode(code)) return 'ascii';
     return null;
+  }
+
+  private static isHyperframesCode(code: string): boolean {
+    const hasComposition = /data-composition-id/i.test(code);
+    const hasClipTiming = /class\s*=\s*["'][^"']*\bclip\b[^"']*["']/i.test(code) && /data-(?:start|duration|track-index)/i.test(code);
+    const hasTimeline = /gsap\.(?:timeline|from|to)\s*\(/.test(code) || /window\.__timelines/.test(code);
+    return hasComposition && hasClipTiming && hasTimeline;
   }
 
   private static isStrudelCode(code: string): boolean {
@@ -193,7 +213,7 @@ export class GenericWrapper {
       case 'revideo':
         return this.wrapRevideo(code, options.showPreview ?? false);
       case 'hyperframes':
-        return this.wrapHyperframes(code, options.showPreview ?? false);
+        return this.wrapHyperframes(code, options.title ?? 'HyperFrames Preview');
       case 'ascii':
         return this.wrapASCII(code, options.asciiWidth ?? 60);
       default:
@@ -527,35 +547,85 @@ ${safeCommentCode}
 </html>`;
   }
 
-  private static wrapHyperframes(code: string, _showPreview = false): string {
-    const escaped = code
+  private static wrapHyperframes(code: string, title = 'HyperFrames Preview'): string {
+    const escapedSource = this.escapeHTML(code);
+    const escapedSrcdoc = code
       .replace(/&/g, '&amp;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
+    const compositionId = code.match(/data-composition-id\s*=\s*["']([^"']+)["']/i)?.[1] ?? 'composition';
+    const width = code.match(/data-width\s*=\s*["']?(\d+)/i)?.[1] ?? '1920';
+    const height = code.match(/data-height\s*=\s*["']?(\d+)/i)?.[1] ?? '1080';
+    const clipCount = (code.match(/class\s*=\s*["'][^"']*\bclip\b[^"']*["']/gi) ?? []).length;
+    const timelineCount = (code.match(/gsap\.(?:timeline|from|to)\s*\(/g) ?? []).length;
+    const safeTitle = this.escapeHTML(title);
+    const safeCompositionId = this.escapeHTML(compositionId);
 
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HyperFrames Composition</title>
+  <title>${safeTitle}</title>
   <style>
-    body { margin: 0; background: #1a1a2e; font-family: system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-    h2 { color: #e0e0e0; margin-bottom: 16px; }
-    .preview { width: 960px; height: 540px; border: 2px solid #333; border-radius: 8px; background: #fff; }
-    pre { white-space: pre-wrap; word-wrap: break-word; background: #0f0f1a; padding: 1.5rem; border-radius: 8px; border: 1px solid #1e293b; max-width: 960px; overflow-x: auto; color: #e0e0e0; font-size: 0.85rem; }
-    .info { color: #888; margin-top: 12px; font-size: 14px; }
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 18% 12%, rgba(45,212,191,.22), transparent 30%), radial-gradient(circle at 82% 0%, rgba(129,140,248,.2), transparent 32%), #05070d; color: #eaf2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    [data-hyperframes-preview-shell] { width: min(1180px, calc(100vw - 32px)); margin: 0 auto; padding: 28px 0 36px; display: grid; gap: 16px; }
+    .hyperframes-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(125,211,252,.32); background: rgba(8,47,73,.42); color: #7dd3fc; border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 10px 0 0; font-size: clamp(34px, 6vw, 76px); line-height: .92; letter-spacing: -.055em; }
+    .summary { color: #cbd5e1; max-width: 56ch; line-height: 1.55; }
+    .meta { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; color: #bfdbfe; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .pill { border: 1px solid rgba(148,163,184,.22); border-radius: 999px; background: rgba(15,23,42,.74); padding: 6px 10px; }
+    .hyperframes-stage-wrap { border: 1px solid rgba(148,163,184,.28); border-radius: 28px; overflow: hidden; background: linear-gradient(135deg, rgba(15,23,42,.96), rgba(30,41,59,.76)); box-shadow: 0 28px 90px rgba(0,0,0,.42); }
+    .hyperframes-stage { display: block; width: 100%; aspect-ratio: ${width} / ${height}; min-height: 420px; border: 0; background: #050816; }
+    .timeline { position: relative; height: 72px; border: 1px solid rgba(148,163,184,.22); border-radius: 18px; background: rgba(2,6,23,.72); overflow: hidden; }
+    .timeline-label { position: absolute; left: 18px; top: 12px; color: #a5b4fc; font: 11px ui-monospace, monospace; }
+    .track { position: absolute; left: 18px; right: 18px; top: 34px; height: 14px; border-radius: 999px; background: linear-gradient(90deg, #2dd4bf, #38bdf8, #a78bfa, #f472b6); box-shadow: 0 0 22px rgba(56,189,248,.24); }
+    .playhead { position: absolute; top: 14px; bottom: 12px; width: 3px; border-radius: 999px; background: #fff; box-shadow: 0 0 22px #67e8f9; animation: hf-playhead 5s linear infinite; }
+    .note { color: #94a3b8; font-size: 12px; margin: 0; }
+    details { border: 1px solid rgba(148,163,184,.22); border-radius: 16px; background: rgba(2,6,23,.62); }
+    summary { cursor: pointer; padding: 14px 16px; color: #93c5fd; font-weight: 800; }
+    pre { white-space: pre-wrap; word-break: break-word; margin: 0; padding: 0 16px 16px; max-height: 320px; overflow: auto; color: #dbeafe; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    @keyframes hf-playhead { from { left: 18px; } to { left: calc(100% - 18px); } }
+    @media (max-width: 820px) { .hyperframes-header { display: grid; } .meta { justify-content: flex-start; } .hyperframes-stage { min-height: 280px; } }
   </style>
 </head>
 <body>
-  <h2>HyperFrames Composition</h2>
-  <iframe class="preview" srcdoc="${escaped}" sandbox="allow-scripts"></iframe>
-  <p class="info">Renders via @hyperframes/producer — use Exporter.exportVideo() for MP4 output</p>
+  <main data-hyperframes-preview-shell>
+    <section class="hyperframes-header">
+      <div>
+        <div class="eyebrow">HyperFrames composition</div>
+        <h1>${safeTitle}</h1>
+        <p class="summary">A browser-visible composition preview for HTML + GSAP assets. The generated stage stays live above; export/render details stay available without dominating the artist-facing view.</p>
+      </div>
+      <div class="meta" aria-label="HyperFrames metadata">
+        <span class="pill">id: ${safeCompositionId}</span>
+        <span class="pill">${clipCount} clips</span>
+        <span class="pill">${timelineCount} timeline calls</span>
+        <span class="pill">${width}×${height}</span>
+      </div>
+    </section>
+    <section class="hyperframes-stage-wrap" aria-label="Rendered HyperFrames stage preview">
+      <iframe class="hyperframes-stage" title="HyperFrames rendered stage" srcdoc="${escapedSrcdoc}" sandbox="allow-scripts allow-same-origin"></iframe>
+    </section>
+    <section class="timeline" aria-label="HyperFrames timeline preview">
+      <div class="timeline-label">GSAP timeline / export preview</div>
+      <div class="track"></div>
+      <div class="playhead"></div>
+    </section>
+    <p class="note">Use @hyperframes/producer / Exporter.exportVideo() for final MP4 output. This shell is for quick visual inspection inside Studio.</p>
+    <details>
+      <summary>Source code and export details</summary>
+      <pre><code>${escapedSource}</code></pre>
+    </details>
+  </main>
 </body>
 </html>`;
-  }
+}
 
   private static wrapASCII(code: string, _width: number): string {
     const escaped = code
@@ -615,7 +685,7 @@ ${safeCommentCode}
 
   private static wrapToneJS(code: string): string {
     const cleanedCode = this.stripLLMToolMarkup(code);
-    if (this.isHTMLDocument(cleanedCode)) return this.wrapToneHTML(cleanedCode);
+    if (this.isHTMLDocument(cleanedCode) || this.isHTMLFragment(cleanedCode)) return this.wrapToneHTML(cleanedCode);
 
     const safeCode = cleanedCode.replace(/`/g, '\\`');
     

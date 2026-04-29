@@ -7,6 +7,19 @@ export interface RenderEvidence {
     height?: number;
   };
   logRef?: string;
+  audio?: {
+    success: boolean;
+    sampleRate?: number;
+    durationSeconds?: number;
+    peakAmplitude?: number;
+    rmsAmplitude?: number;
+    error?: string;
+    warningCount?: number;
+  };
+  video?: {
+    fps?: number;
+    durationSeconds?: number;
+  };
   timingMs: number;
   infraUnavailable: boolean;
   candidateFailure: boolean;

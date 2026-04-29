@@ -615,6 +615,7 @@ export class RalphLoop {
                       candidate.code,
                       prompt,
                       undefined,
+                      String(normalizedOptions.collabDomain || 'p5'),
                     );
                     if (genEval.failureClass === 'scorer') {
                       if (evalMode === 'strict-browser') {
@@ -814,6 +815,7 @@ export class RalphLoop {
                 currentCode,
                 prompt,
                 undefined,
+                String(normalizedOptions.collabDomain || 'p5'),
               );
               if (genEval.failureClass === 'scorer') {
                 if (evalMode === 'strict-browser') {
@@ -931,6 +933,7 @@ export class RalphLoop {
                         repairCode,
                         prompt,
                         undefined,
+                        String(normalizedOptions.collabDomain || 'p5'),
                       );
                       if (genEvalRepair.failureClass === 'scorer') {
                         if (evalMode === 'strict-browser') {

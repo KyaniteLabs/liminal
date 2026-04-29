@@ -85,6 +85,29 @@ const DEFAULT_OPTIONS: Required<RenderOptions> = {
   keepPageOpen: false,
 };
 
+
+function summarizeAudioCapture(audio?: AudioCaptureResult): RenderEvidence['audio'] {
+  if (!audio) return undefined;
+  let peakAmplitude = 0;
+  let sumSquares = 0;
+  for (const sample of audio.samples) {
+    const abs = Math.abs(sample);
+    if (abs > peakAmplitude) peakAmplitude = abs;
+    sumSquares += sample * sample;
+  }
+  const rmsAmplitude = audio.samples.length > 0 ? Math.sqrt(sumSquares / audio.samples.length) : 0;
+
+  return {
+    success: audio.success,
+    sampleRate: audio.sampleRate,
+    durationSeconds: audio.duration,
+    peakAmplitude: Math.round(peakAmplitude * 1_000_000) / 1_000_000,
+    rmsAmplitude: Math.round(rmsAmplitude * 1_000_000) / 1_000_000,
+    error: audio.error,
+    warningCount: audio.warnings?.length ?? 0,
+  };
+}
+
 function domainRequiresCanvas(domain: RenderDomain): boolean {
   return domain === 'p5' || domain === 'three' || domain === 'glsl' || domain === 'hydra';
 }
@@ -366,6 +389,7 @@ export class HeadlessRenderer {
           }
         : undefined,
       logRef: result.logs.length > 0 ? 'logs' : undefined,
+      audio: summarizeAudioCapture(result.audio),
     };
   }
 

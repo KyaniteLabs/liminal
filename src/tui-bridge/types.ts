@@ -52,6 +52,8 @@ export interface TuiInputRequest {
   maxIterations?: number;
   candidateCount?: number;
   timeoutMinutes?: number;
+  creativePreferences?: Record<string, unknown>;
+  guidanceAnswers?: Record<string, unknown>;
 }
 
 export interface SwarmRoundEvent {

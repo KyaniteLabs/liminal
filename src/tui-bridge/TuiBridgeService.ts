@@ -35,7 +35,7 @@ import { AutonomousGardener, type GardenerCycleResult } from '../autonomy/Autono
 import { LiminalFS } from '../fs/LiminalFS.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
-import { createCreativePreferenceSuggestion } from '../chat/CreativePreferenceGuide.js';
+import { buildCreativePreferencePromptHints, createCreativePreferenceSuggestion } from '../chat/CreativePreferenceGuide.js';
 import type { Domain as ChatDomain } from '../chat/types.js';
 import { buildCreativeDomainPlan, previewDomainForCode } from './CreativeDomainRouting.js';
 import { summarizeReasoningTrace } from './TraceSummarizer.js';
@@ -1559,7 +1559,7 @@ export class TuiBridgeService {
     userText: string,
     conversation: ConversationManager,
     llm: LLMClient,
-    options: Pick<TuiInputRequest, 'maxIterations' | 'candidateCount' | 'timeoutMinutes'> = {},
+    options: Pick<TuiInputRequest, 'maxIterations' | 'candidateCount' | 'timeoutMinutes' | 'creativePreferences' | 'guidanceAnswers'> = {},
   ): Promise<void> {
     const controller = new AbortController();
     this.activeStreams.set(sessionId, controller);
@@ -1679,7 +1679,7 @@ export class TuiBridgeService {
         const attemptStartedAt = Date.now();
         const domain = domainPlan[attempt];
         activeDomain = domain;
-        const attemptPrompt = this.promptForCreativeDomain(userText, domain, attempt > 0, intentBrief);
+        const attemptPrompt = this.promptForCreativeDomain(userText, domain, attempt > 0, intentBrief, options);
         const attemptLabel = `${attempt + 1}/${domainPlan.length}: ${domain}`;
         this.emit(sessionId, {
           type: 'generation.attempt.started',
@@ -1945,7 +1945,7 @@ export class TuiBridgeService {
     userText: string,
     conversation: ConversationManager,
     llm: LLMClient,
-    options: Pick<TuiInputRequest, 'maxIterations' | 'candidateCount' | 'timeoutMinutes'> = {},
+    options: Pick<TuiInputRequest, 'maxIterations' | 'candidateCount' | 'timeoutMinutes' | 'creativePreferences' | 'guidanceAnswers'> = {},
   ): Promise<void> {
     const controller = new AbortController();
     this.activeStreams.set(sessionId, controller);
@@ -2027,7 +2027,7 @@ export class TuiBridgeService {
         const attemptStartedAt = Date.now();
         const domain = domainPlan[attempt];
         activeDomain = domain;
-        const attemptPrompt = this.promptForCreativeDomain(userText, domain, attempt > 0, intentBrief);
+        const attemptPrompt = this.promptForCreativeDomain(userText, domain, attempt > 0, intentBrief, options);
 
         this.emit(sessionId, {
           type: 'generation.attempt.started',
@@ -2584,7 +2584,13 @@ export class TuiBridgeService {
     return 'p5';
   }
 
-  private promptForCreativeDomain(userText: string, domain: Domain, fallback: boolean, intentBrief?: CreativeIntentBrief): string {
+  private promptForCreativeDomain(
+    userText: string,
+    domain: Domain,
+    fallback: boolean,
+    intentBrief?: CreativeIntentBrief,
+    options: Pick<TuiInputRequest, 'creativePreferences' | 'guidanceAnswers'> = {},
+  ): string {
     const prefix = fallback
       ? `Previous generation route failed. Retry the original request as ${domain}.`
       : `Target creative domain: ${domain}.`;
@@ -2607,7 +2613,41 @@ export class TuiBridgeService {
             : '- Unknown details: none significant.',
         ]
       : [];
-    return [userText, '', ...briefLines, '', prefix, domainInstruction].join('\n');
+    const preferenceHints = this.buildCreativePreferenceLines(userText, domain, options);
+    return [userText, '', ...briefLines, ...preferenceHints, '', prefix, domainInstruction].join('\n');
+  }
+
+  private buildCreativePreferenceLines(
+    userText: string,
+    domain: Domain | string,
+    options: Pick<TuiInputRequest, 'creativePreferences' | 'guidanceAnswers'>,
+  ): string[] {
+    const answers = {
+      ...this.cleanPreferenceAnswers(options.creativePreferences),
+      ...this.cleanPreferenceAnswers(options.guidanceAnswers),
+    };
+    if (Object.keys(answers).length === 0) return [];
+
+    const hints = buildCreativePreferencePromptHints({
+      domain: this.toChatDomain(domain),
+      prompt: this.extractUserPrompt(userText),
+      answers,
+    });
+    if (hints.length === 0) return [];
+
+    return [
+      '',
+      'Creative preferences (user-confirmed, optional):',
+      ...hints.map(hint => `- ${hint}`),
+    ];
+  }
+
+  private cleanPreferenceAnswers(answers: Record<string, unknown> | undefined): Record<string, unknown> {
+    if (!answers || typeof answers !== 'object' || Array.isArray(answers)) return {};
+    return Object.fromEntries(
+      Object.entries(answers)
+        .filter(([, value]) => value != null && String(value).trim() !== ''),
+    );
   }
 
   private async emitPreviewArtifacts(sessionId: string, code: string, requestedDomain: Domain): Promise<void> {

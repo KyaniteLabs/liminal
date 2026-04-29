@@ -116,11 +116,9 @@ body::before {
   display: grid;
   grid-template-areas:
     "command command command"
-    "rail stage inspector"
-    "rail timeline inspector"
-    "rail legacy inspector";
-  grid-template-columns: minmax(168px, 0.16fr) minmax(0, 1fr) minmax(260px, 0.28fr);
-  grid-template-rows: auto minmax(360px, 52vh) auto minmax(0, auto);
+    "rail chat preview";
+  grid-template-columns: minmax(138px, 0.14fr) minmax(440px, 1fr) minmax(360px, 0.46fr);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 12px;
   padding: 14px;
   background: var(--liminal-bg-void);
@@ -129,10 +127,10 @@ body::before {
 .liminal-commandbar {
   grid-area: command;
   display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(260px, 1fr) auto;
-  align-items: stretch;
+  grid-template-columns: minmax(220px, 1fr) auto;
+  align-items: center;
   gap: 12px;
-  min-height: 78px;
+  min-height: 70px;
   padding: 12px;
   background: var(--liminal-surface-1);
   border: 1px solid var(--liminal-line);
@@ -166,11 +164,48 @@ body::before {
 .liminal-brand p {
   margin: 4px 0 0;
   color: var(--liminal-muted);
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.liminal-status-cluster {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.liminal-status-pill {
+  display: grid;
+  gap: 2px;
+  min-width: 140px;
+  max-width: 230px;
+  padding: 8px 10px;
+  border: 1px solid var(--liminal-line);
+  border-radius: 999px;
+  background: rgba(25, 31, 43, 0.72);
+  color: var(--liminal-text);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liminal-status-pill b {
+  color: var(--liminal-cyan);
+  font-family: var(--font-body);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.liminal-status-pill--muted {
+  color: var(--liminal-muted);
 }
 
 .liminal-command {
@@ -201,6 +236,269 @@ body::before {
 .liminal-command textarea:focus {
   outline: 2px solid var(--liminal-cyan-dim);
   border-color: var(--liminal-cyan);
+}
+
+.liminal-chat-surface {
+  grid-area: chat;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid var(--liminal-line);
+  border-radius: var(--atelier-radius);
+  background:
+    radial-gradient(circle at 18% 0%, rgba(89, 225, 255, 0.08), transparent 32%),
+    var(--liminal-surface-1);
+}
+
+.liminal-chat-timeline {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: auto;
+  padding: 20px;
+}
+
+.liminal-chat-message {
+  max-width: min(760px, 92%);
+  padding: 16px 18px;
+  border: 1px solid var(--liminal-line);
+  border-radius: 18px;
+  background: rgba(18, 23, 32, 0.86);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.18);
+}
+
+.liminal-chat-message h2,
+.liminal-chat-message p {
+  margin: 0;
+}
+
+.liminal-chat-message h2 {
+  margin-top: 4px;
+  font-size: clamp(1.5rem, 3vw, 2.45rem);
+  letter-spacing: -0.04em;
+}
+
+.liminal-chat-message p {
+  margin-top: 10px;
+  color: var(--liminal-muted);
+  line-height: 1.55;
+}
+
+.liminal-chat-message--assistant {
+  border-color: rgba(89, 225, 255, 0.28);
+}
+
+.liminal-chat-message--user {
+  align-self: flex-end;
+  border-color: rgba(89, 225, 255, 0.35);
+  background: rgba(11, 40, 52, 0.76);
+}
+
+.liminal-chat-message--user span,
+.liminal-chat-kicker {
+  color: var(--liminal-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.liminal-chat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.liminal-chat-chips span {
+  padding: 6px 10px;
+  border: 1px solid rgba(89, 225, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(89, 225, 255, 0.08);
+  color: var(--liminal-cyan-hover);
+  font-size: 0.8rem;
+}
+
+.liminal-artifact-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  max-width: min(760px, 92%);
+  padding: 14px;
+  border: 1px solid rgba(143, 92, 255, 0.28);
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(143, 92, 255, 0.12), rgba(89, 225, 255, 0.07));
+}
+
+.liminal-artifact-card span,
+.liminal-artifact-card small {
+  display: block;
+}
+
+.liminal-artifact-card span {
+  color: var(--liminal-orchid);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.liminal-artifact-card strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--liminal-text);
+}
+
+.liminal-artifact-card small {
+  margin-top: 4px;
+  color: var(--liminal-muted);
+  line-height: 1.35;
+}
+
+.liminal-artifact-card a {
+  flex: 0 0 auto;
+  padding: 8px 11px;
+  border: 1px solid var(--liminal-line-strong);
+  border-radius: 999px;
+  color: var(--liminal-cyan);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.liminal-receipt-details,
+.liminal-advanced-drawer {
+  max-width: min(900px, 100%);
+  border: 1px solid var(--liminal-line);
+  border-radius: 14px;
+  background: rgba(13, 17, 24, 0.74);
+  overflow: hidden;
+}
+
+.liminal-receipt-details summary,
+.liminal-advanced-drawer summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  min-height: 46px;
+  padding: 0 14px;
+  cursor: pointer;
+  color: var(--liminal-muted);
+  list-style: none;
+}
+
+.liminal-receipt-details summary::-webkit-details-marker,
+.liminal-advanced-drawer summary::-webkit-details-marker {
+  display: none;
+}
+
+.liminal-receipt-details summary span,
+.liminal-advanced-drawer summary span {
+  color: var(--liminal-text);
+  font-weight: 700;
+}
+
+.liminal-receipt-details summary strong,
+.liminal-advanced-drawer summary strong {
+  color: var(--liminal-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.liminal-chat-composer {
+  display: grid;
+  gap: 10px;
+  margin: 0 20px 20px;
+  padding: 14px;
+  border: 1px solid var(--liminal-line-strong);
+  border-radius: 18px;
+  background: rgba(7, 9, 13, 0.92);
+  box-shadow: 0 20px 58px rgba(0, 0, 0, 0.28);
+}
+
+.liminal-composer-head,
+.liminal-composer-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.liminal-composer-label {
+  color: var(--liminal-text);
+  font-weight: 700;
+}
+
+.liminal-composer-head span {
+  color: var(--liminal-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.liminal-chat-composer textarea {
+  width: 100%;
+  min-height: 108px;
+  resize: vertical;
+  padding: 12px 14px;
+  border: 1px solid var(--liminal-line);
+  border-radius: 14px;
+  background: var(--liminal-surface-2);
+  color: var(--liminal-text);
+  font: inherit;
+  line-height: 1.45;
+}
+
+.liminal-chat-composer textarea:focus {
+  outline: 2px solid var(--liminal-cyan-dim);
+  border-color: var(--liminal-cyan);
+}
+
+.liminal-preview-panel {
+  grid-area: preview;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--liminal-line);
+  border-radius: var(--atelier-radius);
+  background: var(--liminal-surface-1);
+}
+
+.liminal-preview-panel__header {
+  display: grid;
+  gap: 3px;
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--liminal-line);
+}
+
+.liminal-preview-panel__header span {
+  color: var(--liminal-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.liminal-preview-panel__header strong {
+  color: var(--liminal-text);
+  font-size: 1rem;
+}
+
+.liminal-preview-panel__header small {
+  color: var(--liminal-muted);
+  line-height: 1.35;
+}
+
+.liminal-preview-panel__stage {
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
 }
 
 .liminal-command-actions {
@@ -347,6 +645,12 @@ body::before {
   min-width: 0;
   overflow: hidden;
   background: #05070a;
+}
+
+.liminal-preview-panel > .liminal-preview-panel__stage {
+  grid-area: auto;
+  width: 100%;
+  height: 100%;
 }
 
 .liminal-stage-frame,
@@ -1357,6 +1661,10 @@ body::before {
 .atelier-input:focus-visible,
 .atelier-select:focus-visible,
 .atelier-textarea:focus-visible,
+.liminal-chat-composer textarea:focus-visible,
+.liminal-artifact-card a:focus-visible,
+.liminal-receipt-details summary:focus-visible,
+.liminal-advanced-drawer summary:focus-visible,
 .liminal-run-button:focus-visible,
 .liminal-rail-button:focus-visible,
 .liminal-subnav-button:focus-visible,
@@ -1403,18 +1711,40 @@ body::before {
   .liminal-workbench {
     grid-template-areas:
       "command"
-      "stage"
-      "timeline"
-      "inspector"
-      "rail"
-      "legacy";
+      "chat"
+      "preview"
+      "rail";
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(280px, 44vh) auto auto auto auto;
+    grid-template-rows: auto minmax(0, auto) minmax(320px, 52vh) auto;
     padding: 10px;
   }
 
   .liminal-commandbar {
     grid-template-columns: 1fr;
+  }
+
+  .liminal-status-cluster {
+    justify-content: stretch;
+    overflow-x: auto;
+  }
+
+  .liminal-status-pill {
+    min-width: 150px;
+  }
+
+  .liminal-chat-timeline {
+    padding: 14px;
+  }
+
+  .liminal-chat-composer {
+    margin: 0 14px 14px;
+  }
+
+  .liminal-artifact-card,
+  .liminal-composer-actions,
+  .liminal-human-review-strip {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .liminal-left-rail nav {
@@ -1484,12 +1814,14 @@ body::before {
   .liminal-workbench {
     grid-template-areas:
       "command command"
-      "rail stage"
-      "rail timeline"
-      "rail inspector"
-      "legacy legacy";
+      "rail chat"
+      "rail preview";
     grid-template-columns: 150px minmax(0, 1fr);
-    grid-template-rows: auto minmax(340px, 46vh) auto auto auto;
+    grid-template-rows: auto minmax(0, auto) minmax(340px, 48vh);
+  }
+
+  .liminal-status-cluster {
+    overflow-x: auto;
   }
 
   .atelier-title {

@@ -141,8 +141,11 @@ export class TuiBridgeServer {
   }
 
   async stop(): Promise<void> {
+    this.server.closeIdleConnections?.();
+    this.server.closeAllConnections?.();
     return new Promise((resolve, reject) => {
       this.server.close((err) => {
+        this.bridge.destroy();
         if (err) reject(err);
         else resolve();
       });

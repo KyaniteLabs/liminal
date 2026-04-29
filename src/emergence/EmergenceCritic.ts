@@ -71,14 +71,14 @@ export class EmergenceCritic {
    * Full evaluation — computes all signals including perturbation probe.
    * Use for final candidate evaluation.
    */
-  async evaluateFull(params: {
+  evaluateFull(params: {
     output: string;
     descriptor: BehaviorDescriptor;
     qualityScore: number;
     archive: ArchiveEntry[];
     lineage?: LineageRecord;
     extractFn?: (output: string) => BehaviorDescriptor;
-  }): Promise<CriticResult> {
+  }): CriticResult {
     const { output, descriptor, qualityScore, archive, lineage, extractFn } = params;
 
     // 1. Novelty

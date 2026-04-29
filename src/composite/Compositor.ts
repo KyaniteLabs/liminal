@@ -69,7 +69,7 @@ export class Compositor {
     throw removedError('Video composition generation');
   }
 
-  async composite(_spec: CompositionSpec, _outputPath: string): Promise<never> {
+  composite(_spec: CompositionSpec, _outputPath: string): Promise<never> {
     throw removedError('Video compositing');
   }
 }

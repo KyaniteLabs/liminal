@@ -321,8 +321,12 @@ describeIfBrowser('RenderAndScorePipeline', () => {
   });
 
   afterEach(async () => {
-    await pipeline.close();
-  });
+    try {
+      await pipeline.close();
+    } catch {
+      // Browser may already be closed or never opened — ignore cleanup errors
+    }
+  }, 30000);
 
   it('should process p5 code and return scores', async () => {
     const result = await pipeline.process(sampleP5Code);

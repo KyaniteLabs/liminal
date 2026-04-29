@@ -70,6 +70,6 @@ export class Compositor {
   }
 
   composite(_spec: CompositionSpec, _outputPath: string): Promise<never> {
-    throw removedError('Video compositing');
+    return Promise.reject(removedError('Video compositing'));
   }
 }

@@ -19,7 +19,7 @@ const DEFAULT_SMOKE_ROOT = path.join(ROOT, '.omx', 'runtime-smoke');
 const DEFAULT_LIVE_RECEIPT = path.join(ROOT, '.omx', 'proof', 'domain-gauntlet-live.json');
 const DEFAULT_LIVE_ARTIFACT_DIR = path.join(ROOT, '.omx', 'proof', 'live-creative-domains');
 const DEFAULT_OUT_ROOT = path.join(ROOT, '.omx', 'qa-cockpit');
-const DOMAIN_ORDER = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel', 'tone', 'revideo', 'html', 'ascii', 'kinetic', 'textgen'];
+const DOMAIN_ORDER = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel', 'tone', 'revideo', 'hyperframes', 'ascii', 'kinetic', 'textgen'];
 
 const DOMAIN_EXPECTATIONS = {
   p5: 'canvas visible; animation or intentional still sketch loads without console errors',
@@ -30,7 +30,7 @@ const DOMAIN_EXPECTATIONS = {
   strudel: 'click/start path produces audible pattern or exposes a clear play affordance',
   tone: 'click/start path produces audible synth/drone or exposes a clear play affordance',
   revideo: 'motion/video scene renders at least one frame and has plausible animation path',
-  html: 'page layout renders without broken markup or obvious overflow',
+  hyperframes: 'HTML-backed HyperFrames composition renders visible staged clips and timeline/export affordance without console errors',
   ascii: 'ASCII composition is visible, intentional, and not prose spillover',
   kinetic: 'CSS kinetic typography renders visible animated text/elements without console errors',
   textgen: 'generated text/concrete poetry is intentional, readable, and not placeholder/prose spillover',

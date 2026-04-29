@@ -8,6 +8,9 @@ export function inferCreativeDomain(prompt: string): Domain {
   const lower = prompt.toLowerCase();
 
   if (/\bp5\.?js\b|\bp5js\b|\bp5\s+sketch\b|\bp5\s+code\b/.test(lower)) return Domain.P5;
+  if (/\bhyperframes?\b|\b(promo|trailer|slideshow|title\s*card|subtitle|caption|social\s*media)\b|\b(composite|assemble|overlay|watermark|intro|outro)\b/.test(lower)) {
+    return Domain.HYPERFRAMES;
+  }
   if (/\bthree\.js\b|\bthreejs\b|\bthree\b|\b3d\b|\bwebgl\b|\bscene\b|\bcamera\b|\bmesh\b|\bgeometry\b|\borbit(?:ing)?\b/.test(lower)) {
     return Domain.THREE;
   }
@@ -30,13 +33,14 @@ export function buildCreativeDomainPlan(prompt: string): Domain[] {
 export function previewDomainForCode(code: string, requestedDomain: Domain): PreviewDomain {
   if (/\bTHREE\.|import\s+.*\bthree\b|new\s+THREE\./.test(code)) return 'three';
   const detected = CodeValidator.detectDomain(code);
-  if (detected === 'shader' || detected === 'three' || detected === 'hydra' || detected === 'tone' || detected === 'strudel' || detected === 'ascii' || detected === 'html' || detected === 'revideo') {
+  if (detected === 'shader' || detected === 'three' || detected === 'hydra' || detected === 'tone' || detected === 'strudel' || detected === 'ascii' || detected === 'html' || detected === 'revideo' || detected === 'hyperframes') {
     return detected;
   }
   if (requestedDomain === Domain.THREE) return 'three';
   if (requestedDomain === Domain.GLSL || requestedDomain === Domain.SHADER || requestedDomain === Domain.WEBGL) return 'shader';
   if (requestedDomain === Domain.HYDRA) return 'hydra';
   if (requestedDomain === Domain.TONE) return 'tone';
+  if (requestedDomain === Domain.HYPERFRAMES) return 'hyperframes';
   if (requestedDomain === Domain.STRUDEL || requestedDomain === Domain.MUSIC) return 'strudel';
   if (requestedDomain === Domain.ASCII) return 'ascii';
   return 'p5';

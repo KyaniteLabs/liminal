@@ -52,7 +52,7 @@ export class CognitiveArchitectureAtlas {
         this.domain('tone', 'Tone.js', 'beta', 'Programmatic audio and music logic'),
         this.domain('strudel', 'Strudel', 'beta', 'Pattern-based live music code'),
         this.domain('revideo', 'Revideo', 'beta', 'Timeline/video composition generation'),
-        this.domain('html', 'HTML', 'beta', 'Self-contained browser artifacts'),
+        this.domain('hyperframes', 'HyperFrames', 'beta', 'HTML-backed GSAP asset compositing and video export prep'),
         this.domain('ascii', 'ASCII', 'scaffold', 'Text-mode visual artifacts'),
         this.domain('kinetic', 'Kinetic Typography', 'scaffold', 'Animated typographic compositions'),
         this.domain('textgen', 'TextGen', 'scaffold', 'Generative text and poetic artifacts'),

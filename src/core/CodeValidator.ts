@@ -58,6 +58,9 @@ const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
 // Domain detection
 // -----------------------------------------------------------------------------
 function detectDomain(code: string): Domain {
+  if (/data-composition-id/i.test(code) && (/gsap\.(?:timeline|from|to)\s*\(/.test(code) || /window\.__timelines/.test(code))) return 'hyperframes';
+  if (/window\.__timelines/.test(code) && /class\s*=\s*["'][^"']*\bclip\b[^"']*["']/i.test(code)) return 'hyperframes';
+
   if (isAlreadyWrapped(code)) {
     // Check for HTML-specific domains first
     const hasThreeImport = code.includes('import * as THREE') ||
@@ -99,10 +102,6 @@ function detectDomain(code: string): Domain {
 
   // Check for Revideo
   if (/\bmakeScene|@revideo\/core/.test(code)) return 'revideo';
-
-  // Check for HyperFrames (HTML+GSAP compositing)
-  if (/data-composition-id/.test(code) && /gsap\.timeline|gsap\.to\(/.test(code)) return 'hyperframes';
-  if (/window\.__timelines/.test(code) && /class="clip"/.test(code)) return 'hyperframes';
 
   // Check for Hydra
   if (/\b(osc|src|noise|shape|gradient|solid|voronoi)\s*\(/.test(code) && /\.out\(/.test(code) && !/\$:/.test(code)) {

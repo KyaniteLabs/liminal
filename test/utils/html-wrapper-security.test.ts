@@ -15,6 +15,19 @@ describe('HTMLWrapper Security Headers', () => {
     expect(revideoHtml).toContain('</html>');
   });
 
+
+
+  it('detects and wraps HyperFrames HTML as a visual composition preview, not generic HTML', () => {
+    const code = '<!doctype html><html><body><div data-composition-id="demo"><h1 class="clip" data-start="0" data-duration="3" data-track-index="0">Title</h1></div><script>const tl = gsap.timeline({ paused: true }); window.__timelines = { demo: tl };</script></body></html>';
+    const html = HTMLWrapper.wrap(code, { domain: 'hyperframes', title: 'HyperFrames Preview' });
+
+    expect(HTMLWrapper.detectDomain(code)).toBe('hyperframes');
+    expect(HTMLWrapper.getSupportedDomains()).toContain('hyperframes');
+    expect(html).toContain('data-hyperframes-preview-shell');
+    expect(html).toContain('HyperFrames Preview');
+    expect(html).not.toBe(code);
+  });
+
   it('should include charset meta tag in all wrappers', () => {
     const p5Html = HTMLWrapper.wrap('function setup() {}', 'p5');
     const shaderHtml = HTMLWrapper.wrap('void main() { gl_FragColor = vec4(1.0); }', 'shader');

@@ -432,6 +432,7 @@ describe('Security regression — Wave 5 security headers', () => {
     expect(html).toContain('Permissions-Policy');
     expect(html).toContain('accelerometer=()');
     expect(html).toContain('gyroscope=()');
+    expect(html.indexOf('liminalSensorPolicy')).toBeLessThan(html.indexOf('p5.min.js'));
   });
 
   it('API JSON responses have correct content type', async () => {

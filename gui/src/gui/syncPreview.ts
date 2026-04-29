@@ -5,6 +5,21 @@ function escapeScript(code: string): string {
   return code.replace(/<\/script>/gi, '<\\/script>');
 }
 
+function sensorPolicyBootstrap(): string {
+  return `
+(function liminalSensorPolicy() {
+  const nativeAddEventListener = window.addEventListener.bind(window);
+  window.addEventListener = function(type, listener, options) {
+    const eventName = String(type).toLowerCase();
+    if (eventName === 'devicemotion' || eventName === 'deviceorientation' || eventName === 'deviceorientationabsolute') return;
+    return nativeAddEventListener(type, listener, options);
+  };
+  try { Object.defineProperty(window, 'DeviceMotionEvent', { value: undefined, configurable: true }); } catch {}
+  try { Object.defineProperty(window, 'DeviceOrientationEvent', { value: undefined, configurable: true }); } catch {}
+})();
+`;
+}
+
 function audioBootstrap(): string {
   return `
 window.__liminalAudio = window.__liminalAudio || {
@@ -69,6 +84,7 @@ export function buildSyncPreviewHtml(code: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Liminal Sync Stage</title>
   <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070a}main{width:100%;height:100%;display:grid;place-items:center}</style>
+  <script>${sensorPolicyBootstrap()}</script>
   <script>${audioBootstrap()}</script>
   <script src="${P5_CDN}"></script>
 </head>

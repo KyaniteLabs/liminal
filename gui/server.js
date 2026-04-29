@@ -65,6 +65,19 @@ const previewStore = new Map();
 const tuiBridge = new TuiBridgeService();
 
 const P5_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js';
+const P5_SENSOR_POLICY_SCRIPT = `
+  <script>
+    (function liminalSensorPolicy() {
+      const nativeAddEventListener = window.addEventListener.bind(window);
+      window.addEventListener = function(type, listener, options) {
+        const eventName = String(type).toLowerCase();
+        if (eventName === 'devicemotion' || eventName === 'deviceorientation' || eventName === 'deviceorientationabsolute') return;
+        return nativeAddEventListener(type, listener, options);
+      };
+      try { Object.defineProperty(window, 'DeviceMotionEvent', { value: undefined, configurable: true }); } catch {}
+      try { Object.defineProperty(window, 'DeviceOrientationEvent', { value: undefined, configurable: true }); } catch {}
+    })();
+  </script>`;
 
 function setPreviewSecurityHeaders(res) {
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -484,6 +497,7 @@ export function createApp(configPath, port = 5174) {
   <meta http-equiv="Permissions-Policy" content="accelerometer=(), gyroscope=(), magnetometer=(), deviceorientation=(), devicemotion=()">
   <title>Preview v${version}</title>
   <style>body { margin: 0; padding: 0; overflow: hidden; } canvas { display: block; }</style>
+  ${P5_SENSOR_POLICY_SCRIPT}
   <script src="${P5_CDN}" integrity="sha384-bOv+b6RV+dlZvdQAx6+cJ+FK9ab8JCSVWyJ1JPhMVQjPW+4C8V2cOKK+qZDfnRnx" crossorigin="anonymous"></script>
 </head>
 <body>

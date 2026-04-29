@@ -10,6 +10,18 @@ describe('syncPreview', () => {
     expect(html).toContain('p5.min.js');
   });
 
+  it('blocks p5 sensor listeners before loading p5 to avoid permissions-policy console noise', () => {
+    const html = buildSyncPreviewHtml('function setup(){createCanvas(100,100)}');
+    const sensorPolicyIndex = html.indexOf('liminalSensorPolicy');
+    const p5ScriptIndex = html.indexOf('p5.min.js');
+
+    expect(sensorPolicyIndex).toBeGreaterThan(-1);
+    expect(p5ScriptIndex).toBeGreaterThan(-1);
+    expect(sensorPolicyIndex).toBeLessThan(p5ScriptIndex);
+    expect(html).toContain("eventName === 'devicemotion'");
+    expect(html).toContain("eventName === 'deviceorientation'");
+  });
+
   it('wraps Three.js code with import map and audio API', () => {
     const html = buildSyncPreviewHtml('const scene = new THREE.Scene();');
 

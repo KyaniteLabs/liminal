@@ -9,4 +9,19 @@ export const SECURITY_HEADERS = `
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
 `;
 
+export const P5_SENSOR_POLICY_SCRIPT = `
+    <script>
+    (function liminalSensorPolicy() {
+      const nativeAddEventListener = window.addEventListener.bind(window);
+      window.addEventListener = function(type, listener, options) {
+        const eventName = String(type).toLowerCase();
+        if (eventName === 'devicemotion' || eventName === 'deviceorientation' || eventName === 'deviceorientationabsolute') return;
+        return nativeAddEventListener(type, listener, options);
+      };
+      try { Object.defineProperty(window, 'DeviceMotionEvent', { value: undefined, configurable: true }); } catch {}
+      try { Object.defineProperty(window, 'DeviceOrientationEvent', { value: undefined, configurable: true }); } catch {}
+    })();
+    </script>
+`;
+
 export default SECURITY_HEADERS;

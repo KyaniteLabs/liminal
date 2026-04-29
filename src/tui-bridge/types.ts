@@ -88,10 +88,12 @@ export type TuiBridgeEvent =
   | { type: 'preview.started'; sessionId: string; previewType: 'code' | 'image' | 'html' | 'music' }
   | { type: 'preview.content'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music' }
   | { type: 'preview.completed'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music'; imageUrl?: string }
+  | { type: 'preview.verified'; sessionId: string; previewType: 'code' | 'image' | 'html' | 'music'; artifactPath: string; checks: string[]; imageUrl?: string }
   // Generation telemetry: emitted during RalphLoop generation
   | { type: 'generation.intent_brief'; sessionId: string; userRequest: string; requirements: string[]; missingDetails: string[]; questions: string[]; willClarify: boolean }
   | { type: 'generation.clarification_needed'; sessionId: string; questions: string[]; reason: string }
   | { type: 'generation.reasoning_trace'; sessionId: string; phase: string; thought: string; model?: string; detail?: string; source?: 'harness' | 'generator' | 'evaluator' }
+  | { type: 'generation.route.selected'; sessionId: string; domain: string; domains: string[]; startedAt?: string; timeoutMinutes?: number; candidateCount?: number; executionMode?: 'draft' | 'prove' }
   | { type: 'generation.domain_plan'; sessionId: string; domains: string[]; startedAt?: string; timeoutMinutes?: number; candidateCount?: number; executionMode?: 'draft' | 'prove' }
   | { type: 'generation.attempt.started'; sessionId: string; domain: string; attempt: number; attemptTotal: number; startedAt?: string; timeoutMinutes?: number; candidateCount?: number; executionMode?: 'draft' | 'prove' }
   | { type: 'generation.attempt.failed'; sessionId: string; domain: string; attempt: number; attemptTotal: number; error: string; duration?: number }

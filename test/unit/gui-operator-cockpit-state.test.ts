@@ -19,6 +19,21 @@ describe('OperatorCockpit state derivation', () => {
     expect(state.activeWork).toContain('3 candidates');
   });
 
+  it('marks the cockpit phase as verified preview after preview verification arrives', () => {
+    const state = deriveCockpit([
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
+      { type: 'generation.domain_plan', domains: ['p5'], startedAt: '2026-04-29T02:00:00.000Z', candidateCount: 1, executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 1, startedAt: '2026-04-29T02:00:01.000Z', executionMode: 'draft' },
+      { type: 'artifact.found', artifactLabel: 'p5 HTML preview', artifactPath: '.omx/proof/live-previews/p5.html' },
+      { type: 'preview.completed', content: 'abc', previewType: 'image', imageUrl: '.omx/proof/live-previews/p5.png' },
+      { type: 'preview.verified', previewType: 'image', artifactPath: '.omx/proof/live-previews/p5.png', checks: ['screenshot rendered'] },
+    ], Date.parse('2026-04-29T02:00:04.000Z'));
+
+    expect(state.phase).toBe('verified preview');
+    expect(state.latestMessage).toContain('screenshot rendered');
+    expect(state.activeWork).toContain('Preview verified');
+  });
+
   it('surfaces human-only review focus and copyable context after artifacts complete', () => {
     const state = deriveCockpit([
       { type: 'generation.domain_plan', domains: ['tone'], startedAt: '2026-04-22T12:00:00.000Z', candidateCount: 3 },

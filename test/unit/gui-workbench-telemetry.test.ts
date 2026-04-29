@@ -25,6 +25,28 @@ describe('workbenchTelemetry', () => {
     ]);
   });
 
+  it('surfaces route selection and verified preview receipts in the workbench timeline', () => {
+    const summary = summarizeWorkbenchBridge([
+      { type: 'generation.intent_brief', userRequest: 'p5 fireflies', requirements: ['Primary request: p5 fireflies'], missingDetails: [], questions: [], willClarify: false },
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5', 'three'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 2, executionMode: 'draft' },
+      { type: 'artifact.found', artifactLabel: 'p5 HTML preview', artifactPath: '.omx/proof/live-previews/p5.html' },
+      { type: 'preview.completed', previewType: 'image', content: 'ZmFrZQ==', imageUrl: '.omx/proof/live-previews/p5.png' },
+      { type: 'preview.verified', previewType: 'image', artifactPath: '.omx/proof/live-previews/p5.png', checks: ['html artifact written', 'screenshot rendered'] },
+    ]);
+
+    expect(summary.recentActivity.map((item) => item.label)).toContain('Route selected');
+    expect(summary.recentActivity.map((item) => item.label)).toContain('Preview verified');
+    expect(summary.processSteps.find((step) => step.id === 'route')).toMatchObject({
+      status: 'done',
+      detail: 'selected p5; fallback order: p5 -> three',
+    });
+    expect(summary.processSteps.find((step) => step.id === 'preview')).toMatchObject({
+      status: 'done',
+      detail: 'verified image preview (p5)',
+    });
+  });
+
   it('surfaces intent brief and tool activity in the default timeline summary', () => {
     const summary = summarizeWorkbenchBridge([
       {

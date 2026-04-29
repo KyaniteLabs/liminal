@@ -20,6 +20,13 @@ describe('GUI workbench accessibility contract', () => {
     expect(bridgeHook).toContain("parsed.type === 'status.updated'");
   });
 
+  it('does not surface stale EventSource disconnects from replaced sessions', () => {
+    expect(bridgeHook).toContain('disconnectCurrentSource');
+    expect(bridgeHook).toContain('sourceRef.current !== es');
+    expect(bridgeHook).toContain('es.readyState !== EventSource.CLOSED');
+    expect(bridgeHook).toContain('!opened');
+  });
+
   it('keeps reduced-motion and visible preview-status fallbacks in CSS', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     expect(css).toContain('animation: none');

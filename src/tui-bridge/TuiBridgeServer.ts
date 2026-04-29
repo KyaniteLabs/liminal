@@ -310,6 +310,7 @@ export class TuiBridgeServer {
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
     });
+    res.write(': connected\n\n');
 
     const lastEventId = Number(req.headers['last-event-id'] || 0) || 0;
 

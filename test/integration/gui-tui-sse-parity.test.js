@@ -26,14 +26,23 @@ function readOneSseBlock(port, sessionId, headers = {}) {
       let buffer = '';
       const timeout = setTimeout(() => reject(new Error('timed out waiting for SSE block')), 3000);
       try {
-        while (!buffer.includes('\n\n')) {
+        while (true) {
           const { value, done } = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
+          const blocks = buffer.split('\n\n');
+          buffer = blocks.pop() || '';
+          const eventBlock = blocks.find((block) => block.includes('data:'));
+          if (eventBlock) {
+            clearTimeout(timeout);
+            await reader.cancel();
+            resolve(eventBlock);
+            return;
+          }
         }
         clearTimeout(timeout);
         await reader.cancel();
-        resolve(buffer.slice(0, buffer.indexOf('\n\n')));
+        resolve(buffer);
       } catch (err) {
         clearTimeout(timeout);
         reject(err);

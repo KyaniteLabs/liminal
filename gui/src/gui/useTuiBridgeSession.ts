@@ -35,11 +35,19 @@ export function useTuiBridgeSession() {
   const sourceRef = useRef<EventSource | null>(null);
   const sessionAbortRef = useRef<AbortController | null>(null);
 
+  const disconnectCurrentSource = useCallback(() => {
+    if (!sourceRef.current) return;
+    sourceRef.current.onmessage = null;
+    sourceRef.current.onerror = null;
+    sourceRef.current.close();
+    sourceRef.current = null;
+  }, []);
+
   const createSession = useCallback(async () => {
     sessionAbortRef.current?.abort();
     const controller = new AbortController();
     sessionAbortRef.current = controller;
-    sourceRef.current?.close();
+    disconnectCurrentSource();
     setEvents([]);
     setError(null);
     try {
@@ -49,7 +57,12 @@ export function useTuiBridgeSession() {
       if (!res.ok) throw new Error(status.error || res.statusText);
       setSession(status);
       const es = new EventSource(`${API}/tui/session/${status.sessionId}/events`);
+      let opened = false;
       sourceRef.current = es;
+      es.onopen = () => {
+        opened = true;
+        setError(null);
+      };
       es.onmessage = (event) => {
         try {
           const parsed = { ...(JSON.parse(event.data) as WorkbenchBridgeEvent), receivedAt: Date.now() };
@@ -62,6 +75,7 @@ export function useTuiBridgeSession() {
         }
       };
       es.onerror = () => {
+        if (sourceRef.current !== es || es.readyState !== EventSource.CLOSED || !opened) return;
         const message = 'Workbench event stream disconnected; create a new session.';
         setError(message);
         setEvents((prev) => [...prev.slice(-299), { type: 'stream.disconnected', message, receivedAt: Date.now() }]);
@@ -70,15 +84,15 @@ export function useTuiBridgeSession() {
       if (controller.signal.aborted) return;
       setError(err instanceof Error ? err.message : String(err));
     }
-  }, []);
+  }, [disconnectCurrentSource]);
 
   useEffect(() => {
     void createSession();
     return () => {
       sessionAbortRef.current?.abort();
-      sourceRef.current?.close();
+      disconnectCurrentSource();
     };
-  }, [createSession]);
+  }, [createSession, disconnectCurrentSource]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);

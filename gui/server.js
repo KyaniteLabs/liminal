@@ -308,6 +308,7 @@ export function createApp(configPath, port = 5174) {
       res.setHeader('X-Content-Type-Options', 'nosniff');
       res.setHeader('Referrer-Policy', 'no-referrer');
       res.flushHeaders();
+      res.write(': connected\n\n');
 
       const lastEventId = Number(req.headers['last-event-id'] || 0) || 0;
 
@@ -772,6 +773,7 @@ export function createApp(configPath, port = 5174) {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.flushHeaders();
+    res.write(': connected\n\n');
 
     const recent = eventBus.getRecentEvents();
     for (const event of recent) {

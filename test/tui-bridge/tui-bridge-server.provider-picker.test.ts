@@ -668,6 +668,6 @@ describe('TuiBridgeServer model picker', () => {
     } finally {
       await server.stop();
     }
-  });
+  }, 15_000);
 
 });

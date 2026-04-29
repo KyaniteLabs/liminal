@@ -6,6 +6,7 @@ import { loadConfig, saveConfig, type UserConfig } from '../config/ConfigLoader.
 import { resolveOpenRouterModelAlias, OPENROUTER_MODEL_CATALOG } from './OpenRouterModelCatalog.js';
 import { LLMClient as RuntimeLLMClient } from '../llm/LLMClient.js';
 import { isPlaceholderApiKey } from '../harness/MultiProviderConfig.js';
+import { summarizeBridgeRuntime } from './BridgeLauncherConfig.js';
 
 type ModelProviderKey = 'custom' | 'minimax' | 'glm' | 'lmstudio' | 'ollama' | 'openrouter' | 'kimi' | 'moonshot';
 
@@ -178,9 +179,12 @@ export class TuiBridgeServer {
       // POST /api/tui/session — create a new session
       if (req.method === 'POST' && path === '/api/tui/session') {
         const cfg = this.llm?.getConfig();
+        const runtime = summarizeBridgeRuntime();
         const status = this.bridge.createSession({
           provider: cfg ? this.providerLabel(cfg.baseUrl) : undefined,
           model: cfg?.model,
+          roles: runtime.roles,
+          evaluation: runtime.evaluation,
         });
         this.json(res, 201, status);
         return;

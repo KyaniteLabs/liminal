@@ -89,6 +89,7 @@ export type TuiBridgeEvent =
   | { type: 'preview.content'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music' }
   | { type: 'preview.completed'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music'; imageUrl?: string }
   | { type: 'preview.verified'; sessionId: string; previewType: 'code' | 'image' | 'html' | 'music'; artifactPath: string; checks: string[]; imageUrl?: string }
+  | { type: 'preview.missing'; sessionId: string; previewType: 'code' | 'image' | 'html' | 'music'; reason: string; artifactPath?: string }
   // Generation telemetry: emitted during RalphLoop generation
   | { type: 'generation.intent_brief'; sessionId: string; userRequest: string; requirements: string[]; missingDetails: string[]; questions: string[]; willClarify: boolean }
   | { type: 'generation.clarification_needed'; sessionId: string; questions: string[]; reason: string }
@@ -100,6 +101,7 @@ export type TuiBridgeEvent =
   | { type: 'generation.candidate.generated'; sessionId: string; domain: string; attempt: number; attemptTotal: number; iteration: number; candidateCount?: number; codeSize?: number; duration?: number }
   | { type: 'generation.iteration'; sessionId: string; iteration: number; score: number; code: string; stageTimings?: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }> }
   | { type: 'generation.complete'; sessionId: string; iterations: number; finalScore: number; duration: number; model: string; reason: string; qualityState?: 'scored' | 'unscored'; executionMode?: 'draft' | 'prove' }
+  | { type: 'generation.cancelled'; sessionId: string; reason: 'operator-stop' | 'stream-abort' | 'superseded'; cancelledAt: string; message?: string }
   | { type: 'generation.cognitive_receipt'; sessionId: string; loop: 'creative' | 'self-improvement' | 'model-assimilation'; receipts: Array<{ organ: string; status: 'observed' | 'pending' | 'unavailable'; detail: string }> }
   | { type: 'phase.changed'; sessionId: string; phase: string; stepCurrent?: number; stepTotal?: number; activeFile?: string; objective?: string }
   | { type: 'tool.started'; sessionId: string; toolName: string; thought?: string; displayLabel?: string; argsSummary?: string; stepNum?: number }

@@ -15,13 +15,24 @@ type PendingAction struct {
 }
 
 type SessionStatus struct {
-	SessionID     string         `json:"sessionId"`
-	Mode          string         `json:"mode"`
-	Provider      string         `json:"provider,omitempty"`
-	Model         string         `json:"model,omitempty"`
-	Trust         TrustState     `json:"trust"`
-	ActiveTask    string         `json:"activeTask,omitempty"`
-	PendingAction *PendingAction `json:"pendingAction,omitempty"`
+	SessionID     string                `json:"sessionId"`
+	Mode          string                `json:"mode"`
+	Provider      string                `json:"provider,omitempty"`
+	Model         string                `json:"model,omitempty"`
+	Roles         map[string]RoleStatus `json:"roles,omitempty"`
+	Trust         TrustState            `json:"trust"`
+	ActiveTask    string                `json:"activeTask,omitempty"`
+	PendingAction *PendingAction        `json:"pendingAction,omitempty"`
+}
+
+type RoleStatus struct {
+	Role       string `json:"role"`
+	Provider   string `json:"provider"`
+	BaseURL    string `json:"baseUrl,omitempty"`
+	Model      string `json:"model"`
+	Source     string `json:"source,omitempty"`
+	Multimodal string `json:"multimodal,omitempty"`
+	Purpose    string `json:"purpose,omitempty"`
 }
 
 // FileChange represents a single changed file from an agent mutation.

@@ -19,7 +19,7 @@ export type BridgeSessionStatus = {
     multimodal: 'yes' | 'no' | 'unknown';
     note: string;
   };
-  pendingAction?: { id: string; title: string };
+  pendingAction?: { id: string; title: string; description?: string; kind?: string };
 };
 
 const API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASEURL)
@@ -53,12 +53,19 @@ export function useTuiBridgeSession() {
       es.onmessage = (event) => {
         try {
           const parsed = { ...(JSON.parse(event.data) as WorkbenchBridgeEvent), receivedAt: Date.now() };
+          if (parsed.type === 'status.updated' && parsed.status) {
+            setSession(parsed.status as BridgeSessionStatus);
+          }
           setEvents((prev) => [...prev.slice(-299), parsed]);
         } catch {
           // Ignore malformed SSE payloads.
         }
       };
-      es.onerror = () => setError('Workbench event stream disconnected; create a new session.');
+      es.onerror = () => {
+        const message = 'Workbench event stream disconnected; create a new session.';
+        setError(message);
+        setEvents((prev) => [...prev.slice(-299), { type: 'stream.disconnected', message, receivedAt: Date.now() }]);
+      };
     } catch (err) {
       if (controller.signal.aborted) return;
       setError(err instanceof Error ? err.message : String(err));
@@ -121,6 +128,15 @@ export function useTuiBridgeSession() {
     await refreshStatus();
   }
 
+  async function cancelPending() {
+    if (!session?.pendingAction) return;
+    setError(null);
+    const res = await fetch(`${API}/tui/session/${session.sessionId}/actions/${session.pendingAction.id}/cancel`, { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) setError(data.error || res.statusText);
+    await refreshStatus();
+  }
+
   async function cancelCurrent() {
     if (!session?.sessionId) return;
     setError(null);
@@ -150,6 +166,7 @@ export function useTuiBridgeSession() {
     createSession,
     submitPrompt,
     confirmPending,
+    cancelPending,
     cancelCurrent,
   };
 }

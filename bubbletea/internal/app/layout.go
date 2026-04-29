@@ -46,7 +46,7 @@ func (m Model) renderOperatorSurface(width int) string {
 	if m.ArtifactsVisible {
 		panels = append(panels, m.renderArtifactsDrawer(contentWidth))
 	}
-	if m.PreviewVisible && strings.TrimSpace(m.PreviewContent) != "" {
+	if m.PreviewVisible && (strings.TrimSpace(m.PreviewContent) != "" || strings.TrimSpace(m.PreviewMissing) != "") {
 		panels = append(panels, m.renderPreviewCard(contentWidth))
 	}
 	if m.ReviewVisible && len(m.ReviewCandidates) > 0 {
@@ -430,6 +430,16 @@ func (m Model) renderPreviewCard(width int) string {
 		previewType = "output"
 	}
 	lines = append(lines, ui.PanelMetaStyle.Render("Type: "+previewType))
+	if strings.TrimSpace(m.PreviewMissing) != "" {
+		lines = append(lines,
+			ui.ErrorStyle.Render("Preview unavailable"),
+			ui.PreviewContentStyle.Render(trimToWidth(m.PreviewMissing, width-8)),
+		)
+		if strings.TrimSpace(m.PreviewContent) != "" {
+			lines = append(lines, ui.PanelMetaStyle.Render("Artifact: "+trimToWidth(m.PreviewContent, width-14)))
+		}
+		return ui.PreviewCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+	}
 	if previewType == "image" {
 		lines = append(lines, RenderImageFromBase64(m.PreviewContent, min(width-8, 96)))
 	} else if previewType == "music" || previewType == "audio" || previewType == "mic" {
@@ -467,16 +477,11 @@ func (m Model) renderHelpDrawer(width int) string {
 		helpRow("Ctrl+E", "toggle preview card"),
 		helpRow("Ctrl+X", "toggle cortex dashboard"),
 		helpRow("Ctrl+Y", "copy last assistant response"),
-		helpRow("/setup", "run setup wizard"),
-		helpRow("/diagnostics", "run env checks"),
-		helpRow("/sessions", "list session history"),
-		helpRow("/workspace", "manage workspaces"),
-		helpRow("/report", "generate session report"),
-		helpRow("/autonomy", "set autonomy level"),
-		helpRow("/cortex", "cortex dashboard"),
-		helpRow("/stop", "stop active generation"),
-		helpRow("?", "toggle this help"),
 	}
+	for _, command := range operatorCommands {
+		lines = append(lines, helpRow(command.Name, command.Description))
+	}
+	lines = append(lines, helpRow("?", "toggle this help"))
 	return ui.HelpCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }
 

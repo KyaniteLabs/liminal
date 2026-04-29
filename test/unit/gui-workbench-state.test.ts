@@ -22,6 +22,12 @@ describe('workbenchState', () => {
     ]);
   });
 
+  it('keeps Generate as the front door and Settings as a secondary destination', () => {
+    expect(WORKBENCH_MODES[0]).toMatchObject({ id: 'generate', label: 'Generate' });
+    expect(WORKBENCH_MODES.at(-1)).toMatchObject({ id: 'settings', label: 'Settings' });
+    expect(getWorkbenchMode('unknown-tab')).toMatchObject({ id: 'generate' });
+  });
+
   it('keeps primary generate out of the legacy panel while preserving migration panels', () => {
     expect(shouldRenderLegacyPanel('create')).toBe(false);
     expect(shouldRenderLegacyPanel('cockpit')).toBe(true);

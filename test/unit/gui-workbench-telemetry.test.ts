@@ -47,6 +47,47 @@ describe('workbenchTelemetry', () => {
     });
   });
 
+  it('marks stopped runs as inactive and visible in the timeline', () => {
+    const summary = summarizeWorkbenchBridge([
+      { type: 'generation.intent_brief', userRequest: 'fireflies', requirements: ['Primary request: fireflies'], missingDetails: [], questions: [], willClarify: false },
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5'], executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      { type: 'generation.cancelled', reason: 'operator-stop', cancelledAt: '2026-04-29T03:00:00.000Z' },
+    ]);
+
+    expect(summary.active).toBe(false);
+    expect(summary.phase).toBe('stopped');
+    expect(summary.stageTitle).toBe('stopped');
+    expect(summary.recentActivity.at(-1)).toMatchObject({
+      label: 'Stopped',
+      status: 'failed',
+    });
+    expect(summary.processSteps.find((step) => step.id === 'ready')).toMatchObject({
+      status: 'failed',
+      detail: 'stopped by operator',
+    });
+  });
+
+  it('surfaces missing previews and disconnected streams instead of pretending the stage is blank', () => {
+    const summary = summarizeWorkbenchBridge([
+      { type: 'generation.route.selected', domain: 'three', domains: ['three'], executionMode: 'draft' },
+      { type: 'artifact.found', artifactLabel: 'three HTML preview', artifactPath: '.omx/proof/live-previews/three.html' },
+      { type: 'preview.missing', previewType: 'image', reason: 'screenshot render failed', artifactPath: '.omx/proof/live-previews/three.html' },
+      { type: 'stream.disconnected', message: 'Workbench event stream disconnected; create a new session.' },
+    ]);
+
+    expect(summary.active).toBe(false);
+    expect(summary.phase).toBe('disconnected');
+    expect(summary.stageTitle).toBe('disconnected');
+    expect(summary.stageSubtitle).toContain('event stream disconnected');
+    expect(summary.processSteps.find((step) => step.id === 'preview')).toMatchObject({
+      status: 'failed',
+      detail: 'missing image preview: screenshot render failed',
+    });
+    expect(summary.recentActivity.map((item) => item.label)).toContain('Preview missing');
+    expect(summary.recentActivity.map((item) => item.label)).toContain('Disconnected');
+  });
+
   it('surfaces intent brief and tool activity in the default timeline summary', () => {
     const summary = summarizeWorkbenchBridge([
       {

@@ -34,6 +34,29 @@ describe('OperatorCockpit state derivation', () => {
     expect(state.activeWork).toContain('Preview verified');
   });
 
+  it('marks stopped and missing-preview states as terminal surface states', () => {
+    const stopped = deriveCockpit([
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5'], executionMode: 'draft', candidateCount: 1 },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      { type: 'generation.cancelled', reason: 'operator-stop', cancelledAt: '2026-04-29T03:00:00.000Z' },
+    ], Date.parse('2026-04-29T03:00:01.000Z'));
+
+    expect(stopped.phase).toBe('stopped');
+    expect(stopped.etaLabel).toBe('done');
+    expect(stopped.progressPercent).toBe(1);
+    expect(stopped.activeWork).toContain('stopped by operator');
+
+    const missing = deriveCockpit([
+      { type: 'generation.route.selected', domain: 'three', domains: ['three'], executionMode: 'draft' },
+      { type: 'artifact.found', artifactLabel: 'three HTML preview', artifactPath: '.omx/proof/live-previews/three.html' },
+      { type: 'preview.missing', previewType: 'image', reason: 'screenshot render failed', artifactPath: '.omx/proof/live-previews/three.html' },
+    ], Date.parse('2026-04-29T03:00:01.000Z'));
+
+    expect(missing.phase).toBe('preview missing');
+    expect(missing.latestMessage).toContain('screenshot render failed');
+    expect(missing.activeWork).toContain('Preview unavailable');
+  });
+
   it('surfaces human-only review focus and copyable context after artifacts complete', () => {
     const state = deriveCockpit([
       { type: 'generation.domain_plan', domains: ['tone'], startedAt: '2026-04-22T12:00:00.000Z', candidateCount: 3 },

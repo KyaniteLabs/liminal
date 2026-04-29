@@ -425,6 +425,14 @@ body::before {
   animation: liminal-grid-drift 8s linear infinite;
 }
 
+.liminal-stage-empty--blocked {
+  border: 1px solid rgba(217, 87, 99, 0.42);
+  background:
+    linear-gradient(rgba(217, 87, 99, 0.10) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(242, 184, 75, 0.08) 1px, transparent 1px),
+    #09070a;
+}
+
 .liminal-stage-pulse {
   width: 86px;
   height: 86px;
@@ -708,6 +716,27 @@ body::before {
   display: grid;
   grid-template-columns: 0.7fr 1fr;
   gap: 8px;
+}
+
+.liminal-pending-action-card {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(242, 184, 75, 0.35);
+  border-radius: 10px;
+  background: rgba(242, 184, 75, 0.08);
+}
+
+.liminal-pending-action-card span {
+  color: var(--liminal-amber);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.liminal-pending-action-card small {
+  color: var(--liminal-muted);
 }
 
 .liminal-timeline {
@@ -1351,6 +1380,11 @@ body::before {
   }
 
   .atelier-scroll-code {
+    animation: none !important;
+  }
+
+  .liminal-stage-pulse,
+  .liminal-stage-empty--active {
     animation: none !important;
   }
 }

@@ -720,17 +720,18 @@ export class TuiBridgeService {
 
   // eslint-disable-next-line @typescript-eslint/require-await
   async confirmAction(sessionId: string, actionId: string, llm?: LLMClient): Promise<void> {
-    const status = this.getStatus(sessionId);
-    if (!status.pendingAction || status.pendingAction.id !== actionId) {
+    const currentStatus = this.getStatus(sessionId);
+    if (!currentStatus.pendingAction || currentStatus.pendingAction.id !== actionId) {
       throw new Error(`Pending action ${actionId} not found`);
     }
-    const pendingAction = status.pendingAction;
-    this.sessions.update(sessionId, {
+    const pendingAction = currentStatus.pendingAction;
+    const nextStatus = this.sessions.update(sessionId, {
       mode: 'confirm',
       pendingAction: undefined,
       trust: { level: 'confirmed', label: 'Operator confirmed mutation' },
     });
     this.emit(sessionId, { type: 'action.confirmed', sessionId, actionId });
+    this.emit(sessionId, { type: 'status.updated', sessionId, status: nextStatus });
 
     if (!llm) return;
 
@@ -782,16 +783,17 @@ export class TuiBridgeService {
   }
 
   cancelAction(sessionId: string, actionId: string): void {
-    const status = this.getStatus(sessionId);
-    if (!status.pendingAction || status.pendingAction.id !== actionId) {
+    const currentStatus = this.getStatus(sessionId);
+    if (!currentStatus.pendingAction || currentStatus.pendingAction.id !== actionId) {
       throw new Error(`Pending action ${actionId} not found`);
     }
-    this.sessions.update(sessionId, {
+    const nextStatus = this.sessions.update(sessionId, {
       mode: 'chat',
       pendingAction: undefined,
       trust: { level: 'untrusted', label: 'Generated code is untrusted by default' },
     });
     this.emit(sessionId, { type: 'action.cancelled', sessionId, actionId });
+    this.emit(sessionId, { type: 'status.updated', sessionId, status: nextStatus });
   }
 
   cancelRun(sessionId: string): void {
@@ -800,6 +802,13 @@ export class TuiBridgeService {
     if (!status) {
       throw new Error(`Unknown TUI session: ${sessionId}`);
     }
+    this.emit(sessionId, {
+      type: 'generation.cancelled',
+      sessionId,
+      reason: 'operator-stop',
+      cancelledAt: new Date().toISOString(),
+      message: 'Generation stopped by operator.',
+    });
     this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
     this.emit(sessionId, {
       type: 'status.updated',
@@ -2586,6 +2595,13 @@ export class TuiBridgeService {
       this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Inline preview image: ${pngPath}` });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      this.emit(sessionId, {
+        type: 'preview.missing',
+        sessionId,
+        previewType: 'image',
+        artifactPath: htmlPath,
+        reason: message,
+      });
       this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Preview render failed: ${message}` });
       this.emit(sessionId, { type: 'error', sessionId, message: `Preview render failed: ${message}` });
     }

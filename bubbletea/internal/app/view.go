@@ -212,6 +212,11 @@ func (m Model) renderCompactStatus() string {
 		ui.StatusLabelStyle.Render("Mode:") + " " + ui.StatusValueStyle.Render(strings.ToLower(m.Mode)),
 		ui.StatusLabelStyle.Render("Trust:") + " " + ui.StatusValueStyle.Render(m.TrustLabel),
 	}
+	for _, role := range []string{"generator", "harness", "evaluator"} {
+		if status, ok := m.RoleStatuses[role]; ok {
+			lines = append(lines, ui.StatusLabelStyle.Render(roleLabel(role)+":")+" "+ui.StatusValueStyle.Render(status.Provider+"/"+status.Model))
+		}
+	}
 	if strings.TrimSpace(m.Task.Objective) != "" {
 		lines = append(lines, ui.StatusLabelStyle.Render("Task:")+" "+ui.StatusValueStyle.Render(m.Task.Objective))
 	}
@@ -228,6 +233,19 @@ func (m Model) renderCompactStatus() string {
 	}
 	lines = append(lines, "", ui.HintStyle.Render("Ctrl+E operator  Ctrl+T timeline  Ctrl+A artifacts  ?:help"))
 	return strings.Join(lines, "\n")
+}
+
+func roleLabel(role string) string {
+	switch role {
+	case "generator":
+		return "Generator"
+	case "harness":
+		return "Harness"
+	case "evaluator":
+		return "Evaluator"
+	default:
+		return role
+	}
 }
 
 // ── Chat content rendering ──

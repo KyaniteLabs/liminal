@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
 )
 
 func TestKittyGraphicsSupportedKitty(t *testing.T) {
@@ -90,6 +92,25 @@ func TestRenderImageFromBase64InvalidImage(t *testing.T) {
 	result := RenderImageFromBase64("aGVsbG8gd29ybGQ=", 10)
 	if !strings.Contains(result, "(image parse error:") {
 		t.Fatalf("expected parse error, got %q", result)
+	}
+}
+
+func TestPreviewMissingEventRendersExplicitBlockedPreview(t *testing.T) {
+	m := NewModel("http://localhost:0")
+	m.PreviewVisible = true
+
+	m.ApplyEvent(bridge.Event{
+		Type:         "preview.missing",
+		PreviewType:  "image",
+		ErrorText:    "screenshot render failed",
+		ArtifactPath: ".omx/proof/live-previews/three.html",
+	})
+
+	card := m.renderPreviewCard(72)
+	for _, want := range []string{"Preview", "Type: image", "Preview unavailable", "screenshot render failed", ".omx/proof/live-previews/three.html"} {
+		if !strings.Contains(card, want) {
+			t.Fatalf("expected missing preview card to contain %q\n%s", want, card)
+		}
 	}
 }
 

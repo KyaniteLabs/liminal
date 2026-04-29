@@ -46,6 +46,45 @@ type streamDoneMsg struct{}
 
 type reconnectTickMsg struct{}
 
+type operatorCommand struct {
+	Name        string
+	Mode        string
+	Description string
+}
+
+var operatorCommands = []operatorCommand{
+	{Name: "/status", Mode: "inspect", Description: "show bridge status"},
+	{Name: "/tasks", Mode: "inspect", Description: "list pending tasks"},
+	{Name: "/help", Mode: "inspect", Description: "show commands"},
+	{Name: "/dogfood", Mode: "inspect", Description: "run dogfood checkpoint"},
+	{Name: "/run", Mode: "action", Description: "run structured task"},
+	{Name: "/agent", Mode: "action", Description: "queue agent task for review"},
+	{Name: "/confirm", Mode: "action", Description: "confirm pending action"},
+	{Name: "/cancel", Mode: "action", Description: "cancel pending action"},
+	{Name: "/preview", Mode: "action", Description: "preview artifact"},
+	{Name: "/play", Mode: "action", Description: "play audio artifact"},
+	{Name: "/browser", Mode: "action", Description: "open last preview in browser"},
+	{Name: "/stop", Mode: "chat", Description: "stop active generation"},
+	{Name: "/model", Mode: "chat", Description: "switch provider/model"},
+	{Name: "/provider", Mode: "chat", Description: "switch provider/model"},
+	{Name: "/mode", Mode: "chat", Description: "switch product mode"},
+	{Name: "/modes", Mode: "chat", Description: "list product modes"},
+	{Name: "/skill", Mode: "chat", Description: "run a skill"},
+	{Name: "/skills", Mode: "chat", Description: "list skills"},
+	{Name: "/accept", Mode: "chat", Description: "accept candidate"},
+	{Name: "/reject", Mode: "chat", Description: "reject candidate"},
+	{Name: "/pin", Mode: "chat", Description: "pin favorite"},
+	{Name: "/diff", Mode: "chat", Description: "diff candidates"},
+	{Name: "/candidates", Mode: "chat", Description: "list candidates"},
+	{Name: "/setup", Mode: "chat", Description: "run setup wizard"},
+	{Name: "/diagnostics", Mode: "chat", Description: "run environment checks"},
+	{Name: "/sessions", Mode: "chat", Description: "list session history"},
+	{Name: "/workspace", Mode: "chat", Description: "manage workspaces"},
+	{Name: "/report", Mode: "chat", Description: "generate session report"},
+	{Name: "/autonomy", Mode: "chat", Description: "set autonomy level"},
+	{Name: "/cortex", Mode: "chat", Description: "open cortex dashboard"},
+}
+
 // ── Init ──
 
 func (m Model) Init() tea.Cmd {
@@ -430,26 +469,12 @@ func parseInputIntent(input string) (mode, intent string) {
 	if strings.HasPrefix(input, "/") {
 		parts := strings.SplitN(input, " ", 2)
 		cmd := parts[0]
-		switch cmd {
-		case "/status", "/tasks", "/help", "/dogfood":
-			return "inspect", "command"
-		case "/confirm", "/cancel", "/run", "/agent":
-			return "action", "command"
-		case "/preview", "/play", "/browser":
-			return "action", "command"
-		case "/mode", "/modes":
-			return "chat", "command"
-		case "/skill", "/skills", "/accept", "/reject", "/pin", "/diff", "/candidates":
-			return "chat", "command"
-		case "/setup", "/diagnostics", "/sessions":
-			return "chat", "command"
-		case "/workspace", "/report", "/autonomy", "/cortex":
-			return "chat", "command"
-		case "/stop":
-			return "chat", "command"
-		default:
-			return "chat", "command"
+		for _, command := range operatorCommands {
+			if command.Name == cmd {
+				return command.Mode, "command"
+			}
 		}
+		return "chat", "command"
 	}
 	return "chat", "chat"
 }

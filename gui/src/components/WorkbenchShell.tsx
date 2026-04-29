@@ -11,6 +11,7 @@ interface WorkbenchShellProps {
   onPromptChange: (value: string) => void;
   onRun: () => void;
   runDisabled: boolean;
+  stageBusy: boolean;
   runLabel: string;
   audioSlot?: React.ReactNode;
   providerLabel: string;
@@ -33,6 +34,7 @@ export function WorkbenchShell({
   onPromptChange,
   onRun,
   runDisabled,
+  stageBusy,
   runLabel,
   audioSlot,
   providerLabel,
@@ -57,13 +59,15 @@ export function WorkbenchShell({
             <p>{providerLabel}</p>
           </div>
         </div>
-        <label className="liminal-command">
+        <label className="liminal-command" htmlFor="workbench-prompt">
           <span>Prompt</span>
           <textarea
+            id="workbench-prompt"
             value={prompt}
             onChange={(event) => onPromptChange(event.target.value)}
             rows={2}
             placeholder="Describe the visual, instrument, behavior, or system to generate"
+            aria-describedby="workbench-run-status"
           />
         </label>
         <div className="liminal-command-actions">
@@ -71,7 +75,7 @@ export function WorkbenchShell({
           <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled} aria-busy={runDisabled}>
             {runLabel}
           </button>
-          <p className="sr-only" aria-live="polite">{runStatusText}</p>
+          <p id="workbench-run-status" className="sr-only" aria-live="polite">{runStatusText}</p>
         </div>
       </header>
 
@@ -108,7 +112,7 @@ export function WorkbenchShell({
         <div className="liminal-left-rail__content">{leftSlot}</div>
       </aside>
 
-      <main id="main-content" className="liminal-stage" aria-label="Live stage">
+      <main id="main-content" className="liminal-stage" aria-label="Live stage" aria-busy={stageBusy}>
         {stageSlot}
       </main>
 
@@ -120,7 +124,7 @@ export function WorkbenchShell({
         {inspectorSlot}
       </aside>
 
-      <section className="liminal-timeline" aria-label="Generation timeline">
+      <section className="liminal-timeline" aria-label="Generation timeline" role="status" aria-live="polite">
         {timelineSlot}
       </section>
 

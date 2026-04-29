@@ -773,6 +773,7 @@ export default function App() {
   const bridgeSummary = bridge.summary;
   const bridgePreview = bridge.preview;
   const bridgeCodePreview = bridge.codePreview;
+  const stageBlocked = bridgeSummary.phase === 'preview missing' || bridgeSummary.phase === 'disconnected';
   const clarificationRequest = activeMode.id === 'generate' ? latestClarificationRequest(bridge.events) : null;
   const cognitiveReceipt = activeMode.id === 'generate' ? latestCognitiveReceipt(bridge.events) : null;
   const syncPreviewHtml = bridgeCodePreview?.code ? buildSyncPreviewHtml(bridgeCodePreview.code) : '';
@@ -898,11 +899,11 @@ export default function App() {
       ) : bridgePreview?.type === 'code' ? (
         <pre className="liminal-stage-code">{bridgePreview.code}</pre>
       ) : (
-        <div className={bridgeSummary.active ? 'liminal-stage-empty liminal-stage-empty--active' : 'liminal-stage-empty'}>
+        <div className={stageBlocked ? 'liminal-stage-empty liminal-stage-empty--blocked' : bridgeSummary.active ? 'liminal-stage-empty liminal-stage-empty--active' : 'liminal-stage-empty'}>
           {bridgeSummary.active && <i className="liminal-stage-pulse" aria-hidden="true" />}
           <span>Stage</span>
-          <strong>{bridgeSummary.active ? bridgeSummary.stageTitle : runStatus === 'running' ? 'Generating' : 'Ready'}</strong>
-          <small>{bridgeSummary.active ? bridgeSummary.stageSubtitle : createModeOption.stageLabel}</small>
+          <strong>{stageBlocked ? 'Preview unavailable' : bridgeSummary.active ? bridgeSummary.stageTitle : runStatus === 'running' ? 'Generating' : 'Ready'}</strong>
+          <small>{stageBlocked ? bridgeSummary.stageSubtitle : bridgeSummary.active ? bridgeSummary.stageSubtitle : createModeOption.stageLabel}</small>
         </div>
       )}
       {(bridgeSummary.active || bridgeSummary.processSteps.some((step) => step.status === 'done')) && (
@@ -990,9 +991,19 @@ export default function App() {
         <div className="liminal-control-panel">
           {bridge.error && <div className="atelier-alert atelier-alert--error">{bridge.error}</div>}
           {bridge.session?.pendingAction && (
-            <button type="button" className="atelier-btn atelier-btn--primary" onClick={() => void bridge.confirmPending()}>
-              Confirm: {bridge.session.pendingAction.title}
-            </button>
+            <div className="liminal-pending-action-card" role="group" aria-label="Pending action review">
+              <span>Pending review</span>
+              <strong>{bridge.session.pendingAction.title}</strong>
+              {bridge.session.pendingAction.description && <small>{bridge.session.pendingAction.description}</small>}
+              <div className="liminal-control-row">
+                <button type="button" className="atelier-btn atelier-btn--primary" onClick={() => void bridge.confirmPending()}>
+                  Confirm
+                </button>
+                <button type="button" className="atelier-btn atelier-btn--secondary" onClick={() => void bridge.cancelPending()}>
+                  Cancel
+                </button>
+              </div>
+            </div>
           )}
           {bridgeSummary.active && (
             <button type="button" className="atelier-btn atelier-btn--secondary" onClick={() => void bridge.cancelCurrent()}>
@@ -1226,6 +1237,7 @@ export default function App() {
       onPromptChange={setCreatePrompt}
       onRun={handleWorkbenchRun}
       runDisabled={activeMode.id === 'improve' ? improveLoading : bridge.submitting || runStatus === 'running' || !createPrompt.trim() || (runNeedsBridgeSession && !bridge.session)}
+      stageBusy={bridgeSummary.active || runStatus === 'running'}
       runLabel={bridge.submitting ? 'Sending' : bridge.session?.pendingAction ? 'Review' : runLabel}
       audioSlot={audioSlot}
       providerLabel={providerLabel}

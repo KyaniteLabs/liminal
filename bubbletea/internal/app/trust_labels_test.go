@@ -38,3 +38,34 @@ func TestViewRendersTrustAndModeLabels(t *testing.T) {
 		t.Fatalf("expected trust label fragment in view")
 	}
 }
+
+func TestStatusRolesRenderActualProviderTruth(t *testing.T) {
+	m := NewModel("http://localhost:0")
+	m.Ready = true
+	m.Width = 140
+	m.Height = 36
+	m.PreviewVisible = false
+
+	m.ApplyEvent(bridge.Event{
+		Type: "status.updated",
+		Status: &bridge.SessionStatus{
+			SessionID: "s1",
+			Mode:      "chat",
+			Provider:  "openai",
+			Model:     "gpt-5.4",
+			Trust:     bridge.TrustState{Level: "untrusted", Label: "Generated code is untrusted by default"},
+			Roles: map[string]bridge.RoleStatus{
+				"generator": {Role: "generator", Provider: "glm", Model: "GLM-5v-turbo", Source: "active-provider", Multimodal: "yes", Purpose: "Writes the creative code candidates."},
+				"harness":   {Role: "harness", Provider: "openai", Model: "gpt-5.4", Source: "role-env", Multimodal: "yes", Purpose: "Runs bridge orchestration."},
+				"evaluator": {Role: "evaluator", Provider: "openrouter", Model: "google/gemini-2.5-flash", Source: "role-env", Multimodal: "yes", Purpose: "Scores rendered evidence."},
+			},
+		},
+	})
+
+	view := m.renderCompactStatus()
+	for _, want := range []string{"Generator:", "glm/GLM-5v-turbo", "Harness:", "openai/gpt-5.4", "Evaluator:", "openrouter/google/gemini-2.5-flash"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("expected role truth %q in compact status\n%s", want, view)
+		}
+	}
+}

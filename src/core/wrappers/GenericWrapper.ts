@@ -722,41 +722,46 @@ ${safeCommentCode}
     ${SECURITY_HEADERS.trim()}
     <title>ASCII Art</title>
     <style>
-        body { 
-            margin: 0; 
-            background: #0a0a0f; 
-            color: #00ff00;
+        body {
+            margin: 0;
+            background: radial-gradient(circle at 18% 16%, rgba(34, 197, 94, 0.18), transparent 30%), #0a0a0f;
+            color: #86efac;
             font-family: 'Courier New', 'Courier', monospace;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            padding: 20px;
+            padding: clamp(20px, 4vw, 56px);
         }
         .container {
             text-align: center;
+            width: min(980px, 96vw);
         }
         pre { 
-            font-size: 10px;
+            font-size: clamp(18px, 2.2vw, 34px);
             line-height: 1.2;
-            background: #000;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #1a1a2e;
+            background: linear-gradient(135deg, rgba(0,0,0,.95), rgba(15,23,42,.86));
+            padding: clamp(24px, 5vw, 72px);
+            border-radius: 24px;
+            border: 1px solid rgba(134, 239, 172, 0.26);
             display: inline-block;
-            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+            min-width: min(760px, 92vw);
+            min-height: min(360px, 62vh);
+            text-shadow: 0 0 12px rgba(134, 239, 172, 0.6);
+            box-shadow: 0 28px 90px rgba(0,0,0,.42);
         }
         .label {
-            color: #6b7280;
+            color: #bbf7d0;
             font-size: 12px;
-            margin-bottom: 10px;
+            margin-bottom: 14px;
             text-transform: uppercase;
             letter-spacing: 2px;
+            font-weight: 800;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container" data-ascii-preview-shell>
         <div class="label">ASCII Art</div>
         <pre>${escaped}</pre>
     </div>

@@ -22,6 +22,16 @@ describe('syncPreview', () => {
     expect(html).toContain("eventName === 'deviceorientation'");
   });
 
+  it('scales small p5 canvases into a readable Studio preview stage', () => {
+    const html = buildSyncPreviewHtml('function setup(){createCanvas(160,120)}');
+
+    expect(html).toContain('data-liminal-sync-preview="p5"');
+    expect(html).toContain('main > canvas,body > canvas');
+    expect(html).toContain('window.__liminalAdoptP5Canvas');
+    expect(html).toContain("document.querySelectorAll('body > canvas')");
+    expect(html).toContain('transform:translate(-50%,-50%)!important');
+  });
+
   it('wraps Three.js code with import map and audio API', () => {
     const html = buildSyncPreviewHtml('const scene = new THREE.Scene();');
 

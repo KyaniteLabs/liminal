@@ -21,12 +21,15 @@ describe('createModes', () => {
       'hydra',
       'strudel',
       'tone',
-      'html',
+      'hyperframes',
+      'kinetic',
       'ascii',
       'text',
       'revideo',
       'organism',
     ]);
+    expect(CREATE_MODE_OPTIONS.find((option) => option.id === 'hyperframes')?.label).toContain('HyperFrames');
+    expect(CREATE_MODE_OPTIONS.map((option) => option.id)).not.toContain('html');
   });
 
   it('adds domain hints for explicit bridge modes while leaving auto untouched', () => {
@@ -34,6 +37,8 @@ describe('createModes', () => {
     expect(buildWorkbenchPrompt('three', 'make a flower')).toContain('Three.js 3D scene');
     expect(buildWorkbenchPrompt('svg', 'make a flower')).toContain('raw SVG vector asset');
     expect(buildWorkbenchPrompt('glsl', 'make a flower')).toContain('GLSL fragment shader');
+    expect(buildWorkbenchPrompt('hyperframes', 'make a promo')).toContain('HyperFrames composition');
+    expect(buildWorkbenchPrompt('kinetic', 'make moving typography')).toContain('CSS kinetic typography');
   });
 
   it('lets explicit prompt domain override a stale selected mode hint', () => {
@@ -42,6 +47,9 @@ describe('createModes', () => {
     expect(prompt).toContain('Hydra video synth');
     expect(prompt).not.toContain('Tone.js audio');
     expect(detectPromptCreateMode('make a hydra visual')).toBe('hydra');
+    expect(detectPromptCreateMode('make a HyperFrames promo with clips')).toBe('hyperframes');
+    expect(detectPromptCreateMode('make kinetic typography')).toBe('kinetic');
+    expect(detectPromptCreateMode('make an HTML landing page')).toBe('hyperframes');
   });
 
   it('keeps organism as the dedicated paired music and visual API mode', () => {

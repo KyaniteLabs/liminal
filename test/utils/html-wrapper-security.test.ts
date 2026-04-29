@@ -28,6 +28,14 @@ describe('HTMLWrapper Security Headers', () => {
     expect(html).not.toBe(code);
   });
 
+  it('scales intrinsic SVG art into a readable preview stage', () => {
+    const html = HTMLWrapper.wrap('<svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="20"/></svg>', { domain: 'svg', title: 'SVG proof' });
+
+    expect(html).toContain('aria-label="Generated SVG"');
+    expect(html).toContain('width: min(72vmin, 760px)');
+    expect(html).toContain('background: radial-gradient');
+  });
+
   it('should include charset meta tag in all wrappers', () => {
     const p5Html = HTMLWrapper.wrap('function setup() {}', 'p5');
     const shaderHtml = HTMLWrapper.wrap('void main() { gl_FragColor = vec4(1.0); }', 'shader');

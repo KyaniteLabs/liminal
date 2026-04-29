@@ -1,15 +1,51 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
-import { chromium } from 'playwright';
+import { pathToFileURL } from 'node:url';
+import { chromium, type Page } from 'playwright';
 import { buildSyncPreviewHtml } from '../../gui/src/gui/syncPreview';
 import { GenericWrapper } from '../../src/core/wrappers/GenericWrapper';
 import { HTMLWrapper } from '../../src/utils/htmlWrapper';
 
 type RenderItem = { domain: string; html: string; sourceLabel: string };
 type RenderedItem = RenderItem & { htmlPath: string; url?: string };
+type VisualProofMetrics = {
+  canvasCount: number;
+  svgCount: number;
+  videoCount: number;
+  audioCount: number;
+  buttonCount: number;
+  bodyTextLength: number;
+  largestCanvasAreaRatio: number;
+  largestSvgAreaRatio: number;
+  primaryTextBlockAreaRatio: number;
+  cssAnimationCount: number;
+  strudelCodeVisible: boolean;
+  revideoTimelinePreview: boolean;
+  tonePreviewShell: boolean;
+  toneTempoSynced: boolean;
+  toneEmbeddedPlayableControl: boolean;
+  hyperframesPreviewShell: boolean;
+  monitor: { errors?: Array<{ level: string; message: string }> };
+};
 
 type Args = { input?: string; out: string };
+
+const ARTIST_OUTPUT_DOMAINS = [
+  'p5',
+  'three',
+  'svg',
+  'glsl',
+  'hydra',
+  'strudel',
+  'tone',
+  'revideo',
+  'hyperframes',
+  'ascii',
+  'kinetic',
+  'textgen',
+  'organism',
+] as const;
 
 function parseArgs(argv: string[]): Args {
   const args: Args = { out: path.join('.omx', 'proof', 'visual-output-preview-contract') };
@@ -52,11 +88,11 @@ function injectMonitor(html: string, domain: string): string {
 }
 
 function textPreview(title: string, code: string): string {
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#05070d;color:#eaf2ff;font:16px/1.4 ui-monospace,monospace}pre{white-space:pre-wrap;border:1px solid #334155;border-radius:16px;padding:24px;max-width:760px;background:#0d1320}</style></head><body><pre>${escapeHtml(code)}</pre></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>:root{color-scheme:dark}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 18% 18%,rgba(56,189,248,.2),transparent 30%),#05070d;color:#eaf2ff;font:clamp(22px,4.2vw,58px)/1.08 ui-monospace,monospace;padding:32px}pre{white-space:pre-wrap;border:1px solid #334155;border-radius:24px;padding:clamp(24px,5vw,72px);min-width:min(820px,92vw);min-height:min(420px,70vh);display:grid;place-items:center;background:linear-gradient(135deg,rgba(13,19,32,.96),rgba(15,23,42,.72));box-shadow:0 28px 90px rgba(0,0,0,.42);text-align:center}</style></head><body><pre data-textgen-preview-shell>${escapeHtml(code)}</pre></body></html>`;
 }
 
 function svgPreview(code: string): string {
-  return `<!doctype html><html><head><meta charset="utf-8"><title>SVG preview</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b1020}.card{padding:40px;border-radius:24px;background:#fff}svg{max-width:78vw;max-height:78vh}</style></head><body><div class="card">${code}</div></body></html>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>SVG preview</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 20% 16%,rgba(125,211,252,.2),transparent 30%),#0b1020}.card{padding:clamp(28px,5vw,72px);border-radius:28px;background:#fff;box-shadow:0 28px 90px rgba(0,0,0,.42)}svg{width:min(72vmin,760px);max-width:82vw;max-height:82vh;height:auto;display:block}</style></head><body><div class="card" data-svg-preview-shell>${code}</div></body></html>`;
 }
 
 function kineticFixture(): string {
@@ -105,9 +141,9 @@ function fixtureItems(): RenderItem[] {
     { domain: 'tone', sourceLabel: 'fixture tone raw html', html: HTMLWrapper.wrap('<!DOCTYPE html><html><body><button id="startButton">Start Ambient Sequence</button><script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script><script>const synth = new Tone.Synth().toDestination(); document.getElementById("startButton").addEventListener("click", () => synth.triggerAttackRelease("C4", "8n"));</script></body></html>', { domain: 'tone', title: 'Liminal Tone Preview' }) },
     { domain: 'revideo', sourceLabel: 'fixture revideo', html: GenericWrapper.wrap('import { makeScene } from "@revideo/core"; export default makeScene("x", function* () {});', { domain: 'revideo' }) },
     { domain: 'hyperframes', sourceLabel: 'fixture hyperframes', html: hyperframesFixture() },
-    { domain: 'ascii', sourceLabel: 'fixture ascii', html: GenericWrapper.wrap('/\\\n/  \\\n----', { domain: 'ascii' }) },
+    { domain: 'ascii', sourceLabel: 'fixture ascii', html: GenericWrapper.wrap(['        /\\\\', '       /  \\\\', '  ____/____\\\\____', ' /  moonlit ridge \\\\', '/__stars__stars___\\\\'].join('\n'), { domain: 'ascii' }) },
     { domain: 'kinetic', sourceLabel: 'fixture kinetic', html: kineticFixture() },
-    { domain: 'textgen', sourceLabel: 'fixture textgen', html: textPreview('Text art', 'D R E A M\n  MACHINE\n    IN LOOPS') },
+    { domain: 'textgen', sourceLabel: 'fixture textgen', html: textPreview('Text art', 'D R E A M\n  MACHINE\n    IN LOOPS\n      REMEMBERS\n        LIGHT') },
   ];
 }
 
@@ -133,6 +169,74 @@ function itemsFromReceipt(receiptPath: string): RenderItem[] {
     sourceLabel: item.artifactPath,
     html: domainHtml(item.domain, path.resolve(item.artifactPath)),
   }));
+}
+
+function validateOutputMatrix(domains: string[]): string[] {
+  const expected = new Set<string>(ARTIST_OUTPUT_DOMAINS);
+  const actual = new Set(domains);
+  const missing = [...expected].filter((domain) => !actual.has(domain));
+  const genericHtml = actual.has('html') ? ['generic html is not an artist-facing output type; route kinetic HTML through kinetic and compositing HTML through HyperFrames'] : [];
+  return [
+    ...missing.map((domain) => `Missing artist-facing output domain: ${domain}`),
+    ...genericHtml,
+  ];
+}
+
+function contractErrorsForDomain(domain: string, metrics: VisualProofMetrics): string[] {
+  const canvasDomains = new Set(['p5', 'three', 'glsl', 'hydra', 'organism']);
+  return [
+    canvasDomains.has(domain) && (metrics.canvasCount < 1 || metrics.largestCanvasAreaRatio < 0.08)
+      ? `${domain} is missing a browser-visible canvas`
+      : '',
+    domain === 'svg' && (metrics.svgCount < 1 || metrics.largestSvgAreaRatio < 0.08)
+      ? 'SVG preview is too small or missing'
+      : '',
+    domain === 'ascii' && (metrics.bodyTextLength < 40 || metrics.primaryTextBlockAreaRatio < 0.08)
+      ? 'ASCII preview text block is too small'
+      : '',
+    domain === 'textgen' && (metrics.bodyTextLength < 20 || metrics.primaryTextBlockAreaRatio < 0.08)
+      ? 'Textgen preview text block is too small'
+      : '',
+    domain === 'kinetic' && metrics.cssAnimationCount < 1
+      ? 'Kinetic preview is missing visible CSS animation'
+      : '',
+    domain === 'strudel' && !metrics.strudelCodeVisible
+      ? 'Strudel preview is missing visible source code'
+      : '',
+    domain === 'revideo' && !metrics.revideoTimelinePreview
+      ? 'Revideo preview is missing the rendered timeline shell'
+      : '',
+    domain === 'tone' && !metrics.tonePreviewShell
+      ? 'Tone preview is missing the polished audio shell'
+      : '',
+    domain === 'tone' && !metrics.toneTempoSynced
+      ? 'Tone preview is missing tempo-synced visual feedback'
+      : '',
+    domain === 'tone' && !metrics.toneEmbeddedPlayableControl
+      ? 'Tone preview is missing the generated playback control'
+      : '',
+    domain === 'hyperframes' && !metrics.hyperframesPreviewShell
+      ? 'HyperFrames preview is missing the composition shell'
+      : '',
+  ].filter(Boolean);
+}
+
+async function writeGalleryAssets(outDir: string, results: Array<{ domain: string; screenshot: string; source: string }>, page: Page): Promise<void> {
+  const gallery = [
+    '<!doctype html><html><head><meta charset="utf-8"><title>Liminal output proof gallery</title>',
+    '<style>:root{color-scheme:dark}body{margin:0;background:#05070d;color:#eaf2ff;font-family:Inter,system-ui,sans-serif;padding:28px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}figure{margin:0;border:1px solid rgba(148,163,184,.32);border-radius:18px;background:#0b1220;overflow:hidden}img{width:100%;display:block}figcaption{padding:12px 14px;font-weight:800}.source{display:block;color:#94a3b8;font:11px ui-monospace,monospace;margin-top:4px;word-break:break-word}</style></head><body>',
+    '<h1>Liminal full output visual proof</h1><main>',
+    ...results.map((result) => {
+      const relativeShot = path.relative(outDir, path.resolve(result.screenshot));
+      return `<figure><img src="${escapeHtml(relativeShot)}" alt="${escapeHtml(result.domain)} screenshot"><figcaption>${escapeHtml(result.domain.toUpperCase())}<span class="source">${escapeHtml(result.source)}</span></figcaption></figure>`;
+    }),
+    '</main></body></html>',
+  ].join('');
+  const galleryPath = path.join(outDir, 'gallery.html');
+  fs.writeFileSync(galleryPath, gallery);
+  await page.setViewportSize({ width: 1440, height: 1200 });
+  await page.goto(pathToFileURL(galleryPath).href, { waitUntil: 'load', timeout: 45_000 });
+  await page.screenshot({ path: path.join(outDir, 'contact-sheet.png'), fullPage: true });
 }
 
 async function listen(server: http.Server): Promise<string> {
@@ -219,33 +323,44 @@ async function main() {
     await page.waitForTimeout(['p5', 'three', 'glsl', 'hydra', 'kinetic', 'hyperframes'].includes(item.domain) ? 2_000 : 1_000);
     const screenshot = path.join(screenshotDir, `${item.domain}.png`);
     await page.screenshot({ path: screenshot, fullPage: true });
-    const metrics = await page.evaluate(() => ({
-      canvasCount: document.querySelectorAll('canvas').length,
-      svgCount: document.querySelectorAll('svg').length,
-      videoCount: document.querySelectorAll('video').length,
-      audioCount: document.querySelectorAll('audio').length,
-      buttonCount: document.querySelectorAll('button,[role="button"]').length,
-      bodyTextLength: (document.body?.innerText || '').trim().length,
-      strudelCodeVisible: Boolean(document.querySelector('[data-strudel-source-code]')?.textContent?.trim()),
-      revideoTimelinePreview: Boolean(document.querySelector('[data-revideo-timeline-preview]')),
-      tonePreviewShell: Boolean(document.querySelector('[data-tone-preview-shell], #visualizer, #liminal-tone-visualizer')),
-      toneTempoSynced: Boolean(document.querySelector('[data-tone-tempo-sync="true"][data-tone-bpm]')),
-      toneEmbeddedPlayableControl: Boolean(
-        !document.querySelector('#tone-artifact-surface') ||
-        document.querySelector('#tone-artifact-surface button, #tone-artifact-surface [role="button"]')
-      ),
-      hyperframesPreviewShell: Boolean(document.querySelector('[data-hyperframes-preview-shell]')),
-      monitor: (window as unknown as { __liminalVisualProof?: { errors?: Array<{ level: string; message: string }> } }).__liminalVisualProof || {},
-    }));
+    const metrics = await page.evaluate(`(() => {
+      const viewportArea = Math.max(1, window.innerWidth * window.innerHeight);
+      const largestAreaRatio = (selector) => {
+        let largest = 0;
+        for (const element of document.querySelectorAll(selector)) {
+          const rect = element.getBoundingClientRect();
+          largest = Math.max(largest, Math.max(0, rect.width * rect.height) / viewportArea);
+        }
+        return largest;
+      };
+      const textBlock = document.querySelector('pre, [data-ascii-preview-shell], [data-textgen-preview-shell], [data-strudel-source-code]');
+      const textBlockRect = textBlock && textBlock.getBoundingClientRect();
+      const primaryTextBlockAreaRatio = textBlockRect ? Math.max(0, textBlockRect.width * textBlockRect.height) / viewportArea : 0;
+      return {
+        canvasCount: document.querySelectorAll('canvas').length,
+        svgCount: document.querySelectorAll('svg').length,
+        videoCount: document.querySelectorAll('video').length,
+        audioCount: document.querySelectorAll('audio').length,
+        buttonCount: document.querySelectorAll('button,[role="button"]').length,
+        bodyTextLength: (document.body && document.body.innerText || '').trim().length,
+        largestCanvasAreaRatio: largestAreaRatio('canvas'),
+        largestSvgAreaRatio: largestAreaRatio('svg'),
+        primaryTextBlockAreaRatio,
+        cssAnimationCount: document.getAnimations().length,
+        strudelCodeVisible: Boolean(document.querySelector('[data-strudel-source-code]') && document.querySelector('[data-strudel-source-code]').textContent.trim()),
+        revideoTimelinePreview: Boolean(document.querySelector('[data-revideo-timeline-preview]')),
+        tonePreviewShell: Boolean(document.querySelector('[data-tone-preview-shell], #visualizer, #liminal-tone-visualizer')),
+        toneTempoSynced: Boolean(document.querySelector('[data-tone-tempo-sync="true"][data-tone-bpm]')),
+        toneEmbeddedPlayableControl: Boolean(
+          !document.querySelector('#tone-artifact-surface') ||
+          document.querySelector('#tone-artifact-surface button, #tone-artifact-surface [role="button"]')
+        ),
+        hyperframesPreviewShell: Boolean(document.querySelector('[data-hyperframes-preview-shell]')),
+        monitor: window.__liminalVisualProof || {},
+      };
+    })()`) as VisualProofMetrics;
     const monitorErrors = (metrics.monitor.errors || []).filter((entry: { level: string; message: string }) => entry.level === 'error');
-    const contractErrors = [
-      item.domain === 'strudel' && !metrics.strudelCodeVisible ? 'Strudel preview is missing visible source code' : '',
-      item.domain === 'revideo' && !metrics.revideoTimelinePreview ? 'Revideo preview is missing the rendered timeline shell' : '',
-      item.domain === 'tone' && !metrics.tonePreviewShell ? 'Tone preview is missing the polished audio shell' : '',
-      item.domain === 'tone' && !metrics.toneTempoSynced ? 'Tone preview is missing tempo-synced visual feedback' : '',
-      item.domain === 'tone' && !metrics.toneEmbeddedPlayableControl ? 'Tone preview is missing the generated playback control' : '',
-      item.domain === 'hyperframes' && !metrics.hyperframesPreviewShell ? 'HyperFrames preview is missing the composition shell' : '',
-    ].filter(Boolean);
+    const contractErrors = contractErrorsForDomain(item.domain, metrics);
     results.push({
       domain: item.domain,
       source: item.sourceLabel,
@@ -257,6 +372,37 @@ async function main() {
     });
   }
 
+  const matrixErrors = validateOutputMatrix(results.map((result) => result.domain));
+  if (matrixErrors.length > 0) {
+    results.push({
+      domain: 'matrix',
+      source: 'artist output domain matrix',
+      screenshot: '',
+      html: '',
+      browserErrors: matrixErrors,
+      monitorErrors: [],
+      metrics: {
+        canvasCount: 0,
+        svgCount: 0,
+        videoCount: 0,
+        audioCount: 0,
+        buttonCount: 0,
+        bodyTextLength: 0,
+        largestCanvasAreaRatio: 0,
+        largestSvgAreaRatio: 0,
+        primaryTextBlockAreaRatio: 0,
+        cssAnimationCount: 0,
+        strudelCodeVisible: false,
+        revideoTimelinePreview: false,
+        tonePreviewShell: false,
+        toneTempoSynced: false,
+        toneEmbeddedPlayableControl: false,
+        hyperframesPreviewShell: false,
+        monitor: {},
+      },
+    });
+  }
+  await writeGalleryAssets(outDir, results.filter((result) => result.screenshot), page);
   await browser.close();
   server.close();
   await organismPreview.close();
@@ -268,9 +414,12 @@ async function main() {
     '',
     `Input: ${report.input}`,
     '',
+    `Contact sheet: ${path.relative(process.cwd(), path.join(outDir, 'contact-sheet.png'))}`,
+    `Gallery: ${path.relative(process.cwd(), path.join(outDir, 'gallery.html'))}`,
+    '',
     '| Domain | Errors | Signal | Screenshot |',
     '| --- | ---: | --- | --- |',
-    ...results.map((result) => `| ${result.domain} | ${result.browserErrors.length + result.monitorErrors.length} | canvas:${result.metrics.canvasCount} svg:${result.metrics.svgCount} text:${result.metrics.bodyTextLength} | ${result.screenshot} |`),
+    ...results.map((result) => `| ${result.domain} | ${result.browserErrors.length + result.monitorErrors.length} | canvas:${result.metrics.canvasCount} (${result.metrics.largestCanvasAreaRatio.toFixed(2)}) svg:${result.metrics.svgCount} (${result.metrics.largestSvgAreaRatio.toFixed(2)}) text:${result.metrics.bodyTextLength} (${result.metrics.primaryTextBlockAreaRatio.toFixed(2)}) anim:${result.metrics.cssAnimationCount} | ${result.screenshot} |`),
     '',
   ].join('\n'));
   console.log(JSON.stringify({ outDir: report.outDir, checked: results.length, failures: failures.map((failure) => failure.domain) }, null, 2));

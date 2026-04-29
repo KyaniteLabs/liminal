@@ -46,6 +46,36 @@ window.addEventListener('message', (event) => {
 `;
 }
 
+function p5CanvasPlacementBootstrap(): string {
+  return `
+(function liminalP5CanvasPlacement() {
+  function fit(canvas) {
+    const sourceWidth = Number(canvas.getAttribute('width')) || canvas.width || canvas.clientWidth || window.innerWidth;
+    const sourceHeight = Number(canvas.getAttribute('height')) || canvas.height || canvas.clientHeight || window.innerHeight;
+    const ratio = sourceWidth > 0 && sourceHeight > 0 ? sourceWidth / sourceHeight : 4 / 3;
+    const targetWidth = Math.max(1, Math.min(window.innerWidth, 960, window.innerHeight * ratio));
+    canvas.style.setProperty('display', 'block', 'important');
+    canvas.style.setProperty('width', targetWidth + 'px', 'important');
+    canvas.style.setProperty('height', 'auto', 'important');
+    canvas.style.setProperty('max-width', '100vw', 'important');
+    canvas.style.setProperty('max-height', '100vh', 'important');
+    canvas.style.setProperty('object-fit', 'contain', 'important');
+  }
+  function adoptP5Canvases() {
+    const stage = document.querySelector('[data-liminal-sync-preview="p5"]');
+    if (!stage) return;
+    document.querySelectorAll('body > canvas').forEach((canvas) => stage.appendChild(canvas));
+    stage.querySelectorAll('canvas').forEach(fit);
+  }
+  window.__liminalAdoptP5Canvas = adoptP5Canvases;
+  new MutationObserver(adoptP5Canvases).observe(document.body, { childList: true });
+  window.addEventListener('resize', adoptP5Canvases);
+  queueMicrotask(adoptP5Canvases);
+  setTimeout(adoptP5Canvases, 0);
+})();
+`;
+}
+
 function inferStageDomain(code: string): 'p5' | 'three' | 'html' {
   if (/\bTHREE\.|from\s+['"]three['"]|new\s+THREE\./.test(code)) return 'three';
   if (/<!doctype\s+html|<html\b/i.test(code)) return 'html';
@@ -96,13 +126,14 @@ export function buildSyncPreviewHtml(code: string): string {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Liminal Sync Stage</title>
-  <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070a}main{width:100%;height:100%;display:grid;place-items:center}</style>
+  <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070a}main{position:fixed;inset:0;display:grid;place-items:center}main > canvas,body > canvas{display:block;max-width:100vw;max-height:100vh;object-fit:contain}body > canvas{position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important}</style>
   <script>${sensorPolicyBootstrap()}</script>
   <script>${audioBootstrap()}</script>
   <script src="${P5_CDN}"></script>
 </head>
 <body>
-  <main></main>
+  <main data-liminal-sync-preview="p5"></main>
+  <script>${p5CanvasPlacementBootstrap()}</script>
   <script>${escapeScript(code)}</script>
 </body>
 </html>`;

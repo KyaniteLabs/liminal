@@ -7,7 +7,8 @@ export type CreateModeId =
   | 'hydra'
   | 'strudel'
   | 'tone'
-  | 'html'
+  | 'hyperframes'
+  | 'kinetic'
   | 'ascii'
   | 'text'
   | 'revideo'
@@ -31,7 +32,8 @@ export const CREATE_MODE_OPTIONS: CreateModeOption[] = [
   { id: 'hydra', label: 'Hydra visual', stageLabel: 'Hydra video synth', promptHint: 'Create a Hydra video synth sketch.' },
   { id: 'strudel', label: 'Strudel music', stageLabel: 'Strudel music pattern', promptHint: 'Create a Strudel live-coding music pattern.' },
   { id: 'tone', label: 'Tone.js audio', stageLabel: 'Tone.js audio', promptHint: 'Create a Tone.js Web Audio sketch.' },
-  { id: 'html', label: 'HTML/CSS', stageLabel: 'HTML/CSS artifact', promptHint: 'Create an HTML/CSS web artifact.' },
+  { id: 'hyperframes', label: 'HyperFrames', stageLabel: 'HyperFrames composition', promptHint: 'Create a HyperFrames composition with HTML, CSS, GSAP timeline clips, data-composition-id, and window.__timelines registration.' },
+  { id: 'kinetic', label: 'Kinetic type', stageLabel: 'CSS kinetic typography', promptHint: 'Create CSS kinetic typography as a complete animated HTML artifact.' },
   { id: 'ascii', label: 'ASCII art', stageLabel: 'ASCII art', promptHint: 'Create ASCII art.' },
   { id: 'text', label: 'Text art', stageLabel: 'Text generative art', promptHint: 'Create concrete poetry or text generative art.' },
   { id: 'revideo', label: 'Revideo', stageLabel: 'Revideo composition', promptHint: 'Create a Revideo composition.' },
@@ -49,9 +51,10 @@ export function detectPromptCreateMode(prompt: string): CreateModeId | null {
   if (/\bstrudel\b|\blive coding\b/.test(lower)) return 'strudel';
   if (/\bthree(?:\.js)?\b|\b3d\b|\bwebgl scene\b/.test(lower)) return 'three';
   if (/\bglsl\b|\bfragment shader\b|\bshader\b/.test(lower)) return 'glsl';
+  if (/\bkinetic\b|\bkinetic typography\b|\bmoving typography\b|\banimated text\b/.test(lower)) return 'kinetic';
+  if (/\bhyperframes?\b|\b(promo|trailer|slideshow|title\s*card|subtitle|caption|social\s*media)\b|\bhtml\b|\bcss\b/.test(lower)) return 'hyperframes';
   if (/\bsvg\b|\bvector\b/.test(lower)) return 'svg';
   if (/\bp5(?:\.js)?\b|\bcreative coding sketch\b/.test(lower)) return 'p5';
-  if (/\bhtml\b|\bcss\b/.test(lower)) return 'html';
   if (/\bascii\b/.test(lower)) return 'ascii';
   return null;
 }

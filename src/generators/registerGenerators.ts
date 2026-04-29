@@ -25,6 +25,7 @@ import { HydraGenerator } from './hydra/HydraGenerator.js';
 import { ToneGenerator } from './tone/ToneGenerator.js';
 import { TextGenerativeGenerator } from './textgen/TextGenerativeGenerator.js';
 import { SVGGenerator } from './svg/SVGGenerator.js';
+import { KineticGenerator } from './kinetic/KineticGenerator.js';
 import { pluginLoader } from '../plugins/PluginLoader.js';
 import { Logger } from '../utils/Logger.js';
 
@@ -108,6 +109,15 @@ const textgenConfidence = (prompt: string): number => {
   // Avoid capturing pure ASCII requests (let ascii generator handle those)
   if (/\bascii\b/.test(lower)) return 0;
   
+  return 0;
+};
+
+/** Confidence for CSS kinetic typography / motion HTML art */
+const kineticConfidence = (prompt: string): number => {
+  const lower = prompt.toLowerCase();
+  if (/\bkinetic\s+(typography|type|text|css)\b|\bcss\s+kinetic\b/.test(lower)) return 0.95;
+  if (/\b(animated|moving|orbiting|spinning|pulsing)\s+(words?|letters?|typography|text)\b/.test(lower)) return 0.85;
+  if (/\b(typography|text)\b.*\b(animated|moving|kinetic|orbiting|spinning|pulsing)\b/.test(lower)) return 0.85;
   return 0;
 };
 
@@ -297,6 +307,15 @@ const textgenEntry: GeneratorEntry = {
   },
 };
 
+const kineticEntry: GeneratorEntry = {
+  name: 'kinetic',
+  canHandle: kineticConfidence,
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
+    const gen = new KineticGenerator();
+    return gen.generate(prompt, params);
+  },
+};
+
 const p5Entry: GeneratorEntry = {
   name: 'p5',
   canHandle: p5Confidence,
@@ -343,6 +362,7 @@ function registerStaticGenerators(): void {
   generatorRegistry.register(svgEntry);
   generatorRegistry.register(htmlEntry);
   generatorRegistry.register(asciiEntry);
+  generatorRegistry.register(kineticEntry);
   generatorRegistry.register(textgenEntry);  // textgen before strudel for priority
   generatorRegistry.register(strudelEntry);
   generatorRegistry.register(hydraEntry);
@@ -384,6 +404,7 @@ export {
   strudelConfidence,
   hydraConfidence,
   toneConfidence,
+  kineticConfidence,
   hyperframesConfidence,
   p5Confidence,
 };

@@ -102,7 +102,7 @@ func TestPreviewMissingEventRendersExplicitBlockedPreview(t *testing.T) {
 	m.ApplyEvent(bridge.Event{
 		Type:         "preview.missing",
 		PreviewType:  "image",
-		ErrorText:    "screenshot render failed",
+		Reason:       "screenshot render failed",
 		ArtifactPath: ".omx/proof/live-previews/three.html",
 	})
 

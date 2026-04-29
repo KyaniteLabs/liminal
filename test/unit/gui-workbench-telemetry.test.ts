@@ -88,6 +88,24 @@ describe('workbenchTelemetry', () => {
     expect(summary.recentActivity.map((item) => item.label)).toContain('Disconnected');
   });
 
+  it('does not latch a recovered SSE disconnect after later bridge events arrive', () => {
+    const summary = summarizeWorkbenchBridge([
+      { type: 'generation.route.selected', domain: 'three', domains: ['three'], executionMode: 'draft' },
+      { type: 'stream.disconnected', message: 'Workbench event stream disconnected; create a new session.' },
+      { type: 'preview.completed', previewType: 'code', content: 'function setup() {}' },
+      { type: 'generation.complete', finalScore: 0, duration: 1200, model: 'qwen', reason: 'draft artifact ready', executionMode: 'draft' },
+    ]);
+
+    expect(summary.active).toBe(false);
+    expect(summary.phase).toBe('complete');
+    expect(summary.stageTitle).toBe('complete');
+    expect(summary.stageSubtitle).not.toContain('event stream disconnected');
+    expect(summary.processSteps.find((step) => step.id === 'ready')).toMatchObject({
+      status: 'done',
+      detail: 'preview ready; waiting for your revise/new variation/polish choice',
+    });
+  });
+
   it('surfaces intent brief and tool activity in the default timeline summary', () => {
     const summary = summarizeWorkbenchBridge([
       {

@@ -83,7 +83,8 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   let hasGenerationComplete = false;
   let hasCancelled = false;
   let hasMissingPreview = false;
-  let isDisconnected = false;
+  const latestDisconnectedIndex = events.reduce((latest, event, index) => event.type === 'stream.disconnected' ? index : latest, -1);
+  const isDisconnected = latestDisconnectedIndex === events.length - 1;
   let selectedArtifactDomain = '';
   let latestIterationStageTimings: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }> = [];
   const artifacts: Array<{ label: string; path: string }> = [];
@@ -206,8 +207,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       phase = 'stopped';
       latestMessage = 'Generation stopped by operator.';
     }
-    if (event.type === 'stream.disconnected') {
-      isDisconnected = true;
+    if (event.type === 'stream.disconnected' && isDisconnected) {
       phase = 'disconnected';
       latestMessage = String(event.message || 'Workbench event stream disconnected.');
     }

@@ -57,6 +57,20 @@ describe('OperatorCockpit state derivation', () => {
     expect(missing.activeWork).toContain('Preview unavailable');
   });
 
+  it('does not keep the cockpit disconnected after newer events arrive', () => {
+    const state = deriveCockpit([
+      { type: 'generation.route.selected', domain: 'three', domains: ['three'], executionMode: 'draft' },
+      { type: 'stream.disconnected', message: 'Workbench event stream disconnected; create a new session.' },
+      { type: 'preview.completed', content: 'abc', previewType: 'image', imageUrl: '.omx/proof/live-previews/three.png' },
+      { type: 'generation.complete', iterations: 1, finalScore: 0, duration: 1200, model: 'qwen', reason: 'draft artifact ready', executionMode: 'draft' },
+    ], Date.parse('2026-04-29T03:00:01.000Z'));
+
+    expect(state.phase).toBe('complete');
+    expect(state.latestMessage).not.toContain('event stream disconnected');
+    expect(state.activeWork).toContain('Preview ready from three');
+    expect(state.etaLabel).toBe('done');
+  });
+
   it('surfaces human-only review focus and copyable context after artifacts complete', () => {
     const state = deriveCockpit([
       { type: 'generation.domain_plan', domains: ['tone'], startedAt: '2026-04-22T12:00:00.000Z', candidateCount: 3 },

@@ -140,7 +140,8 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
   const missingPreviewEvent = [...events].reverse().find((event) => event.type === 'preview.missing');
   const hasMissingPreview = Boolean(missingPreviewEvent);
   const hasCancelled = events.some((event) => event.type === 'generation.cancelled');
-  const hasDisconnected = events.some((event) => event.type === 'stream.disconnected');
+  const latestDisconnectedIndex = events.reduce((latest, event, index) => event.type === 'stream.disconnected' ? index : latest, -1);
+  const hasDisconnected = latestDisconnectedIndex === events.length - 1;
   const hasComplete = events.some((event) => event.type === 'generation.complete');
   const hasCognitiveReceipt = events.some((event) => event.type === 'generation.cognitive_receipt');
   const hasError = events.some((event) => event.type === 'error' || event.type === 'generation.attempt.failed');

@@ -542,7 +542,10 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		m.PreviewVisible = true
 	case "preview.missing":
 		m.PreviewContent = event.ArtifactPath
-		m.PreviewMissing = event.ErrorText
+		m.PreviewMissing = event.Reason
+		if strings.TrimSpace(m.PreviewMissing) == "" {
+			m.PreviewMissing = event.ErrorText
+		}
 		if strings.TrimSpace(m.PreviewMissing) == "" {
 			m.PreviewMissing = event.Message
 		}

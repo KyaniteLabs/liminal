@@ -9,18 +9,30 @@ const repoRoot = process.cwd();
 const outDir = path.join(repoRoot, '.omx', 'proof');
 const outPath = path.join(outDir, 'studio-smoke.json');
 
-async function getPort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = net.createServer();
-    server.listen(0, () => {
-      const address = server.address();
-      server.close(() => {
-        if (address && typeof address === 'object') resolve(address.port);
-        else reject(new Error('Failed to allocate port'));
+async function getPorts(count: number): Promise<number[]> {
+  const servers: net.Server[] = [];
+  try {
+    for (let index = 0; index < count; index += 1) {
+      const server = net.createServer();
+      servers.push(server);
+      await new Promise<void>((resolve, reject) => {
+        server.once('error', reject);
+        server.listen(0, '127.0.0.1', () => resolve());
       });
+    }
+
+    return servers.map((server) => {
+      const address = server.address();
+      if (!address || typeof address === 'string') {
+        throw new Error('Failed to allocate port');
+      }
+      return address.port;
     });
-    server.on('error', reject);
-  });
+  } finally {
+    await Promise.all(
+      servers.map((server) => new Promise<void>((resolve) => server.close(() => resolve()))),
+    );
+  }
 }
 
 function waitFor(url: string, timeoutMs = 30_000): Promise<void> {
@@ -64,8 +76,7 @@ function stop(child: ChildProcess): Promise<void> {
   });
 }
 
-const apiPort = await getPort();
-const guiPort = await getPort();
+const [apiPort, guiPort] = await getPorts(2);
 let backend: ChildProcess | undefined;
 let frontend: ChildProcess | undefined;
 

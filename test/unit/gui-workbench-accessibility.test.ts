@@ -27,6 +27,13 @@ describe('GUI workbench accessibility contract', () => {
     expect(bridgeHook).toContain('!opened');
   });
 
+  it('wraps long inspector receipts and review details inside the right rail', () => {
+    expect(css).toContain('.liminal-inspector-grid small,');
+    expect(css).toContain('.liminal-review-panel small');
+    expect(css).toContain('overflow-wrap: anywhere');
+    expect(css).toContain('grid-template-columns: minmax(0, 0.7fr) auto');
+  });
+
   it('keeps reduced-motion and visible preview-status fallbacks in CSS', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     expect(css).toContain('animation: none');

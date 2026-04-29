@@ -65,6 +65,15 @@ export interface SwarmRoundEvent {
   timestamp: number;
 }
 
+export interface TuiGuidanceSuggestion {
+  category: 'creative-preferences';
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+  optional: true;
+  questions: string[];
+}
+
 export interface TuiFileChange {
   path: string;
   status: string;
@@ -85,6 +94,7 @@ export type TuiBridgeEvent =
   | { type: 'status.updated'; sessionId: string; status: TuiSessionStatus }
   | { type: 'activity.updated'; sessionId: string; message: string }
   | { type: 'trust.updated'; sessionId: string; trust: TuiTrustState; provenance?: TuiProvenance }
+  | ({ type: 'guidance.suggestion'; sessionId: string } & TuiGuidanceSuggestion)
   | { type: 'preview.started'; sessionId: string; previewType: 'code' | 'image' | 'html' | 'music' }
   | { type: 'preview.content'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music' }
   | { type: 'preview.completed'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music'; imageUrl?: string }

@@ -47,12 +47,16 @@ export class HTMLWrapper {
 
   private static readonly STRUDEL_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://raw.githubusercontent.com https://unpkg.com; font-src 'self';";
 
+  private static readonly TONE_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; font-src 'self'; media-src 'self';";
+
   private static securityHeadersFor(domain: Domain): string[] {
     const csp = domain === 'hydra'
       ? this.HYDRA_CSP
       : domain === 'strudel'
         ? this.STRUDEL_CSP
-        : this.DEFAULT_CSP;
+        : domain === 'tone'
+          ? this.TONE_CSP
+          : this.DEFAULT_CSP;
     return [
       ...this.BASE_SECURITY_HEADERS,
       `<meta http-equiv="Content-Security-Policy" content="${csp}">`,
@@ -118,6 +122,7 @@ export class HTMLWrapper {
       // Already wrapped - try to detect from content
       if (code.includes('@strudel/repl') || code.includes('strudel')) return 'strudel';
       if (code.includes('hydra-synth') || code.includes('new Hydra(')) return 'hydra';
+      if (code.includes('tone@') || /\bTone\./.test(code) || /from\s+['"]tone['"]/.test(code)) return 'tone';
       if (code.includes('import * as THREE') || 
           code.includes('from "three"') || 
           code.includes("from 'three'") ||
@@ -177,13 +182,15 @@ export class HTMLWrapper {
       hydraResolution = options.hydraResolution ?? { width: 1280, height: 720 };
     }
 
-    // Don't double-wrap
-    if (this.isAlreadyWrapped(code)) {
-      return this.stripInvalidMetaHeaders(code);
-    }
-
     // Detect domain if not specified
     const detectedDomain = domain || this.detectDomain(code);
+
+    // Don't double-wrap general HTML, but enhance already-wrapped Tone pages so
+    // raw model-emitted button-only audio pages still get the Studio preview shell.
+    if (this.isAlreadyWrapped(code)) {
+      if (detectedDomain === 'tone') return GenericWrapper.wrap(code, { domain: 'tone' });
+      return this.stripInvalidMetaHeaders(code);
+    }
 
     // Route to appropriate wrapper
     let wrapped: string;

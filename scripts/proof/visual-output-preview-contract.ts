@@ -4,6 +4,7 @@ import path from 'node:path';
 import { chromium } from 'playwright';
 import { buildSyncPreviewHtml } from '../../gui/src/gui/syncPreview';
 import { GenericWrapper } from '../../src/core/wrappers/GenericWrapper';
+import { HTMLWrapper } from '../../src/utils/htmlWrapper';
 
 type RenderItem = { domain: string; html: string; sourceLabel: string };
 type RenderedItem = RenderItem & { htmlPath: string; url?: string };
@@ -70,7 +71,7 @@ function fixtureItems(): RenderItem[] {
     { domain: 'glsl', sourceLabel: 'fixture glsl', html: GenericWrapper.wrap('precision highp float; uniform vec2 u_resolution; uniform float u_time; void main(){ vec2 uv=gl_FragCoord.xy/u_resolution.xy; gl_FragColor=vec4(uv,abs(sin(u_time)),1.0); }', { domain: 'shader' }) },
     { domain: 'hydra', sourceLabel: 'fixture hydra', html: GenericWrapper.wrap('osc(8, 0.1, 1.2).kaleid(4).out()', { domain: 'hydra' }) },
     { domain: 'strudel', sourceLabel: 'fixture strudel', html: GenericWrapper.wrap('s("bd sd hh*2").slow(2)', { domain: 'strudel' }) },
-    { domain: 'tone', sourceLabel: 'fixture tone', html: GenericWrapper.wrap('const synth = new Tone.Synth().toDestination(); function play(){ synth.triggerAttackRelease("C4", "8n"); } function stop(){}', { domain: 'tone' }) },
+    { domain: 'tone', sourceLabel: 'fixture tone raw html', html: HTMLWrapper.wrap('<!DOCTYPE html><html><body><button id="startButton">Start Ambient Sequence</button><script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script><script>const synth = new Tone.Synth().toDestination(); document.getElementById("startButton").addEventListener("click", () => synth.triggerAttackRelease("C4", "8n"));</script></body></html>', { domain: 'tone', title: 'Liminal Tone Preview' }) },
     { domain: 'revideo', sourceLabel: 'fixture revideo', html: GenericWrapper.wrap('import { makeScene } from "@revideo/core"; export default makeScene("x", function* () {});', { domain: 'revideo' }) },
     { domain: 'html', sourceLabel: 'fixture html', html: '<!doctype html><html><head><title>HTML preview</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#284b8f;color:white;font:700 44px system-ui}</style></head><body>Liminal</body></html>' },
     { domain: 'ascii', sourceLabel: 'fixture ascii', html: GenericWrapper.wrap('/\\\n/  \\\n----', { domain: 'ascii' }) },
@@ -86,7 +87,7 @@ function domainHtml(domain: string, filePath: string): string {
   if (domain === 'glsl') return GenericWrapper.wrap(code, { domain: 'shader' });
   if (domain === 'hydra') return GenericWrapper.wrap(code, { domain: 'hydra' });
   if (domain === 'strudel') return GenericWrapper.wrap(code, { domain: 'strudel' });
-  if (domain === 'tone') return path.extname(filePath).toLowerCase() === '.html' ? code : GenericWrapper.wrap(code, { domain: 'tone' });
+  if (domain === 'tone') return HTMLWrapper.wrap(code, { domain: 'tone', title: 'Liminal Tone Preview' });
   if (domain === 'revideo') return GenericWrapper.wrap(code, { domain: 'revideo' });
   if (domain === 'ascii') return GenericWrapper.wrap(code, { domain: 'ascii' });
   if (domain === 'html' || domain === 'kinetic') return code;
@@ -193,15 +194,21 @@ async function main() {
       audioCount: document.querySelectorAll('audio').length,
       buttonCount: document.querySelectorAll('button,[role="button"]').length,
       bodyTextLength: (document.body?.innerText || '').trim().length,
+      revideoTimelinePreview: Boolean(document.querySelector('[data-revideo-timeline-preview]')),
+      tonePreviewShell: Boolean(document.querySelector('[data-tone-preview-shell], #visualizer, #liminal-tone-visualizer')),
       monitor: (window as unknown as { __liminalVisualProof?: { errors?: Array<{ level: string; message: string }> } }).__liminalVisualProof || {},
     }));
     const monitorErrors = (metrics.monitor.errors || []).filter((entry: { level: string; message: string }) => entry.level === 'error');
+    const contractErrors = [
+      item.domain === 'revideo' && !metrics.revideoTimelinePreview ? 'Revideo preview is missing the rendered timeline shell' : '',
+      item.domain === 'tone' && !metrics.tonePreviewShell ? 'Tone preview is missing the polished audio shell' : '',
+    ].filter(Boolean);
     results.push({
       domain: item.domain,
       source: item.sourceLabel,
       screenshot: path.relative(process.cwd(), screenshot),
       html: path.relative(process.cwd(), item.htmlPath),
-      browserErrors,
+      browserErrors: [...browserErrors, ...contractErrors],
       monitorErrors,
       metrics,
     });

@@ -2610,6 +2610,9 @@ export class TuiBridgeService {
   private toPreviewHtml(code: string, previewDomain: import('../utils/htmlWrapper.js').Domain): string {
     const trimmed = code.trim();
     if (/^(?:<!DOCTYPE\s+html|<html\b)/i.test(trimmed)) {
+      if (previewDomain === 'tone') {
+        return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Liminal ${previewDomain} Preview` });
+      }
       return trimmed;
     }
     return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Liminal ${previewDomain} Preview` });

@@ -32,8 +32,10 @@ vi.mock('../../../src/git/GitService.js', () => ({
   }),
 }));
 
-const mockInfo = vi.fn();
-const mockError = vi.fn();
+const { mockInfo, mockError } = vi.hoisted(() => ({
+  mockInfo: vi.fn(),
+  mockError: vi.fn(),
+}));
 vi.mock('../../../src/utils/Logger.js', () => ({
   Logger: {
     info: (...args: unknown[]) => mockInfo(...args),

@@ -209,8 +209,8 @@ describe('ReasoningCapture', () => {
       expect(trace.outcome).toBe('success');
       expect(trace.rawReasoning).toContain('analyze');
       expect(trace.code).toBe('function setup() {}');
-      expect(trace.patterns).toBeDefined();
-      expect(trace.quality).toBeDefined();
+      expect(Array.isArray(trace.patterns)).toBe(true);
+      expect(typeof trace.quality).toBe('object');
       expect(trace.sessionId).toBe('test-session-123');
       expect(mockWriteFileSync).toHaveBeenCalled();
     });

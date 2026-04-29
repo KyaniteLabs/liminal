@@ -7,12 +7,12 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockExecFile = vi.fn();
+const { mockExecFile } = vi.hoisted(() => ({ mockExecFile: vi.fn() }));
 vi.mock('child_process', () => ({
   execFile: (...args: unknown[]) => mockExecFile(...args),
 }));
 
-const mockReadFile = vi.fn();
+const { mockReadFile } = vi.hoisted(() => ({ mockReadFile: vi.fn() }));
 vi.mock('fs/promises', () => ({
   readFile: (...args: unknown[]) => mockReadFile(...args),
 }));

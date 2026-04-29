@@ -34,7 +34,7 @@ vi.mock('../../../src/generators/GeneratorRegistry.js', () => ({
   },
 }));
 
-const mockBuildEnhancedPrompt = vi.fn();
+const { mockBuildEnhancedPrompt } = vi.hoisted(() => ({ mockBuildEnhancedPrompt: vi.fn() }));
 vi.mock('../../../src/learning/index.js', () => ({
   ArchiveLearning: vi.fn().mockImplementation(() => ({
     buildEnhancedPrompt: (...args: unknown[]) => mockBuildEnhancedPrompt(...args),

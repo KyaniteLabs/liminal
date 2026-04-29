@@ -27,6 +27,64 @@ export interface GenericWrapOptions {
 }
 
 export class GenericWrapper {
+  private static escapeHTML(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  private static escapeScript(value: string): string {
+    return value.replace(/<\/script>/gi, '<\\/script>');
+  }
+
+  private static isHTMLDocument(code: string): boolean {
+    const trimmed = code.trim();
+    return /^<!doctype\s+html/i.test(trimmed) || /^<html\b/i.test(trimmed) || /<body\b/i.test(trimmed);
+  }
+
+  private static extractBodyFragment(html: string): string {
+    return html.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)?.[1] ?? html;
+  }
+
+  private static extractInlineScripts(html: string): string[] {
+    return [...html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]
+      .map(match => match[1])
+      .filter(script => script.trim().length > 0);
+  }
+
+  private static stripExecutableHTML(fragment: string): string {
+    return fragment
+      .replace(/<script\b[\s\S]*?<\/script>/gi, '')
+      .replace(/<style\b[\s\S]*?<\/style>/gi, '')
+      .trim();
+  }
+
+  private static stripLLMToolMarkup(code: string): string {
+    return code
+      .replace(/```(?:\w+)?\s*/g, '')
+      .replace(/```\s*$/g, '')
+      .replace(/<tool_call\b[\s\S]*?<arg_value\b[^>]*>/gi, '')
+      .replace(/<\/arg_value>(?:\\n|\s)*<\/tool_call>\s*$/gi, '')
+      .replace(/<\/arg_value>[\s\S]*?<\/tool_call>\s*$/gi, '')
+      .trim();
+  }
+
+  private static extractRevideoLabels(code: string): string[] {
+    const labels = [
+      ...[...code.matchAll(/<Txt\b[^>]*\btext\s*=\s*(?:\{\s*)?["'`]([^"'`]{2,90})["'`]/g)].map(match => match[1]),
+      ...[...code.matchAll(/<Txt\b[^>]*>([^<]{2,90})<\/Txt>/g)].map(match => match[1]),
+      ...[...code.matchAll(/["'`]([^"'`]{4,70})["'`]/g)].map(match => match[1]),
+    ];
+    const blocked = /^(?:@revideo\/|react|typescript|tsx|durationInFrames|width|height|fps|fill|font|fontFamily|layout|center|middle|white|black|transparent)$/i;
+    return [...new Set(labels
+      .map(label => label.replace(/\s+/g, ' ').trim())
+      .filter(label => label.length >= 3 && !blocked.test(label) && !label.includes('@revideo/')))]
+      .slice(0, 3);
+  }
+
   /**
    * Detect domain from code content for generic wrappers
    */
@@ -367,10 +425,7 @@ ${safeCommentCode}
   }
 
   private static wrapRevideo(code: string, _showPreview = false): string {
-    const escaped = code
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    const escaped = this.escapeHTML(code);
 
     const durationMatch = code.match(/durationInFrames[=:]\s*(\d+)/);
     const fpsMatch = code.match(/fps[=:]\s*(\d+)/);
@@ -382,6 +437,10 @@ ${safeCommentCode}
     const width = widthMatch ? parseInt(widthMatch[1]) : 1920;
     const height = heightMatch ? parseInt(heightMatch[1]) : 1080;
     const durationSec = (duration / fps).toFixed(1);
+    const labels = this.extractRevideoLabels(code);
+    const title = this.escapeHTML(labels[0] ?? 'Revideo scene');
+    const subtitle = this.escapeHTML(labels[1] ?? 'Generated motion timeline');
+    const caption = this.escapeHTML(labels[2] ?? 'Frame-accurate browser preview');
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -391,22 +450,11 @@ ${safeCommentCode}
     ${SECURITY_HEADERS.trim()}
     <title>Revideo Composition</title>
     <style>
-        body {
-            margin: 0;
-            padding: 2rem;
-            background: #0a0a0f;
-            color: #e0e0e0;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 0.85rem;
-            line-height: 1.6;
-        }
-        .header {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(236, 72, 153, 0.2));
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
+        :root { color-scheme: dark; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 20% 20%, rgba(96,165,250,.18), transparent 32%), #05070d; color: #e0e7ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        main { width: min(1180px, calc(100vw - 32px)); margin: 0 auto; padding: 28px 0 36px; }
+        .header { display: flex; justify-content: space-between; gap: 1rem; align-items: center; margin-bottom: 18px; }
         .badge {
             display: inline-block;
             padding: 0.25rem 0.75rem;
@@ -416,53 +464,65 @@ ${safeCommentCode}
             font-size: 0.8rem;
             margin-right: 0.5rem;
         }
-        .meta {
-            display: flex;
-            gap: 1.5rem;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-        }
-        .meta-item {
-            color: #94a3b8;
-        }
-        .meta-value {
-            color: #e2e8f0;
-            font-weight: 600;
-        }
-        pre {
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            background: #0f0f1a;
-            padding: 1.5rem;
-            border-radius: 8px;
-            border: 1px solid #1e293b;
-            overflow-x: auto;
-        }
-        .note {
-            color: #94a3b8;
-            font-size: 0.8rem;
-            margin-top: 1rem;
-            padding: 1rem;
-            background: rgba(59, 130, 246, 0.1);
-            border-radius: 6px;
-            border-left: 3px solid #3b82f6;
-        }
+        .meta { display: flex; gap: 1rem; flex-wrap: wrap; color: #94a3b8; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .meta-value { color: #e2e8f0; font-weight: 700; }
+        [data-revideo-timeline-preview] { display: grid; gap: 16px; }
+        .revideo-stage { position: relative; aspect-ratio: ${width} / ${height}; min-height: 360px; overflow: hidden; border-radius: 24px; border: 1px solid rgba(148,163,184,.28); background: linear-gradient(135deg, #090b17, #14162f 50%, #250b28); box-shadow: 0 24px 80px rgba(0,0,0,.42); }
+        .revideo-frame-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 80px 80px; opacity: .28; }
+        .orb { position: absolute; width: 30%; aspect-ratio: 1; border-radius: 999px; filter: blur(1px); background: radial-gradient(circle at 35% 35%, #ecfeff, #22d3ee 24%, #7c3aed 58%, transparent 70%); left: 9%; top: 18%; animation: revideo-orbit ${durationSec}s ease-in-out infinite alternate; }
+        .title-card { position: absolute; left: 8%; right: 8%; bottom: 14%; padding: clamp(18px, 4vw, 54px); border: 1px solid rgba(255,255,255,.18); border-radius: 22px; background: rgba(7,10,22,.58); backdrop-filter: blur(12px); animation: revideo-title ${durationSec}s ease-in-out infinite; }
+        .eyebrow { color: #67e8f9; letter-spacing: .22em; text-transform: uppercase; font-size: clamp(11px, 1.1vw, 14px); font-weight: 800; }
+        h1 { margin: 8px 0 0; font-size: clamp(40px, 8vw, 116px); line-height: .9; letter-spacing: -.06em; }
+        .subtitle { margin-top: 14px; color: #c4b5fd; font-size: clamp(18px, 2.6vw, 42px); font-weight: 700; }
+        .caption { margin-top: 8px; color: #94a3b8; font-size: clamp(13px, 1.4vw, 18px); }
+        .timeline { position: relative; height: 68px; border: 1px solid rgba(148,163,184,.24); border-radius: 16px; background: rgba(15,23,42,.74); overflow: hidden; }
+        .track { position: absolute; left: 18px; right: 18px; top: 22px; height: 12px; border-radius: 999px; background: linear-gradient(90deg, #38bdf8, #a78bfa, #f472b6); }
+        .ticks { position: absolute; left: 18px; right: 18px; bottom: 12px; display: grid; grid-template-columns: repeat(8, 1fr); color: #64748b; font: 10px ui-monospace, monospace; }
+        .timeline-playhead { position: absolute; top: 9px; bottom: 9px; width: 3px; border-radius: 999px; background: #fff; box-shadow: 0 0 18px #67e8f9; animation: revideo-playhead ${durationSec}s linear infinite; }
+        .frame-readout { position: absolute; right: 18px; top: 43px; color: #cbd5e1; font: 11px ui-monospace, monospace; }
+        details { margin-top: 18px; border: 1px solid rgba(148,163,184,.22); border-radius: 16px; background: rgba(2,6,23,.66); }
+        summary { cursor: pointer; padding: 14px 16px; color: #bfdbfe; font-weight: 700; }
+        pre { white-space: pre-wrap; word-wrap: break-word; margin: 0; padding: 0 16px 16px; overflow-x: auto; color: #dbeafe; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+        .note { color: #94a3b8; font-size: 12px; margin-top: 10px; }
+        @keyframes revideo-playhead { from { left: 18px; } to { left: calc(100% - 18px); } }
+        @keyframes revideo-orbit { from { transform: translate3d(0, 0, 0) scale(.92); } to { transform: translate3d(145%, 38%, 0) scale(1.24); } }
+        @keyframes revideo-title { 0% { transform: translateY(18px); opacity: .72; } 35%, 80% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-10px); opacity: .86; } }
     </style>
 </head>
 <body>
-    <div class="header">
-        <span class="badge">Revideo</span>
-        <span class="badge">TypeScript</span>
-        <div class="meta">
-            <div class="meta-item">Duration: <span class="meta-value">${durationSec}s</span> (${duration} frames @ ${fps}fps)</div>
-            <div class="meta-item">Resolution: <span class="meta-value">${width}×${height}</span></div>
+    <main data-revideo-timeline-preview>
+        <div class="header">
+            <div>
+                <span class="badge">Revideo</span>
+                <span class="badge">Timeline preview</span>
+            </div>
+            <div class="meta">
+                <div>Duration: <span class="meta-value">${durationSec}s</span> (${duration} frames @ ${fps}fps)</div>
+                <div>Resolution: <span class="meta-value">${width}×${height}</span></div>
+            </div>
         </div>
-    </div>
-    <pre><code>${escaped}</code></pre>
-    <p class="note">
-        💡 <strong>Note:</strong> Revideo scene — renders via @revideo/renderer (in-process).
-        Use <code>Exporter.exportVideo()</code> for MP4 output.
-    </p>
+        <section class="revideo-stage" aria-label="Rendered Revideo timeline preview">
+            <div class="revideo-frame-grid"></div>
+            <div class="orb"></div>
+            <article class="title-card">
+                <div class="eyebrow">Generated Revideo scene</div>
+                <h1>${title}</h1>
+                <div class="subtitle">${subtitle}</div>
+                <div class="caption">${caption}</div>
+            </article>
+        </section>
+        <section class="timeline" aria-label="Timeline scrub preview">
+            <div class="track"></div>
+            <div class="timeline-playhead"></div>
+            <div class="ticks"><span>0f</span><span>${Math.round(duration * .14)}f</span><span>${Math.round(duration * .28)}f</span><span>${Math.round(duration * .42)}f</span><span>${Math.round(duration * .56)}f</span><span>${Math.round(duration * .70)}f</span><span>${Math.round(duration * .84)}f</span><span>${duration}f</span></div>
+            <div class="frame-readout">looping ${duration} frames</div>
+        </section>
+        <p class="note">Browser-visible timeline approximation from the generated Revideo scene. Use the source details for exact renderer export.</p>
+        <details>
+            <summary>Source code and export details</summary>
+            <pre><code>${escaped}</code></pre>
+        </details>
+    </main>
 </body>
 </html>`;
   }
@@ -554,7 +614,10 @@ ${safeCommentCode}
   }
 
   private static wrapToneJS(code: string): string {
-    const safeCode = code.replace(/`/g, '\\`');
+    const cleanedCode = this.stripLLMToolMarkup(code);
+    if (this.isHTMLDocument(cleanedCode)) return this.wrapToneHTML(cleanedCode);
+
+    const safeCode = cleanedCode.replace(/`/g, '\\`');
     
     return `<!DOCTYPE html>
 <html lang="en">
@@ -620,8 +683,9 @@ ${safeCommentCode}
         #visualizer {
             width: 300px;
             height: 100px;
-            background: #1e293b;
+            background: linear-gradient(180deg, #020617, #1e293b);
             border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.24);
             margin-top: 20px;
         }
     </style>
@@ -639,14 +703,47 @@ ${safeCommentCode}
         const playBtn = document.getElementById('start');
         const stopBtn = document.getElementById('stop');
         const statusEl = document.getElementById('status');
-        
-        ${safeCode}
+        const visualizer = document.getElementById('visualizer');
+        const visualizerCtx = visualizer.getContext('2d');
+        let toneArtifactError = null;
+        function drawToneVisualizer() {
+            const w = visualizer.width || 300;
+            const h = visualizer.height || 100;
+            const t = performance.now() / 1000;
+            visualizerCtx.clearRect(0, 0, w, h);
+            visualizerCtx.fillStyle = '#020617';
+            visualizerCtx.fillRect(0, 0, w, h);
+            for (let i = 0; i < 32; i += 1) {
+                const level = isPlaying ? (Math.sin(t * 2.5 + i * 0.48) + 1) * 0.38 + 0.18 : 0.12;
+                const barH = level * h * (0.52 + (i % 5) * 0.08);
+                const x = i * (w / 32);
+                const gradient = visualizerCtx.createLinearGradient(0, h - barH, 0, h);
+                gradient.addColorStop(0, '#facc15');
+                gradient.addColorStop(0.56, '#fb7185');
+                gradient.addColorStop(1, '#38bdf8');
+                visualizerCtx.fillStyle = gradient;
+                visualizerCtx.fillRect(x + 2, h - barH - 6, Math.max(3, w / 42), barH);
+            }
+            requestAnimationFrame(drawToneVisualizer);
+        }
+        drawToneVisualizer();
+
+        try {
+            ${safeCode}
+        } catch (err) {
+            toneArtifactError = err;
+            console.warn('Tone artifact runtime issue:', err);
+            statusEl.className = 'ready';
+            statusEl.textContent = 'Tone runtime issue: ' + err.message;
+        }
         
         playBtn.addEventListener('click', async () => {
             await Tone.start();
             isPlaying = true;
             statusEl.className = 'playing';
-            statusEl.textContent = '🔊 Playing';
+            statusEl.textContent = toneArtifactError
+                ? 'Preview shell running; generated Tone code has issue: ' + toneArtifactError.message
+                : '🔊 Playing';
             if (typeof play === 'function') play();
         });
         
@@ -655,6 +752,129 @@ ${safeCommentCode}
             statusEl.className = 'ready';
             statusEl.textContent = 'Stopped';
             if (typeof stop === 'function') stop();
+        });
+    </script>
+</body>
+</html>`;
+  }
+
+  private static wrapToneHTML(code: string): string {
+    const bodyFragment = this.stripExecutableHTML(this.extractBodyFragment(code)) ||
+      '<p class="tone-empty">The generated Tone artifact did not include visible body controls.</p>';
+    const inlineScripts = this.extractInlineScripts(code)
+      .map(script => this.escapeScript(script))
+      .join('\n\n');
+    const escapedSource = this.escapeHTML(code);
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    ${TONE_SECURITY_HEADERS.trim()}
+    <title>Tone.js Preview</title>
+    <script src="${TONE_CDN}"></script>
+    <style>
+        :root { color-scheme: dark; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 20% 18%, rgba(245,158,11,.24), transparent 28%), radial-gradient(circle at 80% 8%, rgba(236,72,153,.18), transparent 30%), #07080f; color: #f8fafc; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; display: grid; place-items: center; padding: 28px; }
+        [data-tone-preview-shell] { width: min(1120px, 100%); display: grid; grid-template-columns: minmax(280px, .9fr) minmax(320px, 1.1fr); gap: 20px; align-items: stretch; }
+        .tone-panel, .tone-artifact { border: 1px solid rgba(248,250,252,.14); border-radius: 24px; background: rgba(15,23,42,.72); box-shadow: 0 24px 80px rgba(0,0,0,.36); overflow: hidden; }
+        .tone-panel { padding: 24px; display: grid; gap: 18px; align-content: center; }
+        .eyebrow { color: #fbbf24; letter-spacing: .18em; text-transform: uppercase; font-size: 12px; font-weight: 800; }
+        h1 { margin: 0; font-size: clamp(36px, 6vw, 72px); line-height: .9; letter-spacing: -.06em; }
+        .hint { color: #cbd5e1; line-height: 1.55; max-width: 46ch; }
+        .controls { display: flex; gap: 12px; flex-wrap: wrap; }
+        #liminal-tone-start, #liminal-tone-stop { border: 0; border-radius: 999px; padding: 12px 18px; color: #08111f; font-weight: 800; cursor: pointer; }
+        #liminal-tone-start { background: linear-gradient(135deg, #facc15, #fb7185); }
+        #liminal-tone-stop { background: #cbd5e1; }
+        #liminal-tone-status { color: #fef3c7; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+        #liminal-tone-visualizer { width: 100%; height: 160px; border-radius: 18px; background: linear-gradient(180deg, rgba(2,6,23,.98), rgba(30,41,59,.86)); border: 1px solid rgba(148,163,184,.22); }
+        .tone-artifact { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+        .tone-artifact h2 { margin: 0; color: #fed7aa; font-size: 13px; letter-spacing: .16em; text-transform: uppercase; }
+        #tone-artifact-surface { min-height: 220px; display: grid; place-items: center; border-radius: 18px; background: rgba(2,6,23,.62); border: 1px solid rgba(148,163,184,.18); padding: 20px; }
+        #tone-artifact-surface button, #tone-artifact-surface [role="button"] { border: 0; border-radius: 999px; padding: 10px 15px; background: linear-gradient(135deg, #38bdf8, #a78bfa); color: white; font-weight: 800; cursor: pointer; }
+        details { border-top: 1px solid rgba(148,163,184,.18); padding-top: 8px; }
+        summary { cursor: pointer; color: #93c5fd; font-weight: 700; }
+        pre { white-space: pre-wrap; word-break: break-word; color: #dbeafe; font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; max-height: 240px; overflow: auto; }
+        @media (max-width: 820px) { [data-tone-preview-shell] { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <main data-tone-preview-shell>
+        <section class="tone-panel" aria-label="Tone playback controls">
+            <div class="eyebrow">Tone.js artifact</div>
+            <h1>Audio preview</h1>
+            <p class="hint">A polished wrapper around the generated Tone HTML. Start the preview here, or use the embedded controls preserved on the right.</p>
+            <canvas id="liminal-tone-visualizer" width="640" height="240"></canvas>
+            <div class="controls">
+                <button id="liminal-tone-start" type="button">▶ Start preview</button>
+                <button id="liminal-tone-stop" type="button">⏹ Stop</button>
+            </div>
+            <div id="liminal-tone-status">Ready — browser audio starts after a click.</div>
+        </section>
+        <section class="tone-artifact" aria-label="Embedded Tone artifact">
+            <h2>Embedded Tone artifact</h2>
+            <div id="tone-artifact-surface">${bodyFragment}</div>
+            <details>
+                <summary>Original Tone HTML source</summary>
+                <pre><code>${escapedSource}</code></pre>
+            </details>
+        </section>
+    </main>
+    <script>
+        const liminalToneStatus = document.getElementById('liminal-tone-status');
+        const liminalToneCanvas = document.getElementById('liminal-tone-visualizer');
+        const liminalToneCtx = liminalToneCanvas.getContext('2d');
+        let liminalTonePlaying = false;
+        function drawToneBars() {
+            const w = liminalToneCanvas.width;
+            const h = liminalToneCanvas.height;
+            const t = performance.now() / 1000;
+            liminalToneCtx.clearRect(0, 0, w, h);
+            liminalToneCtx.fillStyle = '#020617';
+            liminalToneCtx.fillRect(0, 0, w, h);
+            for (let i = 0; i < 48; i += 1) {
+                const amp = liminalTonePlaying ? (Math.sin(t * 2 + i * .42) + 1) * .42 + .16 : .12;
+                const barH = amp * h * (0.45 + (i % 7) * .055);
+                const x = i * (w / 48);
+                const gradient = liminalToneCtx.createLinearGradient(0, h - barH, 0, h);
+                gradient.addColorStop(0, '#facc15');
+                gradient.addColorStop(.55, '#fb7185');
+                gradient.addColorStop(1, '#38bdf8');
+                liminalToneCtx.fillStyle = gradient;
+                liminalToneCtx.fillRect(x + 3, h - barH - 10, Math.max(4, w / 58), barH);
+            }
+            requestAnimationFrame(drawToneBars);
+        }
+        drawToneBars();
+        try {
+            ${inlineScripts}
+        } catch (error) {
+            console.warn('Tone artifact script error:', error);
+            liminalToneStatus.textContent = 'Tone artifact script error: ' + error.message;
+        }
+        document.getElementById('liminal-tone-start').addEventListener('click', async () => {
+            try {
+                if (window.Tone?.start) await Tone.start();
+                liminalTonePlaying = true;
+                liminalToneStatus.textContent = 'Playing — embedded artifact controls are preserved.';
+                const artifactButton = document.querySelector('#tone-artifact-surface button:not([disabled]), #tone-artifact-surface [role="button"]:not([aria-disabled="true"])');
+                if (artifactButton) artifactButton.click();
+                else if (typeof play === 'function') play();
+            } catch (error) {
+                console.warn('Tone preview start error:', error);
+                liminalToneStatus.textContent = 'Start error: ' + error.message;
+            }
+        });
+        document.getElementById('liminal-tone-stop').addEventListener('click', () => {
+            liminalTonePlaying = false;
+            if (window.Tone?.Transport) {
+                Tone.Transport.stop();
+                Tone.Transport.cancel();
+            }
+            if (typeof stop === 'function') stop();
+            liminalToneStatus.textContent = 'Stopped.';
         });
     </script>
 </body>

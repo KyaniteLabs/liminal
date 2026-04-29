@@ -187,6 +187,15 @@ describe('GenericWrapper', () => {
       expect(result).toContain('tone@14.8.49');
     });
 
+    it('strips stray tool-call markup before embedding raw Tone snippets', () => {
+      const code = 'const synth = new Tone.Synth();</arg_value>\\n</tool_call>';
+      const result = GenericWrapper.wrap(code, { domain: 'tone' });
+
+      expect(result).toContain('const synth = new Tone.Synth();');
+      expect(result).not.toContain('</arg_value>');
+      expect(result).not.toContain('</tool_call>');
+    });
+
     it('includes play/stop controls', () => {
       const code = 'const synth = new Tone.Synth();';
       const result = GenericWrapper.wrap(code, { domain: 'tone' });
@@ -195,6 +204,27 @@ describe('GenericWrapper', () => {
       expect(result).toContain('⏹ Stop');
       expect(result).toContain('id="start"');
       expect(result).toContain('id="stop"');
+    });
+
+    it('wraps raw Tone HTML in a polished preview shell instead of showing a bare button page', () => {
+      const code = `<!DOCTYPE html>
+<html>
+<body>
+  <button id="startButton">Start Ambient Sequence</button>
+  <script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
+  <script>
+    const synth = new Tone.Synth().toDestination();
+    document.getElementById('startButton').addEventListener('click', () => synth.triggerAttackRelease('C4', '8n'));
+  </script>
+</body>
+</html>`;
+      const result = GenericWrapper.wrap(code, { domain: 'tone' });
+
+      expect(result).toContain('data-tone-preview-shell');
+      expect(result).toContain('id="liminal-tone-start"');
+      expect(result).toContain('id="liminal-tone-visualizer"');
+      expect(result).toContain('id="startButton"');
+      expect(result).toContain('Embedded Tone artifact');
     });
   });
 
@@ -271,8 +301,22 @@ void main() { fragColor = vec4(1.0); }`;
       const result = GenericWrapper.wrap(code, { domain: 'revideo' });
 
       expect(result).toContain('Revideo Composition');
-      expect(result).toContain('from "@revideo/core"');
+      expect(result).toContain('from &quot;@revideo/core&quot;');
       expect(result).not.toContain('<script>\nimport { makeScene }');
+    });
+
+    it('renders a browser-visible timeline preview before the source details', () => {
+      const code = `import { makeScene2D, Txt } from "@revideo/2d";
+export default makeScene2D(function* (view) {
+  yield view.add(<Txt text="Liminal title" />);
+});`;
+      const result = GenericWrapper.wrap(code, { domain: 'revideo' });
+
+      expect(result).toContain('data-revideo-timeline-preview');
+      expect(result).toContain('class="revideo-stage"');
+      expect(result).toContain('class="timeline-playhead"');
+      expect(result).toContain('Liminal title');
+      expect(result.indexOf('data-revideo-timeline-preview')).toBeLessThan(result.indexOf('<details'));
     });
   });
 

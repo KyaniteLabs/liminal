@@ -23,6 +23,11 @@ describe('HTMLWrapper', () => {
       expect(HTMLWrapper.detectDomain(code)).toBe('html'); // Wrapped HTML without p5 CDN defaults to html
     });
 
+    it('detects already-wrapped Tone HTML as a Tone artifact', () => {
+      const code = '<!DOCTYPE html><html><body><script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script><script>const synth = new Tone.Synth();</script></body></html>';
+      expect(HTMLWrapper.detectDomain(code)).toBe('tone');
+    });
+
     it('does not misclassify p5 code as shader', () => {
       const code = 'function setup() { createCanvas(400, 400); } function draw() { void main(); }';
       expect(HTMLWrapper.detectDomain(code)).toBe('p5');
@@ -51,6 +56,15 @@ describe('HTMLWrapper', () => {
       const html = '<!DOCTYPE html><html><body>p5</body></html>';
       const result = HTMLWrapper.wrap(html);
       expect(result).toBe(html);
+    });
+
+    it('enhances already-wrapped Tone HTML with the Tone preview shell', () => {
+      const html = '<!DOCTYPE html><html><body><button id="startButton">Play</button><script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script><script>const synth = new Tone.Synth();</script></body></html>';
+      const result = HTMLWrapper.wrap(html, { domain: 'tone' });
+
+      expect(result).toContain('data-tone-preview-shell');
+      expect(result).toContain('id="liminal-tone-visualizer"');
+      expect(result).toContain('id="startButton"');
     });
 
     it('wraps p5.js code correctly', () => {

@@ -97,6 +97,8 @@ func TestParseInputIntentCommands(t *testing.T) {
 		{"/preview file.html", "action", "command"},
 		{"/play audio.wav", "action", "command"},
 		{"/stop", "chat", "command"},
+		{"/model glm 5v", "chat", "command"},
+		{"/provider minimax", "chat", "command"},
 		{"/confirm a1", "action", "command"},
 		{"/cancel a1", "action", "command"},
 		{"hello world", "chat", "chat"},
@@ -109,6 +111,32 @@ func TestParseInputIntentCommands(t *testing.T) {
 		}
 		if intent != tt.wantIntent {
 			t.Errorf("parseInputIntent(%q) intent = %q, want %q", tt.input, intent, tt.wantIntent)
+		}
+	}
+}
+
+func TestOperatorCommandRegistryPowersHelpAndRouting(t *testing.T) {
+	seen := map[string]bool{}
+	for _, command := range operatorCommands {
+		if seen[command.Name] {
+			t.Fatalf("duplicate operator command %q", command.Name)
+		}
+		seen[command.Name] = true
+		mode, intent := parseInputIntent(command.Name)
+		if intent != "command" {
+			t.Fatalf("expected %s to route as command, got %s/%s", command.Name, mode, intent)
+		}
+	}
+	for _, want := range []string{"/stop", "/confirm", "/cancel", "/model", "/provider", "/preview"} {
+		if !seen[want] {
+			t.Fatalf("expected command registry to include %s", want)
+		}
+	}
+
+	help := NewModel("http://localhost:0").renderHelpDrawer(80)
+	for _, want := range []string{"/stop", "stop active generation", "/confirm", "confirm pending action", "/provider", "switch provider/model"} {
+		if !strings.Contains(help, want) {
+			t.Fatalf("expected help to contain %q\n%s", want, help)
 		}
 	}
 }

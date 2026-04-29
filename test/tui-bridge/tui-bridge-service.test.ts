@@ -84,6 +84,15 @@ describe('TuiBridgeService', () => {
 
     expect(service.getStatus(session.sessionId).pendingAction).toBeUndefined();
     expect(service.getEvents(session.sessionId).map(e => e.type)).toContain('action.confirmed');
+    expect(service.getEvents(session.sessionId)
+      .filter(e => e.type === 'status.updated')
+      .at(-1)).toMatchObject({
+      type: 'status.updated',
+      status: {
+        mode: 'confirm',
+        pendingAction: undefined,
+      },
+    });
   });
 
   it('cancels a pending action and clears it', async () => {
@@ -101,6 +110,44 @@ describe('TuiBridgeService', () => {
 
     expect(service.getStatus(session.sessionId).pendingAction).toBeUndefined();
     expect(service.getEvents(session.sessionId).map(e => e.type)).toContain('action.cancelled');
+    expect(service.getEvents(session.sessionId)
+      .filter(e => e.type === 'status.updated')
+      .at(-1)).toMatchObject({
+      type: 'status.updated',
+      status: {
+        mode: 'chat',
+        pendingAction: undefined,
+      },
+    });
+  });
+
+  it('publishes an explicit cancellation event when the active run is stopped', () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    service.cancelRun(session.sessionId);
+
+    expect(service.getEvents(session.sessionId)).toContainEqual(expect.objectContaining({
+      type: 'generation.cancelled',
+      reason: 'operator-stop',
+    }));
+    expect(service.getEvents(session.sessionId)
+      .filter(e => e.type === 'status.updated')
+      .at(-1)).toMatchObject({
+      type: 'status.updated',
+      status: {
+        mode: 'chat',
+        activeTask: 'Generation stopped',
+      },
+    });
+  });
+
+  it('rejects confirmation when no pending action exists', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await expect(service.confirmAction(session.sessionId, 'missing-action')).rejects.toThrow('not found');
+    expect(service.getEvents(session.sessionId).map(e => e.type)).not.toContain('action.confirmed');
   });
 
   // ── StudioAgent Routing ──

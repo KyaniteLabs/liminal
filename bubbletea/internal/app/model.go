@@ -219,6 +219,7 @@ type Model struct {
 	// Preview state
 	PreviewContent string // Current preview content
 	PreviewType    string // "code" | "image" | "html" | "music" | ""
+	PreviewMissing string
 	PreviewTab     string // "code" | "output" | "log"
 	PreviewVisible bool
 
@@ -226,6 +227,7 @@ type Model struct {
 	Mode          string
 	Provider      string
 	ModelName     string
+	RoleStatuses  map[string]bridge.RoleStatus
 	TrustLabel    string
 	PendingAction *bridge.PendingAction
 
@@ -412,6 +414,7 @@ func NewModel(bridgeURL string) Model {
 		Height:         32,
 		Provider:       "pending",
 		ModelName:      "bridge",
+		RoleStatuses:   map[string]bridge.RoleStatus{},
 		TrustLabel:     "Generated code is untrusted by default",
 		Bridge:         bridge.NewClient(bridgeURL),
 		TextInput:      ti,
@@ -499,6 +502,9 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			if event.Status.Model != "" {
 				m.ModelName = event.Status.Model
 			}
+			if event.Status.Roles != nil {
+				m.RoleStatuses = event.Status.Roles
+			}
 			m.TrustLabel = event.Status.Trust.Label
 		}
 	case "trust.updated":
@@ -522,16 +528,37 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		m.PreviewVisible = true
 	case "preview.content":
 		m.PreviewContent = event.Content
+		m.PreviewMissing = ""
 		m.PreviewType = event.PreviewType
 		m.PreviewVisible = true
 	case "preview.completed":
 		m.PreviewContent = event.Content
+		m.PreviewMissing = ""
 		m.PreviewType = event.PreviewType
 		if event.ImageUrl != "" {
 			m.PreviewContent = event.ImageUrl
 			m.PreviewType = "image"
 		}
 		m.PreviewVisible = true
+	case "preview.missing":
+		m.PreviewContent = event.ArtifactPath
+		m.PreviewMissing = event.Reason
+		if strings.TrimSpace(m.PreviewMissing) == "" {
+			m.PreviewMissing = event.ErrorText
+		}
+		if strings.TrimSpace(m.PreviewMissing) == "" {
+			m.PreviewMissing = event.Message
+		}
+		m.PreviewType = event.PreviewType
+		m.PreviewVisible = true
+		m.addActivity("Preview unavailable: " + m.PreviewMissing)
+	case "generation.cancelled":
+		m.IsStreaming = false
+		m.ActiveResponse = ""
+		m.Task.Phase = PhaseReport
+		m.Task.Objective = "Generation stopped by operator"
+		m.GenerationReason = event.Reason
+		m.addActivity("Generation stopped by operator")
 	case "generation.iteration":
 		m.CurrentIteration = event.Iteration
 		m.GenerationScore = event.Score

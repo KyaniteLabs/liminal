@@ -77,12 +77,13 @@ export function summarizeWorkbenchBridge(
   const phase = String(derived.phase || 'idle');
   const processSteps = summarizeProcessSteps(events, phase);
   const readyDone = processSteps.some((step) => step.id === 'ready' && step.status === 'done');
-  const active = !readyDone && !['idle', 'complete', 'previewed', 'verified preview'].includes(phase);
+  const terminalPhases = ['idle', 'complete', 'previewed', 'verified preview', 'preview missing', 'stopped', 'disconnected'];
+  const active = !readyDone && !terminalPhases.includes(phase);
 
   return {
     active,
     phase,
-    stageTitle: active ? phase : phase === 'complete' ? 'complete' : 'ready',
+    stageTitle: active ? phase : phase === 'complete' ? 'complete' : terminalPhases.includes(phase) && phase !== 'idle' ? phase : 'ready',
     stageSubtitle: derived.latestMessage || derived.activeWork || 'No active generation',
     timelineStatus: phase,
     timelinePrimary: derived.activeDomain || derived.plan[0] || 'Generate',
@@ -136,6 +137,11 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
   const hasCandidate = events.some((event) => event.type === 'generation.candidate.generated' || event.type === 'generation.iteration');
   const hasPreview = events.some((event) => event.type === 'preview.completed');
   const hasVerifiedPreview = events.some((event) => event.type === 'preview.verified');
+  const missingPreviewEvent = [...events].reverse().find((event) => event.type === 'preview.missing');
+  const hasMissingPreview = Boolean(missingPreviewEvent);
+  const hasCancelled = events.some((event) => event.type === 'generation.cancelled');
+  const latestDisconnectedIndex = events.reduce((latest, event, index) => event.type === 'stream.disconnected' ? index : latest, -1);
+  const hasDisconnected = latestDisconnectedIndex === events.length - 1;
   const hasComplete = events.some((event) => event.type === 'generation.complete');
   const hasCognitiveReceipt = events.some((event) => event.type === 'generation.cognitive_receipt');
   const hasError = events.some((event) => event.type === 'error' || event.type === 'generation.attempt.failed');
@@ -175,15 +181,17 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
       id: 'draft',
       label: 'Generate',
       detail: hasAttempt ? attemptLabel : 'model not called yet',
-      status: hasError ? 'failed' : hasCandidate || hasPreview || hasComplete ? 'done' : hasAttempt ? 'active' : 'pending',
+      status: hasError || hasCancelled || hasDisconnected ? 'failed' : hasCandidate || hasPreview || hasComplete ? 'done' : hasAttempt ? 'active' : 'pending',
     },
     {
       id: 'preview',
       label: 'Preview',
-      detail: hasVerifiedPreview
+      detail: hasMissingPreview
+        ? `missing ${String(missingPreviewEvent?.previewType || 'preview')} preview: ${String(missingPreviewEvent?.reason || 'preview unavailable')}`
+        : hasVerifiedPreview
         ? `verified ${String(verifiedEvent?.previewType || 'preview')} preview${selectedDomain !== 'unknown' ? ` (${selectedDomain})` : ''}`
         : hasPreview ? `artifact mounted${selectedDomain !== 'unknown' ? ` (${selectedDomain})` : ''}` : hasCandidate || hasComplete ? 'rendering receipt' : 'waiting for artifact',
-      status: hasVerifiedPreview || hasPreview ? 'done' : hasCandidate || hasComplete ? 'active' : 'pending',
+      status: hasMissingPreview || hasDisconnected ? 'failed' : hasVerifiedPreview || hasPreview ? 'done' : hasCandidate || hasComplete ? 'active' : 'pending',
     },
     ...(hasCognitiveReceipt ? [{
       id: 'cognition',
@@ -194,8 +202,8 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
     {
       id: 'ready',
       label: 'Ready',
-      detail: hasComplete && completeEvent?.executionMode === 'draft' ? 'preview ready; waiting for your revise/new variation/polish choice' : hasComplete ? 'run completed' : 'not ready yet',
-      status: hasComplete ? 'done' : hasError ? 'failed' : 'pending',
+      detail: hasCancelled ? 'stopped by operator' : hasDisconnected ? 'event stream disconnected' : hasComplete && completeEvent?.executionMode === 'draft' ? 'preview ready; waiting for your revise/new variation/polish choice' : hasComplete ? 'run completed' : 'not ready yet',
+      status: hasComplete ? 'done' : hasError || hasCancelled || hasDisconnected ? 'failed' : 'pending',
     },
   ];
 }
@@ -216,8 +224,11 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
       'activity.updated',
       'preview.completed',
       'preview.verified',
+      'preview.missing',
+      'generation.cancelled',
       'generation.complete',
       'generation.cognitive_receipt',
+      'stream.disconnected',
       'error',
     ].includes(String(event.type)))
     .slice(-6)
@@ -267,6 +278,12 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
         const checks = Array.isArray(event.checks) ? event.checks.join(', ') : 'verified';
         return { label: 'Preview verified', detail: `${String(event.previewType || 'preview')}: ${checks}`, status: 'ok' };
       }
+      if (event.type === 'preview.missing') {
+        return { label: 'Preview missing', detail: `${String(event.previewType || 'preview')}: ${String(event.reason || 'preview unavailable')}`, status: 'failed' };
+      }
+      if (event.type === 'generation.cancelled') {
+        return { label: 'Stopped', detail: String(event.reason || 'operator stopped generation'), status: 'failed' };
+      }
       if (event.type === 'generation.cognitive_receipt') {
         return { label: 'Cognitive receipt', detail: summarizeCognitiveReceipt([event]), status: 'ok' };
       }
@@ -275,6 +292,9 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
           return { label: 'Preview ready', detail: String(event.reason || 'Preview ready without scoring'), status: 'ok' };
         }
         return { label: 'Complete', detail: `Score ${event.finalScore ?? 'n/a'} in ${event.duration ?? 0}ms`, status: 'ok' };
+      }
+      if (event.type === 'stream.disconnected') {
+        return { label: 'Disconnected', detail: String(event.message || 'event stream disconnected'), status: 'failed' };
       }
       return { label: 'Error', detail: String(event.message || 'unknown error'), status: 'failed' };
     });
@@ -328,8 +348,11 @@ export function latestClarificationRequest(events: WorkbenchBridgeEvent[]): Work
       'generation.candidate.generated',
       'preview.completed',
       'preview.verified',
+      'preview.missing',
+      'generation.cancelled',
       'generation.complete',
       'generation.cognitive_receipt',
+      'stream.disconnected',
       'error',
     ].includes(String(event.type))) {
       return null;

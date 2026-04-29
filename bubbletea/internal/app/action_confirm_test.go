@@ -188,6 +188,28 @@ func TestStopCommandCancelsActiveRun(t *testing.T) {
 	}
 }
 
+func TestCancelledGenerationEventShowsStoppedState(t *testing.T) {
+	m := NewModel("http://localhost:0")
+	m.Connected = true
+	m.Ready = true
+	m.Width = 120
+	m.Height = 32
+	m.IsStreaming = true
+
+	m.ApplyEvent(bridge.Event{Type: "generation.cancelled", SessionID: "s1", Reason: "operator-stop"})
+
+	if m.IsStreaming {
+		t.Fatal("expected stopped generation to clear streaming state")
+	}
+	if m.Task.Phase != PhaseReport {
+		t.Fatalf("expected report phase after stop, got %s", m.Task.Phase)
+	}
+	view := m.renderCompactStatus()
+	if !strings.Contains(view, "Generation stopped by operator") {
+		t.Fatalf("expected stopped state in compact status\n%s", view)
+	}
+}
+
 func TestViewShowsReviewCardHintsInActionMode(t *testing.T) {
 	m := NewModel("http://localhost:0")
 	m.Connected = true

@@ -15,9 +15,9 @@ export type BridgeEvent = {
   model?: string;
   duration?: number;
   finalScore?: number;
-  reason?: string;
   qualityState?: 'scored' | 'unscored';
   error?: string;
+  reason?: string;
   startedAt?: string;
   timeoutMinutes?: number;
   executionMode?: 'draft' | 'prove';
@@ -81,6 +81,10 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   let generationCompletedAt = 0;
   let completedDuration = 0;
   let hasGenerationComplete = false;
+  let hasCancelled = false;
+  let hasMissingPreview = false;
+  const latestDisconnectedIndex = events.reduce((latest, event, index) => event.type === 'stream.disconnected' ? index : latest, -1);
+  const isDisconnected = latestDisconnectedIndex === events.length - 1;
   let selectedArtifactDomain = '';
   let latestIterationStageTimings: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }> = [];
   const artifacts: Array<{ label: string; path: string }> = [];
@@ -192,6 +196,21 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
         ? `Preview verified: ${event.checks.join(', ')}`
         : 'Preview verified';
     }
+    if (event.type === 'preview.missing') {
+      hasMissingPreview = true;
+      phase = 'preview missing';
+      previewCompletedAt = readEventTime(event) || previewCompletedAt || now;
+      latestMessage = `Preview unavailable: ${event.reason || event.error || event.message || 'preview artifact missing'}`;
+    }
+    if (event.type === 'generation.cancelled') {
+      hasCancelled = true;
+      phase = 'stopped';
+      latestMessage = 'Generation stopped by operator.';
+    }
+    if (event.type === 'stream.disconnected' && isDisconnected) {
+      phase = 'disconnected';
+      latestMessage = String(event.message || 'Workbench event stream disconnected.');
+    }
     if (event.type === 'generation.complete') {
       hasGenerationComplete = true;
       phase = 'complete';
@@ -209,27 +228,34 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   const boundedTotalMs = Math.max(1, (attemptTotal || plan.length || 1) * timeoutMs);
   const activeElapsedMs = activeAttemptStartedAt ? Math.max(0, now - activeAttemptStartedAt) : 0;
   const spentMs = currentAttempt > 0 ? ((currentAttempt - 1) * timeoutMs) + activeElapsedMs : elapsedMs;
-  const progressPercent = hasGenerationComplete || phase === 'complete' || phase === 'previewed'
+  const isTerminal = hasGenerationComplete || hasCancelled || hasMissingPreview || isDisconnected || phase === 'complete' || phase === 'previewed' || phase === 'verified preview' || phase === 'preview missing' || phase === 'stopped' || phase === 'disconnected';
+  const progressPercent = isTerminal
     ? 1
     : currentAttempt > 0
       ? Math.min(0.96, Math.max(0.03, spentMs / boundedTotalMs))
       : 0;
-  const remainingMs = hasGenerationComplete || phase === 'complete' || phase === 'previewed' || phase === 'verified preview' ? 0 : Math.max(0, boundedTotalMs - spentMs);
+  const remainingMs = isTerminal ? 0 : Math.max(0, boundedTotalMs - spentMs);
   const selectedDomain = selectedArtifactDomain || activeDomain;
   const hasVerifiedPreview = events.some((event) => event.type === 'preview.verified');
-  const activeWork = hasVerifiedPreview && !hasGenerationComplete
-    ? `Preview verified${selectedDomain ? ` for ${selectedDomain}` : ''}.`
-    : hasGenerationComplete && selectedDomain
-    ? executionMode === 'draft'
-      ? `Preview ready from ${selectedDomain}; no more domains are running.`
-      : `Run complete from ${selectedDomain}.`
-    : activeDomain
-      ? executionMode === 'draft'
-        ? `Generating first usable preview; fallback route may try ${activeDomain} first.`
-        : `Waiting for ${candidateCount} candidates in ${activeDomain}`
-      : plan.length
-        ? `Planning ${plan.length} domain attempts`
-        : 'Idle';
+  const activeWork = hasCancelled
+    ? 'Generation stopped by operator.'
+    : isDisconnected
+      ? 'Workbench event stream disconnected.'
+      : hasMissingPreview
+        ? `Preview unavailable${selectedDomain ? ` for ${selectedDomain}` : ''}.`
+        : hasVerifiedPreview && !hasGenerationComplete
+          ? `Preview verified${selectedDomain ? ` for ${selectedDomain}` : ''}.`
+          : hasGenerationComplete && selectedDomain
+            ? executionMode === 'draft'
+              ? `Preview ready from ${selectedDomain}; no more domains are running.`
+              : `Run complete from ${selectedDomain}.`
+            : activeDomain
+              ? executionMode === 'draft'
+                ? `Generating first usable preview; fallback route may try ${activeDomain} first.`
+                : `Waiting for ${candidateCount} candidates in ${activeDomain}`
+              : plan.length
+                ? `Planning ${plan.length} domain attempts`
+                : 'Idle';
   const stageTimings: Array<{ label: string; durationLabel: string }> = [];
   const renderEndAt = previewCompletedAt || generationCompletedAt;
   if (generationStartedAt && activeAttemptStartedAt > generationStartedAt) {
@@ -294,7 +320,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
     phase,
     latestMessage,
     elapsedLabel: elapsedMs ? formatDuration(elapsedMs) : '0s',
-    etaLabel: hasGenerationComplete || phase === 'complete' || phase === 'previewed' ? 'done' : `up to ${formatDuration(remainingMs)} left`,
+    etaLabel: isTerminal ? 'done' : `up to ${formatDuration(remainingMs)} left`,
     progressPercent,
     activeWork,
     selectedDomain,

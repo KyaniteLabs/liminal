@@ -47,6 +47,17 @@ describe('workbenchTelemetry', () => {
     });
   });
 
+  it('does not treat an empty event history as disconnected', () => {
+    const summary = summarizeWorkbenchBridge([]);
+
+    expect(summary.phase).toBe('idle');
+    expect(summary.stageTitle).toBe('ready');
+    expect(summary.processSteps.find((step) => step.id === 'ready')).toMatchObject({
+      status: 'pending',
+      detail: 'not ready yet',
+    });
+  });
+
   it('marks stopped runs as inactive and visible in the timeline', () => {
     const summary = summarizeWorkbenchBridge([
       { type: 'generation.intent_brief', userRequest: 'fireflies', requirements: ['Primary request: fireflies'], missingDetails: [], questions: [], willClarify: false },

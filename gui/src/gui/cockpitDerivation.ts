@@ -84,7 +84,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   let hasCancelled = false;
   let hasMissingPreview = false;
   const latestDisconnectedIndex = events.reduce((latest, event, index) => event.type === 'stream.disconnected' ? index : latest, -1);
-  const isDisconnected = latestDisconnectedIndex === events.length - 1;
+  const isDisconnected = events.length > 0 && latestDisconnectedIndex === events.length - 1;
   let selectedArtifactDomain = '';
   let latestIterationStageTimings: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }> = [];
   const artifacts: Array<{ label: string; path: string }> = [];

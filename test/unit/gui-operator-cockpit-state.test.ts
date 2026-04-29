@@ -34,6 +34,14 @@ describe('OperatorCockpit state derivation', () => {
     expect(state.activeWork).toContain('Preview verified');
   });
 
+  it('does not treat an empty event history as disconnected', () => {
+    const state = deriveCockpit([]);
+
+    expect(state.phase).toBe('idle');
+    expect(state.activeWork).toBe('Idle');
+    expect(state.etaLabel).toContain('left');
+  });
+
   it('marks stopped and missing-preview states as terminal surface states', () => {
     const stopped = deriveCockpit([
       { type: 'generation.route.selected', domain: 'p5', domains: ['p5'], executionMode: 'draft', candidateCount: 1 },

@@ -2624,12 +2624,19 @@ export class TuiBridgeService {
     let page: Awaited<ReturnType<typeof browser.newPage>> | null = null;
     try {
       page = await browser.newPage();
+      const pageErrors: string[] = [];
+      page.on('pageerror', (error: unknown) => {
+        pageErrors.push(error instanceof Error ? error.message : String(error));
+      });
       await page.setViewport({ width: 960, height: 640 });
       await page.goto(`file://${htmlPath}`, { waitUntil: 'load', timeout: 30000 });
       if (['p5', 'three', 'shader', 'hydra'].includes(previewDomain)) {
         await page.waitForSelector('canvas', { timeout: 10000 });
       }
       await new Promise(resolve => setTimeout(resolve, 1000));
+      if (pageErrors.length > 0) {
+        throw new Error(`Preview runtime error: ${pageErrors.join(' | ')}`);
+      }
       await page.screenshot({ path: pngPath, type: 'png' });
     } finally {
       if (page) await page.close().catch(() => undefined);

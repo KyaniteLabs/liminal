@@ -77,7 +77,7 @@ export function summarizeWorkbenchBridge(
   const phase = String(derived.phase || 'idle');
   const processSteps = summarizeProcessSteps(events, phase);
   const readyDone = processSteps.some((step) => step.id === 'ready' && step.status === 'done');
-  const active = !readyDone && !['idle', 'complete', 'previewed'].includes(phase);
+  const active = !readyDone && !['idle', 'complete', 'previewed', 'verified preview'].includes(phase);
 
   return {
     active,
@@ -130,19 +130,26 @@ function summarizeCognitiveReceipt(events: WorkbenchBridgeEvent[]): string {
 function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): WorkbenchProcessStep[] {
   const hasIntent = events.some((event) => event.type === 'generation.intent_brief');
   const hasClarification = latestClarificationRequest(events) !== null;
+  const hasRoute = events.some((event) => event.type === 'generation.route.selected');
   const hasPlan = events.some((event) => event.type === 'generation.domain_plan');
   const hasAttempt = events.some((event) => event.type === 'generation.attempt.started');
   const hasCandidate = events.some((event) => event.type === 'generation.candidate.generated' || event.type === 'generation.iteration');
   const hasPreview = events.some((event) => event.type === 'preview.completed');
+  const hasVerifiedPreview = events.some((event) => event.type === 'preview.verified');
   const hasComplete = events.some((event) => event.type === 'generation.complete');
   const hasCognitiveReceipt = events.some((event) => event.type === 'generation.cognitive_receipt');
   const hasError = events.some((event) => event.type === 'error' || event.type === 'generation.attempt.failed');
+  const routeEvent = [...events].reverse().find((event) => event.type === 'generation.route.selected');
   const planEvent = [...events].reverse().find((event) => event.type === 'generation.domain_plan');
   const attemptEvent = [...events].reverse().find((event) => event.type === 'generation.attempt.started');
-  const rawDomains = Array.isArray(planEvent?.domains) ? planEvent.domains.map(String) : [];
+  const routeDomains = Array.isArray(routeEvent?.domains) ? routeEvent.domains.map(String) : [];
+  const rawDomains = Array.isArray(planEvent?.domains) ? planEvent.domains.map(String) : routeDomains;
+  const selectedRoute = String(routeEvent?.domain || rawDomains[0] || '');
   const domains = rawDomains.length > 0 ? `fallback order: ${rawDomains.join(' -> ')}` : 'waiting for route';
+  const routeDetail = selectedRoute ? `selected ${selectedRoute}; ${domains}` : domains;
   const completeEvent = [...events].reverse().find((event) => event.type === 'generation.complete');
   const artifactEvent = [...events].reverse().find((event) => event.type === 'artifact.found');
+  const verifiedEvent = [...events].reverse().find((event) => event.type === 'preview.verified');
   const selectedDomain = String((artifactEvent?.artifactLabel || '').split(' ')[0] || attemptEvent?.domain || rawDomains[0] || 'unknown').toLowerCase();
   const attemptLabel = completeEvent
     ? completeEvent.executionMode === 'draft'
@@ -161,8 +168,8 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
     {
       id: 'route',
       label: 'Route',
-      detail: hasComplete && completeEvent?.executionMode === 'draft' ? `fallback order available; stopped after ${selectedDomain}` : domains,
-      status: hasPlan || hasAttempt || hasComplete ? 'done' : hasIntent && !hasClarification ? 'active' : 'pending',
+      detail: hasComplete && completeEvent?.executionMode === 'draft' ? `fallback order available; stopped after ${selectedDomain}` : routeDetail,
+      status: hasRoute || hasPlan || hasAttempt || hasComplete ? 'done' : hasIntent && !hasClarification ? 'active' : 'pending',
     },
     {
       id: 'draft',
@@ -173,8 +180,10 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
     {
       id: 'preview',
       label: 'Preview',
-      detail: hasPreview ? `artifact mounted${selectedDomain !== 'unknown' ? ` (${selectedDomain})` : ''}` : hasCandidate || hasComplete ? 'rendering receipt' : 'waiting for artifact',
-      status: hasPreview ? 'done' : hasCandidate || hasComplete ? 'active' : 'pending',
+      detail: hasVerifiedPreview
+        ? `verified ${String(verifiedEvent?.previewType || 'preview')} preview${selectedDomain !== 'unknown' ? ` (${selectedDomain})` : ''}`
+        : hasPreview ? `artifact mounted${selectedDomain !== 'unknown' ? ` (${selectedDomain})` : ''}` : hasCandidate || hasComplete ? 'rendering receipt' : 'waiting for artifact',
+      status: hasVerifiedPreview || hasPreview ? 'done' : hasCandidate || hasComplete ? 'active' : 'pending',
     },
     ...(hasCognitiveReceipt ? [{
       id: 'cognition',
@@ -197,6 +206,7 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
       'generation.intent_brief',
       'generation.clarification_needed',
       'generation.reasoning_trace',
+      'generation.route.selected',
       'generation.domain_plan',
       'generation.attempt.started',
       'generation.candidate.generated',
@@ -205,6 +215,7 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
       'tool.completed',
       'activity.updated',
       'preview.completed',
+      'preview.verified',
       'generation.complete',
       'generation.cognitive_receipt',
       'error',
@@ -222,6 +233,10 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
       if (event.type === 'generation.reasoning_trace') {
         const source = event.source ? `${event.source} ` : '';
         return { label: `${source}Reasoning: ${String(event.phase || 'trace')}`, detail: String(event.thought || event.detail || 'thinking') };
+      }
+      if (event.type === 'generation.route.selected') {
+        const domains = Array.isArray(event.domains) ? event.domains.join(' -> ') : 'unknown';
+        return { label: 'Route selected', detail: `${String(event.domain || 'domain')} (${domains})`, status: 'ok' };
       }
       if (event.type === 'generation.domain_plan') {
         const domains = Array.isArray(event.domains) ? event.domains.join(' -> ') : 'unknown';
@@ -247,6 +262,10 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
       }
       if (event.type === 'preview.completed') {
         return { label: 'Preview', detail: event.previewType === 'image' ? String(event.imageUrl || 'inline image rendered') : `${event.previewType} ready`, status: 'ok' };
+      }
+      if (event.type === 'preview.verified') {
+        const checks = Array.isArray(event.checks) ? event.checks.join(', ') : 'verified';
+        return { label: 'Preview verified', detail: `${String(event.previewType || 'preview')}: ${checks}`, status: 'ok' };
       }
       if (event.type === 'generation.cognitive_receipt') {
         return { label: 'Cognitive receipt', detail: summarizeCognitiveReceipt([event]), status: 'ok' };
@@ -303,10 +322,12 @@ export function latestClarificationRequest(events: WorkbenchBridgeEvent[]): Work
   for (let index = events.length - 1; index >= 0; index--) {
     const event = events[index];
     if ([
+      'generation.route.selected',
       'generation.domain_plan',
       'generation.attempt.started',
       'generation.candidate.generated',
       'preview.completed',
+      'preview.verified',
       'generation.complete',
       'generation.cognitive_receipt',
       'error',

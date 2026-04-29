@@ -1599,6 +1599,16 @@ export class TuiBridgeService {
       }
 
       const domainPlan = buildCreativeDomainPlan(userText);
+      this.emit(sessionId, {
+        type: 'generation.route.selected',
+        sessionId,
+        domain: domainPlan[0],
+        domains: domainPlan,
+        startedAt: new Date(generationStartedAt).toISOString(),
+        timeoutMinutes,
+        candidateCount,
+        executionMode: 'prove',
+      });
       const memoryReceipts = await this.cognitiveWriter.prepareGeneration({
         sessionId,
         userText,
@@ -1958,6 +1968,16 @@ export class TuiBridgeService {
       }
 
       const domainPlan = buildCreativeDomainPlan(userText);
+      this.emit(sessionId, {
+        type: 'generation.route.selected',
+        sessionId,
+        domain: domainPlan[0],
+        domains: domainPlan,
+        startedAt: new Date(generationStartedAt).toISOString(),
+        timeoutMinutes,
+        candidateCount,
+        executionMode: 'draft',
+      });
       const memoryReceiptsPromise = this.cognitiveWriter.prepareGeneration({
         sessionId,
         userText,
@@ -2555,6 +2575,14 @@ export class TuiBridgeService {
       this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'image' });
       this.emit(sessionId, { type: 'preview.content', sessionId, content: b64, previewType: 'image' });
       this.emit(sessionId, { type: 'preview.completed', sessionId, content: b64, previewType: 'image', imageUrl: pngPath });
+      this.emit(sessionId, {
+        type: 'preview.verified',
+        sessionId,
+        previewType: 'image',
+        artifactPath: pngPath,
+        imageUrl: pngPath,
+        checks: ['html artifact written', 'screenshot rendered'],
+      });
       this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Inline preview image: ${pngPath}` });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);

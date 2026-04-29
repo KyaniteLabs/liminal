@@ -22,6 +22,7 @@ import { EVALUATOR_TOOLS, createGeneratorToolExecutor } from '../harness/tools/g
 import { Result, ok, err } from 'neverthrow';
 import { LLMError } from '../llm/errors.js';
 import type { RenderEvidence, GenerationEvaluation } from './types/GenerationEvaluation.js';
+import { evaluateRenderEvidencePerception } from '../perception/RenderEvidencePerception.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -603,6 +604,7 @@ export async function scoreRenderedEvidence(
   code: string,
   brief: string,
   llmClient?: LLMClient,
+  domain?: string,
 ): Promise<GenerationEvaluation> {
   if (evidence.infraUnavailable) {
     return {
@@ -622,6 +624,22 @@ export async function scoreRenderedEvidence(
         fix: 'Fix syntax errors, ensure all required imports/libraries are loaded, and verify the code runs without runtime exceptions.',
         constraint: 'Return a complete, runnable artifact.',
       },
+    };
+  }
+
+  const perceptionReport = domain ? evaluateRenderEvidencePerception(evidence, domain) : undefined;
+  if (perceptionReport && !perceptionReport.passed) {
+    const issueIds = perceptionReport.issues.map(issue => issue.id).join(', ');
+    return {
+      score: 0,
+      confidence: 1,
+      failureClass: 'render',
+      repairAdvice: {
+        issue: `Rendered output failed human perception checks: ${issueIds}`,
+        fix: 'Revise the artifact so the rendered output is visible, audible, readable, or viewable for humans as appropriate for the domain.',
+        constraint: 'Runtime evidence must satisfy human perception ergonomics before aesthetic evaluation.',
+      },
+      reasoning: perceptionReport.issues.map(issue => issue.message).join(' '),
     };
   }
 

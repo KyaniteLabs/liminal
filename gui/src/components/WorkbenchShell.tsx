@@ -46,36 +46,30 @@ export function WorkbenchShell({
   leftSlot,
   children,
 }: WorkbenchShellProps) {
-  const runStatusText = runDisabled ? `${runLabel} in progress` : `${runLabel} ready`;
+  const activeModeLabel = modes.find((mode) => mode.id === activeMode)?.label ?? 'Generate';
+  const activeSurfaceLabel = formatLegacyTab(activeTab);
+  const userPrompt = prompt.trim();
+  const runStatusText = stageBusy
+    ? `${runLabel} in progress`
+    : runDisabled
+      ? 'Describe an artifact to enable generation'
+      : `${runLabel} ready`;
 
   return (
-    <div className="liminal-workbench">
+    <div className="liminal-workbench liminal-workbench--chat-first">
       <a className="liminal-skip-link" href="#main-content">Skip to main content</a>
       <header className="liminal-commandbar">
         <div className="liminal-brand">
           <span className="liminal-brand__mark">L</span>
           <div>
             <h1>Liminal Studio</h1>
-            <p>{providerLabel}</p>
+            <p>Codex for creative coding</p>
           </div>
         </div>
-        <label className="liminal-command" htmlFor="workbench-prompt">
-          <span>Prompt</span>
-          <textarea
-            id="workbench-prompt"
-            value={prompt}
-            onChange={(event) => onPromptChange(event.target.value)}
-            rows={2}
-            placeholder="Describe the visual, instrument, behavior, or system to generate"
-            aria-describedby="workbench-run-status"
-          />
-        </label>
-        <div className="liminal-command-actions">
-          {audioSlot}
-          <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled} aria-busy={runDisabled}>
-            {runLabel}
-          </button>
-          <p id="workbench-run-status" className="sr-only" aria-live="polite">{runStatusText}</p>
+        <div className="liminal-status-cluster" aria-label="Runtime status">
+          <span className="liminal-status-pill"><b>Agent</b>{providerLabel}</span>
+          <span className="liminal-status-pill liminal-status-pill--muted"><b>Judge</b>{evaluatorLabel}</span>
+          <span className="liminal-status-pill liminal-status-pill--muted"><b>Receipts</b>{inspectorLabel}</span>
         </div>
       </header>
 
@@ -112,27 +106,106 @@ export function WorkbenchShell({
         <div className="liminal-left-rail__content">{leftSlot}</div>
       </aside>
 
-      <main id="main-content" className="liminal-stage" aria-label="Live stage" aria-busy={stageBusy}>
-        {stageSlot}
+      <main id="main-content" className="liminal-chat-surface" aria-label="Creative coding conversation">
+        <div className="liminal-chat-timeline" aria-live="polite">
+          <article className="liminal-chat-message liminal-chat-message--assistant">
+            <span className="liminal-chat-kicker">AI creative coding agent</span>
+            <h2>What should we make?</h2>
+            <p>
+              Describe a sketch, scene, shader, sound, or visual system. I’ll ask for missing details
+              when useful, generate the artifact, then help you revise or polish it.
+            </p>
+            <div className="liminal-chat-chips" aria-label="Preserved capabilities">
+              <span>Generate</span>
+              <span>Preview</span>
+              <span>Revise</span>
+              <span>Polish</span>
+            </div>
+          </article>
+
+          {userPrompt ? (
+            <article className="liminal-chat-message liminal-chat-message--user" aria-label="Current prompt draft">
+              <span>You</span>
+              <p>{userPrompt}</p>
+            </article>
+          ) : null}
+
+          <article className="liminal-artifact-card" aria-label="Artifact preview card">
+            <div>
+              <span>{stageBusy ? 'Working artifact' : 'Artifact preview'}</span>
+              <strong>{stageBusy ? 'Liminal is generating…' : 'Preview opens on the right'}</strong>
+              <small>
+                Creative output stays visible as soon as the bridge provides a live iframe, image,
+                or code preview.
+              </small>
+            </div>
+            <a href="#liminal-preview-panel">View preview</a>
+          </article>
+
+          {children ? (
+            <section className="liminal-legacy-panel" aria-label="Supplemental panel">
+              {children}
+            </section>
+          ) : null}
+
+          <details className="liminal-receipt-details" open={stageBusy}>
+            <summary>
+              <span>Work log</span>
+              <strong>{stageBusy ? 'live' : 'collapsed'}</strong>
+            </summary>
+            <section className="liminal-timeline" aria-label="Generation timeline" role="status" aria-live="polite">
+              {timelineSlot}
+            </section>
+          </details>
+
+          <details className="liminal-advanced-drawer">
+            <summary>
+              <span>Advanced settings, receipts, and safety</span>
+              <strong>{activeModeLabel} · {activeSurfaceLabel}</strong>
+            </summary>
+            <aside className="liminal-inspector" aria-label="Advanced settings and receipts">
+              <div className="liminal-inspector__header">
+                <span>Details</span>
+                <small>{inspectorLabel}</small>
+              </div>
+              {inspectorSlot}
+            </aside>
+          </details>
+        </div>
+
+        <section className="liminal-chat-composer" aria-label="Message composer">
+          <div className="liminal-composer-head">
+            <label className="liminal-composer-label" htmlFor="workbench-prompt">Message Liminal</label>
+            <span>{activeModeLabel} · {activeSurfaceLabel}</span>
+          </div>
+          <textarea
+            id="workbench-prompt"
+            value={prompt}
+            onChange={(event) => onPromptChange(event.target.value)}
+            rows={4}
+            placeholder="Create a p5.js sketch of luminous blue-green particles orbiting a dark center…"
+            aria-describedby="workbench-run-status"
+          />
+          <div className="liminal-composer-actions">
+            {audioSlot}
+            <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled} aria-busy={stageBusy}>
+              {runLabel}
+            </button>
+            <p id="workbench-run-status" className="sr-only" aria-live="polite">{runStatusText}</p>
+          </div>
+        </section>
       </main>
 
-      <aside className="liminal-inspector">
-        <div className="liminal-inspector__header">
-          <span>Inspector</span>
-          <small>{inspectorLabel}</small>
+      <aside id="liminal-preview-panel" className="liminal-preview-panel" aria-label="Live preview and artifact panel" aria-busy={stageBusy}>
+        <div className="liminal-preview-panel__header">
+          <span>Live preview</span>
+          <strong>Artifact panel</strong>
+          <small>Inline cards keep the conversation focused; expanded output lives here.</small>
         </div>
-        {inspectorSlot}
+        <div className="liminal-preview-panel__stage liminal-stage">
+          {stageSlot}
+        </div>
       </aside>
-
-      <section className="liminal-timeline" aria-label="Generation timeline" role="status" aria-live="polite">
-        {timelineSlot}
-      </section>
-
-      {children ? (
-        <section className="liminal-legacy-panel" aria-label="Supplemental panel">
-          {children}
-        </section>
-      ) : null}
     </div>
   );
 }

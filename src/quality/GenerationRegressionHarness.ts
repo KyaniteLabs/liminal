@@ -119,7 +119,7 @@ function toEvaluation(result: ReturnType<typeof CreativeEvaluator.assess>): Regr
   };
 }
 
-async function createGenerator(domain: RegressionDomain, llm: LLMClient) {
+function createGenerator(domain: RegressionDomain, llm: LLMClient) {
   switch (domain) {
     case 'p5':
       return new P5GeneratorLLM(llm);
@@ -171,7 +171,7 @@ export async function runGenerationRegression(request: RegressionRequest): Promi
     maxTokens: 4000,
   });
 
-  const generator = await createGenerator(domain, llm);
+  const generator = createGenerator(domain, llm);
   const started = Date.now();
   const rawArtifact = await generateDomainArtifact(domain, generator, prompt);
   const durationMs = Date.now() - started;

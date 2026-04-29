@@ -30,7 +30,7 @@ export class EnvironmentValidator {
   async validate(): Promise<DiagnosticReport> {
     const checks: DiagnosticCheck[] = [];
 
-    checks.push(await this.checkNodeVersion());
+    checks.push(this.checkNodeVersion());
     checks.push(await this.checkGoToolchain());
     checks.push(await this.checkConfigFile());
     checks.push(this.checkProviderConfig());
@@ -44,7 +44,7 @@ export class EnvironmentValidator {
     };
   }
 
-  private async checkNodeVersion(): Promise<DiagnosticCheck> {
+  private checkNodeVersion(): DiagnosticCheck {
     const version = process.version;
     const major = parseInt(version.slice(1).split('.')[0], 10);
 

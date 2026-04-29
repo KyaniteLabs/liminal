@@ -191,6 +191,85 @@ describe('PromptHistory', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // Validation branches (isValidHistoryData edge cases)
+  // ---------------------------------------------------------------------------
+  describe('data validation', () => {
+    it('rejects data where recent entry has non-string prompt', async () => {
+      await fs.writeFile(HISTORY_FILE, JSON.stringify({
+        recent: [{ prompt: 123, timestamp: Date.now() }],
+        favorites: [],
+      }));
+
+      const recent = await history.getRecent();
+      expect(recent).toEqual([]); // Falls back to defaults
+    });
+
+    it('rejects data where recent entry has non-number timestamp', async () => {
+      await fs.writeFile(HISTORY_FILE, JSON.stringify({
+        recent: [{ prompt: 'test', timestamp: 'not-a-number' }],
+        favorites: [],
+      }));
+
+      const recent = await history.getRecent();
+      expect(recent).toEqual([]);
+    });
+
+    it('rejects data where recent entry is null', async () => {
+      await fs.writeFile(HISTORY_FILE, JSON.stringify({
+        recent: [null],
+        favorites: [],
+      }));
+
+      const recent = await history.getRecent();
+      expect(recent).toEqual([]);
+    });
+
+    it('rejects data where recent is not an array', async () => {
+      await fs.writeFile(HISTORY_FILE, JSON.stringify({
+        recent: 'not-array',
+        favorites: [],
+      }));
+
+      const recent = await history.getRecent();
+      expect(recent).toEqual([]);
+    });
+
+    it('rejects data where favorites has non-string entries', async () => {
+      await fs.writeFile(HISTORY_FILE, JSON.stringify({
+        recent: [],
+        favorites: [42],
+      }));
+
+      const recent = await history.getRecent();
+      expect(recent).toEqual([]);
+    });
+
+    it('rejects data where favorites is not an array', async () => {
+      await fs.writeFile(HISTORY_FILE, JSON.stringify({
+        recent: [],
+        favorites: 'not-array',
+      }));
+
+      const recent = await history.getRecent();
+      expect(recent).toEqual([]);
+    });
+
+    it('rejects null top-level data', async () => {
+      await fs.writeFile(HISTORY_FILE, 'null');
+
+      const recent = await history.getRecent();
+      expect(recent).toEqual([]);
+    });
+
+    it('rejects non-object top-level data', async () => {
+      await fs.writeFile(HISTORY_FILE, '"a string"');
+
+      const recent = await history.getRecent();
+      expect(recent).toEqual([]);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Integration: add + favorites coexist
   // ---------------------------------------------------------------------------
   describe('recent and favorites coexist', () => {

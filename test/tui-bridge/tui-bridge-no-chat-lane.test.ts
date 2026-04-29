@@ -358,6 +358,71 @@ describe('Bubble Tea operator routing', () => {
     });
   });
 
+  it('threads Studio creative preference answers into draft generation prompts without UI coupling language', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'p5 sketch of a quiet moon garden with drifting flowers',
+        clientIntent: 'creative',
+        executionMode: 'draft',
+        creativePreferences: {
+          color: 'muted cool colors with gentle low contrast',
+          motion: 'slow breathing motion',
+        },
+      },
+      fakeLlm() as never,
+    );
+
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'generation.complete'));
+
+    const prompt = String(draftGenerate.mock.calls[0]?.[0] ?? '');
+    expect(prompt).toContain('Creative preferences');
+    expect(prompt).toContain('Favor muted saturation.');
+    expect(prompt).toContain('Use gentle low contrast as a creative preference.');
+    expect(prompt).toContain('Favor a cool color temperature.');
+    expect(prompt).toContain('Prefer slow motion pacing.');
+    expect(prompt).not.toMatch(/\b(guardrail|proof|harness)\b/i);
+  });
+
+  it('threads guidance answer aliases into prove generation prompts', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'make a p5 animation of icebergs dancing in the sky with aurora colors, slow drifting motion, and a dark ocean horizon',
+        clientIntent: 'creative',
+        executionMode: 'prove',
+        maxIterations: 1,
+        candidateCount: 1,
+        timeoutMinutes: 1,
+        guidanceAnswers: {
+          saturation: 'vivid',
+          contrast: 'high contrast',
+          motion: 'slow drifting motion',
+        },
+      },
+      fakeLlm() as never,
+    );
+
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'generation.complete'));
+
+    const prompt = String(ralphRun.mock.calls[0]?.[0] ?? '');
+    expect(prompt).toContain('Creative preferences');
+    expect(prompt).toContain('Favor vivid saturation.');
+    expect(prompt).toContain('Use high contrast as a creative preference.');
+    expect(prompt).toContain('Prefer slow motion pacing.');
+    expect(prompt).not.toMatch(/\b(guardrail|proof|harness)\b/i);
+  }, 15000);
+
   it('cancels an in-flight draft run before it can complete', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession();

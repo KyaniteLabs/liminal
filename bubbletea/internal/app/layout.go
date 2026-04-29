@@ -474,6 +474,7 @@ func (m Model) renderHelpDrawer(width int) string {
 		helpRow("/report", "generate session report"),
 		helpRow("/autonomy", "set autonomy level"),
 		helpRow("/cortex", "cortex dashboard"),
+		helpRow("/stop", "stop active generation"),
 		helpRow("?", "toggle this help"),
 	}
 	return ui.HelpCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))

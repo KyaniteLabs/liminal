@@ -155,6 +155,39 @@ func TestCancelReturnsNilWhenDisconnected(t *testing.T) {
 	}
 }
 
+func TestStopCommandCancelsActiveRun(t *testing.T) {
+	cancelRunCalled := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/tui/session/s1/cancel" && r.Method == http.MethodPost {
+			cancelRunCalled = true
+			fmt.Fprint(w, `{"ok":true}`)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
+
+	m := NewModel(server.URL)
+	m.Connected = true
+	m.SessionID = "s1"
+	m.Ready = true
+	m.Width = 120
+	m.Height = 32
+	m.TextInput.SetValue("/stop")
+
+	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if cmd == nil {
+		t.Fatal("expected cancel command for /stop")
+	}
+	msg := cmd()
+	if _, ok := msg.(runCancelledMsg); !ok {
+		t.Fatalf("expected runCancelledMsg, got %T", msg)
+	}
+	if !cancelRunCalled {
+		t.Fatal("expected active run cancel endpoint to be called")
+	}
+}
+
 func TestViewShowsReviewCardHintsInActionMode(t *testing.T) {
 	m := NewModel("http://localhost:0")
 	m.Connected = true

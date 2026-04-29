@@ -363,9 +363,12 @@ export function collectRepositoryOpportunityEvidence(repoRoot = process.cwd()): 
   const packageJson = readJson(path.join(repoRoot, 'package.json')) as { scripts?: Record<string, string> } | null;
   const scripts = packageJson?.scripts ?? {};
   const readme = readText(path.join(repoRoot, 'README.md'));
-  const duplicatedLaunchPaths = scripts.tui && scripts['gui:all'] && !scripts.studio
-    ? ['package.json has tui and gui:all scripts but no canonical studio script']
-    : [];
+  const duplicatedLaunchPaths = [
+    scripts['gui:all'] ? 'package.json still exposes deprecated gui:all instead of canonical gui' : '',
+    scripts['tui:bubbletea'] ? 'package.json still exposes deprecated tui:bubbletea alias instead of canonical tui' : '',
+    scripts.tui?.includes('HarnessTUI') ? 'package.json tui still launches legacy Ink instead of Bubble Tea' : '',
+    scripts.studio && scripts.studio !== 'npm run gui' ? 'package.json studio is not an alias of canonical gui' : '',
+  ].filter(Boolean);
   const docsDrift = /closed-loop self-improvement|continuously improves the system/i.test(readme)
     ? ['README markets closed-loop self-improvement; verify current-head proof before launch claims']
     : [];

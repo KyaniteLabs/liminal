@@ -1,6 +1,7 @@
 /**
- * Start GUI backend (and optionally serve Vite dev or static build).
- * Usage: node gui/start.js
+ * Start Studio backend only.
+ * Canonical full Studio command: pnpm gui
+ * Backend-only usage: node gui/start.js
  * Env: PORT=5174 (default), LIMINAL_CONFIG_PATH optional.
  */
 import path from 'path';
@@ -29,7 +30,8 @@ const server = app.listen(PORT, () => {
   console.log(`  POST /api/live-music/visuals`);
   console.log(`  GET  /preview?version=N`);
   console.log(`  GET  /api/health`);
-  console.log(`\nThen run the frontend: npm run gui:dev (or use npm run gui:all to run both)`);
+  console.log(`\nFull Studio: pnpm gui`);
+  console.log(`Backend-only mode is active; run the frontend separately with: cd gui && npm run dev`);
 });
 
 // Keep server ref so process stays alive when backgrounded

@@ -292,6 +292,15 @@ describe('Security regression — Wave 3 preview isolation', () => {
     expect(html).toContain('catch(e)');
   });
 
+  it('missing preview response is explicit instead of rendering a fake fallback sketch', async () => {
+    const res = await realFetch(`http://127.0.0.1:${port}/preview?version=123456`);
+    const html = await res.text();
+
+    expect(res.status).toBe(404);
+    expect(html).toContain('Preview expired or missing');
+    expect(html).not.toContain('function setup(){ createCanvas(400,400); }');
+  });
+
   it('preview response includes CSP header', async () => {
     const res = await realFetch(`http://127.0.0.1:${port}/preview?version=1`);
     const csp = res.headers.get('Content-Security-Policy') || '';
@@ -402,6 +411,10 @@ describe('Security regression — Wave 5 security headers', () => {
     const info = await startServer(app);
     server = info.server;
     port = info.port;
+    await jsonFetch(`http://127.0.0.1:${port}/api/preview/run`, {
+      method: 'POST',
+      body: JSON.stringify({ code: 'function setup() {}', version: 1 }),
+    });
   }, 60000);
 
   afterAll(async () => {
@@ -474,6 +487,10 @@ describe('Security regression — Wave 7 red team remediation', () => {
     const info = await startServer(app);
     server = info.server;
     port = info.port;
+    await jsonFetch(`http://127.0.0.1:${port}/api/preview/run`, {
+      method: 'POST',
+      body: JSON.stringify({ code: 'function setup() {}', version: 1 }),
+    });
   }, 60000);
 
   afterAll(async () => {

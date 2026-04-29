@@ -149,7 +149,9 @@ export class TuiBridgeServer {
   }
 
   get address(): string {
-    return `http://${this.host}:${this.port}`;
+    const actual = this.server.address();
+    const port = actual && typeof actual === 'object' ? actual.port : this.port;
+    return `http://${this.host}:${port}`;
   }
 
   private async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -239,6 +241,15 @@ export class TuiBridgeServer {
         const sessionId = cancelMatch[1];
         const actionId = cancelMatch[2];
         this.bridge.cancelAction(sessionId, actionId);
+        this.json(res, 200, { ok: true });
+        return;
+      }
+
+      // POST /api/tui/session/:id/cancel
+      const runCancelMatch = path.match(/^\/api\/tui\/session\/([^/]+)\/cancel$/);
+      if (req.method === 'POST' && runCancelMatch) {
+        const sessionId = runCancelMatch[1];
+        this.bridge.cancelRun(sessionId);
         this.json(res, 200, { ok: true });
         return;
       }

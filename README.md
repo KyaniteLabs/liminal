@@ -34,10 +34,12 @@ liminal --prompt "Create a calming blue particle system"
 liminal chat
 
 # Studio — GUI workbench with live preview
-liminal studio
+pnpm gui
+# or: liminal studio
 
 # Bubble Tea operator cockpit (requires Go >= 1.21)
-liminal bubbletea
+pnpm tui
+# or: liminal tui
 
 # Read-only self-healing opportunity scan
 liminal improve scan
@@ -62,7 +64,7 @@ export GLM_API_KEY=your-key
 liminal "a luminous blue-green particle garden"
 
 # 4. Launch Studio for live preview, phases, artifacts, and learning receipts
-liminal studio
+pnpm gui
 
 # 5. Refresh the live provider receipt used by the market gate
 pnpm run proof:live-provider-smoke -- --provider=glm --timeout-ms=120000
@@ -132,9 +134,9 @@ liminal -p "idea" --use-swarm --swarm-mode hybrid  # Swarm generation
 liminal -p "ambient glitch set" --mode live-music  # Music mode
 
 # Interactive
-liminal studio                                      # GUI workbench
+pnpm gui                                            # GUI workbench
 liminal chat                                        # Conversational creative session
-liminal bubbletea                                   # Bubble Tea operator cockpit
+pnpm tui                                            # Bubble Tea operator cockpit
 liminal improve scan                                # Read-only repair/hardening/optimization proposals
 liminal improve run <proposal-id>                   # Run one proposal from an isolated worktree
 

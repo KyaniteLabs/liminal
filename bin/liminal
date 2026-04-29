@@ -149,7 +149,7 @@ function printHelp() {
   console.log('COMMANDS:');
   console.log('  <prompt>                    Natural-language creative request (no magic verb required)');
   console.log('  generate, gen, g <prompt>   Create art/code from prompt');
-  console.log('  tui                         Launch natural language TUI (Meta-Harness)');
+  console.log('  tui                         Launch Bubble Tea operator cockpit');
   console.log('  bridge [port]               Start TUI bridge server (default: 3000)');
   console.log('  studio                     Launch GUI workbench (backend + browser app)');
   console.log('  bubbletea [port]            Launch Bubble Tea operator cockpit with bridge');
@@ -1132,12 +1132,18 @@ else if (cmd === 'consolidate' || flags.consolidate) {
   console.log('✅ Consolidation complete');
   console.log('');
   process.exit(0);
-} else if (cmd === 'tui') {  // Launch the Natural Language TUI (Meta-Harness + NaturalInterface)
-  import('../dist/tui/HarnessTUI.js').then(async ({ startHarnessTUI }) => {
-    await startHarnessTUI();
-  }).catch(err => {
+} else if (cmd === 'tui') {
+  const { spawn } = await import('child_process');
+  const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  console.log('Launching Bubble Tea operator cockpit...');
+  const tui = spawn(npmCmd, ['run', 'tui'], {
+    cwd: repoRoot,
+    stdio: 'inherit',
+    env: process.env,
+  });
+  tui.on('exit', (code) => process.exit(code ?? 0));
+  tui.on('error', (err) => {
     console.error('TUI error:', err.message);
-    console.error('Make sure to run `npm run build` first.');
     process.exit(1);
   });
 }
@@ -1189,7 +1195,7 @@ else if (cmd === 'studio') {
   console.log('  Surface: GUI workbench with live preview and Improve lane');
   console.log('');
 
-  const studio = spawn(npmCmd, ['run', 'gui:all'], {
+  const studio = spawn(npmCmd, ['run', 'gui'], {
     cwd: repoRoot,
     env: {
       ...process.env,

@@ -32,6 +32,8 @@ type inputErrorMsg struct {
 
 type actionConfirmedMsg struct{}
 
+type runCancelledMsg struct{}
+
 type actionErrorMsg struct {
 	err error
 }
@@ -194,6 +196,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case actionConfirmedMsg:
 		return m, nil
 
+	case runCancelledMsg:
+		m.addActivity("Generation stopped by operator")
+		m.refreshViewports()
+		return m, nil
+
 	case actionErrorMsg:
 		m.updateChatViewport("Action error: " + msg.err.Error())
 		return m, nil
@@ -277,6 +284,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if !m.Connected {
 					m.updateChatViewport("Not connected to bridge.")
 					return m, nil
+				}
+
+				if strings.TrimSpace(input) == "/stop" {
+					cmd := m.CancelActiveRun()
+					m.refreshViewports()
+					return m, cmd
 				}
 
 				mode, intent := parseInputIntent(input)

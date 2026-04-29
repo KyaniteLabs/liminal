@@ -44,8 +44,11 @@ export function WorkbenchShell({
   leftSlot,
   children,
 }: WorkbenchShellProps) {
+  const runStatusText = runDisabled ? `${runLabel} in progress` : `${runLabel} ready`;
+
   return (
     <div className="liminal-workbench">
+      <a className="liminal-skip-link" href="#main-content">Skip to main content</a>
       <header className="liminal-commandbar">
         <div className="liminal-brand">
           <span className="liminal-brand__mark">L</span>
@@ -65,9 +68,10 @@ export function WorkbenchShell({
         </label>
         <div className="liminal-command-actions">
           {audioSlot}
-          <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled}>
+          <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled} aria-busy={runDisabled}>
             {runLabel}
           </button>
+          <p className="sr-only" aria-live="polite">{runStatusText}</p>
         </div>
       </header>
 
@@ -78,6 +82,7 @@ export function WorkbenchShell({
               <button
                 type="button"
                 className={mode.id === activeMode ? 'liminal-rail-button liminal-rail-button--active' : 'liminal-rail-button'}
+                aria-current={mode.id === activeMode ? 'page' : undefined}
                 onClick={() => onModeChange(mode)}
               >
                 {mode.label}
@@ -89,6 +94,7 @@ export function WorkbenchShell({
                       key={tab}
                       type="button"
                       className={tab === activeTab ? 'liminal-subnav-button liminal-subnav-button--active' : 'liminal-subnav-button'}
+                      aria-current={tab === activeTab ? 'page' : undefined}
                       onClick={() => onTabChange(tab)}
                     >
                       {formatLegacyTab(tab)}
@@ -102,9 +108,9 @@ export function WorkbenchShell({
         <div className="liminal-left-rail__content">{leftSlot}</div>
       </aside>
 
-      <section className="liminal-stage" aria-label="Live stage">
+      <main id="main-content" className="liminal-stage" aria-label="Live stage">
         {stageSlot}
-      </section>
+      </main>
 
       <aside className="liminal-inspector">
         <div className="liminal-inspector__header">
@@ -119,9 +125,9 @@ export function WorkbenchShell({
       </section>
 
       {children ? (
-        <main id="main-content" className="liminal-legacy-panel">
+        <section className="liminal-legacy-panel" aria-label="Supplemental panel">
           {children}
-        </main>
+        </section>
       ) : null}
     </div>
   );

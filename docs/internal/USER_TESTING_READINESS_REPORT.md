@@ -20,7 +20,7 @@
 | Linting | ✅ PASS | 0 errors, 1 warning (non-blocking) |
 | CLI Entrypoint | ✅ PASS | All commands parse correctly |
 | GUI Backend | ✅ PASS | Express server, health endpoint, all routes present |
-| TUI | ✅ PASS | Ink-based terminal UI, natural language interface |
+| TUI | ✅ PASS | Bubble Tea operator cockpit through shared bridge |
 | Config System | ✅ PASS | Defaults to LM Studio at localhost:1234 |
 | Env Requirements | ⚠️ ACTION NEEDED | LLM backend must be running before use |
 
@@ -88,7 +88,7 @@ Minor: an async method that doesn't actually await anything. No user-visible imp
 |---------|-------------|
 | `liminal --prompt "..."` | Generate p5.js art |
 | `liminal generate/gen/g` | Same as --prompt |
-| `liminal tui` | Launch Ink terminal UI (natural language) |
+| `liminal tui` | Launch Bubble Tea operator cockpit |
 | `liminal serve [port]` | Start preview server (default: 3456) |
 | `liminal list` | Show saved sketches |
 | `liminal chat` | Conversational creative coding mode |
@@ -123,15 +123,15 @@ Routes available:
 - `POST /api/live-music/music` / `/visuals` — Live music endpoints
 - `GET  /preview?version=N` — Sketch preview
 
-**Frontend:** React/Vite app in `gui/src/`. Run with `pnpm gui:dev` (Vite dev server) or `pnpm gui:all` (backend + frontend together).
+**Frontend:** React/Vite app in `gui/src/`. Run with `pnpm gui` (backend + frontend together). Use `pnpm gui:dev` only when the backend is already running separately.
 
-GUI frontend **not pre-built** — user must run `pnpm gui:dev` or `pnpm gui:all`. No static build in repo.
+GUI frontend is launched by `pnpm gui`; static builds are produced with `pnpm --filter liminal-studio-gui build`.
 
 ---
 
 ## 5. TUI Readiness
 
-`liminal tui` launches an Ink-based terminal UI with a natural language interface:
+`liminal tui` launches the Bubble Tea operator cockpit through the shared bridge:
 
 - **Agent mode** — triggered by action phrases ("Fix the validation")
 - **Command mode** — triggered by questions ("What's the status?")
@@ -220,7 +220,7 @@ Before starting a manual testing session:
 - [ ] `pnpm install` completed (or `npm install`)
 - [ ] LLM backend running (LM Studio, Ollama, or cloud API key set)
 - [ ] Run `liminal --configure` OR set `LIMINAL_LLM_BASE_URL` + `LIMINAL_LLM_MODEL`
-- [ ] For GUI: run `pnpm gui:all` (starts backend + Vite frontend)
+- [ ] For GUI: run `pnpm gui` (starts backend + Vite frontend)
 - [ ] For TUI: run `liminal tui` in terminal
 - [ ] For CLI: run `liminal --help` to verify install
 
@@ -237,4 +237,4 @@ Before starting a manual testing session:
 7. **Compost Mill:** `liminal compost status` → `liminal compost add <sketch.js>` → `liminal compost digest`
 8. **Swarm:** `liminal --prompt "fractal tree" --use-swarm --swarm-mode hybrid`
 9. **Dual model:** `liminal --prompt "aurora borealis" --fast-model qwen3.5:9b --powerful-model qwen3:30b-a3b --routing-mode cascade`
-10. **GUI:** `pnpm gui:all` → open localhost:5173
+10. **GUI:** `pnpm gui` → open localhost:5173

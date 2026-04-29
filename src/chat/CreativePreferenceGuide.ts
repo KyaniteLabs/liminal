@@ -9,12 +9,16 @@ import type { Domain, GenerationContext, Suggestion } from './types.js';
 
 const DOMAIN_TO_VOCABULARY: Record<string, CreativeVocabularyDomain[]> = {
   p5: ['color', 'motion'],
+  glsl: ['color', 'motion'],
+  webgl: ['color', 'motion'],
   shader: ['color', 'motion'],
   three: ['color', 'motion'],
   hydra: ['color', 'motion'],
+  tone: ['music'],
   music: ['music'],
   strudel: ['music'],
   revideo: ['motion', 'cinematic', 'creative-writing'],
+  hyperframes: ['motion', 'cinematic', 'creative-writing'],
 };
 
 export interface CreativePreferencePromptInput {

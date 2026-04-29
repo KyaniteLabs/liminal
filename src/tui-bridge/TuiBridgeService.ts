@@ -35,6 +35,8 @@ import { AutonomousGardener, type GardenerCycleResult } from '../autonomy/Autono
 import { LiminalFS } from '../fs/LiminalFS.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
+import { createCreativePreferenceSuggestion } from '../chat/CreativePreferenceGuide.js';
+import type { Domain as ChatDomain } from '../chat/types.js';
 import { buildCreativeDomainPlan, previewDomainForCode } from './CreativeDomainRouting.js';
 import { summarizeReasoningTrace } from './TraceSummarizer.js';
 import { normalizeOptions } from '../core/LoopConfig.js';
@@ -1608,6 +1610,7 @@ export class TuiBridgeService {
       }
 
       const domainPlan = buildCreativeDomainPlan(userText);
+      this.emitCreativePreferenceGuidance(sessionId, userText, domainPlan[0]);
       this.emit(sessionId, {
         type: 'generation.route.selected',
         sessionId,
@@ -1977,6 +1980,7 @@ export class TuiBridgeService {
       }
 
       const domainPlan = buildCreativeDomainPlan(userText);
+      this.emitCreativePreferenceGuidance(sessionId, userText, domainPlan[0]);
       this.emit(sessionId, {
         type: 'generation.route.selected',
         sessionId,
@@ -2534,6 +2538,50 @@ export class TuiBridgeService {
   private extractUserPrompt(userText: string): string {
     const match = userText.match(/(?:^|\n)User prompt:\s*([\s\S]+)$/i);
     return (match?.[1] ?? userText).trim();
+  }
+
+  private emitCreativePreferenceGuidance(sessionId: string, userText: string, domain: Domain | string): boolean {
+    const prompt = this.extractUserPrompt(userText);
+    const suggestion = createCreativePreferenceSuggestion({
+      prompt,
+      domain: this.toChatDomain(domain),
+      techniques: [],
+      constraints: [],
+      references: [],
+      iteration: 0,
+      currentScore: 0,
+    });
+    if (!suggestion) return false;
+
+    const questions = suggestion.description
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.startsWith('- '))
+      .map(line => line.slice(2).trim())
+      .filter(Boolean);
+
+    this.emit(sessionId, {
+      type: 'guidance.suggestion',
+      sessionId,
+      category: 'creative-preferences',
+      title: suggestion.title,
+      description: suggestion.description,
+      priority: suggestion.priority,
+      optional: true,
+      questions,
+    });
+    return true;
+  }
+
+  private toChatDomain(domain: Domain | string): ChatDomain {
+    const value = String(domain);
+    if (value === Domain.GLSL || value === Domain.WEBGL) return 'shader';
+    if (value === Domain.TONE) return 'music';
+    if (value === Domain.REVIEWD || value === Domain.HYPERFRAMES) return 'revideo';
+    if (['p5', 'shader', 'three', 'music', 'hydra', 'strudel', 'revideo'].includes(value)) {
+      return value as ChatDomain;
+    }
+    return 'p5';
   }
 
   private promptForCreativeDomain(userText: string, domain: Domain, fallback: boolean, intentBrief?: CreativeIntentBrief): string {

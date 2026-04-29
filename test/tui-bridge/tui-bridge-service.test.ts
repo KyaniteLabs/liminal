@@ -29,6 +29,34 @@ describe('TuiBridgeService', () => {
   it('still routes explicit creative prompts to generation', () => {
     expect(isGenerationRequest('create a p5 shader sketch')).toBe(true);
   });
+
+  it('publishes optional creative preference guidance as an artist-facing bridge event', () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    const emitted = (service as any).emitCreativePreferenceGuidance(
+      session.sessionId,
+      'create a slow blue p5 nebula with soft motion',
+      'p5',
+    );
+
+    const guidance = service.getEvents(session.sessionId)
+      .find((event): event is any => event.type === 'guidance.suggestion');
+    const serialized = JSON.stringify(guidance);
+
+    expect(emitted).toBe(true);
+    expect(guidance).toMatchObject({
+      type: 'guidance.suggestion',
+      category: 'creative-preferences',
+      title: 'Optional creative preferences',
+      priority: 'low',
+      optional: true,
+    });
+    expect(guidance.description).toContain('color/motion');
+    expect(guidance.questions.length).toBeGreaterThan(0);
+    expect(serialized).not.toMatch(/\b(guardrail|proof|harness)\b/i);
+  });
+
   it('creates a session with default chat mode', () => {
     const service = new TuiBridgeService();
     const status = service.createSession();

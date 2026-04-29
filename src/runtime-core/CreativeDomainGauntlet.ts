@@ -37,6 +37,7 @@ export const CREATIVE_DOMAIN_GAUNTLET_DOMAINS: readonly CreativeDomainGauntletDo
   { id: 'strudel', label: 'Strudel', prompt: 'create a Strudel live coding rhythm', implementationFiles: ['src/generators/strudel/StrudelGenerator.ts'], verification: 'StrudelGenerator|StrudelValidator' },
   { id: 'tone', label: 'Tone.js', prompt: 'create a Tone.js synth sequence', implementationFiles: ['src/generators/tone/ToneGenerator.ts'], verification: 'ToneGenerator|ToneValidator' },
   { id: 'revideo', label: 'Revideo', prompt: 'create a Revideo timeline composition', implementationFiles: ['src/generators/revideo/RevideoGenerator.ts'], verification: 'RevideoGenerator|RevideoValidator' },
+  { id: 'hyperframes', label: 'HyperFrames', prompt: 'create a HyperFrames GSAP asset composition', implementationFiles: ['src/generators/hyperframes/HyperFramesGenerator.ts'], verification: 'HyperFramesGenerator|HyperFramesValidator' },
   { id: 'ascii', label: 'ASCII', prompt: 'create ASCII art', implementationFiles: ['src/generators/ascii/ASCIIArtGenerator.ts'], verification: 'ASCIIArtGenerator|ascii' },
   { id: 'kinetic', label: 'Kinetic', prompt: 'create kinetic typography', implementationFiles: ['src/generators/kinetic/KineticGenerator.ts'], verification: 'KineticGenerator|kinetic' },
   { id: 'textgen', label: 'TextGen', prompt: 'create concrete poetry word art', implementationFiles: ['src/generators/textgen/TextGenerativeGenerator.ts'], verification: 'TextGenerativeGenerator|textgen' },

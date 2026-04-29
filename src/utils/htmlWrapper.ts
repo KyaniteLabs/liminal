@@ -10,6 +10,7 @@
  * - hydra: Hydra video synthesizer patterns (GenericWrapper)
  * - tone: Tone.js audio (GenericWrapper)
  * - revideo: Revideo video compositions (GenericWrapper)
+ * - hyperframes: HTML + GSAP asset compositions (GenericWrapper)
  * - svg: Raw SVG documents displayed inline
  * - html: Complete HTML pages (pass-through)
  * - ascii: ASCII art display (GenericWrapper)
@@ -122,6 +123,7 @@ export class HTMLWrapper {
       // Already wrapped - try to detect from content
       if (code.includes('@strudel/repl') || code.includes('strudel')) return 'strudel';
       if (code.includes('hydra-synth') || code.includes('new Hydra(')) return 'hydra';
+      if (/data-composition-id/i.test(code) && (/gsap\.(?:timeline|from|to)\s*\(/.test(code) || /window\.__timelines/.test(code))) return 'hyperframes';
       if (code.includes('tone@') || /\bTone\./.test(code) || /from\s+['"]tone['"]/.test(code)) return 'tone';
       if (code.includes('import * as THREE') || 
           code.includes('from "three"') || 
@@ -143,6 +145,10 @@ export class HTMLWrapper {
     if (genericDomain) return genericDomain;
 
     if (/^<svg\b/i.test(code.trim())) return 'svg';
+
+    if (/data-composition-id/i.test(code) && (/gsap\.(?:timeline|from|to)\s*\(/.test(code) || /window\.__timelines/.test(code))) {
+      return 'hyperframes';
+    }
 
     // Use specific wrappers for P5 and Three
     if (ThreeWrapper.detect(code)) return 'three';
@@ -185,10 +191,11 @@ export class HTMLWrapper {
     // Detect domain if not specified
     const detectedDomain = domain || this.detectDomain(code);
 
-    // Don't double-wrap general HTML, but enhance already-wrapped Tone pages so
-    // raw model-emitted button-only audio pages still get the Studio preview shell.
+    // Don't double-wrap general HTML, but enhance already-wrapped Tone and
+    // HyperFrames pages so model-emitted HTML still gets Studio's preview shell.
     if (this.isAlreadyWrapped(code)) {
       if (detectedDomain === 'tone') return GenericWrapper.wrap(code, { domain: 'tone' });
+      if (detectedDomain === 'hyperframes') return GenericWrapper.wrap(code, { domain: 'hyperframes', title });
       return this.stripInvalidMetaHeaders(code);
     }
 
@@ -212,6 +219,9 @@ export class HTMLWrapper {
         break;
       case 'revideo':
         wrapped = GenericWrapper.wrap(code, { domain: 'revideo', showPreview });
+        break;
+      case 'hyperframes':
+        wrapped = GenericWrapper.wrap(code, { domain: 'hyperframes', title });
         break;
       case 'ascii':
         wrapped = GenericWrapper.wrap(code, { domain: 'ascii', asciiWidth });
@@ -273,7 +283,7 @@ export class HTMLWrapper {
    * Get all supported domains
    */
   static getSupportedDomains(): Domain[] {
-    return ['p5', 'shader', 'three', 'strudel', 'hydra', 'tone', 'revideo', 'svg', 'html', 'ascii'];
+    return ['p5', 'shader', 'three', 'strudel', 'hydra', 'tone', 'revideo', 'hyperframes', 'svg', 'html', 'ascii'];
   }
 
   /**

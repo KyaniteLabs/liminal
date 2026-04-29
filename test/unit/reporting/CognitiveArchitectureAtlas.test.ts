@@ -5,7 +5,7 @@ describe('CognitiveArchitectureAtlas', () => {
   it('keeps the full creative body in scope instead of shrinking to a proof wedge', () => {
     const atlas = new CognitiveArchitectureAtlas().build();
     const domains = atlas.domains.map(domain => domain.id);
-    expect(domains).toEqual(['svg', 'p5', 'glsl', 'hydra', 'three', 'tone', 'strudel', 'revideo', 'html', 'ascii', 'kinetic', 'textgen']);
+    expect(domains).toEqual(['svg', 'p5', 'glsl', 'hydra', 'three', 'tone', 'strudel', 'revideo', 'hyperframes', 'ascii', 'kinetic', 'textgen']);
   });
 
   it('names the cognitive organs that make Liminal a learning-inspired organism', () => {
@@ -24,5 +24,6 @@ describe('CognitiveArchitectureAtlas', () => {
     expect(output).toContain('Tone.js');
     expect(output).toContain('Strudel');
     expect(output).toContain('Revideo');
+    expect(output).toContain('HyperFrames');
   });
 });

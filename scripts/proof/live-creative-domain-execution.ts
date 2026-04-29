@@ -18,13 +18,13 @@ import { RevideoGenerator } from '../../src/generators/revideo/RevideoGenerator.
 import { ShaderGenerator } from '../../src/generators/glsl/ShaderGenerator.js';
 import { ThreeGenerator } from '../../src/generators/three/ThreeGenerator.js';
 import { HydraGenerator } from '../../src/generators/hydra/HydraGenerator.js';
-import { HTMLWebGenerator } from '../../src/generators/html/HTMLWebGenerator.js';
+import { HyperFramesGenerator } from '../../src/generators/hyperframes/HyperFramesGenerator.js';
 import { ASCIIArtGenerator } from '../../src/generators/ascii/ASCIIArtGenerator.js';
 import { TextGenerativeGenerator } from '../../src/generators/textgen/TextGenerativeGenerator.js';
 import { KineticGenerator } from '../../src/generators/kinetic/KineticGenerator.js';
 
 const DEFAULT_DOMAINS = ['p5', 'svg', 'strudel', 'tone', 'revideo'] as const;
-type Domain = typeof DEFAULT_DOMAINS[number] | 'glsl' | 'three' | 'hydra' | 'html' | 'ascii' | 'kinetic' | 'textgen';
+type Domain = typeof DEFAULT_DOMAINS[number] | 'glsl' | 'three' | 'hydra' | 'hyperframes' | 'ascii' | 'kinetic' | 'textgen';
 
 type GeneratorLike = { generate(prompt: string, options?: { signal?: AbortSignal; maxTokens?: number }): Promise<string> | string };
 
@@ -37,14 +37,14 @@ const PROMPTS: Record<Domain, string> = {
   glsl: 'create a GLSL fragment shader with animated plasma colors',
   three: 'create a Three.js scene with a rotating cube and visible lighting',
   hydra: 'create a Hydra video synth patch with oscillator and kaleidoscope modulation',
-  html: 'create an HTML landing page hero for Liminal with one call to action',
+  hyperframes: 'create a HyperFrames promo composition with GSAP timeline, staged image-like clips, title card, data-composition-id, clip timing attributes, and window.__timelines registration',
   ascii: 'create ASCII art of a moonlit mountain landscape',
   kinetic: 'create kinetic typography with animated words orbiting a luminous threshold',
   textgen: 'create concrete poetry word art about a machine dreaming in loops',
 };
 
 const EXTENSIONS: Record<Domain, string> = {
-  p5: 'js', svg: 'svg', strudel: 'js', tone: 'html', revideo: 'tsx', glsl: 'frag', three: 'js', hydra: 'js', html: 'html', ascii: 'txt', kinetic: 'html', textgen: 'txt',
+  p5: 'js', svg: 'svg', strudel: 'js', tone: 'html', revideo: 'tsx', glsl: 'frag', three: 'js', hydra: 'js', hyperframes: 'html', ascii: 'txt', kinetic: 'html', textgen: 'txt',
 };
 
 interface DomainResult {
@@ -112,7 +112,7 @@ function createGenerator(domain: Domain, config: { baseUrl?: string; model?: str
     case 'glsl': return new ShaderGenerator(config);
     case 'three': return new ThreeGenerator(config);
     case 'hydra': return new HydraGenerator(config);
-    case 'html': return new HTMLWebGenerator(config);
+    case 'hyperframes': return new HyperFramesGenerator(config);
     case 'ascii': return new ASCIIArtGenerator(config);
     case 'kinetic': return new KineticGenerator(config);
     case 'textgen': return new TextGenerativeGenerator(config);

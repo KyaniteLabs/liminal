@@ -21,6 +21,7 @@ describe('runCreativeDomainGauntlet', () => {
       'strudel',
       'tone',
       'revideo',
+      'hyperframes',
       'ascii',
       'kinetic',
       'textgen',

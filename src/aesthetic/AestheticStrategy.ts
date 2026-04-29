@@ -27,12 +27,9 @@ export class AestheticStrategy implements ScoringStrategy {
   score(input: ScoringInput): ScoringResult {
     void this.wireLLM();
     // Thread LIR context through if available on the input
-    const report = this.critic.critique(
-      input.output,
-      input.criticConfig,
-      input.lirContext,
-      input.domain,
-    );
+    const report = input.domain
+      ? this.critic.critique(input.output, input.criticConfig, input.lirContext, input.domain)
+      : this.critic.critique(input.output, input.criticConfig, input.lirContext);
 
     return {
       score: report.score,

@@ -53,7 +53,13 @@ function inferStageDomain(code: string): 'p5' | 'three' | 'html' {
 }
 
 function needsThreeCanvasBinding(code: string): boolean {
-  return /\bcanvas\b/.test(code) && !/\b(?:const|let|var)\s+canvas\b/.test(code);
+  const declaresCanvas = [
+    /\b(?:const|let|var)\s+canvas\b/,
+    /\b(?:const|let|var)\s*\{[^}]*\bcanvas\s*(?:[,}=])/s,
+    /\b(?:const|let|var)\s*\{[^}]*:\s*canvas\s*(?:[,}=])/s,
+    /\bimport\s+(?:canvas\b|\{[^}]*\bcanvas\b)/s,
+  ].some((pattern) => pattern.test(code));
+  return /\bcanvas\b/.test(code) && !declaresCanvas;
 }
 
 export function buildSyncPreviewHtml(code: string): string {

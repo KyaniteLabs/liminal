@@ -37,4 +37,11 @@ describe('syncPreview', () => {
     expect(html).toContain("const canvas = document.getElementById('liminal-three-canvas')");
   });
 
+  it('does not redeclare canvas when a Three.js snippet already destructures one', () => {
+    const html = buildSyncPreviewHtml('const opts = {}; const { canvas } = opts; const renderer = new THREE.WebGLRenderer({ canvas });');
+
+    expect(html).not.toContain('id="liminal-three-canvas"');
+    expect(html).not.toContain("const canvas = document.getElementById('liminal-three-canvas')");
+  });
+
 });

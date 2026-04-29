@@ -36,4 +36,18 @@ describe('gui bridge input forwarding', () => {
       clientIntent: undefined,
     });
   });
+
+  it('treats array bodies as empty input instead of forwarding indexed values', () => {
+    const body = [];
+    body.mode = 'action';
+    body.text = 'array payload';
+    body.creativePreferences = { color: 'red' };
+
+    expect(buildGuiBridgeInput(body)).toEqual({
+      mode: 'chat',
+      text: '',
+      clientIntent: undefined,
+    });
+  });
+
 });

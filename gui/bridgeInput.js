@@ -8,7 +8,7 @@ const OPTIONAL_TUI_INPUT_FIELDS = [
 ];
 
 export function buildGuiBridgeInput(body = {}) {
-  const source = body && typeof body === 'object' ? body : {};
+  const source = body && typeof body === 'object' && !Array.isArray(body) ? body : {};
   const input = {
     mode: source.mode || 'chat',
     text: source.text || '',

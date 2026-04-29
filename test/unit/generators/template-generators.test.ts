@@ -4,6 +4,36 @@ import { StrudelGenerator } from '../../../src/generators/strudel/StrudelGenerat
 import { ASCIIArtGenerator } from '../../../src/generators/ascii/ASCIIArtGenerator.js';
 import { HTMLWebGenerator } from '../../../src/generators/html/HTMLWebGenerator.js';
 import { ToneGenerator } from '../../../src/generators/tone/ToneGenerator.js';
+import { P5GeneratorV2 } from '../../../src/generators/p5/P5GeneratorV2.js';
+
+
+// ===========================================================================
+// P5GeneratorV2
+// ===========================================================================
+
+describe('P5GeneratorV2', () => {
+  describe('validateOutput', () => {
+    it('rejects sketches that shadow p5 callable globals', () => {
+      const gen = new P5GeneratorV2();
+      const result = (gen as any).validateOutput(`
+        function setup() {
+          createCanvas(400, 400);
+        }
+
+        function draw() {
+          const scale = map(mouseX, 0, width, 0.5, 2);
+          push();
+          scale(scale);
+          circle(0, 0, 10);
+          pop();
+        }
+      `);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('shadowing the p5.js function');
+    });
+  });
+});
 
 // ===========================================================================
 // HydraGenerator

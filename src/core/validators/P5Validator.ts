@@ -27,7 +27,7 @@ export class P5Validator {
     'fill', 'floor', 'frameRate', 'image', 'lerp', 'line', 'map', 'max', 'min', 'noFill', 'noise', 'noLoop',
     'createVector',
     'loadPixels', 'noStroke', 'pixelDensity', 'pop', 'pow', 'push', 'random', 'rect', 'red', 'green', 'blue', 'lerpColor',
-    'resizeCanvas', 'rotate', 'round', 'sin', 'sqrt',
+    'resizeCanvas', 'rotate', 'round', 'scale', 'sin', 'sqrt',
     'stroke', 'strokeWeight', 'text', 'textAlign', 'textFont', 'textSize', 'translate', 'triangle', 'updatePixels', 'vertex',
     // p5.sound
     'loadSound', 'createAudio', 'getAudioContext', 'userStartAudio',
@@ -36,6 +36,16 @@ export class P5Validator {
     'Float32Array', 'Float64Array', 'Int32Array', 'Uint8Array', 'Uint32Array', 'ArrayBuffer',
     // Browser globals
     'navigator', 'setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'requestAnimationFrame',
+  ]);
+
+
+  private static readonly P5_CALLABLE_GLOBALS = new Set([
+    'background', 'beginShape', 'bezier', 'bezierVertex', 'blendMode', 'circle', 'color', 'colorMode',
+    'constrain', 'cos', 'createCanvas', 'createGraphics', 'createVector', 'curveVertex', 'dist', 'ellipse',
+    'endShape', 'fill', 'image', 'lerp', 'lerpColor', 'line', 'map', 'max', 'min', 'noise', 'noFill',
+    'noLoop', 'noStroke', 'pixelDensity', 'pop', 'push', 'random', 'rect', 'resizeCanvas', 'rotate',
+    'scale', 'sin', 'stroke', 'strokeWeight', 'text', 'textAlign', 'textFont', 'textSize', 'translate',
+    'triangle', 'vertex',
   ]);
 
   private static readonly traverseAst = (
@@ -158,12 +168,22 @@ export class P5Validator {
     });
     const missing = new Set<string>();
     const assignedGlobals = new Set<string>();
+    const shadowedCalls = new Set<string>();
 
     this.traverseAst(ast, {
       AssignmentExpression(path) {
         const left = path.node.left;
         if (left.type === 'Identifier' && !path.scope.hasBinding(left.name)) {
           assignedGlobals.add(left.name);
+        }
+      },
+      CallExpression(path) {
+        const callee = path.node.callee;
+        if (callee.type !== 'Identifier' || !P5Validator.P5_CALLABLE_GLOBALS.has(callee.name)) return;
+
+        const binding = path.scope.getBinding(callee.name);
+        if (binding) {
+          shadowedCalls.add(callee.name);
         }
       },
       ReferencedIdentifier(path) {
@@ -174,9 +194,14 @@ export class P5Validator {
       },
     });
 
-    return Array.from(missing)
-      .sort()
-      .map((name) => `p5.js code references undeclared identifier: ${name}`);
+    return [
+      ...Array.from(missing)
+        .sort()
+        .map((name) => `p5.js code references undeclared identifier: ${name}`),
+      ...Array.from(shadowedCalls)
+        .sort()
+        .map((name) => `p5.js code declares local ${name} and then calls ${name}(), shadowing the p5.js function`),
+    ];
   }
 
   private static extractInlineScriptBodies(html: string): string[] {

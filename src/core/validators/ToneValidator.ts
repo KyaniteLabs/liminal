@@ -180,8 +180,9 @@ export class ToneValidator {
 
     for (const match of code.matchAll(/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*new\s+Tone\.(Part|Sequence|Loop|Pattern)\b/g)) {
       const name = match[1];
-      const startsInline = new RegExp(`\\b(?:const|let|var)\\s+${name}\\s*=\\s*new\\s+Tone\\.(?:Part|Sequence|Loop|Pattern)[\\s\\S]{0,1000}?\\)\\.start\\s*\\(`).test(code);
-      const startsLater = new RegExp(`\\b${name}\\.start\\s*\\(`).test(code);
+      const escapedName = this.escapeRegExp(name);
+      const startsInline = new RegExp(`\\b(?:const|let|var)\\s+${escapedName}\\s*=\\s*new\\s+Tone\\.(?:Part|Sequence|Loop|Pattern)[\\s\\S]{0,1000}?\\)\\.start\\s*\\(`).test(code);
+      const startsLater = new RegExp(`\\b${escapedName}\\.start\\s*\\(`).test(code);
       if (!startsInline && !startsLater) {
         const kind = match[0].match(/Tone\.(Part|Sequence|Loop|Pattern)/)?.[1] ?? 'event';
         errors.push(`Tone.js: Scheduled Tone.${kind} "${name}" is never started; call ${name}.start(0) before Tone.Transport.start()`);
@@ -189,6 +190,10 @@ export class ToneValidator {
     }
 
     return errors;
+  }
+
+  private static escapeRegExp(value: string): string {
+    return value.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&');
   }
 
   /**

@@ -74,10 +74,11 @@ export class GenericWrapper {
     );
   }
 
-  private static extractToneBpm(code: string): number {
+  private static extractToneBpm(code: string): number | null {
     const bpmMatch = code.match(/\b(?:Tone\.)?Transport\.bpm\.value\s*=\s*([0-9]+(?:\.[0-9]+)?)/);
-    const bpm = bpmMatch ? Number(bpmMatch[1]) : 120;
-    if (!Number.isFinite(bpm) || bpm < 30 || bpm > 300) return 120;
+    if (!bpmMatch) return null;
+    const bpm = Number(bpmMatch[1]);
+    if (!Number.isFinite(bpm) || bpm < 30 || bpm > 300) return null;
     return Math.round(bpm);
   }
 
@@ -764,7 +765,7 @@ ${safeCommentCode}
     if (this.isHTMLDocument(cleanedCode) || this.isHTMLFragment(cleanedCode)) return this.wrapToneHTML(cleanedCode);
 
     const safeCode = cleanedCode.replace(/`/g, '\\`');
-    const bpm = this.extractToneBpm(cleanedCode);
+    const bpm = this.extractToneBpm(cleanedCode) ?? 120;
     
     return `<!DOCTYPE html>
 <html lang="en">
@@ -852,9 +853,18 @@ ${safeCommentCode}
         const statusEl = document.getElementById('status');
         const visualizer = document.getElementById('visualizer');
         const visualizerCtx = visualizer.getContext('2d');
-        const liminalToneBpm = ${bpm};
-        const liminalToneBeatSeconds = 60 / liminalToneBpm;
+        const liminalToneFallbackBpm = ${bpm};
+        let liminalToneBpm = ${bpm};
+        let liminalToneBeatSeconds = 60 / liminalToneBpm;
         let toneArtifactError = null;
+        function syncLiminalToneTempo() {
+            const authoredBpm = Number(window.Tone?.Transport?.bpm?.value);
+            liminalToneBpm = Number.isFinite(authoredBpm) && authoredBpm >= 30 && authoredBpm <= 300
+                ? authoredBpm
+                : liminalToneFallbackBpm;
+            liminalToneBeatSeconds = 60 / liminalToneBpm;
+            document.querySelector('[data-tone-preview-shell]')?.setAttribute('data-tone-bpm', String(Math.round(liminalToneBpm)));
+        }
         function drawToneVisualizer() {
             const w = visualizer.width || 300;
             const h = visualizer.height || 100;
@@ -885,11 +895,13 @@ ${safeCommentCode}
             console.warn('Tone artifact runtime issue:', err);
             statusEl.className = 'ready';
             statusEl.textContent = 'Tone runtime issue: ' + err.message;
+        } finally {
+            syncLiminalToneTempo();
         }
         
         playBtn.addEventListener('click', async () => {
             await Tone.start();
-            if (window.Tone?.Transport?.bpm) Tone.Transport.bpm.value = liminalToneBpm;
+            syncLiminalToneTempo();
             if (window.Tone?.Transport?.start) Tone.Transport.start();
             isPlaying = true;
             statusEl.className = 'playing';
@@ -918,7 +930,7 @@ ${safeCommentCode}
       .map(script => this.escapeScript(script))
       .join('\n\n');
     const escapedSource = this.escapeHTML(code);
-    const bpm = this.extractToneBpm(code);
+    const bpm = this.extractToneBpm(code) ?? 120;
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -980,9 +992,18 @@ ${safeCommentCode}
         const liminalToneStatus = document.getElementById('liminal-tone-status');
         const liminalToneCanvas = document.getElementById('liminal-tone-visualizer');
         const liminalToneCtx = liminalToneCanvas.getContext('2d');
-        const liminalToneBpm = ${bpm};
-        const liminalToneBeatSeconds = 60 / liminalToneBpm;
+        const liminalToneFallbackBpm = ${bpm};
+        let liminalToneBpm = ${bpm};
+        let liminalToneBeatSeconds = 60 / liminalToneBpm;
         let liminalTonePlaying = false;
+        function syncLiminalToneTempo() {
+            const authoredBpm = Number(window.Tone?.Transport?.bpm?.value);
+            liminalToneBpm = Number.isFinite(authoredBpm) && authoredBpm >= 30 && authoredBpm <= 300
+                ? authoredBpm
+                : liminalToneFallbackBpm;
+            liminalToneBeatSeconds = 60 / liminalToneBpm;
+            document.querySelector('[data-tone-preview-shell]')?.setAttribute('data-tone-bpm', String(Math.round(liminalToneBpm)));
+        }
         function drawToneBars() {
             const w = liminalToneCanvas.width;
             const h = liminalToneCanvas.height;
@@ -1010,17 +1031,21 @@ ${safeCommentCode}
         } catch (error) {
             console.warn('Tone artifact script error:', error);
             liminalToneStatus.textContent = 'Tone artifact script error: ' + error.message;
+        } finally {
+            syncLiminalToneTempo();
         }
         document.getElementById('liminal-tone-start').addEventListener('click', async () => {
             try {
                 if (window.Tone?.start) await Tone.start();
-                if (window.Tone?.Transport?.bpm) Tone.Transport.bpm.value = liminalToneBpm;
-                if (window.Tone?.Transport?.start) Tone.Transport.start();
+                syncLiminalToneTempo();
                 liminalTonePlaying = true;
                 liminalToneStatus.textContent = 'Playing — embedded artifact controls are preserved.';
                 const artifactButton = document.querySelector('#tone-artifact-surface button:not([disabled]), #tone-artifact-surface [role="button"]:not([aria-disabled="true"])');
                 if (artifactButton) artifactButton.click();
                 else if (typeof play === 'function') play();
+                syncLiminalToneTempo();
+                setTimeout(syncLiminalToneTempo, 120);
+                if (window.Tone?.Transport?.start && Tone.Transport.state !== 'started') Tone.Transport.start();
             } catch (error) {
                 console.warn('Tone preview start error:', error);
                 liminalToneStatus.textContent = 'Start error: ' + error.message;

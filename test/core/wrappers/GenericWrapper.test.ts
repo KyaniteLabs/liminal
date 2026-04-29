@@ -251,8 +251,18 @@ document.body.innerHTML = ` + '`' + `<button id="startButton">Start Ambient Sequ
 
       expect(result).toContain('data-tone-tempo-sync="true"');
       expect(result).toContain('data-tone-bpm="84"');
-      expect(result).toContain('const liminalToneBpm = 84;');
-      expect(result).toContain('const liminalToneBeatSeconds = 60 / liminalToneBpm;');
+      expect(result).toContain('let liminalToneBpm = 84;');
+      expect(result).toContain('liminalToneBeatSeconds = 60 / liminalToneBpm;');
+    });
+
+    it('does not overwrite authored Tone BPM expressions with the numeric fallback', () => {
+      const code = 'const bpm = 90; Tone.Transport.bpm.value = bpm; const seq = new Tone.Sequence((time, note) => {}, ["C4"], "4n").start(0);';
+      const result = GenericWrapper.wrap(code, { domain: 'tone' });
+      const startBlock = result.slice(result.indexOf("playBtn.addEventListener('click'"));
+
+      expect(result).toContain('syncLiminalToneTempo();');
+      expect(result).toContain('Tone.Transport.bpm.value = bpm;');
+      expect(startBlock).not.toContain('Tone.Transport.bpm.value = liminalToneBpm');
     });
 
     it('wraps raw Tone HTML in a polished preview shell instead of showing a bare button page', () => {

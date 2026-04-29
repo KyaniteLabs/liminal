@@ -173,6 +173,20 @@ Tone.Transport.start();
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('Tone.js: Scheduled Tone.Part "melody" is never started; call melody.start(0) before Tone.Transport.start()');
     });
+
+    it('should accept started scheduled events with dollar signs in variable names', () => {
+      const code = `
+const synth = new Tone.Synth().toDestination();
+const seq$ = new Tone.Sequence((time, note) => {
+  synth.triggerAttackRelease(note, "8n", time);
+}, ["C4", "E4"], "4n").start(0);
+Tone.Transport.start();
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
   });
 
   describe('getMinSize', () => {

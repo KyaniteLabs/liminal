@@ -17,6 +17,7 @@ import { harnessMemory } from '../harness/HarnessMemory.js';
 import type { GenerationContext, Suggestion } from './types.js';
 import type { SemanticArtMemory } from '../brain/archive/SemanticArtMemory.js';
 import type { CompostMill } from '../compost/CompostMill.js';
+import { createCreativePreferenceSuggestion } from './CreativePreferenceGuide.js';
 
 // Score history for trend analysis
 interface ScoreHistory {
@@ -113,6 +114,9 @@ export class GuidanceEngine {
 
     const archiveSuggestion = this.createArchiveSuggestion();
     if (archiveSuggestion) suggestions.push(archiveSuggestion);
+
+    const creativePreferenceSuggestion = createCreativePreferenceSuggestion(ctx);
+    if (creativePreferenceSuggestion) suggestions.push(creativePreferenceSuggestion);
 
     return this.sortByPriority(suggestions);
   }

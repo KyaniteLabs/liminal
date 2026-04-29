@@ -140,6 +140,25 @@ describe('GuidanceEngine', () => {
       expect(evolutionSuggestion?.title).toContain('diversity');
     });
 
+    it('includes one optional creative preference prompt without making it a blocker', () => {
+      const context: GenerationContext = {
+        prompt: 'slow ambient chords with sparse instrumentation',
+        domain: 'strudel',
+        techniques: [],
+        constraints: [],
+        references: [],
+        iteration: 1,
+        currentScore: 0.5,
+      };
+
+      const suggestions = guidance.suggestNextAction(context);
+      const preferenceSuggestion = suggestions.find(s => s.title.includes('Optional creative preferences'));
+
+      expect(preferenceSuggestion?.type).toBe('parameter');
+      expect(preferenceSuggestion?.priority).toBe('low');
+      expect(preferenceSuggestion?.description).toContain('music');
+    });
+
     it('prioritizes high-priority suggestions first', () => {
       const context: GenerationContext = {
         prompt: 'help me',

@@ -14,6 +14,7 @@ import type { IterationContext } from '../core/LoopConfig.js';
 // Note: SemanticArtMemory archived as part of Fix 8 - using HarnessMemory via GuidanceEngine
 import { GuidanceEngine } from './GuidanceEngine.js';
 import { SemanticArtMemory } from '../brain/archive/SemanticArtMemory.js';
+import { buildCreativePreferencePromptHints } from './CreativePreferenceGuide.js';
 
 // Interview phase type
 type InterviewPhase = 'greeting' | 'discovery' | 'confirm' | 'generating';
@@ -176,6 +177,18 @@ export class ConversationManager {
       prompt += `\nTechniques to use:\n`;
       for (const technique of brief.techniques) {
         prompt += `- ${technique.name}: ${technique.description}\n`;
+      }
+    }
+
+    const creativePreferenceHints = buildCreativePreferencePromptHints({
+      domain: brief.domain,
+      prompt,
+      answers: Object.fromEntries(this.interviewAnswers),
+    });
+    if (creativePreferenceHints.length > 0) {
+      prompt += '\nCreative preferences:\n';
+      for (const hint of creativePreferenceHints) {
+        prompt += `- ${hint}\n`;
       }
     }
 

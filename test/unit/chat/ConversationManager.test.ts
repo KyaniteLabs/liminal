@@ -220,6 +220,40 @@ describe('ConversationManager', () => {
     });
   });
 
+  describe('creative preference prompt hints', () => {
+    beforeEach(() => {
+      manager.startNewSession();
+      vi.mocked(RalphLoop.run).mockResolvedValue({
+        code: '// mock code',
+        iterations: 1,
+        completed: true,
+        reason: 'done',
+        timestamp: new Date().toISOString(),
+        duration: 1000,
+        finalScore: 0.7
+      });
+    });
+
+    it('threads optional creative vocabulary hints into generation prompts', async () => {
+      await manager.generateFromBrief({
+        intent: 'slow ambient chords with sparse instrumentation',
+        context: '',
+        mood: 'gentle and quiet',
+        constraints: [],
+        references: [],
+        domain: 'strudel',
+        techniques: [],
+        complexity: 'simple'
+      });
+
+      const prompt = vi.mocked(RalphLoop.run).mock.calls[0][0] as string;
+      expect(prompt).toContain('Creative preferences');
+      expect(prompt).toContain('Prefer a slow tempo feel.');
+      expect(prompt).toContain('Keep musical density sparse.');
+      expect(prompt).not.toContain('guardrail');
+    });
+  });
+
   describe('getInterviewQuestion', () => {
     beforeEach(() => {
       manager.startNewSession();

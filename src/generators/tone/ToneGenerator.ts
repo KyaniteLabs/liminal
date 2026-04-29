@@ -28,6 +28,9 @@ export class ToneGenerator extends TierBasedGenerator {
     const tonePrompt = [
       'Generate a complete Tone.js artifact for browser playback.',
       'Use Tone.js APIs only. If returning HTML, include the Tone.js CDN script and close </body></html>.',
+      'Include a visible user-click start control that actually triggers audible Tone output.',
+      'Set Tone.Transport.bpm.value explicitly so Studio can sync visual motion to audio speed.',
+      'If you create Tone.Part, Tone.Sequence, Tone.Loop, or Tone.Pattern, call .start(0) on it before Tone.Transport.start().',
       'Keep the output compact enough to finish in one response; no markdown fences or prose.',
       '',
       `User request: ${prompt}`,
@@ -49,7 +52,12 @@ export class ToneGenerator extends TierBasedGenerator {
       return { valid: false, error: 'Generated code does not use Tone.js' };
     }
 
-    if (/^(?:html\s*)?<!DOCTYPE|^(?:html\s*)?<html/i.test(clean)) {
+    const isCompleteHtml = /^(?:html\s*)?<!DOCTYPE|^(?:html\s*)?<html/i.test(clean);
+    if (!isCompleteHtml && /<\/(?:script|body|html)>/i.test(clean)) {
+      return { valid: false, error: 'Generated Tone output appears to be truncated or orphaned HTML' };
+    }
+
+    if (isCompleteHtml) {
       const html = clean.replace(/^html\s*/i, '').trim();
       const htmlValidation = HTMLValidator.validate(html);
       if (!htmlValidation.valid) {
@@ -92,12 +100,14 @@ export class ToneGenerator extends TierBasedGenerator {
         `Create a complete browser-playable Tone.js artifact for: ${prompt}`,
         'Return one complete HTML document with <!DOCTYPE html>, <html>, <head>, charset meta, title, <body>, and closing </body></html>.',
         'Include the Tone.js CDN script in <head> and a user-click start button.',
+        'Set Tone.Transport.bpm.value explicitly and start/trigger audible synths from that button.',
+        'If using Tone.Part, Tone.Sequence, Tone.Loop, or Tone.Pattern, call .start(0) on it before Tone.Transport.start().',
         'No markdown, prose, hidden reasoning, or partial fragments.',
       ].join('\n'),
       [
         'Return raw complete HTML only. First characters must be <!DOCTYPE html> and final characters must be </html>.',
         '<head> must contain <meta charset="UTF-8">, <title>Tone.js Patch</title>, and the Tone.js CDN script.',
-        '<body> must contain a button and a script that calls Tone.start() from a click handler and creates a Tone synth/drone.',
+        '<body> must contain a button and a script that calls Tone.start() from a click handler, sets Tone.Transport.bpm.value, starts any Tone.Part/Sequence/Loop/Pattern with .start(0), and creates audible Tone synth/drone output.',
         `User request: ${prompt}`,
       ].join('\n'),
     ];

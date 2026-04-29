@@ -62,8 +62,23 @@ export class GenericWrapper {
   private static extractInlineScripts(html: string): string[] {
     return [...html.matchAll(/<script\b(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)]
       .map(match => match[1])
+      .map(script => this.retargetToneDomWrites(script))
       .filter(script => script.trim().length > 0)
-      .filter(script => !/\bdocument\.(?:body|documentElement)\.innerHTML\b|\bdocument\.write\s*\(/.test(script));
+      .filter(script => !/\bdocument\.write\s*\(/.test(script));
+  }
+
+  private static retargetToneDomWrites(script: string): string {
+    return script.replace(
+      /\bdocument\.(?:body|documentElement)\.innerHTML\b/g,
+      "document.getElementById('tone-artifact-surface').innerHTML",
+    );
+  }
+
+  private static extractToneBpm(code: string): number {
+    const bpmMatch = code.match(/\b(?:Tone\.)?Transport\.bpm\.value\s*=\s*([0-9]+(?:\.[0-9]+)?)/);
+    const bpm = bpmMatch ? Number(bpmMatch[1]) : 120;
+    if (!Number.isFinite(bpm) || bpm < 30 || bpm > 300) return 120;
+    return Math.round(bpm);
   }
 
   private static stripExecutableHTML(fragment: string): string {
@@ -223,6 +238,7 @@ export class GenericWrapper {
 
   private static wrapStrudel(code: string, _autoPlay = false): string {
     const safeCommentCode = code.replace(/-->/g, '--\\u003e');
+    const visibleCode = this.escapeHTML(code);
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -233,24 +249,40 @@ export class GenericWrapper {
     <title>Strudel Pattern</title>
     <script src="${STRUDEL_CDN}"></script>
     <style>
+        :root { color-scheme: dark; }
+        * { box-sizing: border-box; }
         body {
             margin: 0;
-            background: #1a1a2e;
+            background: radial-gradient(circle at 18% 12%, rgba(236,72,153,.2), transparent 28%), #111122;
             color: #fff;
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             padding: 20px;
             min-height: 100vh;
         }
-        strudel-editor { display: block; min-height: 420px; border: 1px solid #312e81; border-radius: 10px; overflow: hidden; }
+        [data-strudel-editor-shell] { display: grid; grid-template-columns: minmax(300px, .8fr) minmax(320px, 1.2fr); gap: 16px; align-items: stretch; }
+        .source-card, .editor-card { border: 1px solid rgba(249,168,212,.28); border-radius: 18px; background: rgba(15,23,42,.7); box-shadow: 0 18px 60px rgba(0,0,0,.28); overflow: hidden; }
+        .source-card { padding: 16px; }
+        .eyebrow { color: #f9a8d4; font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; margin-bottom: 10px; }
+        [data-strudel-source-code] { min-height: 320px; margin: 0; white-space: pre-wrap; word-break: break-word; color: #fdf2f8; background: rgba(2,6,23,.72); border: 1px solid rgba(148,163,184,.22); border-radius: 14px; padding: 16px; line-height: 1.5; }
+        strudel-editor { display: block; min-height: 420px; border: 0; overflow: hidden; }
         .hint { margin: 0 0 12px; color: #f9a8d4; }
+        @media (max-width: 860px) { [data-strudel-editor-shell] { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <h3 style="color: #ec4899; margin-bottom: 8px;">🎵 Strudel Live Coding Pattern</h3>
     <p class="hint">Use the embedded Strudel editor controls to evaluate and play. Browser audio still requires a user click.</p>
-    <strudel-editor><!--
+    <main data-strudel-editor-shell>
+      <section class="source-card" aria-label="Visible Strudel source code">
+        <div class="eyebrow">Strudel source</div>
+        <pre data-strudel-source-code><code>${visibleCode}</code></pre>
+      </section>
+      <section class="editor-card" aria-label="Embedded Strudel editor">
+        <strudel-editor><!--
 ${safeCommentCode}
-    --></strudel-editor>
+        --></strudel-editor>
+      </section>
+    </main>
 </body>
 </html>`;
   }
@@ -549,7 +581,8 @@ ${safeCommentCode}
 
   private static wrapHyperframes(code: string, title = 'HyperFrames Preview'): string {
     const escapedSource = this.escapeHTML(code);
-    const escapedSrcdoc = code
+    const previewCode = this.injectHyperframesPreviewRunner(code);
+    const escapedSrcdoc = previewCode
       .replace(/&/g, '&amp;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;')
@@ -627,6 +660,49 @@ ${safeCommentCode}
 </html>`;
 }
 
+  private static injectHyperframesPreviewRunner(code: string): string {
+    const runner = `<script data-hyperframes-preview-runner>
+(function () {
+  function fitHyperframesStage() {
+    const stage = document.querySelector('[data-composition-id]');
+    if (!stage) return;
+    const width = Number(stage.getAttribute('data-width')) || stage.offsetWidth || 1920;
+    const height = Number(stage.getAttribute('data-height')) || stage.offsetHeight || 1080;
+    const scale = Math.min(window.innerWidth / width, window.innerHeight / height, 1);
+    document.documentElement.style.width = '100%';
+    document.documentElement.style.height = '100%';
+    document.body.style.margin = '0';
+    document.body.style.width = '100%';
+    document.body.style.height = '100%';
+    document.body.style.overflow = 'hidden';
+    stage.style.position = 'absolute';
+    stage.style.transformOrigin = 'top left';
+    stage.style.transform = 'scale(' + scale + ')';
+    stage.style.left = Math.max(0, (window.innerWidth - width * scale) / 2) + 'px';
+    stage.style.top = Math.max(0, (window.innerHeight - height * scale) / 2) + 'px';
+  }
+  function runHyperframesTimelines() {
+    fitHyperframesStage();
+    const timelines = Object.values(window.__timelines || {});
+    for (const timeline of timelines) {
+      if (!timeline || typeof timeline.progress !== 'function') continue;
+      try {
+        timeline.progress(0.35);
+        if (typeof timeline.play === 'function') timeline.play(0);
+      } catch (error) {
+        console.warn('HyperFrames preview timeline issue:', error);
+      }
+    }
+  }
+  window.addEventListener('resize', fitHyperframesStage);
+  window.addEventListener('load', () => setTimeout(runHyperframesTimelines, 250));
+  setTimeout(runHyperframesTimelines, 800);
+})();
+</script>`;
+    if (/<\/body>/i.test(code)) return code.replace(/<\/body>/i, `${runner}\n</body>`);
+    return `${code}\n${runner}`;
+  }
+
   private static wrapASCII(code: string, _width: number): string {
     const escaped = code
       .replace(/&/g, '&amp;')
@@ -688,6 +764,7 @@ ${safeCommentCode}
     if (this.isHTMLDocument(cleanedCode) || this.isHTMLFragment(cleanedCode)) return this.wrapToneHTML(cleanedCode);
 
     const safeCode = cleanedCode.replace(/`/g, '\\`');
+    const bpm = this.extractToneBpm(cleanedCode);
     
     return `<!DOCTYPE html>
 <html lang="en">
@@ -760,7 +837,7 @@ ${safeCommentCode}
         }
     </style>
 </head>
-<body>
+<body data-tone-preview-shell data-tone-tempo-sync="true" data-tone-bpm="${bpm}">
     <h3>🎹 Tone.js Audio Synthesizer</h3>
     <div id="controls">
         <button id="start">▶ Play</button>
@@ -775,16 +852,19 @@ ${safeCommentCode}
         const statusEl = document.getElementById('status');
         const visualizer = document.getElementById('visualizer');
         const visualizerCtx = visualizer.getContext('2d');
+        const liminalToneBpm = ${bpm};
+        const liminalToneBeatSeconds = 60 / liminalToneBpm;
         let toneArtifactError = null;
         function drawToneVisualizer() {
             const w = visualizer.width || 300;
             const h = visualizer.height || 100;
             const t = performance.now() / 1000;
+            const beat = t / liminalToneBeatSeconds;
             visualizerCtx.clearRect(0, 0, w, h);
             visualizerCtx.fillStyle = '#020617';
             visualizerCtx.fillRect(0, 0, w, h);
             for (let i = 0; i < 32; i += 1) {
-                const level = isPlaying ? (Math.sin(t * 2.5 + i * 0.48) + 1) * 0.38 + 0.18 : 0.12;
+                const level = isPlaying ? (Math.sin(beat * Math.PI * 2 + i * 0.48) + 1) * 0.38 + 0.18 : 0.12;
                 const barH = level * h * (0.52 + (i % 5) * 0.08);
                 const x = i * (w / 32);
                 const gradient = visualizerCtx.createLinearGradient(0, h - barH, 0, h);
@@ -809,6 +889,8 @@ ${safeCommentCode}
         
         playBtn.addEventListener('click', async () => {
             await Tone.start();
+            if (window.Tone?.Transport?.bpm) Tone.Transport.bpm.value = liminalToneBpm;
+            if (window.Tone?.Transport?.start) Tone.Transport.start();
             isPlaying = true;
             statusEl.className = 'playing';
             statusEl.textContent = toneArtifactError
@@ -821,6 +903,7 @@ ${safeCommentCode}
             isPlaying = false;
             statusEl.className = 'ready';
             statusEl.textContent = 'Stopped';
+            if (window.Tone?.Transport) Tone.Transport.stop();
             if (typeof stop === 'function') stop();
         });
     </script>
@@ -835,6 +918,7 @@ ${safeCommentCode}
       .map(script => this.escapeScript(script))
       .join('\n\n');
     const escapedSource = this.escapeHTML(code);
+    const bpm = this.extractToneBpm(code);
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -871,7 +955,7 @@ ${safeCommentCode}
     </style>
 </head>
 <body>
-    <main data-tone-preview-shell>
+    <main data-tone-preview-shell data-tone-tempo-sync="true" data-tone-bpm="${bpm}">
         <section class="tone-panel" aria-label="Tone playback controls">
             <div class="eyebrow">Tone.js artifact</div>
             <h1>Audio preview</h1>
@@ -896,16 +980,19 @@ ${safeCommentCode}
         const liminalToneStatus = document.getElementById('liminal-tone-status');
         const liminalToneCanvas = document.getElementById('liminal-tone-visualizer');
         const liminalToneCtx = liminalToneCanvas.getContext('2d');
+        const liminalToneBpm = ${bpm};
+        const liminalToneBeatSeconds = 60 / liminalToneBpm;
         let liminalTonePlaying = false;
         function drawToneBars() {
             const w = liminalToneCanvas.width;
             const h = liminalToneCanvas.height;
             const t = performance.now() / 1000;
+            const beat = t / liminalToneBeatSeconds;
             liminalToneCtx.clearRect(0, 0, w, h);
             liminalToneCtx.fillStyle = '#020617';
             liminalToneCtx.fillRect(0, 0, w, h);
             for (let i = 0; i < 48; i += 1) {
-                const amp = liminalTonePlaying ? (Math.sin(t * 2 + i * .42) + 1) * .42 + .16 : .12;
+                const amp = liminalTonePlaying ? (Math.sin(beat * Math.PI * 2 + i * .42) + 1) * .42 + .16 : .12;
                 const barH = amp * h * (0.45 + (i % 7) * .055);
                 const x = i * (w / 48);
                 const gradient = liminalToneCtx.createLinearGradient(0, h - barH, 0, h);
@@ -927,6 +1014,8 @@ ${safeCommentCode}
         document.getElementById('liminal-tone-start').addEventListener('click', async () => {
             try {
                 if (window.Tone?.start) await Tone.start();
+                if (window.Tone?.Transport?.bpm) Tone.Transport.bpm.value = liminalToneBpm;
+                if (window.Tone?.Transport?.start) Tone.Transport.start();
                 liminalTonePlaying = true;
                 liminalToneStatus.textContent = 'Playing — embedded artifact controls are preserved.';
                 const artifactButton = document.querySelector('#tone-artifact-surface button:not([disabled]), #tone-artifact-surface [role="button"]:not([aria-disabled="true"])');

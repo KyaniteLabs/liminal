@@ -158,6 +158,21 @@ Tone.Transport.start();
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
+
+    it('should reject scheduled Tone parts that are never started', () => {
+      const code = `
+const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+const melody = new Tone.Part((time, note) => {
+  synth.triggerAttackRelease(note, "16n", time);
+}, [{ time: "0:0", note: "C3" }]);
+melody.loop = true;
+Tone.Transport.start();
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Tone.js: Scheduled Tone.Part "melody" is never started; call melody.start(0) before Tone.Transport.start()');
+    });
   });
 
   describe('getMinSize', () => {

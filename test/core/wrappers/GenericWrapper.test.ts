@@ -140,6 +140,15 @@ describe('GenericWrapper', () => {
       expect(result).toContain('Browser audio still requires a user click');
       expect(result).not.toContain('import { repl, controls }');
     });
+
+    it('keeps Strudel source code visibly readable even if the embedded editor renders blank', () => {
+      const code = 'stack(s("bd"), s("sd"))';
+      const result = GenericWrapper.wrap(code, { domain: 'strudel' });
+
+      expect(result).toContain('data-strudel-source-code');
+      expect(result).toContain('stack(s(&quot;bd&quot;), s(&quot;sd&quot;))');
+      expect(result).toContain('data-strudel-editor-shell');
+    });
   });
 
   describe('wrap - Hydra', () => {
@@ -232,6 +241,18 @@ document.body.innerHTML = ` + '`' + `<button id="startButton">Start Ambient Sequ
       const runtimeBlock = result.slice(result.indexOf('try {'), result.indexOf('} catch (error)'));
       expect(runtimeBlock).not.toContain('<script');
       expect(runtimeBlock).not.toContain('document.body.innerHTML');
+      expect(runtimeBlock).toContain('tone-artifact-surface');
+      expect(runtimeBlock).toContain('new Tone.Synth().toDestination()');
+    });
+
+    it('syncs the Tone visualizer speed to the generated Tone.Transport BPM', () => {
+      const code = 'Tone.Transport.bpm.value = 84; const seq = new Tone.Sequence((time, note) => {}, ["C4"], "4n");';
+      const result = GenericWrapper.wrap(code, { domain: 'tone' });
+
+      expect(result).toContain('data-tone-tempo-sync="true"');
+      expect(result).toContain('data-tone-bpm="84"');
+      expect(result).toContain('const liminalToneBpm = 84;');
+      expect(result).toContain('const liminalToneBeatSeconds = 60 / liminalToneBpm;');
     });
 
     it('wraps raw Tone HTML in a polished preview shell instead of showing a bare button page', () => {
@@ -359,6 +380,16 @@ export default makeScene2D(function* (view) {
       expect(result).toContain('class="hyperframes-stage"');
       expect(result).toContain('HyperFrames Preview');
       expect(result.indexOf('data-hyperframes-preview-shell')).toBeLessThan(result.indexOf('<details'));
+    });
+
+    it('injects a preview runner so paused GSAP timelines render visible frames', () => {
+      const code = '<div data-composition-id="demo"><h1 class="clip" data-start="0" data-duration="3" data-track-index="0">Title</h1></div><script>const tl = gsap.timeline({ paused: true }); window.__timelines = { demo: tl };</script>';
+      const result = GenericWrapper.wrap(code, { domain: 'hyperframes', title: 'HyperFrames Preview' });
+
+      expect(result).toContain('data-hyperframes-preview-runner');
+      expect(result).toContain('fitHyperframesStage');
+      expect(result).toContain('timeline.progress(0.35)');
+      expect(result).toContain('timeline.play(0)');
     });
   });
 

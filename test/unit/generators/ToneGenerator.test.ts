@@ -106,6 +106,22 @@ describe('ToneGenerator', () => {
     expect(result.error).toContain('closing </html>');
   });
 
+  it('validateOutput rejects orphaned HTML tails that cannot preserve audible Tone controls', () => {
+    const gen = new ToneGenerator();
+    const result = gen.validateOutput(`Tone.Transport.start();
+  }, "16n");
+}
+document.getElementById('startBtn').addEventListener('click', function() {
+  startAmbientSequence();
+});
+</script>
+</body>
+</html>`);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('truncated or orphaned HTML');
+  });
+
   it('requests a larger token budget for full Tone.js pages', async () => {
     const gen = new ToneGenerator();
     await gen.generate('ambient drone');

@@ -423,6 +423,29 @@ describe('Bubble Tea operator routing', () => {
     expect(prompt).not.toMatch(/\b(guardrail|proof|harness)\b/i);
   }, 15000);
 
+  it('keeps Kinetic Studio mode out of the p5-only generation instruction path', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'Create CSS kinetic typography as a complete animated HTML artifact.\n\nUser prompt: moving words orbiting a threshold',
+        clientIntent: 'creative',
+        executionMode: 'draft',
+      },
+      fakeLlm() as never,
+    );
+
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'generation.complete'));
+
+    const prompt = String(draftGenerate.mock.calls[0]?.[0] ?? '');
+    expect(prompt).toContain('Target creative domain: kinetic.');
+    expect(prompt).not.toContain('Return raw p5.js sketch code only');
+  });
+
   it('cancels an in-flight draft run before it can complete', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession();

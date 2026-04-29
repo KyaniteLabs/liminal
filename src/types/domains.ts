@@ -18,6 +18,7 @@ export enum Domain {
   CODE = 'code',
   REVIEWD = 'revideo', // Revideo v0.12+ active video composition framework
   HYPERFRAMES = 'hyperframes', // HTML+GSAP asset compositing via @hyperframes/producer
+  KINETIC = 'kinetic',
   EMPTY = ''
 }
 

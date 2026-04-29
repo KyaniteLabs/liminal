@@ -3,7 +3,7 @@
  * Wraps p5.js sketch code in a complete HTML document
  */
 
-import { SECURITY_HEADERS } from './SecurityHeaders.js';
+import { P5_SENSOR_POLICY_SCRIPT, SECURITY_HEADERS } from './SecurityHeaders.js';
 
 const P5_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js';
 const P5_SOUND_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js';
@@ -64,6 +64,7 @@ export class P5Wrapper {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     ${SECURITY_HEADERS.trim()}
     <title>${title}</title>
+    ${P5_SENSOR_POLICY_SCRIPT.trim()}
     <script src="${P5_CDN}"></script>${p5SoundScript}
     <style>
         body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }

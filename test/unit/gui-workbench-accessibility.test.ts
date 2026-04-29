@@ -34,6 +34,12 @@ describe('GUI workbench accessibility contract', () => {
     expect(css).toContain('grid-template-columns: minmax(0, 0.7fr) auto');
   });
 
+  it('keeps sandboxed preview iframes from delegating sensor permissions', () => {
+    expect(app).toContain(`const SENSOR_PERMISSION_POLICY = "accelerometer 'none'; gyroscope 'none'; magnetometer 'none'";`);
+    expect(app).toContain('allow={SENSOR_PERMISSION_POLICY}');
+    expect(app).not.toContain('allow="accelerometer;');
+  });
+
   it('keeps reduced-motion and visible preview-status fallbacks in CSS', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     expect(css).toContain('animation: none');

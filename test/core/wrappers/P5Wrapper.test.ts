@@ -71,6 +71,18 @@ describe('P5Wrapper', () => {
       expect(result).toContain(code);
     });
 
+    it('blocks p5 sensor listeners before loading p5 to avoid permissions-policy console noise', () => {
+      const result = P5Wrapper.wrap('function setup() { createCanvas(400, 400); }');
+      const sensorPolicyIndex = result.indexOf('liminalSensorPolicy');
+      const p5ScriptIndex = result.indexOf('p5.min.js');
+
+      expect(sensorPolicyIndex).toBeGreaterThan(-1);
+      expect(p5ScriptIndex).toBeGreaterThan(-1);
+      expect(sensorPolicyIndex).toBeLessThan(p5ScriptIndex);
+      expect(result).toContain("eventName === 'devicemotion'");
+      expect(result).toContain("eventName === 'deviceorientation'");
+    });
+
     it('includes p5.sound when requested', () => {
       const code = 'function setup() {}';
       const result = P5Wrapper.wrap(code, { includeP5Sound: true });

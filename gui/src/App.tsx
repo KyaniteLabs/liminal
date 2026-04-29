@@ -118,6 +118,7 @@ interface ImproveReport {
 
 const API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASEURL) ? import.meta.env.VITE_API_BASEURL : '/api';
 const STORED_SECRET_SENTINEL = '(stored)';
+const SENSOR_PERMISSION_POLICY = "accelerometer 'none'; gyroscope 'none'; magnetometer 'none'";
 const PROVIDER_OPTIONS = ['lmstudio', 'minimax', 'glm', 'openai', 'openrouter', 'ollama', 'kimi', 'moonshot', 'custom'];
 const PROVIDER_PRESETS: Record<string, { baseUrl: string; model: string; evaluatorModel?: string }> = {
   lmstudio: { baseUrl: 'http://localhost:1234/v1', model: 'local-model' },
@@ -877,12 +878,13 @@ export default function App() {
   const stageSlot = activeMode.id === 'improve' ? improveSlot : (
     <div className="liminal-stage-frame">
       {previewUrl ? (
-        <iframe title="Live preview" src={previewUrl} sandbox="allow-scripts" />
+        <iframe title="Live preview" src={previewUrl} allow={SENSOR_PERMISSION_POLICY} sandbox="allow-scripts" />
       ) : syncPreviewHtml ? (
         <iframe
           ref={syncFrameRef}
           title="Syncable generated stage"
           srcDoc={syncPreviewHtml}
+          allow={SENSOR_PERMISSION_POLICY}
           sandbox="allow-scripts"
         />
       ) : bridgePreview?.type === 'image' && bridgePreview.src ? (
@@ -1482,7 +1484,7 @@ export default function App() {
                 title="Strudel REPL"
                 src={`https://strudel.cc/embed/#${base64UrlCode(musicCode)}`}
                 style={{ width: '100%', height: 380, border: '1px solid var(--atelier-border)', borderRadius: 'var(--atelier-radius-sm)', background: '#0a090c' }}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
+                allow="autoplay; clipboard-write; encrypted-media"
                 sandbox="allow-scripts allow-same-origin allow-forms"
               />
             </div>
@@ -1661,6 +1663,7 @@ export default function App() {
               <iframe
                 title="Live organism"
                 src={previewUrl}
+                allow={SENSOR_PERMISSION_POLICY}
                 sandbox="allow-scripts"
                 style={{ width: '100%', height: '100%', minHeight: 400, border: 0, background: '#000' }}
               />

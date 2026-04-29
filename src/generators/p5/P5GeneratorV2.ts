@@ -5,6 +5,7 @@
  */
 
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
+import { P5Validator } from '../../core/validators/P5Validator.js';
 import { Logger } from '../../utils/Logger.js';
 
 export interface P5GeneratorV2Options extends TierBasedGeneratorOptions {
@@ -54,6 +55,11 @@ export class P5GeneratorV2 extends TierBasedGenerator {
     // Check for createCanvas (usually required)
     if (!code.includes('createCanvas')) {
       Logger.warn('P5GeneratorV2', 'Code may be missing createCanvas()');
+    }
+
+    const validation = P5Validator.validate(code);
+    if (!validation.valid) {
+      return { valid: false, error: validation.errors.join('; ') };
     }
 
     return { valid: true };

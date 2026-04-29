@@ -287,6 +287,26 @@ describe('P5Validator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
+    it('should reject local bindings that shadow p5 functions when called', () => {
+      const code = `
+        function setup() {
+          createCanvas(400, 400);
+        }
+
+        function draw() {
+          const scale = map(mouseX, 0, width, 0.5, 2);
+          push();
+          scale(scale);
+          circle(0, 0, 10);
+          pop();
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('p5.js code declares local scale and then calls scale(), shadowing the p5.js function');
+    });
+
     it('should allow standard p5 color helpers and blend constants', () => {
       const code = `
         function setup() {

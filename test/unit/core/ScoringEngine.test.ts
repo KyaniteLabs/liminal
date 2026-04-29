@@ -957,6 +957,29 @@ describe('ScoringEngine', () => {
       expect(result.repairAdvice).not.toBeNull();
     });
 
+    it('returns render failure when runtime perception evidence is not human-perceivable', async () => {
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const result = await scoreRenderedEvidence(
+        {
+          timingMs: 200,
+          infraUnavailable: false,
+          candidateFailure: false,
+          audio: { success: false, error: 'No audio captured during render window', durationSeconds: 2 },
+        },
+        'setcps(1)',
+        'make a Strudel pattern',
+        fakeLLM,
+        'strudel',
+      );
+
+      expect(result.score).toBe(0);
+      expect(result.confidence).toBe(1);
+      expect(result.failureClass).toBe('render');
+      expect(result.repairAdvice?.issue).toContain('audio.unintended-silence');
+      expect(mockLLMClientInstance.generate).not.toHaveBeenCalled();
+      expect(mockLLMClientInstance.generateWithImages).not.toHaveBeenCalled();
+    });
+
     it('uses provided LLM and parses JSON response', async () => {
       mockLLMClientInstance.generate.mockResolvedValue({
         code: '{"score":0.85,"confidence":0.9,"reasoning":"Good"}',

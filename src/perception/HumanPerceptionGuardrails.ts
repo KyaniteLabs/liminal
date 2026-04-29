@@ -248,6 +248,14 @@ function extractNumber(code: string, patterns: RegExp[]): number | undefined {
   return undefined;
 }
 
+function extractTempoBpm(code: string): number | undefined {
+  const explicitBpm = extractNumber(code, [/(?:tempo|bpm)\s*[:=]\s*(\d+(?:\.\d+)?)/i]);
+  if (explicitBpm !== undefined) return explicitBpm;
+
+  const cyclesPerSecond = extractNumber(code, [/setcps\s*\(\s*(\d+(?:\.\d+)?)/i]);
+  return cyclesPerSecond === undefined ? undefined : cyclesPerSecond * 60;
+}
+
 function isAudioDomain(domain?: string): boolean {
   return /audio|music|tone|strudel/i.test(domain ?? '');
 }
@@ -266,10 +274,7 @@ export function evaluateCodePerception(code: string, domain?: string): Perceptio
         /(?:frequency|freq|hz)\s*[:=]\s*(\d+(?:\.\d+)?)/i,
         /(?:sine|saw|square|triangle)\s*\(\s*(\d+(?:\.\d+)?)/i,
       ]),
-      tempoBpm: extractNumber(text, [
-        /(?:tempo|bpm)\s*[:=]\s*(\d+(?:\.\d+)?)/i,
-        /setcps\s*\(\s*(\d+(?:\.\d+)?)/i,
-      ]),
+      tempoBpm: extractTempoBpm(text),
     });
   }
 

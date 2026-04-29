@@ -77,6 +77,7 @@ describe('HumanPerceptionGuardrails', () => {
     expect(evaluateCodePerception('const frequency = 28000; const bpm = 999;', 'tone').issues.map(issue => issue.id)).toEqual(
       expect.arrayContaining(['audio.frequency-outside-human-range', 'audio.tempo-outside-human-useful-range']),
     );
+    expect(evaluateCodePerception('setcps(1)', 'strudel').passed).toBe(true);
   });
 
   it('checks video motion/fps/caption ergonomics through the generic dispatcher', () => {

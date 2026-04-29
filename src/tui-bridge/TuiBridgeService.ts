@@ -2602,7 +2602,9 @@ export class TuiBridgeService {
           ? 'Return raw GLSL fragment shader code only. Do not return SVG, p5, prose, or markdown.'
           : domain === Domain.HYDRA
             ? 'Return raw Hydra video-synth code only. Do not return SVG, p5, prose, or markdown.'
-            : `Return raw ${domain} artifact code only. Do not return SVG unless the target domain is SVG.`;
+            : domain === Domain.KINETIC
+              ? 'Return a complete raw HTML/CSS kinetic typography artifact only. Include visible animated text or letter elements and CSS @keyframes. Do not return p5, SVG-only output, prose, or markdown.'
+              : `Return raw ${domain} artifact code only. Do not return SVG unless the target domain is SVG.`;
     const briefLines = intentBrief
       ? [
           'Intent brief:',

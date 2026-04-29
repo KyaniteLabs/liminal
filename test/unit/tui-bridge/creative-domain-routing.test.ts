@@ -62,6 +62,20 @@ describe('TuiBridgeService creative domain routing', () => {
     expect(buildCreativeDomainPlan(prompt)[0]).toBe(Domain.HYPERFRAMES);
   });
 
+  it('routes explicit Kinetic typography prompts away from the p5-only instruction path', () => {
+    const prompt = 'Create CSS kinetic typography as a complete animated HTML artifact.';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.KINETIC);
+    expect(buildCreativeDomainPlan(prompt)[0]).toBe(Domain.KINETIC);
+  });
+
+  it('honors explicit Three.js cues before broad kinetic typography matching', () => {
+    const prompt = 'Create a Three.js scene with animated text orbiting the camera.';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.THREE);
+    expect(buildCreativeDomainPlan(prompt)[0]).toBe(Domain.THREE);
+  });
+
   it('chooses HyperFrames preview shell for generated HyperFrames HTML', () => {
     const hyperframesCode = '<!doctype html><html><body><div data-composition-id="demo"><h1 class="clip" data-start="0" data-duration="3" data-track-index="0">Title</h1></div><script>const tl = gsap.timeline({ paused: true }); window.__timelines = { demo: tl };</script></body></html>';
 

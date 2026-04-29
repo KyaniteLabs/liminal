@@ -52,6 +52,10 @@ function inferStageDomain(code: string): 'p5' | 'three' | 'html' {
   return 'p5';
 }
 
+function needsThreeCanvasBinding(code: string): boolean {
+  return /\bcanvas\b/.test(code) && !/\b(?:const|let|var)\s+canvas\b/.test(code);
+}
+
 export function buildSyncPreviewHtml(code: string): string {
   const domain = inferStageDomain(code);
   if (domain === 'html') {
@@ -60,6 +64,8 @@ export function buildSyncPreviewHtml(code: string): string {
 
   if (domain === 'three') {
     const hasImport = /\bimport\b[\s\S]*?\bfrom\s+['"](?:three|https:\/\/(?:unpkg\.com|cdn\.jsdelivr\.net)\/(?:npm\/)?three)/m.test(code);
+    const needsCanvas = needsThreeCanvasBinding(code);
+    const canvasBootstrap = needsCanvas ? `const canvas = document.getElementById('liminal-three-canvas');\n` : '';
     const moduleCode = hasImport ? code : `import * as THREE from 'three';\n${code}`;
     return `<!doctype html>
 <html>
@@ -72,7 +78,8 @@ export function buildSyncPreviewHtml(code: string): string {
   <script type="importmap">{"imports":{"three":"${THREE_CDN}"}}</script>
 </head>
 <body>
-  <script type="module">${moduleCode}</script>
+  ${needsCanvas ? '<canvas id="liminal-three-canvas"></canvas>' : ''}
+  <script type="module">${canvasBootstrap}${moduleCode}</script>
 </body>
 </html>`;
   }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liminal — Command Center</title>
+    <title>Liminal — Codex for Creative Coding</title>
     <link rel="stylesheet" href="styles/docs.css">
 </head>
 <body>
@@ -27,11 +27,11 @@
 <!-- Hero -->
 <section class="hero">
     <h1>Liminal</h1>
-    <p>A creative coding agent that generates art, music, and shaders through iterative LLM-powered evolution.</p>
+    <p>Codex for creative coding: chat with an AI agent, generate creative-code artifacts, and preview the work in the same screen.</p>
     <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
         <a href="https://github.com/Pastorsimon1798/liminal" class="btn btn-primary">GitHub Repository</a>
-        <a href="architecture.html" class="btn btn-secondary">Architecture</a>
-        <a href="cli-reference.html" class="btn btn-secondary">CLI Reference</a>
+        <a href="cli-reference.html" class="btn btn-secondary">Run Studio</a>
+        <a href="USER_SURFACE_CONTRACT.md" class="btn btn-secondary">Surface Contract</a>
     </div>
 </section>
 
@@ -39,31 +39,32 @@
 
 <!-- Project Metrics -->
 <section class="section">
-    <h2 class="section-title">Project Status</h2>
+    <h2 class="section-title">Launch-Candidate Status</h2>
+    <p class="section-subtitle">Current main has been smoked through Studio chat, same-screen p5 preview, revision, microphone preview, and permission-denied UX.</p>
     <div class="stat-grid">
         <div class="stat-card">
-            <div class="stat-value">11</div>
-            <div class="stat-label">Generators</div>
+            <div class="stat-value">12</div>
+            <div class="stat-label">Creative Domains</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">581</div>
-            <div class="stat-label">Source Files</div>
+            <div class="stat-value">10k+</div>
+            <div class="stat-label">Tests Passing</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">646</div>
-            <div class="stat-label">Test Files</div>
+            <div class="stat-value">2</div>
+            <div class="stat-label">Surfaces: Studio + TUI</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">48</div>
-            <div class="stat-label">Subsystems</div>
+            <div class="stat-value">Same-screen</div>
+            <div class="stat-label">Preview Contract</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">25+</div>
-            <div class="stat-label">Guardrail Modules</div>
+            <div class="stat-value">Voice</div>
+            <div class="stat-label">Mic-to-Visual Smoke</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">11</div>
-            <div class="stat-label">CLI Commands</div>
+            <div class="stat-value">GLM</div>
+            <div class="stat-label">Live Provider Smoke</div>
         </div>
     </div>
 </section>
@@ -71,7 +72,7 @@
 <!-- Generators -->
 <section class="section">
     <h2 class="section-title">Generators</h2>
-    <p class="section-subtitle">11 creative domains — from p5.js sketches to GLSL shaders to live-coded music.</p>
+    <p class="section-subtitle">12 creative domains — from p5.js sketches to GLSL shaders, live-coded music, video compositions, HTML, ASCII, kinetic pieces, and text.</p>
     <div class="card-grid">
         <div class="card">
             <h3>p5.js</h3>
@@ -289,13 +290,16 @@ pnpm install
 # Configure (first time)
 liminal --configure
 
-# Generate
+# Studio: chat-first creative workbench with same-screen preview
+pnpm gui
+
+# CLI generation
 liminal --prompt "Create a calming blue particle system"
 
-# Chat-driven creative session
+# Conversational CLI session
 liminal chat
 
-# Terminal UI (Bubble Tea — requires Go &gt;= 1.21)
+# Operator TUI (Bubble Tea — requires Go &gt;= 1.21)
 pnpm run tui</code></pre>
 </section>
 
@@ -309,7 +313,7 @@ pnpm run tui</code></pre>
         </a>
         <a href="features.html" class="card" style="text-decoration:none;">
             <h3>Features &amp; Guardrails</h3>
-            <p>Feature status, guardrail M1-M18 details, harness task system.</p>
+            <p>Feature status, guardrails, and internal proof/diagnostic systems.</p>
         </a>
         <a href="cli-reference.html" class="card" style="text-decoration:none;">
             <h3>CLI Reference</h3>

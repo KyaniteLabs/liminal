@@ -670,7 +670,9 @@ describe('TuiBridgeServer model picker', () => {
 
       const page = await fetch(`http://127.0.0.1:${port}/api/tui/session/${session.sessionId}/mic-preview`);
       expect(page.status).toBe(200);
-      expect(await page.text()).toContain('Start recording');
+      const micHtml = await page.text();
+      expect(micHtml).toContain('Start recording');
+      expect(micHtml).toContain('permission was denied');
 
       await fetch(`http://127.0.0.1:${port}/api/tui/session/${session.sessionId}/mic-preview/update`, {
         method: 'POST',

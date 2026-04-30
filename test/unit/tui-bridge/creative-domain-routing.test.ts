@@ -5,6 +5,7 @@ import {
   buildCreativeDomainPlan,
   inferCreativeDomain,
   previewDomainForCode,
+  validateGeneratedDomainForRequest,
 } from '../../../src/tui-bridge/CreativeDomainRouting.js';
 import { Domain } from '../../../src/types/domains.js';
 
@@ -76,6 +77,45 @@ describe('TuiBridgeService creative domain routing', () => {
 
 
 
+
+
+  it('honors explicit Revideo even when broad video words look HyperFrames-like', () => {
+    const prompt = 'Create a Revideo composition: a 4-second cinematic title card saying LIMINAL REVIDEO.';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.REVIEWD);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.REVIEWD]);
+  });
+
+  it('routes explicit Revideo prompts to the Revideo composition domain', () => {
+    const prompt = 'Create a Revideo title-card composition with layered animated captions.';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.REVIEWD);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.REVIEWD]);
+  });
+
+  it('rejects generated Three.js when the prompt locked the route to p5', () => {
+    const threeCode = 'import * as THREE from "three"; const scene = new THREE.Scene();';
+    const validation = validateGeneratedDomainForRequest(threeCode, Domain.P5);
+
+    expect(validation.ok).toBe(false);
+    expect(validation.detected).toBe('three');
+    expect(validation.message).toContain('requested p5, generated three');
+  });
+
+  it('accepts p5 code when the prompt locked the route to p5', () => {
+    const p5Code = 'function setup() { createCanvas(800, 600); } function draw() { ellipse(mouseX, mouseY, 20); }';
+
+    expect(validateGeneratedDomainForRequest(p5Code, Domain.P5)).toMatchObject({ ok: true, detected: 'p5' });
+  });
+
+
+  it('honors explicit HyperFrames even when the prompt forbids Revideo', () => {
+    const prompt = 'Create a HyperFrames composition with data-composition-id. Do not use Revideo.';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.HYPERFRAMES);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.HYPERFRAMES]);
+  });
+
   it('routes explicit HyperFrames prompts to the HyperFrames video composition domain', () => {
     const prompt = 'Create a HyperFrames promo slideshow with image clips and GSAP timeline.';
 
@@ -114,6 +154,14 @@ describe('TuiBridgeService creative domain routing', () => {
     const threeCode = 'const scene = new THREE.Scene(); const renderer = new THREE.WebGLRenderer(); renderer.render(scene, new THREE.PerspectiveCamera());';
 
     expect(previewDomainForCode(threeCode, Domain.P5)).toBe('three');
+  });
+
+
+  it('keeps complete Tone HTML in the Tone preview shell for explicit Tone requests', () => {
+    const toneHtml = '<!DOCTYPE html><html><head><script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script></head><body><button>Start</button><script>Tone.Transport.bpm.value = 90;</script></body></html>';
+
+    expect(previewDomainForCode(toneHtml, Domain.TONE)).toBe('tone');
+    expect(validateGeneratedDomainForRequest(toneHtml, Domain.TONE)).toMatchObject({ ok: true, detected: 'tone' });
   });
 
   it('does not include unreachable glsl preview branches for shader output', () => {

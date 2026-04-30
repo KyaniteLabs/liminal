@@ -43,6 +43,7 @@ const shaderConfidence = (prompt: string): number => {
 /** Confidence for 3D/Three.js patterns */
 const threeConfidence = (prompt: string): number => {
   const lower = prompt.toLowerCase();
+  if (!/target creative domain:\s*three/.test(lower) && /\b(do not|don't|dont|never|avoid)\b[^.\n]*(three\.js|threejs|\bthree\b)/.test(lower)) return 0;
   // High confidence for explicit three.js mentions
   if (/three\.js|threejs|\bthree\b/.test(lower)) return 0.95;
   // Strong confidence for 3D with specific keywords
@@ -67,6 +68,7 @@ const htmlConfidence = (prompt: string): number => {
 /** Confidence for SVG/vector asset patterns */
 const svgConfidence = (prompt: string): number => {
   const lower = prompt.toLowerCase();
+  if (!/target creative domain:\s*svg/.test(lower) && /\b(do not|don't|dont|never|avoid)\b[^.\n]*(svg|vector)/.test(lower)) return 0;
   if (/\bsvg\b|scalable\s+vector|vector\s+(logo|icon|diagram|art|asset)/.test(lower)) return 0.95;
   if (/\b(logo|icon|diagram|flowchart|laser|cutfile|cut\s*file|cnc|toolpath|sticker|decal)\b/.test(lower)) return 0.85;
   if (/\bvector\b|\billustration\b.*\bpaths?\b/.test(lower)) return 0.75;

@@ -912,6 +912,16 @@ export default function App() {
           />
           <figcaption>{bridgePreview.label}</figcaption>
         </figure>
+      ) : (bridgePreview?.type === 'html' || bridgePreview?.type === 'music') && bridgePreview.content ? (
+        <figure className={`liminal-stage-embed liminal-stage-embed--${bridgePreview.type}`}>
+          <iframe
+            title={bridgePreview.type === 'music' ? 'Inline music preview' : 'Inline HTML preview'}
+            srcDoc={bridgePreview.content}
+            allow={SENSOR_PERMISSION_POLICY}
+            sandbox="allow-scripts"
+          />
+          <figcaption>{bridgePreview.label}</figcaption>
+        </figure>
       ) : bridgePreview?.type === 'code' ? (
         <pre className="liminal-stage-code">{bridgePreview.code}</pre>
       ) : (

@@ -35,14 +35,11 @@ export class ToneGenerator extends TierBasedGenerator {
       '',
       `User request: ${prompt}`,
     ].join('\n');
-    try {
-      const code = await super.generate(tonePrompt, { ...options, maxTokens: options?.maxTokens ?? 8192 });
-      return this.sanitizeCode(code);
-    } catch (error) {
-      const direct = await this.retryToneDirect(prompt, options);
-      if (direct) return direct;
-      throw error;
-    }
+    const direct = await this.retryToneDirect(prompt, options);
+    if (direct) return direct;
+
+    const code = await super.generate(tonePrompt, { ...options, maxTokens: options?.maxTokens ?? 8192 });
+    return this.sanitizeCode(code);
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
@@ -116,16 +113,29 @@ export class ToneGenerator extends TierBasedGenerator {
       const result = await this.llm.complete({
         systemPrompt: 'You write complete Tone.js browser artifacts. Output only runnable HTML or Tone.js source.',
         prompt: directPrompt,
-        maxTokens: options?.maxTokens ?? 4096,
+        maxTokens: options?.maxTokens ?? 2800,
         temperature: this.llm.getConfig().temperature,
         signal: options?.signal,
       });
       if (!result.success || !result.text) continue;
       const clean = this.sanitizeCode(result.text);
       if (this.validateOutput(clean).valid) return clean;
+      if (this.isUsableToneDraft(clean)) return clean;
     }
 
     return null;
+  }
+
+  private isUsableToneDraft(code: string): boolean {
+    const clean = code.trim();
+    if (clean.length < 80 || !/\bTone\b|tone\.js/i.test(clean)) return false;
+    if (/```|<think\b/i.test(clean)) return false;
+    if (/<html\b/i.test(clean) && !/<\/html>\s*$/i.test(clean)) return false;
+    const openBraces = (clean.match(/\{/g) || []).length;
+    const closeBraces = (clean.match(/\}/g) || []).length;
+    const openParens = (clean.match(/\(/g) || []).length;
+    const closeParens = (clean.match(/\)/g) || []).length;
+    return openBraces <= closeBraces && openParens <= closeParens;
   }
 
   /**

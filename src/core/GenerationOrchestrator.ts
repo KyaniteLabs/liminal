@@ -29,6 +29,25 @@ import type { ClarifyResult, GenerationSuccess } from './clarify.js';
 
 type DispatchResult = { entry: GeneratorEntry; confidence: number } | null;
 
+
+function entryNameForDomain(domain?: Domain | string): string | null {
+  const value = String(domain || '').toLowerCase();
+  if (!value) return null;
+  if (value === Domain.GLSL || value === Domain.SHADER || value === Domain.WEBGL) return 'shader';
+  if (value === Domain.REVIEWD) return 'revideo';
+  if (value === Domain.KINETIC) return 'kinetic';
+  if (value === Domain.HYPERFRAMES) return 'hyperframes';
+  if (value === Domain.P5 || value === Domain.THREE || value === Domain.HYDRA || value === Domain.TONE || value === Domain.STRUDEL || value === Domain.ASCII) return value;
+  return null;
+}
+
+function dispatchForRequestedDomain(domain?: Domain | string): DispatchResult {
+  const entryName = entryNameForDomain(domain);
+  if (!entryName) return null;
+  const entry = generatorRegistry.getAll().find((candidate) => candidate.name === entryName);
+  return entry ? { entry, confidence: 1 } : null;
+}
+
 function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
     throw new Error('Generation aborted');
@@ -120,7 +139,7 @@ export class GenerationOrchestrator {
     throwIfAborted(signal);
     await registerAllGenerators();
     throwIfAborted(signal);
-    const dispatched = generatorRegistry.dispatch(usedPrompt);
+    const dispatched = dispatchForRequestedDomain(this.options.collabDomain) ?? generatorRegistry.dispatch(usedPrompt);
 
     if (this.options.useSwarm) {
       const result = await this.generateWithSwarm(usedPrompt);

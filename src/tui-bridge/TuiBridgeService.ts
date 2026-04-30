@@ -37,7 +37,7 @@ import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
 import { buildCreativePreferencePromptHints, createCreativePreferenceSuggestion } from '../chat/CreativePreferenceGuide.js';
 import type { Domain as ChatDomain } from '../chat/types.js';
-import { buildCreativeDomainPlan, previewDomainForCode } from './CreativeDomainRouting.js';
+import { buildCreativeDomainPlan, previewDomainForCode, validateGeneratedDomainForRequest } from './CreativeDomainRouting.js';
 import { summarizeReasoningTrace } from './TraceSummarizer.js';
 import { normalizeOptions } from '../core/LoopConfig.js';
 import { GenerationOrchestrator } from '../core/GenerationOrchestrator.js';
@@ -1779,6 +1779,8 @@ export class TuiBridgeService {
             this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
             return;
           }
+          const mismatch = this.describeStrictDomainMismatch(attemptResult.code, domain, domainPlan);
+          if (mismatch) throw new Error(mismatch);
           this.emit(sessionId, {
             type: 'tool.completed',
             sessionId,
@@ -2061,7 +2063,7 @@ export class TuiBridgeService {
               logBridge('generation.draft.background_failed', { sessionId, generatorModel: generatorModelName, message });
             }
           });
-          const attemptResult = await this.awaitDraftAttempt(generationPromise, controller.signal, timeoutMinutes);
+          let attemptResult = await this.awaitDraftAttempt(generationPromise, controller.signal, timeoutMinutes);
           if (!attemptResult) {
             this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
             return;
@@ -2085,6 +2087,46 @@ export class TuiBridgeService {
             this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
             return;
           }
+          const mismatch = this.describeStrictDomainMismatch(attemptResult.code, domain, domainPlan);
+          if (mismatch) {
+            this.emit(sessionId, {
+              type: 'activity.updated',
+              sessionId,
+              message: `${mismatch}; retrying ${domain} without changing domains.`,
+            });
+            const correctionPrompt = this.domainCorrectionPrompt(attemptPrompt, domain, mismatch);
+            const retryPromise = orchestrator.generate(correctionPrompt, correctionPrompt, true, controller.signal);
+            retryPromise.catch((err) => {
+              if (!controller.signal.aborted) {
+                const message = err instanceof Error ? err.message : String(err);
+                logBridge('generation.draft.domain_retry_failed', { sessionId, generatorModel: generatorModelName, message });
+              }
+            });
+            const retryResult = await this.awaitDraftAttempt(retryPromise, controller.signal, timeoutMinutes);
+            if (!retryResult) {
+              this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
+              return;
+            }
+            if (retryResult.needsClarification) {
+              attemptResult = retryResult;
+            } else if (retryResult.code?.trim()) {
+              attemptResult = retryResult;
+            }
+          }
+          if (attemptResult.needsClarification) {
+            const clarificationBrief: CreativeIntentBrief = {
+              userRequest: intentBrief.userRequest,
+              requirements: intentBrief.requirements,
+              missingDetails: intentBrief.missingDetails,
+              questions: attemptResult.clarifyingQuestions.map((question) => question.question),
+              shouldClarify: true,
+              reason: `Generation needs clarification for ${domain}.`,
+            };
+            this.emitCreativeClarification(sessionId, clarificationBrief, conversation);
+            return;
+          }
+          const retryMismatch = this.describeStrictDomainMismatch(attemptResult.code, domain, domainPlan);
+          if (retryMismatch) throw new Error(retryMismatch);
           if (attemptResult.thinking) {
             const summary = summarizeReasoningTrace(attemptResult.thinking, 'generator');
             this.emitReasoningTrace(sessionId, {
@@ -2652,6 +2694,28 @@ export class TuiBridgeService {
     );
   }
 
+  private describeStrictDomainMismatch(code: string, requestedDomain: Domain, domainPlan: Domain[]): string | null {
+    if (domainPlan.length !== 1) return null;
+    const validation = validateGeneratedDomainForRequest(code, requestedDomain);
+    return validation.ok ? null : validation.message ?? 'Generated artifact did not match the requested domain';
+  }
+
+  private domainCorrectionPrompt(originalPrompt: string, requestedDomain: Domain, mismatch: string): string {
+    return [
+      originalPrompt,
+      '',
+      `Reject the previous answer: ${mismatch}.`,
+      `The requested creative domain is locked to ${requestedDomain}; do not switch frameworks or languages.`,
+      `Return only valid ${requestedDomain} artifact code with no prose or markdown.`,
+    ].join('\n');
+  }
+
+  private inlinePreviewType(previewDomain: import('../utils/htmlWrapper.js').Domain): 'html' | 'music' | null {
+    if (previewDomain === 'tone' || previewDomain === 'strudel') return 'music';
+    if (previewDomain === 'hydra' || previewDomain === 'html') return 'html';
+    return null;
+  }
+
   private async emitPreviewArtifacts(sessionId: string, code: string, requestedDomain: Domain): Promise<void> {
     const safeSessionId = sessionId.replace(/[^a-zA-Z0-9_-]/g, '-');
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -2665,6 +2729,22 @@ export class TuiBridgeService {
     await fs.writeFile(htmlPath, html, 'utf8');
     this.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: `${previewDomain} HTML preview`, artifactPath: htmlPath });
     this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Preview artifact: ${htmlPath}` });
+
+    const inlinePreviewType = this.inlinePreviewType(previewDomain);
+    if (inlinePreviewType) {
+      this.emit(sessionId, { type: 'preview.started', sessionId, previewType: inlinePreviewType });
+      this.emit(sessionId, { type: 'preview.content', sessionId, content: html, previewType: inlinePreviewType });
+      this.emit(sessionId, { type: 'preview.completed', sessionId, content: html, previewType: inlinePreviewType, artifactPath: htmlPath });
+      this.emit(sessionId, {
+        type: 'preview.verified',
+        sessionId,
+        previewType: inlinePreviewType,
+        artifactPath: htmlPath,
+        checks: ['html artifact written', 'inline preview mounted without popup'],
+      });
+      this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Inline ${inlinePreviewType} preview mounted: ${htmlPath}` });
+      return;
+    }
 
     try {
       await this.renderHtmlScreenshot(htmlPath, pngPath, previewDomain);

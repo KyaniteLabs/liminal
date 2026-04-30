@@ -99,7 +99,7 @@ export type TuiBridgeEvent =
   | ({ type: 'guidance.suggestion'; sessionId: string } & TuiGuidanceSuggestion)
   | { type: 'preview.started'; sessionId: string; previewType: 'code' | 'image' | 'html' | 'music' }
   | { type: 'preview.content'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music' }
-  | { type: 'preview.completed'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music'; imageUrl?: string }
+  | { type: 'preview.completed'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music'; imageUrl?: string; artifactPath?: string }
   | { type: 'preview.verified'; sessionId: string; previewType: 'code' | 'image' | 'html' | 'music'; artifactPath: string; checks: string[]; imageUrl?: string }
   | { type: 'preview.missing'; sessionId: string; previewType: 'code' | 'image' | 'html' | 'music'; reason: string; artifactPath?: string }
   // Generation telemetry: emitted during RalphLoop generation

@@ -11,6 +11,7 @@ function hasExplicitCreativeDomainCue(prompt: string): boolean {
     || /\bshader\b|\bglsl\b|\bfragment\s+shader\b/.test(lower)
     || /\bstrudel\b|\btidal\b|\blive\s+coding\s+music\b/.test(lower)
     || /\bhydra\b|\bvideo\s+synth\b/.test(lower)
+    || /\brevideo\b|@revideo\b/.test(lower)
     || /\btone\.?js\b|\btonejs\b|\bweb\s*audio\b/.test(lower)
     || /\bhyperframes?\b/.test(lower)
     || /\bkinetic\s+(typography|type|text|css)\b|\bcss\s+kinetic\b/.test(lower)
@@ -19,13 +20,18 @@ function hasExplicitCreativeDomainCue(prompt: string): boolean {
 
 export function inferCreativeDomain(prompt: string): Domain {
   const lower = prompt.toLowerCase();
-  const hasExplicitFrameworkCue = /\bhyperframes?\b|\bthree\.js\b|\bthreejs\b|\b3d\b|\bwebgl\b|\bscene\b|\bcamera\b|\bmesh\b|\bgeometry\b|\bshader\b|\bglsl\b|\bstrudel\b|\bhydra\b|\btone\.?js\b|\btonejs\b|\bweb\s*audio\b/.test(lower);
+  const hasExplicitFrameworkCue = /\bhyperframes?\b|\brevideo\b|@revideo\b|\bthree\.js\b|\bthreejs\b|\b3d\b|\bwebgl\b|\bscene\b|\bcamera\b|\bmesh\b|\bgeometry\b|\bshader\b|\bglsl\b|\bstrudel\b|\bhydra\b|\btone\.?js\b|\btonejs\b|\bweb\s*audio\b/.test(lower);
 
   if (/\bp5\.?js\b|\bp5js\b|\bp5\s+sketch\b|\bp5\s+code\b/.test(lower)) return Domain.P5;
   if (!hasExplicitFrameworkCue && /\bkinetic\s+(typography|type|text|css)\b|\bcss\s+kinetic\b|\b(animated|moving|orbiting|spinning|pulsing)\s+(words?|letters?|typography|text|type)\b|\b(typography|text|type)\b.*\b(animated|moving|kinetic|orbiting|spinning|pulsing)\b/.test(lower)) {
     return Domain.KINETIC;
   }
-  if (/\bhyperframes?\b|\b(promo|trailer|slideshow|title\s*card|subtitle|caption|social\s*media)\b|\b(composite|assemble|overlay|watermark|intro|outro)\b/.test(lower)) {
+  const forbidsRevideo = /\b(do not|don't|dont|never|avoid)\b[^.\n]*(revideo|@revideo)/.test(lower);
+  const explicitlyHyperframes = /\bhyperframes?\b/.test(lower);
+  const explicitlyRevideo = /\brevideo\b|@revideo\b/.test(lower);
+  if (explicitlyHyperframes) return Domain.HYPERFRAMES;
+  if (!forbidsRevideo && explicitlyRevideo) return Domain.REVIEWD;
+  if (/\b(promo|trailer|slideshow|title\s*card|subtitle|caption|social\s*media)\b|\b(composite|assemble|overlay|watermark|intro|outro)\b/.test(lower)) {
     return Domain.HYPERFRAMES;
   }
   if (/\bthree\.js\b|\bthreejs\b|\bthree\b|\b3d\b|\bwebgl\b|\bscene\b|\bcamera\b|\bmesh\b|\bgeometry\b|\borbit(?:ing)?\b/.test(lower)) {
@@ -52,6 +58,9 @@ export function buildCreativeDomainPlan(prompt: string): Domain[] {
 }
 
 export function previewDomainForCode(code: string, requestedDomain: Domain): PreviewDomain {
+  if (requestedDomain === Domain.TONE && /\bTone\.|tone(?:\.js|@|\.min\.js)|Tone\.Transport/i.test(code)) return 'tone';
+  if ((requestedDomain === Domain.STRUDEL || requestedDomain === Domain.MUSIC) && /\bstrudel\b|\bsound\(|\bnote\(/i.test(code)) return 'strudel';
+  if (requestedDomain === Domain.HYDRA && /\bosc\(|\bsrc\(|\bout\(/i.test(code)) return 'hydra';
   if (/\bTHREE\.|import\s+.*\bthree\b|new\s+THREE\./.test(code)) return 'three';
   const detected = CodeValidator.detectDomain(code);
   if (detected === 'shader' || detected === 'three' || detected === 'hydra' || detected === 'tone' || detected === 'strudel' || detected === 'ascii' || detected === 'html' || detected === 'revideo' || detected === 'hyperframes') {
@@ -61,9 +70,47 @@ export function previewDomainForCode(code: string, requestedDomain: Domain): Pre
   if (requestedDomain === Domain.GLSL || requestedDomain === Domain.SHADER || requestedDomain === Domain.WEBGL) return 'shader';
   if (requestedDomain === Domain.HYDRA) return 'hydra';
   if (requestedDomain === Domain.TONE) return 'tone';
+  if (requestedDomain === Domain.REVIEWD) return 'revideo';
   if (requestedDomain === Domain.HYPERFRAMES) return 'hyperframes';
   if (requestedDomain === Domain.KINETIC) return 'html';
   if (requestedDomain === Domain.STRUDEL || requestedDomain === Domain.MUSIC) return 'strudel';
   if (requestedDomain === Domain.ASCII) return 'ascii';
   return 'p5';
+}
+
+export interface GeneratedDomainValidation {
+  ok: boolean;
+  requested: Domain;
+  detected: PreviewDomain;
+  expected: PreviewDomain[];
+  message?: string;
+}
+
+export function expectedPreviewDomainsForCreativeDomain(domain: Domain): PreviewDomain[] {
+  if (domain === Domain.THREE) return ['three'];
+  if (domain === Domain.GLSL || domain === Domain.SHADER || domain === Domain.WEBGL) return ['shader'];
+  if (domain === Domain.HYDRA) return ['hydra'];
+  if (domain === Domain.TONE) return ['tone'];
+  if (domain === Domain.STRUDEL || domain === Domain.MUSIC) return ['strudel'];
+  if (domain === Domain.REVIEWD) return ['revideo'];
+  if (domain === Domain.HYPERFRAMES) return ['hyperframes'];
+  if (domain === Domain.KINETIC) return ['html'];
+  if (domain === Domain.ASCII) return ['ascii'];
+  if (domain === Domain.P5) return ['p5'];
+  return ['p5', 'three', 'shader', 'hydra', 'tone', 'strudel', 'ascii', 'html', 'revideo', 'hyperframes'];
+}
+
+export function validateGeneratedDomainForRequest(code: string, requestedDomain: Domain): GeneratedDomainValidation {
+  const detected = previewDomainForCode(code, requestedDomain);
+  const expected = expectedPreviewDomainsForCreativeDomain(requestedDomain);
+  const ok = expected.includes(detected);
+  return {
+    ok,
+    requested: requestedDomain,
+    detected,
+    expected,
+    message: ok
+      ? undefined
+      : `Domain mismatch: requested ${requestedDomain}, generated ${detected}; expected ${expected.join(' or ')}`,
+  };
 }

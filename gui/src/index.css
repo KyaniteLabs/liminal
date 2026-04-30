@@ -872,6 +872,31 @@ body::before {
   font-size: 0.78rem;
 }
 
+.liminal-stage-embed {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  background: #05070a;
+}
+
+.liminal-stage-embed iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #05070a;
+}
+
+.liminal-stage-embed figcaption {
+  padding: 8px 10px;
+  color: var(--liminal-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  border-top: 1px solid var(--liminal-line);
+  overflow-wrap: anywhere;
+}
+
 .liminal-stage-empty {
   height: 100%;
   display: grid;

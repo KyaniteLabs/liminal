@@ -16,14 +16,11 @@ export class StrudelGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: StrudelGeneratorOptions): Promise<string> {
-    try {
-      const code = await super.generate(prompt, options);
-      return this.sanitizeCode(code);
-    } catch (error) {
-      const direct = await this.retryStrudelDirect(prompt, options);
-      if (direct) return direct;
-      throw error;
-    }
+    const direct = await this.retryStrudelDirect(prompt, options);
+    if (direct) return direct;
+
+    const code = await super.generate(prompt, options);
+    return this.sanitizeCode(code);
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {

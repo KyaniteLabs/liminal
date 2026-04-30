@@ -87,6 +87,10 @@ describe('threeConfidence', () => {
   it('returns 0 for empty string', () => {
     expect(threeConfidence('')).toBe(0);
   });
+
+  it('does not route a p5-only prompt to Three just because it says not Three.js', () => {
+    expect(threeConfidence('Target creative domain: p5. Return p5.js code only. Do not use Three.js.')).toBe(0);
+  });
 });
 
 // ---------------------------------------------------------------------------

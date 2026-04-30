@@ -36,9 +36,10 @@ export interface WorkbenchProcessStep {
 }
 
 export interface WorkbenchPreview {
-  type: 'image' | 'code';
+  type: 'image' | 'code' | 'html' | 'music';
   src?: string;
   code?: string;
+  content?: string;
   label: string;
 }
 
@@ -329,6 +330,16 @@ export function latestBridgePreview(events: WorkbenchBridgeEvent[]): WorkbenchPr
         type: 'image',
         src: `data:image/png;base64,${event.content}`,
         label: typeof event.imageUrl === 'string' ? event.imageUrl : 'Generated preview image',
+      };
+    }
+    if ((event.previewType === 'html' || event.previewType === 'music') && typeof event.content === 'string') {
+      const type = event.previewType === 'music' ? 'music' : 'html';
+      return {
+        type,
+        content: String(event.content),
+        label: typeof event.artifactPath === 'string'
+          ? event.artifactPath
+          : type === 'music' ? 'Generated music preview' : 'Generated HTML preview',
       };
     }
     if (event.previewType === 'code' && typeof event.content === 'string') {

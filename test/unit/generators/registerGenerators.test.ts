@@ -85,6 +85,10 @@ describe('registerGenerators', () => {
       it('returns 0 for unrelated prompts', () => {
         expect(threeConfidence('draw a circle')).toBe(0);
       });
+
+      it('does not win when Three.js is explicitly forbidden by a p5 route prompt', () => {
+        expect(threeConfidence('Target creative domain: p5. Use p5.js only. Do not use Three.js.')).toBe(0);
+      });
     });
 
     describe('htmlConfidence', () => {
@@ -114,6 +118,10 @@ describe('registerGenerators', () => {
 
       it('returns 0 for unrelated prompts', () => {
         expect(svgConfidence('draw a circle in p5')).toBe(0);
+      });
+
+      it('does not win when SVG is explicitly forbidden by a kinetic route prompt', () => {
+        expect(svgConfidence('Target creative domain: kinetic. Return complete HTML/CSS. Do not return SVG-only output.')).toBe(0);
       });
     });
 

@@ -338,6 +338,19 @@ describe('workbenchTelemetry', () => {
     expect(preview?.code).toContain('function setup');
   });
 
+
+  it('extracts inline HTML and music previews so non-image domains still mount in the stage', () => {
+    const htmlPreview = latestBridgePreview([
+      { type: 'preview.completed', previewType: 'html', content: '<!doctype html><html><body>Hydra</body></html>', artifactPath: '/tmp/hydra.html' },
+    ]);
+    const musicPreview = latestBridgePreview([
+      { type: 'preview.completed', previewType: 'music', content: '<!doctype html><html><body>Tone</body></html>', artifactPath: '/tmp/tone.html' },
+    ]);
+
+    expect(htmlPreview).toMatchObject({ type: 'html', content: expect.stringContaining('Hydra'), label: '/tmp/hydra.html' });
+    expect(musicPreview).toMatchObject({ type: 'music', content: expect.stringContaining('Tone'), label: '/tmp/tone.html' });
+  });
+
   it('summarizes self-healing improvement proposal events for the Improve lane', () => {
     const lane = summarizeImproveLane([
       {

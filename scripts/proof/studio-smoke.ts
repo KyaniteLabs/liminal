@@ -98,7 +98,9 @@ try {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   await page.goto(`http://localhost:${guiPort}/`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  await page.getByLabel('More tools').click();
   await page.getByRole('button', { name: /^Improve$/ }).click();
+  await page.getByText('Session').click();
   await page.getByRole('button', { name: /^Scan$/ }).click();
   await page.getByText('Prove or hide ML feature value').waitFor({ timeout: 30_000 });
   await page.getByText('ML labels').waitFor({ timeout: 30_000 });

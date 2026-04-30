@@ -187,13 +187,13 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
   return [
     {
       id: 'intent',
-      label: 'Intent',
+      label: 'Brief',
       detail: hasClarification ? 'needs answer' : hasIntent ? 'brief captured' : 'waiting for prompt',
       status: hasClarification ? 'needs-input' : hasIntent || hasPlan || hasAttempt || hasComplete ? 'done' : phase === 'idle' ? 'pending' : 'active',
     },
     {
       id: 'route',
-      label: 'Route',
+      label: 'Medium',
       detail: hasComplete && completeEvent?.executionMode === 'draft' ? completedDraftRouteDetail(selectedDomain, backupWasUsed, failedDomains) : routeSummary,
       status: hasRoute || hasPlan || hasAttempt || hasComplete ? 'done' : hasIntent && !hasClarification ? 'active' : 'pending',
     },
@@ -215,7 +215,7 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
     },
     ...(hasCognitiveReceipt ? [{
       id: 'cognition',
-      label: 'Cognition',
+      label: 'Reflection',
       detail: cognitiveDetail,
       status: hasComplete ? 'done' : hasError ? 'failed' : 'active',
     } as WorkbenchProcessStep] : []),
@@ -255,7 +255,7 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
     .map((event) => {
       if (event.type === 'generation.intent_brief') {
         const requirements = Array.isArray(event.requirements) ? event.requirements : [];
-        return { label: 'Intent brief', detail: String(requirements[0] || event.userRequest || 'requirements extracted') };
+        return { label: 'Creative brief', detail: String(requirements[0] || event.userRequest || 'requirements extracted') };
       }
       if (event.type === 'generation.clarification_needed') {
         const questions = Array.isArray(event.questions) ? event.questions : [];
@@ -263,24 +263,24 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
       }
       if (event.type === 'generation.reasoning_trace') {
         const source = event.source ? `${event.source} ` : '';
-        return { label: `${source}Reasoning: ${String(event.phase || 'trace')}`, detail: String(event.thought || event.detail || 'thinking') };
+        return { label: `${source}Notes: ${String(event.phase || 'trace')}`, detail: String(event.thought || event.detail || 'thinking') };
       }
       if (event.type === 'generation.route.selected') {
         const domains = Array.isArray(event.domains) ? event.domains.join(' -> ') : 'unknown';
-        return { label: 'Route selected', detail: `${String(event.domain || 'domain')} (${domains})`, status: 'ok' };
+        return { label: 'Medium chosen', detail: `${String(event.domain || 'domain')} (${domains})`, status: 'ok' };
       }
       if (event.type === 'generation.domain_plan') {
         const domains = Array.isArray(event.domains) ? event.domains.join(' -> ') : 'unknown';
-        return { label: 'Domain plan', detail: domains };
+        return { label: 'Possible media', detail: domains };
       }
       if (event.type === 'generation.attempt.started') {
-        return { label: 'Model call', detail: `Attempt ${event.attempt}/${event.attemptTotal}: ${event.domain}` };
+        return { label: 'Generating', detail: `Attempt ${event.attempt}/${event.attemptTotal}: ${event.domain}` };
       }
       if (event.type === 'generation.candidate.generated') {
-        return { label: 'Candidate', detail: `Iteration ${event.iteration}, ${event.codeSize || 0} bytes` };
+        return { label: 'Draft', detail: `Iteration ${event.iteration}, ${event.codeSize || 0} bytes` };
       }
       if (event.type === 'generation.attempt.failed') {
-        return { label: 'Fallback', detail: String(event.error || 'attempt failed'), status: 'failed' };
+        return { label: 'Retrying', detail: String(event.error || 'attempt failed'), status: 'failed' };
       }
       if (event.type === 'tool.started') {
         return { label: String(event.toolName || 'tool'), detail: String(event.displayLabel || event.argsSummary || 'started'), status: 'running' };
@@ -305,7 +305,7 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
         return { label: 'Stopped', detail: String(event.reason || 'operator stopped generation'), status: 'failed' };
       }
       if (event.type === 'generation.cognitive_receipt') {
-        return { label: 'Cognitive receipt', detail: summarizeCognitiveReceipt([event]), status: 'ok' };
+        return { label: 'Reflection receipt', detail: summarizeCognitiveReceipt([event]), status: 'ok' };
       }
       if (event.type === 'generation.complete') {
         if (event.qualityState === 'unscored') {

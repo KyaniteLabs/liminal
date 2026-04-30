@@ -51,7 +51,12 @@ import { Gallery } from '../gallery/Gallery.js';
 import { PostGenerationCognitiveWriter } from './PostGenerationCognitiveWriter.js';
 import { detectProviderLabel } from '../config/ProviderRuntime.js';
 import { compactLLMErrorProvenance, extractLLMErrorProvenance } from '../llm/ErrorProvenance.js';
-import { describeStatusLifecycle } from '../types/status.js';
+import {
+  describeStatusLifecycle,
+  formatStatusEvidenceLines,
+  formatStatusNextAction,
+  formatStatusRiskLine,
+} from '../types/status.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -3305,9 +3310,7 @@ export class TuiBridgeService {
       `- Steps: ${session.stepCount}`,
       `- Duration: ${duration}ms`,
       `- Tools used: ${this.agentToolsUsed(session).join(', ') || 'none'}`,
-      `- Resumable: ${lifecycle.resumable ? 'yes' : 'no'}`,
-      `- Retryable provider failure: ${lifecycle.retryable ? 'yes' : 'no'}`,
-      `- Next action: ${lifecycle.nextAction.label}`,
+      ...formatStatusEvidenceLines(lifecycle),
     ];
 
     return [
@@ -3331,15 +3334,11 @@ export class TuiBridgeService {
         session.lastPlanError,
       ] : []),
       `Remaining risks:`,
-      lifecycle.resumable
-        ? '- Medium: checkpointed work exists; resume before starting a replacement run in the same area.'
-        : session.status === 'success'
-        ? '- Low: trust generated changes only after reviewing the diff and verification output.'
-        : '- The run did not report full success; inspect logs and working tree changes before trusting results.',
+      formatStatusRiskLine(lifecycle),
       `Recommended next action:`,
       session.status === 'success'
         ? '- Review the diff and merge if the changes match intent.'
-        : `- ${lifecycle.nextAction.label}: ${lifecycle.nextAction.reason}`,
+        : `- ${formatStatusNextAction(lifecycle.nextAction)}`,
       '',
       `Supporting tool trace:`,
       toolLines.length > 0 ? toolLines.join('\n') : '- no tool calls recorded',

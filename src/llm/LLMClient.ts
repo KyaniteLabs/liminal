@@ -28,6 +28,7 @@ import type { ProviderImageInput, ProviderRequest, ProviderResponse } from './Pr
 import type { ModelRole, ResolvedRoleConfig, RoleConfigFile } from '../config/RoleConfig.js';
 import { loadRoleConfig, getFallbacks } from '../config/RoleConfig.js';
 import { selectApiKeyForEndpoint } from '../config/ProviderKeyResolver.js';
+import { detectProviderLabel } from '../config/ProviderRuntime.js';
 
 export interface LLMConfig {
   /** Base URL for the LLM API (OpenAI-compatible) */
@@ -514,14 +515,13 @@ export class LLMClient {
 
   /** Detect provider name from baseUrl or model for logging */
   private detectProvider(): string {
-    const baseUrl = this.config.baseUrl.toLowerCase();
     const model = this.config.model.toLowerCase();
+    const provider = detectProviderLabel(this.config.baseUrl, this.config.model);
 
-    if (baseUrl.includes('minimax')) return Provider.MINIMAX; // Matches both api.minimaxi.com and api.minimax.io
-    if (baseUrl.includes('openai')) return Provider.OPENAI;
+    if (provider !== 'llm' && provider !== 'unknown') return provider;
+
+    const baseUrl = this.config.baseUrl.toLowerCase();
     if (baseUrl.includes('anthropic')) return 'anthropic';
-    if (baseUrl.includes('localhost:11434')) return Provider.OLLAMA;
-    if (baseUrl.includes('localhost:1234') || baseUrl.includes('lmstudio')) return Provider.LMSTUDIO;
     if (model.includes('qwen')) return Provider.LMSTUDIO;
     if (model.includes('llama')) return Provider.OLLAMA;
     if (model.includes('gemma') || model.includes('mistral')) return 'local';

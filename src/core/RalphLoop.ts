@@ -1000,7 +1000,12 @@ export class RalphLoop {
             : undefined),
         });
 
-        // Aesthetic guardrails: run AestheticCritic if enabled
+        const shouldRunHumanPerception = normalizedOptions.useHumanPerceptionGuardrails;
+        let aestheticScore = evaluation.dimensions?.aesthetic ?? evaluation.dimensions?.creative ?? 0;
+        let humanPerceptionPassed: boolean | undefined;
+        let humanPerceptionIssues: string[] | undefined;
+
+        // Layer 2 creative-form critics: run AestheticCritic only when explicitly enabled
         if (normalizedOptions.useAestheticGuardrails) {
           try {
             const { AestheticCritic } = await import('../aesthetic/index.js');
@@ -1018,6 +1023,7 @@ export class RalphLoop {
               normalizedOptions.aestheticConfig as unknown as Partial<import('../aesthetic/types.js').CriticConfig>,
               lirContext,  // Pass LIR context for structured evaluation
             );
+            aestheticScore = aestheticReport.score;
 
             // Apply penalty if violations detected
             if (!aestheticReport.passed) {
@@ -1032,12 +1038,21 @@ export class RalphLoop {
                 evaluation.issues = [...evaluation.issues, ...aestheticIssues];
               }
             }
+          } catch (e) {
+            // Aesthetic analysis failed gracefully — don't block generation
+            normalizedOptions.onThought?.(`Aesthetic analysis skipped: ${e instanceof Error ? e.message : 'unknown error'}`);
+          }
+        }
 
+        if (shouldRunHumanPerception) {
+          try {
             const { evaluateCodePerception } = await import('../perception/index.js');
             const perceptionReport = evaluateCodePerception(
               currentCode,
               String(normalizedOptions.collabDomain || normalizedOptions.mode || 'p5'),
             );
+            humanPerceptionPassed = perceptionReport.passed;
+            humanPerceptionIssues = perceptionReport.issues.map(issue => issue.id);
             if (!perceptionReport.passed) {
               evaluation.score = evaluation.score * 0.85;
               const perceptionIssues = perceptionReport.issues
@@ -1045,30 +1060,20 @@ export class RalphLoop {
                 .map(issue => `[human-perception] ${issue.id}: ${issue.message}`);
               evaluation.issues = [...(evaluation.issues ?? []), ...perceptionIssues];
             }
-
-            // Emit aesthetic and human-perception scores in evaluation event
-            eventBus.emit(EventTypes.LOOP_EVALUATION, 'RalphLoop', {
-              iteration,
-              overallScore: evaluation.score,
-              technicalScore: evaluation.dimensions?.technical ?? 0,
-              aestheticScore: aestheticReport.score,
-              humanPerceptionPassed: perceptionReport.passed,
-              humanPerceptionIssues: perceptionReport.issues.map(issue => issue.id),
-              noveltyScore: evaluation.dimensions?.novelty ?? 0,
-            });
           } catch (e) {
-            // Aesthetic analysis failed gracefully — don't block generation
-            normalizedOptions.onThought?.(`Aesthetic analysis skipped: ${e instanceof Error ? e.message : 'unknown error'}`);
+            normalizedOptions.onThought?.(`Human perception analysis skipped: ${e instanceof Error ? e.message : 'unknown error'}`);
           }
-        } else {
-          eventBus.emit(EventTypes.LOOP_EVALUATION, 'RalphLoop', {
-            iteration,
-            overallScore: evaluation.score,
-            technicalScore: evaluation.dimensions?.technical ?? 0,
-            aestheticScore: evaluation.dimensions?.aesthetic ?? evaluation.dimensions?.creative ?? 0,
-            noveltyScore: evaluation.dimensions?.novelty ?? 0,
-          });
         }
+
+        eventBus.emit(EventTypes.LOOP_EVALUATION, 'RalphLoop', {
+          iteration,
+          overallScore: evaluation.score,
+          technicalScore: evaluation.dimensions?.technical ?? 0,
+          aestheticScore,
+          ...(humanPerceptionPassed === undefined ? {} : { humanPerceptionPassed }),
+          ...(humanPerceptionIssues === undefined ? {} : { humanPerceptionIssues }),
+          noveltyScore: evaluation.dimensions?.novelty ?? 0,
+        });
 
         // Intuition-based scoring: advisory only, no score blending
         if (normalizedOptions.useIntuition && candidates.length > 0) {

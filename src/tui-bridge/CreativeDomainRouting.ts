@@ -6,12 +6,13 @@ const VISUAL_FALLBACKS: Domain[] = [Domain.THREE, Domain.P5, Domain.HYDRA, Domai
 
 function hasExplicitCreativeDomainCue(prompt: string): boolean {
   const lower = prompt.toLowerCase();
+  const hasRevideoHandle = lower.includes('@revideo');
   return /\bp5\.?js\b|\bp5js\b|\bp5\s+(sketch|code)\b|\bprocessing\b/.test(lower)
     || /\bthree\.js\b|\bthreejs\b|\bthree\s*js\b/.test(lower)
     || /\bshader\b|\bglsl\b|\bfragment\s+shader\b/.test(lower)
     || /\bstrudel\b|\btidal\b|\blive\s+coding\s+music\b/.test(lower)
     || /\bhydra\b|\bvideo\s+synth\b/.test(lower)
-    || /\brevideo\b|@revideo\b/.test(lower)
+    || hasRevideoHandle || /\brevideo\b/.test(lower)
     || /\btone\.?js\b|\btonejs\b|\bweb\s*audio\b/.test(lower)
     || /\bhyperframes?\b/.test(lower)
     || /\bkinetic\s+(typography|type|text|css)\b|\bcss\s+kinetic\b/.test(lower)
@@ -20,15 +21,16 @@ function hasExplicitCreativeDomainCue(prompt: string): boolean {
 
 export function inferCreativeDomain(prompt: string): Domain {
   const lower = prompt.toLowerCase();
-  const hasExplicitFrameworkCue = /\bhyperframes?\b|\brevideo\b|@revideo\b|\bthree\.js\b|\bthreejs\b|\b3d\b|\bwebgl\b|\bscene\b|\bcamera\b|\bmesh\b|\bgeometry\b|\bshader\b|\bglsl\b|\bstrudel\b|\bhydra\b|\btone\.?js\b|\btonejs\b|\bweb\s*audio\b/.test(lower);
+  const hasRevideoHandle = lower.includes('@revideo');
+  const hasExplicitFrameworkCue = hasRevideoHandle || /\bhyperframes?\b|\brevideo\b|\bthree\.js\b|\bthreejs\b|\b3d\b|\bwebgl\b|\bscene\b|\bcamera\b|\bmesh\b|\bgeometry\b|\bshader\b|\bglsl\b|\bstrudel\b|\bhydra\b|\btone\.?js\b|\btonejs\b|\bweb\s*audio\b/.test(lower);
 
   if (/\bp5\.?js\b|\bp5js\b|\bp5\s+sketch\b|\bp5\s+code\b/.test(lower)) return Domain.P5;
   if (!hasExplicitFrameworkCue && /\bkinetic\s+(typography|type|text|css)\b|\bcss\s+kinetic\b|\b(animated|moving|orbiting|spinning|pulsing)\s+(words?|letters?|typography|text|type)\b|\b(typography|text|type)\b.*\b(animated|moving|kinetic|orbiting|spinning|pulsing)\b/.test(lower)) {
     return Domain.KINETIC;
   }
-  const forbidsRevideo = /\b(do not|don't|dont|never|avoid)\b[^.\n]*(revideo|@revideo)/.test(lower);
+  const forbidsRevideo = /\b(do not|don't|dont|never|avoid)\b[^.\n]*(?:@?revideo)/.test(lower);
   const explicitlyHyperframes = /\bhyperframes?\b/.test(lower);
-  const explicitlyRevideo = /\brevideo\b|@revideo\b/.test(lower);
+  const explicitlyRevideo = hasRevideoHandle || /\brevideo\b/.test(lower);
   if (explicitlyHyperframes) return Domain.HYPERFRAMES;
   if (!forbidsRevideo && explicitlyRevideo) return Domain.REVIEWD;
   if (/\b(promo|trailer|slideshow|title\s*card|subtitle|caption|social\s*media)\b|\b(composite|assemble|overlay|watermark|intro|outro)\b/.test(lower)) {

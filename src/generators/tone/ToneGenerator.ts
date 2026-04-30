@@ -131,11 +131,36 @@ export class ToneGenerator extends TierBasedGenerator {
     if (clean.length < 80 || !/\bTone\b|tone\.js/i.test(clean)) return false;
     if (/```|<think\b/i.test(clean)) return false;
     if (/<html\b/i.test(clean) && !/<\/html>\s*$/i.test(clean)) return false;
-    const openBraces = (clean.match(/\{/g) || []).length;
-    const closeBraces = (clean.match(/\}/g) || []).length;
-    const openParens = (clean.match(/\(/g) || []).length;
-    const closeParens = (clean.match(/\)/g) || []).length;
-    return openBraces <= closeBraces && openParens <= closeParens;
+    return this.hasNestedDelimiters(clean);
+  }
+
+  private hasNestedDelimiters(code: string): boolean {
+    const stack: string[] = [];
+    const pairs: Record<string, string> = { ')': '(', '}': '{', ']': '[' };
+    let quote: '"' | "'" | '`' | null = null;
+    let escaped = false;
+
+    for (const char of code) {
+      if (quote) {
+        if (escaped) {
+          escaped = false;
+        } else if (char === '\\') {
+          escaped = true;
+        } else if (char === quote) {
+          quote = null;
+        }
+        continue;
+      }
+      if (char === '"' || char === "'" || char === '`') {
+        quote = char;
+      } else if (char === '(' || char === '{' || char === '[') {
+        stack.push(char);
+      } else if (char === ')' || char === '}' || char === ']') {
+        if (stack.pop() !== pairs[char]) return false;
+      }
+    }
+
+    return !quote && stack.length === 0;
   }
 
   /**

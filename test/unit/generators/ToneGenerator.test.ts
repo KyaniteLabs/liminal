@@ -174,6 +174,26 @@ document.getElementById('startBtn').addEventListener('click', function() {
     expect(wrapped).toContain('<!DOCTYPE html>');
   });
 
+  it('rejects direct Tone drafts with incorrectly nested delimiters', async () => {
+    mockComplete.mockResolvedValueOnce({
+      text: [
+        ') {',
+        'const synth = new Tone.Synth().toDestination();',
+        'const loop = new Tone.Loop(() => synth.triggerAttackRelease("C4", "8n"), "4n");',
+        'Tone.Transport.bpm.value = 92;',
+        'Tone.Transport.start();',
+      ].join('\n'),
+      success: true,
+    });
+
+    const gen = new ToneGenerator();
+    const result = await gen.generate('drone');
+
+    expect(result).toContain('<!DOCTYPE html>');
+    expect(result).not.toContain(') {');
+    expect(mockComplete).toHaveBeenCalledTimes(2);
+  });
+
   it('falls back to strict complete HTML when generation returns an invalid Tone fragment', async () => {
     mockToolLoop
       .mockResolvedValueOnce({

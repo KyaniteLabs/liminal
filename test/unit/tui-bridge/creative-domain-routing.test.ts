@@ -93,6 +93,13 @@ describe('TuiBridgeService creative domain routing', () => {
     expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.REVIEWD]);
   });
 
+  it('routes explicit @revideo package prompts to the Revideo composition domain', () => {
+    const prompt = 'Create an @revideo title-card composition with layered animated captions.';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.REVIEWD);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.REVIEWD]);
+  });
+
   it('rejects generated Three.js when the prompt locked the route to p5', () => {
     const threeCode = 'import * as THREE from "three"; const scene = new THREE.Scene();';
     const validation = validateGeneratedDomainForRequest(threeCode, Domain.P5);

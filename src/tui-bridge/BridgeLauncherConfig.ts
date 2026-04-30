@@ -6,6 +6,7 @@ import {
   apiKeyEnvNamesForProvider,
   detectProviderLabel,
   inferProviderVisionSupport,
+  providerRequiresApiKey,
 } from '../config/ProviderRuntime.js';
 
 export interface BridgeProviderConfig {
@@ -45,15 +46,6 @@ interface PersistedBridgeRoleConfig {
   apiKey?: string;
 }
 
-const API_KEY_REQUIRED_PROVIDERS = new Set<ProviderType>([
-  'minimax',
-  'glm',
-  'openai',
-  'openrouter',
-  'moonshot',
-  'kimi',
-]);
-
 export function resolveBridgeProviderConfig(): BridgeProviderConfig {
   const provider = getActiveProvider();
   const config = getProviderConfig(provider);
@@ -62,7 +54,7 @@ export function resolveBridgeProviderConfig(): BridgeProviderConfig {
     throw new Error(`No provider config found for ${provider}`);
   }
 
-  if (API_KEY_REQUIRED_PROVIDERS.has(provider) && !config.apiKey) {
+  if (providerRequiresApiKey(provider) && !config.apiKey) {
     throw new Error(
       `Missing API key for ${provider}. Set the provider key in ~/.liminal/config.json or environment variables.`,
     );

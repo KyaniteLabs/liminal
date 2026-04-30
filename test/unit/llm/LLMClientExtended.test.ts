@@ -641,17 +641,33 @@ describe('LLMClient tool loop diagnostics', () => {
 });
 
 describe('LLMClient isConfigured', () => {
+  const providerEnvKeys = [
+    'LIMINAL_LLM_BASE_URL',
+    'LIMINAL_LLM_API_KEY',
+    'OPENAI_API_KEY',
+    'MINIMAX_API_KEY',
+    'GLM_API_KEY',
+    'OPENROUTER_API_KEY',
+    'MOONSHOT_API_KEY',
+    'KIMI_API_KEY',
+    'ANTHROPIC_AUTH_TOKEN',
+  ];
+  let savedEnv: Record<string, string | undefined>;
+
   beforeEach(() => {
-    delete process.env.LIMINAL_LLM_BASE_URL;
-    delete process.env.LIMINAL_LLM_API_KEY;
-    delete process.env.OPENAI_API_KEY;
+    savedEnv = {};
+    for (const key of providerEnvKeys) {
+      savedEnv[key] = process.env[key];
+      delete process.env[key];
+    }
     process.env.NODE_ENV = 'test';
   });
 
   afterEach(() => {
-    delete process.env.LIMINAL_LLM_BASE_URL;
-    delete process.env.LIMINAL_LLM_API_KEY;
-    delete process.env.OPENAI_API_KEY;
+    for (const key of providerEnvKeys) {
+      if (savedEnv[key] === undefined) delete process.env[key];
+      else process.env[key] = savedEnv[key];
+    }
     delete process.env.NODE_ENV;
   });
 
@@ -671,6 +687,11 @@ describe('LLMClient isConfigured', () => {
 
   it('returns true when LIMINAL_LLM_API_KEY is set', () => {
     process.env.LIMINAL_LLM_API_KEY = 'test-key';
+    expect(LLMClient.isConfigured()).toBe(true);
+  });
+
+  it('returns true for any configured provider key from ProviderRuntime', () => {
+    process.env.GLM_API_KEY = 'glm-key';
     expect(LLMClient.isConfigured()).toBe(true);
   });
 });

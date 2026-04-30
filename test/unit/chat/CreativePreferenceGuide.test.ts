@@ -10,6 +10,7 @@ describe('CreativePreferenceGuide', () => {
     expect(getCreativeVocabularyDomainsForRuntimeDomain('p5')).toEqual(['color', 'motion']);
     expect(getCreativeVocabularyDomainsForRuntimeDomain('strudel')).toEqual(['music']);
     expect(getCreativeVocabularyDomainsForRuntimeDomain('revideo')).toEqual(['motion', 'cinematic', 'creative-writing']);
+    expect(getCreativeVocabularyDomainsForRuntimeDomain('kinetic')).toEqual(['creative-writing', 'motion', 'color']);
   });
 
   it('builds prompt hints from free-form conversation without adding mandatory UI fields', () => {
@@ -42,5 +43,19 @@ describe('CreativePreferenceGuide', () => {
     expect(suggestion?.title).toContain('Optional creative preferences');
     expect(suggestion?.description).toContain('Should the video lead');
     expect(suggestion?.description).not.toContain('guardrail');
+  });
+
+  it('surfaces writing preferences for Kinetic typography before lower-priority visual taste', () => {
+    const suggestion = createCreativePreferenceSuggestion({
+      prompt: 'moving type that reveals a short mythic phrase',
+      domain: 'kinetic',
+      techniques: [],
+      constraints: [],
+      references: [],
+      iteration: 1,
+      currentScore: 0.5,
+    });
+
+    expect(suggestion?.description).toContain('Should the words feel');
   });
 });

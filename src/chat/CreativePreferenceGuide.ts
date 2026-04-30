@@ -19,6 +19,7 @@ const DOMAIN_TO_VOCABULARY: Record<string, CreativeVocabularyDomain[]> = {
   strudel: ['music'],
   revideo: ['motion', 'cinematic', 'creative-writing'],
   hyperframes: ['motion', 'cinematic', 'creative-writing'],
+  kinetic: ['creative-writing', 'motion', 'color'],
 };
 
 export interface CreativePreferencePromptInput {

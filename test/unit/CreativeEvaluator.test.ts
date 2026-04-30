@@ -136,7 +136,7 @@ const scene = new THREE.Scene();`;
       const code = `import {makeScene2D, Txt} from '@revideo/2d';
 import {createRef} from '@revideo/core';
 
-export default makeScene2D(function* (view) {
+export default makeScene2D("PreviewScene", function* (view) {
   const title = createRef();
   view.add(<Txt ref={title} text="Hello Revideo" />);
   yield* title().opacity(1, 0.6);

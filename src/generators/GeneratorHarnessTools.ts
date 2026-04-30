@@ -174,10 +174,10 @@ void main() {
     domain: 'revideo',
     skeletonText: `// Revideo scene skeleton -- generator function shape, not React component
 // Do not use Remotion, @revideo/react, React.FC, useFrame, useCurrentFrame, or makeScene({ render: ... }).
-import { makeScene, createRef } from '@revideo/core';
-import { Txt, Rect } from '@revideo/2d';
+import { makeScene2D, Txt, Rect } from '@revideo/2d';
+import { createRef, waitFor } from '@revideo/core';
 
-export default makeScene('TypingScene', function* (view) {
+export default makeScene2D('TypingScene', function* (view) {
   const text = createRef<Txt>();
   view.add(
     <Rect width={'100%'} height={'100%'} fill={'#111'}>
@@ -185,9 +185,10 @@ export default makeScene('TypingScene', function* (view) {
     </Rect>
   );
   yield* text().opacity(1, 0.5);
+  yield* waitFor(1);
 });`,
-    requiredApis: ['makeScene', 'createRef', '@revideo/core', '@revideo/2d', 'Txt', 'Rect', 'view.add', 'yield*'],
-    shapeNotes: 'Revideo makeScene(name, function* (view) { view.add(...); yield* ... }) scene',
+    requiredApis: ['makeScene2D', 'createRef', 'waitFor', '@revideo/core', '@revideo/2d', 'Txt', 'Rect', 'view.add', 'yield*'],
+    shapeNotes: 'Revideo makeScene2D(name, function* (view) { view.add(...); yield* ... }) scene',
   },
 ];
 
@@ -219,7 +220,7 @@ const DOMAIN_API_VOCAB: DomainApiVocab[] = [
   },
   {
     domain: 'revideo',
-    apis: ['makeScene', 'createRef', '@revideo/core', '@revideo/2d', 'Txt', 'Rect', 'view.add(', 'yield*', 'function* (view)', 'export default makeScene('],
+    apis: ['makeScene2D', 'createRef', 'waitFor', '@revideo/core', '@revideo/2d', 'Txt', 'Rect', 'view.add(', 'yield*', 'function* (view)', 'export default makeScene2D('],
     contaminationDomains: ['remotion', '@revideo/react', 'useFrame', 'useCurrentFrame', 'React.FC', 'makeScene({ render:', 'elements: ['],
   },
 ];
@@ -251,7 +252,7 @@ const HARDENING_HINTS: HardeningHint[] = [
   { id: 'three_no_nested_html', text: 'If you return HTML, include exactly one HTML document. Never place a second <!DOCTYPE html> or <html> document inside a <script> block.', domains: ['three'] },
   { id: 'glsl_precision', text: 'Always start with precision mediump float; and declare all uniforms (u_time, u_resolution).', domains: ['glsl'] },
   { id: 'glsl_main_or_mainimage', text: 'Use either void main() with gl_FragColor, or void mainImage(out vec4, in vec2) -- not both mixed.', domains: ['glsl'] },
-  { id: 'revideo_makescene_shape', text: 'Use export default makeScene("SceneName", function* (view) { ... }). Do not use makeScene({ render: ... }).', domains: ['revideo'] },
+  { id: 'revideo_makescene_shape', text: 'Use export default makeScene2D("SceneName", function* (view) { ... }). Do not use makeScene({ render: ... }).', domains: ['revideo'] },
   { id: 'revideo_no_react', text: 'Do not use Remotion, @revideo/react, React.FC, useFrame, or useCurrentFrame. Use @revideo/core plus @revideo/2d.', domains: ['revideo'] },
   { id: 'revideo_scene_components', text: 'Use view.add(...), yield* animations, and @revideo/2d components such as Txt and Rect.', domains: ['revideo'] },
   { id: 'no_contamination', text: 'Do not mix frameworks. For Three.js, use only THREE namespace. For GLSL, use only WebGL/GLSL conventions.', domains: 'all' },
@@ -315,7 +316,7 @@ const WRAPPER_CONTRACTS: Record<string, string> = {
   shader: 'GLSL fragment shader code only (precision + uniforms + main or mainImage), no HTML wrapper.',
   hydra: 'Complete HTML page with Hydra loaded via CDN, visual synth code in <script type="module">.',
   kinetic: 'Complete HTML page with kineticjs or raw DOM animation, full document structure.',
-  revideo: 'Revideo scene file using export default makeScene("SceneName", function* (view) { ... }), @revideo/core, @revideo/2d components, view.add(...), and yield* animations. No Remotion, @revideo/react, React.FC, useFrame, useCurrentFrame, or makeScene({ render: ... }).',
+  revideo: 'Revideo scene file using export default makeScene2D("SceneName", function* (view) { ... }), @revideo/2d components, @revideo/core helpers, view.add(...), and yield* animations. No Remotion, @revideo/react, React.FC, useFrame, useCurrentFrame, or makeScene({ render: ... }).',
   p5: 'Complete HTML page with p5.js loaded via CDN, draw() and setup() functions in <script>.',
 };
 

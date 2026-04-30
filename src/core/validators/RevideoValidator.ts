@@ -2,9 +2,10 @@
  * RevideoValidator - Revideo video composition validation logic
  *
  * Revideo is the active programmatic video framework. The supported contract is
- * makeScene(name, function* (view) { ... }) with @revideo/core and @revideo/2d
- * scene components. It must not use @revideo/react, React.FC, or
- * useCurrentFrame/AbsoluteFill/Composition API.
+ * canonical makeScene2D("SceneName", function* (view) { ... }) scenes with @revideo/2d
+ * components and @revideo/core animation helpers. Legacy makeScene(name, ...)
+ * scenes remain accepted for compatibility. It must not use @revideo/react,
+ * React.FC, or useCurrentFrame/AbsoluteFill/Composition API.
  */
 
 export interface RevideoValidationResult {
@@ -14,7 +15,7 @@ export interface RevideoValidationResult {
 
 export class RevideoValidator {
   private static readonly VALID_REVIDEO_IMPORTS = new Set([
-    'makeScene', 'useTime', 'createSignal', 'createRef',
+    'makeScene', 'useTime', 'createSignal', 'createRef', 'waitFor',
     'interpolate', 'spring', 'Easing', 'Audio', 'Img', 'Video',
     'OffthreadVideo', 'staticFile'
   ]);
@@ -38,24 +39,29 @@ export class RevideoValidator {
   private static validateStructure(code: string): string[] {
     const errors: string[] = [];
 
-    const hasRevideo = /@revideo\/core/.test(code) ||
-                       /\b(makeScene|useTime|createSignal)\b/.test(code);
+    const hasRevideo = /@revideo\/(core|2d)/.test(code) ||
+                       /\b(makeScene2D|makeScene|useTime|createSignal)\b/.test(code);
 
     if (!hasRevideo) {
-      errors.push('Revideo code must use @revideo/core APIs (makeScene, useTime, createSignal)');
+      errors.push('Revideo code must use @revideo/2d or @revideo/core APIs (makeScene2D, createRef, waitFor)');
     }
 
-    const hasMakeScene = /makeScene/.test(code);
-    if (!hasMakeScene) {
-      errors.push('Revideo composition must export a makeScene function');
+    const hasMakeScene2D = /\bmakeScene2D\s*\(/.test(code);
+    const hasLegacyMakeScene = /\bmakeScene\s*\(/.test(code);
+    if (!hasMakeScene2D && !hasLegacyMakeScene) {
+      errors.push('Revideo composition must export makeScene2D(...) or makeScene(...)');
     }
 
     if (/makeScene\s*\(\s*\{/.test(code)) {
       errors.push('Revideo makeScene must use makeScene("SceneName", function* (view) { ... }), not makeScene({ render: ... })');
     }
 
-    if (!/makeScene\s*\(\s*['"][^'"]+['"]\s*,\s*function\*/.test(code)) {
-      errors.push('Revideo composition must use makeScene("SceneName", function* (view) { ... })');
+    const hasNamedCanonicalScene = /makeScene2D\s*\(\s*['"][^'"]+['"]\s*,\s*function\*/.test(code);
+    const hasSingleArgCanonicalScene = /makeScene2D\s*\(\s*function\*/.test(code);
+    const hasCanonicalScene = hasNamedCanonicalScene || hasSingleArgCanonicalScene;
+    const hasLegacyScene = /makeScene\s*\(\s*['"][^'"]+['"]\s*,\s*function\*/.test(code);
+    if (!hasCanonicalScene && !hasLegacyScene) {
+      errors.push('Revideo composition must use makeScene2D("SceneName", function* (view) { ... }), makeScene2D(function* (view) { ... }), or makeScene("SceneName", function* (view) { ... })');
     }
 
     return errors;
@@ -96,14 +102,14 @@ export class RevideoValidator {
   private static validateSemantics(code: string): string[] {
     const errors: string[] = [];
 
-    const hasMakeScene = /makeScene/.test(code);
+    const hasMakeScene = /\b(makeScene2D|makeScene)\b/.test(code);
     const hasSignalOrRef = /createSignal|createRef/.test(code);
     const hasJSX = /<[A-Z][A-Za-z0-9]*/.test(code) || /<[a-z]+/.test(code);
     const hasViewAdd = /\bview\.add\s*\(/.test(code);
     const hasYield = /\byield\*/.test(code);
 
     if (!hasMakeScene) {
-      errors.push('Revideo code must define a makeScene function');
+      errors.push('Revideo code must define a makeScene2D or makeScene function');
     }
 
     if (!hasSignalOrRef && !hasJSX) {
@@ -118,9 +124,10 @@ export class RevideoValidator {
       errors.push('Revideo animation should use generator/yield* animation steps');
     }
 
-    const hasDefaultMakeSceneExport = /export\s+default\s+makeScene\s*\(/.test(code);
+    const hasDefaultMakeSceneExport = /export\s+default\s+makeScene2D\s*\(/.test(code) ||
+      /export\s+default\s+makeScene\s*\(/.test(code);
     if (!hasDefaultMakeSceneExport) {
-      errors.push('Revideo code should export default makeScene(...)');
+      errors.push('Revideo code should export default makeScene2D("SceneName", ...) or makeScene(...)');
     }
 
     return errors;

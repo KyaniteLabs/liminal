@@ -36,6 +36,12 @@ describe('GUI workbench accessibility contract', () => {
     expect(shell).toContain('More Generate tools');
   });
 
+  it('does not force the secondary tools drawer closed on every render', () => {
+    expect(shell).toContain('secondaryToolsOpen');
+    expect(shell).toContain('onToggle');
+    expect(shell).not.toContain('open={activeMode !== primaryMode.id}');
+  });
+
   it('keeps internal process receipts out of the default preview panel', () => {
     expect(app).not.toContain('liminal-stage-process');
     expect(app).not.toContain('liminal-human-review-strip');

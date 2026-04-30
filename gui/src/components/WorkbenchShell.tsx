@@ -54,6 +54,7 @@ export function WorkbenchShell({
   const generateTabs = primaryMode.legacyTabs;
   const activeModeLabel = activeModeObject.label;
   const activeSurfaceLabel = formatLegacyTab(activeTab);
+  const [secondaryToolsOpen, setSecondaryToolsOpen] = React.useState(activeMode !== primaryMode.id);
   const userPrompt = prompt.trim();
   const showGeneratePreviewReady = activeMode === 'generate' && artifactReady;
   const artifactHeading = stageBusy
@@ -75,6 +76,12 @@ export function WorkbenchShell({
     : runDisabled
       ? 'Describe an artifact to enable generation'
       : `${runLabel} ready`;
+
+  React.useEffect(() => {
+    if (activeMode !== primaryMode.id) {
+      setSecondaryToolsOpen(true);
+    }
+  }, [activeMode, primaryMode.id]);
 
   return (
     <div className="liminal-workbench liminal-workbench--chat-first">
@@ -134,7 +141,11 @@ export function WorkbenchShell({
             )}
           </div>
           {secondaryModes.length > 0 && (
-            <details className="liminal-secondary-tools" open={activeMode !== primaryMode.id}>
+            <details
+              className="liminal-secondary-tools"
+              open={secondaryToolsOpen}
+              onToggle={(event) => setSecondaryToolsOpen(event.currentTarget.open)}
+            >
               <summary aria-label="More tools">More</summary>
               <div className="liminal-secondary-tools__body">
                 {secondaryModes.map((mode) => (

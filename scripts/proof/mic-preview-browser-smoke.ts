@@ -27,6 +27,10 @@ interface SmokeReceipt {
   eventTypes: string[];
   previewCompleted: boolean;
   previewCompletedBytes: number;
+  deniedOutText: string | null;
+  deniedConsoleMessages: string[];
+  deniedPageErrors: string[];
+  deniedEventTypes: string[];
 }
 
 const port = await getFreePort();
@@ -83,8 +87,42 @@ try {
   const events = service.getEvents(session.sessionId);
   const previewCompleted = events.some((event) => event.type === 'preview.completed');
   const completedContent = String(events.find((event) => event.type === 'preview.completed')?.content ?? '');
+
+  const deniedSessionRes = await fetch(`http://127.0.0.1:${port}/api/tui/session`, { method: 'POST' });
+  const deniedSession = await deniedSessionRes.json() as { sessionId: string };
+  const deniedContext = await browser.newContext();
+  const deniedPage = await deniedContext.newPage();
+  const deniedConsoleMessages: string[] = [];
+  const deniedPageErrors: string[] = [];
+  deniedPage.on('console', (msg) => deniedConsoleMessages.push(`${msg.type()}: ${msg.text()}`));
+  deniedPage.on('pageerror', (err) => deniedPageErrors.push(err.message));
+  await deniedPage.goto(`http://127.0.0.1:${port}/api/tui/session/${deniedSession.sessionId}/mic-preview`, {
+    waitUntil: 'domcontentloaded',
+  });
+  await deniedPage.evaluate(`(() => {
+    const deniedGetUserMedia = async () => {
+      throw new DOMException('Permission denied by smoke test', 'NotAllowedError');
+    };
+    if (navigator.mediaDevices) {
+      Object.defineProperty(navigator.mediaDevices, 'getUserMedia', { configurable: true, value: deniedGetUserMedia });
+    }
+  })()`);
+  await deniedPage.getByRole('button', { name: 'Start recording' }).click();
+  await deniedPage.waitForFunction(
+    () => document.querySelector('#out')?.textContent?.includes('Microphone permission was denied'),
+    null,
+    { timeout: 10_000 },
+  );
+  const deniedOutText = await deniedPage.locator('#out').textContent();
+  const deniedEvents = service.getEvents(deniedSession.sessionId);
+  await deniedContext.close();
+
+  const happyPathOk = pageErrors.length === 0 && previewCompleted && /RMS:|Peak:|Status: stopped/.test(outText ?? '');
+  const deniedPathOk = deniedPageErrors.length === 0
+    && /Status: microphone unavailable|Microphone permission was denied/.test(deniedOutText ?? '')
+    && deniedEvents.some((event) => event.type === 'preview.content');
   receipt = {
-    status: pageErrors.length === 0 && previewCompleted && /RMS:|Peak:|Status: stopped/.test(outText ?? '') ? 'pass' : 'fail',
+    status: happyPathOk && deniedPathOk ? 'pass' : 'fail',
     port,
     outText,
     consoleMessages,
@@ -92,6 +130,10 @@ try {
     eventTypes: events.map((event) => event.type),
     previewCompleted,
     previewCompletedBytes: completedContent.length,
+    deniedOutText,
+    deniedConsoleMessages,
+    deniedPageErrors,
+    deniedEventTypes: deniedEvents.map((event) => event.type),
   };
 } finally {
   await browser?.close().catch(() => undefined);

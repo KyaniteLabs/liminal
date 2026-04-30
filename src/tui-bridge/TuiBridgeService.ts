@@ -37,7 +37,13 @@ import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
 import { buildCreativePreferencePromptHints, createCreativePreferenceSuggestion } from '../chat/CreativePreferenceGuide.js';
 import type { Domain as ChatDomain } from '../chat/types.js';
-import { buildCreativeDomainPlan, previewDomainForCode, validateGeneratedDomainForRequest } from './CreativeDomainRouting.js';
+import {
+  buildCreativeDomainRouteTruth,
+  detectPreviewDomainForCode,
+  previewDomainForCode,
+  validateGeneratedDomainForRequest,
+  type CreativeDomainRouteTruth,
+} from './CreativeDomainRouting.js';
 import { summarizeReasoningTrace } from './TraceSummarizer.js';
 import { normalizeOptions } from '../core/LoopConfig.js';
 import { GenerationOrchestrator } from '../core/GenerationOrchestrator.js';
@@ -413,6 +419,23 @@ export class TuiBridgeService {
     });
     this.emit(sessionId, { type: 'run.lifecycle', sessionId, run });
     this.emit(sessionId, { type: 'status.updated', sessionId, status });
+  }
+
+  private emitDomainTruth(
+    sessionId: string,
+    route: CreativeDomainRouteTruth,
+    patch: { generatedDomain?: string; previewDomain?: string; artifactPath?: string } = {},
+  ): void {
+    this.emit(sessionId, {
+      type: 'generation.domain_truth',
+      sessionId,
+      requestedDomain: route.requestedDomain,
+      selectedDomain: route.selectedDomain,
+      domains: route.domains,
+      promptDomainLocked: route.promptDomainLocked,
+      source: route.source,
+      ...patch,
+    });
   }
 
   emitCommandResponse(sessionId: string, content: string): void {
@@ -1704,22 +1727,28 @@ export class TuiBridgeService {
         return;
       }
 
-      const domainPlan = buildCreativeDomainPlan(userText);
-      this.emitCreativePreferenceGuidance(sessionId, userText, domainPlan[0]);
+      const routeTruth = buildCreativeDomainRouteTruth(userText);
+      const domainPlan = routeTruth.domains;
+      this.emitCreativePreferenceGuidance(sessionId, userText, routeTruth.selectedDomain);
       this.emit(sessionId, {
         type: 'generation.route.selected',
         sessionId,
-        domain: domainPlan[0],
+        domain: routeTruth.selectedDomain,
         domains: domainPlan,
+        requestedDomain: routeTruth.requestedDomain,
+        selectedDomain: routeTruth.selectedDomain,
+        promptDomainLocked: routeTruth.promptDomainLocked,
+        source: routeTruth.source,
         startedAt: new Date(generationStartedAt).toISOString(),
         timeoutMinutes,
         candidateCount,
         executionMode: 'prove',
       });
+      this.emitDomainTruth(sessionId, routeTruth);
       const memoryReceipts = await this.cognitiveWriter.prepareGeneration({
         sessionId,
         userText,
-        domain: domainPlan[0],
+        domain: routeTruth.selectedDomain,
       });
       this.emitReasoningTrace(sessionId, {
         phase: 'domain-routing',
@@ -1740,6 +1769,10 @@ export class TuiBridgeService {
         type: 'generation.domain_plan',
         sessionId,
         domains: domainPlan,
+        requestedDomain: routeTruth.requestedDomain,
+        selectedDomain: routeTruth.selectedDomain,
+        promptDomainLocked: routeTruth.promptDomainLocked,
+        source: routeTruth.source,
         startedAt: new Date(generationStartedAt).toISOString(),
         timeoutMinutes,
         candidateCount,
@@ -1998,7 +2031,6 @@ export class TuiBridgeService {
         if (codeContent) {
           this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'code' });
           this.emit(sessionId, { type: 'preview.content', sessionId, content: codeContent, previewType: 'code' });
-          this.emit(sessionId, { type: 'preview.completed', sessionId, content: codeContent, previewType: 'code' });
         }
 
         this.transitionRun(sessionId, 'rendering', {
@@ -2006,7 +2038,7 @@ export class TuiBridgeService {
           model: result.model || generatorModelName,
           provider,
         });
-        await this.emitPreviewArtifacts(sessionId, result.code, activeDomain);
+        await this.emitPreviewArtifacts(sessionId, result.code, activeDomain, routeTruth);
 
         // Record in conversation
         conversation['recordMessage']('assistant', `Generated code (${result.iterations} iterations, score: ${result.finalScore.toFixed(2)}):\n\n${result.code}`);
@@ -2111,27 +2143,37 @@ export class TuiBridgeService {
         return;
       }
 
-      const domainPlan = buildCreativeDomainPlan(userText);
-      this.emitCreativePreferenceGuidance(sessionId, userText, domainPlan[0]);
+      const routeTruth = buildCreativeDomainRouteTruth(userText);
+      const domainPlan = routeTruth.domains;
+      this.emitCreativePreferenceGuidance(sessionId, userText, routeTruth.selectedDomain);
       this.emit(sessionId, {
         type: 'generation.route.selected',
         sessionId,
-        domain: domainPlan[0],
+        domain: routeTruth.selectedDomain,
         domains: domainPlan,
+        requestedDomain: routeTruth.requestedDomain,
+        selectedDomain: routeTruth.selectedDomain,
+        promptDomainLocked: routeTruth.promptDomainLocked,
+        source: routeTruth.source,
         startedAt: new Date(generationStartedAt).toISOString(),
         timeoutMinutes,
         candidateCount,
         executionMode: 'draft',
       });
+      this.emitDomainTruth(sessionId, routeTruth);
       const memoryReceiptsPromise = this.cognitiveWriter.prepareGeneration({
         sessionId,
         userText,
-        domain: domainPlan[0],
+        domain: routeTruth.selectedDomain,
       });
       this.emit(sessionId, {
         type: 'generation.domain_plan',
         sessionId,
         domains: domainPlan,
+        requestedDomain: routeTruth.requestedDomain,
+        selectedDomain: routeTruth.selectedDomain,
+        promptDomainLocked: routeTruth.promptDomainLocked,
+        source: routeTruth.source,
         startedAt: new Date(generationStartedAt).toISOString(),
         timeoutMinutes,
         candidateCount,
@@ -2318,7 +2360,6 @@ export class TuiBridgeService {
       if (codeContent) {
         this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'code' });
         this.emit(sessionId, { type: 'preview.content', sessionId, content: codeContent, previewType: 'code' });
-        this.emit(sessionId, { type: 'preview.completed', sessionId, content: codeContent, previewType: 'code' });
       }
 
       conversation['recordMessage']('assistant', `Generated artifact ready:\n\n${result.code}`);
@@ -2370,7 +2411,7 @@ export class TuiBridgeService {
         model: result.model || generatorModelName,
         provider,
       });
-      await this.emitPreviewArtifacts(sessionId, result.code, activeDomain);
+      await this.emitPreviewArtifacts(sessionId, result.code, activeDomain, routeTruth);
       this.completeRun(sessionId, {
         label: 'Creative draft complete',
         model: result.model || generatorModelName,
@@ -2478,7 +2519,6 @@ export class TuiBridgeService {
       if (codeContent) {
         this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'code' });
         this.emit(sessionId, { type: 'preview.content', sessionId, content: codeContent, previewType: 'code' });
-        this.emit(sessionId, { type: 'preview.completed', sessionId, content: codeContent, previewType: 'code' });
       }
 
       this.emit(sessionId, {
@@ -2890,20 +2930,39 @@ export class TuiBridgeService {
     return null;
   }
 
-  private async emitPreviewArtifacts(sessionId: string, code: string, requestedDomain: Domain): Promise<void> {
+  private async emitPreviewArtifacts(
+    sessionId: string,
+    code: string,
+    requestedDomain: Domain,
+    routeTruth?: CreativeDomainRouteTruth,
+  ): Promise<void> {
     const safeSessionId = sessionId.replace(/[^a-zA-Z0-9_-]/g, '-');
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     const dir = path.join(process.cwd(), '.omx', 'proof', 'live-previews');
+    const generatedDomain = detectPreviewDomainForCode(code);
     const previewDomain = previewDomainForCode(code, requestedDomain);
     const htmlPath = path.join(dir, `${previewDomain}-${safeSessionId}-${stamp}.html`);
     const pngPath = path.join(dir, `${previewDomain}-${safeSessionId}-${stamp}.png`);
+    const truth = routeTruth ?? {
+      requestedDomain,
+      selectedDomain: requestedDomain,
+      domains: [requestedDomain],
+      promptDomainLocked: false,
+      source: 'inferred' as const,
+    };
 
     await fs.mkdir(dir, { recursive: true });
     const html = this.toPreviewHtml(code, previewDomain);
     await fs.writeFile(htmlPath, html, 'utf8');
+    this.emitDomainTruth(sessionId, truth, {
+      generatedDomain,
+      previewDomain,
+      artifactPath: htmlPath,
+    });
     this.transitionRun(sessionId, 'rendering', {
       label: `Rendering ${previewDomain} preview`,
       artifactPath: htmlPath,
+      previewType: this.inlinePreviewType(previewDomain) ?? 'image',
     });
     this.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: `${previewDomain} HTML preview`, artifactPath: htmlPath });
     this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Preview artifact: ${htmlPath}` });
@@ -2912,13 +2971,25 @@ export class TuiBridgeService {
     if (inlinePreviewType) {
       this.emit(sessionId, { type: 'preview.started', sessionId, previewType: inlinePreviewType });
       this.emit(sessionId, { type: 'preview.content', sessionId, content: html, previewType: inlinePreviewType });
-      this.emit(sessionId, { type: 'preview.completed', sessionId, content: html, previewType: inlinePreviewType, artifactPath: htmlPath });
+      this.emit(sessionId, {
+        type: 'preview.completed',
+        sessionId,
+        content: html,
+        previewType: inlinePreviewType,
+        artifactPath: htmlPath,
+        requestedDomain,
+        generatedDomain,
+        previewDomain,
+      });
       this.emit(sessionId, {
         type: 'preview.verified',
         sessionId,
         previewType: inlinePreviewType,
         artifactPath: htmlPath,
         checks: ['html artifact written', 'inline preview mounted without popup'],
+        requestedDomain,
+        generatedDomain,
+        previewDomain,
       });
       this.transitionRun(sessionId, 'rendering', {
         label: `Rendered ${inlinePreviewType} preview`,
@@ -2936,7 +3007,17 @@ export class TuiBridgeService {
       this.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: `${previewDomain} preview image`, artifactPath: pngPath });
       this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'image' });
       this.emit(sessionId, { type: 'preview.content', sessionId, content: b64, previewType: 'image' });
-      this.emit(sessionId, { type: 'preview.completed', sessionId, content: b64, previewType: 'image', imageUrl: pngPath });
+      this.emit(sessionId, {
+        type: 'preview.completed',
+        sessionId,
+        content: b64,
+        previewType: 'image',
+        imageUrl: pngPath,
+        artifactPath: pngPath,
+        requestedDomain,
+        generatedDomain,
+        previewDomain,
+      });
       this.emit(sessionId, {
         type: 'preview.verified',
         sessionId,
@@ -2944,6 +3025,9 @@ export class TuiBridgeService {
         artifactPath: pngPath,
         imageUrl: pngPath,
         checks: ['html artifact written', 'screenshot rendered'],
+        requestedDomain,
+        generatedDomain,
+        previewDomain,
       });
       this.transitionRun(sessionId, 'rendering', {
         label: 'Rendered image preview',
@@ -2959,6 +3043,9 @@ export class TuiBridgeService {
         previewType: 'image',
         artifactPath: htmlPath,
         reason: message,
+        requestedDomain,
+        generatedDomain,
+        previewDomain,
       });
       this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Preview render failed: ${message}` });
       this.emit(sessionId, { type: 'error', sessionId, message: `Preview render failed: ${message}` });

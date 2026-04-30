@@ -4,7 +4,7 @@ import type { Domain as PreviewDomain } from '../utils/htmlWrapper.js';
 
 const VISUAL_FALLBACKS: Domain[] = [Domain.THREE, Domain.P5, Domain.HYDRA, Domain.GLSL];
 
-function hasExplicitCreativeDomainCue(prompt: string): boolean {
+export function hasExplicitCreativeDomainCue(prompt: string): boolean {
   const lower = prompt.toLowerCase();
   const hasRevideoHandle = lower.includes('@revideo');
   return /\bp5\.?js\b|\bp5js\b|\bp5\s+(sketch|code)\b|\bprocessing\b/.test(lower)
@@ -17,6 +17,14 @@ function hasExplicitCreativeDomainCue(prompt: string): boolean {
     || /\bhyperframes?\b/.test(lower)
     || /\bkinetic\s+(typography|type|text|css)\b|\bcss\s+kinetic\b/.test(lower)
     || /\bascii\b|\btext\s*art\b/.test(lower);
+}
+
+export interface CreativeDomainRouteTruth {
+  requestedDomain: Domain;
+  selectedDomain: Domain;
+  domains: Domain[];
+  promptDomainLocked: boolean;
+  source: 'prompt' | 'inferred';
 }
 
 export function inferCreativeDomain(prompt: string): Domain {
@@ -59,15 +67,34 @@ export function buildCreativeDomainPlan(prompt: string): Domain[] {
   return primaryPlan.filter((domain, index, all) => all.indexOf(domain) === index);
 }
 
-export function previewDomainForCode(code: string, requestedDomain: Domain): PreviewDomain {
-  if (requestedDomain === Domain.TONE && /\bTone\.|tone(?:\.js|@|\.min\.js)|Tone\.Transport/i.test(code)) return 'tone';
-  if ((requestedDomain === Domain.STRUDEL || requestedDomain === Domain.MUSIC) && /\bstrudel\b|\bsound\(|\bnote\(/i.test(code)) return 'strudel';
-  if (requestedDomain === Domain.HYDRA && /\bosc\(|\bsrc\(|\bout\(/i.test(code)) return 'hydra';
+export function buildCreativeDomainRouteTruth(prompt: string): CreativeDomainRouteTruth {
+  const requestedDomain = inferCreativeDomain(prompt);
+  const domains = buildCreativeDomainPlan(prompt);
+  const promptDomainLocked = requestedDomain !== Domain.GENERIC && hasExplicitCreativeDomainCue(prompt);
+  return {
+    requestedDomain,
+    selectedDomain: domains[0] ?? requestedDomain,
+    domains,
+    promptDomainLocked,
+    source: promptDomainLocked ? 'prompt' : 'inferred',
+  };
+}
+
+export function detectPreviewDomainForCode(code: string): PreviewDomain {
+  if (/\bTone\.|tone(?:\.js|@|\.min\.js)|Tone\.Transport/i.test(code)) return 'tone';
+  if (/\bstrudel\b|\bsound\(|\bnote\(/i.test(code)) return 'strudel';
+  if (/\bosc\(|\bsrc\(|\bout\(/i.test(code)) return 'hydra';
   if (/\bTHREE\.|import\s+.*\bthree\b|new\s+THREE\./.test(code)) return 'three';
   const detected = CodeValidator.detectDomain(code);
-  if (detected === 'shader' || detected === 'three' || detected === 'hydra' || detected === 'tone' || detected === 'strudel' || detected === 'ascii' || detected === 'html' || detected === 'revideo' || detected === 'hyperframes') {
+  if (detected === 'shader' || detected === 'three' || detected === 'hydra' || detected === 'tone' || detected === 'strudel' || detected === 'ascii' || detected === 'html' || detected === 'revideo' || detected === 'hyperframes' || detected === 'p5') {
     return detected;
   }
+  return 'p5';
+}
+
+export function previewDomainForCode(code: string, requestedDomain: Domain): PreviewDomain {
+  const detected = detectPreviewDomainForCode(code);
+  if (detected) return detected;
   if (requestedDomain === Domain.THREE) return 'three';
   if (requestedDomain === Domain.GLSL || requestedDomain === Domain.SHADER || requestedDomain === Domain.WEBGL) return 'shader';
   if (requestedDomain === Domain.HYDRA) return 'hydra';

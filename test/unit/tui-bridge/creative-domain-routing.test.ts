@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 
 import {
+  buildCreativeDomainRouteTruth,
   buildCreativeDomainPlan,
+  detectPreviewDomainForCode,
   inferCreativeDomain,
   previewDomainForCode,
   validateGeneratedDomainForRequest,
@@ -73,6 +75,28 @@ describe('TuiBridgeService creative domain routing', () => {
 
     expect(inferCreativeDomain(prompt)).toBe(Domain.HYDRA);
     expect(buildCreativeDomainPlan(prompt)[0]).toBe(Domain.HYDRA);
+  });
+
+  it('records prompt-locked route truth for explicit domain prompts', () => {
+    const route = buildCreativeDomainRouteTruth('make a hydra visual of icebergs dancing in the sky');
+
+    expect(route).toEqual({
+      requestedDomain: Domain.HYDRA,
+      selectedDomain: Domain.HYDRA,
+      domains: [Domain.HYDRA],
+      promptDomainLocked: true,
+      source: 'prompt',
+    });
+  });
+
+  it('records inferred route truth with fallback domains for implicit visuals', () => {
+    const route = buildCreativeDomainRouteTruth('luminous particles orbiting a dark center');
+
+    expect(route.requestedDomain).toBe(Domain.THREE);
+    expect(route.selectedDomain).toBe(Domain.THREE);
+    expect(route.promptDomainLocked).toBe(false);
+    expect(route.source).toBe('inferred');
+    expect(route.domains).toEqual([Domain.THREE, Domain.P5, Domain.HYDRA, Domain.GLSL]);
   });
 
 
@@ -160,6 +184,7 @@ describe('TuiBridgeService creative domain routing', () => {
   it('chooses preview domain from actual output code over requested fallback domain', () => {
     const threeCode = 'const scene = new THREE.Scene(); const renderer = new THREE.WebGLRenderer(); renderer.render(scene, new THREE.PerspectiveCamera());';
 
+    expect(detectPreviewDomainForCode(threeCode)).toBe('three');
     expect(previewDomainForCode(threeCode, Domain.P5)).toBe('three');
   });
 

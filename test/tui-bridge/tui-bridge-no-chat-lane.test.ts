@@ -177,6 +177,17 @@ describe('Bubble Tea operator routing', () => {
         artifactPath: `.omx/proof/live-previews/${sessionId}.html`,
         checks: ['mock preview rendered'],
       });
+      this.publishEvent(sessionId, {
+        type: 'generation.domain_truth',
+        requestedDomain: domain,
+        selectedDomain: domain,
+        domains: [domain],
+        promptDomainLocked: true,
+        source: 'prompt',
+        generatedDomain: domain,
+        previewDomain: domain,
+        artifactPath: `.omx/proof/live-previews/${sessionId}.html`,
+      });
     });
   });
 
@@ -364,6 +375,52 @@ describe('Bubble Tea operator routing', () => {
     expect((events[routeIndex] as any).domains[0]).toBe((events[routeIndex] as any).domain);
   });
 
+  it('records prompt-domain truth when prompt overrides a stale mode hint', async () => {
+    draftGenerate.mockImplementationOnce(async () => ({
+      needsClarification: false,
+      code: 'osc(10).kaleid(4).out()',
+      thinking: 'Drafted a Hydra video synth because the user prompt explicitly requested Hydra.',
+      model: 'qwen3.6-35b-a3b',
+    }));
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'Create a Tone.js Web Audio sketch.\n\nUser prompt: make a hydra visual of icebergs dancing in the sky',
+        clientIntent: 'creative',
+        executionMode: 'draft',
+        timeoutMinutes: 1,
+      },
+      fakeLlm() as never,
+    );
+
+    const truth = await waitFor(() => service.getEvents(session.sessionId)
+      .filter((event) => event.type === 'generation.domain_truth')
+      .find((event) => 'artifactPath' in event));
+
+    const route = service.getEvents(session.sessionId)
+      .find((event) => event.type === 'generation.route.selected');
+
+    expect(route).toMatchObject({
+      domain: 'hydra',
+      requestedDomain: 'hydra',
+      selectedDomain: 'hydra',
+      domains: ['hydra'],
+      promptDomainLocked: true,
+      source: 'prompt',
+    });
+    expect(truth).toMatchObject({
+      requestedDomain: 'hydra',
+      selectedDomain: 'hydra',
+      generatedDomain: 'hydra',
+      previewDomain: 'hydra',
+      artifactPath: expect.stringContaining('.html'),
+    });
+  });
+
   it('keeps a canonical draft run lifecycle through render before completion', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession();
@@ -397,6 +454,9 @@ describe('Bubble Tea operator routing', () => {
       outcome: 'completed',
       model: 'qwen3.6-35b-a3b',
     });
+    expect(service.getEvents(session.sessionId)
+      .filter((event) => event.type === 'preview.completed')
+      .every((event) => Boolean((event as any).artifactPath || (event as any).imageUrl))).toBe(true);
   });
 
   it('defaults workbench creative runs to the draft lane without invoking RalphLoop', async () => {
@@ -497,6 +557,12 @@ describe('Bubble Tea operator routing', () => {
   }, 15000);
 
   it('keeps Kinetic Studio mode out of the p5-only generation instruction path', async () => {
+    draftGenerate.mockImplementationOnce(async () => ({
+      needsClarification: false,
+      code: '<!doctype html><html><style>@keyframes orbit{to{transform:rotate(360deg)}}</style><body><span class="letter">threshold</span></body></html>',
+      thinking: 'Drafted CSS kinetic typography as HTML.',
+      model: 'qwen3.6-35b-a3b',
+    }));
     const service = new TuiBridgeService();
     const session = service.createSession();
 

@@ -2,6 +2,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { getActiveProvider, getProviderConfig, type ProviderType } from '../harness/MultiProviderConfig.js';
+import {
+  apiKeyEnvNamesForProvider,
+  detectProviderLabel,
+  inferProviderVisionSupport,
+} from '../config/ProviderRuntime.js';
 
 export interface BridgeProviderConfig {
   provider: ProviderType;
@@ -181,31 +186,12 @@ function roleStatus(role: BridgeRoleName, env: NodeJS.ProcessEnv, fallback?: Bri
 }
 
 function inferProvider(baseUrl: string, model: string): string {
-  const lowerUrl = baseUrl.toLowerCase();
-  const lowerModel = model.toLowerCase();
-  if (lowerUrl.includes('openrouter')) return 'openrouter';
-  if (lowerUrl.includes('z.ai') || lowerUrl.includes('bigmodel') || lowerModel.includes('glm')) return 'glm';
-  if (lowerUrl.includes('minimax')) return 'minimax';
-  if (lowerUrl.includes('openai')) return 'openai';
-  if (lowerUrl.includes('moonshot')) return 'moonshot';
-  if (lowerUrl.includes('kimi')) return 'kimi';
-  if (lowerUrl.includes('localhost:11434')) return 'ollama';
-  if (lowerUrl.includes('localhost:1234')) return 'lmstudio';
-  return lowerUrl ? 'custom' : 'unknown';
+  const label = detectProviderLabel(baseUrl, model);
+  return label === 'llm' ? 'custom' : label;
 }
 
 function inferVisionSupport(provider: string, model: string): BridgeVisionSupport {
-  const lower = `${provider} ${model}`.toLowerCase();
-  if (lower.includes('glm-5v') || lower.includes('glm 5v')) {
-    return 'yes';
-  }
-  if (lower.includes('glm') || lower.includes('minimax') || lower.includes('kimi') || lower.includes('moonshot')) {
-    return 'no';
-  }
-  if (lower.includes('gemini') || lower.includes('gpt-5') || lower.includes('gpt-4o') || lower.includes('claude') || lower.includes('vision') || lower.includes('-vl')) {
-    return 'yes';
-  }
-  return 'unknown';
+  return inferProviderVisionSupport(provider, model);
 }
 
 function rolePurpose(role: BridgeRoleName): string {
@@ -262,13 +248,7 @@ function setEnvValue(env: NodeJS.ProcessEnv, key: string, value: string | undefi
 
 function applyProviderApiKey(env: NodeJS.ProcessEnv, provider: string, apiKey: string | undefined, overwrite: boolean): void {
   if (!apiKey) return;
-  const set = (key: string) => setEnvValue(env, key, apiKey, overwrite);
-  if (provider === 'glm') set('GLM_API_KEY');
-  if (provider === 'minimax') set('MINIMAX_API_KEY');
-  if (provider === 'openai' || provider === 'custom') set('OPENAI_API_KEY');
-  if (provider === 'openrouter') set('OPENROUTER_API_KEY');
-  if (provider === 'moonshot' || provider === 'kimi') {
-    set('MOONSHOT_API_KEY');
-    if (provider === 'kimi') set('KIMI_API_KEY');
+  for (const key of apiKeyEnvNamesForProvider(provider as ProviderType)) {
+    setEnvValue(env, key, apiKey, overwrite);
   }
 }

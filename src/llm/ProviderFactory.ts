@@ -6,6 +6,7 @@
  */
 
 import type { ProviderConfig } from './ProviderTypes.js';
+import { detectProviderAdapter } from '../config/ProviderRuntime.js';
 import { BaseProvider } from './providers/BaseProvider.js';
 import { OpenAIProvider } from './providers/OpenAIProvider.js';
 import { AnthropicProvider } from './providers/AnthropicProvider.js';
@@ -20,27 +21,7 @@ export type ProviderName = 'openai' | 'anthropic' | 'ollama' | 'openrouter' | 'g
  * Detect provider from baseUrl or config hints.
  */
 export function detectProvider(config: ProviderConfig): ProviderName {
-  const baseUrl = config.baseUrl.toLowerCase();
-
-  if (baseUrl.includes('openrouter')) return 'openrouter';
-  if (baseUrl.includes('minimax')) return 'minimax'; // Before anthropic — api.minimax.io/anthropic contains "anthropic"
-  if (baseUrl.includes('anthropic') || baseUrl.includes('api.anthropic')) return 'anthropic';
-  if (baseUrl.includes('generativelanguage') || baseUrl.includes('googleapis')) return 'google';
-  if (baseUrl.includes(':11434') || baseUrl.includes('ollama')) return 'ollama';
-  if (baseUrl.includes('z.ai') || baseUrl.includes('bigmodel.cn')) return 'openai'; // Z.ai also has OpenAI-compatible endpoints.
-  if (baseUrl.includes('moonshot.ai') || baseUrl.includes('moonshot.cn')) return 'openai'; // KimiCode — OpenAI-compatible
-  if (baseUrl.includes('api.kimi.com/coding')) return 'anthropic'; // Kimi Code coding-agent endpoint — Anthropic Messages API
-  if (baseUrl.includes('kimi.com')) return 'openai'; // Other Kimi endpoints — OpenAI-compatible
-  if (baseUrl.includes('openai') || baseUrl.includes('api.openai')) return 'openai';
-
-  // Local endpoints: check model name for hints
-  const model = config.model.toLowerCase();
-  if (model.includes('claude')) return 'anthropic';
-  if (model.includes('gemini')) return 'google';
-  if (model.includes('deepseek-r1') && baseUrl.includes('11434')) return 'ollama';
-
-  // Default: OpenAI-compatible (covers LM Studio, LocalAI, vLLM, etc.)
-  return 'openai';
+  return detectProviderAdapter(config);
 }
 
 /**

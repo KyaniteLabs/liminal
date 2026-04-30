@@ -16,6 +16,26 @@ If the runtime supports local skills, load and apply `karpathy-guidelines` direc
 
 ---
 
+## Agent skills
+
+### Active Matt Pocock skill surface
+
+Codex should use only the active Matt Pocock subset: `setup-matt-pocock-skills`, `diagnose`, `grill-with-docs`, `improve-codebase-architecture`, and `zoom-out`. Do not use quarantined Matt Pocock skills unless they are explicitly re-enabled.
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues for `Pastorsimon1798/liminal`; see `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical triage labels are documented conservatively; most are not present in GitHub yet, so do not invent mappings to unrelated labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Liminal is configured as a single-context repo; read available domain docs opportunistically and let `grill-with-docs` create missing glossary/ADR artifacts lazily. See `docs/agents/domain.md`.
+
+---
+
 ## Overview
 
 Liminal is a creative coding agent with a **Meta-Harness** — a self-improving outer loop that observes failures, detects patterns, and applies targeted fixes. Agents operate inside this loop, using tools to generate, evaluate, and improve creative code.

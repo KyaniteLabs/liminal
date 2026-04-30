@@ -43,7 +43,7 @@ function entryNameForDomain(domain?: Domain | string): string | null {
 
 function dispatchForRequestedDomain(domain?: Domain | string): DispatchResult {
   const entryName = entryNameForDomain(domain);
-  if (!entryName) return null;
+  if (!entryName || typeof generatorRegistry.getAll !== 'function') return null;
   const entry = generatorRegistry.getAll().find((candidate) => candidate.name === entryName);
   return entry ? { entry, confidence: 1 } : null;
 }

@@ -56,8 +56,18 @@ import { StrudelGenerator } from '../../../src/generators/strudel/StrudelGenerat
 
 describe('StrudelGenerator', () => {
   beforeEach(() => {
-    mockToolLoop.mockClear();
-    mockComplete.mockClear();
+    mockToolLoop.mockReset();
+    mockToolLoop.mockResolvedValue({
+      content: 's("bd sd hh").fast(2)',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: true,
+    });
+    mockComplete.mockReset();
+    mockComplete.mockResolvedValue({
+      text: 's("bd sd hh").fast(2)',
+      success: true,
+    });
   });
 
   it('constructs with strudel domain', () => {
@@ -82,6 +92,7 @@ describe('StrudelGenerator', () => {
   });
 
   it('sanitizeCode strips markdown fences', async () => {
+    mockComplete.mockResolvedValueOnce({ text: '', success: true });
     mockToolLoop.mockResolvedValueOnce({
       content: '```javascript\ns("bd hh").fast(4)\n```',
       iterations: 1, toolCallsMade: 0, success: true,
@@ -93,6 +104,7 @@ describe('StrudelGenerator', () => {
   });
 
   it('sanitizeCode strips HTML script loader tags while preserving Strudel source', async () => {
+    mockComplete.mockResolvedValueOnce({ text: '', success: true });
     mockToolLoop.mockResolvedValueOnce({
       content: '<script src="https://cdn.jsdelivr.net/npm/@strudel/web@latest"></script>\nstack(s("bd"), note("c3")).out()',
       iterations: 1, toolCallsMade: 0, success: true,
@@ -122,37 +134,38 @@ describe('StrudelGenerator', () => {
     expect(wrapped).toContain('&gt;');
   });
 
-  it('falls back to a compact direct prompt when tool-assisted generation is empty', async () => {
-    mockToolLoop.mockResolvedValueOnce({
-      content: '',
-      iterations: 1,
-      toolCallsMade: 0,
-      success: true,
-    });
-    mockComplete
-      .mockResolvedValueOnce({ text: '', success: true })
-      .mockResolvedValueOnce({ text: '$: s("bd sd").fast(2)\\n$: note("c3 eb3").slow(2)', success: true });
+  it('uses compact direct generation before tool-assisted generation', async () => {
+    mockComplete.mockResolvedValueOnce({ text: '$: s("bd sd").fast(2)\\n$: note("c3 eb3").slow(2)', success: true });
 
     const gen = new StrudelGenerator();
     const result = await gen.generate('drums and bass');
 
     expect(result).toContain('s("bd sd")');
-    expect(mockComplete).toHaveBeenCalledTimes(2);
+    expect(mockComplete).toHaveBeenCalledTimes(1);
+    expect(mockToolLoop).not.toHaveBeenCalled();
   });
 
-  it('recovers Strudel code from provider thinking during direct retry', async () => {
+  it('falls back to tool-assisted generation when direct Strudel generation is empty', async () => {
+    mockComplete.mockResolvedValueOnce({ text: '', success: true });
     mockToolLoop.mockResolvedValueOnce({
-      content: '',
+      content: 'stack(s("bd"), note("c3")).out()',
       iterations: 1,
       toolCallsMade: 0,
       success: true,
     });
-    mockComplete
-      .mockResolvedValueOnce({ text: '', success: true })
-      .mockResolvedValueOnce({
-        text: '<think>Plan:\\n$: s("bd sd").fast(2)\\n$: note("c3 eb3").slow(2)</think>',
-        success: true,
-      });
+
+    const gen = new StrudelGenerator();
+    const result = await gen.generate('drums and bass');
+
+    expect(result).toContain('stack(s("bd"), note("c3")).out()');
+    expect(mockToolLoop).toHaveBeenCalledTimes(1);
+  });
+
+  it('recovers Strudel code from provider thinking during direct retry', async () => {
+    mockComplete.mockResolvedValueOnce({
+      text: '<think>Plan:\\n$: s("bd sd").fast(2)\\n$: note("c3 eb3").slow(2)</think>',
+      success: true,
+    });
 
     const gen = new StrudelGenerator();
     const result = await gen.generate('drums and bass');

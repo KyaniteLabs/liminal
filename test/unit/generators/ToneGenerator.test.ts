@@ -56,8 +56,18 @@ import { ToneGenerator } from '../../../src/generators/tone/ToneGenerator.js';
 
 describe('ToneGenerator', () => {
   beforeEach(() => {
-    mockToolLoop.mockClear();
-    mockComplete.mockClear();
+    mockToolLoop.mockReset();
+    mockToolLoop.mockResolvedValue({
+      content: 'const synth = new Tone.Synth().toDestination();',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: true,
+    });
+    mockComplete.mockReset();
+    mockComplete.mockResolvedValue({
+      text: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Tone.js Patch</title><script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script></head><body><button id="start">Start</button><script>document.getElementById("start").onclick=async()=>{await Tone.start();new Tone.Synth().toDestination().triggerAttackRelease("C4","8n");};</script></body></html>',
+      success: true,
+    });
   });
 
   it('constructs with tone domain', () => {
@@ -67,6 +77,7 @@ describe('ToneGenerator', () => {
   });
 
   it('sanitizeCode strips markdown fences', async () => {
+    mockComplete.mockResolvedValue({ text: '', success: true });
     mockToolLoop.mockResolvedValueOnce({
       content: '```javascript\nconst synth = new Tone.Synth();\n```',
       iterations: 1, toolCallsMade: 0, success: true,
@@ -78,6 +89,7 @@ describe('ToneGenerator', () => {
   });
 
   it('sanitizeCode strips think tags', async () => {
+    mockComplete.mockResolvedValue({ text: '', success: true });
     mockToolLoop.mockResolvedValueOnce({
       content: '<think reasoning here</think\nnew Tone.Synth()',
       iterations: 1, toolCallsMade: 0, success: true,
@@ -122,7 +134,8 @@ document.getElementById('startBtn').addEventListener('click', function() {
     expect(result.error).toContain('truncated or orphaned HTML');
   });
 
-  it('requests a larger token budget for full Tone.js pages', async () => {
+  it('requests a larger token budget for tool-assisted full Tone.js pages after direct retry fails', async () => {
+    mockComplete.mockResolvedValue({ text: '', success: true });
     const gen = new ToneGenerator();
     await gen.generate('ambient drone');
     expect(mockToolLoop).toHaveBeenCalledWith(expect.objectContaining({ maxTokens: 8192 }));

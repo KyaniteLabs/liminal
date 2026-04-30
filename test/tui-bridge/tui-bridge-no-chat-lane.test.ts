@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Status } from '../../src/types/status.js';
 
 const { executeTask } = vi.hoisted(() => ({
@@ -154,6 +154,34 @@ describe('Bubble Tea operator routing', () => {
     executeTask.mockClear();
     ralphRun.mockClear();
     draftGenerate.mockClear();
+    vi.spyOn(TuiBridgeService.prototype as any, 'emitPreviewArtifacts').mockImplementation(async function (
+      this: InstanceType<typeof TuiBridgeService>,
+      sessionId: string,
+      _code: string,
+      domain: string,
+    ) {
+      this.publishEvent(sessionId, {
+        type: 'artifact.found',
+        artifactLabel: `${domain} HTML preview`,
+        artifactPath: `.omx/proof/live-previews/${sessionId}.html`,
+      });
+      this.publishEvent(sessionId, {
+        type: 'preview.completed',
+        previewType: 'html',
+        content: '<html></html>',
+        artifactPath: `.omx/proof/live-previews/${sessionId}.html`,
+      });
+      this.publishEvent(sessionId, {
+        type: 'preview.verified',
+        previewType: 'html',
+        artifactPath: `.omx/proof/live-previews/${sessionId}.html`,
+        checks: ['mock preview rendered'],
+      });
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('routes ordinary text to direct chat without requiring review in assist mode', async () => {
@@ -180,6 +208,16 @@ describe('Bubble Tea operator routing', () => {
       type: 'session.turn',
       intent: 'direct',
       delegatedTo: 'llm-chat',
+    });
+    expect(service.getEvents(session.sessionId)
+      .filter((event) => event.type === 'run.lifecycle')
+      .map((event) => event.run.phase)).toEqual(['queued', 'generating', 'completed']);
+    expect(service.getStatus(session.sessionId).run).toMatchObject({
+      kind: 'chat',
+      phase: 'completed',
+      outcome: 'completed',
+      model: 'test-model',
+      provider: 'openai',
     });
   });
 
@@ -324,6 +362,41 @@ describe('Bubble Tea operator routing', () => {
       timeoutMinutes: 1,
     });
     expect((events[routeIndex] as any).domains[0]).toBe((events[routeIndex] as any).domain);
+  });
+
+  it('keeps a canonical draft run lifecycle through render before completion', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'p5 sketch of fireflies orbiting a moonlit willow tree',
+        clientIntent: 'creative',
+        executionMode: 'draft',
+        timeoutMinutes: 1,
+      },
+      fakeLlm() as never,
+    );
+
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'generation.complete'));
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'run.lifecycle' && event.run.phase === 'completed'));
+
+    const lifecycle = service.getEvents(session.sessionId)
+      .filter((event): event is Extract<typeof event, { type: 'run.lifecycle' }> => event.type === 'run.lifecycle');
+    const phases = lifecycle.map((event) => event.run.phase);
+    expect(phases).toEqual(expect.arrayContaining(['queued', 'planning', 'generating', 'rendering', 'completed']));
+    expect(phases.lastIndexOf('rendering')).toBeLessThan(phases.lastIndexOf('completed'));
+    expect(service.getStatus(session.sessionId).run).toMatchObject({
+      kind: 'creative',
+      executionMode: 'draft',
+      phase: 'completed',
+      outcome: 'completed',
+      model: 'qwen3.6-35b-a3b',
+    });
   });
 
   it('defaults workbench creative runs to the draft lane without invoking RalphLoop', async () => {
@@ -474,6 +547,11 @@ describe('Bubble Tea operator routing', () => {
 
     expect(service.getEvents(session.sessionId).some((event) => event.type === 'generation.complete')).toBe(false);
     expect(service.getEvents(session.sessionId).some((event) => event.type === 'activity.updated' && String((event as any).message).includes('Generation stopped'))).toBe(true);
+    expect(service.getStatus(session.sessionId).run).toMatchObject({
+      phase: 'failed',
+      outcome: 'cancelled',
+      error: 'Generation stopped by operator.',
+    });
 
     pendingDraft.resolve({
       needsClarification: false,

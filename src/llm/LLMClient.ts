@@ -96,6 +96,18 @@ export interface LLMResponse {
   detectedPatterns?: string[];
 }
 
+export interface LLMCompleteResult {
+  text: string;
+  success: boolean;
+  error?: string;
+  provider?: string;
+  model?: string;
+  endpoint?: string;
+  statusCode?: number;
+  retryable?: boolean;
+  responseBody?: string;
+}
+
 /**
  * Universal LLM Client - model agnostic, provider agnostic
  *
@@ -905,7 +917,7 @@ export class LLMClient {
     maxTokens?: number;
     temperature?: number;
     signal?: AbortSignal;
-  }): Promise<{ text: string; success: boolean; error?: string }> {
+  }): Promise<LLMCompleteResult> {
     const {
       prompt,
       systemPrompt = 'You are a helpful assistant.',
@@ -1013,9 +1025,22 @@ export class LLMClient {
       return result;
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      const isRetryable = error instanceof LLMError ? error.retryable : undefined;
+      const provenance = compactLLMErrorProvenance(
+        extractLLMErrorProvenance(error),
+        {
+          provider: this.detectProvider(),
+          model: this.config.model,
+          endpoint: this.providerEndpoint(),
+          retryable: isRetryable,
+        },
+      );
       eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', {
-        provider: this.detectProvider(),
-        model: this.config.model,
+        provider: provenance.provider,
+        model: provenance.model,
+        endpoint: provenance.endpoint,
+        statusCode: provenance.statusCode,
+        retryable: provenance.retryable,
         method: 'complete',
         success: false,
         duration: Date.now() - startTime,
@@ -1025,6 +1050,12 @@ export class LLMClient {
         text: '',
         success: false,
         error: errMsg,
+        provider: provenance.provider,
+        model: provenance.model,
+        endpoint: provenance.endpoint,
+        statusCode: provenance.statusCode,
+        retryable: provenance.retryable,
+        responseBody: provenance.responseBody,
       };
     }
   }

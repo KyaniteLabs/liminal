@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { err } from 'neverthrow';
 
 // ============================================================================
 // SECURITY NOTICE: All API keys in this file are FAKE test values.
@@ -410,6 +411,49 @@ describe('LLMClient getSafeConfig', () => {
     const safeConfig = client.getSafeConfig();
 
     expect(safeConfig.apiKey).toBeUndefined();
+  });
+});
+
+describe('LLMClient complete failure provenance', () => {
+  it('returns provider, model, endpoint, status, retryability, and body on provider errors', async () => {
+    const client = new LLMClient({
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-5.4-mini',
+      apiKey: 'fake-test-key',
+    });
+    const endpoint = 'https://api.openai.com/v1/chat/completions';
+    const providerError = new LLMError(
+      'OpenAI API error 400: bad request',
+      'openai',
+      400,
+      false,
+      {
+        model: 'gpt-5.4-mini',
+        endpoint,
+        responseBody: '{"error":"bad request","api_key":"[REDACTED]"}',
+      },
+    );
+    const provider = {
+      name: 'openai',
+      getModel: vi.fn(() => 'gpt-5.4-mini'),
+      generate: vi.fn(async () => err(providerError)),
+    };
+
+    vi.spyOn(client as any, 'resolveModel').mockResolvedValue('gpt-5.4-mini');
+    vi.spyOn(client as any, 'getProvider').mockResolvedValue(provider);
+
+    const response = await client.complete({
+      systemPrompt: 'system',
+      prompt: 'hello',
+    });
+
+    expect(response.success).toBe(false);
+    expect(response.provider).toBe('openai');
+    expect(response.model).toBe('gpt-5.4-mini');
+    expect(response.endpoint).toBe(endpoint);
+    expect(response.statusCode).toBe(400);
+    expect(response.retryable).toBe(false);
+    expect(response.responseBody).toContain('[REDACTED]');
   });
 });
 

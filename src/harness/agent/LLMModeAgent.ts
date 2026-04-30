@@ -139,8 +139,10 @@ interface PlanningLLMResponse {
   error?: string;
   provider?: string;
   model?: string;
+  endpoint?: string;
   statusCode?: number;
   retryable?: boolean;
+  responseBody?: unknown;
   body?: unknown;
 }
 
@@ -969,13 +971,15 @@ Return exactly one JSON object with keys thought, tool, params, expectedResult. 
   }
 
   private formatPlanningFailure(response: PlanningLLMResponse): string {
+    const responseBody = response.responseBody ?? response.body;
     const fields = [
       response.error || 'LLM call failed before producing a response',
       response.provider ? `provider=${response.provider}` : undefined,
       response.model ? `model=${response.model}` : undefined,
+      response.endpoint ? `endpoint=${response.endpoint}` : undefined,
       typeof response.statusCode === 'number' ? `status=${response.statusCode}` : undefined,
       typeof response.retryable === 'boolean' ? `retryable=${response.retryable}` : undefined,
-      response.body !== undefined ? `body=${this.safeStringify(response.body)}` : undefined,
+      responseBody !== undefined ? `body=${this.safeStringify(responseBody)}` : undefined,
     ].filter((field): field is string => Boolean(field));
     return fields.join(' | ');
   }

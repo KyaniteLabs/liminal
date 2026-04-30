@@ -305,9 +305,10 @@ describe('LLMModeAgent', () => {
       error: 'upstream rejected request',
       provider: 'openai',
       model: 'gpt-5.4-mini',
+      endpoint: 'https://api.openai.com/v1/chat/completions',
       statusCode: 429,
       retryable: true,
-      body: { error: { type: 'rate_limit', message: 'quota exceeded' } },
+      responseBody: '{"error":{"type":"rate_limit","message":"quota exceeded"}}',
     });
 
     const agent = new LLMModeAgent(mockLLM as any);
@@ -322,6 +323,7 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.FAILED);
     expect(session.lastPlanError).toContain('provider=openai');
     expect(session.lastPlanError).toContain('model=gpt-5.4-mini');
+    expect(session.lastPlanError).toContain('endpoint=https://api.openai.com/v1/chat/completions');
     expect(session.lastPlanError).toContain('status=429');
     expect(session.lastPlanError).toContain('retryable=true');
     expect(session.lastPlanError).toContain('quota exceeded');

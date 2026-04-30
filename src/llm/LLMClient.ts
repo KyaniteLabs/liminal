@@ -28,7 +28,13 @@ import type { ProviderImageInput, ProviderRequest, ProviderResponse } from './Pr
 import type { ModelRole, ResolvedRoleConfig, RoleConfigFile } from '../config/RoleConfig.js';
 import { loadRoleConfig, getFallbacks } from '../config/RoleConfig.js';
 import { selectApiKeyForEndpoint } from '../config/ProviderKeyResolver.js';
-import { detectProviderLabel } from '../config/ProviderRuntime.js';
+import {
+  PROVIDER_ORDER,
+  apiKeyEnvNamesForProvider,
+  detectProviderLabel,
+  firstUsableApiKey,
+  readRuntimeEnv,
+} from '../config/ProviderRuntime.js';
 import { compactLLMErrorProvenance, extractLLMErrorProvenance } from './ErrorProvenance.js';
 
 export interface LLMConfig {
@@ -900,7 +906,10 @@ export class LLMClient {
 
   /** Check if LLM is configured */
   static isConfigured(): boolean {
-    const hasExplicitConfig = !!(env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY') || process.env.MINIMAX_API_KEY);
+    const configuredProviderKey = PROVIDER_ORDER.some(provider => firstUsableApiKey(
+      ...apiKeyEnvNamesForProvider(provider).map(key => readRuntimeEnv(process.env, key)),
+    ));
+    const hasExplicitConfig = !!(env('LLM_BASE_URL') || env('LLM_API_KEY') || configuredProviderKey);
     if (hasExplicitConfig) return true;
     // In test environments, don't treat the hardcoded default local URL as configured,
     // otherwise E2E tests try to call a non-existent localhost endpoint and timeout.

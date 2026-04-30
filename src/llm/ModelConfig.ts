@@ -11,6 +11,7 @@
  */
 
 import { detectProviderType } from '../config/RoleConfig.js';
+import { PROVIDER_DEFAULTS, selectRuntimeApiKey } from '../config/ProviderRuntime.js';
 import type { ProviderType, ModelRole } from '../config/RoleConfig.js';
 
 export { ProviderType, ModelRole };
@@ -114,13 +115,17 @@ export function loadHarnessConfig(): ModelConfig {
   // Check for explicit harness configuration
   const harnessBaseUrl = process.env.LIMINAL_HARNESS_BASE_URL || process.env.LIMINAL_LLM_BASE_URL;
   const harnessModel = process.env.LIMINAL_HARNESS_MODEL || process.env.LIMINAL_LLM_MODEL;
-  const harnessApiKey = process.env.LIMINAL_HARNESS_API_KEY || process.env.LIMINAL_LLM_API_KEY;
   const harnessTemp = parseFloat(process.env.LIMINAL_HARNESS_TEMPERATURE || String(DEFAULT_HARNESS_TEMPERATURE));
   const harnessTokens = parseInt(process.env.LIMINAL_HARNESS_MAX_TOKENS || String(DEFAULT_MAX_TOKENS));
   const harnessTimeout = parseInt(process.env.LIMINAL_HARNESS_TIMEOUT || String(DEFAULT_TIMEOUT));
 
-  const baseUrl = harnessBaseUrl || 'http://localhost:1234/v1';
+  const baseUrl = harnessBaseUrl || PROVIDER_DEFAULTS.lmstudio.baseUrl;
   const model = harnessModel || 'unknown';
+  const harnessApiKey = selectRuntimeApiKey({
+    baseUrl,
+    model,
+    genericFallbackKeys: ['HARNESS_API_KEY', 'LLM_API_KEY'],
+  });
 
   // Validate URL to prevent SSRF attacks
   validateBaseUrl(baseUrl);
@@ -140,9 +145,13 @@ export function loadHarnessConfig(): ModelConfig {
  * Load generation-specific configuration
  */
 export function loadGenerationConfig(): ModelConfig {
-  const baseUrl = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:1234/v1';
+  const baseUrl = process.env.LIMINAL_LLM_BASE_URL || PROVIDER_DEFAULTS.lmstudio.baseUrl;
   const model = process.env.LIMINAL_LLM_MODEL || 'unknown';
-  const apiKey = process.env.LIMINAL_LLM_API_KEY;
+  const apiKey = selectRuntimeApiKey({
+    baseUrl,
+    model,
+    genericFallbackKeys: ['LLM_API_KEY'],
+  });
   const temp = parseFloat(process.env.LIMINAL_LLM_TEMPERATURE || String(DEFAULT_GENERATION_TEMPERATURE));
   const tokens = parseInt(process.env.LIMINAL_LLM_MAX_TOKENS || String(DEFAULT_MAX_TOKENS));
   const timeout = parseInt(process.env.LIMINAL_LLM_TIMEOUT || String(DEFAULT_TIMEOUT));
@@ -168,13 +177,17 @@ export function loadGenerationConfig(): ModelConfig {
 export function loadEvaluatorConfig(): ModelConfig {
   const evaluatorBaseUrl = process.env.LIMINAL_EVALUATOR_BASE_URL || process.env.LIMINAL_LLM_BASE_URL;
   const evaluatorModel = process.env.LIMINAL_EVALUATOR_MODEL || process.env.LIMINAL_LLM_MODEL;
-  const evaluatorApiKey = process.env.LIMINAL_EVALUATOR_API_KEY || process.env.LIMINAL_LLM_API_KEY;
   const evaluatorTemp = parseFloat(process.env.LIMINAL_EVALUATOR_TEMPERATURE || String(DEFAULT_EVALUATOR_TEMPERATURE));
   const evaluatorTokens = parseInt(process.env.LIMINAL_EVALUATOR_MAX_TOKENS || String(DEFAULT_MAX_TOKENS));
   const evaluatorTimeout = parseInt(process.env.LIMINAL_EVALUATOR_TIMEOUT || String(DEFAULT_TIMEOUT));
 
-  const baseUrl = evaluatorBaseUrl || 'http://localhost:1234/v1';
+  const baseUrl = evaluatorBaseUrl || PROVIDER_DEFAULTS.lmstudio.baseUrl;
   const model = evaluatorModel || 'unknown';
+  const evaluatorApiKey = selectRuntimeApiKey({
+    baseUrl,
+    model,
+    genericFallbackKeys: ['EVALUATOR_API_KEY', 'LLM_API_KEY'],
+  });
 
   // Validate URL to prevent SSRF attacks
   validateBaseUrl(baseUrl);

@@ -21,7 +21,7 @@ import type { ModelCapabilities } from '../llm/CapabilityRegistry.js';
 import type { ThinkingConfig } from '../llm/ProviderTypes.js';
 import { getEffectiveConfig } from './ConfigLoader.js';
 import { selectApiKeyForEndpoint } from './ProviderKeyResolver.js';
-import { detectRoleProviderType } from './ProviderRuntime.js';
+import { PROVIDER_DEFAULTS, detectRoleProviderType } from './ProviderRuntime.js';
 
 // ── Types ──
 
@@ -88,7 +88,7 @@ export interface ResolvedRoleConfig {
 
 // ── Defaults ──
 
-const DEFAULT_BASE_URL = 'http://localhost:1234/v1';
+const DEFAULT_BASE_URL = PROVIDER_DEFAULTS.lmstudio.baseUrl;
 const DEFAULT_TEMPERATURES: Record<ModelRole, number> = {
   generator: 0.7,   // Creative — needs variety
   evaluator: 0.2,   // Precise — needs consistency

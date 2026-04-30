@@ -14,8 +14,8 @@ import {
 
 describe('ProviderRuntime', () => {
   it('centralizes provider aliases and defaults used by model switching', () => {
-    expect(resolveProviderAlias('openai')).toBe('custom');
-    expect(resolveProviderAlias('gpt')).toBe('custom');
+    expect(resolveProviderAlias('openai')).toBe('openai');
+    expect(resolveProviderAlias('gpt')).toBe('openai');
     expect(resolveProviderAlias('z')).toBe('glm');
     expect(PROVIDER_DEFAULTS.glm).toMatchObject({
       baseUrl: 'https://api.z.ai/api/anthropic',
@@ -52,7 +52,7 @@ describe('ProviderRuntime', () => {
 
   it('resolves runtime selection with usable current keys and status labels', () => {
     const runtime = resolveProviderRuntime({
-      provider: 'custom',
+      provider: 'openai',
       model: 'gpt-5.4-mini',
       configuredApiKey: 'YOUR_OPENAI_API_KEY_HERE',
       current: {
@@ -63,12 +63,25 @@ describe('ProviderRuntime', () => {
     });
 
     expect(runtime).toMatchObject({
-      provider: 'custom',
+      provider: 'openai',
       statusProvider: 'openai',
       adapter: 'openai',
       label: 'OpenAI',
       apiKey: 'sk-live',
       model: 'gpt-5.4-mini',
+      apiStyle: 'openai',
     });
+  });
+
+  it('keeps unknown custom endpoints custom while reporting official OpenAI as OpenAI', () => {
+    const custom = resolveProviderRuntime({ provider: 'custom', env: {} });
+    const openaiCompatible = resolveProviderRuntime({
+      provider: 'custom',
+      configuredBaseUrl: 'https://api.openai.com/v1',
+      env: {},
+    });
+
+    expect(custom.statusProvider).toBe('custom');
+    expect(openaiCompatible.statusProvider).toBe('openai');
   });
 });

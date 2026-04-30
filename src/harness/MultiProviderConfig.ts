@@ -26,7 +26,18 @@ import type { LLMConfig } from '../llm/LLMClient.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { selectApiKeyForEndpoint } from '../config/ProviderKeyResolver.js';
+import {
+  PROVIDER_DEFAULTS,
+  PROVIDER_ORDER,
+  apiKeyEnvNamesForProvider,
+  detectRuntimeProviderFromUrl,
+  firstUsableApiKey,
+  providerRequiresApiKey,
+  resolveProviderAlias,
+  resolveProviderRuntime,
+  selectRuntimeApiKey,
+  type RuntimeProviderKey,
+} from '../config/ProviderRuntime.js';
 
 /** Read defaultProvider from ~/.liminal/config.json (sync, cached) */
 let _cachedDefault: string | null = null;
@@ -61,31 +72,7 @@ function getDefaultProviderFromConfig(): string | null {
   return _cachedDefault;
 }
 
-function getApiKeyFromConfig(provider: string): string | undefined {
-  const providers = loadConfigFile();
-  return providers?.[provider]?.apiKey;
-}
-
-export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openai' | 'openrouter' | 'glm' | 'moonshot' | 'kimi' | 'custom';
-
-const PLACEHOLDER_API_KEY_PATTERNS = [
-  /^YOUR[_-]/i,
-  /_HERE$/i,
-  /PLACEHOLDER/i,
-  /CHANGE[_-]?ME/i,
-  /^sk-your/i,
-  /^<.*>$/,
-] as const;
-
-export function isPlaceholderApiKey(value?: string): boolean {
-  const trimmed = value?.trim();
-  if (!trimmed) return true;
-  return PLACEHOLDER_API_KEY_PATTERNS.some(pattern => pattern.test(trimmed));
-}
-
-function firstUsableApiKey(...values: Array<string | undefined>): string | undefined {
-  return values.find(value => !isPlaceholderApiKey(value));
-}
+export type ProviderType = RuntimeProviderKey;
 
 export interface ProviderConfig extends LLMConfig {
   provider: ProviderType;
@@ -94,100 +81,26 @@ export interface ProviderConfig extends LLMConfig {
 }
 
 /**
- * Pre-configured provider templates
+ * Pre-configured provider templates.
+ *
+ * The provider/runtime truth lives in ProviderRuntime.ts. This export remains
+ * for callers that need the legacy harness template shape.
  */
-export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiKey'>> = {
-  minimax: {
-    provider: 'minimax',
-    name: 'MiniMax',
-    description: 'MiniMax M2.7 and other models (Global Token Plan, Anthropic-compatible)',
-    baseUrl: 'https://api.minimax.io/anthropic',
-    model: 'MiniMax-M2.7',
-    apiStyle: 'anthropic',
-    temperature: 0.7,
-    maxTokens: 16384,
-  },
-  lmstudio: {
-    provider: 'lmstudio',
-    name: 'LM Studio',
-    description: 'Local LM Studio server',
-    baseUrl: 'http://localhost:1234/v1',
-    model: 'local-model',
-    apiStyle: 'openai',
-    temperature: 0.7,
-    maxTokens: 16384,
-  },
-  ollama: {
-    provider: 'ollama',
-    name: 'Ollama',
-    description: 'Local Ollama server',
-    baseUrl: 'http://localhost:11434',
-    model: 'llama3.2',
-    apiStyle: 'ollama',
-    temperature: 0.7,
-    maxTokens: 16384,
-  },
-  openai: {
-    provider: 'openai',
-    name: 'OpenAI',
-    description: 'OpenAI API (OpenAI-compatible chat completions)',
-    baseUrl: 'https://api.openai.com/v1',
-    model: 'gpt-5.4',
-    apiStyle: 'openai',
-    temperature: 0.7,
-    maxTokens: 16384,
-  },
-  openrouter: {
-    provider: 'openrouter',
-    name: 'OpenRouter',
-    description: 'OpenRouter API (access to many models)',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    model: 'anthropic/claude-3.5-sonnet',
-    apiStyle: 'openai',
-    temperature: 0.7,
-    maxTokens: 16384,
-  },
-  glm: {
-    provider: 'glm',
-    name: 'GLM',
-    description: 'GLM International API (GLM-5v-turbo multimodal, Anthropic-compatible)',
-    baseUrl: 'https://api.z.ai/api/anthropic',
-    model: 'GLM-5v-turbo',
-    apiStyle: 'anthropic',
-    temperature: 0.7,
-    maxTokens: 16384,
-  },
-  moonshot: {
-    provider: 'moonshot',
-    name: 'Moonshot AI (Legacy)',
-    description: 'Moonshot AI Kimi API',
-    baseUrl: 'https://api.moonshot.ai/v1',
-    model: 'kimi-k2.5',
-    apiStyle: 'openai',
-    temperature: 0.7,
-    maxTokens: 16384,
-  },
-  kimi: {
-    provider: 'kimi',
-    name: 'Kimi Code',
-    description: 'Moonshot AI Kimi Code (K2P5) for Coding Agents',
-    baseUrl: 'https://api.kimi.com/coding/v1',
-    model: 'k2p5',
-    apiStyle: 'openai',
-    temperature: 0.7,
-    maxTokens: 16384,
-  },
-  custom: {
-    provider: 'custom',
-    name: 'Custom',
-    description: 'Custom OpenAI-compatible endpoint',
-    baseUrl: 'http://localhost:8000/v1',
-    model: 'custom-model',
-    apiStyle: 'openai',
-    temperature: 0.7,
-    maxTokens: 16384,
-  },
-};
+export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiKey'>> = Object.fromEntries(
+  PROVIDER_ORDER.map((provider) => {
+    const runtime = PROVIDER_DEFAULTS[provider];
+    return [provider, {
+      provider,
+      name: runtime.label,
+      description: runtime.description,
+      baseUrl: runtime.baseUrl,
+      model: runtime.model,
+      apiStyle: runtime.apiStyle,
+      temperature: runtime.temperature,
+      maxTokens: runtime.maxTokens,
+    } satisfies Omit<ProviderConfig, 'apiKey'>];
+  }),
+) as Record<ProviderType, Omit<ProviderConfig, 'apiKey'>>;
 
 /**
  * Get provider configuration with API key from environment
@@ -200,45 +113,31 @@ function getProviderConfigInternal(
   const template = PROVIDER_TEMPLATES[provider];
   const fileProviders = loadConfigFile();
   const fileProvider = fileProviders?.[provider];
-  const baseUrl = (respectGenericEnvOverrides ? process.env.LIMINAL_LLM_BASE_URL : undefined) || fileProvider?.baseUrl || template.baseUrl;
-  const model = (respectGenericEnvOverrides ? process.env.LIMINAL_LLM_MODEL : undefined) || fileProvider?.model || template.model;
-  
-  // Get API key: environment first, then config file. Ignore obvious
-  // placeholders so copied example env vars cannot shadow real saved keys.
-  let apiKey: string | undefined;
-  const fileApiKey = getApiKeyFromConfig(provider);
-  switch (provider) {
-    case 'minimax':
-      apiKey = firstUsableApiKey(process.env.MINIMAX_API_KEY, fileApiKey);
-      break;
-    case 'glm':
-      apiKey = firstUsableApiKey(process.env.GLM_API_KEY, process.env.ANTHROPIC_AUTH_TOKEN, fileApiKey);
-      break;
-    case 'moonshot':
-    case 'kimi':
-      apiKey = firstUsableApiKey(process.env.MOONSHOT_API_KEY, process.env.KIMI_API_KEY, fileApiKey);
-      break;
-    case 'openrouter':
-      apiKey = firstUsableApiKey(process.env.OPENROUTER_API_KEY, fileApiKey);
-      break;
-    case 'openai':
-      apiKey = firstUsableApiKey(selectApiKeyForEndpoint(baseUrl, model, ['LLM_API_KEY', 'OPENAI_API_KEY']), fileApiKey);
-      break;
-    case 'ollama':
-    case 'lmstudio':
-      // Local providers don't need API keys
-      apiKey = undefined;
-      break;
-    case 'custom':
-      apiKey = firstUsableApiKey(selectApiKeyForEndpoint(baseUrl, model, ['LLM_API_KEY', 'OPENAI_API_KEY']), fileApiKey);
-      break;
-  }
-  
+  const configuredBaseUrl = (respectGenericEnvOverrides ? process.env.LIMINAL_LLM_BASE_URL : undefined) || fileProvider?.baseUrl;
+  const model = (respectGenericEnvOverrides ? process.env.LIMINAL_LLM_MODEL : undefined) || fileProvider?.model;
+
+  const runtime = resolveProviderRuntime({
+    provider,
+    configuredBaseUrl,
+    model,
+    configuredApiKey: fileProvider?.apiKey,
+  });
+  const apiKey = selectRuntimeApiKey({
+    provider,
+    baseUrl: runtime.baseUrl,
+    model: runtime.model,
+    configuredApiKey: fileProvider?.apiKey,
+    genericFirst: provider === 'custom',
+  });
+
   return {
     ...template,
-    baseUrl,
-    model,
+    baseUrl: runtime.baseUrl,
+    model: runtime.model,
     apiKey,
+    apiStyle: runtime.apiStyle,
+    temperature: runtime.temperature,
+    maxTokens: runtime.maxTokens,
   };
 }
 
@@ -247,30 +146,14 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
 }
 
 /**
- * Detect provider from base URL
+ * Detect provider from base URL.
  */
 export function detectProviderFromUrl(baseUrl: string): ProviderType {
-  const normalized = baseUrl.toLowerCase();
-  let host = '';
-  try {
-    host = new URL(normalized).hostname;
-  } catch {
-    host = '';
-  }
-
-  if (normalized.includes('minimax')) return 'minimax';
-  if (normalized.includes('openrouter')) return 'openrouter';
-  if (host === 'api.openai.com') return 'openai';
-  if (normalized.includes('z.ai') || normalized.includes('bigmodel') || normalized.includes('glm')) return 'glm';
-  if (normalized.includes('kimi.com')) return 'kimi';
-  if (normalized.includes('moonshot')) return 'moonshot';
-  if (normalized.includes('localhost:1234')) return 'lmstudio';
-  if (normalized.includes('localhost:11434')) return 'ollama';
-  return 'custom';
+  return detectRuntimeProviderFromUrl(baseUrl);
 }
 
 /**
- * Get active provider from environment
+ * Get active provider from environment.
  */
 export function getActiveProvider(): ProviderType {
   const baseUrl = process.env.LIMINAL_LLM_BASE_URL;
@@ -278,23 +161,19 @@ export function getActiveProvider(): ProviderType {
     return detectProviderFromUrl(baseUrl);
   }
 
-  const explicitProvider = process.env.LIMINAL_LLM_PROVIDER;
-  if (explicitProvider && PROVIDER_TEMPLATES[explicitProvider as keyof typeof PROVIDER_TEMPLATES]) {
-    return explicitProvider as ProviderType;
-  }
+  const explicitProvider = resolveProviderAlias(process.env.LIMINAL_LLM_PROVIDER);
+  if (explicitProvider) return explicitProvider;
 
   // Check config file defaultProvider before env var sniffing
-  const fileDefault = getDefaultProviderFromConfig();
-  if (fileDefault && PROVIDER_TEMPLATES[fileDefault as keyof typeof PROVIDER_TEMPLATES]) {
-    return fileDefault as ProviderType;
-  }
+  const fileDefault = resolveProviderAlias(getDefaultProviderFromConfig() ?? undefined);
+  if (fileDefault) return fileDefault;
 
-  // Check for specific API keys
-  if (!isPlaceholderApiKey(process.env.MINIMAX_API_KEY)) return 'minimax';
-  if (!isPlaceholderApiKey(process.env.GLM_API_KEY)) return 'glm';
-  if (!isPlaceholderApiKey(process.env.MOONSHOT_API_KEY)) return 'moonshot';
-  if (!isPlaceholderApiKey(process.env.OPENROUTER_API_KEY)) return 'openrouter';
-  if (!isPlaceholderApiKey(process.env.OPENAI_API_KEY)) return 'openai';
+  // Check for specific API keys. Preserve legacy preference order.
+  const keyedProviders: ProviderType[] = ['minimax', 'glm', 'moonshot', 'kimi', 'openrouter', 'openai'];
+  for (const provider of keyedProviders) {
+    const apiKey = firstUsableApiKey(...apiKeyEnvNamesForProvider(provider).map((key) => process.env[key]));
+    if (apiKey) return provider;
+  }
 
   // Default to Ollama (local)
   return 'ollama';
@@ -306,12 +185,7 @@ export function getActiveProvider(): ProviderType {
 export function isProviderConfigured(provider: ProviderType): boolean {
   const config = getProviderConfig(provider);
   if (!config) return false;
-  
-  // Local providers don't need API keys
-  if (provider === 'ollama' || provider === 'lmstudio') {
-    return true;
-  }
-  
+  if (!providerRequiresApiKey(provider)) return true;
   return !!config.apiKey;
 }
 
@@ -396,25 +270,28 @@ export function getHarnessProviderConfig(): LLMConfig | null {
   
   // If harness-specific config exists, use it
   if (harnessBaseUrl && harnessModel) {
-    // Use provider-specific API keys when harness endpoint is provider-scoped.
-    const isMinimax = harnessBaseUrl.includes('minimax');
-    const isGlm = harnessBaseUrl.includes('z.ai') || harnessBaseUrl.includes('bigmodel') || harnessBaseUrl.includes('glm');
-    const apiStyle = harnessBaseUrl.includes('/anthropic') ? 'anthropic' : 'openai';
-    const apiKey = firstUsableApiKey(
-      harnessApiKey,
-      isMinimax ? process.env.MINIMAX_API_KEY : undefined,
-      isGlm ? process.env.GLM_API_KEY : undefined,
-      process.env.LIMINAL_LLM_API_KEY,
-      process.env.OPENAI_API_KEY,
-    );
-    
-    return {
-      baseUrl: harnessBaseUrl,
+    const provider = detectProviderFromUrl(harnessBaseUrl);
+    const runtime = resolveProviderRuntime({
+      provider,
+      configuredBaseUrl: harnessBaseUrl,
       model: harnessModel,
+      configuredApiKey: harnessApiKey,
+    });
+    const apiKey = selectRuntimeApiKey({
+      provider,
+      baseUrl: runtime.baseUrl,
+      model: runtime.model,
+      configuredApiKey: harnessApiKey,
+      genericFallbackKeys: ['HARNESS_API_KEY', 'LLM_API_KEY', 'OPENAI_API_KEY'],
+    });
+
+    return {
+      baseUrl: runtime.baseUrl,
+      model: runtime.model,
       apiKey,
       temperature: harnessTemp ? parseFloat(harnessTemp) : 0.2,
-      maxTokens: harnessMaxTokens ? parseInt(harnessMaxTokens) : 4096,
-      apiStyle,
+      maxTokens: harnessMaxTokens ? parseInt(harnessMaxTokens, 10) : 4096,
+      apiStyle: runtime.apiStyle,
     };
   }
   

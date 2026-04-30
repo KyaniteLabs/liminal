@@ -13,6 +13,26 @@ describe('LoopConfig audio + aesthetic extensions', () => {
     expect(opts.useAestheticGuardrails).toBe(false);
   });
 
+  it('accepts human perception ergonomics without enabling subjective aesthetic critics', () => {
+    const opts = normalizeOptions({ useHumanPerceptionGuardrails: true, useAestheticGuardrails: false });
+
+    expect(opts.useHumanPerceptionGuardrails).toBe(true);
+    expect(opts.useAestheticGuardrails).toBe(false);
+  });
+
+  it('keeps human perception ergonomics enabled for legacy aesthetic guardrail runs', () => {
+    const opts = normalizeOptions({ useAestheticGuardrails: true });
+
+    expect(opts.useHumanPerceptionGuardrails).toBe(true);
+  });
+
+  it('honors explicit opt-out of human perception ergonomics even with aesthetic critics enabled', () => {
+    const opts = normalizeOptions({ useAestheticGuardrails: true, useHumanPerceptionGuardrails: false });
+
+    expect(opts.useAestheticGuardrails).toBe(true);
+    expect(opts.useHumanPerceptionGuardrails).toBe(false);
+  });
+
   it('accepts aestheticConfig with preset', () => {
     const opts = normalizeOptions({ aestheticConfig: { preset: 'cinematic' } });
 

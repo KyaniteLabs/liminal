@@ -109,6 +109,8 @@ export interface LoopOptions {
   guidanceEngine?: GuidanceEngine;
   /** Enable aesthetic guardrails in the quality gate */
   useAestheticGuardrails?: boolean;
+  /** Enable Layer 1 human-perception ergonomics without subjective aesthetic critics */
+  useHumanPerceptionGuardrails?: boolean;
   /** Enable intuition-based quality scoring from compressed experience */
   useIntuition?: boolean;
   /** Enable entropy-based generation and scoring */
@@ -210,6 +212,7 @@ export interface NormalizedLoopOptions extends LoopOptions {
   onSuggestion?: (suggestion: Suggestion) => void;
   guidanceEngine?: GuidanceEngine;
   useAestheticGuardrails: boolean;
+  useHumanPerceptionGuardrails: boolean;
   useIntuition: boolean;
   useEntropy: boolean;
   useEvolution: boolean;
@@ -278,6 +281,7 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     onSuggestion: options?.onSuggestion,
     guidanceEngine: options?.guidanceEngine,
     useAestheticGuardrails: options?.useAestheticGuardrails ?? false,
+    useHumanPerceptionGuardrails: options?.useHumanPerceptionGuardrails ?? options?.useAestheticGuardrails ?? false,
     useIntuition: options?.useIntuition ?? false,
     useEntropy: options?.useEntropy ?? false,
     useEvolution: options?.useEvolution ?? false,

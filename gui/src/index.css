@@ -1954,7 +1954,13 @@ body::before {
   z-index: 4;
 }
 
-.liminal-human-review-strip summary {
+.liminal-human-review-strip__summary {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1963,10 +1969,6 @@ body::before {
   padding: 0 14px;
   cursor: pointer;
   list-style: none;
-}
-
-.liminal-human-review-strip summary::-webkit-details-marker {
-  display: none;
 }
 
 .liminal-human-review-strip__body {

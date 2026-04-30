@@ -842,6 +842,7 @@ describe('Bubble Tea operator routing', () => {
       agentStatus: Status.FAILED,
       resumable: false,
       retryable: true,
+      nextAction: expect.objectContaining({ action: 'retry_provider' }),
     });
   });
 
@@ -895,6 +896,7 @@ describe('Bubble Tea operator routing', () => {
       agentStatus: Status.SUSPENDED,
       resumable: true,
       retryable: true,
+      nextAction: expect.objectContaining({ action: 'resume_checkpoint' }),
     });
   });
 

@@ -24,7 +24,7 @@ import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { Logger } from '../utils/Logger.js';
-import { Status, isResumableStatus } from '../types/status.js';
+import { Status, describeStatusLifecycle, isResumableStatus } from '../types/status.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -266,6 +266,10 @@ function formatVerificationSummary(lastVerification?: VerificationState): string
  */
 export function formatResumeContext(state: RunState): string {
   const verificationSummary = formatVerificationSummary(state.lastVerification);
+  const lifecycle = describeStatusLifecycle(state.status, state.lastPlanError, {
+    lastVerification: state.lastVerification,
+    mutatedFiles: state.mutatedFiles,
+  });
   const lines = [
     `## Resume Context`,
     ``,
@@ -282,6 +286,7 @@ export function formatResumeContext(state: RunState): string {
     state.focusDecision ? `Last focus decision: ${state.focusDecision}${state.focusDecisionAt ? ` at ${state.focusDecisionAt}` : ''}` : '',
     verificationSummary ?? '',
     state.lastPlanError ? `Last planning failure: ${state.lastPlanError}` : '',
+    `Recommended next action: ${lifecycle.nextAction.label} — ${lifecycle.nextAction.reason}`,
     ``,
     `Progress: ${state.progressSummary}`,
     ``,

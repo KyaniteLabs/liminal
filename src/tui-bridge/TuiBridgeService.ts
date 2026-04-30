@@ -2650,7 +2650,10 @@ export class TuiBridgeService {
       conversation['recordMessage']('assistant', fullContent);
 
       const duration = new Date(session.endTime || new Date().toISOString()).getTime() - new Date(session.startTime).getTime();
-      const lifecycle = describeStatusLifecycle(session.status, session.lastPlanError);
+      const lifecycle = describeStatusLifecycle(session.status, session.lastPlanError, {
+        lastVerification: session.lastVerification,
+        mutatedFiles: Array.from(session.mutatedFiles),
+      });
       this.emit(sessionId, { type: 'response.metadata', sessionId, model: modelName, duration });
       this.emit(sessionId, { type: 'task.completed', sessionId, taskId, success: lifecycle.succeeded, durationMs: duration });
 
@@ -2671,6 +2674,7 @@ export class TuiBridgeService {
           agentStatus: session.status,
           resumable: lifecycle.resumable,
           retryable: lifecycle.retryable,
+          nextAction: lifecycle.nextAction,
         });
       } else if (lifecycle.resumable) {
         this.suspendRun(
@@ -2682,6 +2686,7 @@ export class TuiBridgeService {
             agentStatus: session.status,
             resumable: true,
             retryable: lifecycle.retryable,
+            nextAction: lifecycle.nextAction,
             model: modelName,
             provider,
           },
@@ -2697,6 +2702,7 @@ export class TuiBridgeService {
             agentStatus: session.status,
             resumable: false,
             retryable: lifecycle.retryable,
+            nextAction: lifecycle.nextAction,
             model: modelName,
             provider,
           },
@@ -3259,7 +3265,10 @@ export class TuiBridgeService {
   }
 
   private formatAgentSession(session: LLMSession): string {
-    const lifecycle = describeStatusLifecycle(session.status, session.lastPlanError);
+    const lifecycle = describeStatusLifecycle(session.status, session.lastPlanError, {
+      lastVerification: session.lastVerification,
+      mutatedFiles: Array.from(session.mutatedFiles),
+    });
     const duration = session.endTime
       ? new Date(session.endTime).getTime() - new Date(session.startTime).getTime()
       : Date.now() - new Date(session.startTime).getTime();
@@ -3298,6 +3307,7 @@ export class TuiBridgeService {
       `- Tools used: ${this.agentToolsUsed(session).join(', ') || 'none'}`,
       `- Resumable: ${lifecycle.resumable ? 'yes' : 'no'}`,
       `- Retryable provider failure: ${lifecycle.retryable ? 'yes' : 'no'}`,
+      `- Next action: ${lifecycle.nextAction.label}`,
     ];
 
     return [
@@ -3327,11 +3337,9 @@ export class TuiBridgeService {
         ? '- Low: trust generated changes only after reviewing the diff and verification output.'
         : '- The run did not report full success; inspect logs and working tree changes before trusting results.',
       `Recommended next action:`,
-      lifecycle.resumable
-        ? '- Resume the suspended run from the checkpoint instead of restarting from scratch.'
-        : session.status === 'success'
+      session.status === 'success'
         ? '- Review the diff and merge if the changes match intent.'
-        : '- Inspect the failure, rerun verification, and continue from the most relevant file.',
+        : `- ${lifecycle.nextAction.label}: ${lifecycle.nextAction.reason}`,
       '',
       `Supporting tool trace:`,
       toolLines.length > 0 ? toolLines.join('\n') : '- no tool calls recorded',

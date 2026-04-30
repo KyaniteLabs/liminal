@@ -3,13 +3,13 @@
 [![CI](https://github.com/Pastorsimon1798/liminal/actions/workflows/ci.yml/badge.svg)](https://github.com/Pastorsimon1798/liminal/actions/workflows/ci.yml)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](./LICENSE)
 
-> A creative coding agent that generates art, music, and shaders through iterative LLM-powered evolution.
+> Codex for creative coding: a chat-first Studio that helps you turn natural language, sound, and iteration into sketches, shaders, music, video compositions, and other creative-code artifacts.
 >
 > **Finish-line contract:** Liminal is a creative cognitive system, not a narrowed proof wedge. See [docs/FINISH_LINE.md](docs/FINISH_LINE.md) for the domain, cognitive-organ, self-improvement, and model-assimilation contract.
 
-Liminal is a model-agnostic creative coding system. You give it a prompt — "a calming blue particle system" or "glitch techno beats with feedback loops" — and it generates, evaluates, and iteratively improves p5.js sketches, GLSL shaders, Three.js scenes, Strudel live-coding music, Hydra visuals, and more. It works with any OpenAI-compatible API, Ollama, LM Studio, or Anthropic.
+Liminal is a model-agnostic creative coding system. You describe what you want — "a quiet moonlit garden with blue-green fireflies" or "glitch techno beats with feedback loops" — and Liminal helps choose a medium, generates the artifact, shows an inline/side-panel preview, and keeps the conversation open for revision. It works with any OpenAI-compatible API, Ollama, LM Studio, Anthropic-style providers, and GLM.
 
-Liminal Studio is the GUI-first creative workbench for live preview, streamed generation phases, and reviewable self-healing proposals. The self-healing loop has three jobs: repair failing behavior, harden green systems by finding blind spots, and propose measurable improvements or optimizations when the current gates are already green. Bubble Tea remains the terminal operator cockpit.
+Liminal Studio is the artist-facing workbench: clean chat on the left, live preview on the right, and advanced receipts hidden until you ask for them. Bubble Tea remains the keyboard-first operator cockpit for deeper diagnostics and review actions.
 
 ---
 
@@ -33,7 +33,7 @@ liminal --prompt "Create a calming blue particle system"
 # Chat-driven creative session
 liminal chat
 
-# Studio — GUI workbench with live preview
+# Studio — chat-first GUI workbench with same-screen preview
 pnpm gui
 # or: liminal studio
 
@@ -63,7 +63,7 @@ export GLM_API_KEY=your-key
 # 3. Generate from natural language
 liminal "a luminous blue-green particle garden"
 
-# 4. Launch Studio for live preview, phases, artifacts, and learning receipts
+# 4. Launch Studio for chat, same-screen preview, revision, and optional details
 pnpm gui
 
 # 5. Refresh the live provider receipt used by the market gate
@@ -76,7 +76,7 @@ pnpm exec tsx scripts/proof/creative-copilot-proof.ts --provider=glm --all --tim
 liminal market status
 ```
 
-Expected current result: `liminal market status` prints `Market readiness: READY` after the live smoke receipt exists. The all-domain sweep should report 11 pass, 0 fail, 0 blocked for the current GLM path. Strudel patterns are saved with an external playback link, Tone.js saves playable HTML, and Revideo code artifacts are generated; native rendered video/still capture is a separate follow-up.
+Expected current result: `liminal market status` prints `Market readiness: READY` after the live smoke receipt exists. The current launch-candidate proof also includes Studio p5 generation, same-screen preview, revision, microphone preview smoke, and permission-denied UX receipts summarized in `docs/launch/launch-candidate-2026-04-30.md`. Strudel patterns are saved with an external playback link, Tone.js saves playable HTML, and Revideo code artifacts are generated; native rendered video/still capture is a separate follow-up.
 
 ---
 
@@ -98,9 +98,9 @@ Each iteration, Liminal:
 - **Compost Mill** — Digests past work into reusable creative seeds that improve every generation
 - **Self-healing harness** — Observes failures, detects patterns, and proposes repair, hardening, and optimization work with verification targets
 - **Music theory engine** — Euclidean rhythms, Markov chains, scales, chord progressions
-- **Voice/audio pipeline** — Maps audio features to visual parameters in real time
+- **Voice/audio pipeline** — Maps microphone/audio features to visual parameters in real time, with explicit permission-denied UX
 - **Aesthetic guardrails** — Color harmony, layout, typography, and sound quality critics
-- **Liminal Studio** — GUI workbench with live preview, provider/model visibility, streamed phases, artifacts, and an Improve lane
+- **Liminal Studio** — Chat-first GUI with same-screen preview, revision, optional detail receipts, and an Improve lane tucked behind disclosures
 - **LiminalCortex** — Background executive that perceives system events, manages goals, and proposes improvements
 - **Emergence evaluation** — Novelty scoring, temporal structure analysis, perturbation probes, weighted ensemble critic
 - **Taste learning + dreaming** — Preference-informed generation, cross-modal dream recombinations, motif rehydration
@@ -119,7 +119,7 @@ Each iteration, Liminal:
 | **Swarm** | `--use-swarm` | Multiple personas generate in parallel, vote on best |
 | **Deep Collab** | `--routing-mode` | Dual-model routing (fast + powerful) |
 | **Live Music** | `--mode live-music` | Generate Strudel + Hydra code |
-| **Studio** | `liminal studio` | GUI workbench with live preview and Improve lane |
+| **Studio** | `liminal studio` | Chat-first GUI with same-screen preview, revision, and optional Improve/details drawers |
 | **Cortex** | (in Studio) | Background executive manages goals and improvements |
 
 ---

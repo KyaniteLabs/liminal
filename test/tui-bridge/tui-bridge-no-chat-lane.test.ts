@@ -789,6 +789,59 @@ describe('Bubble Tea operator routing', () => {
     });
   });
 
+  it('shows persisted planning failure receipts in engineering run status', async () => {
+    const receipt = 'upstream rejected request | provider=openai | model=gpt-5.4-mini | endpoint=https://api.openai.com/v1/chat/completions | status=429 | retryable=true | body={"error":"quota exceeded"}';
+    executeTask.mockImplementationOnce(async (task: { id: string; title: string }) => ({
+      task,
+      messages: [],
+      status: Status.FAILED,
+      startTime: new Date(0).toISOString(),
+      endTime: new Date(10).toISOString(),
+      stepCount: 1,
+      backups: [],
+      successfulInspectionCalls: 0,
+      modifiedExtensions: new Set<string>(),
+      exploredPaths: new Set<string>(),
+      mutatedFiles: new Set<string>(),
+      successfulMutatedFiles: new Set<string>(),
+      activeFocusIndex: 0,
+      focusInspectionBudgetRemaining: 0,
+      focusStatus: 'rejected',
+      focusAdjacentFileUsed: false,
+      lastPlanError: receipt,
+    }));
+
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+    const prompt = 'Fix the Bubble Tea TUI provider failure receipt display.';
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: prompt,
+        clientIntent: 'chat',
+      },
+      fakeLlm() as never,
+    );
+
+    const pending = service.getStatus(session.sessionId).pendingAction!;
+    await service.confirmAction(session.sessionId, pending.id, fakeLlm() as never);
+
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'response.completed' && String(event.content).includes('Last planning failure:')));
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'run.lifecycle' && event.run.phase === 'failed'));
+
+    expect(service.getStatus(session.sessionId).run).toMatchObject({
+      kind: 'engineering',
+      phase: 'failed',
+      outcome: 'failed',
+      error: receipt,
+      lastPlanError: receipt,
+    });
+  });
+
   it('routes ordinary text to direct chat even in autopilot mode', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession();

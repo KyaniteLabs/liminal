@@ -407,8 +407,13 @@ export class TuiBridgeService {
     });
   }
 
-  private failRun(sessionId: string, error: string, outcome: 'failed' | 'cancelled' = 'failed'): TuiRunLifecycle | undefined {
-    return this.transitionRun(sessionId, 'failed', { error, outcome });
+  private failRun(
+    sessionId: string,
+    error: string,
+    outcome: 'failed' | 'cancelled' = 'failed',
+    patch: Partial<Omit<TuiRunLifecycle, 'runId' | 'kind' | 'startedAt' | 'phase' | 'error' | 'outcome'>> = {},
+  ): TuiRunLifecycle | undefined {
+    return this.transitionRun(sessionId, 'failed', { ...patch, error, outcome });
   }
 
   private setRunLifecycle(sessionId: string, run: TuiRunLifecycle, activeTask?: string): void {
@@ -2651,7 +2656,12 @@ export class TuiBridgeService {
       if (session.status === 'success') {
         this.completeRun(sessionId, { label: 'Engineering task complete', model: modelName, provider });
       } else {
-        this.failRun(sessionId, `Engineering ${session.status}`);
+        this.failRun(
+          sessionId,
+          session.lastPlanError || `Engineering ${session.status}`,
+          'failed',
+          { label: `Engineering ${session.status}`, lastPlanError: session.lastPlanError, model: modelName, provider },
+        );
       }
 
       logBridge('engineering.completed', {
@@ -3262,6 +3272,10 @@ export class TuiBridgeService {
       testsRun.length > 0 ? testsRun.join('\n') : '- none recorded',
       `Other verification:`,
       otherVerificationRun.length > 0 ? otherVerificationRun.join('\n') : '- none recorded',
+      ...(session.lastPlanError ? [
+        `Last planning failure:`,
+        session.lastPlanError,
+      ] : []),
       `Remaining risks:`,
       session.status === 'success'
         ? '- Low: trust generated changes only after reviewing the diff and verification output.'

@@ -267,6 +267,19 @@ describe('TuiBridgeService', () => {
       expect(content).toContain('- readFile: Inspect formatter (ok)');
     });
 
+    it('surfaces restored planning failure receipts in engineering summaries', () => {
+      const service = new TuiBridgeService();
+      const receipt = 'upstream rejected request | provider=openai | model=gpt-5.4-mini | endpoint=https://api.openai.com/v1/chat/completions | status=429 | retryable=true | body={"error":"quota exceeded"}';
+      const content = service['formatAgentSession'](makeSession({
+        status: 'failed',
+        lastPlanError: receipt,
+      }));
+
+      expect(content).toContain('Last planning failure:');
+      expect(content).toContain(receipt);
+      expect(content.indexOf('Last planning failure:')).toBeLessThan(content.indexOf('Remaining risks:'));
+    });
+
     it('lists runFocusedTests as verification evidence', () => {
       const service = new TuiBridgeService();
       const content = service['formatAgentSession'](makeSession({

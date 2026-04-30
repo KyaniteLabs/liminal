@@ -65,6 +65,8 @@ export interface TuiRunLifecycle {
   failedAt?: string;
   outcome?: TuiRunOutcome;
   error?: string;
+  /** Most recent engineering planning failure receipt restored from run-state. */
+  lastPlanError?: string;
 }
 
 export interface TuiDomainTruth {

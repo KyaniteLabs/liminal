@@ -169,6 +169,11 @@ export class HydraGenerator extends TierBasedGenerator {
     clean = clean.replace(/\.screen\s*\(\s*\)\s*;\s*\n\s*\.out\s*\(/g, '.out(');
     clean = clean.replace(/\.output\s*\(\s*\)\s*;\s*\n\s*\.out\s*\(/g, '.out(');
     clean = clean.replace(/\.draw\s*\(\s*\)\s*;?/g, '.out(o0)');
+    // Some providers hallucinate kaleid() as a global source. In Hydra it is a
+    // chain transform, so turn bare uses into an explicit visible source chain
+    // before variable inlining runs.
+    clean = clean.replace(/\b((?:const|let|var)\s+[A-Za-z_]\w*\s*=\s*)kaleid\s*\(([^)]*)\)[^\S\n]*;?/g, '$1osc(4, 0.1, 1.0).kaleid($2);');
+    clean = clean.replace(/(^|[^.\w$])kaleid\s*\(([^)]*)\)/g, '$1osc(4, 0.1, 1.0).kaleid($2)');
     clean = clean.replace(/\bs0\.(osc|noise|shape|voronoi|gradient|solid)\s*\(/g, '$1(');
     // Catch remaining s0.anyMethod() patterns that the specific regex above missed
     clean = clean.replace(/\bs0\.(?!(?:initCam|initScreen)\s*\()([a-zA-Z_$][\w$]*)\s*\(/g, '$1(');
@@ -193,19 +198,39 @@ export class HydraGenerator extends TierBasedGenerator {
     // Multi-pass: collect source assignments, then derived assignments, inline all.
     const allVarMap = new Map<string, string>();
 
+    for (const line of clean.split('\n')) {
+      const assignment = line.match(/^\s*(?:(?:const|let|var)\s+)?([a-zA-Z_]\w*)\s*=\s*(.+)\s*$/);
+      if (!assignment) continue;
+      const rhs = assignment[2].trim();
+      const startsWithHydraSource = /^(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(rhs);
+      const startsWithDerivedHydraVar = /^[a-zA-Z_]\w*\s*\.(?:modulate|blend|add|mult|diff|colorama|saturate|brightness|scale|rotate|kaleid|scroll|pixelate)\s*\(/.test(rhs);
+      if (startsWithHydraSource || startsWithDerivedHydraVar) {
+        allVarMap.set(assignment[1], rhs.replace(/;\s*$/, '').trim());
+      }
+    }
+
     // Pass 1: source-based assignments (osc/noise/shape/etc.)
-    const sourceVarRegex = /^(?:(?:const|let|var)\s+)?([a-zA-Z_]\w*)\s*=\s*((?:osc|noise|shape|voronoi|gradient|solid)\s*\([\s\S]*?(?:\.(?:kaleid|rotate|color|saturate|brightness|scale|scroll|modulate|pixelate|speed|blend|add|mult|diff|colorama)\s*\([^)]*\))*\s*;?\s*)$/gm;
+    const sourceVarRegex = /^(?:(?:const|let|var)\s+)?([a-zA-Z_]\w*)\s*=\s*((?:osc|noise|shape|voronoi|gradient|solid)\s*\([^\n]*\s*)$/gm;
     let srcMatch: RegExpExecArray | null;
     while ((srcMatch = sourceVarRegex.exec(clean)) !== null) {
       allVarMap.set(srcMatch[1], srcMatch[2].replace(/;\s*$/, '').trim());
     }
 
     // Pass 2: derived assignments (varName = otherVar.method(...))
-    const derivedVarRegex = /^(?:(?:const|let|var)\s+)?([a-zA-Z_]\w*)\s*=\s*((?:[a-zA-Z_]\w*)\s*\.(?:modulate|blend|add|mult|diff|colorama|saturate|brightness|scale|rotate|kaleid|scroll|pixelate)\s*\([\s\S]*?\s*;\s*)$/gm;
+    const derivedVarRegex = /^(?:(?:const|let|var)\s+)?([a-zA-Z_]\w*)\s*=\s*((?:[a-zA-Z_]\w*)[^\S\n]*\.(?:modulate|blend|add|mult|diff|colorama|saturate|brightness|scale|rotate|kaleid|scroll|pixelate)[^\n]*;?\s*)$/gm;
     let drvMatch: RegExpExecArray | null;
     while ((drvMatch = derivedVarRegex.exec(clean)) !== null) {
       if (!allVarMap.has(drvMatch[1])) {
         allVarMap.set(drvMatch[1], drvMatch[2].replace(/;\s*$/, '').trim());
+      }
+    }
+
+    const aliasVarRegex = /^(?:(?:const|let|var)\s+)?([a-zA-Z_]\w*)\s*=\s*([a-zA-Z_]\w*)\s*;?\s*$/gm;
+    let aliasMatch: RegExpExecArray | null;
+    while ((aliasMatch = aliasVarRegex.exec(clean)) !== null) {
+      const target = allVarMap.get(aliasMatch[2]);
+      if (target && !allVarMap.has(aliasMatch[1])) {
+        allVarMap.set(aliasMatch[1], target);
       }
     }
 
@@ -230,8 +255,11 @@ export class HydraGenerator extends TierBasedGenerator {
     // Remove assignment lines and inline remaining references
     if (allVarMap.size > 0) {
       const varNames = [...allVarMap.keys()].join('|');
-      const assignLineRegex = new RegExp(`^\\s*(?:(?:const|let|var)\\s+)?(${varNames})\\s*=\\s*[\\s\\S]*?;?\\s*$`, 'gm');
-      clean = clean.replace(assignLineRegex, '');
+      const assignLineRegex = new RegExp(`^\\s*(?:(?:const|let|var)\\s+)?(${varNames})\\s*=\\s*[^\\n]*\\s*$`, 'gm');
+      clean = clean.replace(assignLineRegex, (match: string, varName: string, offset: number, full: string) => {
+        const followingText = full.slice(offset + match.length);
+        return /^\s*\n\s*\./.test(followingText) ? (allVarMap.get(varName) || '') : '';
+      });
 
       for (const [varName, expr] of allVarMap) {
         const refRegex = new RegExp(`\\b${varName}\\b`, 'g');

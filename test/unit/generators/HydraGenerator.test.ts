@@ -173,6 +173,42 @@ describe('HydraGenerator', () => {
     expect(gen.validateForTest(sanitized).valid).toBe(true);
   });
 
+
+  it('normalizes bare kaleid variables into renderable source chains', () => {
+    const gen = new TestableHydraGenerator();
+    const code = [
+      'let k = kaleid(6)',
+      'let pattern = osc(4, 0.1, 1.0).add(src(osc(6, 0.2, 0.8))).modulate(k)',
+      'pattern.color(0.95, 0.61, 0.62).saturate(1.2).brightness(1.2).out()',
+      'render()',
+    ].join('\n');
+
+    const sanitized = (gen as any).sanitizeCode(code);
+    expect(sanitized).not.toMatch(/(^|[^.\w$])kaleid\s*\(/);
+    expect(sanitized).toContain('.kaleid(6)');
+    expect(sanitized).toContain('.modulate(osc(4, 0.1, 1.0).kaleid(6))');
+    expect(gen.validateForTest(sanitized).valid).toBe(true);
+  });
+
+  it('does not treat source-like variable names as source calls', () => {
+    const gen = new TestableHydraGenerator();
+    const code = [
+      'let oscLayer = osc(4, 0.1, 1.0)',
+      'let pattern = oscLayer',
+      '  .add(noise(3, 0.2))',
+      '  .color(0.9, 0.4, 0.8)',
+      '  .out(o0)',
+      'render()',
+    ].join('\n');
+
+    const sanitized = (gen as any).sanitizeCode(code);
+    expect(sanitized).not.toContain('let pattern =');
+    expect(sanitized).toContain('osc(4, 0.1, 1.0)');
+    expect(sanitized).toContain('.add(noise(3, 0.2))');
+    expect(sanitized).toContain('.out(o0)');
+    expect(gen.validateForTest(sanitized).valid).toBe(true);
+  });
+
   it('normalizes bare output buffers used as source arguments', () => {
     const gen = new TestableHydraGenerator();
     const sanitized = (gen as any).sanitizeCode([

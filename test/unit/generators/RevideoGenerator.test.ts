@@ -16,12 +16,13 @@ describe('RevideoGenerator', () => {
       .mockResolvedValueOnce({ text: '', success: true })
       .mockResolvedValueOnce({
         text: [
-          'import { makeScene, createRef } from "@revideo/core";',
-          'import { Txt, Rect } from "@revideo/2d";',
-          'export default makeScene("TitleCard", function* (view) {',
+          'import { makeScene2D, Txt, Rect } from "@revideo/2d";',
+          'import { createRef, waitFor } from "@revideo/core";',
+          'export default makeScene2D("TitleCard", function* (view) {',
           '  const title = createRef<Txt>();',
           '  view.add(<Rect width={1920} height={1080} fill={"#050a18"}><Txt ref={title} text={"Liminal"} fill={"#fff"} /></Rect>);',
           '  yield* title().opacity(1, 0.8);',
+          '  yield* waitFor(1);',
           '});',
         ].join('\n'),
         success: true,
@@ -30,7 +31,7 @@ describe('RevideoGenerator', () => {
     const gen = new RevideoGenerator(llm);
     const code = await gen.generate('animated title card');
 
-    expect(code).toContain('export default makeScene');
+    expect(code).toContain('export default makeScene2D');
     expect(code).toContain('@revideo/2d');
     expect(complete).toHaveBeenCalledTimes(2);
   });

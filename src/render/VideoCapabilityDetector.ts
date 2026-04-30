@@ -18,6 +18,8 @@ export class VideoCapabilityDetector {
     let revideo = false;
     try {
       req.resolve('@revideo/renderer');
+      req.resolve('@revideo/vite-plugin');
+      req.resolve('@revideo/ui');
       revideo = true;
     } catch {
       // not installed
@@ -40,7 +42,7 @@ export class VideoCapabilityDetector {
 
     if (domain === 'revideo' && !caps.revideo) {
       throw new Error(
-        'Revideo rendering is not available. Install with: pnpm add @revideo/renderer'
+        'Revideo rendering is not available. Install optional dependencies with: pnpm install or pnpm add -O @revideo/renderer @revideo/vite-plugin @revideo/ui'
       );
     }
 

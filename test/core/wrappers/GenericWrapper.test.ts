@@ -374,7 +374,7 @@ void main() { fragColor = vec4(1.0); }`;
 
     it('renders a browser-visible timeline preview before the source details', () => {
       const code = `import { makeScene2D, Txt } from "@revideo/2d";
-export default makeScene2D(function* (view) {
+export default makeScene2D("PreviewScene", function* (view) {
   yield view.add(<Txt text="Liminal title" />);
 });`;
       const result = GenericWrapper.wrap(code, { domain: 'revideo' });

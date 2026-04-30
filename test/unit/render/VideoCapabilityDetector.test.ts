@@ -32,14 +32,27 @@ describe('VideoCapabilityDetector', () => {
     expect(caps.hyperframes).toBe(false);
   });
 
-  it('detects only revideo available', () => {
+  it('detects revideo available only when renderer, vite plugin, and UI resolve', () => {
+    mockResolve.mockImplementation((id: string) => {
+      if (id === '@revideo/renderer') return '/fake/revideo';
+      if (id === '@revideo/vite-plugin') return '/fake/revideo-vite-plugin';
+      if (id === '@revideo/ui') return '/fake/revideo-ui';
+      throw new Error('Cannot find module');
+    });
+
+    const caps = VideoCapabilityDetector.detect();
+    expect(caps.revideo).toBe(true);
+    expect(caps.hyperframes).toBe(false);
+  });
+
+  it('does not detect revideo when only renderer resolves', () => {
     mockResolve.mockImplementation((id: string) => {
       if (id === '@revideo/renderer') return '/fake/revideo';
       throw new Error('Cannot find module');
     });
 
     const caps = VideoCapabilityDetector.detect();
-    expect(caps.revideo).toBe(true);
+    expect(caps.revideo).toBe(false);
     expect(caps.hyperframes).toBe(false);
   });
 
@@ -59,7 +72,7 @@ describe('VideoCapabilityDetector', () => {
       throw new Error('Cannot find module');
     });
 
-    expect(() => VideoCapabilityDetector.require('revideo')).toThrow('pnpm add @revideo/renderer');
+    expect(() => VideoCapabilityDetector.require('revideo')).toThrow('@revideo/ui');
   });
 
   it('require() throws for missing hyperframes', () => {
@@ -73,6 +86,8 @@ describe('VideoCapabilityDetector', () => {
   it('require() does not throw when framework is available', () => {
     mockResolve.mockImplementation((id: string) => {
       if (id === '@revideo/renderer') return '/fake/path';
+      if (id === '@revideo/vite-plugin') return '/fake/path';
+      if (id === '@revideo/ui') return '/fake/path';
       throw new Error('Cannot find module');
     });
 
@@ -99,6 +114,8 @@ describe('VideoCapabilityDetector', () => {
 
     mockResolve.mockImplementation((id: string) => {
       if (id === '@revideo/renderer') return '/fake/path';
+      if (id === '@revideo/vite-plugin') return '/fake/path';
+      if (id === '@revideo/ui') return '/fake/path';
       throw new Error('Cannot find module');
     });
 

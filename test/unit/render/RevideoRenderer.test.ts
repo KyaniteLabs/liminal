@@ -26,10 +26,10 @@ vi.mock('child_process', () => ({
 import { RevideoRenderer } from '../../../src/render/RevideoRenderer.js';
 
 const SCENE_CODE = `
-import { makeScene2D, Rect } from '@revideo/2d/lib';
-import { createRef } from '@revideo/core/lib';
+import { makeScene2D, Rect } from '@revideo/2d';
+import { createRef, waitFor } from '@revideo/core';
 
-export default makeScene2D('test', function* (view) {
+export default makeScene2D("SmokeScene", function* (view) {
   const rect = createRef<Rect>();
   view.add(<Rect ref={rect} width={400} height={300} fill={'blue'} />);
   yield* rect().scale(2, 1);
@@ -84,7 +84,7 @@ describe('RevideoRenderer', () => {
     const outputPath = path.join(tempDir, 'out.mp4');
 
     await expect(freshRenderer.render(SCENE_CODE, outputPath)).rejects.toThrow(
-      'Install with: pnpm add @revideo/renderer'
+      '@revideo/vite-plugin'
     );
 
     // Restore
@@ -97,26 +97,47 @@ describe('RevideoRenderer', () => {
   it('writeProject creates proper Revideo project structure', async () => {
     const projectDir = await renderer.writeProject(SCENE_CODE);
 
-    const sceneFile = path.join(projectDir, 'src', 'scene.tsx');
+    const sceneFile = path.join(projectDir, 'src', 'scenes', 'scene.tsx');
     const projectFile = path.join(projectDir, 'src', 'project.ts');
     const packageFile = path.join(projectDir, 'package.json');
     const tsconfigFile = path.join(projectDir, 'tsconfig.json');
+    const viteConfigFile = path.join(projectDir, 'vite.config.ts');
 
     const sceneContent = await fs.readFile(sceneFile, 'utf-8');
     expect(sceneContent).toBe(SCENE_CODE);
 
     const projectContent = await fs.readFile(projectFile, 'utf-8');
     expect(projectContent).toContain('makeProject');
-    expect(projectContent).toContain("import scene from './scene.js'");
+    expect(projectContent).toContain("import scene from './scenes/scene?scene'");
+    expect(projectContent).toContain('shared: { size: { x: 1920, y: 1080 } }');
+    expect(projectContent).toContain('rendering: { fps: 30 }');
+
+    const viteConfigContent = await fs.readFile(viteConfigFile, 'utf-8');
+    expect(viteConfigContent).toContain('@revideo/vite-plugin');
+    expect(viteConfigContent).toContain('./src/project.ts');
 
     const pkg = JSON.parse(await fs.readFile(packageFile, 'utf-8'));
     expect(pkg.dependencies['@revideo/core']).toBeTruthy();
     expect(pkg.dependencies['@revideo/renderer']).toBeTruthy();
+    expect(pkg.dependencies['@revideo/vite-plugin']).toBeTruthy();
+    expect(pkg.dependencies['@revideo/ui']).toBeTruthy();
     expect(pkg.type).toBe('module');
 
     const tsconfig = JSON.parse(await fs.readFile(tsconfigFile, 'utf-8'));
     expect(tsconfig.compilerOptions.jsx).toBe('react-jsx');
     expect(tsconfig.compilerOptions.strict).toBe(true);
+
+    await fs.rm(projectDir, { recursive: true, force: true });
+  });
+
+
+  it('names single-argument makeScene2D scenes before writing project files', async () => {
+    const code = SCENE_CODE.replace('makeScene2D("SmokeScene", function*', 'makeScene2D(function*');
+    const projectDir = await renderer.writeProject(code);
+    const sceneFile = path.join(projectDir, 'src', 'scenes', 'scene.tsx');
+    const sceneContent = await fs.readFile(sceneFile, 'utf-8');
+
+    expect(sceneContent).toContain("export default makeScene2D('GeneratedScene', function*");
 
     await fs.rm(projectDir, { recursive: true, force: true });
   });
@@ -153,15 +174,17 @@ describe('RevideoRenderer', () => {
     expect(config.durationInFrames).toBe(300);
   });
 
-  it('calls renderVideo with project file path', async () => {
-    const outputPath = path.join(tempDir, 'out.mp4');
-    mockRenderVideo.mockResolvedValue({});
+  it('calls renderVideo from the generated project with relative project and split output settings', async () => {
+    const outputPath = path.join(tempDir, 'nested', 'out.mp4');
+    mockRenderVideo.mockResolvedValue(outputPath);
 
     await renderer.render(SCENE_CODE, outputPath);
 
     expect(mockRenderVideo).toHaveBeenCalledTimes(1);
     const callArg = mockRenderVideo.mock.calls[0][0];
-    expect(callArg.projectFile).toContain('project.ts');
-    expect(callArg.settings.outFile).toBe(outputPath);
+    expect(callArg.projectFile).toBe('./src/project.ts');
+    expect(callArg.settings.outDir).toBe(path.dirname(outputPath));
+    expect(callArg.settings.outFile).toBe(path.basename(outputPath));
+    expect(callArg.settings.projectSettings.size).toEqual({ x: 1920, y: 1080 });
   });
 });

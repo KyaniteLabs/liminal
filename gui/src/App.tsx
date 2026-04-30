@@ -903,9 +903,9 @@ export default function App() {
       ) : (
         <div className={stageBlocked ? 'liminal-stage-empty liminal-stage-empty--blocked' : bridgeSummary.active ? 'liminal-stage-empty liminal-stage-empty--active' : 'liminal-stage-empty'}>
           {bridgeSummary.active && <i className="liminal-stage-pulse" aria-hidden="true" />}
-          <span>Stage</span>
-          <strong>{stageBlocked ? 'Preview unavailable' : bridgeSummary.active ? bridgeSummary.stageTitle : runStatus === 'running' ? 'Generating' : 'Ready'}</strong>
-          <small>{stageBlocked ? bridgeSummary.stageSubtitle : bridgeSummary.active ? bridgeSummary.stageSubtitle : createModeOption.stageLabel}</small>
+          <span>{stageBlocked ? 'Preview' : bridgeSummary.active ? 'Working' : 'Preview'}</span>
+          <strong>{stageBlocked ? 'Preview unavailable' : bridgeSummary.active ? bridgeSummary.stageTitle : runStatus === 'running' ? 'Generating' : 'No artifact yet'}</strong>
+          <small>{stageBlocked ? bridgeSummary.stageSubtitle : bridgeSummary.active ? bridgeSummary.stageSubtitle : 'Send a creative prompt; live output will appear here.'}</small>
         </div>
       )}
       {(bridgeSummary.active || bridgeSummary.processSteps.some((step) => step.status === 'done')) && (
@@ -919,19 +919,21 @@ export default function App() {
         </div>
       )}
       {activeMode.id === 'generate' && bridgeSummary.humanReview.status !== 'waiting' && (
-        <div className={`liminal-human-review-strip liminal-human-review-strip--${bridgeSummary.humanReview.status}`}>
-          <div>
-            <span>Human review</span>
+        <details className={`liminal-human-review-strip liminal-human-review-strip--${bridgeSummary.humanReview.status}`}>
+          <summary>
+            <span>Review notes</span>
             <strong>{bridgeSummary.humanReview.heading}</strong>
+          </summary>
+          <div className="liminal-human-review-strip__body">
             <small>{bridgeSummary.humanReview.summary}</small>
+            <button
+              type="button"
+              onClick={() => void navigator.clipboard?.writeText(bridgeSummary.humanReview.issueReport)}
+            >
+              Copy issue report
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => void navigator.clipboard?.writeText(bridgeSummary.humanReview.issueReport)}
-          >
-            Copy issue report
-          </button>
-        </div>
+        </details>
       )}
       {hasSyncTarget && !hasDirectSyncTarget && <canvas ref={syncCanvasRef} className="liminal-sync-overlay" aria-hidden="true" />}
     </div>

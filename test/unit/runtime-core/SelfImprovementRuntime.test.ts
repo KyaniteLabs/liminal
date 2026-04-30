@@ -116,6 +116,7 @@ describe('LLMModeSelfImprovementRuntime', () => {
         category: 'succeeded',
         succeeded: true,
         resumable: false,
+        nextAction: expect.objectContaining({ action: 'none' }),
       }),
     });
     expect(mockExecuteTask).toHaveBeenCalledWith(result.session ? expect.objectContaining({

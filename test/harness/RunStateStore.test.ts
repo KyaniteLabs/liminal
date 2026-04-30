@@ -199,5 +199,6 @@ describe('RunStateStore', () => {
     const loaded = await readRunState(tempDir);
     expect(loaded!.lastPlanError).toBe(receipt);
     expect(formatResumeContext(loaded!)).toContain(`Last planning failure: ${receipt}`);
+    expect(formatResumeContext(loaded!)).toContain('Recommended next action: Resume checkpoint');
   });
 });

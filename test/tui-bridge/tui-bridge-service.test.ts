@@ -291,7 +291,35 @@ describe('TuiBridgeService', () => {
       expect(content).toContain('The engineering run is suspended with a checkpoint and can be resumed.');
       expect(content).toContain('- Resumable: yes');
       expect(content).toContain('- Retryable provider failure: yes');
-      expect(content).toContain('Resume the suspended run from the checkpoint instead of restarting from scratch.');
+      expect(content).toContain('- Next action: Resume checkpoint');
+      expect(content).toContain('Resume checkpoint: The run was suspended with a checkpoint and should continue from saved state.');
+    });
+
+    it('classifies non-resumable provider failures as retry actions', () => {
+      const service = new TuiBridgeService();
+      const content = service['formatAgentSession'](makeSession({
+        status: 'failed',
+        lastPlanError: 'OpenAI upstream 503 timeout | retryable=true',
+      }));
+
+      expect(content).toContain('- Next action: Retry provider');
+      expect(content).toContain('Retry provider: The provider failure is marked transient or retryable.');
+    });
+
+    it('classifies verification failures as rerun verification actions', () => {
+      const service = new TuiBridgeService();
+      const content = service['formatAgentSession'](makeSession({
+        status: 'failed',
+        lastVerification: {
+          passed: false,
+          type: 'build',
+          error: 'tsc failed',
+          timestamp: '2026-04-30T20:00:00.000Z',
+        },
+      }));
+
+      expect(content).toContain('- Next action: Rerun verification');
+      expect(content).toContain('Rerun verification: The last build verification failed');
     });
 
     it('lists runFocusedTests as verification evidence', () => {

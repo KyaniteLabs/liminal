@@ -83,6 +83,30 @@ export type StatusLifecycleCategory =
   | 'cancelled'
   | 'suspended';
 
+export type StatusNextActionName =
+  | 'none'
+  | 'resume_checkpoint'
+  | 'retry_provider'
+  | 'switch_model'
+  | 'shrink_prompt'
+  | 'inspect_file'
+  | 'rerun_verification';
+
+export interface StatusNextAction {
+  action: StatusNextActionName;
+  label: string;
+  reason: string;
+}
+
+export interface StatusLifecycleHints {
+  lastVerification?: {
+    passed: boolean;
+    type: string;
+    error?: string;
+  };
+  mutatedFiles?: string[];
+}
+
 export interface StatusLifecycleDescriptor {
   status: Status;
   category: StatusLifecycleCategory;
@@ -96,6 +120,7 @@ export interface StatusLifecycleDescriptor {
   resumable: boolean;
   rolledBack: boolean;
   retryable: boolean;
+  nextAction: StatusNextAction;
 }
 
 /**
@@ -127,7 +152,75 @@ export function isRetryableStatusReceipt(receipt?: string): boolean {
   return /rate limit|429|529|overload|timeout|502|503|504|upstream|temporar/i.test(receipt);
 }
 
-export function describeStatusLifecycle(status: Status, receipt?: string): StatusLifecycleDescriptor {
+export function classifyStatusNextAction(
+  status: Status,
+  receipt?: string,
+  hints: StatusLifecycleHints = {},
+): StatusNextAction {
+  const text = `${receipt || ''}\n${hints.lastVerification?.error || ''}`.trim();
+
+  if (isResumableStatus(status)) {
+    return {
+      action: 'resume_checkpoint',
+      label: 'Resume checkpoint',
+      reason: 'The run was suspended with a checkpoint and should continue from saved state.',
+    };
+  }
+
+  if (hints.lastVerification && !hints.lastVerification.passed) {
+    return {
+      action: 'rerun_verification',
+      label: 'Rerun verification',
+      reason: `The last ${hints.lastVerification.type} verification failed and should be rerun after the focused fix.`,
+    };
+  }
+
+  if (/context window|context length|token limit|too many tokens|prompt too large|request too large|413\b|maximum context/i.test(text)) {
+    return {
+      action: 'shrink_prompt',
+      label: 'Shrink prompt',
+      reason: 'The failure indicates the prompt or context packet exceeded the provider limit.',
+    };
+  }
+
+  if (/unsupported|response_format|not supported|model .*not|capability|vision.*not|tool.*not/i.test(text)) {
+    return {
+      action: 'switch_model',
+      label: 'Switch model',
+      reason: 'The failure indicates the selected route or model lacks the required capability.',
+    };
+  }
+
+  if (isRetryableStatusReceipt(text)) {
+    return {
+      action: 'retry_provider',
+      label: 'Retry provider',
+      reason: 'The provider failure is marked transient or retryable.',
+    };
+  }
+
+  if (isSuccessfulStatus(status)) {
+    return {
+      action: 'none',
+      label: 'No failure action',
+      reason: 'The run completed successfully.',
+    };
+  }
+
+  return {
+    action: 'inspect_file',
+    label: 'Inspect file',
+    reason: hints.mutatedFiles?.[0]
+      ? `Inspect ${hints.mutatedFiles[0]} and the latest failure context.`
+      : 'Inspect the latest failure context and relevant files before retrying.',
+  };
+}
+
+export function describeStatusLifecycle(
+  status: Status,
+  receipt?: string,
+  hints: StatusLifecycleHints = {},
+): StatusLifecycleDescriptor {
   const waiting = isWaitingStatus(status);
   const active = isActiveStatus(status);
   const resumable = isResumableStatus(status);
@@ -160,6 +253,6 @@ export function describeStatusLifecycle(status: Status, receipt?: string): Statu
     resumable,
     rolledBack,
     retryable: isRetryableStatusReceipt(receipt),
+    nextAction: classifyStatusNextAction(status, receipt, hints),
   };
 }
-

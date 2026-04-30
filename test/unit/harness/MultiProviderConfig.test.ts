@@ -31,6 +31,8 @@ const KEYS_PRESERVED = [
   'GLM_API_KEY',
   'OPENROUTER_API_KEY',
   'OPENAI_API_KEY',
+  'MOONSHOT_API_KEY',
+  'KIMI_API_KEY',
   'LIMINAL_HARNESS_BASE_URL',
   'LIMINAL_HARNESS_MODEL',
   'LIMINAL_HARNESS_API_KEY',
@@ -360,11 +362,12 @@ describe('listConfiguredProviders', () => {
     process.env.OPENROUTER_API_KEY = 'k3';
     process.env.LIMINAL_LLM_API_KEY = 'k4';
     process.env.OPENAI_API_KEY = 'k5';
+    process.env.MOONSHOT_API_KEY = 'k6';
     const providers = listConfiguredProviders();
     expect(providers).toEqual(
-      expect.arrayContaining(['minimax', 'lmstudio', 'ollama', 'openai', 'openrouter', 'glm', 'custom']),
+      expect.arrayContaining(['minimax', 'lmstudio', 'ollama', 'openai', 'openrouter', 'glm', 'moonshot', 'kimi', 'custom']),
     );
-    expect(providers).toHaveLength(7);
+    expect(providers).toHaveLength(9);
   });
 });
 

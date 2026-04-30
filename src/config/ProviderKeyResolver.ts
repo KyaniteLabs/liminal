@@ -1,9 +1,8 @@
-import { apiKeyEnvNamesForEndpoint as runtimeApiKeyEnvNamesForEndpoint } from './ProviderRuntime.js';
-import { env } from '../utils/env.js';
-
-function readEnvKey(key: string): string | undefined {
-  return process.env[key] || env(key);
-}
+import {
+  apiKeyEnvNamesForEndpoint as runtimeApiKeyEnvNamesForEndpoint,
+  readRuntimeEnv,
+  selectRuntimeApiKey,
+} from './ProviderRuntime.js';
 
 export function apiKeyEnvNamesForEndpoint(baseUrl: string, model = ''): string[] {
   return runtimeApiKeyEnvNamesForEndpoint(baseUrl, model);
@@ -14,9 +13,13 @@ export function selectApiKeyForEndpoint(
   model: string | undefined,
   genericFallbackKeys: string[] = [],
 ): string | undefined {
-  const providerKeys = apiKeyEnvNamesForEndpoint(baseUrl, model);
-  const providerKey = providerKeys.map(readEnvKey).find(Boolean);
-  if (providerKey) return providerKey;
+  return selectRuntimeApiKey({
+    baseUrl,
+    model,
+    genericFallbackKeys,
+  });
+}
 
-  return genericFallbackKeys.map(readEnvKey).find(Boolean);
+export function readProviderEnvKey(key: string): string | undefined {
+  return readRuntimeEnv(process.env, key);
 }

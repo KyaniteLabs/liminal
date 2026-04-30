@@ -1,6 +1,6 @@
 # Issue tracker: GitHub
 
-Issues and PRDs for this repo live in GitHub Issues for `Pastorsimon1798/liminal`. Use the `gh` CLI from inside this clone so the repo is inferred from `git remote -v`.
+Issues and PRDs for this repo live in GitHub Issues for `KyaniteLabs/liminal`. Use the `gh` CLI from inside this clone so the repo is inferred from `git remote -v`.
 
 ## Conventions
 

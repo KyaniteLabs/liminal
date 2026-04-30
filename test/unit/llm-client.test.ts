@@ -9,7 +9,7 @@ process.env.LIMINAL_ALLOW_LOCALHOST_LLM = "true";
 // Do NOT use these values in production or with real APIs.
 // ============================================================================
 
-import { describe, it, expect, afterEach, test } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, test } from 'vitest';
 /**
  * LLMClient tests - OpenAI-compatible API support
  *
@@ -33,10 +33,33 @@ function createFetchStub(response: any) {
 }
 
 describe('LLMClient Configuration', () => {
+  const providerEnvKeys = [
+    'LIMINAL_LLM_BASE_URL',
+    'LIMINAL_LLM_API_KEY',
+    'ATELIER_LLM_API_KEY',
+    'OPENAI_API_KEY',
+    'MINIMAX_API_KEY',
+    'GLM_API_KEY',
+    'OPENROUTER_API_KEY',
+    'MOONSHOT_API_KEY',
+    'KIMI_API_KEY',
+    'ANTHROPIC_AUTH_TOKEN',
+  ];
+  let savedEnv: Record<string, string | undefined>;
+
+  beforeEach(() => {
+    savedEnv = {};
+    for (const key of providerEnvKeys) {
+      savedEnv[key] = process.env[key];
+      delete process.env[key];
+    }
+  });
+
   afterEach(() => {
-    delete process.env.LIMINAL_LLM_API_KEY;
-    delete process.env.ATELIER_LLM_API_KEY;
-    delete process.env.OPENAI_API_KEY;
+    for (const key of providerEnvKeys) {
+      if (savedEnv[key] === undefined) delete process.env[key];
+      else process.env[key] = savedEnv[key];
+    }
   });
 
   test('should create client with LM Studio config (no API key)', () => {

@@ -24,7 +24,7 @@ Codex should use only the active Matt Pocock subset: `setup-matt-pocock-skills`,
 
 ### Issue tracker
 
-Issues are tracked in GitHub Issues for `Pastorsimon1798/liminal`; see `docs/agents/issue-tracker.md`.
+Issues are tracked in GitHub Issues for `KyaniteLabs/liminal`; see `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

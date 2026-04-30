@@ -4,6 +4,15 @@ import os from 'os';
 import { env } from '../utils/env.js';
 import { Logger } from '../utils/Logger.js';
 import { SERVICE_DEFAULTS } from '../constants.js';
+import {
+  PROVIDER_DEFAULTS,
+  firstUsableApiKey,
+  isPlaceholderApiKey,
+  isRuntimeProviderKey,
+  resolveProviderAlias,
+  selectRuntimeApiKey,
+  type RuntimeProviderKey,
+} from './ProviderRuntime.js';
 import { loadRoleConfig } from './RoleConfig.js';
 import type { ModelRole, ResolvedRoleConfig, RoleProviderConfig } from './RoleConfig.js';
 import { Result, ok, err as reject } from 'neverthrow';
@@ -364,62 +373,58 @@ export async function getEffectiveConfig(configPath?: string, projectConfigPath?
   const usableFileProviderName = fileProviderName && !isPlaceholderProviderConfig(fileProviderName, rawFileProviderConfig)
     ? fileProviderName
     : undefined;
-  const providerName = env('LLM_PROVIDER') || projectProvider || usableFileProviderName || providerFromAvailableApiKey() || 'lmstudio';
+  const keyedProvider = providerFromAvailableApiKey();
+  const rawProviderName = env('LLM_PROVIDER') || projectProvider || usableFileProviderName || keyedProvider || 'lmstudio';
+  const provider = effectiveProviderName(rawProviderName);
+  const runtimeProvider = runtimeProviderForEffective(provider);
+  const hasProviderSignal = Boolean(env('LLM_PROVIDER') || projectProvider || usableFileProviderName || keyedProvider);
 
-  // Map provider names (including legacy aliases) to canonical types
-  const providerMap: Record<string, NonNullable<EffectiveConfig['provider']>> = {
-    'lmstudio': 'lmstudio',
-    'inception': 'lmstudio',  // Legacy alias — inception used same OpenAI-compatible format
-    'ollama': 'ollama',
-    'openai': 'openai',
-    'anthropic': 'openai',   // Legacy alias — removed provider, route to openai as closest match
-    'minimax': 'minimax',
-    'hybrid': 'hybrid',
-    'glm': 'glm',
-    'openrouter': 'openrouter',
-    'moonshot': 'moonshot',
-    'kimi': 'kimi',
-    'custom': 'custom',
-  };
-
-  const provider = providerMap[providerName] || 'lmstudio';
-
-  const rawFileProviderConfigForProvider = fileConfig?.providers?.[providerName] || {};
-  const fileProviderConfig = isPlaceholderProviderConfig(providerName, rawFileProviderConfigForProvider)
+  const rawFileProviderConfigForProvider = fileConfig?.providers?.[rawProviderName] || fileConfig?.providers?.[provider] || {};
+  const fileProviderConfig = isPlaceholderProviderConfig(rawProviderName, rawFileProviderConfigForProvider)
     ? {}
     : rawFileProviderConfigForProvider;
   const projectLlm = projectConfig?.llm || {};
-  const providerDefaultConfig = providerDefaults(provider);
+  const runtimeDefaults = runtimeProvider && hasProviderSignal ? PROVIDER_DEFAULTS[runtimeProvider] : undefined;
+  const baseUrl = env('LLM_BASE_URL') || projectLlm.baseUrl || fileProviderConfig.baseUrl || runtimeDefaults?.baseUrl;
+  const model = env('LLM_MODEL') || projectLlm.model || fileProviderConfig.model || runtimeDefaults?.model || SERVICE_DEFAULTS.DEFAULT_MODEL;
 
   return {
     provider,
-    baseUrl: env('LLM_BASE_URL') || projectLlm.baseUrl || fileProviderConfig.baseUrl || providerDefaultConfig.baseUrl,
-    model: env('LLM_MODEL') || projectLlm.model || fileProviderConfig.model || providerDefaultConfig.model || SERVICE_DEFAULTS.DEFAULT_MODEL,
-    apiKey: env('LLM_API_KEY') || projectLlm.apiKey || fileProviderConfig.apiKey || process.env.OPENAI_API_KEY || process.env.GLM_API_KEY || process.env.MOONSHOT_API_KEY || process.env.MINIMAX_API_KEY,
+    baseUrl,
+    model,
+    apiKey: runtimeProvider
+      ? selectRuntimeApiKey({
+          provider: runtimeProvider,
+          baseUrl: baseUrl ?? '',
+          model,
+          configuredApiKey: firstUsableApiKey(projectLlm.apiKey, fileProviderConfig.apiKey),
+          genericFallbackKeys: ['LLM_API_KEY', 'OPENAI_API_KEY'],
+          genericFirst: true,
+        })
+      : firstUsableApiKey(env('LLM_API_KEY'), projectLlm.apiKey, fileProviderConfig.apiKey, process.env.OPENAI_API_KEY),
   };
 }
 
-function providerDefaults(
-  provider: NonNullable<EffectiveConfig['provider']>,
-): { baseUrl?: string; model?: string } {
-  if (provider === 'minimax') {
-    return { baseUrl: SERVICE_DEFAULTS.MINIMAX_URL, model: 'MiniMax-M2.7' };
-  }
-  return {};
+function effectiveProviderName(providerName: string): NonNullable<EffectiveConfig['provider']> {
+  if (providerName === 'hybrid') return 'hybrid';
+  if (providerName === 'inception') return 'lmstudio';
+  if (providerName === 'anthropic') return 'openai';
+  return resolveProviderAlias(providerName) ?? 'lmstudio';
+}
+
+function runtimeProviderForEffective(provider: NonNullable<EffectiveConfig['provider']>): RuntimeProviderKey | undefined {
+  if (provider === 'hybrid') return undefined;
+  return isRuntimeProviderKey(provider) ? provider : undefined;
 }
 
 function providerFromAvailableApiKey(): string | undefined {
-  if (hasUsableApiKey(process.env.MINIMAX_API_KEY)) return 'minimax';
-  if (hasUsableApiKey(process.env.GLM_API_KEY)) return 'glm';
-  if (hasUsableApiKey(process.env.MOONSHOT_API_KEY)) return 'moonshot';
-  if (hasUsableApiKey(process.env.OPENAI_API_KEY)) return 'openai';
-  return undefined;
-}
-
-function hasUsableApiKey(value?: string): boolean {
-  const trimmed = value?.trim();
-  if (!trimmed) return false;
-  return !/^(test|fake|dummy|placeholder|sk-test)/i.test(trimmed);
+  const keyedProviders: RuntimeProviderKey[] = ['minimax', 'glm', 'moonshot', 'kimi', 'openrouter', 'openai'];
+  return keyedProviders.find((provider) => selectRuntimeApiKey({
+    provider,
+    baseUrl: PROVIDER_DEFAULTS[provider].baseUrl,
+    model: PROVIDER_DEFAULTS[provider].model,
+    genericFallbackKeys: [],
+  }));
 }
 
 function isPlaceholderProviderConfig(
@@ -429,7 +434,8 @@ function isPlaceholderProviderConfig(
   const baseUrl = config.baseUrl?.toLowerCase() ?? '';
   return providerName === 'test-provider'
     || baseUrl === 'https://api.test.com/v1'
-    || baseUrl.includes('api.test.com');
+    || baseUrl.includes('api.test.com')
+    || (config.apiKey !== undefined && isPlaceholderApiKey(config.apiKey));
 }
 
 /**

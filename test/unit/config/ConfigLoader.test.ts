@@ -220,6 +220,11 @@ describe('getEffectiveConfig', () => {
     'LIMINAL_LLM_API_KEY',
     'OPENAI_API_KEY',
     'MINIMAX_API_KEY',
+    'GLM_API_KEY',
+    'OPENROUTER_API_KEY',
+    'MOONSHOT_API_KEY',
+    'KIMI_API_KEY',
+    'ANTHROPIC_AUTH_TOKEN',
   ];
 
   let savedEnv: Record<string, string | undefined>;
@@ -302,7 +307,7 @@ describe('getEffectiveConfig', () => {
     const config = await getEffectiveConfig();
     expect(config.provider).toBe('minimax');
     expect(config.model).toBe('MiniMax-M2.7');
-    expect(config.baseUrl).toBe('https://api.minimax.io/v1');
+    expect(config.baseUrl).toBe('https://api.minimax.io/anthropic');
     expect(config.apiKey).toBe('real-minimax-key');
   });
 
@@ -508,7 +513,19 @@ describe('loadProjectConfig edge cases', () => {
 
 describe('getEffectiveConfig provider mappings', () => {
   let savedEnv: Record<string, string | undefined>;
-  const envVarsToClean = ['LIMINAL_LLM_PROVIDER', 'LIMINAL_LLM_MODEL'];
+  const envVarsToClean = [
+    'LIMINAL_LLM_PROVIDER',
+    'LIMINAL_LLM_BASE_URL',
+    'LIMINAL_LLM_MODEL',
+    'LIMINAL_LLM_API_KEY',
+    'OPENAI_API_KEY',
+    'MINIMAX_API_KEY',
+    'GLM_API_KEY',
+    'OPENROUTER_API_KEY',
+    'MOONSHOT_API_KEY',
+    'KIMI_API_KEY',
+    'ANTHROPIC_AUTH_TOKEN',
+  ];
 
   beforeEach(() => {
     savedEnv = {};

@@ -4,6 +4,19 @@ import type { Domain as PreviewDomain } from '../utils/htmlWrapper.js';
 
 const VISUAL_FALLBACKS: Domain[] = [Domain.THREE, Domain.P5, Domain.HYDRA, Domain.GLSL];
 
+function hasExplicitCreativeDomainCue(prompt: string): boolean {
+  const lower = prompt.toLowerCase();
+  return /\bp5\.?js\b|\bp5js\b|\bp5\s+(sketch|code)\b|\bprocessing\b/.test(lower)
+    || /\bthree\.js\b|\bthreejs\b|\bthree\s*js\b/.test(lower)
+    || /\bshader\b|\bglsl\b|\bfragment\s+shader\b/.test(lower)
+    || /\bstrudel\b|\btidal\b|\blive\s+coding\s+music\b/.test(lower)
+    || /\bhydra\b|\bvideo\s+synth\b/.test(lower)
+    || /\btone\.?js\b|\btonejs\b|\bweb\s*audio\b/.test(lower)
+    || /\bhyperframes?\b/.test(lower)
+    || /\bkinetic\s+(typography|type|text|css)\b|\bcss\s+kinetic\b/.test(lower)
+    || /\bascii\b|\btext\s*art\b/.test(lower);
+}
+
 export function inferCreativeDomain(prompt: string): Domain {
   const lower = prompt.toLowerCase();
   const hasExplicitFrameworkCue = /\bhyperframes?\b|\bthree\.js\b|\bthreejs\b|\b3d\b|\bwebgl\b|\bscene\b|\bcamera\b|\bmesh\b|\bgeometry\b|\bshader\b|\bglsl\b|\bstrudel\b|\bhydra\b|\btone\.?js\b|\btonejs\b|\bweb\s*audio\b/.test(lower);
@@ -30,6 +43,10 @@ export function inferCreativeDomain(prompt: string): Domain {
 
 export function buildCreativeDomainPlan(prompt: string): Domain[] {
   const primary = inferCreativeDomain(prompt);
+  if (primary !== Domain.GENERIC && hasExplicitCreativeDomainCue(prompt)) {
+    return [primary];
+  }
+
   const primaryPlan = primary === Domain.GENERIC ? VISUAL_FALLBACKS : [primary, ...VISUAL_FALLBACKS];
   return primaryPlan.filter((domain, index, all) => all.indexOf(domain) === index);
 }

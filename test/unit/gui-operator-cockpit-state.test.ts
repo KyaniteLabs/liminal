@@ -19,6 +19,44 @@ describe('OperatorCockpit state derivation', () => {
     expect(state.activeWork).toContain('3 candidates');
   });
 
+  it('keeps provider failure receipts visible in cockpit state', () => {
+    const state = deriveCockpit([
+      { type: 'generation.domain_plan', domains: ['hydra'], candidateCount: 1, executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'hydra', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      {
+        type: 'generation.attempt.failed',
+        domain: 'hydra',
+        attempt: 1,
+        attemptTotal: 1,
+        error: 'LLM generation failed: OpenAI API error 429: rate limited',
+        provider: 'openai',
+        model: 'gpt-5.4-mini',
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        statusCode: 429,
+        retryable: true,
+        responseBody: '{"error":"rate limited"}',
+      },
+    ]);
+
+    expect(state.phase).toBe('fallback');
+    expect(state.attempts[0].detail).toContain('openai / gpt-5.4-mini');
+    expect(state.attempts[0].detail).toContain('HTTP 429');
+    expect(state.failureReceipts).toEqual([
+      expect.objectContaining({
+        title: 'hydra attempt 1 / 1 failed',
+        provider: 'openai',
+        model: 'gpt-5.4-mini',
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        statusCode: 429,
+        retryable: true,
+        responseBody: '{"error":"rate limited"}',
+        summary: expect.stringContaining('retryable'),
+      }),
+    ]);
+    expect(state.humanReview.summary).toContain('openai / gpt-5.4-mini');
+    expect(state.humanReview.issueReport).toContain('HTTP 429');
+  });
+
   it('marks the cockpit phase as verified preview after preview verification arrives', () => {
     const state = deriveCockpit([
       { type: 'generation.route.selected', domain: 'p5', domains: ['p5'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
@@ -98,7 +136,6 @@ describe('OperatorCockpit state derivation', () => {
     expect(state.humanReview.issueReport).toContain('tone HTML preview');
     expect(state.humanReview.issueReport).toContain('memory:observed');
   });
-
 
   it('describes backup domains without implying a fallback already happened', () => {
     const state = deriveCockpit([

@@ -117,6 +117,21 @@ export function latestCognitiveReceipt(events: WorkbenchBridgeEvent[]): Workbenc
   };
 }
 
+function formatFailureProvenance(event: WorkbenchBridgeEvent): string {
+  const providerModel = [event.provider, event.model].filter(Boolean).map(String).join(' / ');
+  const endpoint = event.endpoint ? String(event.endpoint) : '';
+  const status = event.statusCode ? `HTTP ${String(event.statusCode)}` : '';
+  const retry = event.retryable === true ? 'retryable' : event.retryable === false ? 'not retryable' : '';
+  return [providerModel, endpoint, status, retry].filter(Boolean).join(' · ');
+}
+
+function formatFailureDetail(event: WorkbenchBridgeEvent, fallback: string): string {
+  const message = String(event.error || event.message || fallback);
+  const provenance = formatFailureProvenance(event);
+  const body = event.responseBody ? ` · body: ${String(event.responseBody)}` : '';
+  return provenance ? `${message} · ${provenance}${body}` : message;
+}
+
 function routeDetail(selectedDomain: string, domains: string[]): string {
   if (!selectedDomain) return domains.length > 0 ? `planned domains: ${domains.join(' -> ')}` : 'waiting for route';
   const backups = domains.filter((domain) => domain !== selectedDomain);
@@ -281,7 +296,7 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
         return { label: 'Draft', detail: `Iteration ${event.iteration}, ${event.codeSize || 0} bytes` };
       }
       if (event.type === 'generation.attempt.failed') {
-        return { label: 'Retrying', detail: String(event.error || 'attempt failed'), status: 'failed' };
+        return { label: 'Provider failure', detail: formatFailureDetail(event, 'attempt failed'), status: 'failed' };
       }
       if (event.type === 'tool.started') {
         return { label: String(event.toolName || 'tool'), detail: String(event.displayLabel || event.argsSummary || 'started'), status: 'running' };
@@ -317,7 +332,7 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
       if (event.type === 'stream.disconnected') {
         return { label: 'Disconnected', detail: String(event.message || 'event stream disconnected'), status: 'failed' };
       }
-      return { label: 'Error', detail: String(event.message || 'unknown error'), status: 'failed' };
+      return { label: 'Provider error', detail: formatFailureDetail(event, 'unknown error'), status: 'failed' };
     });
 }
 

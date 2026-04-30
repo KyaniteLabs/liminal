@@ -1714,7 +1714,7 @@ body::before {
 .cockpit-muted { color: var(--atelier-text-muted); font-size: 0.875rem; }
 .cockpit-big { color: var(--atelier-accent); font-family: var(--font-display); font-size: 1.5rem; }
 .cockpit-flow, .cockpit-artifact code { font-family: var(--font-mono); font-size: 0.8125rem; }
-.cockpit-attempts, .cockpit-timeline { display: flex; flex-direction: column; gap: 8px; }
+.cockpit-attempts, .cockpit-timeline, .cockpit-failure-receipts { display: flex; flex-direction: column; gap: 8px; }
 
 .cockpit-progress {
   position: relative;
@@ -1780,7 +1780,8 @@ body::before {
 
 .cockpit-attempt,
 .cockpit-event,
-.cockpit-artifact {
+.cockpit-artifact,
+.cockpit-failure-receipt {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 10px;
@@ -1792,7 +1793,9 @@ body::before {
 }
 
 .cockpit-attempt small,
-.cockpit-event small {
+.cockpit-event small,
+.cockpit-failure-receipt small,
+.cockpit-failure-receipt code {
   grid-column: 1 / -1;
   color: var(--atelier-text-muted);
 }
@@ -1800,6 +1803,15 @@ body::before {
 .cockpit-attempt--running,
 .cockpit-attempt--candidate { border-left: 3px solid var(--atelier-accent); }
 .cockpit-attempt--failed { border-left: 3px solid var(--atelier-error); }
+.cockpit-failure-receipt {
+  grid-template-columns: 180px 1fr;
+  border-left: 3px solid var(--atelier-error);
+}
+.cockpit-failure-receipt code {
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
 .cockpit-artifact { grid-template-columns: 140px 1fr; }
 
 .atelier-code {

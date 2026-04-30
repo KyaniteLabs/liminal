@@ -192,6 +192,21 @@ export function OperatorCockpit() {
         </section>
 
         <section className="cockpit-card cockpit-card--wide">
+          <h3 className="atelier-heading">Failure Receipts</h3>
+          {derived.failureReceipts.length === 0 && <div className="cockpit-muted">No provider failures yet.</div>}
+          <div className="cockpit-failure-receipts">
+            {derived.failureReceipts.map((receipt, index) => (
+              <div className="cockpit-failure-receipt" key={`${index}-${receipt.title}`}>
+                <strong>{receipt.title}</strong>
+                <span>{receipt.message}</span>
+                {receipt.summary && <small>{receipt.summary}</small>}
+                {receipt.responseBody && <code>{receipt.responseBody}</code>}
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="cockpit-card cockpit-card--wide">
           <h3 className="atelier-heading">Artifacts</h3>
           {derived.artifacts.length === 0 && <div className="cockpit-muted">No artifacts yet.</div>}
           {derived.artifacts.map((artifact) => (

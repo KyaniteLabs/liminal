@@ -13,6 +13,11 @@ export type BridgeEvent = {
   artifactPath?: string;
   imageUrl?: string;
   model?: string;
+  provider?: string;
+  endpoint?: string;
+  statusCode?: number;
+  retryable?: boolean;
+  responseBody?: string;
   duration?: number;
   finalScore?: number;
   qualityState?: 'scored' | 'unscored';
@@ -63,12 +68,61 @@ function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))];
 }
 
+export type FailureReceipt = {
+  title: string;
+  message: string;
+  summary: string;
+  provider?: string;
+  model?: string;
+  endpoint?: string;
+  statusCode?: number;
+  retryable?: boolean;
+  responseBody?: string;
+};
+
 function routeSelectionMessage(domain: string | undefined, domains: string[] | undefined): string {
   const selected = domain || domains?.[0] || 'domain';
   const backups = (domains || []).filter((item) => item !== selected);
   return backups.length > 0
     ? `Selected ${selected}; backup domains if needed: ${backups.join(' -> ')}`
     : `Selected ${selected}; no backup domain`;
+}
+
+function failureMessage(event: BridgeEvent): string {
+  return String(event.error || event.message || 'failure');
+}
+
+function formatProviderFailureSummary(event: BridgeEvent): string {
+  const providerModel = [event.provider, event.model].filter(Boolean).join(' / ');
+  const status = event.statusCode ? `HTTP ${event.statusCode}` : '';
+  const retry = event.retryable === true ? 'retryable' : event.retryable === false ? 'not retryable' : '';
+  return [providerModel, event.endpoint, status, retry].filter(Boolean).join(' · ');
+}
+
+function buildFailureReceipt(event: BridgeEvent): FailureReceipt {
+  const title = event.type === 'generation.attempt.failed'
+    ? `${event.domain || 'unknown'} attempt ${event.attempt || '?'} / ${event.attemptTotal || '?'} failed`
+    : 'Bridge error';
+  return {
+    title,
+    message: failureMessage(event),
+    summary: formatProviderFailureSummary(event),
+    provider: event.provider,
+    model: event.model,
+    endpoint: event.endpoint,
+    statusCode: event.statusCode,
+    retryable: event.retryable,
+    responseBody: event.responseBody,
+  };
+}
+
+function attemptFailureDetail(event: BridgeEvent): string {
+  const summary = formatProviderFailureSummary(event);
+  return summary ? `${failureMessage(event)} · ${summary}` : failureMessage(event);
+}
+
+function hasFailureProvenance(event: BridgeEvent): boolean {
+  return Boolean(event.provider || event.model || event.endpoint || event.statusCode || event.retryable !== undefined || event.responseBody);
 }
 
 export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
@@ -97,6 +151,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   let latestIterationStageTimings: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }> = [];
   const artifacts: Array<{ label: string; path: string }> = [];
   const failures: string[] = [];
+  const failureReceipts: FailureReceipt[] = [];
   const receipts: Array<{ organ: string; status: string; detail: string }> = [];
 
   for (const event of events) {
@@ -173,13 +228,15 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       phase = 'fallback';
       currentAttempt = event.attempt || currentAttempt;
       attemptTotal = event.attemptTotal || attemptTotal;
-      failures.push(`${event.domain || 'unknown'}: ${event.error || event.message || 'attempt failed'}`);
+      const detail = attemptFailureDetail(event);
+      failures.push(`${event.domain || 'unknown'}: ${detail}`);
+      failureReceipts.push(buildFailureReceipt(event));
       attempts.set(`${event.attempt}-${event.domain}`, {
         attempt: event.attempt || 0,
         total: event.attemptTotal || 0,
         domain: event.domain || 'unknown',
         status: 'failed',
-        detail: event.error || event.message || '',
+        detail,
       });
     }
     if (event.type === 'artifact.found' && event.artifactPath) {
@@ -209,6 +266,13 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       phase = 'preview missing';
       previewCompletedAt = readEventTime(event) || previewCompletedAt || now;
       latestMessage = `Preview unavailable: ${event.reason || event.error || event.message || 'preview artifact missing'}`;
+    }
+    if (event.type === 'error' && hasFailureProvenance(event)) {
+      phase = 'failed';
+      latestMessage = failureMessage(event);
+      const receipt = buildFailureReceipt(event);
+      failureReceipts.push(receipt);
+      failures.push(receipt.summary ? `${receipt.message} · ${receipt.summary}` : receipt.message);
     }
     if (event.type === 'generation.cancelled') {
       hasCancelled = true;
@@ -334,6 +398,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
     selectedDomain,
     fallbackRoute: plan,
     artifacts: artifacts.slice(-8),
+    failureReceipts: failureReceipts.slice(-6),
     stageTimings,
     humanReview,
   };

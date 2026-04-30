@@ -47,6 +47,37 @@ describe('workbenchTelemetry', () => {
     });
   });
 
+  it('surfaces provider failure provenance in workbench activity', () => {
+    const summary = summarizeWorkbenchBridge([
+      { type: 'generation.intent_brief', userRequest: 'hydra storm', requirements: ['Primary request: hydra storm'], missingDetails: [], questions: [], willClarify: false },
+      { type: 'generation.route.selected', domain: 'hydra', domains: ['hydra'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
+      { type: 'generation.attempt.started', domain: 'hydra', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      {
+        type: 'generation.attempt.failed',
+        domain: 'hydra',
+        attempt: 1,
+        attemptTotal: 1,
+        error: 'LLM generation failed: OpenAI API error 429: rate limited',
+        provider: 'openai',
+        model: 'gpt-5.4-mini',
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        statusCode: 429,
+        retryable: true,
+        responseBody: '{"error":"rate limited"}',
+      },
+    ]);
+
+    const latest = summary.recentActivity.at(-1);
+    expect(latest).toMatchObject({ label: 'Provider failure', status: 'failed' });
+    expect(latest?.detail).toContain('openai / gpt-5.4-mini');
+    expect(latest?.detail).toContain('https://api.openai.com/v1/chat/completions');
+    expect(latest?.detail).toContain('HTTP 429');
+    expect(latest?.detail).toContain('retryable');
+    expect(latest?.detail).toContain('body: {"error":"rate limited"}');
+    expect(summary.processSteps.find((step) => step.id === 'draft')).toMatchObject({ status: 'failed' });
+    expect(summary.humanReview.checks.find((check) => check.label === 'Machine blockers')?.detail).toContain('HTTP 429');
+  });
+
   it('does not imply a completed explicit p5 draft fell through to another generator', () => {
     const summary = summarizeWorkbenchBridge([
       { type: 'generation.intent_brief', userRequest: 'p5 fireflies', requirements: ['Primary request: p5 fireflies'], missingDetails: [], questions: [], willClarify: false },
@@ -337,7 +368,6 @@ describe('workbenchTelemetry', () => {
     expect(preview?.type).toBe('code');
     expect(preview?.code).toContain('function setup');
   });
-
 
   it('extracts inline HTML and music previews so non-image domains still mount in the stage', () => {
     const htmlPreview = latestBridgePreview([

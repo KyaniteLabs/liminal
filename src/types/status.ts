@@ -75,6 +75,29 @@ export const RESUMABLE_STATUSES = [
   Status.SUSPENDED
 ];
 
+export type StatusLifecycleCategory =
+  | 'waiting'
+  | 'active'
+  | 'succeeded'
+  | 'failed'
+  | 'cancelled'
+  | 'suspended';
+
+export interface StatusLifecycleDescriptor {
+  status: Status;
+  category: StatusLifecycleCategory;
+  terminal: boolean;
+  active: boolean;
+  waiting: boolean;
+  succeeded: boolean;
+  failed: boolean;
+  cancelled: boolean;
+  suspended: boolean;
+  resumable: boolean;
+  rolledBack: boolean;
+  retryable: boolean;
+}
+
 /**
  * Check if a status is active (job currently processing)
  */
@@ -89,4 +112,54 @@ export function isResumableStatus(status: Status): boolean {
   return RESUMABLE_STATUSES.includes(status);
 }
 
+export function isSuccessfulStatus(status: Status): boolean {
+  return status === Status.SUCCESS || status === Status.COMPLETED;
+}
+
+export function isFailedStatus(status: Status): boolean {
+  return status === Status.FAILED || status === Status.ROLLED_BACK;
+}
+
+export function isRetryableStatusReceipt(receipt?: string): boolean {
+  if (!receipt) return false;
+  if (/\bretryable\s*=\s*false\b/i.test(receipt)) return false;
+  if (/\bretryable\s*=\s*true\b/i.test(receipt)) return true;
+  return /rate limit|429|529|overload|timeout|502|503|504|upstream|temporar/i.test(receipt);
+}
+
+export function describeStatusLifecycle(status: Status, receipt?: string): StatusLifecycleDescriptor {
+  const waiting = isWaitingStatus(status);
+  const active = isActiveStatus(status);
+  const resumable = isResumableStatus(status);
+  const succeeded = isSuccessfulStatus(status);
+  const failed = isFailedStatus(status);
+  const cancelled = status === Status.CANCELLED;
+  const rolledBack = status === Status.ROLLED_BACK;
+  const category: StatusLifecycleCategory = waiting
+    ? 'waiting'
+    : active
+      ? 'active'
+      : resumable
+        ? 'suspended'
+        : succeeded
+          ? 'succeeded'
+          : cancelled
+            ? 'cancelled'
+            : 'failed';
+
+  return {
+    status,
+    category,
+    terminal: isTerminalStatus(status),
+    active,
+    waiting,
+    succeeded,
+    failed,
+    cancelled,
+    suspended: status === Status.SUSPENDED,
+    resumable,
+    rolledBack,
+    retryable: isRetryableStatusReceipt(receipt),
+  };
+}
 

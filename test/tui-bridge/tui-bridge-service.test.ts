@@ -280,6 +280,20 @@ describe('TuiBridgeService', () => {
       expect(content.indexOf('Last planning failure:')).toBeLessThan(content.indexOf('Remaining risks:'));
     });
 
+    it('formats suspended engineering sessions as resumable checkpoints', () => {
+      const service = new TuiBridgeService();
+      const content = service['formatAgentSession'](makeSession({
+        status: 'suspended',
+        lastPlanError: 'MiniMax API error 529 | retryable=true',
+      }));
+
+      expect(content).toContain('Status: suspended');
+      expect(content).toContain('The engineering run is suspended with a checkpoint and can be resumed.');
+      expect(content).toContain('- Resumable: yes');
+      expect(content).toContain('- Retryable provider failure: yes');
+      expect(content).toContain('Resume the suspended run from the checkpoint instead of restarting from scratch.');
+    });
+
     it('lists runFocusedTests as verification evidence', () => {
       const service = new TuiBridgeService();
       const content = service['formatAgentSession'](makeSession({

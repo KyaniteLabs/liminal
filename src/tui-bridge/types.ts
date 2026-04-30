@@ -1,6 +1,7 @@
 import type { CortexGoal, CortexSnapshot } from '../cortex/types.js';
 import type { ActionProposal } from '../cortex/ActionProposer.js';
 import type { BridgeRoleName, BridgeRoleStatus, BridgeVisionSupport } from './BridgeLauncherConfig.js';
+import type { Status } from '../types/status.js';
 
 export type TuiMode = 'chat' | 'inspect' | 'action' | 'confirm';
 
@@ -34,11 +35,12 @@ export type TuiRunPhase =
   | 'rendering'
   | 'evaluating'
   | 'repairing'
+  | 'suspended'
   | 'completed'
   | 'failed';
 
 export type TuiRunKind = 'chat' | 'creative' | 'engineering' | 'hybrid';
-export type TuiRunOutcome = 'completed' | 'failed' | 'cancelled';
+export type TuiRunOutcome = 'completed' | 'failed' | 'cancelled' | 'suspended';
 
 export interface TuiFailureProvenance {
   provider?: string;
@@ -65,6 +67,12 @@ export interface TuiRunLifecycle {
   failedAt?: string;
   outcome?: TuiRunOutcome;
   error?: string;
+  /** Canonical harness status that produced this UI lifecycle state. */
+  agentStatus?: Status;
+  /** True when the run has a checkpoint and should be resumed rather than restarted. */
+  resumable?: boolean;
+  /** True when the latest failure receipt says retrying the upstream call is safe. */
+  retryable?: boolean;
   /** Most recent engineering planning failure receipt restored from run-state. */
   lastPlanError?: string;
 }

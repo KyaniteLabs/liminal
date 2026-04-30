@@ -1,6 +1,7 @@
 import type { LLMClient } from '../llm/LLMClient.js';
 import { createLLMModeAgent, type LLMSession, type LLMTask } from '../harness/agent/index.js';
 import { localizeBoundedSelfImprovement, type VerificationTarget } from './RepoIndexLite.js';
+import { describeStatusLifecycle, type StatusLifecycleDescriptor } from '../types/status.js';
 
 export interface SelfImprovementRuntimeInput {
   llm: LLMClient;
@@ -34,6 +35,7 @@ export interface SelfImprovementRuntimeResult {
   modelName: string;
   maxSteps: number;
   session: LLMSession;
+  lifecycle: StatusLifecycleDescriptor;
 }
 
 export interface SelfImprovementRuntime {
@@ -106,6 +108,7 @@ export class LLMModeSelfImprovementRuntime implements SelfImprovementRuntime {
       modelName: prepared.modelName,
       maxSteps: prepared.maxSteps,
       session,
+      lifecycle: describeStatusLifecycle(session.status, session.lastPlanError),
     };
   }
 }

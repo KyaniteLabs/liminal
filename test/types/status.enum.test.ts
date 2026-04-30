@@ -1,5 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { Status, isValidStatus, isTerminalStatus, isWaitingStatus, TERMINAL_STATUSES, ACTIVE_STATUSES, WAITING_STATUSES } from '../../src/types/status.js';
+import {
+  Status,
+  isValidStatus,
+  isTerminalStatus,
+  isWaitingStatus,
+  isResumableStatus,
+  isRetryableStatusReceipt,
+  describeStatusLifecycle,
+  TERMINAL_STATUSES,
+  ACTIVE_STATUSES,
+  WAITING_STATUSES,
+  RESUMABLE_STATUSES,
+} from '../../src/types/status.js';
 
 describe('Status enum', () => {
   it('should have PENDING = pending', () => {
@@ -45,6 +57,10 @@ describe('Status enum', () => {
   it('should have ROLLED_BACK = rolled_back', () => {
     expect(Status.ROLLED_BACK).toBe('rolled_back');
   });
+
+  it('should have SUSPENDED = suspended', () => {
+    expect(Status.SUSPENDED).toBe('suspended');
+  });
   
   it('should include all statuses in values array', () => {
     const values = Object.values(Status);
@@ -59,6 +75,7 @@ describe('Status enum', () => {
     expect(values).toContain('in_progress');
     expect(values).toContain('success');
     expect(values).toContain('rolled_back');
+    expect(values).toContain('suspended');
   });
   
   it('should distinguish terminal from non-terminal statuses', () => {
@@ -75,6 +92,7 @@ describe('isValidStatus type guard', () => {
     expect(isValidStatus('running')).toBe(true);
     expect(isValidStatus('completed')).toBe(true);
     expect(isValidStatus('failed')).toBe(true);
+    expect(isValidStatus('suspended')).toBe(true);
   });
   
   it('should return false for invalid status strings', () => {
@@ -100,6 +118,7 @@ describe('TERMINAL_STATUSES array', () => {
     expect(TERMINAL_STATUSES).not.toContain(Status.IDLE);
     expect(TERMINAL_STATUSES).not.toContain(Status.QUEUED);
     expect(TERMINAL_STATUSES).not.toContain(Status.IN_PROGRESS);
+    expect(TERMINAL_STATUSES).not.toContain(Status.SUSPENDED);
   });
 });
 
@@ -134,6 +153,7 @@ describe('isTerminalStatus helper', () => {
     expect(isTerminalStatus(Status.IDLE)).toBe(false);
     expect(isTerminalStatus(Status.QUEUED)).toBe(false);
     expect(isTerminalStatus(Status.IN_PROGRESS)).toBe(false);
+    expect(isTerminalStatus(Status.SUSPENDED)).toBe(false);
   });
 });
 
@@ -149,5 +169,28 @@ describe('isWaitingStatus helper', () => {
     expect(isWaitingStatus(Status.COMPLETED)).toBe(false);
     expect(isWaitingStatus(Status.FAILED)).toBe(false);
     expect(isWaitingStatus(Status.IN_PROGRESS)).toBe(false);
+  });
+});
+
+describe('canonical lifecycle helpers', () => {
+  it('treats suspended as resumable but not failed or terminal', () => {
+    expect(RESUMABLE_STATUSES).toContain(Status.SUSPENDED);
+    expect(isResumableStatus(Status.SUSPENDED)).toBe(true);
+    expect(describeStatusLifecycle(Status.SUSPENDED)).toMatchObject({
+      category: 'suspended',
+      suspended: true,
+      resumable: true,
+      failed: false,
+      terminal: false,
+    });
+  });
+
+  it('normalizes retryability from provider receipts', () => {
+    expect(isRetryableStatusReceipt('OpenAI error | retryable=true')).toBe(true);
+    expect(isRetryableStatusReceipt('OpenAI error | retryable=false | status=400')).toBe(false);
+    expect(describeStatusLifecycle(Status.FAILED, 'upstream 503 timeout')).toMatchObject({
+      failed: true,
+      retryable: true,
+    });
   });
 });

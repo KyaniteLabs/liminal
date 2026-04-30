@@ -74,6 +74,14 @@ describe('RunStateStore', () => {
     expect(loaded).toBeNull();
   });
 
+  it('only treats suspended run-state as resumable', async () => {
+    const state = makeRunState({ status: Status.FAILED as RunState['status'] });
+    await saveRunState(state, tempDir);
+
+    const loaded = await readRunState(tempDir);
+    expect(loaded).toBeNull();
+  });
+
   it('clears run state', async () => {
     const state = makeRunState();
     await saveRunState(state, tempDir);

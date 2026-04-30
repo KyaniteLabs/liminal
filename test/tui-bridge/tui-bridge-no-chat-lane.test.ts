@@ -839,6 +839,62 @@ describe('Bubble Tea operator routing', () => {
       outcome: 'failed',
       error: receipt,
       lastPlanError: receipt,
+      agentStatus: Status.FAILED,
+      resumable: false,
+      retryable: true,
+    });
+  });
+
+  it('keeps suspended engineering runs resumable instead of flattening them to failed', async () => {
+    const receipt = 'MiniMax API error 529 | retryable=true';
+    executeTask.mockImplementationOnce(async (task: { id: string; title: string }) => ({
+      task,
+      messages: [],
+      status: Status.SUSPENDED,
+      startTime: new Date(0).toISOString(),
+      endTime: new Date(10).toISOString(),
+      stepCount: 2,
+      backups: [],
+      successfulInspectionCalls: 0,
+      modifiedExtensions: new Set<string>(),
+      exploredPaths: new Set<string>(),
+      mutatedFiles: new Set<string>(['src/foo.ts']),
+      successfulMutatedFiles: new Set<string>(['src/foo.ts']),
+      activeFocusIndex: 0,
+      focusInspectionBudgetRemaining: 0,
+      focusStatus: 'committed',
+      focusAdjacentFileUsed: false,
+      lastPlanError: receipt,
+    }));
+
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'Fix the Bubble Tea resumable lifecycle display.',
+        clientIntent: 'chat',
+      },
+      fakeLlm() as never,
+    );
+
+    const pending = service.getStatus(session.sessionId).pendingAction!;
+    await service.confirmAction(session.sessionId, pending.id, fakeLlm() as never);
+
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'run.lifecycle' && event.run.phase === 'suspended'));
+
+    expect(service.getStatus(session.sessionId).run).toMatchObject({
+      kind: 'engineering',
+      phase: 'suspended',
+      outcome: 'suspended',
+      error: receipt,
+      lastPlanError: receipt,
+      agentStatus: Status.SUSPENDED,
+      resumable: true,
+      retryable: true,
     });
   });
 

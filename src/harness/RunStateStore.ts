@@ -24,7 +24,7 @@ import { join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { Logger } from '../utils/Logger.js';
-import { Status } from '../types/status.js';
+import { Status, isResumableStatus } from '../types/status.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -158,7 +158,7 @@ export async function readRunState(cwd?: string): Promise<RunState | null> {
   try {
     const content = await readFile(path, 'utf-8');
     const state = JSON.parse(content) as RunState;
-    if (state.status === Status.SUSPENDED) {
+    if (isResumableStatus(state.status)) {
       return state;
     }
     return null;

@@ -51,6 +51,7 @@ import { Gallery } from '../gallery/Gallery.js';
 import { PostGenerationCognitiveWriter } from './PostGenerationCognitiveWriter.js';
 import { detectProviderLabel } from '../config/ProviderRuntime.js';
 import { compactLLMErrorProvenance, extractLLMErrorProvenance } from '../llm/ErrorProvenance.js';
+import { describeStatusLifecycle } from '../types/status.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -414,6 +415,14 @@ export class TuiBridgeService {
     patch: Partial<Omit<TuiRunLifecycle, 'runId' | 'kind' | 'startedAt' | 'phase' | 'error' | 'outcome'>> = {},
   ): TuiRunLifecycle | undefined {
     return this.transitionRun(sessionId, 'failed', { ...patch, error, outcome });
+  }
+
+  private suspendRun(
+    sessionId: string,
+    error: string,
+    patch: Partial<Omit<TuiRunLifecycle, 'runId' | 'kind' | 'startedAt' | 'phase' | 'error' | 'outcome'>> = {},
+  ): TuiRunLifecycle | undefined {
+    return this.transitionRun(sessionId, 'suspended', { ...patch, error, outcome: 'suspended' });
   }
 
   private setRunLifecycle(sessionId: string, run: TuiRunLifecycle, activeTask?: string): void {
@@ -2641,8 +2650,9 @@ export class TuiBridgeService {
       conversation['recordMessage']('assistant', fullContent);
 
       const duration = new Date(session.endTime || new Date().toISOString()).getTime() - new Date(session.startTime).getTime();
+      const lifecycle = describeStatusLifecycle(session.status, session.lastPlanError);
       this.emit(sessionId, { type: 'response.metadata', sessionId, model: modelName, duration });
-      this.emit(sessionId, { type: 'task.completed', sessionId, taskId, success: session.status === 'success', durationMs: duration });
+      this.emit(sessionId, { type: 'task.completed', sessionId, taskId, success: lifecycle.succeeded, durationMs: duration });
 
       this.emit(sessionId, {
         type: 'status.updated',
@@ -2653,14 +2663,43 @@ export class TuiBridgeService {
           model: modelName,
         }),
       });
-      if (session.status === 'success') {
-        this.completeRun(sessionId, { label: 'Engineering task complete', model: modelName, provider });
+      if (lifecycle.succeeded) {
+        this.completeRun(sessionId, {
+          label: 'Engineering task complete',
+          model: modelName,
+          provider,
+          agentStatus: session.status,
+          resumable: lifecycle.resumable,
+          retryable: lifecycle.retryable,
+        });
+      } else if (lifecycle.resumable) {
+        this.suspendRun(
+          sessionId,
+          session.lastPlanError || `Engineering ${session.status}`,
+          {
+            label: 'Engineering suspended - resumable',
+            lastPlanError: session.lastPlanError,
+            agentStatus: session.status,
+            resumable: true,
+            retryable: lifecycle.retryable,
+            model: modelName,
+            provider,
+          },
+        );
       } else {
         this.failRun(
           sessionId,
           session.lastPlanError || `Engineering ${session.status}`,
           'failed',
-          { label: `Engineering ${session.status}`, lastPlanError: session.lastPlanError, model: modelName, provider },
+          {
+            label: `Engineering ${session.status}`,
+            lastPlanError: session.lastPlanError,
+            agentStatus: session.status,
+            resumable: false,
+            retryable: lifecycle.retryable,
+            model: modelName,
+            provider,
+          },
         );
       }
 
@@ -3220,6 +3259,7 @@ export class TuiBridgeService {
   }
 
   private formatAgentSession(session: LLMSession): string {
+    const lifecycle = describeStatusLifecycle(session.status, session.lastPlanError);
     const duration = session.endTime
       ? new Date(session.endTime).getTime() - new Date(session.startTime).getTime()
       : Date.now() - new Date(session.startTime).getTime();
@@ -3246,6 +3286,8 @@ export class TuiBridgeService {
       .map((m) => `- ${m.toolCall?.tool}`);
     const verdict = session.status === 'success'
       ? 'The engineering run completed successfully.'
+      : lifecycle.resumable
+        ? 'The engineering run is suspended with a checkpoint and can be resumed.'
       : session.status === 'failed' || session.status === 'rolled_back'
         ? 'The engineering run did not complete successfully.'
         : 'The engineering run completed with unresolved issues.';
@@ -3254,6 +3296,8 @@ export class TuiBridgeService {
       `- Steps: ${session.stepCount}`,
       `- Duration: ${duration}ms`,
       `- Tools used: ${this.agentToolsUsed(session).join(', ') || 'none'}`,
+      `- Resumable: ${lifecycle.resumable ? 'yes' : 'no'}`,
+      `- Retryable provider failure: ${lifecycle.retryable ? 'yes' : 'no'}`,
     ];
 
     return [
@@ -3277,11 +3321,15 @@ export class TuiBridgeService {
         session.lastPlanError,
       ] : []),
       `Remaining risks:`,
-      session.status === 'success'
+      lifecycle.resumable
+        ? '- Medium: checkpointed work exists; resume before starting a replacement run in the same area.'
+        : session.status === 'success'
         ? '- Low: trust generated changes only after reviewing the diff and verification output.'
         : '- The run did not report full success; inspect logs and working tree changes before trusting results.',
       `Recommended next action:`,
-      session.status === 'success'
+      lifecycle.resumable
+        ? '- Resume the suspended run from the checkpoint instead of restarting from scratch.'
+        : session.status === 'success'
         ? '- Review the diff and merge if the changes match intent.'
         : '- Inspect the failure, rerun verification, and continue from the most relevant file.',
       '',

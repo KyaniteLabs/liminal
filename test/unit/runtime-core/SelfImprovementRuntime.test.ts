@@ -13,6 +13,7 @@ vi.mock('../../../src/harness/agent/index.js', () => ({
 }));
 
 import { LLMModeSelfImprovementRuntime } from '../../../src/runtime-core/SelfImprovementRuntime.js';
+import { Status } from '../../../src/types/status.js';
 
 describe('LLMModeSelfImprovementRuntime', () => {
   beforeEach(() => {
@@ -75,7 +76,7 @@ describe('LLMModeSelfImprovementRuntime', () => {
       getConfig: vi.fn(() => ({ model: 'glm-5.1' })),
     } as any;
     const session = {
-      status: 'success',
+      status: Status.SUCCESS,
       startTime: '2026-04-11T18:00:00.000Z',
       endTime: '2026-04-11T18:00:01.000Z',
       stepCount: 2,
@@ -110,6 +111,12 @@ describe('LLMModeSelfImprovementRuntime', () => {
       maxSteps: 20,
       session,
       taskId: expect.stringMatching(/^tui-self-/),
+      lifecycle: expect.objectContaining({
+        status: Status.SUCCESS,
+        category: 'succeeded',
+        succeeded: true,
+        resumable: false,
+      }),
     });
     expect(mockExecuteTask).toHaveBeenCalledWith(result.session ? expect.objectContaining({
       id: result.taskId,

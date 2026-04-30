@@ -390,7 +390,7 @@ data: ${JSON.stringify(stored.event)}
     const url = `${this.address}/api/tui/session/${sessionId}/mic-preview`;
     const content = [
       'Mic preview controls',
-      'Start recording in browser: ' + url,
+      'Physical mic capture page: ' + url,
       'Output: nocturnal kinetic pond',
       'RMS: 0',
       'Peak: 0',
@@ -401,11 +401,8 @@ data: ${JSON.stringify(stored.event)}
     ].join('\n');
     this.bridge.publishEvent<'preview.started'>(sessionId, { type: 'preview.started', previewType: 'music' });
     this.bridge.publishEvent<'preview.content'>(sessionId, { type: 'preview.content', content, previewType: 'music' });
-    void import('open')
-      .then(({ default: open }) => open(url))
-      .then(() => this.bridge.publishEvent<'activity.updated'>(sessionId, { type: 'activity.updated', message: 'Opened microphone recorder in browser' }))
-      .catch((error) => this.bridge.publishEvent<'activity.updated'>(sessionId, { type: 'activity.updated', message: `Open browser manually: ${url} (${error instanceof Error ? error.message : String(error)})` }));
-    this.bridge.emitCommandResponse(sessionId, `Mic recorder opened in browser: ${url}\nPress Ctrl+E to watch the operator panel.`);
+    this.bridge.publishEvent<'activity.updated'>(sessionId, { type: 'activity.updated', message: `Mic recorder is ready in Studio; browser auto-open is disabled. URL: ${url}` });
+    this.bridge.emitCommandResponse(sessionId, `Mic recorder is ready in Studio. If you need physical mic capture, open this URL manually: ${url}\nPress Ctrl+E to watch the operator panel.`);
     return true;
   }
 

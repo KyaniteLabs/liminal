@@ -648,7 +648,7 @@ describe('TuiBridgeServer model picker', () => {
       await server.stop();
     }
   });
-  it('opens mic preview command and streams updates to preview events', async () => {
+  it('prepares mic preview command without auto-opening a browser and streams updates', async () => {
     const port = await getFreePort();
     const service = new TuiBridgeService();
     const server = new TuiBridgeServer(service, {
@@ -684,7 +684,8 @@ describe('TuiBridgeServer model picker', () => {
       expect(events.some((event) => event.type === 'preview.started' && (event as any).previewType === 'music')).toBe(true);
       expect(events.some((event) => event.type === 'preview.completed' && (event as any).content.includes('RMS: 0.42'))).toBe(true);
       const committed = events.find((event) => event.type === 'response.committed') as any;
-      expect(committed.content).toContain('Mic recorder opened in browser:');
+      expect(committed.content).toContain('Mic recorder is ready in Studio');
+      expect(committed.content).toContain('open this URL manually:');
     } finally {
       await server.stop();
     }

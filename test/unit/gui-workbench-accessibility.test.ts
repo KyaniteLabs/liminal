@@ -28,6 +28,20 @@ describe('GUI workbench accessibility contract', () => {
     expect(shell).toContain('Use the message box to revise, make a variation, or polish this direction.');
   });
 
+
+  it('keeps secondary modes available without making the default surface a dashboard', () => {
+    expect(shell).toContain('liminal-primary-mode');
+    expect(shell).toContain('liminal-secondary-tools');
+    expect(shell).toContain('More tools');
+    expect(shell).toContain('More Generate tools');
+  });
+
+  it('keeps internal process receipts out of the default preview panel', () => {
+    expect(app).not.toContain('liminal-stage-process');
+    expect(app).not.toContain('liminal-human-review-strip');
+    expect(app).toContain('Manual Review Pack');
+  });
+
   it('does not surface stale EventSource disconnects from replaced sessions', () => {
     expect(bridgeHook).toContain('disconnectCurrentSource');
     expect(bridgeHook).toContain('sourceRef.current !== es');

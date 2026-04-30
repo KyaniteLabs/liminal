@@ -11,9 +11,9 @@ describe('workbench cognitive receipt source contract', () => {
     const source = readFileSync(path.join(repoRoot, 'gui/src/gui/workbenchTelemetry.ts'), 'utf8');
 
     expect(source).toContain("id: 'cognition'");
-    expect(source).toContain("label: 'Cognition'");
+    expect(source).toContain("label: 'Reflection'");
     expect(source).toContain('generation.cognitive_receipt');
-    expect(source).toContain('Cognitive receipt');
+    expect(source).toContain('Reflection receipt');
     expect(source).toContain('summarizeCognitiveReceipt');
   });
 });

@@ -116,6 +116,24 @@ export function latestCognitiveReceipt(events: WorkbenchBridgeEvent[]): Workbenc
   };
 }
 
+function routeDetail(selectedDomain: string, domains: string[]): string {
+  if (!selectedDomain) return domains.length > 0 ? `planned domains: ${domains.join(' -> ')}` : 'waiting for route';
+  const backups = domains.filter((domain) => domain !== selectedDomain);
+  return backups.length > 0
+    ? `selected ${selectedDomain}; backup domains if needed: ${backups.join(' -> ')}`
+    : `selected ${selectedDomain}; no backup domain`;
+}
+
+function completedDraftRouteDetail(selectedDomain: string, backupWasUsed: boolean, failedDomains: string[]): string {
+  if (!backupWasUsed) return `selected ${selectedDomain}; no backup domain used`;
+  const failedSummary = failedDomains.length > 0 ? ` after ${failedDomains.join(' -> ')} did not complete` : '';
+  return `selected ${selectedDomain}; backup domain used${failedSummary}`;
+}
+
+function completedDraftAttemptDetail(selectedDomain: string, backupWasUsed: boolean): string {
+  return `preview ready: selected ${selectedDomain}; ${backupWasUsed ? 'backup used' : 'no backup used'}`;
+}
+
 function summarizeCognitiveReceipt(events: WorkbenchBridgeEvent[]): string {
   const receipt = [...events].reverse().find((event) => event.type === 'generation.cognitive_receipt');
   const receipts = Array.isArray(receipt?.receipts) ? receipt.receipts : [];
@@ -144,6 +162,7 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
   const hasDisconnected = events.length > 0 && latestDisconnectedIndex === events.length - 1;
   const hasComplete = events.some((event) => event.type === 'generation.complete');
   const hasCognitiveReceipt = events.some((event) => event.type === 'generation.cognitive_receipt');
+  const failedAttemptEvents = events.filter((event) => event.type === 'generation.attempt.failed');
   const hasError = events.some((event) => event.type === 'error' || event.type === 'generation.attempt.failed');
   const routeEvent = [...events].reverse().find((event) => event.type === 'generation.route.selected');
   const planEvent = [...events].reverse().find((event) => event.type === 'generation.domain_plan');
@@ -151,15 +170,16 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
   const routeDomains = Array.isArray(routeEvent?.domains) ? routeEvent.domains.map(String) : [];
   const rawDomains = Array.isArray(planEvent?.domains) ? planEvent.domains.map(String) : routeDomains;
   const selectedRoute = String(routeEvent?.domain || rawDomains[0] || '');
-  const domains = rawDomains.length > 0 ? `fallback order: ${rawDomains.join(' -> ')}` : 'waiting for route';
-  const routeDetail = selectedRoute ? `selected ${selectedRoute}; ${domains}` : domains;
+  const routeSummary = routeDetail(selectedRoute, rawDomains);
   const completeEvent = [...events].reverse().find((event) => event.type === 'generation.complete');
   const artifactEvent = [...events].reverse().find((event) => event.type === 'artifact.found');
   const verifiedEvent = [...events].reverse().find((event) => event.type === 'preview.verified');
   const selectedDomain = String((artifactEvent?.artifactLabel || '').split(' ')[0] || attemptEvent?.domain || rawDomains[0] || 'unknown').toLowerCase();
+  const failedDomains = failedAttemptEvents.map((event) => String(event.domain || 'unknown'));
+  const backupWasUsed = failedAttemptEvents.length > 0;
   const attemptLabel = completeEvent
     ? completeEvent.executionMode === 'draft'
-      ? `preview ready: selected ${selectedDomain}; route stopped`
+      ? completedDraftAttemptDetail(selectedDomain, backupWasUsed)
       : `complete: selected ${selectedDomain}`
     : attemptEvent ? `attempt ${attemptEvent.attempt || 1}/${attemptEvent.attemptTotal || 1}` : 'waiting for model';
   const cognitiveDetail = summarizeCognitiveReceipt(events);
@@ -174,14 +194,14 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
     {
       id: 'route',
       label: 'Route',
-      detail: hasComplete && completeEvent?.executionMode === 'draft' ? `fallback order available; stopped after ${selectedDomain}` : routeDetail,
+      detail: hasComplete && completeEvent?.executionMode === 'draft' ? completedDraftRouteDetail(selectedDomain, backupWasUsed, failedDomains) : routeSummary,
       status: hasRoute || hasPlan || hasAttempt || hasComplete ? 'done' : hasIntent && !hasClarification ? 'active' : 'pending',
     },
     {
       id: 'draft',
       label: 'Generate',
       detail: hasAttempt ? attemptLabel : 'model not called yet',
-      status: hasError || hasCancelled || hasDisconnected ? 'failed' : hasCandidate || hasPreview || hasComplete ? 'done' : hasAttempt ? 'active' : 'pending',
+      status: (hasError && !hasComplete) || hasCancelled || hasDisconnected ? 'failed' : hasCandidate || hasPreview || hasComplete ? 'done' : hasAttempt ? 'active' : 'pending',
     },
     {
       id: 'preview',

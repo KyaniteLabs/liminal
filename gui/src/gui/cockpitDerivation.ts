@@ -63,6 +63,14 @@ function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))];
 }
 
+function routeSelectionMessage(domain: string | undefined, domains: string[] | undefined): string {
+  const selected = domain || domains?.[0] || 'domain';
+  const backups = (domains || []).filter((item) => item !== selected);
+  return backups.length > 0
+    ? `Selected ${selected}; backup domains if needed: ${backups.join(' -> ')}`
+    : `Selected ${selected}; no backup domain`;
+}
+
 export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   const planEvent = [...events].reverse().find((event) => event.type === 'generation.domain_plan');
   const plan = Array.isArray(planEvent?.domains) ? planEvent!.domains! : [];
@@ -120,7 +128,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       activeDomain = event.domain || activeDomain;
       phase = 'route selected';
       latestMessage = Array.isArray(event.domains)
-        ? `Selected ${event.domain || event.domains[0] || 'domain'}; fallback order ${event.domains.join(' -> ')}`
+        ? routeSelectionMessage(event.domain, event.domains)
         : latestMessage;
       timeoutMinutes = event.timeoutMinutes || timeoutMinutes;
       candidateCount = event.candidateCount || candidateCount;
@@ -251,7 +259,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
               : `Run complete from ${selectedDomain}.`
             : activeDomain
               ? executionMode === 'draft'
-                ? `Generating first usable preview; fallback route may try ${activeDomain} first.`
+                ? `Generating first usable preview in ${activeDomain}.`
                 : `Waiting for ${candidateCount} candidates in ${activeDomain}`
               : plan.length
                 ? `Planning ${plan.length} domain attempts`

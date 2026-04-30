@@ -39,11 +39,77 @@ describe('workbenchTelemetry', () => {
     expect(summary.recentActivity.map((item) => item.label)).toContain('Preview verified');
     expect(summary.processSteps.find((step) => step.id === 'route')).toMatchObject({
       status: 'done',
-      detail: 'selected p5; fallback order: p5 -> three',
+      detail: 'selected p5; backup domains if needed: three',
     });
     expect(summary.processSteps.find((step) => step.id === 'preview')).toMatchObject({
       status: 'done',
       detail: 'verified image preview (p5)',
+    });
+  });
+
+  it('does not imply a completed explicit p5 draft fell through to another generator', () => {
+    const summary = summarizeWorkbenchBridge([
+      { type: 'generation.intent_brief', userRequest: 'p5 fireflies', requirements: ['Primary request: p5 fireflies'], missingDetails: [], questions: [], willClarify: false },
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
+      { type: 'generation.domain_plan', domains: ['p5'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      { type: 'artifact.found', artifactLabel: 'p5 HTML preview', artifactPath: '.omx/proof/live-previews/p5.html' },
+      { type: 'preview.completed', previewType: 'image', content: 'ZmFrZQ==', imageUrl: '.omx/proof/live-previews/p5.png' },
+      { type: 'generation.complete', finalScore: 0, duration: 1200, model: 'GLM-4.5-air', reason: 'draft artifact ready', executionMode: 'draft' },
+    ]);
+
+    expect(summary.processSteps.find((step) => step.id === 'route')).toMatchObject({
+      status: 'done',
+      detail: 'selected p5; no backup domain used',
+    });
+    expect(summary.processSteps.find((step) => step.id === 'draft')).toMatchObject({
+      status: 'done',
+      detail: 'preview ready: selected p5; no backup used',
+    });
+    expect(summary.processSteps.map((step) => step.detail).join(' ')).not.toMatch(/fallback/i);
+  });
+
+  it('keeps completed draft routing honest when a backup domain actually succeeds', () => {
+    const summary = summarizeWorkbenchBridge([
+      { type: 'generation.intent_brief', userRequest: 'fireflies', requirements: ['Primary request: fireflies'], missingDetails: [], questions: [], willClarify: false },
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5', 'three'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
+      { type: 'generation.domain_plan', domains: ['p5', 'three'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 2, executionMode: 'draft' },
+      { type: 'generation.attempt.failed', domain: 'p5', attempt: 1, attemptTotal: 2, error: 'Generation produced no code' },
+      { type: 'generation.attempt.started', domain: 'three', attempt: 2, attemptTotal: 2, executionMode: 'draft' },
+      { type: 'artifact.found', artifactLabel: 'three HTML preview', artifactPath: '.omx/proof/live-previews/three.html' },
+      { type: 'preview.completed', previewType: 'image', content: 'ZmFrZQ==', imageUrl: '.omx/proof/live-previews/three.png' },
+      { type: 'generation.complete', finalScore: 0, duration: 1200, model: 'GLM-4.5-air', reason: 'draft artifact ready', executionMode: 'draft' },
+    ]);
+
+    expect(summary.processSteps.find((step) => step.id === 'route')).toMatchObject({
+      status: 'done',
+      detail: 'selected three; backup domain used after p5 did not complete',
+    });
+    expect(summary.processSteps.find((step) => step.id === 'draft')).toMatchObject({
+      status: 'done',
+      detail: 'preview ready: selected three; backup used',
+    });
+  });
+
+  it('does not report backup usage without a failed attempt event', () => {
+    const summary = summarizeWorkbenchBridge([
+      { type: 'generation.intent_brief', userRequest: 'three orbit sculpture', requirements: ['Primary request: three orbit sculpture'], missingDetails: [], questions: [], willClarify: false },
+      { type: 'generation.route.selected', domain: 'three', domains: ['p5', 'three'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
+      { type: 'generation.domain_plan', domains: ['p5', 'three'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
+      { type: 'generation.attempt.started', domain: 'three', attempt: 1, attemptTotal: 2, executionMode: 'draft' },
+      { type: 'artifact.found', artifactLabel: 'three HTML preview', artifactPath: '.omx/proof/live-previews/three.html' },
+      { type: 'preview.completed', previewType: 'image', content: 'ZmFrZQ==', imageUrl: '.omx/proof/live-previews/three.png' },
+      { type: 'generation.complete', finalScore: 0, duration: 1200, model: 'GLM-4.5-air', reason: 'draft artifact ready', executionMode: 'draft' },
+    ]);
+
+    expect(summary.processSteps.find((step) => step.id === 'route')).toMatchObject({
+      status: 'done',
+      detail: 'selected three; no backup domain used',
+    });
+    expect(summary.processSteps.find((step) => step.id === 'draft')).toMatchObject({
+      status: 'done',
+      detail: 'preview ready: selected three; no backup used',
     });
   });
 

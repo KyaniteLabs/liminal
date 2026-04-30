@@ -6,7 +6,7 @@ import { TuiSessionStore } from './TuiSessionStore.js';
 import { ConversationManager } from '../chat/ConversationManager.js';
 import { RalphLoop } from '../core/RalphLoop.js';
 import type { LLMClient } from '../llm/LLMClient.js';
-import type { TuiBridgeEvent, TuiInputRequest, TuiPendingAction, TuiRunKind, TuiRunLifecycle, TuiRunPhase, TuiSessionStatus } from './types.js';
+import type { TuiBridgeEvent, TuiFailureProvenance, TuiInputRequest, TuiPendingAction, TuiRunKind, TuiRunLifecycle, TuiRunPhase, TuiSessionStatus } from './types.js';
 import { Domain } from '../types/domains.js';
 import { eventBus, EventTypes, type BusEvent } from '../core/EventBus.js';
 import { createLLMModeAgent, type LLMSession } from '../harness/agent/index.js';
@@ -50,6 +50,7 @@ import { GenerationOrchestrator } from '../core/GenerationOrchestrator.js';
 import { Gallery } from '../gallery/Gallery.js';
 import { PostGenerationCognitiveWriter } from './PostGenerationCognitiveWriter.js';
 import { detectProviderLabel } from '../config/ProviderRuntime.js';
+import { compactLLMErrorProvenance, extractLLMErrorProvenance } from '../llm/ErrorProvenance.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -438,6 +439,22 @@ export class TuiBridgeService {
     });
   }
 
+  private failureProvenance(
+    error: unknown,
+    fallback: TuiFailureProvenance = {},
+  ): TuiFailureProvenance {
+    return compactLLMErrorProvenance(extractLLMErrorProvenance(error), fallback);
+  }
+
+  private errorEvent(sessionId: string, error: unknown, fallback: TuiFailureProvenance = {}): TuiBridgeEvent {
+    return {
+      type: 'error',
+      sessionId,
+      message: error instanceof Error ? error.message : String(error),
+      ...this.failureProvenance(error, fallback),
+    };
+  }
+
   emitCommandResponse(sessionId: string, content: string): void {
     this.emit(sessionId, { type: 'response.started', sessionId });
     this.emit(sessionId, { type: 'response.delta', sessionId, delta: content });
@@ -631,11 +648,12 @@ export class TuiBridgeService {
 
     const routeStart = Date.now();
     const handleError = (err: unknown) => {
-      this.emit(sessionId, {
-        type: 'error',
-        sessionId,
-        message: err instanceof Error ? err.message : String(err),
-      });
+      const config = llm?.getConfig();
+      this.emit(sessionId, this.errorEvent(sessionId, err, {
+        provider: config?.baseUrl ? this.providerLabelFromBaseUrl(config.baseUrl) : undefined,
+        model: config?.model,
+        endpoint: config?.baseUrl,
+      }));
     };
 
     const emitSessionTurn = (delegatedTo: string, responseContent?: string, extras?: { artifactRefs?: string[]; taskRefs?: string[] }) => {
@@ -1654,6 +1672,7 @@ export class TuiBridgeService {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.failRun(sessionId, message);
+      this.emit(sessionId, this.errorEvent(sessionId, err, { provider, model: modelName, endpoint: config.baseUrl }));
       throw err;
     } finally {
       this.activeStreams.delete(sessionId);
@@ -1940,6 +1959,7 @@ export class TuiBridgeService {
             attemptTotal: domainPlan.length,
             error: message,
             duration: Date.now() - attemptStartedAt,
+            ...this.failureProvenance(err, { provider, model: generatorModelName }),
           });
           this.transitionRun(sessionId, 'repairing', {
             label: `Repairing after ${domain} generation failure`,
@@ -2084,7 +2104,7 @@ export class TuiBridgeService {
       const message = err instanceof Error ? err.message : String(err);
       logBridge('generation.failed', { sessionId, generatorModel: generatorModelName, message });
       this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Generation failed: ${message}` });
-      this.emit(sessionId, { type: 'error', sessionId, message });
+      this.emit(sessionId, this.errorEvent(sessionId, err, { provider, model: generatorModelName, endpoint: config.baseUrl }));
       this.failRun(sessionId, message);
       throw err;
     } finally {
@@ -2332,6 +2352,7 @@ export class TuiBridgeService {
             attemptTotal: domainPlan.length,
             error: message,
             duration: Date.now() - attemptStartedAt,
+            ...this.failureProvenance(err, { provider, model: generatorModelName }),
           });
           this.transitionRun(sessionId, 'repairing', {
             label: `Repairing after ${domain} draft failure`,

@@ -239,6 +239,25 @@ describe('OpenAIProvider', () => {
     expect(result.value.error).toContain('content_kind=string');
   });
 
+
+  it('returns HTTP error provenance with endpoint, model, status, and redacted body', async () => {
+    mockFetchResponse({ error: { message: 'bad token', api_key: 'secret-token' } }, 401, false);
+
+    const result = await provider.generate(makeRequest());
+
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.provider).toBe('openai');
+      expect(result.error.model).toBe('gpt-4');
+      expect(result.error.endpoint).toBe('https://api.openai.com/v1/chat/completions');
+      expect(result.error.statusCode).toBe(401);
+      expect(result.error.retryable).toBe(false);
+      expect(result.error.responseBody).toContain('bad token');
+      expect(result.error.responseBody).toContain('[REDACTED]');
+      expect(result.error.responseBody).not.toContain('secret-token');
+    }
+  });
+
   it('extracts text content from array-shaped message content', async () => {
     mockFetchResponse({
       choices: [{

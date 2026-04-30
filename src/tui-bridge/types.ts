@@ -27,11 +27,43 @@ export interface TuiPendingAction {
   createdAt: string;
 }
 
+export type TuiRunPhase =
+  | 'queued'
+  | 'planning'
+  | 'generating'
+  | 'rendering'
+  | 'evaluating'
+  | 'repairing'
+  | 'completed'
+  | 'failed';
+
+export type TuiRunKind = 'chat' | 'creative' | 'engineering' | 'hybrid';
+export type TuiRunOutcome = 'completed' | 'failed' | 'cancelled';
+
+export interface TuiRunLifecycle {
+  runId: string;
+  kind: TuiRunKind;
+  phase: TuiRunPhase;
+  label: string;
+  startedAt: string;
+  updatedAt: string;
+  executionMode?: 'draft' | 'prove';
+  model?: string;
+  provider?: string;
+  artifactPath?: string;
+  previewType?: 'code' | 'image' | 'html' | 'music';
+  completedAt?: string;
+  failedAt?: string;
+  outcome?: TuiRunOutcome;
+  error?: string;
+}
+
 export interface TuiSessionStatus {
   sessionId: string;
   mode: TuiMode;
   provider?: string;
   model?: string;
+  run?: TuiRunLifecycle;
   roles?: Record<BridgeRoleName, BridgeRoleStatus>;
   evaluation?: {
     renderedEvidence: boolean;
@@ -83,6 +115,7 @@ export interface TuiFileChange {
 }
 
 export type TuiBridgeEvent =
+  | { type: 'run.lifecycle'; sessionId: string; run: TuiRunLifecycle }
   | { type: 'response.started'; sessionId: string }
   | { type: 'response.delta'; sessionId: string; delta: string }
   | { type: 'response.completed'; sessionId: string; content: string }

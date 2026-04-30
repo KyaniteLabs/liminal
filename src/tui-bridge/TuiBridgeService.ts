@@ -6,7 +6,7 @@ import { TuiSessionStore } from './TuiSessionStore.js';
 import { ConversationManager } from '../chat/ConversationManager.js';
 import { RalphLoop } from '../core/RalphLoop.js';
 import type { LLMClient } from '../llm/LLMClient.js';
-import type { TuiBridgeEvent, TuiInputRequest, TuiPendingAction, TuiSessionStatus } from './types.js';
+import type { TuiBridgeEvent, TuiInputRequest, TuiPendingAction, TuiRunKind, TuiRunLifecycle, TuiRunPhase, TuiSessionStatus } from './types.js';
 import { Domain } from '../types/domains.js';
 import { eventBus, EventTypes, type BusEvent } from '../core/EventBus.js';
 import { createLLMModeAgent, type LLMSession } from '../harness/agent/index.js';
@@ -43,6 +43,7 @@ import { normalizeOptions } from '../core/LoopConfig.js';
 import { GenerationOrchestrator } from '../core/GenerationOrchestrator.js';
 import { Gallery } from '../gallery/Gallery.js';
 import { PostGenerationCognitiveWriter } from './PostGenerationCognitiveWriter.js';
+import { detectProviderLabel } from '../config/ProviderRuntime.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -341,6 +342,77 @@ export class TuiBridgeService {
     const status = this.sessions.update(sessionId, patch);
     this.emit(sessionId, { type: 'status.updated', sessionId, status });
     return status;
+  }
+
+  private beginRun(
+    sessionId: string,
+    details: {
+      kind: TuiRunKind;
+      label: string;
+      executionMode?: 'draft' | 'prove';
+      model?: string;
+      provider?: string;
+    },
+  ): TuiRunLifecycle {
+    const now = new Date().toISOString();
+    const run: TuiRunLifecycle = {
+      runId: `run-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      kind: details.kind,
+      phase: 'queued',
+      label: details.label,
+      startedAt: now,
+      updatedAt: now,
+      executionMode: details.executionMode,
+      model: details.model,
+      provider: details.provider,
+    };
+    this.setRunLifecycle(sessionId, run, details.label);
+    return run;
+  }
+
+  private transitionRun(
+    sessionId: string,
+    phase: TuiRunPhase,
+    patch: Partial<Omit<TuiRunLifecycle, 'runId' | 'kind' | 'startedAt'>> = {},
+  ): TuiRunLifecycle | undefined {
+    const current = this.sessions.get(sessionId)?.run;
+    if (!current) return undefined;
+    const now = new Date().toISOString();
+    const run: TuiRunLifecycle = {
+      ...current,
+      ...patch,
+      phase,
+      updatedAt: now,
+      completedAt: phase === 'completed' ? (patch.completedAt ?? now) : patch.completedAt ?? current.completedAt,
+      failedAt: phase === 'failed' ? (patch.failedAt ?? now) : patch.failedAt ?? current.failedAt,
+    };
+    this.setRunLifecycle(sessionId, run, run.label);
+    return run;
+  }
+
+  private completeRun(
+    sessionId: string,
+    patch: Partial<Omit<TuiRunLifecycle, 'runId' | 'kind' | 'startedAt' | 'phase'>> = {},
+  ): TuiRunLifecycle | undefined {
+    return this.transitionRun(sessionId, 'completed', {
+      ...patch,
+      outcome: 'completed',
+    });
+  }
+
+  private failRun(sessionId: string, error: string, outcome: 'failed' | 'cancelled' = 'failed'): TuiRunLifecycle | undefined {
+    return this.transitionRun(sessionId, 'failed', { error, outcome });
+  }
+
+  private setRunLifecycle(sessionId: string, run: TuiRunLifecycle, activeTask?: string): void {
+    const status = this.sessions.update(sessionId, {
+      run,
+      activeTask: activeTask ?? run.label,
+      model: run.model ?? this.sessions.get(sessionId)?.model,
+      provider: run.provider ?? this.sessions.get(sessionId)?.provider,
+    });
+    this.emit(sessionId, { type: 'run.lifecycle', sessionId, run });
+    this.emit(sessionId, { type: 'status.updated', sessionId, status });
   }
 
   emitCommandResponse(sessionId: string, content: string): void {
@@ -820,6 +892,7 @@ export class TuiBridgeService {
         activeTask: 'Generation stopped',
       }),
     });
+    this.failRun(sessionId, 'Generation stopped by operator.', 'cancelled');
   }
 
   /**
@@ -1489,8 +1562,16 @@ export class TuiBridgeService {
 
     const config = llm.getConfig();
     const modelName = config.model || 'unknown';
+    const provider = config.baseUrl ? this.providerLabelFromBaseUrl(config.baseUrl) : 'unknown';
     const startTime = Date.now();
     logBridge('direct.started', { sessionId, model: modelName, chars: userText.length });
+    this.beginRun(sessionId, {
+      kind: 'chat',
+      label: 'Direct chat',
+      model: modelName,
+      provider,
+    });
+    this.transitionRun(sessionId, 'generating', { label: 'Streaming direct chat response' });
 
     try {
       // Build conversation context from history (same pattern as streamChatResponse)
@@ -1544,8 +1625,13 @@ export class TuiBridgeService {
           model: modelName,
         }),
       });
+      this.completeRun(sessionId, { label: 'Direct chat complete', model: modelName, provider });
 
       logBridge('direct.completed', { sessionId, model: modelName, duration: Date.now() - startTime });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.failRun(sessionId, message);
+      throw err;
     } finally {
       this.activeStreams.delete(sessionId);
     }
@@ -1566,6 +1652,7 @@ export class TuiBridgeService {
 
     const config = llm.getConfig();
     const sessionStatus = this.sessions.get(sessionId);
+    const provider = config.baseUrl ? this.providerLabelFromBaseUrl(config.baseUrl) : sessionStatus?.provider || 'unknown';
     const harnessModelName = sessionStatus?.roles?.harness?.model || config.model || 'unknown';
     const generatorModelName = sessionStatus?.roles?.generator?.model || harnessModelName;
     const evaluatorModelName = sessionStatus?.roles?.evaluator?.model || harnessModelName;
@@ -1581,8 +1668,16 @@ export class TuiBridgeService {
       evaluatorModel: evaluatorModelName,
       chars: userText.length,
     });
+    this.beginRun(sessionId, {
+      kind: 'creative',
+      label: 'Creative prove queued',
+      executionMode: 'prove',
+      model: generatorModelName,
+      provider,
+    });
 
     try {
+      this.transitionRun(sessionId, 'planning', { label: 'Reading prompt and choosing creative route' });
       // Emit initial activity
       this.emit(sessionId, {
         type: 'activity.updated',
@@ -1692,6 +1787,11 @@ export class TuiBridgeService {
           candidateCount,
           executionMode: 'prove',
         });
+        this.transitionRun(sessionId, 'generating', {
+          label: `Generating ${domain} candidate`,
+          model: generatorModelName,
+          provider,
+        });
         this.emit(sessionId, {
           type: 'activity.updated',
           sessionId,
@@ -1725,6 +1825,11 @@ export class TuiBridgeService {
               });
             },
             onIteration: (iterationContext) => {
+              this.transitionRun(sessionId, 'evaluating', {
+                label: `Evaluating iteration ${iterationContext.iteration}`,
+                model: evaluatorModelName,
+                provider,
+              });
               this.emit(sessionId, {
                 type: 'generation.candidate.generated',
                 sessionId,
@@ -1802,6 +1907,11 @@ export class TuiBridgeService {
             attemptTotal: domainPlan.length,
             error: message,
             duration: Date.now() - attemptStartedAt,
+          });
+          this.transitionRun(sessionId, 'repairing', {
+            label: `Repairing after ${domain} generation failure`,
+            model: generatorModelName,
+            provider,
           });
           this.emit(sessionId, {
             type: 'activity.updated',
@@ -1891,6 +2001,11 @@ export class TuiBridgeService {
           this.emit(sessionId, { type: 'preview.completed', sessionId, content: codeContent, previewType: 'code' });
         }
 
+        this.transitionRun(sessionId, 'rendering', {
+          label: 'Rendering preview artifact',
+          model: result.model || generatorModelName,
+          provider,
+        });
         await this.emitPreviewArtifacts(sessionId, result.code, activeDomain);
 
         // Record in conversation
@@ -1928,11 +2043,17 @@ export class TuiBridgeService {
           model: result.model || generatorModelName,
         }),
       });
+      this.completeRun(sessionId, {
+        label: 'Creative prove complete',
+        model: result.model || generatorModelName,
+        provider,
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       logBridge('generation.failed', { sessionId, generatorModel: generatorModelName, message });
       this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Generation failed: ${message}` });
       this.emit(sessionId, { type: 'error', sessionId, message });
+      this.failRun(sessionId, message);
       throw err;
     } finally {
       this.activeStreams.delete(sessionId);
@@ -1954,14 +2075,23 @@ export class TuiBridgeService {
 
     const config = llm.getConfig();
     const sessionStatus = this.sessions.get(sessionId);
+    const provider = config.baseUrl ? this.providerLabelFromBaseUrl(config.baseUrl) : sessionStatus?.provider || 'unknown';
     const harnessModelName = sessionStatus?.roles?.harness?.model || config.model || 'unknown';
     const generatorModelName = sessionStatus?.roles?.generator?.model || harnessModelName;
     const timeoutMinutes = Math.min(3, Math.max(1, Number(options.timeoutMinutes) || 1));
     const candidateCount = 1;
     const generationStartedAt = Date.now();
     const intentBrief = this.buildCreativeIntentBrief(userText);
+    this.beginRun(sessionId, {
+      kind: 'creative',
+      label: 'Creative draft queued',
+      executionMode: 'draft',
+      model: generatorModelName,
+      provider,
+    });
 
     try {
+      this.transitionRun(sessionId, 'planning', { label: 'Reading prompt and choosing draft route' });
       this.emit(sessionId, {
         type: 'activity.updated',
         sessionId,
@@ -2042,6 +2172,11 @@ export class TuiBridgeService {
           candidateCount,
           executionMode: 'draft',
         });
+        this.transitionRun(sessionId, 'generating', {
+          label: `Generating ${domain} draft`,
+          model: generatorModelName,
+          provider,
+        });
         this.emitReasoningTrace(sessionId, {
           phase: 'generation',
           thought: `Calling ${generatorModelName} for a fast ${domain} generation.`,
@@ -2093,6 +2228,11 @@ export class TuiBridgeService {
               type: 'activity.updated',
               sessionId,
               message: `${mismatch}; retrying ${domain} without changing domains.`,
+            });
+            this.transitionRun(sessionId, 'repairing', {
+              label: `Repairing ${domain} domain mismatch`,
+              model: generatorModelName,
+              provider,
             });
             const correctionPrompt = this.domainCorrectionPrompt(attemptPrompt, domain, mismatch);
             const retryPromise = orchestrator.generate(correctionPrompt, correctionPrompt, true, controller.signal);
@@ -2150,6 +2290,11 @@ export class TuiBridgeService {
             attemptTotal: domainPlan.length,
             error: message,
             duration: Date.now() - attemptStartedAt,
+          });
+          this.transitionRun(sessionId, 'repairing', {
+            label: `Repairing after ${domain} draft failure`,
+            model: generatorModelName,
+            provider,
           });
           if (controller.signal.aborted) throw err;
         }
@@ -2220,11 +2365,21 @@ export class TuiBridgeService {
           model: result.model || generatorModelName,
         }),
       });
-
-      void this.emitPreviewArtifacts(sessionId, result.code, activeDomain).catch((err) => {
-        const message = err instanceof Error ? err.message : String(err);
-        this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Preview render failed: ${message}` });
+      this.transitionRun(sessionId, 'rendering', {
+        label: 'Rendering draft preview artifact',
+        model: result.model || generatorModelName,
+        provider,
       });
+      await this.emitPreviewArtifacts(sessionId, result.code, activeDomain);
+      this.completeRun(sessionId, {
+        label: 'Creative draft complete',
+        model: result.model || generatorModelName,
+        provider,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.failRun(sessionId, message);
+      throw err;
     } finally {
       this.activeStreams.delete(sessionId);
     }
@@ -2355,12 +2510,20 @@ export class TuiBridgeService {
 
     const config = llm.getConfig();
     const modelName = config.model || 'unknown';
+    const provider = config.baseUrl ? this.providerLabelFromBaseUrl(config.baseUrl) : 'unknown';
     const liveTaskDescription = this.withLiveSessionContext(sessionId, userText, config);
     const maxSteps = Number(process.env.LIMINAL_TUI_AGENT_MAX_STEPS || 20);
     const agent = createLLMModeAgent(llm);
     const taskId = `studio-eng-${Date.now()}`;
 
     // Emit task lifecycle events
+    this.beginRun(sessionId, {
+      kind: 'engineering',
+      label: `Engineering task queued: ${userText.slice(0, 60)}`,
+      model: modelName,
+      provider,
+    });
+    this.transitionRun(sessionId, 'planning', { label: 'Planning engineering task' });
     this.emit(sessionId, { type: 'task.queued', sessionId, taskId, description: userText.slice(0, 120) });
     this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Engineering task queued: ${userText.slice(0, 60)}` });
 
@@ -2369,6 +2532,14 @@ export class TuiBridgeService {
       if (event.type === EventTypes.PROCESS_START || event.type === EventTypes.PROCESS_PROGRESS) {
         const message = event.data.message || event.data.stage || 'working';
         this.emitOperatorProgress(sessionId, event);
+        const stage = typeof event.data.stage === 'string' ? event.data.stage : '';
+        if (stage.includes('verification') || stage.includes('runBuild') || stage.includes('runTests')) {
+          this.transitionRun(sessionId, 'evaluating', { label: String(message), model: modelName, provider });
+        } else if (stage.startsWith('planned ')) {
+          this.transitionRun(sessionId, 'planning', { label: String(message), model: modelName, provider });
+        } else if (stage.startsWith('executed ')) {
+          this.transitionRun(sessionId, 'generating', { label: String(message), model: modelName, provider });
+        }
         this.emit(sessionId, { type: 'activity.updated', sessionId, message: String(message) });
         this.emitLiveNarration(sessionId, String(message));
       }
@@ -2384,6 +2555,7 @@ export class TuiBridgeService {
 
     try {
       this.emit(sessionId, { type: 'task.started', sessionId, taskId });
+      this.transitionRun(sessionId, 'generating', { label: 'Executing engineering task', model: modelName, provider });
 
       const session = await agent.executeTask({
         id: taskId,
@@ -2415,6 +2587,11 @@ export class TuiBridgeService {
           model: modelName,
         }),
       });
+      if (session.status === 'success') {
+        this.completeRun(sessionId, { label: 'Engineering task complete', model: modelName, provider });
+      } else {
+        this.failRun(sessionId, `Engineering ${session.status}`);
+      }
 
       logBridge('engineering.completed', {
         sessionId,
@@ -2423,6 +2600,10 @@ export class TuiBridgeService {
         steps: session.stepCount,
         tools: this.agentToolsUsed(session),
       });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.failRun(sessionId, message);
+      throw err;
     } finally {
       eventBus.offEvent(listener);
       this.activeStreams.delete(sessionId);
@@ -2456,15 +2637,8 @@ export class TuiBridgeService {
   }
 
   private providerLabelFromBaseUrl(baseUrl: string): string {
-    const lower = baseUrl.toLowerCase();
-    if (lower.includes('api.openai.com')) return 'openai';
-    if (lower.includes('z.ai') || lower.includes('bigmodel') || lower.includes('glm')) return 'glm';
-    if (lower.includes('minimax')) return 'minimax';
-    if (lower.includes('openrouter')) return 'openrouter';
-    if (lower.includes('api.kimi.com') || lower.includes('moonshot')) return 'kimi';
-    if (lower.includes('localhost:11434') || lower.includes('127.0.0.1:11434')) return 'ollama';
-    if (lower.includes('localhost') || lower.includes('127.0.0.1')) return 'lmstudio';
-    return 'unknown';
+    const label = detectProviderLabel(baseUrl);
+    return label === 'llm' ? 'unknown' : label;
   }
 
   private buildCreativeIntentBrief(userText: string): CreativeIntentBrief {
@@ -2727,6 +2901,10 @@ export class TuiBridgeService {
     await fs.mkdir(dir, { recursive: true });
     const html = this.toPreviewHtml(code, previewDomain);
     await fs.writeFile(htmlPath, html, 'utf8');
+    this.transitionRun(sessionId, 'rendering', {
+      label: `Rendering ${previewDomain} preview`,
+      artifactPath: htmlPath,
+    });
     this.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: `${previewDomain} HTML preview`, artifactPath: htmlPath });
     this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Preview artifact: ${htmlPath}` });
 
@@ -2741,6 +2919,11 @@ export class TuiBridgeService {
         previewType: inlinePreviewType,
         artifactPath: htmlPath,
         checks: ['html artifact written', 'inline preview mounted without popup'],
+      });
+      this.transitionRun(sessionId, 'rendering', {
+        label: `Rendered ${inlinePreviewType} preview`,
+        artifactPath: htmlPath,
+        previewType: inlinePreviewType,
       });
       this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Inline ${inlinePreviewType} preview mounted: ${htmlPath}` });
       return;
@@ -2761,6 +2944,11 @@ export class TuiBridgeService {
         artifactPath: pngPath,
         imageUrl: pngPath,
         checks: ['html artifact written', 'screenshot rendered'],
+      });
+      this.transitionRun(sessionId, 'rendering', {
+        label: 'Rendered image preview',
+        artifactPath: pngPath,
+        previewType: 'image',
       });
       this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Inline preview image: ${pngPath}` });
     } catch (err) {

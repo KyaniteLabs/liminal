@@ -35,7 +35,7 @@ describe('workbenchTelemetry', () => {
       { type: 'preview.verified', previewType: 'image', artifactPath: '.omx/proof/live-previews/p5.png', checks: ['html artifact written', 'screenshot rendered'] },
     ]);
 
-    expect(summary.recentActivity.map((item) => item.label)).toContain('Route selected');
+    expect(summary.recentActivity.map((item) => item.label)).toContain('Medium chosen');
     expect(summary.recentActivity.map((item) => item.label)).toContain('Preview verified');
     expect(summary.processSteps.find((step) => step.id === 'route')).toMatchObject({
       status: 'done',
@@ -206,7 +206,7 @@ describe('workbenchTelemetry', () => {
       },
     ]);
 
-    expect(summary.recentActivity.map((item) => item.label)).toEqual(['Intent brief', 'generator', 'generator Reasoning: generator-thinking']);
+    expect(summary.recentActivity.map((item) => item.label)).toEqual(['Creative brief', 'generator', 'generator Notes: generator-thinking']);
     expect(summary.recentActivity[0].detail).toContain('purple alien');
     expect(summary.timelineSecondary).toContain('The selected generator focused');
   });

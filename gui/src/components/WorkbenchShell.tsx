@@ -48,7 +48,11 @@ export function WorkbenchShell({
   leftSlot,
   children,
 }: WorkbenchShellProps) {
-  const activeModeLabel = modes.find((mode) => mode.id === activeMode)?.label ?? 'Generate';
+  const primaryMode = modes.find((mode) => mode.id === 'generate') ?? modes[0];
+  const activeModeObject = modes.find((mode) => mode.id === activeMode) ?? primaryMode;
+  const secondaryModes = modes.filter((mode) => mode.id !== primaryMode.id);
+  const generateTabs = primaryMode.legacyTabs;
+  const activeModeLabel = activeModeObject.label;
   const activeSurfaceLabel = formatLegacyTab(activeTab);
   const userPrompt = prompt.trim();
   const showGeneratePreviewReady = activeMode === 'generate' && artifactReady;
@@ -85,48 +89,91 @@ export function WorkbenchShell({
         </div>
         <details className="liminal-runtime-details">
           <summary aria-label="Runtime details">
-            <span>Runtime</span>
+            <span>Model</span>
             <strong>{providerLabel}</strong>
           </summary>
           <div className="liminal-runtime-details__body" aria-label="Runtime status">
             <span><b>Agent</b>{providerLabel}</span>
             <span><b>Judge</b>{evaluatorLabel}</span>
-            <span><b>Run details</b>{inspectorLabel}</span>
+            <span><b>Details</b>{inspectorLabel}</span>
           </div>
         </details>
       </header>
 
       <aside className="liminal-left-rail">
         <nav aria-label="Workbench modes">
-          {modes.map((mode) => (
-            <div key={mode.id} className="liminal-rail-group">
-              <button
-                type="button"
-                className={mode.id === activeMode ? 'liminal-rail-button liminal-rail-button--active' : 'liminal-rail-button'}
-                aria-current={mode.id === activeMode ? 'page' : undefined}
-                onClick={() => onModeChange(mode)}
-              >
-                {mode.label}
-              </button>
-              {mode.id === activeMode && mode.legacyTabs.length > 1 && (
-                <div className="liminal-subnav">
-                  {mode.legacyTabs.map((tab) => (
+          <div className="liminal-rail-group">
+            <button
+              type="button"
+              className={primaryMode.id === activeMode ? 'liminal-primary-mode liminal-rail-button liminal-rail-button--active' : 'liminal-primary-mode liminal-rail-button'}
+              aria-current={primaryMode.id === activeMode ? 'page' : undefined}
+              onClick={() => onModeChange(primaryMode)}
+            >
+              {primaryMode.label}
+            </button>
+            {generateTabs.length > 1 && (
+              <details className="liminal-subnav liminal-subnav--drawer">
+                <summary aria-label="More Generate tools">Create tools</summary>
+                <div className="liminal-subnav__body">
+                  {generateTabs.map((tab) => (
                     <button
                       key={tab}
                       type="button"
                       className={tab === activeTab ? 'liminal-subnav-button liminal-subnav-button--active' : 'liminal-subnav-button'}
                       aria-current={tab === activeTab ? 'page' : undefined}
-                      onClick={() => onTabChange(tab)}
+                      onClick={() => {
+                        if (activeMode !== primaryMode.id) onModeChange(primaryMode);
+                        onTabChange(tab);
+                      }}
                     >
                       {formatLegacyTab(tab)}
                     </button>
                   ))}
                 </div>
-              )}
-            </div>
-          ))}
+              </details>
+            )}
+          </div>
+          {secondaryModes.length > 0 && (
+            <details className="liminal-secondary-tools" open={activeMode !== primaryMode.id}>
+              <summary aria-label="More tools">More</summary>
+              <div className="liminal-secondary-tools__body">
+                {secondaryModes.map((mode) => (
+                  <button
+                    key={mode.id}
+                    type="button"
+                    className={mode.id === activeMode ? 'liminal-rail-button liminal-rail-button--active' : 'liminal-rail-button'}
+                    aria-current={mode.id === activeMode ? 'page' : undefined}
+                    onClick={() => onModeChange(mode)}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+            </details>
+          )}
+          {activeModeObject.id !== primaryMode.id && activeModeObject.legacyTabs.length > 1 && (
+            <details className="liminal-subnav liminal-subnav--drawer" open>
+              <summary>{activeModeLabel} views</summary>
+              <div className="liminal-subnav__body">
+                {activeModeObject.legacyTabs.map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    className={tab === activeTab ? 'liminal-subnav-button liminal-subnav-button--active' : 'liminal-subnav-button'}
+                    aria-current={tab === activeTab ? 'page' : undefined}
+                    onClick={() => onTabChange(tab)}
+                  >
+                    {formatLegacyTab(tab)}
+                  </button>
+                ))}
+              </div>
+            </details>
+          )}
         </nav>
-        <div className="liminal-left-rail__content">{leftSlot}</div>
+        <details className="liminal-left-rail__content liminal-rail-meta-details">
+          <summary>Session</summary>
+          {leftSlot}
+        </details>
       </aside>
 
       <main id="main-content" className="liminal-chat-surface" aria-label="Creative coding conversation">
@@ -180,10 +227,10 @@ export function WorkbenchShell({
 
           <details className="liminal-advanced-drawer">
             <summary>
-              <span>Advanced settings and run details</span>
+              <span>Details</span>
               <strong>{activeModeLabel} · {activeSurfaceLabel}</strong>
             </summary>
-            <aside className="liminal-inspector" aria-label="Advanced settings and run details">
+            <aside className="liminal-inspector" aria-label="Details">
               <div className="liminal-inspector__header">
                 <span>Behind the scenes</span>
                 <small>{inspectorLabel}</small>
@@ -196,7 +243,7 @@ export function WorkbenchShell({
         <section className="liminal-chat-composer" aria-label="Message composer">
           <div className="liminal-composer-head">
             <label className="liminal-composer-label" htmlFor="workbench-prompt">Message Liminal</label>
-            <span>{activeModeLabel} · {activeSurfaceLabel}</span>
+            <span>{stageBusy ? 'Working' : 'Ready'}</span>
           </div>
           <textarea
             id="workbench-prompt"

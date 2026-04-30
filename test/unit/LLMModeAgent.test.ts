@@ -327,6 +327,11 @@ describe('LLMModeAgent', () => {
     expect(session.lastPlanError).toContain('status=429');
     expect(session.lastPlanError).toContain('retryable=true');
     expect(session.lastPlanError).toContain('quota exceeded');
+    expect(mockSaveRunState).toHaveBeenCalledWith(expect.objectContaining({
+      taskId: 't-provider-error',
+      status: Status.SUSPENDED,
+      lastPlanError: expect.stringContaining('endpoint=https://api.openai.com/v1/chat/completions'),
+    }));
   });
 
   it('executeTask rejects unapproved tasks before any LLM call runs', async () => {

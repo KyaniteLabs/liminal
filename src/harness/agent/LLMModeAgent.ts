@@ -598,6 +598,9 @@ When the task is complete and build passes, respond with tool "complete".`;
 
         // LLM response couldn't be parsed - this is a real failure
         Logger.error('LLMModeAgent', session.lastPlanError ? `${session.lastPlanError} after ${session.stepCount} steps` : `Failed to parse LLM response after ${session.stepCount} steps`);
+        if (session.backups.length === 0) {
+          await this.persistSuspendedRunState(session, maxSteps);
+        }
         session = this.stampSession(session, {
           status: Status.FAILED,
           endTime: new Date().toISOString(),
@@ -655,20 +658,7 @@ When the task is complete and build passes, respond with tool "complete".`;
         // Mutations were made but task didn't complete - checkpoint and suspend for resume
         Logger.warn('LLMModeAgent', `Max steps (${maxSteps}) reached with incomplete changes - suspending for resume`);
 
-        // Capture workspace fingerprint for safe resume validation
-        let workspaceFingerprint;
-        try {
-          workspaceFingerprint = await captureWorkspaceFingerprint();
-        } catch (fpErr) {
-          Logger.warn('LLMModeAgent', `Could not capture workspace fingerprint: ${fpErr}`);
-        }
-
-        try {
-          await saveRunState(this.buildSuspendedRunState(session, maxSteps, workspaceFingerprint));
-          Logger.info('LLMModeAgent', 'Run state saved for potential resume');
-        } catch (saveErr) {
-          Logger.error('LLMModeAgent', `Failed to save run state: ${saveErr}`);
-        }
+        await this.persistSuspendedRunState(session, maxSteps);
 
         session = this.stampSession(session, {
           status: Status.SUSPENDED,
@@ -1583,6 +1573,9 @@ Return exactly one JSON object with keys thought, tool, params, expectedResult. 
     if (existingRunState.lastVerification) {
       session.lastVerification = existingRunState.lastVerification;
     }
+    if (existingRunState.lastPlanError) {
+      session.lastPlanError = existingRunState.lastPlanError;
+    }
     if (existingRunState.activeFocusFile) {
       session.activeFocusFile = existingRunState.activeFocusFile;
       session.activeFocusIndex = existingRunState.activeFocusIndex ?? 0;
@@ -1642,6 +1635,7 @@ Return exactly one JSON object with keys thought, tool, params, expectedResult. 
       mutationApplied: session.mutatedFiles.size > 0,
       mutatedFiles: Array.from(session.mutatedFiles),
       lastVerification: session.lastVerification,
+      lastPlanError: session.lastPlanError,
       activeFocusFile: session.activeFocusFile,
       activeFocusIndex: session.activeFocusIndex,
       focusInspectionBudgetRemaining: session.focusInspectionBudgetRemaining,
@@ -1651,6 +1645,22 @@ Return exactly one JSON object with keys thought, tool, params, expectedResult. 
       focusDecisionAt: session.focusDecisionAt,
       workspaceFingerprint,
     };
+  }
+
+  private async persistSuspendedRunState(session: LLMSession, maxSteps: number): Promise<void> {
+    let workspaceFingerprint;
+    try {
+      workspaceFingerprint = await captureWorkspaceFingerprint();
+    } catch (fpErr) {
+      Logger.warn('LLMModeAgent', `Could not capture workspace fingerprint: ${fpErr}`);
+    }
+
+    try {
+      await saveRunState(this.buildSuspendedRunState(session, maxSteps, workspaceFingerprint));
+      Logger.info('LLMModeAgent', 'Run state saved for potential resume');
+    } catch (saveErr) {
+      Logger.error('LLMModeAgent', `Failed to save run state: ${saveErr}`);
+    }
   }
 
   private trackModifiedExtension(filePath: string): void {

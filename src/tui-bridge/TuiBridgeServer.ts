@@ -5,11 +5,18 @@ import type { TuiInputRequest } from './types.js';
 import { loadConfig, saveConfig, type UserConfig } from '../config/ConfigLoader.js';
 import { resolveOpenRouterModelAlias, OPENROUTER_MODEL_CATALOG } from './OpenRouterModelCatalog.js';
 import { LLMClient as RuntimeLLMClient } from '../llm/LLMClient.js';
-import { isPlaceholderApiKey } from '../harness/MultiProviderConfig.js';
 import { summarizeBridgeRuntime } from './BridgeLauncherConfig.js';
+import {
+  PROVIDER_ALIASES,
+  PROVIDER_DEFAULTS,
+  detectProviderLabel,
+  isRuntimeProviderKey,
+  resolveProviderRuntime,
+  type RuntimeProviderKey,
+} from '../config/ProviderRuntime.js';
 import { formatMicCaptureError } from '../shared/micPermission.js';
 
-type ModelProviderKey = 'custom' | 'minimax' | 'glm' | 'lmstudio' | 'ollama' | 'openrouter' | 'kimi' | 'moonshot';
+type ModelProviderKey = RuntimeProviderKey;
 
 interface ModelChoice {
   provider: ModelProviderKey;
@@ -17,35 +24,6 @@ interface ModelChoice {
   model: string;
   aliases: string[];
 }
-
-const PROVIDER_ALIASES: Record<string, ModelProviderKey> = {
-  openai: 'custom',
-  gpt: 'custom',
-  custom: 'custom',
-  minimax: 'minimax',
-  mini: 'minimax',
-  glm: 'glm',
-  z: 'glm',
-  lmstudio: 'lmstudio',
-  lm: 'lmstudio',
-  local: 'lmstudio',
-  ollama: 'ollama',
-  openrouter: 'openrouter',
-  or: 'openrouter',
-  kimi: 'kimi',
-  moonshot: 'moonshot',
-};
-
-const PROVIDER_DEFAULTS: Record<ModelProviderKey, { baseUrl: string; model: string; label: string; requiresKey: boolean }> = {
-  custom: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4-mini', label: 'OpenAI', requiresKey: true },
-  minimax: { baseUrl: 'https://api.minimax.io/anthropic', model: 'MiniMax-M2.7', label: 'MiniMax', requiresKey: true },
-  glm: { baseUrl: 'https://api.z.ai/api/anthropic', model: 'GLM-5v-turbo', label: 'GLM', requiresKey: true },
-  lmstudio: { baseUrl: 'http://localhost:1234/v1', model: 'local-model', label: 'LM Studio', requiresKey: false },
-  ollama: { baseUrl: 'http://localhost:11434', model: 'llama3.2', label: 'Ollama', requiresKey: false },
-  openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-5.4-mini', label: 'OpenRouter', requiresKey: true },
-  kimi: { baseUrl: 'https://api.kimi.com/coding/v1', model: 'k2p5', label: 'Kimi', requiresKey: true },
-  moonshot: { baseUrl: 'https://api.moonshot.ai/v1', model: 'kimi-k2.5', label: 'Moonshot', requiresKey: true },
-};
 
 const MODEL_CHOICES: ModelChoice[] = [
   { provider: 'custom', label: 'GPT-5.4 mini', model: 'gpt-5.4-mini', aliases: ['gpt-5.4-mini', 'gpt54mini', '5.4-mini', 'mini'] },
@@ -367,15 +345,8 @@ data: ${JSON.stringify(stored.event)}
     });
   }
 
-  private providerLabel(baseUrl: string): string {
-    const lower = baseUrl.toLowerCase();
-    if (lower.includes('api.openai.com')) return 'openai';
-    if (lower.includes('z.ai') || lower.includes('bigmodel') || lower.includes('glm')) return 'glm';
-    if (lower.includes('minimax')) return 'minimax';
-    if (lower.includes('openrouter')) return 'openrouter';
-    if (lower.includes('kimi')) return 'kimi';
-    if (lower.includes('localhost') || lower.includes('127.0.0.1')) return 'lmstudio';
-    return 'llm';
+  private providerLabel(baseUrl: string, model = ''): string {
+    return detectProviderLabel(baseUrl, model);
   }
 
   private json(res: ServerResponse, status: number, body: unknown): void {
@@ -432,11 +403,21 @@ data: ${JSON.stringify(stored.event)}
       ? ({ defaultProvider: resolved.provider, providers: {} } as UserConfig)
       : (loaded.value as UserConfig);
     const providerConfig = config.providers?.[resolved.provider] ?? {};
-    const defaults = PROVIDER_DEFAULTS[resolved.provider];
+    const currentConfig = this.llm?.getConfig();
+    const runtime = resolveProviderRuntime({
+      provider: resolved.provider,
+      model: resolved.model,
+      configuredBaseUrl: providerConfig.baseUrl,
+      configuredApiKey: providerConfig.apiKey,
+      current: currentConfig ? {
+        provider: this.providerLabel(currentConfig.baseUrl, currentConfig.model),
+        apiKey: currentConfig.apiKey,
+      } : undefined,
+      env: process.env,
+    });
 
-    const apiKey = this.resolveApiKey(resolved.provider, providerConfig.apiKey);
-    if (defaults.requiresKey && !apiKey) {
-      this.bridge.emitCommandResponse(sessionId, `${defaults.label} API key not found. Set providers.${resolved.provider}.apiKey in ~/.liminal/config.json before switching.`);
+    if (runtime.requiresKey && !runtime.apiKey) {
+      this.bridge.emitCommandResponse(sessionId, `${runtime.label} API key not found. Set providers.${resolved.provider}.apiKey in ~/.liminal/config.json before switching.`);
       return true;
     }
 
@@ -444,42 +425,28 @@ data: ${JSON.stringify(stored.event)}
     config.providers = config.providers || {};
     config.providers[resolved.provider] = {
       ...providerConfig,
-      baseUrl: this.resolveProviderBaseUrl(resolved.provider, providerConfig.baseUrl, defaults.baseUrl),
-      model: resolved.model,
+      baseUrl: runtime.baseUrl,
+      model: runtime.model,
     };
-    if (apiKey) config.providers[resolved.provider].apiKey = apiKey;
+    if (runtime.apiKey) config.providers[resolved.provider].apiKey = runtime.apiKey;
     await saveConfig(config);
 
     this.llm = new RuntimeLLMClient({
       role: 'harness',
-      baseUrl: config.providers[resolved.provider].baseUrl,
-      model: resolved.model,
-      apiKey,
+      baseUrl: runtime.baseUrl,
+      model: runtime.model,
+      apiKey: runtime.apiKey,
       temperature: 0.5,
       maxTokens: 4096,
     });
 
     this.bridge.updateStatus(sessionId, {
-      provider: resolved.provider === 'custom' ? 'openai' : resolved.provider,
-      model: resolved.model,
+      provider: runtime.statusProvider,
+      model: runtime.model,
       activeTask: `Model switched to ${resolved.label}`,
     });
-    this.bridge.emitCommandResponse(sessionId, `Switched model to ${resolved.label} (${resolved.model}) via ${PROVIDER_DEFAULTS[resolved.provider].label}`);
+    this.bridge.emitCommandResponse(sessionId, `Switched model to ${resolved.label} (${runtime.model}) via ${runtime.label}`);
     return true;
-  }
-
-  private resolveProviderBaseUrl(provider: ModelProviderKey, configuredBaseUrl: string | undefined, defaultBaseUrl: string): string {
-    if (!configuredBaseUrl) return defaultBaseUrl;
-
-    const lower = configuredBaseUrl.toLowerCase().replace(/\/+$/, '');
-    if (provider === 'glm' && lower.includes('api.z.ai/api/coding/paas')) {
-      return defaultBaseUrl;
-    }
-    if (provider === 'minimax' && lower === 'https://api.minimax.io/v1') {
-      return defaultBaseUrl;
-    }
-
-    return configuredBaseUrl;
   }
 
   private async renderModelPicker(): Promise<string> {
@@ -487,7 +454,7 @@ data: ${JSON.stringify(stored.event)}
     const config = loaded.isErr() ? undefined : (loaded.value as UserConfig);
     const currentConfig = this.llm?.getConfig();
     const currentModel = currentConfig?.model;
-    const currentProvider = currentConfig?.baseUrl ? this.providerLabel(currentConfig.baseUrl) : config?.defaultProvider;
+    const currentProvider = currentConfig?.baseUrl ? this.providerLabel(currentConfig.baseUrl, currentConfig.model) : config?.defaultProvider;
     const lines = [
       'Model picker:',
       `Current: ${currentProvider || 'unknown'}/${currentModel || 'unknown'}`,
@@ -511,8 +478,8 @@ data: ${JSON.stringify(stored.event)}
       return MODEL_CHOICES[numericChoice - 1];
     }
 
-    const provider = PROVIDER_ALIASES[first] ?? (first as ModelProviderKey);
-    if (!PROVIDER_DEFAULTS[provider]) {
+    const provider = PROVIDER_ALIASES[first] ?? (isRuntimeProviderKey(first) ? first : undefined);
+    if (!provider) {
       return this.resolveChoiceByAlias(parts.join(' '));
     }
 
@@ -562,30 +529,6 @@ data: ${JSON.stringify(stored.event)}
     ) ?? null;
   }
 
-  private resolveApiKey(provider: ModelProviderKey, configuredKey?: string): string | undefined {
-    const firstUsable = (...values: Array<string | undefined>) =>
-      values.find(value => !isPlaceholderApiKey(value));
-    const currentConfig = this.llm?.getConfig();
-    const currentProvider = currentConfig?.baseUrl ? this.providerLabel(currentConfig.baseUrl) : undefined;
-    const currentMatchesTarget = currentProvider === provider || (provider === 'custom' && currentProvider === 'openai');
-    const current = currentMatchesTarget ? currentConfig?.apiKey : undefined;
-    switch (provider) {
-      case 'custom':
-        return firstUsable(configuredKey, current, process.env.OPENAI_API_KEY, process.env.LIMINAL_LLM_API_KEY, process.env.LLM_API_KEY);
-      case 'minimax':
-        return firstUsable(configuredKey, current, process.env.MINIMAX_API_KEY, process.env.LIMINAL_LLM_API_KEY, process.env.LLM_API_KEY);
-      case 'glm':
-        return firstUsable(configuredKey, current, process.env.GLM_API_KEY, process.env.ANTHROPIC_AUTH_TOKEN, process.env.LIMINAL_LLM_API_KEY, process.env.LLM_API_KEY);
-      case 'openrouter':
-        return firstUsable(configuredKey, current, process.env.OPENROUTER_API_KEY);
-      case 'kimi':
-      case 'moonshot':
-        return firstUsable(configuredKey, current, process.env.KIMI_API_KEY, process.env.MOONSHOT_API_KEY);
-      case 'lmstudio':
-      case 'ollama':
-        return undefined;
-    }
-  }
 
   private readBody(req: IncomingMessage): Promise<string> {
     return new Promise((resolve, reject) => {

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createServer as createNetServer } from 'node:net';
 import { TuiBridgeService } from '../../src/tui-bridge/TuiBridgeService.js';
 import { TuiBridgeServer } from '../../src/tui-bridge/TuiBridgeServer.js';
+import { normalizeProviderBaseUrl } from '../../src/config/ProviderRuntime.js';
 
 const { mockLoadConfig, mockSaveConfig, mockLLMClientCtor } = vi.hoisted(() => ({
   mockLoadConfig: vi.fn(),
@@ -546,17 +547,9 @@ describe('TuiBridgeServer model picker', () => {
   });
 
   it('preserves non-deprecated GLM-compatible endpoints', () => {
-    const service = new TuiBridgeService();
-    const server = new TuiBridgeServer(service, {
-      llm: {
-        getConfig: () => ({ baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4-mini' }),
-      } as any,
-    });
-
-    const resolved = (server as any).resolveProviderBaseUrl(
+    const resolved = normalizeProviderBaseUrl(
       'glm',
       'https://open.bigmodel.cn/api/paas/v4',
-      'https://api.z.ai/api/anthropic',
     );
 
     expect(resolved).toBe('https://open.bigmodel.cn/api/paas/v4');

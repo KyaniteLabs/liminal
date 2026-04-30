@@ -21,6 +21,7 @@ import type { ModelCapabilities } from '../llm/CapabilityRegistry.js';
 import type { ThinkingConfig } from '../llm/ProviderTypes.js';
 import { getEffectiveConfig } from './ConfigLoader.js';
 import { selectApiKeyForEndpoint } from './ProviderKeyResolver.js';
+import { detectRoleProviderType } from './ProviderRuntime.js';
 
 // ── Types ──
 
@@ -211,28 +212,7 @@ function resolveRole(role: ModelRole, fileConfig: RoleConfigFile | null): Resolv
  * Auto-detect provider type from baseUrl and model name.
  */
 export function detectProviderType(baseUrl: string, model?: string): ProviderType {
-  const url = baseUrl.toLowerCase();
-  const m = (model || '').toLowerCase();
-
-  if (url.includes('openrouter')) return 'openrouter';
-  if (url.includes('minimax')) return 'minimax'; // Before anthropic — api.minimax.io/anthropic contains "anthropic"
-  if (url.includes('anthropic')) return 'anthropic';
-  if (url.includes('generativelanguage.googleapis')) return 'google';
-  if (url.includes('11434') || url.includes('ollama')) return 'ollama';
-
-  // Model-based hints
-  if (m.startsWith('claude')) return 'anthropic';
-  if (m.startsWith('gemini')) return 'google';
-  if (m.startsWith('deepseek-r1')) return 'ollama';
-
-  // Default: OpenAI-compatible (covers LM Studio, vLLM, LocalAI, etc.)
-  // Z.ai also has OpenAI-compatible endpoints.
-  if (url.includes('bigmodel.cn')) return 'openai';
-  // Moonshot KimiCode — OpenAI-compatible
-  if (url.includes('moonshot')) return 'openai';
-
-  // Default: OpenAI-compatible (covers LM Studio, vLLM, LocalAI, Minimax, etc.)
-  return 'openai';
+  return detectRoleProviderType(baseUrl, model) as ProviderType;
 }
 
 // ── File Loading ──

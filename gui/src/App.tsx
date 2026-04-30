@@ -180,6 +180,7 @@ export default function App() {
   const [createTraits, setCreateTraits] = useState<CreateTraits>({ bpm: 120, palette: '' });
   const [clarificationAnswer, setClarificationAnswer] = useState<string>('');
   const [draftAdjustment, setDraftAdjustment] = useState<string>('');
+  const [reviewNotesOpen, setReviewNotesOpen] = useState<boolean>(false);
   const [runStatus, setRunStatus] = useState<string>('');
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [createRunError, setCreateRunError] = useState<string | null>(null);
@@ -775,6 +776,19 @@ export default function App() {
   const bridgePreview = bridge.preview;
   const bridgeCodePreview = bridge.codePreview;
   const stageBlocked = bridgeSummary.phase === 'preview missing' || bridgeSummary.phase === 'disconnected';
+  const stageEmptyKicker = stageBlocked ? 'Preview' : bridgeSummary.active ? 'Working' : 'Preview';
+  const stageEmptyHeading = stageBlocked
+    ? 'Preview unavailable'
+    : bridgeSummary.active
+      ? bridgeSummary.stageTitle
+      : runStatus === 'running'
+        ? 'Generating'
+        : 'No artifact yet';
+  const stageEmptyDetail = stageBlocked
+    ? bridgeSummary.stageSubtitle
+    : bridgeSummary.active
+      ? bridgeSummary.stageSubtitle
+      : 'Send a creative prompt; live output will appear here.';
   const clarificationRequest = activeMode.id === 'generate' ? latestClarificationRequest(bridge.events) : null;
   const cognitiveReceipt = activeMode.id === 'generate' ? latestCognitiveReceipt(bridge.events) : null;
   const syncPreviewHtml = bridgeCodePreview?.code ? buildSyncPreviewHtml(bridgeCodePreview.code) : '';
@@ -903,9 +917,9 @@ export default function App() {
       ) : (
         <div className={stageBlocked ? 'liminal-stage-empty liminal-stage-empty--blocked' : bridgeSummary.active ? 'liminal-stage-empty liminal-stage-empty--active' : 'liminal-stage-empty'}>
           {bridgeSummary.active && <i className="liminal-stage-pulse" aria-hidden="true" />}
-          <span>Stage</span>
-          <strong>{stageBlocked ? 'Preview unavailable' : bridgeSummary.active ? bridgeSummary.stageTitle : runStatus === 'running' ? 'Generating' : 'Ready'}</strong>
-          <small>{stageBlocked ? bridgeSummary.stageSubtitle : bridgeSummary.active ? bridgeSummary.stageSubtitle : createModeOption.stageLabel}</small>
+          <span>{stageEmptyKicker}</span>
+          <strong>{stageEmptyHeading}</strong>
+          <small>{stageEmptyDetail}</small>
         </div>
       )}
       {(bridgeSummary.active || bridgeSummary.processSteps.some((step) => step.status === 'done')) && (
@@ -919,19 +933,28 @@ export default function App() {
         </div>
       )}
       {activeMode.id === 'generate' && bridgeSummary.humanReview.status !== 'waiting' && (
-        <div className={`liminal-human-review-strip liminal-human-review-strip--${bridgeSummary.humanReview.status}`}>
-          <div>
-            <span>Human review</span>
-            <strong>{bridgeSummary.humanReview.heading}</strong>
-            <small>{bridgeSummary.humanReview.summary}</small>
-          </div>
+        <section className={`liminal-human-review-strip liminal-human-review-strip--${bridgeSummary.humanReview.status}`}>
           <button
             type="button"
-            onClick={() => void navigator.clipboard?.writeText(bridgeSummary.humanReview.issueReport)}
+            className="liminal-human-review-strip__summary"
+            aria-expanded={reviewNotesOpen}
+            onClick={() => setReviewNotesOpen((open) => !open)}
           >
-            Copy issue report
+            <span>Review notes</span>
+            <strong>{bridgeSummary.humanReview.heading}</strong>
           </button>
-        </div>
+          {reviewNotesOpen && (
+            <div className="liminal-human-review-strip__body">
+              <small>{bridgeSummary.humanReview.summary}</small>
+              <button
+                type="button"
+                onClick={() => void navigator.clipboard?.writeText(bridgeSummary.humanReview.issueReport)}
+              >
+                Copy issue report
+              </button>
+            </div>
+          )}
+        </section>
       )}
       {hasSyncTarget && !hasDirectSyncTarget && <canvas ref={syncCanvasRef} className="liminal-sync-overlay" aria-hidden="true" />}
     </div>

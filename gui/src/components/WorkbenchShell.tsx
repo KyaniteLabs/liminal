@@ -49,6 +49,16 @@ export function WorkbenchShell({
   const activeModeLabel = modes.find((mode) => mode.id === activeMode)?.label ?? 'Generate';
   const activeSurfaceLabel = formatLegacyTab(activeTab);
   const userPrompt = prompt.trim();
+  const artifactHeading = stageBusy
+    ? 'Liminal is generating…'
+    : userPrompt
+      ? 'Ready to generate your preview'
+      : 'Start with a prompt, then preview here';
+  const artifactDetail = stageBusy
+    ? 'Live output will appear in the side panel as soon as it is available.'
+    : userPrompt
+      ? 'Click Generate and I’ll keep the conversation focused while the artifact opens on the right.'
+      : 'The preview panel stays quiet until there is something visual or playable to inspect.';
   const runStatusText = stageBusy
     ? `${runLabel} in progress`
     : runDisabled
@@ -66,11 +76,17 @@ export function WorkbenchShell({
             <p>Codex for creative coding</p>
           </div>
         </div>
-        <div className="liminal-status-cluster" aria-label="Runtime status">
-          <span className="liminal-status-pill"><b>Agent</b>{providerLabel}</span>
-          <span className="liminal-status-pill liminal-status-pill--muted"><b>Judge</b>{evaluatorLabel}</span>
-          <span className="liminal-status-pill liminal-status-pill--muted"><b>Receipts</b>{inspectorLabel}</span>
-        </div>
+        <details className="liminal-runtime-details">
+          <summary aria-label="Runtime details">
+            <span>Runtime</span>
+            <strong>{providerLabel}</strong>
+          </summary>
+          <div className="liminal-runtime-details__body" aria-label="Runtime status">
+            <span><b>Agent</b>{providerLabel}</span>
+            <span><b>Judge</b>{evaluatorLabel}</span>
+            <span><b>Run details</b>{inspectorLabel}</span>
+          </div>
+        </details>
       </header>
 
       <aside className="liminal-left-rail">
@@ -133,11 +149,8 @@ export function WorkbenchShell({
           <article className="liminal-artifact-card" aria-label="Artifact preview card">
             <div>
               <span>{stageBusy ? 'Working artifact' : 'Artifact preview'}</span>
-              <strong>{stageBusy ? 'Liminal is generating…' : 'Preview opens on the right'}</strong>
-              <small>
-                Creative output stays visible as soon as the bridge provides a live iframe, image,
-                or code preview.
-              </small>
+              <strong>{artifactHeading}</strong>
+              <small>{artifactDetail}</small>
             </div>
             <a href="#liminal-preview-panel">View preview</a>
           </article>
@@ -160,12 +173,12 @@ export function WorkbenchShell({
 
           <details className="liminal-advanced-drawer">
             <summary>
-              <span>Advanced settings, receipts, and safety</span>
+              <span>Advanced settings and run details</span>
               <strong>{activeModeLabel} · {activeSurfaceLabel}</strong>
             </summary>
-            <aside className="liminal-inspector" aria-label="Advanced settings and receipts">
+            <aside className="liminal-inspector" aria-label="Advanced settings and run details">
               <div className="liminal-inspector__header">
-                <span>Details</span>
+                <span>Behind the scenes</span>
                 <small>{inspectorLabel}</small>
               </div>
               {inspectorSlot}
@@ -187,7 +200,12 @@ export function WorkbenchShell({
             aria-describedby="workbench-run-status"
           />
           <div className="liminal-composer-actions">
-            {audioSlot}
+            {audioSlot ? (
+              <details className="liminal-composer-options">
+                <summary>Options</summary>
+                <div>{audioSlot}</div>
+              </details>
+            ) : null}
             <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled} aria-busy={stageBusy}>
               {runLabel}
             </button>
@@ -198,9 +216,9 @@ export function WorkbenchShell({
 
       <aside id="liminal-preview-panel" className="liminal-preview-panel" aria-label="Live preview and artifact panel" aria-busy={stageBusy}>
         <div className="liminal-preview-panel__header">
-          <span>Live preview</span>
-          <strong>Artifact panel</strong>
-          <small>Inline cards keep the conversation focused; expanded output lives here.</small>
+          <span>Preview</span>
+          <strong>Your artifact</strong>
+          <small>Generated sketches, shaders, images, motion, and playable sound open here.</small>
         </div>
         <div className="liminal-preview-panel__stage liminal-stage">
           {stageSlot}

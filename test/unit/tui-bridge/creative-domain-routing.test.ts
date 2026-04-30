@@ -13,7 +13,7 @@ describe('TuiBridgeService creative domain routing', () => {
     const prompt = 'Create a concise p5.js sketch: luminous blue-green particles orbit a dark center, with visible motion, setup(), draw(), and createCanvas().';
 
     expect(inferCreativeDomain(prompt)).toBe(Domain.P5);
-    expect(buildCreativeDomainPlan(prompt).slice(0, 2)).toEqual([Domain.P5, Domain.THREE]);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.P5]);
   });
 
   it('keeps the p5 generation instruction from accidentally retriggering Three dispatch', () => {
@@ -29,7 +29,14 @@ describe('TuiBridgeService creative domain routing', () => {
     const prompt = 'Generate a Three.js scene: an impossible greenhouse orbiting inside a black hole with glass flowers.';
 
     expect(inferCreativeDomain(prompt)).toBe(Domain.THREE);
-    expect(buildCreativeDomainPlan(prompt).slice(0, 2)).toEqual([Domain.THREE, Domain.P5]);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.THREE]);
+  });
+
+  it('preserves visual fallback options for implicit visual prompts', () => {
+    const prompt = 'Create luminous blue-green particles orbiting a dark center with visible motion.';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.THREE);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.THREE, Domain.P5, Domain.HYDRA, Domain.GLSL]);
   });
 
   it('routes SVG prompts to a visual fallback plan without pretending p5 is the requested domain', () => {
@@ -39,11 +46,25 @@ describe('TuiBridgeService creative domain routing', () => {
     expect(buildCreativeDomainPlan(prompt)).toContain(Domain.THREE);
   });
 
+  it('treats ASCII and text-art prompts as explicit ASCII requests', () => {
+    for (const prompt of ['make ASCII text art of a willow tree', 'make text art of a willow tree']) {
+      expect(inferCreativeDomain(prompt)).toBe(Domain.ASCII);
+      expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.ASCII]);
+    }
+  });
+
   it('routes explicit Tone oscillator prompts to Tone before generic Hydra oscillator handling', () => {
     const prompt = 'Create a Tone.js oscillator synth with delay and a slow drone.';
 
     expect(inferCreativeDomain(prompt)).toBe(Domain.TONE);
-    expect(buildCreativeDomainPlan(prompt)[0]).toBe(Domain.TONE);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.TONE]);
+  });
+
+  it('treats web audio prompts as explicit Tone requests', () => {
+    const prompt = 'Build a web audio sequencer with a warm bass pulse.';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.TONE);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.TONE]);
   });
 
   it('routes explicit Hydra video synth prompts to Hydra before generic Tone synth handling', () => {

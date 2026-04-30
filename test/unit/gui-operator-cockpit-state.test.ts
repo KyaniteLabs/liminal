@@ -100,6 +100,18 @@ describe('OperatorCockpit state derivation', () => {
   });
 
 
+  it('describes backup domains without implying a fallback already happened', () => {
+    const state = deriveCockpit([
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5', 'three'], startedAt: '2026-04-29T02:00:00.000Z', candidateCount: 1, executionMode: 'draft' },
+      { type: 'generation.domain_plan', domains: ['p5', 'three'], startedAt: '2026-04-29T02:00:00.000Z', candidateCount: 1, executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 2, startedAt: '2026-04-29T02:00:01.000Z', candidateCount: 1, executionMode: 'draft' },
+    ], Date.parse('2026-04-29T02:00:05.000Z'));
+
+    expect(state.latestMessage).toBe('Selected p5; backup domains if needed: three');
+    expect(state.activeWork).toBe('Generating first usable preview in p5.');
+    expect(`${state.latestMessage} ${state.activeWork}`).not.toMatch(/fallback/i);
+  });
+
   it('marks completed draft previews as done instead of showing future fallback work', () => {
     const state = deriveCockpit([
       { type: 'generation.domain_plan', domains: ['p5', 'three', 'hydra', 'glsl'], startedAt: '2026-04-28T04:13:00.000Z', timeoutMinutes: 5, candidateCount: 1, executionMode: 'draft' },
@@ -113,6 +125,7 @@ describe('OperatorCockpit state derivation', () => {
     expect(state.progressPercent).toBe(1);
     expect(state.etaLabel).toBe('done');
     expect(state.activeWork).toContain('no more domains are running');
+    expect(state.latestMessage).not.toMatch(/fallback/i);
     expect(state.selectedDomain).toBe('three');
   });
 

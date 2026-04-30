@@ -80,16 +80,17 @@ export function buildCreativeDomainRouteTruth(prompt: string): CreativeDomainRou
   };
 }
 
-export function detectPreviewDomainForCode(code: string): PreviewDomain {
+export function detectPreviewDomainForCode(code: string): PreviewDomain | undefined {
   if (/\bTone\.|tone(?:\.js|@|\.min\.js)|Tone\.Transport/i.test(code)) return 'tone';
   if (/\bstrudel\b|\bsound\(|\bnote\(/i.test(code)) return 'strudel';
   if (/\bosc\(|\bsrc\(|\bout\(/i.test(code)) return 'hydra';
   if (/\bTHREE\.|import\s+.*\bthree\b|new\s+THREE\./.test(code)) return 'three';
+  if (/\b(?:createCanvas|function\s+setup\s*\(|function\s+draw\s*\(|new\s+p5\s*\()/i.test(code)) return 'p5';
   const detected = CodeValidator.detectDomain(code);
-  if (detected === 'shader' || detected === 'three' || detected === 'hydra' || detected === 'tone' || detected === 'strudel' || detected === 'ascii' || detected === 'html' || detected === 'revideo' || detected === 'hyperframes' || detected === 'p5') {
+  if (detected === 'shader' || detected === 'three' || detected === 'hydra' || detected === 'tone' || detected === 'strudel' || detected === 'ascii' || detected === 'html' || detected === 'revideo' || detected === 'hyperframes') {
     return detected;
   }
-  return 'p5';
+  return undefined;
 }
 
 export function previewDomainForCode(code: string, requestedDomain: Domain): PreviewDomain {

@@ -113,7 +113,7 @@ export function detectProviderLabel(baseUrl: string, model = ''): ProviderStatus
   if (lowerUrl.includes('openrouter')) return 'openrouter';
   if (lowerUrl.includes('moonshot')) return 'moonshot';
   if (lowerUrl.includes('kimi')) return 'kimi';
-  if (lowerUrl.includes('localhost:11434') || lowerUrl.includes('ollama')) return 'ollama';
+  if (lowerUrl.includes(':11434') || lowerUrl.includes('ollama')) return 'ollama';
   if (lowerUrl.includes('localhost') || lowerUrl.includes('127.0.0.1')) return 'lmstudio';
   return baseUrl ? 'llm' : 'unknown';
 }

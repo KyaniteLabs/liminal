@@ -32,6 +32,7 @@ describe('ProviderRuntime', () => {
 
   it('detects status labels separately from provider adapters', () => {
     expect(detectProviderLabel('https://api.z.ai/api/anthropic', 'glm-5.1')).toBe('glm');
+    expect(detectProviderLabel('http://127.0.0.1:11434', 'llama3.2')).toBe('ollama');
     expect(detectProviderAdapter({ baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-5.1' })).toBe('anthropic');
     expect(detectRoleProviderType('https://api.z.ai/api/anthropic', 'glm-5.1')).toBe('anthropic');
   });

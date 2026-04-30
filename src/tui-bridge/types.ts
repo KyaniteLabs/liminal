@@ -40,6 +40,15 @@ export type TuiRunPhase =
 export type TuiRunKind = 'chat' | 'creative' | 'engineering' | 'hybrid';
 export type TuiRunOutcome = 'completed' | 'failed' | 'cancelled';
 
+export interface TuiFailureProvenance {
+  provider?: string;
+  model?: string;
+  endpoint?: string;
+  statusCode?: number;
+  retryable?: boolean;
+  responseBody?: string;
+}
+
 export interface TuiRunLifecycle {
   runId: string;
   kind: TuiRunKind;
@@ -154,7 +163,7 @@ export type TuiBridgeEvent =
   | { type: 'generation.route.selected'; sessionId: string; domain: string; domains: string[]; startedAt?: string; timeoutMinutes?: number; candidateCount?: number; executionMode?: 'draft' | 'prove'; requestedDomain?: string; selectedDomain?: string; promptDomainLocked?: boolean; source?: 'prompt' | 'inferred' }
   | { type: 'generation.domain_plan'; sessionId: string; domains: string[]; startedAt?: string; timeoutMinutes?: number; candidateCount?: number; executionMode?: 'draft' | 'prove'; requestedDomain?: string; selectedDomain?: string; promptDomainLocked?: boolean; source?: 'prompt' | 'inferred' }
   | { type: 'generation.attempt.started'; sessionId: string; domain: string; attempt: number; attemptTotal: number; startedAt?: string; timeoutMinutes?: number; candidateCount?: number; executionMode?: 'draft' | 'prove' }
-  | { type: 'generation.attempt.failed'; sessionId: string; domain: string; attempt: number; attemptTotal: number; error: string; duration?: number }
+  | ({ type: 'generation.attempt.failed'; sessionId: string; domain: string; attempt: number; attemptTotal: number; error: string; duration?: number } & TuiFailureProvenance)
   | { type: 'generation.candidate.generated'; sessionId: string; domain: string; attempt: number; attemptTotal: number; iteration: number; candidateCount?: number; codeSize?: number; duration?: number }
   | { type: 'generation.iteration'; sessionId: string; iteration: number; score: number; code: string; stageTimings?: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }> }
   | { type: 'generation.complete'; sessionId: string; iterations: number; finalScore: number; duration: number; model: string; reason: string; qualityState?: 'scored' | 'unscored'; executionMode?: 'draft' | 'prove' }
@@ -223,4 +232,4 @@ export type TuiBridgeEvent =
   | { type: 'video:render:start'; sessionId: string; domain: string }
   | { type: 'video:render:complete'; sessionId: string; domain: string; videoPath: string }
   | { type: 'video:render:error'; sessionId: string; domain: string; error: string }
-  | { type: 'error'; sessionId: string; message: string };
+  | ({ type: 'error'; sessionId: string; message: string } & TuiFailureProvenance);

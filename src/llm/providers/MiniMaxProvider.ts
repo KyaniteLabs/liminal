@@ -31,7 +31,7 @@ import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { normalizeThinking, extractAnthropicThinking } from '../ThinkingNormalizer.js';
 import { parseOpenAIStream, parseAnthropicStream } from '../StreamParser.js';
 import { Logger } from '../../utils/Logger.js';
-import { LLMError } from '../errors.js';
+import { createLLMHttpError, LLMError } from '../errors.js';
 
 function buildOpenAIUserContent(req: ProviderRequest): unknown {
   if (!req.imageInputs || req.imageInputs.length === 0) return req.userPrompt;
@@ -162,15 +162,15 @@ export class MiniMaxProvider extends BaseProvider {
       });
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => response.statusText);
-        Logger.error('MiniMaxProvider', `API error ${response.status}: ${errorText}`);
-        const retryable = response.status === 429 || response.status >= 500;
-        return err(new LLMError(
-          `MiniMax API error ${response.status}: ${errorText}`,
-          this.name,
-          response.status,
-          retryable,
-        ));
+        const httpError = await createLLMHttpError({
+          provider: this.name,
+          model: this.config.model,
+          endpoint: url,
+          response,
+          label: 'MiniMax API error',
+        });
+        Logger.error('MiniMaxProvider', httpError.message);
+        return err(httpError);
       }
 
       const data = await response.json();
@@ -346,15 +346,15 @@ export class MiniMaxProvider extends BaseProvider {
       });
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => response.statusText);
-        Logger.error('MiniMaxProvider', `Anthropic-mode API error ${response.status}: ${errorText}`);
-        const retryable = response.status === 429 || response.status >= 500;
-        return err(new LLMError(
-          `MiniMax Anthropic API error ${response.status}: ${errorText}`,
-          this.name,
-          response.status,
-          retryable,
-        ));
+        const httpError = await createLLMHttpError({
+          provider: this.name,
+          model: this.config.model,
+          endpoint: url,
+          response,
+          label: 'MiniMax Anthropic API error',
+        });
+        Logger.error('MiniMaxProvider', httpError.message);
+        return err(httpError);
       }
 
       const data = await response.json();

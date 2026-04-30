@@ -19,7 +19,7 @@ import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { TIMEOUT_DEFAULT_MS } from '../../constants/limits.js';
 import { extractAnthropicThinking } from '../ThinkingNormalizer.js';
 import { parseAnthropicStream } from '../StreamParser.js';
-import { LLMError } from '../errors.js';
+import { createLLMHttpError, LLMError } from '../errors.js';
 
 function buildAnthropicUserContent(req: ProviderRequest): unknown {
   if (!req.imageInputs || req.imageInputs.length === 0) return req.userPrompt;
@@ -122,14 +122,13 @@ export class AnthropicProvider extends BaseProvider {
       });
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => response.statusText);
-        const retryable = response.status === 429 || response.status >= 500;
-        return err(new LLMError(
-          `Anthropic API error ${response.status}: ${errorText}`,
-          this.name,
-          response.status,
-          retryable,
-        ));
+        return err(await createLLMHttpError({
+          provider: this.name,
+          model: this.config.model,
+          endpoint: url,
+          response,
+          label: 'Anthropic API error',
+        }));
       }
 
       const data = await response.json();
@@ -166,7 +165,10 @@ export class AnthropicProvider extends BaseProvider {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      return err(new LLMError(message, this.name, undefined, true));
+      return err(new LLMError(message, this.name, undefined, true, {
+        model: this.config.model,
+        endpoint: `${this.config.baseUrl}/messages`,
+      }));
     }
   }
 

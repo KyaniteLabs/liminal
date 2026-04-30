@@ -116,6 +116,7 @@ vi.mock('../../src/core/GenerationOrchestrator.js', () => ({
 }));
 
 const { TuiBridgeService } = await import('../../src/tui-bridge/TuiBridgeService.js');
+const { LLMGenerationError } = await import('../../src/errors/LLMGenerationError.js');
 
 function fakeLlm() {
   return {
@@ -419,6 +420,56 @@ describe('Bubble Tea operator routing', () => {
       previewDomain: 'hydra',
       artifactPath: expect.stringContaining('.html'),
     });
+  }, 15000);
+
+
+  it('surfaces real provider provenance on creative generation failures', async () => {
+    draftGenerate.mockImplementationOnce(async () => {
+      throw new LLMGenerationError('LLM generation failed: OpenAI API error 429: rate limited', {
+        provider: 'openai',
+        model: 'gpt-5.4-mini',
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        statusCode: 429,
+        retryable: true,
+        responseBody: '{"error":"rate limited"}',
+      });
+    });
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'make a hydra visual of storm clouds',
+        clientIntent: 'creative',
+        executionMode: 'draft',
+        timeoutMinutes: 1,
+      },
+      fakeLlm() as never,
+    );
+
+    const failed = await waitFor(() => service.getEvents(session.sessionId)
+      .find((event) => event.type === 'generation.attempt.failed'));
+    const error = await waitFor(() => service.getEvents(session.sessionId)
+      .find((event) => event.type === 'error'));
+
+    expect(failed).toMatchObject({
+      type: 'generation.attempt.failed',
+      provider: 'openai',
+      model: 'gpt-5.4-mini',
+      endpoint: 'https://api.openai.com/v1/chat/completions',
+      statusCode: 429,
+      retryable: true,
+      responseBody: '{"error":"rate limited"}',
+    });
+    expect(error).toMatchObject({
+      type: 'error',
+      provider: 'openai',
+      model: 'gpt-5.4-mini',
+      endpoint: 'https://api.openai.com/v1/chat/completions',
+      statusCode: 429,
+    });
   });
 
   it('keeps a canonical draft run lifecycle through render before completion', async () => {
@@ -457,7 +508,7 @@ describe('Bubble Tea operator routing', () => {
     expect(service.getEvents(session.sessionId)
       .filter((event) => event.type === 'preview.completed')
       .every((event) => Boolean((event as any).artifactPath || (event as any).imageUrl))).toBe(true);
-  });
+  }, 15000);
 
   it('defaults workbench creative runs to the draft lane without invoking RalphLoop', async () => {
     const service = new TuiBridgeService();

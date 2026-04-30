@@ -29,6 +29,7 @@ import type { ModelRole, ResolvedRoleConfig, RoleConfigFile } from '../config/Ro
 import { loadRoleConfig, getFallbacks } from '../config/RoleConfig.js';
 import { selectApiKeyForEndpoint } from '../config/ProviderKeyResolver.js';
 import { detectProviderLabel } from '../config/ProviderRuntime.js';
+import { compactLLMErrorProvenance, extractLLMErrorProvenance } from './ErrorProvenance.js';
 
 export interface LLMConfig {
   /** Base URL for the LLM API (OpenAI-compatible) */
@@ -140,6 +141,12 @@ export class LLMClient {
         primaryError.provider,
         primaryError.statusCode,
         primaryError.retryable,
+        {
+          model: primaryError.model,
+          endpoint: primaryError.endpoint,
+          statusText: primaryError.statusText,
+          responseBody: primaryError.responseBody,
+        },
       );
     }
 
@@ -513,6 +520,14 @@ export class LLMClient {
     return provider === Provider.LMSTUDIO || provider === Provider.OLLAMA;
   }
 
+  private providerEndpoint(providerName = this.detectProvider()): string {
+    const baseUrl = this.config.baseUrl.replace(/\/+$/, '');
+    if (providerName === Provider.OLLAMA && !baseUrl.endsWith('/v1')) return `${baseUrl}/api/generate`;
+    if (providerName === 'anthropic') return `${baseUrl}/messages`;
+    if (providerName === 'google') return `${baseUrl}/models/${this.config.model}:generateContent`;
+    return `${baseUrl}/chat/completions`;
+  }
+
   /** Detect provider name from baseUrl or model for logging */
   private detectProvider(): string {
     const model = this.config.model.toLowerCase();
@@ -701,6 +716,19 @@ export class LLMClient {
           throw genResult.error;
         }
         const response = genResult.value;
+        if (!response.success) {
+          throw new LLMError(
+            response.error || 'Provider returned unsuccessful response',
+            provider.name,
+            undefined,
+            false,
+            {
+              model: provider.getModel(),
+              endpoint: this.providerEndpoint(provider.name),
+              responseBody: response.error,
+            },
+          );
+        }
         return this.mapProviderResponse(response);
       });
       }).catch(async (primaryError: unknown) => {
@@ -791,9 +819,24 @@ export class LLMClient {
         duration: Date.now() - llmStartTime,
       });
 
+      const provenance = compactLLMErrorProvenance(
+        extractLLMErrorProvenance(error),
+        {
+          provider: this.detectProvider(),
+          model: this.config.model,
+          endpoint: this.providerEndpoint(),
+          retryable: isRetryable,
+        },
+      );
+
       throw new LLMGenerationError(`LLM generation failed: ${errMsg}`, {
         cause: error instanceof Error ? error : undefined,
-        model: this.config.model,
+        model: provenance.model,
+        provider: provenance.provider,
+        endpoint: provenance.endpoint,
+        statusCode: provenance.statusCode,
+        retryable: provenance.retryable,
+        responseBody: provenance.responseBody,
         duration: Date.now() - llmStartTime,
       });
     }
@@ -907,6 +950,11 @@ export class LLMClient {
             provider.name,
             undefined,
             false,
+            {
+              model: provider.getModel(),
+              endpoint: this.providerEndpoint(provider.name),
+              responseBody: response.error,
+            },
           );
         }
 

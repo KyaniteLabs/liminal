@@ -18,7 +18,7 @@ import type {
 import { BaseProvider } from './BaseProvider.js';
 import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { TIMEOUT_DEFAULT_MS } from '../../constants/limits.js';
-import { LLMError } from '../errors.js';
+import { createLLMHttpError, LLMError } from '../errors.js';
 
 function buildGeminiUserParts(req: ProviderRequest): Array<Record<string, unknown>> {
   const parts: Array<Record<string, unknown>> = [{ text: req.userPrompt }];
@@ -55,6 +55,7 @@ export class GoogleProvider extends BaseProvider {
       const base = this.getBaseUrl();
       const apiKey = this.config.apiKey || '';
       const url = `${base}/v1beta/models/${this.config.model}:generateContent?key=${apiKey}`;
+      const safeUrl = `${base}/v1beta/models/${this.config.model}:generateContent?key=${apiKey ? '[REDACTED]' : ''}`;
 
       const generationConfig: Record<string, unknown> = {
         temperature: req.temperature ?? this.config.temperature,
@@ -120,14 +121,13 @@ export class GoogleProvider extends BaseProvider {
       });
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => response.statusText);
-        const retryable = response.status === 429 || response.status >= 500;
-        return err(new LLMError(
-          `Google API error ${response.status}: ${errorText}`,
-          this.name,
-          response.status,
-          retryable,
-        ));
+        return err(await createLLMHttpError({
+          provider: this.name,
+          model: this.config.model,
+          endpoint: safeUrl,
+          response,
+          label: 'Google API error',
+        }));
       }
 
       const data = await response.json();
@@ -178,7 +178,10 @@ export class GoogleProvider extends BaseProvider {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      return err(new LLMError(message, this.name, undefined, true));
+      return err(new LLMError(message, this.name, undefined, true, {
+        model: this.config.model,
+        endpoint: `${this.getBaseUrl()}/v1beta/models/${this.config.model}:generateContent?key=${this.config.apiKey ? '[REDACTED]' : ''}`,
+      }));
     }
   }
 

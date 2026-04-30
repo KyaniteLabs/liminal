@@ -18,7 +18,7 @@ import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { TIMEOUT_DEFAULT_MS, TIMEOUT_OLLAMA_MS } from '../../constants/limits.js';
 import { normalizeThinking, stripThinkTags } from '../ThinkingNormalizer.js';
 import { parseOllamaStream, parseOpenAIStream } from '../StreamParser.js';
-import { LLMError } from '../errors.js';
+import { createLLMHttpError, LLMError } from '../errors.js';
 
 function buildOpenAIUserContent(req: ProviderRequest): unknown {
   if (!req.imageInputs || req.imageInputs.length === 0) return req.userPrompt;
@@ -90,13 +90,13 @@ export class OllamaProvider extends BaseProvider {
       });
 
       if (!response.ok) {
-        const retryable = response.status >= 500;
-        return err(new LLMError(
-          `Ollama API error ${response.status}`,
-          this.name,
-          response.status,
-          retryable,
-        ));
+        return err(await createLLMHttpError({
+          provider: this.name,
+          model: this.config.model,
+          endpoint: `${baseUrl}/api/generate`,
+          response,
+          label: 'Ollama API error',
+        }));
       }
 
       const data = await response.json();
@@ -146,7 +146,10 @@ export class OllamaProvider extends BaseProvider {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      return err(new LLMError(message, this.name, undefined, true));
+      return err(new LLMError(message, this.name, undefined, true, {
+        model: this.config.model,
+        endpoint: `${this.config.baseUrl.replace(/\/+$/, '')}/api/generate`,
+      }));
     }
   }
 
@@ -199,13 +202,13 @@ export class OllamaProvider extends BaseProvider {
       });
 
       if (!response.ok) {
-        const retryable = response.status >= 500;
-        return err(new LLMError(
-          `Ollama OpenAI-compat error ${response.status}`,
-          this.name,
-          response.status,
-          retryable,
-        ));
+        return err(await createLLMHttpError({
+          provider: this.name,
+          model: this.config.model,
+          endpoint: url,
+          response,
+          label: 'Ollama OpenAI-compat error',
+        }));
       }
 
       const data = await response.json();
@@ -227,7 +230,10 @@ export class OllamaProvider extends BaseProvider {
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      return err(new LLMError(message, this.name, undefined, true));
+      return err(new LLMError(message, this.name, undefined, true, {
+        model: this.config.model,
+        endpoint: `${this.config.baseUrl.replace(/\/+$/, '')}/chat/completions`,
+      }));
     }
   }
 

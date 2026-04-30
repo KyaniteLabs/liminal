@@ -1,7 +1,7 @@
 import type { CortexGoal, CortexSnapshot } from '../cortex/types.js';
 import type { ActionProposal } from '../cortex/ActionProposer.js';
 import type { BridgeRoleName, BridgeRoleStatus, BridgeVisionSupport } from './BridgeLauncherConfig.js';
-import type { Status } from '../types/status.js';
+import type { Status, StatusNextAction } from '../types/status.js';
 
 export type TuiMode = 'chat' | 'inspect' | 'action' | 'confirm';
 
@@ -73,6 +73,8 @@ export interface TuiRunLifecycle {
   resumable?: boolean;
   /** True when the latest failure receipt says retrying the upstream call is safe. */
   retryable?: boolean;
+  /** Classified operator action for the current failure/resume state. */
+  nextAction?: StatusNextAction;
   /** Most recent engineering planning failure receipt restored from run-state. */
   lastPlanError?: string;
 }

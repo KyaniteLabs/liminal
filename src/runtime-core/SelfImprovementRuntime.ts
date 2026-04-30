@@ -108,7 +108,10 @@ export class LLMModeSelfImprovementRuntime implements SelfImprovementRuntime {
       modelName: prepared.modelName,
       maxSteps: prepared.maxSteps,
       session,
-      lifecycle: describeStatusLifecycle(session.status, session.lastPlanError),
+      lifecycle: describeStatusLifecycle(session.status, session.lastPlanError, {
+        lastVerification: session.lastVerification,
+        mutatedFiles: session.mutatedFiles ? Array.from(session.mutatedFiles) : [],
+      }),
     };
   }
 }

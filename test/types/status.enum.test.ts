@@ -6,6 +6,7 @@ import {
   isWaitingStatus,
   isResumableStatus,
   isRetryableStatusReceipt,
+  classifyStatusNextAction,
   describeStatusLifecycle,
   TERMINAL_STATUSES,
   ACTIVE_STATUSES,
@@ -191,6 +192,22 @@ describe('canonical lifecycle helpers', () => {
     expect(describeStatusLifecycle(Status.FAILED, 'upstream 503 timeout')).toMatchObject({
       failed: true,
       retryable: true,
+    });
+  });
+
+  it('classifies actionable failure next steps', () => {
+    expect(classifyStatusNextAction(Status.SUSPENDED).action).toBe('resume_checkpoint');
+    expect(classifyStatusNextAction(Status.FAILED, 'context window exceeded').action).toBe('shrink_prompt');
+    expect(classifyStatusNextAction(Status.FAILED, 'response_format not supported').action).toBe('switch_model');
+    expect(classifyStatusNextAction(Status.FAILED, 'upstream 503 timeout').action).toBe('retry_provider');
+    expect(classifyStatusNextAction(Status.FAILED, undefined, {
+      lastVerification: { passed: false, type: 'build', error: 'tsc failed' },
+    }).action).toBe('rerun_verification');
+    expect(classifyStatusNextAction(Status.FAILED, 'parse failure', {
+      mutatedFiles: ['src/foo.ts'],
+    })).toMatchObject({
+      action: 'inspect_file',
+      reason: expect.stringContaining('src/foo.ts'),
     });
   });
 });

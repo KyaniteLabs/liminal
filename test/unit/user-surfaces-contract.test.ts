@@ -5,14 +5,23 @@ import { buildOperatorPromptRequest } from '../../gui/src/components/OperatorCoc
 const read = (path: string) => readFileSync(path, 'utf8');
 
 describe('user-facing TUI/GUI surface contract', () => {
-  it('documents the shared two-cockpit run contract', () => {
+  it('documents the shared chat-first user-surface contract', () => {
     const doc = read('docs/USER_SURFACE_CONTRACT.md');
 
-    expect(doc).toContain('One Engine, Two Cockpits');
-    for (const state of ['intent', 'route', 'generate', 'preview', 'review', 'learn']) {
-      expect(doc).toContain(`\`${state}\``);
+    expect(doc).toContain('Chat First, Preview First');
+    for (const surface of ['Studio GUI', 'Operator TUI']) {
+      expect(doc).toContain(surface);
     }
-    for (const rule of ['Cancel stops active generation', 'Confirm mutates only after review', 'GUI and TUI consume the same bridge events']) {
+    for (const state of ['Brief', 'Medium', 'Generate', 'Preview', 'Revise / Variation / Polish', 'Details']) {
+      expect(doc).toContain(state);
+    }
+    for (const rule of [
+      'Cancel stops active generation',
+      'Confirm mutates only after review',
+      'GUI and TUI consume the same bridge events',
+      'Prompt beats stale selectors',
+      'A pop-up alone is not enough',
+    ]) {
       expect(doc).toContain(rule);
     }
   });

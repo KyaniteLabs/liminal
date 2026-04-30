@@ -1,7 +1,7 @@
 # Launch Day Checklist — Liminal Building in Public
 
 **Date:** ___/___/2026
-**Goal:** First public reveal. Establish credibility through honesty.
+**Goal:** First public launch-candidate reveal. Establish credibility through a real chat-first Studio demo, same-screen preview, and honest caveats.
 
 ---
 
@@ -13,7 +13,7 @@
 - [ ] **Reply with prompt challenge** to your own thread
 - [ ] **Post TikTok/Reel:** Jellyfish generation video (Script 2)
 - [ ] **Cross-post to Instagram** with same video
-- [ ] **Update bio:** "Building Liminal — AI creative coding agent. Real outputs. Honest scores. No cherry-picking."
+- [ ] **Update bio:** "Building Liminal — Codex for creative coding. Chat-first Studio, real previews, honest caveats."
 
 ## Midday (12:00-1:00 PM PT)
 
@@ -33,7 +33,7 @@
 
 ## Evening (6:00-8:00 PM PT)
 
-- [ ] **Twitter Spaces or impromptu live tweet session:** "Ask me anything about the 2,496 tests"
+- [ ] **Twitter Spaces or impromptu live tweet session:** "Ask me anything about Codex for creative coding"
 - [ ] **Schedule Failure Friday** post for end of week
 - [ ] **Plan Week 2 content** based on what resonated today
 
@@ -49,7 +49,7 @@
 | Neon city screenshot | `artifacts/screenshots/tests/test-neon.png` | ✅ |
 | Landing page screenshot | `artifacts/screenshots/landing/landing-final.png` | ✅ |
 | Gallery stats screenshot | `artifacts/screenshots/gallery/index-gallery-stats.png` | ✅ |
-| Terminal recording | Record fresh with `liminal -p "..."` | ⬜ |
+| Studio recording | Record fresh with `pnpm gui` and a same-screen preview prompt | ⬜ |
 | TikTok video | Edit terminal recording to 15-30s | ⬜ |
 
 ---
@@ -65,13 +65,13 @@ If someone asks something you didn't expect:
 > You bring your own API keys (OpenAI, Anthropic, etc.) or run local models for free via Ollama/LM Studio.
 
 **"Can I try it?"**
-> [Landing page link]. Or reply with a prompt and I'll generate it for you live.
+> [Landing page link]. Or reply with a prompt and I'll generate it in Studio with the preview visible.
 
 **"What's the business model?"**
 > Right now there isn't one. I'm building the thing I wish existed. If enough people want it, we'll figure that out together.
 
 **"This is just vibe coding"**
-> Vibe coding doesn't validate its own output. Liminal runs the generated code, scores it against a rubric, and feeds failures back into the system to improve the next generation. It's vibe coding with accountability.
+> Liminal is closer to Codex for creative coding: chat, generate, preview, revise, and keep proof receipts available when something needs debugging.
 
 ---
 
@@ -79,12 +79,12 @@ If someone asks something you didn't expect:
 
 | Metric | Target |
 |--------|--------|
-| Thread impressions | 50,000+ |
-| New followers | 200+ |
-| Landing page visits | 1,000+ |
-| Community prompts generated | 10+ |
-| TikTok views | 10,000+ |
+| Real prompts generated in Studio | 10+ |
+| Same-screen preview demos posted | 3+ |
+| People asking to try it | 5+ |
+| Bugs/caveats captured honestly | all |
+| Follow-up prompts collected | 20+ |
 
 ---
 
-*Post the thread. Show the failures. Let the system speak for itself.*
+*Post the thread. Show the Studio. Show the preview. Keep the caveats honest.*

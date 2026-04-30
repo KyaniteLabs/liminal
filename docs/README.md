@@ -4,6 +4,16 @@
 
 ## Quick Navigation
 
+
+### Launch Candidate / User Surface
+| Document | Purpose |
+|----------|---------|
+| [USER_SURFACE_CONTRACT.md](./USER_SURFACE_CONTRACT.md) | Artist-facing Studio and operator TUI behavior contract |
+| [marketing/launch-thread-ready.md](./marketing/launch-thread-ready.md) | Current launch-candidate public copy |
+| [marketing/launch-day-checklist.md](./marketing/launch-day-checklist.md) | Launch-day execution checklist |
+| [launch/skipped-test-ledger.md](./launch/skipped-test-ledger.md) | Remaining skipped/slow proof obligations |
+| [launch/launch-candidate-2026-04-30.md](./launch/launch-candidate-2026-04-30.md) | Current tracked launch-candidate proof summary |
+
 ### Core Documentation
 | Document | Purpose |
 |----------|---------|

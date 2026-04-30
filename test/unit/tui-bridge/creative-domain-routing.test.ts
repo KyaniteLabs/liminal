@@ -188,6 +188,14 @@ describe('TuiBridgeService creative domain routing', () => {
     expect(previewDomainForCode(threeCode, Domain.P5)).toBe('three');
   });
 
+  it('falls back to the requested preview domain when code is ambiguous', () => {
+    const partialCode = '/* sparse partial output; no executable framework markers yet */';
+
+    expect(detectPreviewDomainForCode(partialCode)).toBeUndefined();
+    expect(previewDomainForCode(partialCode, Domain.GLSL)).toBe('shader');
+    expect(previewDomainForCode(partialCode, Domain.TONE)).toBe('tone');
+  });
+
 
   it('keeps complete Tone HTML in the Tone preview shell for explicit Tone requests', () => {
     const toneHtml = '<!DOCTYPE html><html><head><script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script></head><body><button>Start</button><script>Tone.Transport.bpm.value = 90;</script></body></html>';

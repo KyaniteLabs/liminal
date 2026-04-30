@@ -7,6 +7,7 @@ import { resolveOpenRouterModelAlias, OPENROUTER_MODEL_CATALOG } from './OpenRou
 import { LLMClient as RuntimeLLMClient } from '../llm/LLMClient.js';
 import { isPlaceholderApiKey } from '../harness/MultiProviderConfig.js';
 import { summarizeBridgeRuntime } from './BridgeLauncherConfig.js';
+import { formatMicCaptureError } from '../shared/micPermission.js';
 
 type ModelProviderKey = 'custom' | 'minimax' | 'glm' | 'lmstudio' | 'ollama' | 'openrouter' | 'kimi' | 'moonshot';
 
@@ -65,6 +66,8 @@ const MODEL_CHOICES: ModelChoice[] = [
   })),
 ];
 
+const MIC_CAPTURE_ERROR_FORMATTER_SOURCE = formatMicCaptureError.toString();
+
 const ALLOWED_ORIGINS: readonly string[] = [
   'http://localhost:3000',
   'http://localhost:4200',
@@ -96,7 +99,27 @@ function frameImage(){return canvas.toDataURL('image/png').split(',')[1]}
 function tick(){analyser.getByteTimeDomainData(timeData);analyser.getByteFrequencyData(freqData);const level=rms(timeData);const cent=centroid(freqData);frames.push({rms:level,centroid:cent});if(frames.length>1200)frames.shift();bar.style.width=Math.min(100,level*260)+'%';drawOutput(level,cent);const c=content(false);out.textContent=c;if(performance.now()-lastSent>650){lastSent=performance.now();send(c,false,frameImage())}raf=requestAnimationFrame(tick)}
 drawOutput(0,0);
 function startSpeech(){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR)return;recognition=new SR();recognition.continuous=true;recognition.interimResults=true;recognition.onresult=(event)=>{let text='';for(let i=0;i<event.results.length;i++)text+=event.results[i][0].transcript+' ';spokenPrompt=text.trim();};recognition.start();}
-document.getElementById('start').onclick=async()=>{startSpeech();stream=await navigator.mediaDevices.getUserMedia({audio:true});ctx=new AudioContext();analyser=ctx.createAnalyser();analyser.fftSize=2048;timeData=new Uint8Array(analyser.fftSize);freqData=new Uint8Array(analyser.frequencyBinCount);ctx.createMediaStreamSource(stream).connect(analyser);frames=[];document.getElementById('start').disabled=true;document.getElementById('stop').disabled=false;tick()};
+const formatMicCaptureError=${MIC_CAPTURE_ERROR_FORMATTER_SOURCE};
+function showMicError(err){cancelAnimationFrame(raf);recognition?.stop?.();stream?.getTracks?.().forEach(t=>t.stop());ctx?.close?.();stream=null;ctx=null;analyser=null;document.getElementById('start').disabled=false;document.getElementById('stop').disabled=true;const c=['Status: microphone unavailable',formatMicCaptureError(err,'press Start recording again'),'No audio was captured yet.'].join('\n');out.textContent=c;send(c,false).catch(()=>{})}
+async function startMicPreview(){
+try{
+startSpeech();
+stream=await navigator.mediaDevices.getUserMedia({audio:true});
+ctx=new AudioContext();
+analyser=ctx.createAnalyser();
+analyser.fftSize=2048;
+timeData=new Uint8Array(analyser.fftSize);
+freqData=new Uint8Array(analyser.frequencyBinCount);
+ctx.createMediaStreamSource(stream).connect(analyser);
+frames=[];
+document.getElementById('start').disabled=true;
+document.getElementById('stop').disabled=false;
+tick();
+}catch(err){
+showMicError(err);
+}
+}
+document.getElementById('start').onclick=startMicPreview;
 document.getElementById('stop').onclick=()=>{cancelAnimationFrame(raf);recognition?.stop();stream?.getTracks().forEach(t=>t.stop());ctx?.close();document.getElementById('start').disabled=false;document.getElementById('stop').disabled=true;const c=content(true);out.textContent=c;send(c,true,frameImage())};
 </script></body></html>`;
 

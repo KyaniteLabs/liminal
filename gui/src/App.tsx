@@ -21,6 +21,7 @@ import {
 } from './gui/createModes';
 import { summarizeAudioSync, type AudioSyncFrame } from './gui/audioSync';
 import { buildSyncPreviewHtml } from './gui/syncPreview';
+import { formatMicCaptureError } from '../../src/shared/micPermission';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 import { latestClarificationRequest, latestCognitiveReceipt } from './gui/workbenchTelemetry';
 import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
@@ -460,7 +461,7 @@ export default function App() {
       micRafRef.current = window.requestAnimationFrame(tick);
     } catch (err) {
       setMicStatus('error');
-      setMicError(err instanceof Error ? err.message : 'Microphone permission failed.');
+      setMicError(formatMicCaptureError(err, 'try Sync again'));
     } finally {
       micStartPendingRef.current = false;
     }

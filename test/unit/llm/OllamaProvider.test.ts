@@ -340,7 +340,12 @@ describe('OllamaProvider — Native Mode (no /v1 suffix)', () => {
 
     expect(result.isErr()).toBe(true);
 
-    expect(result.error.message).toBe('Ollama API error 500');
+    expect(result.error.message).toBe('Ollama API error 500: {}');
+    expect(result.error.provider).toBe('ollama');
+    expect(result.error.statusCode).toBe(500);
+    expect(result.error.retryable).toBe(true);
+    expect(result.error.responseBody).toBe('{}');
+    expect(result.error.endpoint).toBe('http://localhost:11434/api/generate');
   });
 
   it('returns error on HTTP 404 (model not found)', async () => {
@@ -350,7 +355,12 @@ describe('OllamaProvider — Native Mode (no /v1 suffix)', () => {
 
     expect(result.isErr()).toBe(true);
 
-    expect(result.error.message).toBe('Ollama API error 404');
+    expect(result.error.message).toBe('Ollama API error 404: {}');
+    expect(result.error.provider).toBe('ollama');
+    expect(result.error.statusCode).toBe(404);
+    expect(result.error.retryable).toBe(false);
+    expect(result.error.responseBody).toBe('{}');
+    expect(result.error.endpoint).toBe('http://localhost:11434/api/generate');
   });
 
   // ── Streaming ─────────────────────────────────────────────────────────────
@@ -548,7 +558,12 @@ describe('OllamaProvider — OpenAI-Compatible Mode (/v1 suffix)', () => {
 
     expect(result.isErr()).toBe(true);
 
-    expect(result.error.message).toBe('Ollama OpenAI-compat error 503');
+    expect(result.error.message).toBe('Ollama OpenAI-compat error 503: {}');
+    expect(result.error.provider).toBe('ollama');
+    expect(result.error.statusCode).toBe(503);
+    expect(result.error.retryable).toBe(true);
+    expect(result.error.responseBody).toBe('{}');
+    expect(result.error.endpoint).toBe('http://localhost:11434/v1/chat/completions');
   });
 
   it('uses model from config in response', async () => {

@@ -17,7 +17,15 @@ describe('GUI workbench accessibility contract', () => {
     expect(shell).toContain('aria-busy');
     expect(shell).toContain('aria-label="Generation timeline"');
     expect(app).toContain("stageBusy={bridgeSummary.active || runStatus === 'running'}");
+    expect(app).toContain("artifactReady={activeMode.id === 'generate' && hasSyncTarget}");
     expect(bridgeHook).toContain("parsed.type === 'status.updated'");
+  });
+
+  it('does not tell users to generate again once a preview is mounted', () => {
+    expect(shell).toContain('artifactReady');
+    expect(shell).toContain("showGeneratePreviewReady");
+    expect(shell).toContain('Preview is ready');
+    expect(shell).toContain('Use the message box to revise, make a variation, or polish this direction.');
   });
 
   it('does not surface stale EventSource disconnects from replaced sessions', () => {

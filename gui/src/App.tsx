@@ -1264,6 +1264,7 @@ export default function App() {
       onRun={handleWorkbenchRun}
       runDisabled={activeMode.id === 'improve' ? improveLoading : bridge.submitting || runStatus === 'running' || !createPrompt.trim() || (runNeedsBridgeSession && !bridge.session)}
       stageBusy={bridgeSummary.active || runStatus === 'running'}
+      artifactReady={activeMode.id === 'generate' && hasSyncTarget}
       runLabel={bridge.submitting ? 'Sending' : bridge.session?.pendingAction ? 'Review' : runLabel}
       audioSlot={audioSlot}
       providerLabel={providerLabel}

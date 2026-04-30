@@ -12,6 +12,7 @@ interface WorkbenchShellProps {
   onRun: () => void;
   runDisabled: boolean;
   stageBusy: boolean;
+  artifactReady: boolean;
   runLabel: string;
   audioSlot?: React.ReactNode;
   providerLabel: string;
@@ -35,6 +36,7 @@ export function WorkbenchShell({
   onRun,
   runDisabled,
   stageBusy,
+  artifactReady,
   runLabel,
   audioSlot,
   providerLabel,
@@ -49,13 +51,18 @@ export function WorkbenchShell({
   const activeModeLabel = modes.find((mode) => mode.id === activeMode)?.label ?? 'Generate';
   const activeSurfaceLabel = formatLegacyTab(activeTab);
   const userPrompt = prompt.trim();
+  const showGeneratePreviewReady = activeMode === 'generate' && artifactReady;
   const artifactHeading = stageBusy
     ? 'Liminal is generating…'
+    : showGeneratePreviewReady
+      ? 'Preview is ready'
     : userPrompt
       ? 'Ready to generate your preview'
       : 'Start with a prompt, then preview here';
   const artifactDetail = stageBusy
     ? 'Live output will appear in the side panel as soon as it is available.'
+    : showGeneratePreviewReady
+      ? 'Use the message box to revise, make a variation, or polish this direction.'
     : userPrompt
       ? 'Click Generate and I’ll keep the conversation focused while the artifact opens on the right.'
       : 'The preview panel stays quiet until there is something visual or playable to inspect.';

@@ -106,6 +106,8 @@ export interface RunState {
   mutationApplied: boolean;
   /** Last verification state */
   lastVerification?: VerificationState;
+  /** Most recent planning-stage failure receipt */
+  lastPlanError?: string;
   /** Workspace fingerprint at time of suspension */
   workspaceFingerprint?: WorkspaceFingerprint;
   /** Reason for interruption (if interrupted) */
@@ -279,6 +281,7 @@ export function formatResumeContext(state: RunState): string {
     typeof state.focusInspectionBudgetRemaining === 'number' ? `Focus inspection reads remaining: ${state.focusInspectionBudgetRemaining}` : '',
     state.focusDecision ? `Last focus decision: ${state.focusDecision}${state.focusDecisionAt ? ` at ${state.focusDecisionAt}` : ''}` : '',
     verificationSummary ?? '',
+    state.lastPlanError ? `Last planning failure: ${state.lastPlanError}` : '',
     ``,
     `Progress: ${state.progressSummary}`,
     ``,

@@ -180,4 +180,16 @@ describe('RunStateStore', () => {
       timestamp: '2026-04-11T10:04:30.000Z',
     });
   });
+
+  it('preserves planning failure receipts in round-trip and resume context', async () => {
+    const receipt = 'upstream rejected request | provider=openai | model=gpt-5.4-mini | endpoint=https://api.openai.com/v1/chat/completions | status=429 | retryable=true | body={"error":"quota exceeded"}';
+    const state = makeRunState({
+      lastPlanError: receipt,
+    });
+    await saveRunState(state, tempDir);
+
+    const loaded = await readRunState(tempDir);
+    expect(loaded!.lastPlanError).toBe(receipt);
+    expect(formatResumeContext(loaded!)).toContain(`Last planning failure: ${receipt}`);
+  });
 });

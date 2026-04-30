@@ -256,3 +256,25 @@ export function describeStatusLifecycle(
     nextAction: classifyStatusNextAction(status, receipt, hints),
   };
 }
+
+export function formatStatusEvidenceLines(lifecycle: StatusLifecycleDescriptor): string[] {
+  return [
+    `- Resumable: ${lifecycle.resumable ? 'yes' : 'no'}`,
+    `- Retryable provider failure: ${lifecycle.retryable ? 'yes' : 'no'}`,
+    `- Next action: ${lifecycle.nextAction.label}`,
+  ];
+}
+
+export function formatStatusNextAction(action: StatusNextAction, separator = ': '): string {
+  return `${action.label}${separator}${action.reason}`;
+}
+
+export function formatStatusRiskLine(lifecycle: StatusLifecycleDescriptor): string {
+  if (lifecycle.resumable) {
+    return '- Medium: checkpointed work exists; resume before starting a replacement run in the same area.';
+  }
+  if (lifecycle.succeeded) {
+    return '- Low: trust generated changes only after reviewing the diff and verification output.';
+  }
+  return '- The run did not report full success; inspect logs and working tree changes before trusting results.';
+}

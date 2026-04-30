@@ -8,6 +8,9 @@ import {
   isRetryableStatusReceipt,
   classifyStatusNextAction,
   describeStatusLifecycle,
+  formatStatusEvidenceLines,
+  formatStatusNextAction,
+  formatStatusRiskLine,
   TERMINAL_STATUSES,
   ACTIVE_STATUSES,
   WAITING_STATUSES,
@@ -209,5 +212,18 @@ describe('canonical lifecycle helpers', () => {
       action: 'inspect_file',
       reason: expect.stringContaining('src/foo.ts'),
     });
+  });
+
+  it('formats lifecycle evidence and action lines from the shared contract', () => {
+    const lifecycle = describeStatusLifecycle(Status.SUSPENDED, 'MiniMax overload | retryable=true');
+
+    expect(formatStatusEvidenceLines(lifecycle)).toEqual([
+      '- Resumable: yes',
+      '- Retryable provider failure: yes',
+      '- Next action: Resume checkpoint',
+    ]);
+    expect(formatStatusNextAction(lifecycle.nextAction)).toBe('Resume checkpoint: The run was suspended with a checkpoint and should continue from saved state.');
+    expect(formatStatusNextAction(lifecycle.nextAction, ' — ')).toBe('Resume checkpoint — The run was suspended with a checkpoint and should continue from saved state.');
+    expect(formatStatusRiskLine(lifecycle)).toBe('- Medium: checkpointed work exists; resume before starting a replacement run in the same area.');
   });
 });

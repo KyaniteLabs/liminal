@@ -1,0 +1,22 @@
+# Liminal
+
+> Model-agnostic creative coding studio and agentic art workbench.
+
+Liminal turns natural-language prompts into creative-code artifacts across p5.js, GLSL, Three.js, SVG, Hydra, Strudel, Tone.js, Revideo, ASCII, kinetic text, and other creative domains. It includes a chat-first Studio, CLI, TUI, multi-agent critique, taste learning, compost/dreaming systems, and self-improvement workflows.
+
+## Use cases
+- AI-assisted creative coding
+- Generative art and shader iteration
+- Music and live-coding experiments
+- Model comparison for creative tasks
+- Creative-code evaluation and critique
+- Local-first artist workbench with provider flexibility
+
+## Key paths
+- `README.md`: public overview and quick start
+- `docs/`: launch, proof, architecture, and model-assimilation docs
+- `gui/`: Studio interface
+- `src/`: creative generation and orchestration code
+
+## Keywords
+AI creative coding studio, generative art agent, LLM art workbench, creative coding CLI, p5.js AI generator, GLSL shader agent, Three.js generation, AI music coding, model-agnostic creative system.

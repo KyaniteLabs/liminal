@@ -1,6 +1,6 @@
 # Liminal
 
-[![CI](https://github.com/Pastorsimon1798/liminal/actions/workflows/ci.yml/badge.svg)](https://github.com/Pastorsimon1798/liminal/actions/workflows/ci.yml)
+[![CI](https://github.com/KyaniteLabs/liminal/actions/workflows/ci.yml/badge.svg)](https://github.com/KyaniteLabs/liminal/actions/workflows/ci.yml)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](./LICENSE)
 
 > Codex for creative coding: a chat-first Studio that helps you turn natural language, sound, and iteration into sketches, shaders, music, video compositions, and other creative-code artifacts.
@@ -12,6 +12,15 @@ Liminal is a model-agnostic creative coding system. You describe what you want â
 Liminal Studio is the artist-facing workbench: clean chat on the left, live preview on the right, and advanced receipts hidden until you ask for them. Bubble Tea remains the keyboard-first operator cockpit for deeper diagnostics and review actions.
 
 ---
+
+
+## Public Discovery
+
+**Liminal** is a model-agnostic creative coding studio for AI-assisted art, music, shaders, sketches, video compositions, and iterative creative systems. It combines a chat-first Studio, CLI, TUI, multi-agent critique, taste learning, creative-code generation, and self-improvement loops.
+
+**AI discovery:** [`llms.txt`](llms.txt) provides a compact project summary for AI assistants and search crawlers.
+
+**Best-fit searches:** AI creative coding studio, generative art agent, creative coding CLI, model-agnostic art generator, p5 GLSL Three.js AI tool, AI music coding, autonomous creative coding system, LLM art workbench.
 
 ## Quick Start
 

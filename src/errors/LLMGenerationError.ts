@@ -9,6 +9,11 @@ export class LLMGenerationError extends LiminalError {
   public readonly model?: string;
   public readonly provider?: string;
   public readonly endpoint?: string;
+  public readonly endpointStyle?: 'openai' | 'ollama' | 'anthropic';
+  public readonly fallbackUsed?: boolean;
+  public readonly fallbackFrom?: string;
+  public readonly fallbackTo?: string;
+  public readonly errorSource?: 'provider' | 'client' | 'network' | 'unknown';
   public readonly statusCode?: number;
   public readonly retryable: boolean;
   public readonly responseBody?: string;
@@ -21,6 +26,11 @@ export class LLMGenerationError extends LiminalError {
       model?: string;
       provider?: string;
       endpoint?: string;
+      endpointStyle?: 'openai' | 'ollama' | 'anthropic';
+      fallbackUsed?: boolean;
+      fallbackFrom?: string;
+      fallbackTo?: string;
+      errorSource?: 'provider' | 'client' | 'network' | 'unknown';
       statusCode?: number;
       retryable?: boolean;
       responseBody?: string;
@@ -34,6 +44,11 @@ export class LLMGenerationError extends LiminalError {
         ...(options?.model && { model: options.model }),
         ...(options?.provider && { provider: options.provider }),
         ...(options?.endpoint && { endpoint: options.endpoint }),
+        ...(options?.endpointStyle && { endpointStyle: options.endpointStyle }),
+        ...(options?.fallbackUsed !== undefined && { fallbackUsed: options.fallbackUsed }),
+        ...(options?.fallbackFrom && { fallbackFrom: options.fallbackFrom }),
+        ...(options?.fallbackTo && { fallbackTo: options.fallbackTo }),
+        ...(options?.errorSource && { errorSource: options.errorSource }),
         ...(options?.statusCode !== undefined && { statusCode: options.statusCode }),
         ...(options?.retryable !== undefined && { retryable: options.retryable }),
         ...(options?.responseBody && { responseBody: options.responseBody }),
@@ -48,6 +63,11 @@ export class LLMGenerationError extends LiminalError {
     this.model = options?.model;
     this.provider = options?.provider;
     this.endpoint = options?.endpoint;
+    this.endpointStyle = options?.endpointStyle;
+    this.fallbackUsed = options?.fallbackUsed;
+    this.fallbackFrom = options?.fallbackFrom;
+    this.fallbackTo = options?.fallbackTo;
+    this.errorSource = options?.errorSource;
     this.statusCode = options?.statusCode;
     this.retryable = options?.retryable ?? false;
     this.responseBody = options?.responseBody;

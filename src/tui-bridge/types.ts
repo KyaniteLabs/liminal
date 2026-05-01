@@ -46,6 +46,11 @@ export interface TuiFailureProvenance {
   provider?: string;
   model?: string;
   endpoint?: string;
+  endpointStyle?: 'openai' | 'ollama' | 'anthropic';
+  fallbackUsed?: boolean;
+  fallbackFrom?: string;
+  fallbackTo?: string;
+  errorSource?: 'provider' | 'client' | 'network' | 'unknown';
   statusCode?: number;
   retryable?: boolean;
   responseBody?: string;

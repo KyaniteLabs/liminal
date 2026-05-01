@@ -34,8 +34,9 @@ import {
   detectProviderLabel,
   firstUsableApiKey,
   readRuntimeEnv,
+  apiStyleForEndpoint,
 } from '../config/ProviderRuntime.js';
-import { compactLLMErrorProvenance, extractLLMErrorProvenance } from './ErrorProvenance.js';
+import { compactLLMErrorProvenance, extractLLMErrorProvenance, type LLMRequestProvenance } from './ErrorProvenance.js';
 
 export interface LLMConfig {
   /** Base URL for the LLM API (OpenAI-compatible) */
@@ -100,6 +101,7 @@ export interface LLMResponse {
   reasoningQuality?: number;
   /** Pattern types detected in reasoning */
   detectedPatterns?: string[];
+  provenance?: LLMRequestProvenance;
 }
 
 export interface LLMCompleteResult {
@@ -112,6 +114,12 @@ export interface LLMCompleteResult {
   statusCode?: number;
   retryable?: boolean;
   responseBody?: string;
+  provenance?: LLMRequestProvenance;
+  endpointStyle?: LLMRequestProvenance['endpointStyle'];
+  fallbackUsed?: boolean;
+  fallbackFrom?: string;
+  fallbackTo?: string;
+  errorSource?: 'provider' | 'client' | 'network' | 'unknown';
 }
 
 /**
@@ -538,12 +546,40 @@ export class LLMClient {
     return provider === Provider.LMSTUDIO || provider === Provider.OLLAMA;
   }
 
-  private providerEndpoint(providerName = this.detectProvider()): string {
-    const baseUrl = this.config.baseUrl.replace(/\/+$/, '');
+  private providerEndpoint(providerName = this.detectProvider(), baseUrlValue = this.config.baseUrl, model = this.config.model): string {
+    const baseUrl = baseUrlValue.replace(/\/+$/, '');
     if (providerName === Provider.OLLAMA && !baseUrl.endsWith('/v1')) return `${baseUrl}/api/generate`;
     if (providerName === 'anthropic') return `${baseUrl}/messages`;
-    if (providerName === 'google') return `${baseUrl}/models/${this.config.model}:generateContent`;
+    if (providerName === 'google') return `${baseUrl}/models/${model}:generateContent`;
     return `${baseUrl}/chat/completions`;
+  }
+
+  private requestProvenanceForProvider(
+    provider: BaseProvider,
+    fallback?: Pick<LLMRequestProvenance, 'fallbackUsed' | 'fallbackFrom'>,
+  ): LLMRequestProvenance {
+    const config = provider.getConfig();
+    const providerName = provider.name;
+    const model = provider.getModel();
+    return {
+      provider: providerName,
+      model,
+      endpoint: this.providerEndpoint(providerName, config.baseUrl, model),
+      endpointStyle: apiStyleForEndpoint(config.baseUrl),
+      fallbackUsed: fallback?.fallbackUsed ?? false,
+      fallbackFrom: fallback?.fallbackFrom,
+      fallbackTo: fallback?.fallbackUsed ? `${providerName}:${model}` : undefined,
+    };
+  }
+
+  private currentRequestProvenance(): LLMRequestProvenance {
+    return {
+      provider: this.detectProvider(),
+      model: this.config.model,
+      endpoint: this.providerEndpoint(),
+      endpointStyle: apiStyleForEndpoint(this.config.baseUrl),
+      fallbackUsed: false,
+    };
   }
 
   /** Detect provider name from baseUrl or model for logging */
@@ -706,7 +742,7 @@ export class LLMClient {
       const hasImages = !!(imageInputs && imageInputs.length > 0);
       const cached = bypassCache || hasImages ? null : this.cache.get(systemPrompt, userPrompt);
       if (cached) {
-        return { code: cached, success: true, fromCache: true };
+        return { code: cached, success: true, fromCache: true, provenance: this.currentRequestProvenance() };
       }
 
       eventBus.emit(EventTypes.LLM_REQUEST, 'LLMClient', {
@@ -747,7 +783,10 @@ export class LLMClient {
             },
           );
         }
-        return this.mapProviderResponse(response);
+        return {
+          ...this.mapProviderResponse(response),
+          provenance: this.requestProvenanceForProvider(provider),
+        };
       });
       }).catch(async (primaryError: unknown) => {
         // Only attempt fallbacks on network/auth errors
@@ -782,7 +821,13 @@ export class LLMClient {
             }
             const mapped = this.mapProviderResponse(fbResult.value);
             Logger.info('LLMClient.fallback', `Fallback succeeded: ${fallback.getModel()}`);
-            return mapped;
+            return {
+              ...mapped,
+              provenance: this.requestProvenanceForProvider(fallback, {
+                fallbackUsed: true,
+                fallbackFrom: `${this.detectProvider()}:${this.config.model}`,
+              }),
+            };
           } catch (fallbackErr) {
             fallbackFailures.push(this.formatFallbackFailure(fallback.getModel(), fallbackErr));
             Logger.info('LLMClient.fallback',
@@ -843,6 +888,9 @@ export class LLMClient {
           provider: this.detectProvider(),
           model: this.config.model,
           endpoint: this.providerEndpoint(),
+          endpointStyle: apiStyleForEndpoint(this.config.baseUrl),
+          fallbackUsed: false,
+          errorSource: 'client',
           retryable: isRetryable,
         },
       );
@@ -852,6 +900,11 @@ export class LLMClient {
         model: provenance.model,
         provider: provenance.provider,
         endpoint: provenance.endpoint,
+        endpointStyle: provenance.endpointStyle,
+        fallbackUsed: provenance.fallbackUsed,
+        fallbackFrom: provenance.fallbackFrom,
+        fallbackTo: provenance.fallbackTo,
+        errorSource: provenance.errorSource,
         statusCode: provenance.statusCode,
         retryable: provenance.retryable,
         responseBody: provenance.responseBody,
@@ -979,7 +1032,16 @@ export class LLMClient {
           );
         }
 
-        return { text: response.content, success: true as const };
+        return {
+          text: response.content,
+          success: true as const,
+          provider: provider.name,
+          model: provider.getModel(),
+          endpoint: this.providerEndpoint(provider.name, provider.getConfig().baseUrl, provider.getModel()),
+          endpointStyle: apiStyleForEndpoint(provider.getConfig().baseUrl),
+          fallbackUsed: false,
+          provenance: this.requestProvenanceForProvider(provider),
+        };
       }).catch(async (primaryError: unknown) => {
         if (!this.isFallbackableError(primaryError)) {
           throw primaryError;
@@ -1011,7 +1073,22 @@ export class LLMClient {
             }
             if (fbResult.value.success) {
               Logger.info('LLMClient.fallback', `complete() fallback succeeded: ${fallback.getModel()}`);
-              return { text: fbResult.value.content, success: true as const };
+              const provenance = this.requestProvenanceForProvider(fallback, {
+                fallbackUsed: true,
+                fallbackFrom: `${this.detectProvider()}:${this.config.model}`,
+              });
+              return {
+                text: fbResult.value.content,
+                success: true as const,
+                provider: provenance.provider,
+                model: provenance.model,
+                endpoint: provenance.endpoint,
+                endpointStyle: provenance.endpointStyle,
+                fallbackUsed: provenance.fallbackUsed,
+                fallbackFrom: provenance.fallbackFrom,
+                fallbackTo: provenance.fallbackTo,
+                provenance,
+              };
             }
           } catch (err) {
             fallbackFailures.push(this.formatFallbackFailure(fallback.getModel(), err));
@@ -1041,6 +1118,9 @@ export class LLMClient {
           provider: this.detectProvider(),
           model: this.config.model,
           endpoint: this.providerEndpoint(),
+          endpointStyle: apiStyleForEndpoint(this.config.baseUrl),
+          fallbackUsed: false,
+          errorSource: 'client',
           retryable: isRetryable,
         },
       );
@@ -1049,6 +1129,11 @@ export class LLMClient {
         model: provenance.model,
         endpoint: provenance.endpoint,
         statusCode: provenance.statusCode,
+        endpointStyle: provenance.endpointStyle,
+        fallbackUsed: provenance.fallbackUsed,
+        fallbackFrom: provenance.fallbackFrom,
+        fallbackTo: provenance.fallbackTo,
+        errorSource: provenance.errorSource,
         retryable: provenance.retryable,
         method: 'complete',
         success: false,
@@ -1062,9 +1147,15 @@ export class LLMClient {
         provider: provenance.provider,
         model: provenance.model,
         endpoint: provenance.endpoint,
+        endpointStyle: provenance.endpointStyle,
+        fallbackUsed: provenance.fallbackUsed,
+        fallbackFrom: provenance.fallbackFrom,
+        fallbackTo: provenance.fallbackTo,
+        errorSource: provenance.errorSource,
         statusCode: provenance.statusCode,
         retryable: provenance.retryable,
         responseBody: provenance.responseBody,
+        provenance,
       };
     }
   }

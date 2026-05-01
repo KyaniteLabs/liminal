@@ -120,8 +120,8 @@
             <p style="font-size:0.9rem;">Located at <code>~/.liminal/config.json</code>. Created via <code>liminal --configure</code>.</p>
             <pre><code>{
   "llm": {
-    "baseUrl": "https://api.minimaxi.chat/v1",
-    "model": "minimax/M2.7-0716",
+    "baseUrl": "https://api.minimax.io/anthropic",
+    "model": "MiniMax-M2.7",
     "apiKey": "your-key"
   }
 }</code></pre>
@@ -132,7 +132,7 @@
                 <thead><tr><th>Variable</th><th>Description</th></tr></thead>
                 <tbody>
                     <tr><td><code>LLM_API_KEY</code></td><td>API key for the provider</td></tr>
-                    <tr><td><code>LLM_MODEL</code></td><td>Model name (e.g. <code>minimax/M2.7-0716</code>)</td></tr>
+                    <tr><td><code>LLM_MODEL</code></td><td>Model name (e.g. <code>MiniMax-M2.7</code>)</td></tr>
                     <tr><td><code>LLM_BASE_URL</code></td><td>API base URL</td></tr>
                     <tr><td><code>LIMINAL_LLM_MODEL</code></td><td>Override model on the fly</td></tr>
                 </tbody>
@@ -144,7 +144,7 @@
     <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
         <div class="card" style="text-align:center;">
             <h3>MiniMax</h3>
-            <span class="badge badge-success">Default</span>
+            <span class="badge badge-success">Preferred cloud</span>
         </div>
         <div class="card" style="text-align:center;">
             <h3>OpenAI</h3>
@@ -169,6 +169,18 @@
         <div class="card" style="text-align:center;">
             <h3>GLM / ZhipuAI</h3>
             <span class="badge badge-info">Supported</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>Kimi Code</h3>
+            <span class="badge badge-info">Coding</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>Moonshot AI</h3>
+            <span class="badge badge-info">Legacy</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>Custom</h3>
+            <span class="badge badge-info">OpenAI-compatible</span>
         </div>
     </div>
 </section>

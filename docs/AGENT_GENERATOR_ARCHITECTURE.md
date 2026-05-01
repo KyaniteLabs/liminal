@@ -276,8 +276,8 @@ export default {
     
     // Harness learned: Strudel needs cloud model
     strudel: {
-      baseUrl: 'https://api.minimax.io/v1',
-      model: 'MiniMax-M2.5',
+      baseUrl: 'https://api.minimax.io/anthropic',
+      model: 'MiniMax-M2.7',
       apiKey: '${MINIMAX_API_KEY}'
     },
     

@@ -65,16 +65,21 @@ describe('InteractiveMode', () => {
   // ---- getProviders ----
 
   describe('getProviders()', () => {
-    it('returns correct list of 5 providers', () => {
+    it('returns the canonical provider list plus hybrid', () => {
       const providers = mode.getProviders();
       expect(providers).toEqual([
-        'lmstudio',
         'minimax',
+        'lmstudio',
         'ollama',
         'openai',
+        'openrouter',
+        'glm',
+        'moonshot',
+        'kimi',
+        'custom',
         'hybrid',
       ]);
-      expect(providers).toHaveLength(5);
+      expect(providers).toHaveLength(10);
     });
   });
 
@@ -141,7 +146,7 @@ describe('InteractiveMode', () => {
 
   describe('selectProvider()', () => {
     it('returns selected provider', async () => {
-      // Provider list: lmstudio(1), minimax(2), ollama(3), openai(4), hybrid(5)
+      // Provider list follows ProviderRuntime.PROVIDER_ORDER; ollama is 3.
       const promise = mode.selectProvider();
       answerQuestion('3');
 

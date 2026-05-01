@@ -27,6 +27,20 @@ The active Matt Pocock skill subset in Codex is:
 
 Do not use still-quarantined Matt Pocock skills such as `caveman`, `git-guardrails-claude-code`, `grill-me`, `migrate-to-shoehorn`, `scaffold-exercises`, `setup-pre-commit`, or `write-a-skill` unless they are explicitly re-enabled.
 
+
+## Roadmap issue handoff contract
+
+For issues in the repository-wide improvement roadmap (#444-#457), an agent should follow this sequence:
+
+1. Read the GitHub issue body and comments.
+2. Read `docs/plans/2026-05-01-repo-improvement-roadmap.md`.
+3. Read relevant repo docs and ADRs before changing code.
+4. Create an isolated worktree before implementation.
+5. Implement only that issue; do not opportunistically broaden scope.
+6. Verify through execution before claiming completion.
+7. Open a PR with evidence and link the issue.
+8. Report the next high-leverage step after the PR lands or if blocked.
+
 ## When a skill says "publish to the issue tracker"
 
 Create a GitHub issue only if the active skill explicitly asks for one and the user has requested issue creation. Otherwise, keep findings in the response or in the requested docs artifact.

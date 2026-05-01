@@ -40,11 +40,21 @@ The wide range exists because the highest-risk work is not writing code; it is p
 
 ## Operating rules for each issue
 
-1. Start from an isolated worktree.
-2. Use `zoom-out` before modifying unfamiliar areas.
-3. Use `tdd` for feature/refactor issues: one behavior test, one implementation, repeat.
-4. Use `diagnose` for failures, flakes, regressions, or performance issues.
-5. Use `grill-with-docs` when a domain term, product contract, or ADR decision becomes ambiguous.
-6. Keep artist-facing wording creative; keep proof/harness/provider detail in receipts, Details, and Operator TUI diagnostics.
-7. Verify through execution before claiming completion.
-8. End every completed issue with the next high-leverage step.
+When assigning any issue from this roadmap to an agent, use this handoff contract. Agents should not treat an issue number as enough context by itself.
+
+1. Read the GitHub issue body and comments.
+2. Read `docs/plans/2026-05-01-repo-improvement-roadmap.md`.
+3. Read relevant repo docs and ADRs before changing code. At minimum, check `docs/agents/domain.md`; for provider/runtime work, check `docs/adr/0001-provider-runtime-truth.md`.
+4. Create an isolated worktree before implementation.
+5. Implement only that issue; do not opportunistically broaden scope.
+6. Verify through execution before claiming completion.
+7. Open a PR with evidence and link the issue.
+8. Report the next high-leverage step after the PR lands or if blocked.
+
+Additional skill-routing rules:
+
+- Use `zoom-out` before modifying unfamiliar areas.
+- Use `tdd` for feature/refactor issues: one behavior test, one implementation, repeat.
+- Use `diagnose` for failures, flakes, regressions, or performance issues.
+- Use `grill-with-docs` when a domain term, product contract, or ADR decision becomes ambiguous.
+- Keep artist-facing wording creative; keep proof/harness/provider detail in receipts, Details, and Operator TUI diagnostics.

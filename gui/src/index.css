@@ -1134,7 +1134,8 @@ body::before {
 
 .liminal-inspector-grid strong,
 .liminal-inspector-grid small,
-.liminal-review-panel small {
+.liminal-review-panel small,
+.cockpit-run-receipt code {
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -1146,8 +1147,13 @@ body::before {
 }
 
 
-.liminal-cognitive-receipt {
+.liminal-cognitive-receipt,
+.liminal-run-receipt {
   grid-column: 1 / -1;
+}
+
+.liminal-run-receipt {
+  border: 1px solid rgba(116, 198, 255, 0.28);
 }
 
 .liminal-cognitive-receipt ul {

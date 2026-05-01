@@ -117,6 +117,7 @@ vi.mock('../../src/core/GenerationOrchestrator.js', () => ({
 
 const { TuiBridgeService } = await import('../../src/tui-bridge/TuiBridgeService.js');
 const { LLMGenerationError } = await import('../../src/errors/LLMGenerationError.js');
+const { latestRunReceipt } = await import('../../gui/src/gui/workbenchTelemetry');
 
 function fakeLlm() {
   return {
@@ -337,6 +338,69 @@ describe('Bubble Tea operator routing', () => {
     expect(draftGenerate).toHaveBeenCalledOnce();
     expect(service.getEvents(session.sessionId)
       .some(event => event.type === 'generation.clarification_needed')).toBe(false);
+  });
+
+  it('exercises the Studio p5 prompt-to-preview route and derives a run receipt', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession({
+      provider: 'openai',
+      model: 'test-model',
+      roles: {
+        generator: {
+          role: 'generator',
+          provider: 'openai',
+          baseUrl: 'https://api.openai.com/v1',
+          model: 'qwen3.6-35b-a3b',
+          source: 'active-provider',
+          multimodal: 'unknown',
+          purpose: 'Writes the creative code candidates.',
+        },
+      } as never,
+    });
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'p5 sketch of fireflies orbiting a moonlit willow tree',
+        clientIntent: 'creative',
+        executionMode: 'draft',
+        maxIterations: 1,
+        candidateCount: 1,
+        timeoutMinutes: 1,
+      },
+      fakeLlm() as never,
+    );
+
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'preview.completed'));
+    const events = service.getEvents(session.sessionId);
+    const receipt = latestRunReceipt(events as never, service.getStatus(session.sessionId) as never);
+
+    expect(receipt).toMatchObject({
+      heading: 'Run receipt',
+      phase: 'complete',
+      creativeDomain: 'p5',
+      provider: 'openai',
+      model: 'qwen3.6-35b-a3b',
+      artifact: {
+        label: 'p5 HTML preview',
+        path: `.omx/proof/live-previews/${session.sessionId}.html`,
+      },
+      preview: {
+        type: 'html',
+        inline: true,
+        path: `.omx/proof/live-previews/${session.sessionId}.html`,
+      },
+    });
+    expect(events.map(event => event.type)).toEqual(expect.arrayContaining([
+      'generation.intent_brief',
+      'generation.route.selected',
+      'generation.attempt.started',
+      'generation.complete',
+      'artifact.found',
+      'preview.completed',
+    ]));
   });
 
   it('emits an explicit route-selected event before model attempts for workbench generation', async () => {

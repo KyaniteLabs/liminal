@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { latestBridgePreview, latestClarificationRequest, latestCognitiveReceipt, summarizeImproveLane, summarizeWorkbenchBridge } from '../../gui/src/gui/workbenchTelemetry';
+import { latestBridgePreview, latestClarificationRequest, latestCognitiveReceipt, latestRunReceipt, summarizeImproveLane, summarizeWorkbenchBridge } from '../../gui/src/gui/workbenchTelemetry';
 
 describe('workbenchTelemetry', () => {
   it('summarizes bridge generation progress for the workbench shell', () => {
@@ -45,6 +45,72 @@ describe('workbenchTelemetry', () => {
       status: 'done',
       detail: 'verified image preview (p5)',
     });
+  });
+
+
+  it('builds a Studio run receipt for a p5 prompt-to-preview route without default-flow jargon', () => {
+    const events = [
+      {
+        type: 'status.updated',
+        status: {
+          sessionId: 'studio-1',
+          provider: 'openai',
+          model: 'gpt-5.4-mini',
+          roles: {
+            generator: {
+              role: 'generator',
+              provider: 'openai',
+              model: 'gpt-5.4-mini',
+              source: 'active-provider',
+              multimodal: 'unknown',
+              purpose: 'Writes the creative code candidates.',
+            },
+          },
+        },
+      },
+      { type: 'generation.intent_brief', userRequest: 'p5 fireflies', requirements: ['Primary request: p5 fireflies'], missingDetails: [], questions: [], willClarify: false },
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      { type: 'artifact.found', artifactLabel: 'p5 HTML preview', artifactPath: '.omx/proof/live-previews/p5-studio-1.html' },
+      {
+        type: 'preview.completed',
+        previewType: 'html',
+        content: '<!doctype html><script src="https://cdn.jsdelivr.net/npm/p5"></script>',
+        artifactPath: '.omx/proof/live-previews/p5-studio-1.html',
+        requestedDomain: 'p5',
+        generatedDomain: 'p5',
+        previewDomain: 'p5',
+      },
+      { type: 'generation.complete', iterations: 1, finalScore: 0, duration: 1200, model: 'gpt-5.4-mini', reason: 'generated artifact ready (unscored)', qualityState: 'unscored', executionMode: 'draft' },
+    ];
+
+    const summary = summarizeWorkbenchBridge(events);
+    const receipt = latestRunReceipt(events);
+    const artistCopy = [
+      ...summary.processSteps.map((step) => `${step.label} ${step.detail}`),
+      ...summary.recentActivity.map((item) => `${item.label} ${item.detail}`),
+    ].join(' ');
+
+    expect(receipt).toMatchObject({
+      heading: 'Run receipt',
+      phase: 'complete',
+      creativeDomain: 'p5',
+      provider: 'openai',
+      model: 'gpt-5.4-mini',
+      artifact: {
+        label: 'p5 HTML preview',
+        path: '.omx/proof/live-previews/p5-studio-1.html',
+      },
+      preview: {
+        type: 'html',
+        inline: true,
+        path: '.omx/proof/live-previews/p5-studio-1.html',
+      },
+    });
+    expect(receipt?.details.join(' ')).toContain('provider/model: openai / gpt-5.4-mini');
+    expect(receipt?.details.join(' ')).toContain('artifact: p5 HTML preview .omx/proof/live-previews/p5-studio-1.html');
+    expect(summary.processSteps.map((step) => step.label)).toEqual(['Brief', 'Medium', 'Generate', 'Preview', 'Ready']);
+    expect(artistCopy).not.toMatch(/harness|proof/i);
   });
 
   it('surfaces provider failure provenance in workbench activity', () => {

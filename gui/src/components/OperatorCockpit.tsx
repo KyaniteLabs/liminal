@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { deriveCockpit, type BridgeEvent } from '../gui/cockpitDerivation';
+import { latestRunReceipt } from '../gui/workbenchTelemetry';
 
 export { deriveCockpit } from '../gui/cockpitDerivation';
 
@@ -110,6 +111,7 @@ export function OperatorCockpit() {
   }
 
   const derived = useMemo(() => deriveCockpit(events, now), [events, now]);
+  const runReceipt = useMemo(() => latestRunReceipt(events, session), [events, session]);
   const [copiedReport, setCopiedReport] = useState(false);
   const status = session ? `${session.provider || 'unknown'} / ${session.model || 'unknown'}` : 'No session';
   const roles = session?.roles ? Object.values(session.roles) : [];
@@ -190,6 +192,19 @@ export function OperatorCockpit() {
             ))}
           </div>
         </section>
+
+        {runReceipt && (
+          <section className="cockpit-card cockpit-card--wide cockpit-run-receipt">
+            <h3 className="atelier-heading">Run Receipt</h3>
+            <div className="cockpit-metrics">
+              <span>Phase: {runReceipt.phase}</span>
+              <span>Domain: {runReceipt.creativeDomain}</span>
+              <span>Provider/model: {runReceipt.providerModel}</span>
+            </div>
+            {runReceipt.artifact && <div className="cockpit-artifact"><span>{runReceipt.artifact.label}</span><code>{runReceipt.artifact.path || 'path pending'}</code></div>}
+            {runReceipt.preview && <div className="cockpit-artifact"><span>{runReceipt.preview.type} preview {runReceipt.preview.inline ? 'inline' : 'pending'}</span><code>{runReceipt.preview.path || runReceipt.preview.label}</code></div>}
+          </section>
+        )}
 
         <section className="cockpit-card cockpit-card--wide">
           <h3 className="atelier-heading">Failure Receipts</h3>

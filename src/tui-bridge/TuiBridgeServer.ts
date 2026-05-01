@@ -195,8 +195,9 @@ export class TuiBridgeServer {
 
       const micPageMatch = path.match(/^\/api\/tui\/session\/([^/]+)\/mic-preview$/);
       if (req.method === 'GET' && micPageMatch) {
+        const page = this.micPreview.renderPage(micPageMatch[1]);
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-        res.end(this.micPreview.renderPage(micPageMatch[1]));
+        res.end(page);
         return;
       }
 

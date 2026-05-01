@@ -642,6 +642,25 @@ describe('TuiBridgeServer model picker', () => {
       await server.stop();
     }
   });
+
+  it('returns a JSON 404 for an unknown mic preview session before sending HTML headers', async () => {
+    const port = await getFreePort();
+    const service = new TuiBridgeService();
+    const server = new TuiBridgeServer(service, { host: '127.0.0.1', port });
+    await server.start();
+
+    try {
+      const response = await fetch(`http://127.0.0.1:${port}/api/tui/session/missing-session/mic-preview`);
+
+      expect(response.status).toBe(404);
+      expect(response.headers.get('content-type')).toContain('application/json');
+      const payload = await response.json() as { error?: string };
+      expect(payload.error).toContain('Unknown TUI session');
+    } finally {
+      await server.stop();
+    }
+  });
+
   it('prepares mic preview command without auto-opening a browser and streams updates', async () => {
     const port = await getFreePort();
     const service = new TuiBridgeService();

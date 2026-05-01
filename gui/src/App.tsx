@@ -23,7 +23,7 @@ import { summarizeAudioSync, type AudioSyncFrame } from './gui/audioSync';
 import { buildSyncPreviewHtml } from './gui/syncPreview';
 import { formatMicCaptureError } from '../../src/shared/micPermission';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
-import { latestClarificationRequest, latestCognitiveReceipt } from './gui/workbenchTelemetry';
+import { latestClarificationRequest, latestCognitiveReceipt, latestRunReceipt } from './gui/workbenchTelemetry';
 import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
 
 const CuratorMode = React.lazy(() => import('./components/CuratorMode').then((module) => ({ default: module.CuratorMode })));
@@ -791,6 +791,7 @@ export default function App() {
       : 'Send a creative prompt; live output will appear here.';
   const clarificationRequest = activeMode.id === 'generate' ? latestClarificationRequest(bridge.events) : null;
   const cognitiveReceipt = activeMode.id === 'generate' ? latestCognitiveReceipt(bridge.events) : null;
+  const runReceipt = activeMode.id === 'generate' ? latestRunReceipt(bridge.events, bridge.session) : null;
   const syncPreviewHtml = bridgeCodePreview?.code ? buildSyncPreviewHtml(bridgeCodePreview.code) : '';
   const hasDirectSyncTarget = Boolean(syncPreviewHtml);
   const hasSyncTarget = Boolean(previewUrl || bridgePreview || hasDirectSyncTarget);
@@ -964,6 +965,15 @@ export default function App() {
         <span>Iterations</span>
         <strong>{createMaxIterations}</strong>
       </div>
+      {runReceipt && (
+        <div className="liminal-run-receipt">
+          <span>{runReceipt.heading}</span>
+          <strong>{runReceipt.creativeDomain} · {runReceipt.phase}</strong>
+          <small>Provider/model: {runReceipt.providerModel}</small>
+          {runReceipt.artifact && <small>Artifact: {runReceipt.artifact.label}{runReceipt.artifact.path ? ` · ${runReceipt.artifact.path}` : ''}</small>}
+          {runReceipt.preview && <small>Preview: {runReceipt.preview.type}{runReceipt.preview.inline ? ' inline' : ' pending'}{runReceipt.preview.path ? ` · ${runReceipt.preview.path}` : ''}</small>}
+        </div>
+      )}
       {cognitiveReceipt && (
         <div className="liminal-cognitive-receipt">
           <span>{cognitiveReceipt.heading}</span>

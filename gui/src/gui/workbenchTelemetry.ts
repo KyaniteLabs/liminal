@@ -54,6 +54,25 @@ export interface WorkbenchCognitiveReceipt {
   items: Array<{ organ: string; status: string; detail: string }>;
 }
 
+
+export interface WorkbenchRunReceipt {
+  heading: 'Run receipt';
+  phase: string;
+  creativeDomain: string;
+  provider?: string;
+  model?: string;
+  providerModel: string;
+  artifact?: { label: string; path?: string };
+  preview?: { type: WorkbenchPreview['type']; inline: boolean; path?: string; label: string };
+  details: string[];
+}
+
+export interface WorkbenchSessionTruth {
+  provider?: string;
+  model?: string;
+  roles?: Record<string, { provider?: string; model?: string }>;
+}
+
 export interface ImproveLaneProposal {
   id: string;
   title: string;
@@ -97,6 +116,107 @@ export function summarizeWorkbenchBridge(
   };
 }
 
+
+function latestEvent(events: WorkbenchBridgeEvent[], type: string): WorkbenchBridgeEvent | undefined {
+  return [...events].reverse().find((event) => event.type === type);
+}
+
+function latestStatusTruth(events: WorkbenchBridgeEvent[]): WorkbenchSessionTruth | undefined {
+  const statusEvent = latestEvent(events, 'status.updated');
+  const rawStatus = statusEvent?.status;
+  return rawStatus && typeof rawStatus === 'object' ? rawStatus as WorkbenchSessionTruth : undefined;
+}
+
+function firstText(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+  return undefined;
+}
+
+function latestCreativeDomain(events: WorkbenchBridgeEvent[]): string | undefined {
+  const domainTruth = latestEvent(events, 'generation.domain_truth');
+  const preview = latestEvent(events, 'preview.completed');
+  const artifact = latestEvent(events, 'artifact.found');
+  const route = latestEvent(events, 'generation.route.selected');
+  const attempt = latestEvent(events, 'generation.attempt.started');
+  const domainFromArtifact = typeof artifact?.artifactLabel === 'string'
+    ? artifact.artifactLabel.split(' ')[0]?.toLowerCase()
+    : undefined;
+  return firstText(
+    preview?.previewDomain,
+    preview?.generatedDomain,
+    domainTruth?.previewDomain,
+    domainTruth?.generatedDomain,
+    domainTruth?.selectedDomain,
+    artifact?.previewDomain,
+    domainFromArtifact,
+    route?.selectedDomain,
+    route?.domain,
+    attempt?.domain,
+  );
+}
+
+function latestProviderModelTruth(
+  events: WorkbenchBridgeEvent[],
+  session?: WorkbenchSessionTruth | null,
+): { provider?: string; model?: string } {
+  const status = latestStatusTruth(events);
+  const generatorRole = status?.roles?.generator || session?.roles?.generator;
+  const providerEvent = [...events].reverse().find((event) => typeof event.provider === 'string' || typeof event.model === 'string');
+  const completion = latestEvent(events, 'generation.complete');
+  return {
+    provider: firstText(generatorRole?.provider, providerEvent?.provider, status?.provider, session?.provider),
+    model: firstText(generatorRole?.model, providerEvent?.model, completion?.model, status?.model, session?.model),
+  };
+}
+
+export function latestRunReceipt(
+  events: WorkbenchBridgeEvent[],
+  session?: WorkbenchSessionTruth | null,
+): WorkbenchRunReceipt | null {
+  const artifactEvent = latestEvent(events, 'artifact.found');
+  const previewEvent = latestEvent(events, 'preview.completed');
+  const completionEvent = latestEvent(events, 'generation.complete');
+  const hasGenerationRoute = events.some((event) => String(event.type).startsWith('generation.'));
+  if (!hasGenerationRoute && !artifactEvent && !previewEvent) return null;
+
+  const summary = summarizeWorkbenchBridge(events);
+  const creativeDomain = latestCreativeDomain(events) || 'unknown';
+  const { provider, model } = latestProviderModelTruth(events, session);
+  const preview = latestBridgePreview(events);
+  const previewPath = firstText(previewEvent?.artifactPath, previewEvent?.imageUrl, artifactEvent?.artifactPath, preview?.label);
+  const artifactPath = firstText(artifactEvent?.artifactPath, previewEvent?.artifactPath, previewEvent?.imageUrl);
+  const artifactLabel = firstText(artifactEvent?.artifactLabel, artifactPath ? `${creativeDomain} artifact` : undefined);
+  const providerModel = [provider, model].filter(Boolean).join(' / ') || 'unknown provider/model';
+  const previewType = preview?.type || (typeof previewEvent?.previewType === 'string' ? previewEvent.previewType as WorkbenchPreview['type'] : undefined);
+  const inlinePreview = Boolean(preview && (preview.src || preview.content || preview.code));
+  const details = [
+    `phase: ${summary.phase}`,
+    `creative domain: ${creativeDomain}`,
+    `provider/model: ${providerModel}`,
+    artifactLabel ? `artifact: ${artifactLabel}${artifactPath ? ` ${artifactPath}` : ''}` : 'artifact: waiting',
+    previewType ? `preview: ${previewType}${inlinePreview ? ' inline' : ' pending'}${previewPath ? ` ${previewPath}` : ''}` : 'preview: waiting',
+    completionEvent?.reason ? `completion: ${String(completionEvent.reason)}` : '',
+  ].filter(Boolean);
+
+  return {
+    heading: 'Run receipt',
+    phase: summary.phase,
+    creativeDomain,
+    provider,
+    model,
+    providerModel,
+    artifact: artifactLabel ? { label: artifactLabel, path: artifactPath } : undefined,
+    preview: previewType ? {
+      type: previewType,
+      inline: inlinePreview,
+      path: previewPath,
+      label: preview?.label || previewPath || `${previewType} preview`,
+    } : undefined,
+    details,
+  };
+}
 
 export function latestCognitiveReceipt(events: WorkbenchBridgeEvent[]): WorkbenchCognitiveReceipt | null {
   const receipt = [...events].reverse().find((event) => event.type === 'generation.cognitive_receipt');

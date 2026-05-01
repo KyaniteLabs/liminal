@@ -1,7 +1,7 @@
 import { Logger } from '../utils/Logger.js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { TuiEventStream } from './TuiEventStream.js';
+import { TuiEventStream, type TuiRunEventReplay } from './TuiEventStream.js';
 import { TuiSessionStore } from './TuiSessionStore.js';
 import { ConversationManager } from '../chat/ConversationManager.js';
 import { RalphLoop } from '../core/RalphLoop.js';
@@ -143,7 +143,7 @@ interface CreativeIntentBrief {
 
 export class TuiBridgeService {
   private sessions = new TuiSessionStore();
-  private stream = new TuiEventStream();
+  private stream = new TuiEventStream({ maxStoredEventsPerSession: 500 });
   private activeStreams = new Map<string, AbortController>();
   // Step 1: Conversation memory - one ConversationManager per session
   private conversations = new Map<string, ConversationManager>();
@@ -218,7 +218,7 @@ export class TuiBridgeService {
     this.cortexBroadcastTimer = setInterval(() => {
       const snapshot = this.cortexBus.getSnapshot();
       for (const sessionId of this.sessions.list()) {
-        this.stream.emitEphemeral(sessionId, { type: 'cortex.snapshot', sessionId, snapshot });
+        this.stream.publishEphemeral(sessionId, { type: 'cortex.snapshot', sessionId, snapshot });
       }
     }, TuiBridgeService.CORTEX_BROADCAST_INTERVAL_MS);
 
@@ -234,7 +234,7 @@ export class TuiBridgeService {
       onEvent: (evt) => {
         // Broadcast cortex loop events to all active sessions
         for (const sid of this.sessions.list()) {
-          this.stream.emitEphemeral(sid, {
+          this.stream.publishEphemeral(sid, {
             type: evt.type,
             sessionId: sid,
             tickNumber: evt.tickNumber,
@@ -254,7 +254,7 @@ export class TuiBridgeService {
       () => [],   // Descriptor axes — populated by emergence pipeline at runtime
       (result: GardenerCycleResult) => {
         for (const sid of this.sessions.list()) {
-          this.stream.emitEphemeral(sid, {
+          this.stream.publishEphemeral(sid, {
             type: 'gardener.cycle',
             sessionId: sid,
             cycle: result.cycle,
@@ -287,7 +287,7 @@ export class TuiBridgeService {
       };
       // Broadcast to every active session
       for (const sessionId of this.sessions.list()) {
-        this.stream.emit(sessionId, {
+        this.stream.publish(sessionId, {
           type: 'swarm.round',
           sessionId,
           round: data.round,
@@ -336,19 +336,11 @@ export class TuiBridgeService {
   }
 
   getEvents(sessionId: string): TuiBridgeEvent[] {
-    return this.stream.getEvents(sessionId);
+    return this.stream.history(sessionId);
   }
 
-  getEventsSince(sessionId: string, lastEventId: number) {
-    return this.stream.getEventsSince(sessionId, lastEventId);
-  }
-
-  subscribe(sessionId: string, listener: (event: TuiBridgeEvent) => void): () => void {
-    return this.stream.subscribe(sessionId, listener);
-  }
-
-  subscribeWithId(sessionId: string, listener: (stored: { id: number; event: TuiBridgeEvent }) => void): () => void {
-    return this.stream.subscribeWithId(sessionId, listener);
+  getEventReplay(): TuiRunEventReplay {
+    return this.stream;
   }
 
   updateStatus(sessionId: string, patch: Partial<TuiSessionStatus>): TuiSessionStatus {
@@ -3401,7 +3393,7 @@ export class TuiBridgeService {
   }
 
   private emit(sessionId: string, event: TuiBridgeEvent): void {
-    this.stream.emit(sessionId, event);
+    this.stream.publish(sessionId, event);
   }
 
 

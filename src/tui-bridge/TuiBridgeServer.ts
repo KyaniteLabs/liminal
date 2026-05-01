@@ -26,9 +26,9 @@ interface ModelChoice {
 }
 
 const MODEL_CHOICES: ModelChoice[] = [
-  { provider: 'custom', label: 'GPT-5.4 mini', model: 'gpt-5.4-mini', aliases: ['gpt-5.4-mini', 'gpt54mini', '5.4-mini', 'mini'] },
-  { provider: 'custom', label: 'GPT-5.4', model: 'gpt-5.4', aliases: ['gpt-5.4', 'gpt54', '5.4'] },
-  { provider: 'custom', label: 'GPT-5.4 nano', model: 'gpt-5.4-nano', aliases: ['gpt-5.4-nano', 'gpt54nano', 'nano'] },
+  { provider: 'openai', label: 'GPT-5.4 mini', model: 'gpt-5.4-mini', aliases: ['gpt-5.4-mini', 'gpt54mini', '5.4-mini', 'mini'] },
+  { provider: 'openai', label: 'GPT-5.4', model: 'gpt-5.4', aliases: ['gpt-5.4', 'gpt54', '5.4'] },
+  { provider: 'openai', label: 'GPT-5.4 nano', model: 'gpt-5.4-nano', aliases: ['gpt-5.4-nano', 'gpt54nano', 'nano'] },
   { provider: 'minimax', label: 'MiniMax M2.7', model: 'MiniMax-M2.7', aliases: ['m27', 'm2.7', 'minimax-m27'] },
   { provider: 'minimax', label: 'MiniMax M2.5', model: 'MiniMax-M2.5', aliases: ['m25', 'm2.5', 'minimax-m25'] },
   { provider: 'glm', label: 'GLM 5V Turbo', model: 'GLM-5v-turbo', aliases: ['glm-5v-turbo', 'glm5v', '5v', 'glm-vision'] },
@@ -402,7 +402,7 @@ data: ${JSON.stringify(stored.event)}
     const config = loaded.isErr()
       ? ({ defaultProvider: resolved.provider, providers: {} } as UserConfig)
       : (loaded.value as UserConfig);
-    const providerConfig = config.providers?.[resolved.provider] ?? {};
+    const providerConfig = this.providerConfigForSelection(config, resolved.provider);
     const currentConfig = this.llm?.getConfig();
     const runtime = resolveProviderRuntime({
       provider: resolved.provider,
@@ -447,6 +447,28 @@ data: ${JSON.stringify(stored.event)}
     });
     this.bridge.emitCommandResponse(sessionId, `Switched model to ${resolved.label} (${runtime.model}) via ${runtime.label}`);
     return true;
+  }
+
+  private providerConfigForSelection(
+    config: UserConfig,
+    provider: RuntimeProviderKey,
+  ): { baseUrl?: string; model?: string; apiKey?: string } {
+    const providerConfig = config.providers?.[provider];
+    if (providerConfig) return providerConfig;
+
+    // Backward compatibility: older configs stored OpenAI-compatible GPT
+    // selections under `custom`. Read that key when switching to the new
+    // first-class `openai` provider, but save future selections as `openai`.
+    const legacyCustom = config.providers?.custom;
+    if (provider === 'openai' && legacyCustom) {
+      const legacyProvider = detectProviderLabel(
+        legacyCustom.baseUrl ?? PROVIDER_DEFAULTS.openai.baseUrl,
+        legacyCustom.model,
+      );
+      if (legacyProvider === 'openai') return legacyCustom;
+    }
+
+    return {};
   }
 
   private async renderModelPicker(): Promise<string> {

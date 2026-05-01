@@ -766,3 +766,74 @@ describe('LLMClient loadRoles', () => {
     await expect(LLMClient.loadRoles('/nonexistent/path')).resolves.toBeUndefined();
   });
 });
+
+describe('LLMClient request provenance', () => {
+  it('returns provider, model, endpoint style, and fallback=false on complete success', async () => {
+    const client = new LLMClient({
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-5.4-mini',
+      apiKey: 'fake-test-key',
+    });
+    const provider = {
+      name: 'openai',
+      getModel: vi.fn(() => 'gpt-5.4-mini'),
+      getConfig: vi.fn(() => ({ baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4-mini' })),
+      generate: vi.fn(async () => ({
+        isErr: () => false,
+        value: { content: 'hello', success: true },
+      })),
+    };
+
+    vi.spyOn(client as any, 'resolveModel').mockResolvedValue('gpt-5.4-mini');
+    vi.spyOn(client as any, 'getProvider').mockResolvedValue(provider);
+
+    const response = await client.complete({ prompt: 'hello' });
+
+    expect(response.success).toBe(true);
+    expect(response.provider).toBe('openai');
+    expect(response.model).toBe('gpt-5.4-mini');
+    expect(response.endpoint).toBe('https://api.openai.com/v1/chat/completions');
+    expect(response.endpointStyle).toBe('openai');
+    expect(response.fallbackUsed).toBe(false);
+    expect(response.provenance).toMatchObject({ provider: 'openai', fallbackUsed: false });
+  });
+
+  it('records fallback decision provenance when complete succeeds through fallback', async () => {
+    const client = new LLMClient({
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-5.4-mini',
+      apiKey: 'fake-test-key',
+    });
+    const primary = {
+      name: 'openai',
+      getModel: vi.fn(() => 'gpt-5.4-mini'),
+      getConfig: vi.fn(() => ({ baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4-mini' })),
+      generate: vi.fn(async () => err(new LLMRateLimitError('openai'))),
+    };
+    const fallback = {
+      name: 'lmstudio',
+      getModel: vi.fn(() => 'local-model'),
+      getConfig: vi.fn(() => ({ baseUrl: 'http://localhost:1234/v1', model: 'local-model' })),
+      generate: vi.fn(async () => ({
+        isErr: () => false,
+        value: { content: 'fallback text', success: true },
+      })),
+    };
+
+    vi.spyOn(RetryManager, 'executeWithRetry').mockImplementation(async (fn: () => Promise<unknown>) => fn());
+    vi.spyOn(client as any, 'resolveModel').mockResolvedValue('gpt-5.4-mini');
+    vi.spyOn(client as any, 'getProvider').mockResolvedValue(primary);
+    vi.spyOn(client as any, 'getFallbackProviders').mockReturnValue([fallback]);
+
+    const response = await client.complete({ prompt: 'hello' });
+
+    expect(response.success).toBe(true);
+    expect(response.text).toBe('fallback text');
+    expect(response.provider).toBe('lmstudio');
+    expect(response.endpointStyle).toBe('openai');
+    expect(response.fallbackUsed).toBe(true);
+    expect(response.fallbackFrom).toBe('openai:gpt-5.4-mini');
+    expect(response.fallbackTo).toBe('lmstudio:local-model');
+    expect(response.provenance).toMatchObject({ fallbackUsed: true, fallbackTo: 'lmstudio:local-model' });
+  });
+});

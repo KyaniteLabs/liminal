@@ -296,14 +296,15 @@ export class TuiBridgeServer {
     const lastEventId = Number(req.headers['last-event-id'] || 0) || 0;
 
     // Send any existing events first
-    const existing = this.bridge.getEventsSince(sessionId, lastEventId);
+    const replay = this.bridge.getEventReplay();
+    const existing = replay.replayAfter(sessionId, lastEventId);
     for (const stored of existing) {
       res.write(`id: ${stored.id}\n`);
       res.write(`data: ${JSON.stringify(stored.event)}\n\n`);
     }
 
     // Subscribe to new events
-    const unsubscribe = this.bridge.subscribeWithId(sessionId, (stored) => {
+    const unsubscribe = replay.subscribeStored(sessionId, (stored) => {
       const payload = `id: ${stored.id}
 data: ${JSON.stringify(stored.event)}
 

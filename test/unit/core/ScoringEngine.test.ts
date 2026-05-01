@@ -420,6 +420,35 @@ describe('ScoringEngine', () => {
       expect(result.dimensions.interestingness).toBeUndefined();
     });
 
+    it('attaches shader domain signals while preserving aggregate score and dimensions', async () => {
+      mockCreativeEvaluatorAssess.mockReturnValue(CREATIVE_ASSESS_RESULT);
+      const engine = new ScoringEngine('comprehensive');
+      const shader = `
+        uniform float iTime;
+        uniform vec2 iResolution;
+        void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+          vec2 uv = fragCoord / iResolution.xy;
+          vec3 color = 0.5 + 0.5 * cos(iTime + uv.xyx);
+          fragColor = vec4(color, 1.0);
+        }`;
+
+      const result = await engine.score({ output: shader, domain: Domain.SHADER });
+
+      expect(result.score).toBe(0.78);
+      expect(result.dimensions).toMatchObject({ technical: 0.8, creative: 0.75 });
+      expect(result.report).toMatchObject({
+        domainEvaluation: {
+          domain: Domain.SHADER,
+          evaluator: 'shader-domain-evaluator',
+          signals: {
+            writesFragmentColor: true,
+            usesUvCoordinates: true,
+            outputRelevantSignalCount: 6,
+          },
+        },
+      });
+    });
+
     it('passes criteria and domain to CreativeEvaluator', async () => {
       mockCreativeEvaluatorAssess.mockReturnValue(CREATIVE_ASSESS_RESULT);
       const engine = new ScoringEngine('comprehensive');

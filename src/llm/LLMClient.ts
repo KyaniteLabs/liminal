@@ -118,7 +118,7 @@ export interface LLMCompleteResult {
  * Universal LLM Client - model agnostic, provider agnostic
  *
  * Works with any OpenAI-compatible endpoint:
- * - Ollama (http://localhost:11434/v1)
+ * - Ollama (http://localhost:11434)
  * - LM Studio (http://localhost:1234/v1)
  * - OpenAI (https://api.openai.com/v1)
  * - OpenRouter (https://openrouter.ai/api/v1)

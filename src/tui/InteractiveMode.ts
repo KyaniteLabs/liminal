@@ -1,6 +1,7 @@
 import readline from 'readline';
 import { PromptHistory } from '../config/PromptHistory.js';
 import { Provider } from '../types/providers.js';
+import { PROVIDER_ORDER } from '../config/ProviderRuntime.js';
 import { Logger } from '../utils/Logger.js';
 
 interface InteractiveOptions {
@@ -25,7 +26,7 @@ export class InteractiveMode {
    * Get list of available providers
    */
   getProviders(): string[] {
-    return [Provider.LMSTUDIO, Provider.MINIMAX, Provider.OLLAMA, Provider.OPENAI, 'hybrid'];
+    return [...PROVIDER_ORDER, 'hybrid'];
   }
 
   /**

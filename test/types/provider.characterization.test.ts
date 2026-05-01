@@ -18,6 +18,8 @@ describe('Provider string characterization', () => {
       'openai',    // Cloud provider
       'openrouter', // Cloud provider (OpenRouter)
       'glm',       // Cloud provider (GLM)
+      'kimi',      // Moonshot AI Kimi Code endpoint
+      'moonshot',  // Moonshot AI legacy endpoint
       'custom'     // Custom endpoint
     ] as const;
     
@@ -28,7 +30,7 @@ describe('Provider string characterization', () => {
     });
     
     // Verify count matches audit finding
-    expect(expectedProviders).toHaveLength(7);
+    expect(expectedProviders).toHaveLength(9);
   });
   
   it('should document fallback patterns found in audit', () => {
@@ -48,14 +50,14 @@ describe('Provider string characterization', () => {
   
   it('should match ProviderType type definition', () => {
     // From MultiProviderConfig.ts:
-    // type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openai' | 'openrouter' | 'glm' | 'custom';
+    // type ProviderType = RuntimeProviderKey
 
     const providerTypeValues = [
-      'minimax', 'lmstudio', 'ollama', 'openai', 'openrouter', 'glm', 'custom'
+      'minimax', 'lmstudio', 'ollama', 'openai', 'openrouter', 'glm', 'moonshot', 'kimi', 'custom'
     ];
 
     expect(providerTypeValues).toContain('openai');
-    expect(providerTypeValues).toHaveLength(7);
+    expect(providerTypeValues).toHaveLength(9);
   });
   
   it('should document files with magic provider strings', () => {
@@ -74,7 +76,7 @@ describe('Provider string characterization', () => {
   
   it('should preserve case sensitivity of provider strings', () => {
     // All provider strings are lowercase in current codebase
-    const providers = ['lmstudio', 'ollama', 'minimax', 'openai', 'openrouter', 'glm', 'custom'];
+    const providers = ['lmstudio', 'ollama', 'minimax', 'openai', 'openrouter', 'glm', 'moonshot', 'kimi', 'custom'];
     
     providers.forEach(p => {
       expect(p).toBe(p.toLowerCase());

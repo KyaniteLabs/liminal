@@ -1,18 +1,21 @@
 import { z } from 'zod';
 import { getAllProviders, getDefaultProvider } from '../types/providers.js';
-import { SERVICE_DEFAULTS } from '../constants.js';
+import { PROVIDER_DEFAULTS } from './ProviderRuntime.js';
 import { ConfigError } from '../errors/ConfigError.js';
+
+const DEFAULT_PROVIDER = getDefaultProvider();
+const DEFAULT_RUNTIME = PROVIDER_DEFAULTS[DEFAULT_PROVIDER];
 
 /**
  * LLM Configuration Schema
  */
 export const LLMConfigSchema = z.object({
-  provider: z.enum(getAllProviders() as [string, ...string[]]).default(getDefaultProvider()),
-  baseUrl: z.string().url().default('http://localhost:1234/v1'),
-  model: z.string().min(1).default(SERVICE_DEFAULTS.DEFAULT_MODEL),
+  provider: z.enum(getAllProviders() as [string, ...string[]]).default(DEFAULT_PROVIDER),
+  baseUrl: z.string().url().default(DEFAULT_RUNTIME.baseUrl),
+  model: z.string().min(1).default(DEFAULT_RUNTIME.model),
   apiKey: z.string().optional(),
-  temperature: z.number().min(0).max(2).default(0.7),
-  maxTokens: z.number().int().positive().default(4096),
+  temperature: z.number().min(0).max(2).default(DEFAULT_RUNTIME.temperature),
+  maxTokens: z.number().int().positive().default(DEFAULT_RUNTIME.maxTokens),
 });
 
 export type LLMConfig = z.infer<typeof LLMConfigSchema>;

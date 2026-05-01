@@ -90,10 +90,11 @@ export const commands: Record<string, Command> = {
   provider: {
     name: 'provider',
     description: 'Switch LLM provider at runtime',
-    usage: '/provider [list|minimax|glm|kimi|ollama|<baseUrl> <model>]',
+    usage: '/provider [list|<provider>|<baseUrl> <model>]',
     // eslint-disable-next-line @typescript-eslint/require-await
     execute: async (args, _ctx) => {
       const { PROVIDER_TEMPLATES, listConfiguredProviders, getProviderConfig } = await import('../harness/MultiProviderConfig.js');
+      const { apiKeyEnvNamesForProvider, providerRequiresApiKey } = await import('../config/ProviderRuntime.js');
       const { metaHarness } = await import('../harness/MetaHarnessIntegration.js');
 
       // /provider list — show all providers
@@ -118,8 +119,10 @@ export const commands: Record<string, Command> = {
       const template = PROVIDER_TEMPLATES[args[0] as keyof typeof PROVIDER_TEMPLATES];
       if (template) {
         const config = getProviderConfig(args[0] as import('../harness/MultiProviderConfig.js').ProviderType);
-        if (!config?.apiKey && args[0] !== 'ollama' && args[0] !== 'lmstudio') {
-          return `⚠️  ${template.name} not configured. Set the API key first:\n  export ${args[0].toUpperCase()}_API_KEY=your-key`;
+        const provider = args[0] as import('../harness/MultiProviderConfig.js').ProviderType;
+        if (!config?.apiKey && providerRequiresApiKey(provider)) {
+          const envName = apiKeyEnvNamesForProvider(provider)[0] || 'LLM_API_KEY';
+          return `⚠️  ${template.name} not configured. Set the API key first:\n  export ${envName}=your-key`;
         }
         metaHarness.switchProvider(config!.baseUrl, config!.model, config!.apiKey);
         return `✅ Switched to ${template.name}: ${config!.model} @ ${config!.baseUrl}`;

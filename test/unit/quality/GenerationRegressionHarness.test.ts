@@ -19,7 +19,13 @@ describe('GenerationRegressionHarness', () => {
   });
 
   it('infers Ollama base URL by default', () => {
-    expect(inferRegressionBaseUrl('ollama')).toBe('http://localhost:11434/v1');
+    expect(inferRegressionBaseUrl('ollama')).toBe('http://localhost:11434');
+  });
+
+  it('infers canonical cloud provider base URLs', () => {
+    expect(inferRegressionBaseUrl('minimax')).toBe('https://api.minimax.io/anthropic');
+    expect(inferRegressionBaseUrl('glm')).toBe('https://api.z.ai/api/anthropic');
+    expect(inferRegressionBaseUrl('kimi')).toBe('https://api.kimi.com/coding/v1');
   });
 
   it('prefers explicit base URLs', () => {

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Provider, isValidProvider, getDefaultProvider } from '../../src/types/providers.js';
+import { Provider, isValidProvider, getDefaultProvider, getAllProviders } from '../../src/types/providers.js';
+import { PROVIDER_DEFAULTS } from '../../src/config/ProviderRuntime.js';
 
 describe('Provider enum', () => {
   describe('enum values', () => {
@@ -30,11 +31,19 @@ describe('Provider enum', () => {
     it('should have CUSTOM = custom', () => {
       expect(Provider.CUSTOM).toBe('custom');
     });
+
+    it('should have KIMI = kimi', () => {
+      expect(Provider.KIMI).toBe('kimi');
+    });
+
+    it('should have MOONSHOT = moonshot', () => {
+      expect(Provider.MOONSHOT).toBe('moonshot');
+    });
   });
   
   describe('enum collection', () => {
-    it('should include all providers in values array', () => {
-      const values = Object.values(Provider);
+    it('should include all runtime providers in values array', () => {
+      const values = getAllProviders();
       expect(values).toContain('lmstudio');
       expect(values).toContain('ollama');
       expect(values).toContain('minimax');
@@ -42,10 +51,12 @@ describe('Provider enum', () => {
       expect(values).toContain('openrouter');
       expect(values).toContain('glm');
       expect(values).toContain('custom');
-      expect(values).toHaveLength(7);
+      expect(values).toContain('kimi');
+      expect(values).toContain('moonshot');
+      expect(values).toHaveLength(Object.keys(PROVIDER_DEFAULTS).length);
     });
     
-    it('should include all providers in keys array', () => {
+    it('should keep enum keys aligned with runtime providers', () => {
       const keys = Object.keys(Provider);
       expect(keys).toContain('LMSTUDIO');
       expect(keys).toContain('OLLAMA');
@@ -54,7 +65,9 @@ describe('Provider enum', () => {
       expect(keys).toContain('OPENROUTER');
       expect(keys).toContain('GLM');
       expect(keys).toContain('CUSTOM');
-      expect(keys).toHaveLength(7);
+      expect(keys).toContain('KIMI');
+      expect(keys).toContain('MOONSHOT');
+      expect(keys).toHaveLength(Object.keys(PROVIDER_DEFAULTS).length);
     });
   });
   
@@ -82,6 +95,8 @@ describe('Provider enum', () => {
       expect(isValidProvider('openrouter')).toBe(true);
       expect(isValidProvider('glm')).toBe(true);
       expect(isValidProvider('custom')).toBe(true);
+      expect(isValidProvider('kimi')).toBe(true);
+      expect(isValidProvider('moonshot')).toBe(true);
     });
     
     it('should return false for invalid provider strings', () => {

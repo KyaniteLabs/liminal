@@ -9,10 +9,10 @@ describe('LLMConfigSchema', () => {
 
       expect(result.provider).toBe('lmstudio');
       expect(result.baseUrl).toBe('http://localhost:1234/v1');
-      expect(result.model).toBe('auto');
+      expect(result.model).toBe('local-model');
       expect(result.apiKey).toBeUndefined();
       expect(result.temperature).toBe(0.7);
-      expect(result.maxTokens).toBe(4096);
+      expect(result.maxTokens).toBe(16384);
     });
 
     it('uses provided values instead of defaults', () => {
@@ -108,9 +108,9 @@ describe('validateLLMConfig', () => {
     const result = validateLLMConfig({});
 
     expect(result.provider).toBe('lmstudio');
-    expect(result.model).toBe('auto');
+    expect(result.model).toBe('local-model');
     expect(result.temperature).toBe(0.7);
-    expect(result.maxTokens).toBe(4096);
+    expect(result.maxTokens).toBe(16384);
   });
 
   it('throws ConfigError for invalid input with descriptive issues', () => {

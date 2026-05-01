@@ -4,6 +4,9 @@
  * Use these enum values instead of magic strings throughout the codebase.
  * This ensures type safety, prevents typos, and makes refactoring easier.
  * 
+ * Provider runtime truth lives in `src/config/ProviderRuntime.ts`; this enum is
+ * kept as the legacy typed string surface for callers that already import it.
+ *
  * @example
  * ```typescript
  * import { Provider, isValidProvider } from './providers.js';
@@ -15,6 +18,8 @@
  * }
  * ```
  */
+import { isRuntimeProviderKey, PROVIDER_DEFAULTS, type RuntimeProviderKey } from '../config/ProviderRuntime.js';
+
 export enum Provider {
   /** LM Studio - Local OpenAI-compatible server (default) */
   LMSTUDIO = 'lmstudio',
@@ -33,6 +38,12 @@ export enum Provider {
   
   /** GLM - Cloud provider (International Coding Plan API) */
   GLM = 'glm',
+
+  /** Kimi Code - Moonshot AI coding endpoint */
+  KIMI = 'kimi',
+
+  /** Moonshot AI legacy Kimi endpoint */
+  MOONSHOT = 'moonshot',
   
   /** Custom - User-defined OpenAI-compatible endpoint */
   CUSTOM = 'custom'
@@ -56,7 +67,7 @@ export enum Provider {
  * ```
  */
 export function isValidProvider(value: string): value is Provider {
-  return Object.values(Provider).includes(value as Provider);
+  return isRuntimeProviderKey(value);
 }
 
 /**
@@ -85,5 +96,5 @@ export function getDefaultProvider(): Provider {
  * ```
  */
 export function getAllProviders(): Provider[] {
-  return Object.values(Provider);
+  return Object.keys(PROVIDER_DEFAULTS) as RuntimeProviderKey[] as Provider[];
 }

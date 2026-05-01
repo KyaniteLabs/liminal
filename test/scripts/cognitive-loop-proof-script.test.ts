@@ -30,6 +30,9 @@ describe('cognitive loop proof script', () => {
     expect(source).toContain('report.md');
     expect(source).toContain('writeBackGeneration');
     expect(source).toContain('prepareGeneration');
+    expect(source).toContain('writeBackSummary');
+    expect(source).toContain("'memory', 'compost', 'dreaming'");
+    expect(source).toContain('writeBackSummary(item.writeBackReceipts)');
   });
 
   it('exposes the proof through package scripts', () => {

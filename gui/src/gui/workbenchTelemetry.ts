@@ -52,6 +52,9 @@ export interface WorkbenchCognitiveReceipt {
   heading: 'What Liminal learned';
   loop: string;
   items: Array<{ organ: string; status: string; detail: string }>;
+  writeBackStatus: 'observed' | 'partial' | 'skipped' | 'missing';
+  writeBackItems: Array<{ organ: string; status: string; detail: string }>;
+  writeBackSummary: string;
 }
 
 
@@ -337,19 +340,47 @@ export function latestCognitiveReceipt(events: WorkbenchBridgeEvent[]): Workbenc
   const receipt = [...events].reverse().find((event) => event.type === 'generation.cognitive_receipt');
   const rawItems = Array.isArray(receipt?.receipts) ? receipt.receipts : [];
   if (!receipt || rawItems.length === 0) return null;
+  const items = rawItems.map((item) => {
+    const record = item as { organ?: unknown; status?: unknown; detail?: unknown };
+    return {
+      organ: String(record.organ || 'organ'),
+      status: String(record.status || 'unknown'),
+      detail: String(record.detail || ''),
+    };
+  });
+  const writeBackItems = cognitiveWriteBackItems(items);
 
   return {
     heading: 'What Liminal learned',
     loop: String(receipt.loop || 'creative'),
-    items: rawItems.map((item) => {
-      const record = item as { organ?: unknown; status?: unknown; detail?: unknown };
-      return {
-        organ: String(record.organ || 'organ'),
-        status: String(record.status || 'unknown'),
-        detail: String(record.detail || ''),
-      };
-    }),
+    items,
+    writeBackStatus: cognitiveWriteBackStatus(writeBackItems),
+    writeBackItems,
+    writeBackSummary: summarizeCognitiveWriteBack(writeBackItems),
   };
+}
+
+const cognitiveWriteBackOrgans = ['memory', 'compost', 'dreaming'] as const;
+
+function cognitiveWriteBackItems(items: WorkbenchCognitiveReceipt['items']): WorkbenchCognitiveReceipt['writeBackItems'] {
+  return cognitiveWriteBackOrgans.map((organ) => (
+    items.find((item) => item.organ === organ) || {
+      organ,
+      status: 'unavailable',
+      detail: `${organ} write-back receipt was not emitted for this generation.`,
+    }
+  ));
+}
+
+function cognitiveWriteBackStatus(items: WorkbenchCognitiveReceipt['writeBackItems']): WorkbenchCognitiveReceipt['writeBackStatus'] {
+  const observedCount = items.filter((item) => item.status === 'observed').length;
+  if (observedCount === items.length) return 'observed';
+  if (observedCount === 0) return items.length > 0 ? 'skipped' : 'missing';
+  return 'partial';
+}
+
+function summarizeCognitiveWriteBack(items: WorkbenchCognitiveReceipt['writeBackItems']): string {
+  return items.map((item) => `${item.organ} ${item.status}: ${item.detail}`).join(' | ');
 }
 
 function formatFailureProvenance(event: WorkbenchBridgeEvent): string {

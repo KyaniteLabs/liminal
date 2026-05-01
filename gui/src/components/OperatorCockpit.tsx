@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { deriveCockpit, type BridgeEvent } from '../gui/cockpitDerivation';
-import { latestRunReceipt } from '../gui/workbenchTelemetry';
+import { latestCognitiveReceipt, latestRunReceipt } from '../gui/workbenchTelemetry';
 
 export { deriveCockpit } from '../gui/cockpitDerivation';
 
@@ -112,6 +112,7 @@ export function OperatorCockpit() {
 
   const derived = useMemo(() => deriveCockpit(events, now), [events, now]);
   const runReceipt = useMemo(() => latestRunReceipt(events, session), [events, session]);
+  const cognitiveReceipt = useMemo(() => latestCognitiveReceipt(events), [events]);
   const [copiedReport, setCopiedReport] = useState(false);
   const status = session ? `${session.provider || 'unknown'} / ${session.model || 'unknown'}` : 'No session';
   const roles = session?.roles ? Object.values(session.roles) : [];
@@ -205,6 +206,26 @@ export function OperatorCockpit() {
             {runReceipt.preview && <div className="cockpit-artifact"><span>{runReceipt.preview.type} preview {runReceipt.preview.inline ? 'inline' : 'pending'}</span><code>{runReceipt.preview.path || runReceipt.preview.label}</code></div>}
             {runReceipt.failure && <div className="cockpit-artifact"><span>Failure</span><code>{runReceipt.failure.message}</code></div>}
             {runReceipt.prior?.artifact && <div className="cockpit-artifact"><span>Prior {runReceipt.prior.revisionKind}</span><code>{runReceipt.prior.artifact.path || runReceipt.prior.artifact.label}</code></div>}
+          </section>
+        )}
+
+        {cognitiveReceipt && (
+          <section className="cockpit-card cockpit-card--wide cockpit-cognitive-receipt">
+            <h3 className="atelier-heading">Cognitive Loop Receipt</h3>
+            <div className="cockpit-metrics">
+              <span>Loop: {cognitiveReceipt.loop}</span>
+              <span>Write-back: {cognitiveReceipt.writeBackStatus}</span>
+            </div>
+            <div className="cockpit-muted">{cognitiveReceipt.writeBackSummary}</div>
+            <div className="cockpit-failure-receipts">
+              {cognitiveReceipt.writeBackItems.map((item) => (
+                <div className="cockpit-failure-receipt" key={item.organ}>
+                  <strong>{item.organ}</strong>
+                  <span>{item.status}</span>
+                  <small>{item.detail}</small>
+                </div>
+              ))}
+            </div>
           </section>
         )}
 

@@ -980,9 +980,10 @@ export default function App() {
       {cognitiveReceipt && (
         <div className="liminal-cognitive-receipt">
           <span>{cognitiveReceipt.heading}</span>
-          <strong>{cognitiveReceipt.loop}</strong>
+          <strong>{cognitiveReceipt.loop} · write-back {cognitiveReceipt.writeBackStatus}</strong>
+          <small>{cognitiveReceipt.writeBackSummary}</small>
           <ul>
-            {cognitiveReceipt.items.map((item, index) => (
+            {cognitiveReceipt.writeBackItems.map((item, index) => (
               <li key={`${item.organ}-${index}`}>
                 <b>{item.organ}</b>
                 <em>{item.status}</em>

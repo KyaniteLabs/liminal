@@ -600,6 +600,13 @@ describe('workbenchTelemetry', () => {
       { organ: 'compost', status: 'observed', detail: 'Added generated artifact to compost heap.' },
       { organ: 'dreaming', status: 'pending', detail: 'Dream queue is full; no recombination task was queued.' },
     ]);
+    expect(receipt?.writeBackStatus).toBe('partial');
+    expect(receipt?.writeBackItems).toEqual([
+      { organ: 'memory', status: 'observed', detail: 'Stored generation episode ep-123 for future retrieval.' },
+      { organ: 'compost', status: 'observed', detail: 'Added generated artifact to compost heap.' },
+      { organ: 'dreaming', status: 'pending', detail: 'Dream queue is full; no recombination task was queued.' },
+    ]);
+    expect(receipt?.writeBackSummary).toContain('dreaming pending');
   });
 
 });

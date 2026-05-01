@@ -15,14 +15,17 @@ import { DreamQueue } from '../../src/dreaming/DreamQueue.js';
 
 type OrganId = 'perception' | 'memory' | 'compost' | 'dreaming' | 'intuition' | 'evaluation';
 type ProofMode = 'deterministic' | 'live-writer';
+type WriteBackOrganId = 'memory' | 'compost' | 'dreaming';
 
 interface CliOptions { outputRoot: string; mode: ProofMode }
 interface OrganReceipt { organ: OrganId; evidence: string }
 interface CognitiveIteration { id: string; prompt: string; artifactPath: string; receipts: OrganReceipt[]; nextRunInfluence: string[]; score: number }
 interface ProofEpisode { id: string; type: 'generation'; timestamp: string; domain?: string; prompt?: string; code?: string; score?: number; comment?: string; tags?: string[] }
 interface LiveIteration { id: string; prompt: string; artifactPath: string; episodeId?: string; prepareReceipts: CognitiveOrganReceipt[]; writeBackReceipts: CognitiveOrganReceipt[]; syntheticReceipts: OrganReceipt[]; score: number }
+interface WriteBackSummary { status: 'observed' | 'partial' | 'skipped'; text: string; items: Array<{ organ: WriteBackOrganId; status: string; detail: string }> }
 
 const basePrompt = 'Create a sparse moonlit vector pond with remembered blue-green geometry and one readable signal word.';
+const writeBackOrgans: WriteBackOrganId[] = ['memory', 'compost', 'dreaming'];
 
 function parseArgs(argv = process.argv.slice(2)): CliOptions {
   let outputRoot = path.join('.omx', 'proof', 'cognitive-loop');
@@ -85,6 +88,19 @@ function deterministicMarkdown(iterations: CognitiveIteration[], outDir: string)
 
 function liveMarkdown(iterations: LiveIteration[], outDir: string, dreamStatus: ReturnType<DreamQueue['getStatus']>): string {
   return ['# Live Cognitive Writer Proof Report', '', `Generated: ${new Date().toISOString()}`, 'Mode: live-writer', `Output dir: ${outDir}`, '', '| Iteration | Score | Episode | Artifact |', '| --- | --- | --- | --- |', ...iterations.map(item => `| ${item.id} | ${item.score.toFixed(2)} | ${item.episodeId ?? 'none'} | ${item.artifactPath} |`), '', `Dream queue: ${dreamStatus.queued} queued, ${dreamStatus.running} running, ${dreamStatus.completed} completed, ${dreamStatus.failed} failed`, '', '## Receipts', '', ...iterations.flatMap(item => [`### ${item.id}`, '', ...item.syntheticReceipts.map(receipt => `- ${receipt.organ}: ${receipt.evidence}`), ...item.prepareReceipts.map(receipt => `- prepare/${receipt.organ} (${receipt.status}): ${receipt.detail}`), ...item.writeBackReceipts.map(receipt => `- write-back/${receipt.organ} (${receipt.status}): ${receipt.detail}`), ''])].join('\n');
+}
+
+function writeBackSummary(receipts: Array<OrganReceipt | CognitiveOrganReceipt>): WriteBackSummary {
+  const items = writeBackOrgans.map((organ) => {
+    const receipt = receipts.find((item) => item.organ === organ);
+    if (!receipt) return { organ, status: 'unavailable', detail: `${organ} write-back receipt was not emitted.` };
+    const status = 'status' in receipt ? receipt.status : 'observed';
+    const detail = 'detail' in receipt ? receipt.detail : receipt.evidence;
+    return { organ, status, detail };
+  });
+  const observed = items.filter((item) => item.status === 'observed').length;
+  const status = observed === items.length ? 'observed' : observed === 0 ? 'skipped' : 'partial';
+  return { status, text: items.map((item) => `${item.organ} ${item.status}: ${item.detail}`).join(' | '), items };
 }
 
 class ProofMemoryStore {
@@ -153,7 +169,7 @@ async function runDeterministic(outDir: string): Promise<boolean> {
     await writeJson(path.join(outDir, id, 'receipts.json'), item);
   }
   const passed = iterations.length === 2 && iterations[1].nextRunInfluence.length > 0 && iterations.every(item => item.receipts.length === 6 && item.score >= 0.6);
-  const report = { generatedAt: new Date().toISOString(), mode: 'deterministic', outputDir: outDir, prompt: basePrompt, passed, iterations };
+  const report = { generatedAt: new Date().toISOString(), mode: 'deterministic', outputDir: outDir, prompt: basePrompt, passed, writeBackSummary: iterations.map(item => ({ iteration: item.id, ...writeBackSummary(item.receipts) })), iterations };
   await writeJson(path.join(outDir, 'report.json'), report);
   await fs.writeFile(path.join(outDir, 'report.md'), deterministicMarkdown(iterations, outDir), 'utf8');
   console.log(path.join(outDir, 'report.md'));
@@ -204,7 +220,7 @@ async function runLiveWriter(outDir: string): Promise<boolean> {
   const secondPrepareUsedMemory = iterations[1].prepareReceipts.some(receipt => receipt.organ === 'memory' && receipt.status === 'observed' && receipt.detail.includes('1 relevant prior generation'));
   const allWriteBackObserved = iterations.every(item => ['memory', 'compost', 'dreaming'].every(organ => item.writeBackReceipts.some(receipt => receipt.organ === organ && receipt.status === 'observed')));
   const passed = allArtifactsExist && secondPrepareUsedMemory && allWriteBackObserved && dreamStatus.queued >= 2;
-  const report = { generatedAt: new Date().toISOString(), mode: 'live-writer', outputDir: outDir, prompt: basePrompt, passed, dreamStatus, compostHeap: compostSink.addedPaths, iterations };
+  const report = { generatedAt: new Date().toISOString(), mode: 'live-writer', outputDir: outDir, prompt: basePrompt, passed, writeBackSummary: iterations.map(item => ({ iteration: item.id, ...writeBackSummary(item.writeBackReceipts) })), dreamStatus, compostHeap: compostSink.addedPaths, iterations };
   await writeJson(path.join(outDir, 'report.json'), report);
   await fs.writeFile(path.join(outDir, 'report.md'), liveMarkdown(iterations, outDir, dreamStatus), 'utf8');
   console.log(path.join(outDir, 'report.md'));

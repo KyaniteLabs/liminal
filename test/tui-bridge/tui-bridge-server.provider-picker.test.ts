@@ -171,7 +171,7 @@ describe('TuiBridgeServer model picker', () => {
     }
   });
 
-  it('switches OpenAI-compatible custom model through /model openai alias', async () => {
+  it('switches OpenAI models through the first-class /model openai alias', async () => {
     const port = await getFreePort();
     const service = new TuiBridgeService();
     const server = new TuiBridgeServer(service, {
@@ -194,9 +194,9 @@ describe('TuiBridgeServer model picker', () => {
       });
 
       expect(mockSaveConfig).toHaveBeenCalledWith(expect.objectContaining({
-        defaultProvider: 'custom',
+        defaultProvider: 'openai',
         providers: expect.objectContaining({
-          custom: expect.objectContaining({
+          openai: expect.objectContaining({
             baseUrl: 'https://api.openai.com/v1',
             model: 'gpt-5.4-mini',
             apiKey: 'openai-key',
@@ -262,8 +262,9 @@ describe('TuiBridgeServer model picker', () => {
         apiKey: 'env-openai-key',
       }));
       expect(mockSaveConfig).toHaveBeenCalledWith(expect.objectContaining({
+        defaultProvider: 'openai',
         providers: expect.objectContaining({
-          custom: expect.objectContaining({ apiKey: 'env-openai-key' }),
+          openai: expect.objectContaining({ apiKey: 'env-openai-key' }),
         }),
       }));
     } finally {
@@ -578,9 +579,9 @@ describe('TuiBridgeServer model picker', () => {
       });
 
       expect(mockSaveConfig).toHaveBeenCalledWith(expect.objectContaining({
-        defaultProvider: 'custom',
+        defaultProvider: 'openai',
         providers: expect.objectContaining({
-          custom: expect.objectContaining({
+          openai: expect.objectContaining({
             model: 'gpt-5.4-mini',
           }),
         }),

@@ -3,46 +3,23 @@ import { TuiBridgeService } from './TuiBridgeService.js';
 import type { LLMClient } from '../llm/LLMClient.js';
 import type { TuiInputRequest } from './types.js';
 import { loadConfig, saveConfig, type UserConfig } from '../config/ConfigLoader.js';
-import { resolveOpenRouterModelAlias, OPENROUTER_MODEL_CATALOG } from './OpenRouterModelCatalog.js';
 import { LLMClient as RuntimeLLMClient } from '../llm/LLMClient.js';
 import { summarizeBridgeRuntime } from './BridgeLauncherConfig.js';
 import {
-  PROVIDER_ALIASES,
   PROVIDER_DEFAULTS,
   detectProviderLabel,
-  isRuntimeProviderKey,
   resolveProviderRuntime,
   type RuntimeProviderKey,
 } from '../config/ProviderRuntime.js';
+import {
+  MODEL_CHOICES,
+  findModelChoice,
+  resolveChoiceByAlias,
+  resolveOpenRouterChoice,
+  resolveProviderToken,
+  type ModelChoice,
+} from './ModelPickerCatalog.js';
 import { formatMicCaptureError } from '../shared/micPermission.js';
-
-type ModelProviderKey = RuntimeProviderKey;
-
-interface ModelChoice {
-  provider: ModelProviderKey;
-  label: string;
-  model: string;
-  aliases: string[];
-}
-
-const MODEL_CHOICES: ModelChoice[] = [
-  { provider: 'openai', label: 'GPT-5.4 mini', model: 'gpt-5.4-mini', aliases: ['gpt-5.4-mini', 'gpt54mini', '5.4-mini', 'mini'] },
-  { provider: 'openai', label: 'GPT-5.4', model: 'gpt-5.4', aliases: ['gpt-5.4', 'gpt54', '5.4'] },
-  { provider: 'openai', label: 'GPT-5.4 nano', model: 'gpt-5.4-nano', aliases: ['gpt-5.4-nano', 'gpt54nano', 'nano'] },
-  { provider: 'minimax', label: 'MiniMax M2.7', model: 'MiniMax-M2.7', aliases: ['m27', 'm2.7', 'minimax-m27'] },
-  { provider: 'minimax', label: 'MiniMax M2.5', model: 'MiniMax-M2.5', aliases: ['m25', 'm2.5', 'minimax-m25'] },
-  { provider: 'glm', label: 'GLM 5V Turbo', model: 'GLM-5v-turbo', aliases: ['glm-5v-turbo', 'glm5v', '5v', 'glm-vision'] },
-  { provider: 'glm', label: 'GLM 5.1', model: 'glm-5.1', aliases: ['glm-5.1', 'glm51'] },
-  { provider: 'lmstudio', label: 'LM Studio local', model: 'local-model', aliases: ['local', 'lmstudio'] },
-  { provider: 'ollama', label: 'Ollama llama3.2', model: 'llama3.2', aliases: ['llama3.2', 'ollama'] },
-  { provider: 'kimi', label: 'Kimi K2P5', model: 'k2p5', aliases: ['k2p5', 'kimi'] },
-  ...OPENROUTER_MODEL_CATALOG.map((entry): ModelChoice => ({
-    provider: 'openrouter',
-    label: entry.label,
-    model: entry.model,
-    aliases: [entry.alias, entry.model],
-  })),
-];
 
 const MIC_CAPTURE_ERROR_FORMATTER_SOURCE = formatMicCaptureError.toString();
 
@@ -500,9 +477,9 @@ data: ${JSON.stringify(stored.event)}
       return MODEL_CHOICES[numericChoice - 1];
     }
 
-    const provider = PROVIDER_ALIASES[first] ?? (isRuntimeProviderKey(first) ? first : undefined);
+    const provider = resolveProviderToken(first);
     if (!provider) {
-      return this.resolveChoiceByAlias(parts.join(' '));
+      return resolveChoiceByAlias(parts.join(' '));
     }
 
     const selection = parts.slice(1).join(' ').trim();
@@ -519,22 +496,11 @@ data: ${JSON.stringify(stored.event)}
     }
 
     if (provider === 'openrouter') {
-      const openRouterAlias = resolveOpenRouterModelAlias(selection);
-      if (openRouterAlias) {
-        return {
-          provider,
-          label: openRouterAlias.label,
-          model: openRouterAlias.model,
-          aliases: [openRouterAlias.alias],
-        };
-      }
+      const openRouterChoice = resolveOpenRouterChoice(selection);
+      if (openRouterChoice) return openRouterChoice;
     }
 
-    const providerChoice = MODEL_CHOICES.find((choice) =>
-      choice.provider === provider &&
-      (choice.model.toLowerCase() === selection.toLowerCase() ||
-        choice.aliases.some((alias) => alias.toLowerCase() === selection.toLowerCase())),
-    );
+    const providerChoice = findModelChoice(provider, selection);
     return providerChoice ?? {
       provider,
       label: selection,
@@ -542,15 +508,6 @@ data: ${JSON.stringify(stored.event)}
       aliases: [],
     };
   }
-
-  private resolveChoiceByAlias(selection: string): ModelChoice | null {
-    const normalized = selection.toLowerCase().trim();
-    return MODEL_CHOICES.find((choice) =>
-      choice.model.toLowerCase() === normalized ||
-      choice.aliases.some((alias) => alias.toLowerCase() === normalized),
-    ) ?? null;
-  }
-
 
   private readBody(req: IncomingMessage): Promise<string> {
     return new Promise((resolve, reject) => {

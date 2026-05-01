@@ -13,15 +13,19 @@ Issues and PRDs for this repo live in GitHub Issues for `KyaniteLabs/liminal`. U
 
 ## Active skill scope
 
-Only this Matt Pocock skill subset is active in Codex right now:
+The active Matt Pocock skill subset in Codex is:
 
 - `setup-matt-pocock-skills`
 - `diagnose`
 - `grill-with-docs`
 - `improve-codebase-architecture`
 - `zoom-out`
+- `tdd`
+- `to-issues`
+- `to-prd`
+- `triage`
 
-Do not use quarantined Matt Pocock skills such as `triage`, `to-issues`, `to-prd`, or `tdd` unless they are explicitly re-enabled.
+Do not use still-quarantined Matt Pocock skills such as `caveman`, `git-guardrails-claude-code`, `grill-me`, `migrate-to-shoehorn`, `scaffold-exercises`, `setup-pre-commit`, or `write-a-skill` unless they are explicitly re-enabled.
 
 ## When a skill says "publish to the issue tracker"
 

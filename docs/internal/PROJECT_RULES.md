@@ -210,7 +210,7 @@ docs: Updated features.html and dashboard.html
 
 - **Documentation Site:** `http://localhost:3456/`
 - **Dashboard:** `http://localhost:3456/dashboard.html`
-- **GitHub:** https://github.com/Pastorsimon1798/liminal
+- **GitHub:** https://github.com/KyaniteLabs/liminal
 
 ---
 

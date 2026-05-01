@@ -24,7 +24,7 @@ This means:
 ## How to Fix (GitHub Web UI)
 
 ### Step 1: Go to Settings
-1. Navigate to: `https://github.com/Pastorsimon1798/liminal/settings`
+1. Navigate to: `https://github.com/KyaniteLabs/liminal/settings`
 2. Click **"Branches"** in left sidebar
 
 ### Step 2: Add Rule for `main`

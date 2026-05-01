@@ -15,6 +15,7 @@
  * - EvolutionIntegration: MAP-Elites + novelty + aesthetic
  * - LoopPersistence: gallery save + merge-every-N
  * - StagnationDetector: stagnation + self-reflection
+ * - CreativeIterationGate: quality and continuation gate
  * - OrganismLoop: organism mode
  */
 
@@ -67,6 +68,7 @@ import { EvolutionIntegration } from './EvolutionIntegration.js';
 import { EvolutionEngine, type EvolutionProposal } from '../evolution/EvolutionEngine.js';
 import { LoopPersistence } from './LoopPersistence.js';
 import { StagnationDetector } from './StagnationDetector.js';
+import { CreativeIterationGate } from './CreativeIterationGate.js';
 import { SuccessRateTracker } from './SuccessRateTracker.js';
 import { GitIntegration } from '../git/GitIntegration.js';
 import { runOrganismMode } from './OrganismLoop.js';
@@ -158,6 +160,7 @@ export class RalphLoop {
     const gallery = new Gallery(normalizedOptions.galleryDir);
     const projectStore = liminalFs.getProjectStore();
     const stagnation = new StagnationDetector(normalizedOptions.stagnationThreshold ?? 7);
+    const creativeIterationGate = new CreativeIterationGate();
     const successRateTracker = new SuccessRateTracker({
       windowSize: 20,
       explorationThreshold: 0.2,
@@ -1185,52 +1188,31 @@ export class RalphLoop {
         await persistence.saveMergeStep(iteration);
         persistedCurrentIteration = true;
 
-        // Quality gate: break if score below minimum threshold (after giving it a chance)
-        // Only apply quality gate after at least 2 iterations to allow initial attempts
-        // Use domain-specific threshold if available, otherwise use default minQualityScore
-        // Detect domain from prompt keywords if collabDomain is the default 'p5'
-        let domain = normalizedOptions.collabDomain || 'p5';
-        if (domain === Domain.P5) {
-          const promptLower = prompt.toLowerCase();
-          if (promptLower.includes('ascii') || promptLower.includes('text art')) domain = 'ascii';
-          else if (promptLower.includes('music') || promptLower.includes('strudel') || promptLower.includes('hydra')) domain = 'music';
-          else if (promptLower.includes('revideo') || promptLower.includes('video') || promptLower.includes('motion graphics') || promptLower.includes('title sequence')) domain = 'revideo';
-          // Keep 'p5' for visual/shader/three since they're handled by the same generator
+        const gateDecision = creativeIterationGate.decide({
+          iteration,
+          prompt,
+          score: evaluation.score,
+          isComplete,
+          maxIterations: normalizedOptions.maxIterations,
+          minQualityScore: normalizedOptions.minQualityScore,
+          domainQualityThresholds: normalizedOptions.domainQualityThresholds,
+          collabDomain: normalizedOptions.collabDomain,
+          disableIterationExtension: normalizedOptions._disableIterationExtension,
+        });
+        const domain = gateDecision.domain;
+        if (gateDecision.logMessage) {
+          Logger.info('RalphLoop', gateDecision.logMessage);
         }
-        const qualityThreshold = normalizedOptions.domainQualityThresholds?.[domain] ?? normalizedOptions.minQualityScore;
-        if (iteration >= 2 && evaluation.score < qualityThreshold) {
-          reason = `quality threshold not met (score ${evaluation.score.toFixed(2)} < ${qualityThreshold} for domain: ${domain})`;
-          break;
-        }
-
-        // Success gate: break if score exceeds excellent threshold (0.90) AND code is complete
-        // Stop iterating when we've achieved excellent quality to avoid regression
-        // BUT don't exit if code is incomplete - force another iteration to complete it
-        if (evaluation.score >= 0.90 && isComplete) {
-          completed = true;
-          reason = `excellent quality achieved (score ${evaluation.score.toFixed(2)} >= 0.90, code complete)`;
-          break;
-        }
-        
-        // Force continuation if code is incomplete (even if quality is high)
-        if (!isComplete && iteration < normalizedOptions.maxIterations) {
-          Logger.info('RalphLoop', `Code incomplete after iteration ${iteration}, forcing another iteration`);
-          // Continue to next iteration without breaking
-        }
-        
-        // Iteration Extension: If at iteration 3 and still not working well, extend max iterations
-        if (iteration === 3 && !normalizedOptions._disableIterationExtension) {
-          const isWorkingWell = evaluation.score >= 0.70 && isComplete;
-          if (!isWorkingWell) {
-            const newMax = Math.min(normalizedOptions.maxIterations + 3, 20);
-            if (newMax > normalizedOptions.maxIterations) {
-              normalizedOptions.maxIterations = newMax;
-              Logger.info('RalphLoop', `Extending max iterations to ${newMax} (score: ${evaluation.score.toFixed(2)}, complete: ${isComplete})`);
-              if (normalizedOptions.chatMode) {
-                normalizedOptions.onThought?.(`Extending to ${newMax} iterations to improve quality...`);
-              }
-            }
+        if (gateDecision.maxIterations !== normalizedOptions.maxIterations) {
+          normalizedOptions.maxIterations = gateDecision.maxIterations;
+          if (normalizedOptions.chatMode && gateDecision.thought) {
+            normalizedOptions.onThought?.(gateDecision.thought);
           }
+        }
+        if (gateDecision.shouldBreak) {
+          completed = gateDecision.completed;
+          reason = gateDecision.reason;
+          break;
         }
 
         // Update evolution subsystems

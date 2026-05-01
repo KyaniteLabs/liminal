@@ -423,12 +423,13 @@ export function createApp(configPath, port = 5174) {
 
       const lastEventId = Number(req.headers['last-event-id'] || 0) || 0;
 
-      for (const stored of tuiBridge.getEventsSince(sessionId, lastEventId)) {
+      const replay = tuiBridge.getEventReplay();
+      for (const stored of replay.replayAfter(sessionId, lastEventId)) {
         res.write(`id: ${stored.id}\n`);
         res.write(`data: ${JSON.stringify(stored.event)}\n\n`);
       }
 
-      const unsubscribe = tuiBridge.subscribeWithId(sessionId, (stored) => {
+      const unsubscribe = replay.subscribeStored(sessionId, (stored) => {
         res.write(`id: ${stored.id}\n`);
         res.write(`data: ${JSON.stringify(stored.event)}\n\n`);
       });

@@ -12,6 +12,17 @@ describe('TuiEventStream', () => {
     stream = new TuiEventStream();
   });
 
+  it('retains only the configured replay window while keeping event IDs monotonic', () => {
+    stream = new TuiEventStream({ maxStoredEventsPerSession: 2 });
+    stream.emit('s1', makeEvent('a'));
+    stream.emit('s1', makeEvent('b'));
+    stream.emit('s1', makeEvent('c'));
+
+    expect(stream.getEvents('s1').map((event) => event.type)).toEqual(['b', 'c']);
+    expect(stream.getEventsSince('s1', 0).map((stored) => stored.id)).toEqual([2, 3]);
+    expect(stream.getEventsSince('s1', 2).map((stored) => stored.id)).toEqual([3]);
+  });
+
   it('emit stores event and notifies listener', () => {
     const listener = vi.fn();
     stream.subscribe('s1', listener);
@@ -63,6 +74,17 @@ describe('TuiEventStream', () => {
     stream.emit('s1', makeEvent('a'));
     expect(idListener).toHaveBeenCalledTimes(1);
     expect(idListener.mock.calls[0][0].id).toBe(1);
+  });
+
+  it('exposes a small publish and replay interface for transport adapters', () => {
+    const storedListener = vi.fn();
+    stream.subscribeStored('s1', storedListener);
+    stream.publish('s1', makeEvent('a'));
+    stream.publish('s1', makeEvent('b'));
+
+    expect(stream.history('s1').map((event) => event.type)).toEqual(['a', 'b']);
+    expect(stream.replayAfter('s1', 1).map((stored) => stored.event.type)).toEqual(['b']);
+    expect(storedListener.mock.calls.map(([stored]) => stored.id)).toEqual([1, 2]);
   });
 
   it('unsubscribe removes listener', () => {

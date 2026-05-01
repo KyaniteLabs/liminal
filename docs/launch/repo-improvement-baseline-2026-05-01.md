@@ -34,6 +34,9 @@ The repository currently has about **127k lines of TypeScript source** and **142
 
 ## Verification matrix
 
+#454 promotes the durable command-to-claim policy into `docs/launch/test-ci-truth-matrix-2026-05-01.md`; keep this baseline section as historical seed evidence.
+
+
 | Claim | Command | Current evidence | Notes |
 | --- | --- | --- | --- |
 | TypeScript type safety | `pnpm typecheck` | Passed locally on `6552ee3b`. | Uses `tsc --noEmit`. |

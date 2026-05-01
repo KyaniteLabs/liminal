@@ -1,7 +1,7 @@
 # Launch Candidate Preflight
 
 > Current status: historical preflight artifact, not a live launch-readiness claim.
-> For current evidence and blockers, use `.omx/proof/launch-readiness-scorecard-2026-04-19.md`.
+> For current verification policy, use `docs/launch/test-ci-truth-matrix-2026-05-01.md`; for current launch proof, rerun the proof commands rather than trusting this historical preflight.
 > As of 2026-04-19, Liminal is a launch candidate with proof slices complete, but full launch readiness still depends on the remaining manual/live gates and documentation truth pass.
 
 **Historical pre-flight package for Liminal Meta-Harness**

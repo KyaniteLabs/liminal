@@ -279,7 +279,7 @@ git commit -m "feat(ci): add GLM PR review workflow"
 
 Run:
 ```bash
-gh secret set GLM_API_KEY --repo Pastorsimon1798/liminal
+gh secret set GLM_API_KEY --repo KyaniteLabs/liminal
 ```
 Then paste the API key when prompted.
 
@@ -303,7 +303,7 @@ If it fails, check logs with: `gh run view --log-failed`
 **Step 3: Configure branch protection on main**
 
 ```bash
-gh api repos/Pastorsimon1798/liminal/branches/main/protection \
+gh api repos/KyaniteLabs/liminal/branches/main/protection \
   -X PUT \
   --input - <<'EOF'
 {
@@ -327,7 +327,7 @@ EOF
 
 **Step 4: Verify branch protection**
 
-Run: `gh api repos/Pastorsimon1798/liminal/branches/main/protection`
+Run: `gh api repos/KyaniteLabs/liminal/branches/main/protection`
 Expected: Returns the protection rules with required_status_checks and required_pull_request_reviews
 
 **Step 5: Test PR review bot**

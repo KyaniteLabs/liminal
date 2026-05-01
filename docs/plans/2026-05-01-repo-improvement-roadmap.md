@@ -1,7 +1,8 @@
 # Liminal Repository Improvement Roadmap
 
-**Date:** 2026-05-01  
-**Parent PRD:** [#444](https://github.com/KyaniteLabs/liminal/issues/444)  
+**Date:** 2026-05-01
+**Parent PRD:** [#444](https://github.com/KyaniteLabs/liminal/issues/444)
+**Baseline truth map:** [docs/launch/repo-improvement-baseline-2026-05-01.md](../launch/repo-improvement-baseline-2026-05-01.md)
 **Method:** Matt Pocock skill loop: `zoom-out` -> `improve-codebase-architecture` -> `to-prd` -> `to-issues`, with implementation issues expected to use `tdd` or `diagnose` as appropriate.
 
 ## Purpose

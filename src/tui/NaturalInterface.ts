@@ -16,6 +16,7 @@ import type { LLMModeAgent, LLMTask } from '../harness/agent/LLMModeAgent.js';
 import { formatError } from '../utils/errors.js';
 import { Logger } from '../utils/Logger.js';
 import { commands } from './commands.js';
+import { handleProviderCommand } from './ProviderCommand.js';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -376,63 +377,11 @@ export class NaturalInterface {
   }
 
   private async handleProvider(args: string[]): Promise<NaturalInputResult> {
-    const { PROVIDER_TEMPLATES, listConfiguredProviders, getProviderConfig } = await import('../harness/MultiProviderConfig.js');
-    const { apiKeyEnvNamesForProvider, providerRequiresApiKey } = await import('../config/ProviderRuntime.js');
-    const { metaHarness } = await import('../harness/MetaHarnessIntegration.js');
-
-    // /provider list — show all providers
-    if (!args[0] || args[0] === 'list' || args[0] === 'ls') {
-      const configured = listConfiguredProviders();
-      const current = metaHarness.getStatus()?.activeProvider || 'unknown';
-      const lines = ['Providers:'];
-      for (const [key, tmpl] of Object.entries(PROVIDER_TEMPLATES)) {
-        const isConfigured = configured.includes(key as import('../harness/MultiProviderConfig.js').ProviderType);
-        const isCurrent = key === current;
-        const marker = isCurrent ? ' <-- active' : '';
-        const status = isConfigured ? '[ok]' : '[--]';
-        lines.push(`  ${status} ${key.padEnd(12)} ${tmpl.name.padEnd(14)} ${tmpl.model}${marker}`);
-      }
-      lines.push('');
-      lines.push('Usage: /provider <name>       -- switch to a configured provider');
-      lines.push('       /provider <url> <model> -- switch to custom endpoint');
-      return { type: 'command', response: lines.join('\n'), shouldContinue: true };
-    }
-
-    // /provider <name> — switch to a known provider
-    const template = PROVIDER_TEMPLATES[args[0] as keyof typeof PROVIDER_TEMPLATES];
-    if (template) {
-      const config = getProviderConfig(args[0] as import('../harness/MultiProviderConfig.js').ProviderType);
-      const provider = args[0] as import('../harness/MultiProviderConfig.js').ProviderType;
-      if (!config?.apiKey && providerRequiresApiKey(provider)) {
-        const envName = apiKeyEnvNamesForProvider(provider)[0] || 'LLM_API_KEY';
-        return {
-          type: 'command',
-          response: `Not configured. Set the API key first:\n  export ${envName}=your-key`,
-          shouldContinue: true,
-        };
-      }
-      metaHarness.switchProvider(config!.baseUrl, config!.model, config!.apiKey);
-      this.onLog(`Switched to ${template.name}: ${config!.model}`);
-      return {
-        type: 'command',
-        response: `Switched to ${template.name}: ${config!.model} @ ${config!.baseUrl}`,
-        shouldContinue: true,
-      };
-    }
-
-    // /provider <url> <model> — custom endpoint
-    if (args[0]?.startsWith('http') && args[1]) {
-      metaHarness.switchProvider(args[0], args[1], args[2]);
-      return {
-        type: 'command',
-        response: `Switched to custom: ${args[1]} @ ${args[0]}`,
-        shouldContinue: true,
-      };
-    }
-
+    const result = await handleProviderCommand(args, 'plain');
+    if (result.logMessage) this.onLog(result.logMessage);
     return {
       type: 'command',
-      response: `Unknown provider "${args[0]}". Run /provider list to see options.`,
+      response: result.response,
       shouldContinue: true,
     };
   }

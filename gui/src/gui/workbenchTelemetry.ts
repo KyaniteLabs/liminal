@@ -58,12 +58,29 @@ export interface WorkbenchCognitiveReceipt {
 export interface WorkbenchRunReceipt {
   heading: 'Run receipt';
   phase: string;
+  outcome: 'running' | 'completed' | 'stopped' | 'failed';
   creativeDomain: string;
   provider?: string;
   model?: string;
   providerModel: string;
   artifact?: { label: string; path?: string };
   preview?: { type: WorkbenchPreview['type']; inline: boolean; path?: string; label: string };
+  failure?: {
+    message: string;
+    provider?: string;
+    model?: string;
+    endpoint?: string;
+    statusCode?: number;
+    retryable?: boolean;
+    responseBody?: string;
+  };
+  prior?: {
+    revisionKind: string;
+    phase: string;
+    creativeDomain: string;
+    artifact?: { label: string; path?: string };
+    previewType?: string;
+  };
   details: string[];
 }
 
@@ -121,6 +138,38 @@ function latestEvent(events: WorkbenchBridgeEvent[], type: string): WorkbenchBri
   return [...events].reverse().find((event) => event.type === type);
 }
 
+
+function latestReceiptRunEvents(events: WorkbenchBridgeEvent[]): WorkbenchBridgeEvent[] {
+  const terminalTypes = new Set(['generation.complete', 'generation.cancelled', 'generation.attempt.failed', 'preview.missing', 'error']);
+  let latestTerminalIndex = -1;
+  for (let index = events.length - 1; index >= 0; index--) {
+    if (terminalTypes.has(String(events[index].type))) {
+      latestTerminalIndex = index;
+      break;
+    }
+  }
+
+  const searchEnd = latestTerminalIndex >= 0 ? latestTerminalIndex : events.length - 1;
+  let startIndex = -1;
+  for (let index = searchEnd; index >= 0; index--) {
+    const type = String(events[index].type);
+    if (type === 'generation.route.selected' || type === 'generation.intent_brief') {
+      startIndex = index;
+      break;
+    }
+  }
+  if (startIndex < 0 && latestTerminalIndex >= 0) startIndex = latestTerminalIndex;
+  if (startIndex < 0) return events;
+
+  const previousTerminal = events.slice(0, startIndex).reduce((latest, event, index) => terminalTypes.has(String(event.type)) ? index : latest, -1);
+  for (let index = startIndex - 1; index > previousTerminal; index--) {
+    if (events[index].type === 'generation.receipt.linked') {
+      startIndex = index;
+    }
+  }
+  return events.slice(startIndex);
+}
+
 function latestStatusTruth(events: WorkbenchBridgeEvent[]): WorkbenchSessionTruth | undefined {
   const statusEvent = latestEvent(events, 'status.updated');
   const rawStatus = statusEvent?.status;
@@ -171,38 +220,102 @@ function latestProviderModelTruth(
   };
 }
 
+
+function receiptOutcome(events: WorkbenchBridgeEvent[], phase: string): WorkbenchRunReceipt['outcome'] {
+  if (events.some((event) => event.type === 'generation.cancelled')) return 'stopped';
+  if (events.some((event) => event.type === 'generation.attempt.failed' || event.type === 'error' || event.type === 'preview.missing')) return 'failed';
+  if (events.some((event) => event.type === 'generation.complete')) return 'completed';
+  return phase === 'stopped' ? 'stopped' : phase === 'complete' ? 'completed' : 'running';
+}
+
+function latestFailureReceipt(events: WorkbenchBridgeEvent[]): WorkbenchRunReceipt['failure'] | undefined {
+  const event = [...events].reverse().find((item) => item.type === 'generation.attempt.failed' || item.type === 'error' || item.type === 'preview.missing');
+  if (!event) return undefined;
+  const message = String(event.error || event.message || event.reason || 'run failed');
+  const statusCode = typeof event.statusCode === 'number' ? event.statusCode : undefined;
+  const retryable = typeof event.retryable === 'boolean' ? event.retryable : undefined;
+  return {
+    message,
+    provider: firstText(event.provider),
+    model: firstText(event.model),
+    endpoint: firstText(event.endpoint),
+    statusCode,
+    retryable,
+    responseBody: firstText(event.responseBody),
+  };
+}
+
+function latestPriorReceipt(events: WorkbenchBridgeEvent[]): WorkbenchRunReceipt['prior'] | undefined {
+  const event = latestEvent(events, 'generation.receipt.linked');
+  if (!event) return undefined;
+  const artifactLabel = firstText(event.priorArtifactLabel);
+  const artifactPath = firstText(event.priorArtifactPath);
+  return {
+    revisionKind: firstText(event.revisionKind) || 'revision',
+    phase: firstText(event.priorPhase) || 'unknown',
+    creativeDomain: firstText(event.priorDomain) || 'unknown',
+    artifact: artifactLabel || artifactPath ? { label: artifactLabel || 'prior artifact', path: artifactPath } : undefined,
+    previewType: firstText(event.priorPreviewType),
+  };
+}
+
+function failureDetailText(failure: NonNullable<WorkbenchRunReceipt['failure']>): string {
+  const status = failure.statusCode ? `HTTP ${failure.statusCode}` : '';
+  const retry = failure.retryable === true ? 'retryable' : failure.retryable === false ? 'not retryable' : '';
+  const provenance = [failure.provider && failure.model ? `${failure.provider} / ${failure.model}` : failure.provider || failure.model, failure.endpoint, status, retry]
+    .filter(Boolean)
+    .join(' · ');
+  return provenance ? `${failure.message} · ${provenance}` : failure.message;
+}
+
 export function latestRunReceipt(
   events: WorkbenchBridgeEvent[],
   session?: WorkbenchSessionTruth | null,
 ): WorkbenchRunReceipt | null {
-  const artifactEvent = latestEvent(events, 'artifact.found');
-  const previewEvent = latestEvent(events, 'preview.completed');
-  const completionEvent = latestEvent(events, 'generation.complete');
-  const hasGenerationRoute = events.some((event) => String(event.type).startsWith('generation.'));
+  const runEvents = latestReceiptRunEvents(events);
+  const status = latestStatusTruth(events);
+  const sessionTruth = {
+    provider: status?.provider || session?.provider,
+    model: status?.model || session?.model,
+    roles: status?.roles || session?.roles,
+  };
+  const artifactEvent = latestEvent(runEvents, 'artifact.found');
+  const previewEvent = latestEvent(runEvents, 'preview.completed');
+  const completionEvent = latestEvent(runEvents, 'generation.complete');
+  const hasGenerationRoute = runEvents.some((event) => String(event.type).startsWith('generation.'));
   if (!hasGenerationRoute && !artifactEvent && !previewEvent) return null;
 
-  const summary = summarizeWorkbenchBridge(events);
-  const creativeDomain = latestCreativeDomain(events) || 'unknown';
-  const { provider, model } = latestProviderModelTruth(events, session);
-  const preview = latestBridgePreview(events);
+  const summary = summarizeWorkbenchBridge(runEvents);
+  const creativeDomain = latestCreativeDomain(runEvents) || 'unknown';
+  const { provider, model } = latestProviderModelTruth(runEvents, sessionTruth);
+  const preview = latestBridgePreview(runEvents);
   const previewPath = firstText(previewEvent?.artifactPath, previewEvent?.imageUrl, artifactEvent?.artifactPath, preview?.label);
   const artifactPath = firstText(artifactEvent?.artifactPath, previewEvent?.artifactPath, previewEvent?.imageUrl);
   const artifactLabel = firstText(artifactEvent?.artifactLabel, artifactPath ? `${creativeDomain} artifact` : undefined);
   const providerModel = [provider, model].filter(Boolean).join(' / ') || 'unknown provider/model';
   const previewType = preview?.type || (typeof previewEvent?.previewType === 'string' ? previewEvent.previewType as WorkbenchPreview['type'] : undefined);
   const inlinePreview = Boolean(preview && (preview.src || preview.content || preview.code));
+  const outcome = receiptOutcome(runEvents, summary.phase);
+  const failure = latestFailureReceipt(runEvents);
+  const prior = latestPriorReceipt(runEvents);
+  const cancelledEvent = latestEvent(runEvents, 'generation.cancelled');
   const details = [
     `phase: ${summary.phase}`,
+    `outcome: ${outcome}`,
     `creative domain: ${creativeDomain}`,
     `provider/model: ${providerModel}`,
     artifactLabel ? `artifact: ${artifactLabel}${artifactPath ? ` ${artifactPath}` : ''}` : 'artifact: waiting',
     previewType ? `preview: ${previewType}${inlinePreview ? ' inline' : ' pending'}${previewPath ? ` ${previewPath}` : ''}` : 'preview: waiting',
+    failure ? `failure: ${failureDetailText(failure)}` : '',
+    cancelledEvent ? `stopped: ${String(cancelledEvent.message || cancelledEvent.reason || 'Generation stopped')}` : '',
+    prior?.artifact ? `prior ${prior.revisionKind}: ${prior.artifact.label}${prior.artifact.path ? ` ${prior.artifact.path}` : ''}` : '',
     completionEvent?.reason ? `completion: ${String(completionEvent.reason)}` : '',
   ].filter(Boolean);
 
   return {
     heading: 'Run receipt',
     phase: summary.phase,
+    outcome,
     creativeDomain,
     provider,
     model,
@@ -214,6 +327,8 @@ export function latestRunReceipt(
       path: previewPath,
       label: preview?.label || previewPath || `${previewType} preview`,
     } : undefined,
+    failure,
+    prior,
     details,
   };
 }

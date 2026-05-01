@@ -179,6 +179,7 @@ export type TuiBridgeEvent =
   | { type: 'generation.candidate.generated'; sessionId: string; domain: string; attempt: number; attemptTotal: number; iteration: number; candidateCount?: number; codeSize?: number; duration?: number }
   | { type: 'generation.iteration'; sessionId: string; iteration: number; score: number; code: string; stageTimings?: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }> }
   | { type: 'generation.complete'; sessionId: string; iterations: number; finalScore: number; duration: number; model: string; reason: string; qualityState?: 'scored' | 'unscored'; executionMode?: 'draft' | 'prove' }
+  | { type: 'generation.receipt.linked'; sessionId: string; revisionKind: 'revise' | 'variation' | 'polish' | 'revision'; priorPhase?: string; priorDomain?: string; priorArtifactLabel?: string; priorArtifactPath?: string; priorPreviewType?: 'code' | 'image' | 'html' | 'music'; instruction?: string }
   | { type: 'generation.cancelled'; sessionId: string; reason: 'operator-stop' | 'stream-abort' | 'superseded'; cancelledAt: string; message?: string }
   | { type: 'generation.cognitive_receipt'; sessionId: string; loop: 'creative' | 'self-improvement' | 'model-assimilation'; receipts: Array<{ organ: string; status: 'observed' | 'pending' | 'unavailable'; detail: string }> }
   | { type: 'phase.changed'; sessionId: string; phase: string; stepCurrent?: number; stepTotal?: number; activeFile?: string; objective?: string }

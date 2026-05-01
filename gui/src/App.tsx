@@ -835,7 +835,7 @@ export default function App() {
     });
   };
 
-  const submitDraftFollowup = (instruction: string, executionMode: WorkbenchExecutionMode) => {
+  const submitDraftFollowup = (instruction: string, executionMode: WorkbenchExecutionMode, revisionKind: 'revise' | 'variation' | 'polish' = 'revise') => {
     const basePrompt = createPrompt.trim() || 'Continue the current artifact.';
     const codeContext = bridgeCodePreview?.code
       ? `\n\nCurrent artifact code excerpt:\n${bridgeCodePreview.code.slice(0, 5000)}`
@@ -848,13 +848,14 @@ export default function App() {
     void bridge.submitPrompt(buildWorkbenchPrompt(followupMode, followupPrompt), {
       clientIntent: 'creative',
       ...buildWorkbenchRunOptions(executionMode, createMaxIterations),
+      creativePreferences: runReceipt ? { priorRunReceipt: runReceipt, revisionKind } : undefined,
     });
   };
 
   const handleDraftAdjustment = () => {
     const adjustment = draftAdjustment.trim();
     if (!adjustment) return;
-    submitDraftFollowup(`Adjust the current artifact: ${adjustment}`, 'draft');
+    submitDraftFollowup(`Adjust the current artifact: ${adjustment}`, 'draft', 'revise');
   };
 
   const handleWorkbenchModeChange = (mode: WorkbenchMode) => {
@@ -972,6 +973,8 @@ export default function App() {
           <small>Provider/model: {runReceipt.providerModel}</small>
           {runReceipt.artifact && <small>Artifact: {runReceipt.artifact.label}{runReceipt.artifact.path ? ` · ${runReceipt.artifact.path}` : ''}</small>}
           {runReceipt.preview && <small>Preview: {runReceipt.preview.type}{runReceipt.preview.inline ? ' inline' : ' pending'}{runReceipt.preview.path ? ` · ${runReceipt.preview.path}` : ''}</small>}
+          {runReceipt.failure && <small>Failure: {runReceipt.failure.message}</small>}
+          {runReceipt.prior?.artifact && <small>Prior {runReceipt.prior.revisionKind}: {runReceipt.prior.artifact.label}{runReceipt.prior.artifact.path ? ` · ${runReceipt.prior.artifact.path}` : ''}</small>}
         </div>
       )}
       {cognitiveReceipt && (
@@ -1168,14 +1171,14 @@ export default function App() {
           </button>
           <button
             type="button"
-            onClick={() => submitDraftFollowup('Make a fresh variation with a different composition while preserving the core idea.', 'draft')}
+            onClick={() => submitDraftFollowup('Make a fresh variation with a different composition while preserving the core idea.', 'draft', 'variation')}
             disabled={bridge.submitting}
           >
             New variation
           </button>
           <button
             type="button"
-            onClick={() => submitDraftFollowup('Polish this direction with quality scoring, repair, and preview checks.', 'prove')}
+            onClick={() => submitDraftFollowup('Polish this direction with quality scoring, repair, and preview checks.', 'prove', 'polish')}
             disabled={bridge.submitting}
           >
             Polish

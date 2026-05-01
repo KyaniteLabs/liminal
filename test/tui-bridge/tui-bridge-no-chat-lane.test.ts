@@ -403,6 +403,56 @@ describe('Bubble Tea operator routing', () => {
     ]));
   });
 
+  it('links revision and polish runs to the prior Studio receipt through bridge events', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'Polish this p5 sketch with slower fireflies',
+        clientIntent: 'creative',
+        executionMode: 'draft',
+        creativePreferences: {
+          revisionKind: 'polish',
+          priorRunReceipt: {
+            phase: 'complete',
+            creativeDomain: 'p5',
+            artifact: {
+              label: 'p5 HTML preview',
+              path: '.omx/proof/live-previews/original.html',
+            },
+            preview: { type: 'html' },
+          },
+        },
+      },
+      fakeLlm() as never,
+    );
+
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'preview.completed'));
+    const link = service.getEvents(session.sessionId).find(event => event.type === 'generation.receipt.linked');
+    const receipt = latestRunReceipt(service.getEvents(session.sessionId) as never, service.getStatus(session.sessionId) as never);
+
+    expect(link).toMatchObject({
+      type: 'generation.receipt.linked',
+      revisionKind: 'polish',
+      priorPhase: 'complete',
+      priorDomain: 'p5',
+      priorArtifactPath: '.omx/proof/live-previews/original.html',
+      priorPreviewType: 'html',
+    });
+    expect(receipt).toMatchObject({
+      outcome: 'completed',
+      prior: {
+        revisionKind: 'polish',
+        creativeDomain: 'p5',
+        artifact: { path: '.omx/proof/live-previews/original.html' },
+      },
+    });
+  });
+
   it('emits an explicit route-selected event before model attempts for workbench generation', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession();
@@ -534,6 +584,18 @@ describe('Bubble Tea operator routing', () => {
       endpoint: 'https://api.openai.com/v1/chat/completions',
       statusCode: 429,
     });
+    const receipt = latestRunReceipt(service.getEvents(session.sessionId) as never, service.getStatus(session.sessionId) as never);
+    expect(receipt).toMatchObject({
+      outcome: 'failed',
+      failure: {
+        provider: 'openai',
+        model: 'gpt-5.4-mini',
+        statusCode: 429,
+        retryable: true,
+      },
+    });
+    expect(receipt?.artifact).toBeUndefined();
+    expect(service.getEvents(session.sessionId).some((event) => event.type === 'artifact.found')).toBe(false);
   });
 
   it('keeps a canonical draft run lifecycle through render before completion', async () => {
@@ -733,6 +795,9 @@ describe('Bubble Tea operator routing', () => {
       outcome: 'cancelled',
       error: 'Generation stopped by operator.',
     });
+    const stoppedReceipt = latestRunReceipt(service.getEvents(session.sessionId) as never, service.getStatus(session.sessionId) as never);
+    expect(stoppedReceipt).toMatchObject({ outcome: 'stopped', phase: 'stopped' });
+    expect(stoppedReceipt?.artifact).toBeUndefined();
 
     pendingDraft.resolve({
       needsClarification: false,

@@ -1783,6 +1783,7 @@ export class TuiBridgeService {
         executionMode: 'prove',
       });
       this.emitDomainTruth(sessionId, routeTruth);
+      this.emitPriorRunReceiptLink(sessionId, options);
       const memoryReceipts = await this.cognitiveWriter.prepareGeneration({
         sessionId,
         userText,
@@ -2200,6 +2201,7 @@ export class TuiBridgeService {
         executionMode: 'draft',
       });
       this.emitDomainTruth(sessionId, routeTruth);
+      this.emitPriorRunReceiptLink(sessionId, options);
       const memoryReceiptsPromise = this.cognitiveWriter.prepareGeneration({
         sessionId,
         userText,
@@ -2921,6 +2923,42 @@ export class TuiBridgeService {
     return 'p5';
   }
 
+  private emitPriorRunReceiptLink(
+    sessionId: string,
+    options: Pick<TuiInputRequest, 'creativePreferences'>,
+  ): void {
+    const preferences = options.creativePreferences;
+    if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) return;
+    const prior = preferences.priorRunReceipt;
+    if (!prior || typeof prior !== 'object' || Array.isArray(prior)) return;
+    const priorRecord = prior as {
+      phase?: unknown;
+      creativeDomain?: unknown;
+      artifact?: { label?: unknown; path?: unknown };
+      preview?: { type?: unknown };
+    };
+    const revisionKindValue = String(preferences.revisionKind || 'revision');
+    const revisionKind = ['revise', 'variation', 'polish', 'revision'].includes(revisionKindValue)
+      ? revisionKindValue as 'revise' | 'variation' | 'polish' | 'revision'
+      : 'revision';
+    const artifact = priorRecord.artifact && typeof priorRecord.artifact === 'object'
+      ? priorRecord.artifact
+      : undefined;
+    const previewType = priorRecord.preview?.type;
+    this.emit(sessionId, {
+      type: 'generation.receipt.linked',
+      sessionId,
+      revisionKind,
+      priorPhase: typeof priorRecord.phase === 'string' ? priorRecord.phase : undefined,
+      priorDomain: typeof priorRecord.creativeDomain === 'string' ? priorRecord.creativeDomain : undefined,
+      priorArtifactLabel: typeof artifact?.label === 'string' ? artifact.label : undefined,
+      priorArtifactPath: typeof artifact?.path === 'string' ? artifact.path : undefined,
+      priorPreviewType: typeof previewType === 'string' && ['code', 'image', 'html', 'music'].includes(previewType)
+        ? previewType as 'code' | 'image' | 'html' | 'music'
+        : undefined,
+    });
+  }
+
   private promptForCreativeDomain(
     userText: string,
     domain: Domain,
@@ -2985,7 +3023,7 @@ export class TuiBridgeService {
     if (!answers || typeof answers !== 'object' || Array.isArray(answers)) return {};
     return Object.fromEntries(
       Object.entries(answers)
-        .filter(([, value]) => value != null && String(value).trim() !== ''),
+        .filter(([key, value]) => key !== 'priorRunReceipt' && key !== 'revisionKind' && value != null && String(value).trim() !== ''),
     );
   }
 

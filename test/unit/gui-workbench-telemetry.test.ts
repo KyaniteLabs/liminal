@@ -113,6 +113,114 @@ describe('workbenchTelemetry', () => {
     expect(artistCopy).not.toMatch(/harness|proof/i);
   });
 
+
+  it('builds a stopped run receipt without inventing an artifact', () => {
+    const receipt = latestRunReceipt([
+      { type: 'generation.intent_brief', userRequest: 'p5 fireflies', requirements: ['Primary request: p5 fireflies'], missingDetails: [], questions: [], willClarify: false },
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5'], executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      { type: 'generation.cancelled', reason: 'operator-stop', cancelledAt: '2026-04-29T03:00:00.000Z', message: 'Generation stopped by operator.' },
+    ]);
+
+    expect(receipt).toMatchObject({
+      phase: 'stopped',
+      outcome: 'stopped',
+      creativeDomain: 'p5',
+    });
+    expect(receipt?.artifact).toBeUndefined();
+    expect(receipt?.preview).toBeUndefined();
+    expect(receipt?.details.join(' ')).toContain('stopped: Generation stopped by operator.');
+  });
+
+  it('builds a failed run receipt with provider provenance and no fake artifact', () => {
+    const receipt = latestRunReceipt([
+      { type: 'generation.route.selected', domain: 'hydra', domains: ['hydra'], executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'hydra', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      {
+        type: 'generation.attempt.failed',
+        domain: 'hydra',
+        attempt: 1,
+        attemptTotal: 1,
+        error: 'LLM generation failed: OpenAI API error 429: rate limited',
+        provider: 'openai',
+        model: 'gpt-5.4-mini',
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        statusCode: 429,
+        retryable: true,
+        responseBody: '{"error":"rate limited"}',
+      },
+    ]);
+
+    expect(receipt).toMatchObject({
+      phase: 'fallback',
+      outcome: 'failed',
+      creativeDomain: 'hydra',
+      provider: 'openai',
+      model: 'gpt-5.4-mini',
+      failure: {
+        message: 'LLM generation failed: OpenAI API error 429: rate limited',
+        provider: 'openai',
+        model: 'gpt-5.4-mini',
+        endpoint: 'https://api.openai.com/v1/chat/completions',
+        statusCode: 429,
+        retryable: true,
+      },
+    });
+    expect(receipt?.artifact).toBeUndefined();
+    expect(receipt?.preview).toBeUndefined();
+    expect(receipt?.details.join(' ')).toContain('HTTP 429');
+  });
+
+  it('does not reuse an older artifact as the current artifact after a later failure', () => {
+    const receipt = latestRunReceipt([
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5'], executionMode: 'draft' },
+      { type: 'artifact.found', artifactLabel: 'p5 HTML preview', artifactPath: '.omx/proof/live-previews/old.html' },
+      { type: 'preview.completed', previewType: 'html', content: '<html></html>', artifactPath: '.omx/proof/live-previews/old.html', previewDomain: 'p5' },
+      { type: 'generation.complete', iterations: 1, finalScore: 0, duration: 1000, model: 'qwen', reason: 'ready', executionMode: 'draft' },
+      { type: 'generation.route.selected', domain: 'hydra', domains: ['hydra'], executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'hydra', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      { type: 'generation.attempt.failed', domain: 'hydra', attempt: 1, attemptTotal: 1, error: 'provider down', provider: 'openai', model: 'gpt-5.4-mini' },
+    ]);
+
+    expect(receipt).toMatchObject({ outcome: 'failed', creativeDomain: 'hydra' });
+    expect(receipt?.artifact).toBeUndefined();
+    expect(receipt?.preview).toBeUndefined();
+  });
+
+  it('links revision receipts back to the prior artifact', () => {
+    const receipt = latestRunReceipt([
+      {
+        type: 'generation.receipt.linked',
+        revisionKind: 'polish',
+        priorPhase: 'complete',
+        priorDomain: 'p5',
+        priorArtifactLabel: 'p5 HTML preview',
+        priorArtifactPath: '.omx/proof/live-previews/p5-original.html',
+        priorPreviewType: 'html',
+      },
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5'], executionMode: 'prove' },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 1, executionMode: 'prove' },
+      { type: 'artifact.found', artifactLabel: 'p5 HTML preview', artifactPath: '.omx/proof/live-previews/p5-polished.html' },
+      { type: 'preview.completed', previewType: 'html', content: '<html></html>', artifactPath: '.omx/proof/live-previews/p5-polished.html', previewDomain: 'p5' },
+      { type: 'generation.complete', iterations: 1, finalScore: 0.82, duration: 1200, model: 'qwen', reason: 'accepted', qualityState: 'scored', executionMode: 'prove' },
+    ]);
+
+    expect(receipt).toMatchObject({
+      outcome: 'completed',
+      prior: {
+        revisionKind: 'polish',
+        phase: 'complete',
+        creativeDomain: 'p5',
+        artifact: {
+          label: 'p5 HTML preview',
+          path: '.omx/proof/live-previews/p5-original.html',
+        },
+        previewType: 'html',
+      },
+    });
+    expect(receipt?.details.join(' ')).toContain('prior polish: p5 HTML preview .omx/proof/live-previews/p5-original.html');
+  });
+
   it('surfaces provider failure provenance in workbench activity', () => {
     const summary = summarizeWorkbenchBridge([
       { type: 'generation.intent_brief', userRequest: 'hydra storm', requirements: ['Primary request: hydra storm'], missingDetails: [], questions: [], willClarify: false },

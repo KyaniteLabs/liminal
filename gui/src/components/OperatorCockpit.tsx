@@ -203,6 +203,8 @@ export function OperatorCockpit() {
             </div>
             {runReceipt.artifact && <div className="cockpit-artifact"><span>{runReceipt.artifact.label}</span><code>{runReceipt.artifact.path || 'path pending'}</code></div>}
             {runReceipt.preview && <div className="cockpit-artifact"><span>{runReceipt.preview.type} preview {runReceipt.preview.inline ? 'inline' : 'pending'}</span><code>{runReceipt.preview.path || runReceipt.preview.label}</code></div>}
+            {runReceipt.failure && <div className="cockpit-artifact"><span>Failure</span><code>{runReceipt.failure.message}</code></div>}
+            {runReceipt.prior?.artifact && <div className="cockpit-artifact"><span>Prior {runReceipt.prior.revisionKind}</span><code>{runReceipt.prior.artifact.path || runReceipt.prior.artifact.label}</code></div>}
           </section>
         )}
 

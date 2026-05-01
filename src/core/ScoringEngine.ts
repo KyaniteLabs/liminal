@@ -23,6 +23,7 @@ import { Result, ok, err } from 'neverthrow';
 import { LLMError } from '../llm/errors.js';
 import type { RenderEvidence, GenerationEvaluation } from './types/GenerationEvaluation.js';
 import { evaluateRenderEvidencePerception } from '../perception/RenderEvidencePerception.js';
+import { DomainEvaluatorRegistry } from './evaluators/DomainEvaluatorRegistry.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -122,6 +123,7 @@ export interface ScoringStrategy {
 /** Comprehensive strategy — wraps CreativeEvaluator.assess(). */
 class ComprehensiveStrategy implements ScoringStrategy {
   name = 'comprehensive';
+  private readonly domainEvaluators = DomainEvaluatorRegistry.withDefaults();
 
   score(input: ScoringInput): ScoringResult {
     const result = CreativeEvaluator.assess(input.output, {
@@ -138,11 +140,14 @@ class ComprehensiveStrategy implements ScoringStrategy {
     if (result.emergenceScore !== undefined) dimensions.emergence = result.emergenceScore;
     if (result.interestingnessScore !== undefined) dimensions.interestingness = result.interestingnessScore;
 
+    const domainEvaluation = this.domainEvaluators.evaluate(input.domain, input.output);
+
     return {
       score: result.score,
       dimensions,
       issues: result.issues,
       strategy: this.name,
+      report: domainEvaluation ? { domainEvaluation } : undefined,
     };
   }
 }

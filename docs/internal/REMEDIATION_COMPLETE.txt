@@ -101,7 +101,7 @@ Test Suites:
 GIT STATUS
 ═══════════════════════════════════════════════════════════════════════════════
 
-Origin:   https://github.com/Pastorsimon1798/liminal.git
+Origin:   https://github.com/KyaniteLabs/liminal.git
 Branch:   main
 Commits:  88 ahead of origin
 Status:   ✅ Pushed

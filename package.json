@@ -9,11 +9,11 @@
   "license": "BUSL-1.1",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Pastorsimon1798/liminal.git"
+    "url": "git+https://github.com/KyaniteLabs/liminal.git"
   },
-  "homepage": "https://github.com/Pastorsimon1798/liminal#readme",
+  "homepage": "https://github.com/KyaniteLabs/liminal#readme",
   "bugs": {
-    "url": "https://github.com/Pastorsimon1798/liminal/issues"
+    "url": "https://github.com/KyaniteLabs/liminal/issues"
   },
   "files": [
     "dist",

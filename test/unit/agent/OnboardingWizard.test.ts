@@ -14,6 +14,26 @@ describe('OnboardingWizard', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(async () => {
+    process.env = { ...originalEnv };
+    for (const key of [
+      'LLM_BASE_URL',
+      'LIMINAL_LLM_BASE_URL',
+      'LLM_MODEL',
+      'LIMINAL_LLM_MODEL',
+      'LLM_PROVIDER',
+      'LIMINAL_LLM_PROVIDER',
+      'LLM_API_KEY',
+      'LIMINAL_LLM_API_KEY',
+      'MINIMAX_API_KEY',
+      'GLM_API_KEY',
+      'ANTHROPIC_AUTH_TOKEN',
+      'OPENAI_API_KEY',
+      'OPENROUTER_API_KEY',
+      'KIMI_API_KEY',
+      'MOONSHOT_API_KEY',
+    ]) {
+      delete process.env[key];
+    }
     tempHome = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-onboarding-'));
     vi.spyOn(os, 'homedir').mockReturnValue(tempHome);
     wizard = new OnboardingWizard();
@@ -76,8 +96,23 @@ describe('OnboardingWizard', () => {
     // Verify config file contents
     const raw = await fs.readFile(configPath, 'utf-8');
     const config = JSON.parse(raw);
-    expect(config.defaultProvider).toBe('test-provider');
-    expect(config.providers['test-provider'].model).toBe('test-model');
+    expect(config.defaultProvider).toBe('custom');
+    expect(config.providers.custom.baseUrl).toBe('https://api.test.com/v1');
+    expect(config.providers.custom.model).toBe('test-model');
+  });
+
+  it('detects provider-specific keys and writes canonical runtime defaults', async () => {
+    process.env.GLM_API_KEY = 'glm-key';
+
+    const result = await wizard.run();
+    expect(result.configWritten).toBe(true);
+
+    const raw = await fs.readFile(result.configPath, 'utf-8');
+    const config = JSON.parse(raw);
+    expect(config.defaultProvider).toBe('glm');
+    expect(config.providers.glm.baseUrl).toBe('https://api.z.ai/api/anthropic');
+    expect(config.providers.glm.model).toBe('GLM-5v-turbo');
+    expect(config.providers.glm.apiKey).toBe('glm-key');
   });
 
   it('getSteps returns a copy, not the internal array', () => {

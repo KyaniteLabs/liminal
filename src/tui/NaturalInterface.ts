@@ -377,6 +377,7 @@ export class NaturalInterface {
 
   private async handleProvider(args: string[]): Promise<NaturalInputResult> {
     const { PROVIDER_TEMPLATES, listConfiguredProviders, getProviderConfig } = await import('../harness/MultiProviderConfig.js');
+    const { apiKeyEnvNamesForProvider, providerRequiresApiKey } = await import('../config/ProviderRuntime.js');
     const { metaHarness } = await import('../harness/MetaHarnessIntegration.js');
 
     // /provider list — show all providers
@@ -401,10 +402,12 @@ export class NaturalInterface {
     const template = PROVIDER_TEMPLATES[args[0] as keyof typeof PROVIDER_TEMPLATES];
     if (template) {
       const config = getProviderConfig(args[0] as import('../harness/MultiProviderConfig.js').ProviderType);
-      if (!config?.apiKey && args[0] !== 'ollama' && args[0] !== 'lmstudio') {
+      const provider = args[0] as import('../harness/MultiProviderConfig.js').ProviderType;
+      if (!config?.apiKey && providerRequiresApiKey(provider)) {
+        const envName = apiKeyEnvNamesForProvider(provider)[0] || 'LLM_API_KEY';
         return {
           type: 'command',
-          response: `Not configured. Set the API key first:\n  export ${args[0].toUpperCase()}_API_KEY=your-key`,
+          response: `Not configured. Set the API key first:\n  export ${envName}=your-key`,
           shouldContinue: true,
         };
       }

@@ -12,6 +12,10 @@ async function mockDnsLookup(hostname: string): Promise<{ address: string; famil
     '::1': '::1',
     'api.openai.com': '8.8.8.8',
     'api.minimax.io': '8.8.8.8',
+    'api.z.ai': '8.8.8.8',
+    'openrouter.ai': '8.8.8.8',
+    'api.kimi.com': '8.8.8.8',
+    'api.moonshot.ai': '8.8.8.8',
     'sub.api.openai.com': '8.8.8.8',
     'custom.llm.provider.com': '8.8.8.8',
     'evil.com': '8.8.8.8',
@@ -35,6 +39,14 @@ describe('UrlValidator', () => {
 
     it('should allow Minimax API', () => {
       expect(() => validateUrlSync('https://api.minimax.io/v1/chat/completions')).not.toThrow();
+    });
+
+    it('should allow canonical cloud provider APIs when a whitelist is active', () => {
+      const options = { allowedHosts: ['custom.llm.provider.com'] };
+      expect(() => validateUrlSync('https://api.z.ai/api/anthropic', options)).not.toThrow();
+      expect(() => validateUrlSync('https://openrouter.ai/api/v1', options)).not.toThrow();
+      expect(() => validateUrlSync('https://api.kimi.com/coding/v1', options)).not.toThrow();
+      expect(() => validateUrlSync('https://api.moonshot.ai/v1', options)).not.toThrow();
     });
 
     it('should block AWS metadata endpoint', () => {

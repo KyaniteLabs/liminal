@@ -5,6 +5,7 @@
 
 import { lookup as defaultDnsLookup } from 'dns/promises';
 import { logSSRFAttempt } from './SecurityLogger.js';
+import { PROVIDER_DEFAULTS } from '../config/ProviderRuntime.js';
 
 export type DnsLookupFn = typeof defaultDnsLookup;
 
@@ -21,15 +22,24 @@ export interface UrlValidationOptions {
   allowLocalhost?: boolean;
 }
 
+const PROVIDER_DEFAULT_HOSTS = Object.values(PROVIDER_DEFAULTS).flatMap(({ baseUrl }) => {
+  try {
+    return [new URL(baseUrl).hostname.toLowerCase()];
+  } catch {
+    return [];
+  }
+});
+
 // Default allowed hosts for LLM providers
 const DEFAULT_ALLOWED_HOSTS = [
+  ...PROVIDER_DEFAULT_HOSTS,
   'api.openai.com',
   'api.minimaxi.com',    // MiniMax Chinese domestic
   'api.minimaxi.chat',   // MiniMax alternative
   'api.minimax.io',       // MiniMax International Token Plan
   'localhost',
   '127.0.0.1',
-];
+] as const;
 
 // Cloud metadata endpoints that should NEVER be accessible
 const BLOCKED_HOSTS = [

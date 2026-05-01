@@ -67,6 +67,10 @@ Liminal validates all LLM URLs to prevent Server-Side Request Forgery:
 Allowed hosts include:
 - api.openai.com
 - api.minimax.io
+- api.z.ai
+- openrouter.ai
+- api.kimi.com
+- api.moonshot.ai
 - localhost (configurable)
 
 ## Rate Limiting

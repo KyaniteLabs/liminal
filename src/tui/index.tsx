@@ -20,6 +20,7 @@ import { IterationTimeline } from "./components/IterationTimeline";
 import { TransparencyPanel } from "./components/TransparencyPanel";
 import { TransparencyViewer, type ProcessEvent } from "../ui/TransparencyViewer.js";
 import { SERVICE_DEFAULTS } from '../constants.js';
+import { detectProviderLabel, readRuntimeEnv } from '../config/ProviderRuntime.js';
 import { validateImportPath } from '../security/ImportValidator.js';
 
 interface GalleryEntry {
@@ -190,8 +191,10 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
     setCurrentIterations([]);
     setPlayerPianoIndex(0);
     addLog("info", `Starting: "${prompt.slice(0, 30)}..."`);
-    const model = process.env.LLM_MODEL || SERVICE_DEFAULTS.DEFAULT_MODEL;
-    addLog("llm", `→ LLM Request: lmstudio/${model}`);
+    const baseUrl = readRuntimeEnv(process.env, 'LLM_BASE_URL') || SERVICE_DEFAULTS.LOCAL_LLM_URL;
+    const model = readRuntimeEnv(process.env, 'LLM_MODEL') || SERVICE_DEFAULTS.DEFAULT_MODEL;
+    const provider = detectProviderLabel(baseUrl, model);
+    addLog("llm", `→ LLM Request: ${provider}/${model}`);
     addLog("llm", `  Prompt: ~${prompt.length + 2000} chars`);
 
     const projectName = `project-${Date.now()}`;

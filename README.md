@@ -33,8 +33,8 @@ liminal --configure
 
 # Or use environment variables:
 export LLM_API_KEY=your-key
-export LLM_MODEL=minimax/M2.7-0716
-export LLM_BASE_URL=https://api.minimaxi.chat/v1
+export LLM_MODEL=MiniMax-M2.7
+export LLM_BASE_URL=https://api.minimax.io/anthropic
 
 # Generate
 liminal --prompt "Create a calming blue particle system"
@@ -114,7 +114,7 @@ Each iteration, Liminal:
 - **Emergence evaluation** — Novelty scoring, temporal structure analysis, perturbation probes, weighted ensemble critic
 - **Taste learning + dreaming** — Preference-informed generation, cross-modal dream recombinations, motif rehydration
 - **Autonomous Gardener** — Background creative steward that manages taste, dreaming, and emergence automatically
-- **Model-agnostic** — Works with any provider: MiniMax, OpenAI, Anthropic, Ollama, LM Studio, OpenRouter, GLM
+- **Model-agnostic** — Works with any provider: MiniMax, OpenAI, Anthropic-style endpoints, Ollama, LM Studio, OpenRouter, GLM, Kimi, Moonshot, or a custom OpenAI-compatible endpoint
 - **Model Assimilation Protocol** — Auditions new models by role/domain before promotion; see [docs/MODEL_ASSIMILATION_PROTOCOL.md](docs/MODEL_ASSIMILATION_PROTOCOL.md)
 - **Circuit breaker** — Automatic provider failover with smart routing
 
@@ -206,8 +206,8 @@ Liminal reads from `~/.liminal/config.json`, environment variables, or `--config
 ```bash
 # Environment variables
 LLM_API_KEY=your-key
-LLM_MODEL=minimax/M2.7-0716
-LLM_BASE_URL=https://api.minimaxi.chat/v1
+LLM_MODEL=MiniMax-M2.7
+LLM_BASE_URL=https://api.minimax.io/anthropic
 
 # Or swap models on the fly
 LIMINAL_LLM_MODEL='google/gemini-3.1-pro-preview' liminal bubbletea

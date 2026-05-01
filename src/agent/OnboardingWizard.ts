@@ -14,6 +14,16 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { Logger } from '../utils/Logger.js';
+import {
+  PROVIDER_DEFAULTS,
+  PROVIDER_ORDER,
+  detectRuntimeProviderFromUrl,
+  providerRequiresApiKey,
+  resolveProviderAlias,
+  resolveProviderRuntime,
+  selectRuntimeApiKey,
+  type RuntimeProviderKey,
+} from '../config/ProviderRuntime.js';
 
 export interface OnboardingStep {
   id: string;
@@ -46,24 +56,37 @@ export class OnboardingWizard {
 
     // Step 1: Detect provider
     this.setStep('detect', 'in_progress');
-    const provider = overrides?.provider || (process.env.LLM_BASE_URL ? 'custom' : 'minimax');
-    const baseUrl = overrides?.baseUrl || process.env.LLM_BASE_URL || '';
-    const apiKey = overrides?.apiKey || process.env.LLM_API_KEY || '';
-    const model = overrides?.model || process.env.LLM_MODEL || 'auto';
+    const configuredBaseUrl = overrides?.baseUrl || process.env.LIMINAL_LLM_BASE_URL || process.env.LLM_BASE_URL;
+    const configuredModel = overrides?.model || process.env.LIMINAL_LLM_MODEL || process.env.LLM_MODEL;
+    const provider = this.detectProvider(overrides?.provider, configuredBaseUrl, configuredModel);
 
-    if (!baseUrl && !apiKey) {
+    if (!provider) {
       this.setStep('detect', 'failed');
       return { steps: [...this.steps], configWritten: false, configPath };
     }
-    this.setStep('detect', 'complete', provider);
+
+    const runtime = resolveProviderRuntime({
+      provider,
+      configuredBaseUrl,
+      model: configuredModel,
+      configuredApiKey: overrides?.apiKey,
+    });
+    const apiKey = selectRuntimeApiKey({
+      provider,
+      baseUrl: runtime.baseUrl,
+      model: runtime.model,
+      configuredApiKey: overrides?.apiKey,
+      genericFirst: true,
+    });
+    this.setStep('detect', 'complete', runtime.label);
 
     // Step 2: Validate connectivity (basic check — non-empty key)
     this.setStep('validate', 'in_progress');
-    if (!apiKey) {
+    if (providerRequiresApiKey(provider) && !apiKey) {
       this.setStep('validate', 'failed');
       return { steps: [...this.steps], configWritten: false, configPath };
     }
-    this.setStep('validate', 'complete', 'API key present');
+    this.setStep('validate', 'complete', apiKey ? 'API key present' : 'local provider');
 
     // Step 3: Write config
     this.setStep('write', 'in_progress');
@@ -73,8 +96,8 @@ export class OnboardingWizard {
         defaultProvider: provider,
         providers: {
           [provider]: {
-            baseUrl: baseUrl || undefined,
-            model,
+            baseUrl: runtime.baseUrl,
+            model: runtime.model,
             apiKey: apiKey || undefined,
           },
         },
@@ -103,5 +126,24 @@ export class OnboardingWizard {
       step.status = status;
       if (value !== undefined) step.value = value;
     }
+  }
+
+  private detectProvider(
+    overrideProvider: string | undefined,
+    configuredBaseUrl: string | undefined,
+    configuredModel: string | undefined,
+  ): RuntimeProviderKey | undefined {
+    const explicit = resolveProviderAlias(
+      overrideProvider || process.env.LIMINAL_LLM_PROVIDER || process.env.LLM_PROVIDER,
+    );
+    if (explicit) return explicit;
+    if (configuredBaseUrl) return detectRuntimeProviderFromUrl(configuredBaseUrl, configuredModel);
+
+    return PROVIDER_ORDER.find(provider => selectRuntimeApiKey({
+      provider,
+      baseUrl: PROVIDER_DEFAULTS[provider].baseUrl,
+      model: PROVIDER_DEFAULTS[provider].model,
+      genericFirst: true,
+    }));
   }
 }

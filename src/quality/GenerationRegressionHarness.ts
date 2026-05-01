@@ -11,6 +11,7 @@ import { ToneGenerator } from '../generators/tone/ToneGenerator.js';
 import { HTMLWebGenerator } from '../generators/html/HTMLWebGenerator.js';
 import { ASCIIArtGenerator } from '../generators/ascii/ASCIIArtGenerator.js';
 import { RevideoGenerator } from '../generators/revideo/RevideoGenerator.js';
+import { PROVIDER_DEFAULTS, resolveProviderAlias } from '../config/ProviderRuntime.js';
 
 export type RegressionDomain =
   | 'p5'
@@ -74,16 +75,9 @@ export function normalizeRegressionDomain(domain: RegressionRequest['domain']): 
 
 export function inferRegressionBaseUrl(provider: string, explicitBaseUrl?: string): string {
   if (explicitBaseUrl) return explicitBaseUrl;
-  switch (provider) {
-    case 'lmstudio':
-      return 'http://localhost:1234/v1';
-    case 'ollama':
-      return 'http://localhost:11434/v1';
-    case 'minimax':
-      return 'https://api.minimaxi.com/v1';
-    default:
-      throw new Error(`Unknown provider: ${provider}`);
-  }
+  const runtimeProvider = resolveProviderAlias(provider);
+  if (runtimeProvider) return PROVIDER_DEFAULTS[runtimeProvider].baseUrl;
+  throw new Error(`Unknown provider: ${provider}`);
 }
 
 function shouldAllowLocalhost(baseUrl: string): boolean {

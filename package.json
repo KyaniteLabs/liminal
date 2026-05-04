@@ -65,7 +65,8 @@
     "qa:creative-domains": "node scripts/qa-creative-domains.mjs",
     "qa:creative-domains:static": "node scripts/qa-creative-domains.mjs --no-serve",
     "proof:visual-output-previews": "tsx scripts/proof/visual-output-preview-contract.ts",
-    "proof:studio-launch-gauntlet": "node scripts/proof/studio-launch-gauntlet.mjs"
+    "proof:studio-launch-gauntlet": "node scripts/proof/studio-launch-gauntlet.mjs",
+    "proof:route-performance": "tsx scripts/proof/route-performance-budget.ts"
   },
   "keywords": [
     "generative-art",

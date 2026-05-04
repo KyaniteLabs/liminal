@@ -1,8 +1,10 @@
 # Comprehensive Audit Report: Everything Wrong
 
-**Worktree:** `agent-comprehensive-audit-1775573255`  
-**Date:** 2026-04-07  
-**Status:** 🔴 CRITICAL ISSUES FOUND
+> **Historical artifact — 2026-04-07 snapshot.** The critical issues reported below were identified and resolved. This document is retained for audit trail only. For current system health, run `pnpm test` and see the archaeology ledger at `docs/archaeology-ledger.md`.
+
+**Worktree:** `agent-comprehensive-audit-1775573255`
+**Date:** 2026-04-07
+**Status:** 🔴 CRITICAL ISSUES FOUND (resolved — see historical note above)
 
 ---
 

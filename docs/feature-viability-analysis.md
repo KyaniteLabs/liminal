@@ -1,6 +1,6 @@
 # Liminal — Feature Viability Analysis
 
-**Date:** 2026-04-06 (updated 2026-04-21)
+**Date:** 2026-04-06 (updated 2026-05-04)
 **Status:** Active reference
 **Classification:** Internal — Proprietary
 **Author:** Generated from deep codebase exploration + market research
@@ -9,7 +9,7 @@
 
 ## A. Executive Summary
 
-Liminal is a creative coding engine that combines iterative LLM generation, multi-domain code output (p5.js, Three.js, GLSL, Hydra, Strudel, Tone.js, Revideo, HTML, ASCII, Kinetic Typography, generative text — 11 domains total), quality scoring, evolutionary optimization, and cross-domain composition into a single system. Three interfaces: CLI, Studio (chat-first TUI agent), and Bubble Tea TUI.
+Liminal is a creative coding engine that combines iterative LLM generation, multi-domain code output (p5.js, Three.js, GLSL, Hydra, Strudel, Tone.js, Revideo, HTML, ASCII, Kinetic Typography, SVG, HyperFrames, generative text — 13 domains total), quality scoring, evolutionary optimization, and cross-domain composition into a single system. Four interfaces: CLI, Studio (chat-first TUI agent), Bubble Tea TUI, and web GUI (React + Vite workbench).
 
 ### Top 3 Opportunities
 
@@ -25,7 +25,7 @@ Liminal is a creative coding engine that combines iterative LLM generation, mult
 
 ### The Bottom Line
 
-Liminal's strongest asset is **integration breadth** — 11 creative domains working end-to-end with iterative generation, evolutionary optimization, and cross-domain composition. No single component is algorithmically novel, but the orchestration is real engineering that would take 6-12 months to replicate from scratch. The **Autonomous Gardener** (TasteModelTrainer + DreamPlanner + EmergenceCritic + StagnationDetector) is the most commercially interesting subsystem because it gets smarter with usage — a potential data flywheel.
+Liminal's strongest asset is **integration breadth** — 13 creative domains working end-to-end with iterative generation, evolutionary optimization, and cross-domain composition. No single component is algorithmically novel, but the orchestration is real engineering that would take 6-12 months to replicate from scratch. The **Autonomous Gardener** (TasteModelTrainer + DreamPlanner + EmergenceCritic + StagnationDetector) is the most commercially interesting subsystem because it gets smarter with usage — a potential data flywheel.
 
 **Recommendation:** Proprietary license, start with SaaS + API, invest in validating quality scoring against human judgment.
 
@@ -37,7 +37,7 @@ Liminal's strongest asset is **integration breadth** — 11 creative domains wor
 
 | Capability | Maturity | Commercial Value |
 |---|---|---|
-| Multi-domain code generation (11 domains) | Production | High — nobody else does this breadth |
+| Multi-domain code generation (13 domains) | Production | High — nobody else does this breadth |
 | Iterative refinement (RalphLoop) | Production | Medium — standard optimization loop, but well-orchestrated |
 | Autonomous Gardener (taste + dream + emergence) | Production | High — gets smarter with usage, potential flywheel |
 | Audio → visual mapping pipeline | Production | Medium — functional but standard DSP techniques |
@@ -58,7 +58,7 @@ Liminal's strongest asset is **integration breadth** — 11 creative domains wor
 | Quality scoring is regex heuristics, not validated | High — users will notice bad outputs passing gates | Partially addressed: CreativeBoard multi-perspective evaluation, EmergenceCritic measures novelty |
 | Meta-harness is open-loop (logs but doesn't auto-adapt) | High — missing the most valuable feedback mechanism | **Closed:** Thinking-Trace Feedback Loop, MetaHarnessIntegration, ModelBehaviorPatterns |
 | No RLHF or preference learning pipeline | High — no data flywheel from user feedback | **Closed:** TasteModelTrainer with margin-based SGD, PreferenceDatasetBuilder, ReplayBiasPolicy |
-| No web UI (CLI only) | Critical — most users won't install a CLI tool | Partially addressed: StudioAgent (chat-first TUI), Bubble Tea Go TUI. Full web UI still needed for SaaS. |
+| No web UI (CLI only) | Critical — most users won't install a CLI tool | Partially addressed: StudioAgent (chat-first TUI), Bubble Tea Go TUI, React+Vite web GUI (`gui/`). Web GUI exists but needs SaaS features (auth, billing, multi-tenant). |
 | No auth, rate limiting, or multi-tenancy | Critical — can't serve multiple users | Open — still needed for SaaS |
 | Evolutionary algorithms are placeholder-grade | Medium — IGA is not a real GA, MetaMode is simulated | Partially addressed: DreamPlanner + RecombinationEngine + CrossModalTransfer |
 | Cross-domain crossover is hand-coded, not learned | Medium — brittle mappings, doesn't generalize | **Closed:** CrossModalTransfer maps techniques between domains |
@@ -324,7 +324,7 @@ The closest workflow today: Claude/ChatGPT for generation → paste into p5.js e
 
 ### Current License Status
 
-Liminal's `LICENSE` file is **MIT** — this means anyone can fork, modify, and even sell the code without paying Simon. This must change before any commercial activity.
+Liminal's `LICENSE` file is **BUSL-1.1** (Business Source License 1.1) — non-production, educational, and personal use allowed; commercial use prohibited without a separate license. Converts to MIT on 2029-04-15. **Re-licensing from MIT is DONE.**
 
 ### Integrated Dependencies — Attribution Requirements
 
@@ -365,14 +365,14 @@ Liminal integrates a significant number of external libraries. Each has its own 
 
 ### Critical Legal Actions
 
-1. **Re-license from MIT to proprietary** — This is the single most important legal step. The current MIT license allows anyone to compete with a fork.
-2. **Audit hydra-synth and strudel dependencies** — Both are AGPL. If Liminal runs these server-side (which it does via HydraAdapter and StrudelAdapter), the AGPL may require disclosing Liminal's source code. Options:
+1. **Re-license from MIT to proprietary** — **DONE.** Re-licensed to BUSL-1.1 with non-production/educational/personal use grant. Converts to MIT on 2029-04-15.
+2. **Audit hydra-synth and strudel dependencies** — Both are AGPL. Neither is a direct `package.json` dependency; they run client-side in the browser via CDN/adapter pattern, which avoids the AGPL server-side copyleft trigger. Risk is reduced but should still be formally documented with legal counsel. Options:
    - Run Hydra/Strudel client-side only (in the browser) — AGPL doesn't apply to client-side use
    - Negotiate commercial licenses with the library authors
    - Replace with non-AGPL alternatives (hardest path)
 3. **LLM output ownership** — Verify terms for each LLM provider. Most (OpenAI, Anthropic) grant ownership of outputs to the user. MiniMax terms need verification.
 4. **Trademark "Liminal"** — Search USPTO for existing trademarks. The name is generic enough that it may be taken.
-5. **Attribution compliance** — Create a `THIRD_PARTY_NOTICES` file listing all dependencies with their license text. Required for MIT/BSD/Apache libraries.
+5. **Attribution compliance** — Create a `THIRD_PARTY_NOTICES` file listing all dependencies with their license text. **Partially done** — file exists with NODEPROMPT attribution. Needs expansion to cover all MIT/BSD/Apache dependencies listed above.
 6. **FFmpeg linking** — Ensure FFmpeg is dynamically linked (called via CLI, not statically compiled). Static linking would trigger GPL.
 7. **Music/sound licensing** — If Tone.js or Strudel generates music, ensure there's no copyright claim from training data. This is an evolving legal area.
 
@@ -422,9 +422,9 @@ Liminal integrates a significant number of external libraries. Each has its own 
 
 ### Phase 0: Legal Foundation (Before Anything Else)
 
-1. **Re-license to proprietary** (BSL or custom EULA)
-2. **Audit AGPL dependencies** — resolve hydra-synth and strudel licensing
-3. **Create THIRD_PARTY_NOTICES file**
+1. **Re-license to proprietary** — **DONE.** BUSL-1.1 with non-production/educational/personal use grant.
+2. **Audit AGPL dependencies** — Reduced risk: hydra-synth and strudel run client-side, not server-side. Formal legal review still recommended.
+3. **Create THIRD_PARTY_NOTICES file** — **Partially done.** File exists with NODEPROMPT attribution. Needs expansion for all dependencies.
 4. **Trademark search for "Liminal"**
 5. **Add Contributor License Agreement (CLA)** for any open contributions
 

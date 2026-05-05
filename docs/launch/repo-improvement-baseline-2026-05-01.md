@@ -126,5 +126,5 @@ Existing launch ledgers still matter:
 - #451 and #452 should start from the largest-module map and characterize behavior before refactoring.
 - #453 should start from ADR-0001 and the provider-env caveat.
 - #454 should promote this matrix into a stricter ongoing CI/test policy.
-- #455 should use the doc classification table as seed input.
+- #455 produced a durable archaeology ledger at `docs/launch/repo-archaeology-ledger-2026-05-04.md` that supersedes the classification table below. Use the ledger as the authoritative classification source.
 - #456 and #457 should use the launch proof/caveat ledgers and must rerun live/browser proof before making public claims.

@@ -11,6 +11,70 @@ const repoRoot = path.join(binDir, '..');
 const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8'));
 const args = process.argv.slice(2);
 
+const CLI_PROVIDER_DEFAULTS = {
+  lmstudio: {
+    label: 'LM Studio',
+    baseUrl: 'http://localhost:1234/v1',
+    model: 'local-model',
+    requiresKey: false,
+  },
+  ollama: {
+    label: 'Ollama',
+    baseUrl: 'http://localhost:11434',
+    model: 'llama3.2',
+    requiresKey: false,
+  },
+  openai: {
+    label: 'OpenAI',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-5.4',
+    requiresKey: true,
+    apiKeyEnv: 'OPENAI_API_KEY',
+  },
+  minimax: {
+    label: 'MiniMax',
+    baseUrl: 'https://api.minimax.io/anthropic',
+    model: 'MiniMax-M2.7',
+    requiresKey: true,
+    apiKeyEnv: 'MINIMAX_API_KEY',
+  },
+  glm: {
+    label: 'GLM',
+    baseUrl: 'https://api.z.ai/api/anthropic',
+    model: 'GLM-5v-turbo',
+    requiresKey: true,
+    apiKeyEnv: 'GLM_API_KEY',
+  },
+  openrouter: {
+    label: 'OpenRouter',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'anthropic/claude-3.5-sonnet',
+    requiresKey: true,
+    apiKeyEnv: 'OPENROUTER_API_KEY',
+  },
+  kimi: {
+    label: 'Kimi Code',
+    baseUrl: 'https://api.kimi.com/coding/v1',
+    model: 'k2p5',
+    requiresKey: true,
+    apiKeyEnv: 'KIMI_API_KEY',
+  },
+  moonshot: {
+    label: 'Moonshot AI',
+    baseUrl: 'https://api.moonshot.ai/v1',
+    model: 'kimi-k2.5',
+    requiresKey: true,
+    apiKeyEnv: 'MOONSHOT_API_KEY',
+  },
+};
+const CLI_PROVIDER_NAMES = Object.keys(CLI_PROVIDER_DEFAULTS);
+
+function resolveCliProvider(value) {
+  if (!value) return undefined;
+  const normalized = value.toLowerCase();
+  return CLI_PROVIDER_DEFAULTS[normalized] ? normalized : undefined;
+}
+
 // Parse flags
 const flags = {};
 let cmd = null;
@@ -191,9 +255,9 @@ function printHelp() {
   console.log('  --prompt, -p <text>         Prompt for generation');
   console.log('  --max-iterations, -m <num>  Max iterations (default: 3)');
   console.log('  --output, -o <path>         Output directory');
-  console.log('  --provider <name>           LLM provider (lmstudio, inception, ollama)');
+  console.log(`  --provider <name>           LLM provider (${CLI_PROVIDER_NAMES.join(', ')})`);
   console.log('  --model <name>              Model name');
-  console.log('  --configure                 Set up LM Studio config');
+  console.log('  --configure                 Set up provider config (default: LM Studio)');
   console.log('  --recent [n]                Show recent prompts (default: 10)');
   console.log('  --favorite <prompt>         Add prompt to favorites');
   console.log('  --favorites                 List favorite prompts');
@@ -511,18 +575,20 @@ const history = new PromptHistory();
 
 // Handle --configure flag
 if (flags.configure) {
+  const providerKey = resolveCliProvider(flags.provider) || 'lmstudio';
+  const providerDefaults = CLI_PROVIDER_DEFAULTS[providerKey];
   console.log('');
   console.log('🎨 Liminal Configuration');
   console.log('');
-  console.log('Setting up LM Studio config...');
+  console.log(`Setting up ${providerDefaults.label} config...`);
   console.log('');
   
   const config = {
-    defaultProvider: 'lmstudio',
+    defaultProvider: providerKey,
     providers: {
-      lmstudio: {
-        baseUrl: 'http://localhost:1234/v1',
-        model: 'local-model'
+      [providerKey]: {
+        baseUrl: providerDefaults.baseUrl,
+        model: flags.model || providerDefaults.model
       }
     }
   };
@@ -532,6 +598,10 @@ if (flags.configure) {
     console.log('');
     console.log('You can now run:');
     console.log('  liminal --prompt "your idea"');
+    if (providerDefaults.requiresKey && providerDefaults.apiKeyEnv) {
+      console.log('');
+      console.log(`Set ${providerDefaults.apiKeyEnv} before generating with ${providerDefaults.label}.`);
+    }
     console.log('');
     process.exit(0);
   }).catch(err => {
@@ -544,20 +614,15 @@ if (flags.configure) {
 
 // Override config with CLI flags
 if (flags.provider) {
-  // --provider is now a convenience shorthand for setting baseUrl
-  // The actual provider name is no longer stored - we use baseUrl + model directly
-  const providerUrls = {
-    'lmstudio': 'http://localhost:1234/v1',
-    'inception': 'http://localhost:5000/v1',
-    'ollama': 'http://localhost:11434/v1',  // Note: Ollama OpenAI-compatible endpoint
-    'openai': 'https://api.openai.com/v1',
-    'minimax': 'https://api.minimax.io/v1',
-  };
-  if (providerUrls[flags.provider]) {
-    process.env.LIMINAL_LLM_BASE_URL = providerUrls[flags.provider];
-    console.log(`[CLI] Using ${flags.provider} endpoint: ${providerUrls[flags.provider]}`);
+  const providerKey = resolveCliProvider(flags.provider);
+  if (providerKey) {
+    const providerDefaults = CLI_PROVIDER_DEFAULTS[providerKey];
+    process.env.LIMINAL_LLM_PROVIDER = providerKey;
+    process.env.LIMINAL_LLM_BASE_URL = providerDefaults.baseUrl;
+    if (!process.env.LIMINAL_LLM_MODEL) process.env.LIMINAL_LLM_MODEL = providerDefaults.model;
+    console.log(`[CLI] Using ${providerDefaults.label} endpoint: ${providerDefaults.baseUrl}`);
   } else {
-    console.warn(`[CLI] Unknown provider: ${flags.provider}. Use --base-url to set custom endpoint.`);
+    console.warn(`[CLI] Unknown provider: ${flags.provider}. Use one of: ${CLI_PROVIDER_NAMES.join(', ')}, or set LIMINAL_LLM_BASE_URL.`);
   }
 }
 if (flags.model) {

@@ -11,6 +11,17 @@
  * Returns a structured report with pass/fail/warn per check.
  */
 
+import {
+  PROVIDER_DEFAULTS,
+  PROVIDER_ORDER,
+  apiKeyEnvNamesForProvider,
+  detectRuntimeProviderFromUrl,
+  isPlaceholderApiKey,
+  resolveProviderAlias,
+  resolveProviderRuntime,
+  type RuntimeProviderKey,
+} from '../config/ProviderRuntime.js';
+
 export interface DiagnosticCheck {
   name: string;
   status: 'pass' | 'fail' | 'warn';
@@ -21,6 +32,12 @@ export interface DiagnosticReport {
   checks: DiagnosticCheck[];
   timestamp: string;
   allPassed: boolean;
+}
+
+const GENERIC_API_KEY_ENV_NAMES = ['LIMINAL_LLM_API_KEY', 'LLM_API_KEY'] as const;
+
+interface ApiKeySource {
+  name: string;
 }
 
 export class EnvironmentValidator {
@@ -83,15 +100,129 @@ export class EnvironmentValidator {
   }
 
   private checkProviderConfig(): DiagnosticCheck {
-    const baseUrl = process.env.LLM_BASE_URL;
-    const apiKey = process.env.LLM_API_KEY;
+    const env = process.env;
+    const configuredBaseUrl = env.LIMINAL_LLM_BASE_URL || env.LLM_BASE_URL;
+    const configuredModel = env.LIMINAL_LLM_MODEL || env.LLM_MODEL;
+    const explicitProviderValue = env.LIMINAL_LLM_PROVIDER || env.LLM_PROVIDER;
+    const explicitProvider = resolveProviderAlias(explicitProviderValue);
 
-    if (baseUrl && apiKey) {
-      return { name: 'Provider', status: 'pass', message: `LLM_BASE_URL and LLM_API_KEY set` };
+    if (explicitProviderValue && !explicitProvider) {
+      return {
+        name: 'Provider',
+        status: 'fail',
+        message: `Unknown LLM provider "${explicitProviderValue}" - use ${Object.keys(PROVIDER_DEFAULTS).join(', ')}`,
+      };
     }
-    if (baseUrl || apiKey) {
-      return { name: 'Provider', status: 'warn', message: 'Partial provider config — set both LLM_BASE_URL and LLM_API_KEY' };
+
+    if (
+      !explicitProvider
+      && env.LLM_BASE_URL
+      && !env.LIMINAL_LLM_BASE_URL
+      && this.findGenericApiKeySource(env)?.name === 'LLM_API_KEY'
+    ) {
+      return { name: 'Provider', status: 'pass', message: 'Legacy LLM_BASE_URL and LLM_API_KEY set' };
     }
-    return { name: 'Provider', status: 'warn', message: 'No LLM provider env vars — using config file defaults' };
+
+    const provider = explicitProvider
+      ?? this.detectProviderFromConfiguredBaseUrl(configuredBaseUrl, configuredModel)
+      ?? this.detectProviderFromConfiguredKey(env);
+
+    if (provider) {
+      const runtime = resolveProviderRuntime({
+        provider,
+        configuredBaseUrl,
+        model: configuredModel,
+        env,
+      });
+      const keySource = this.findApiKeySource(provider, env);
+
+      if (runtime.requiresKey) {
+        if (runtime.apiKey) {
+          return {
+            name: 'Provider',
+            status: 'pass',
+            message: `${runtime.label} configured via ${keySource?.name ?? 'configured API key'} at ${runtime.baseUrl}`,
+          };
+        }
+
+        return {
+          name: 'Provider',
+          status: 'fail',
+          message: `${runtime.label} requires ${this.formatApiKeyGuidance(provider)} for ${runtime.baseUrl}`,
+        };
+      }
+
+      return {
+        name: 'Provider',
+        status: 'pass',
+        message: `${runtime.label} configured at ${runtime.baseUrl}; no API key required`,
+      };
+    }
+
+    if (configuredBaseUrl) {
+      return {
+        name: 'Provider',
+        status: 'fail',
+        message: 'Provider base URL is set but no usable API key was found - set LIMINAL_LLM_API_KEY or the provider-specific key',
+      };
+    }
+
+    if (this.findGenericApiKeySource(env)) {
+      return {
+        name: 'Provider',
+        status: 'warn',
+        message: 'API key is set without a provider or base URL - set LIMINAL_LLM_PROVIDER or LIMINAL_LLM_BASE_URL',
+      };
+    }
+
+    return {
+      name: 'Provider',
+      status: 'warn',
+      message: 'No LLM provider env vars - set LIMINAL_LLM_PROVIDER plus a provider key, or run /setup',
+    };
+  }
+
+  private detectProviderFromConfiguredBaseUrl(
+    configuredBaseUrl: string | undefined,
+    configuredModel: string | undefined,
+  ): RuntimeProviderKey | undefined {
+    if (!configuredBaseUrl) return undefined;
+    return detectRuntimeProviderFromUrl(configuredBaseUrl, configuredModel);
+  }
+
+  private detectProviderFromConfiguredKey(env: NodeJS.ProcessEnv): RuntimeProviderKey | undefined {
+    return PROVIDER_ORDER.find(provider => this.findPrimaryApiKeySource(provider, env) !== undefined);
+  }
+
+  private findApiKeySource(provider: RuntimeProviderKey, env: NodeJS.ProcessEnv): ApiKeySource | undefined {
+    const names = [
+      ...apiKeyEnvNamesForProvider(provider),
+      ...GENERIC_API_KEY_ENV_NAMES,
+    ];
+    for (const name of names) {
+      if (!isPlaceholderApiKey(env[name])) return { name };
+      const liminalName = name.startsWith('LIMINAL_') ? undefined : `LIMINAL_${name}`;
+      if (liminalName && !isPlaceholderApiKey(env[liminalName])) return { name: liminalName };
+    }
+    return undefined;
+  }
+
+  private findPrimaryApiKeySource(provider: RuntimeProviderKey, env: NodeJS.ProcessEnv): ApiKeySource | undefined {
+    const primaryName = apiKeyEnvNamesForProvider(provider)[0];
+    if (!primaryName || isPlaceholderApiKey(env[primaryName])) return undefined;
+    return { name: primaryName };
+  }
+
+  private findGenericApiKeySource(env: NodeJS.ProcessEnv): ApiKeySource | undefined {
+    const name = GENERIC_API_KEY_ENV_NAMES.find(key => !isPlaceholderApiKey(env[key]));
+    return name ? { name } : undefined;
+  }
+
+  private formatApiKeyGuidance(provider: RuntimeProviderKey): string {
+    const names = new Set([
+      ...apiKeyEnvNamesForProvider(provider),
+      ...GENERIC_API_KEY_ENV_NAMES,
+    ]);
+    return Array.from(names).join(' or ');
   }
 }

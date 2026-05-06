@@ -12,7 +12,7 @@ Status: first-pass prevention plan.
 - Example smoke: compile or execute every public example exactly as written.
 - Integration and slow CI must be green before release readiness can be claimed.
 - Live creative-domain proof must cover every public launch domain or the launch docs must declare the narrower set.
-- Provider setup diagnostics: run credential-free validation for every documented provider.
+- Provider setup diagnostics: run credential-free validation for every documented provider and keep CLI provider shorthands aligned with ProviderRuntime defaults.
 - Browser/UI smoke: prove visible stop control, visible preview error state, and at least one Studio prompt-to-preview path.
 - Cancellation smoke: prove AbortSignal reaches provider calls and retry backoff.
 - Visual proof fixture suite: blank, solid, transparent, corrupt, and valid screenshots.

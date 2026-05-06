@@ -82,6 +82,7 @@ Release risk: high. These items make customers angry even when the core code run
    - Findings: FQA-006
    - Action: update CLI help, onboarding, and env validation around documented providers, especially GLM.
    - Proof: credential-free provider setup diagnostics tests.
+   - Remediation status: verified. `EnvironmentValidator` now uses ProviderRuntime provider/key truth, fails selected cloud providers with exact key guidance, accepts GLM/provider-specific keys without generic envs, treats LM Studio/Ollama as keyless local providers, avoids inferring GLM from Anthropic-compatible fallback tokens alone, and CLI help/shorthands advertise the documented provider set.
 
 2. Make stop/cancel visible and effective.
    - Findings: FQA-016, FQA-023, FQA-024

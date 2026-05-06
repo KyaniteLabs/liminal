@@ -165,9 +165,15 @@ export class SwarmOrchestrator {
         }
       }
       selectedIds = positiveScorers.slice(0, selectedCount).map(([id]) => id);
+      for (const [id] of sortedExperts) {
+        if (selectedIds.length >= 2) break;
+        if (!selectedIds.includes(id)) selectedIds.push(id);
+      }
     }
     
-    const selectedExperts = ALL_EXPERTS.filter(e => selectedIds.includes(e.id));
+    const selectedExperts = selectedIds
+      .map(id => ALL_EXPERTS.find(e => e.id === id))
+      .filter((expert): expert is ExpertDescription => expert !== undefined);
     
     // Build reasoning string
     const reasoningParts: string[] = [];
@@ -659,10 +665,12 @@ export class SwarmOrchestrator {
           }
         );
 
+        const cleanContent = this.extractCodeFromResponse(content);
+
         return {
           personaId: persona.id,
           personaName: persona.displayName,
-          content: content.trim(),
+          content: cleanContent,
           model: persona.model,
           tokensUsed: content.length, // Approximate
           latencyMs: Date.now() - startTime,
@@ -719,17 +727,19 @@ export class SwarmOrchestrator {
           }
         );
 
+        const cleanContent = this.extractCodeFromResponse(content);
+
         outputs.set(persona.id, {
           personaId: persona.id,
           personaName: persona.displayName,
-          content: content.trim(),
+          content: cleanContent,
           model: persona.model,
           tokensUsed: content.length,
           latencyMs: Date.now() - startTime,
           roundNum,
         });
 
-        currentChain += `\n\n${persona.displayName}: ${content.trim()}`;
+        currentChain += `\n\n${persona.displayName}: ${cleanContent}`;
       } catch (error) {
         outputs.set(persona.id, {
           personaId: persona.id,

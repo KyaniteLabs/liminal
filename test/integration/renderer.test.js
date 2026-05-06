@@ -3,24 +3,17 @@ import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
  * Integration tests for Renderer
  *
  * Tests screenshot capture functionality with headless browser.
- *
- * Skipped when: CI=1, or CDN is unreachable. Renderer loads p5.js from
- * cdnjs.cloudflare.com — in sandboxed/offline environments these tests
- * hang until the 30s timeout fires.
  */
 
 import { Renderer } from '../../src/render/Renderer.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { existsSync } from 'fs';
-import { isCdnAvailable } from '../helpers/networkCheck.js';
 
 // Increase timeout for integration tests involving browser automation
 const RENDER_TIMEOUT = 30000; // 30 seconds
 
-const cdnAvailable = await isCdnAvailable();
-
-describe.skipIf(process.env.CI || !cdnAvailable)('Renderer Integration Tests', () => {
+describe('Renderer Integration Tests', () => {
   let renderer;
   const testOutputDir = './test-output';
   const testImagePath = path.join(testOutputDir, 'test-screenshot.png');
@@ -37,6 +30,8 @@ describe.skipIf(process.env.CI || !cdnAvailable)('Renderer Integration Tests', (
   });
 
   afterAll(async () => {
+    await Renderer.closeBrowser();
+
     // Clean up test files
     try {
       if (existsSync(testImagePath)) {

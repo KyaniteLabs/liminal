@@ -270,8 +270,7 @@ describe('SwarmOrchestrator', () => {
   // ─── Routing ──────────────────────────────────────────────────────────
 
   describe('routePromptToExperts()', () => {
-    // TODO: routing heuristic only selects 1 expert for "visual generative sketch" — needs score tuning
-    it.skip('routes visual prompt to visual experts', () => {
+    it('routes visual prompt to visual experts', () => {
       const orchestrator = new SwarmOrchestrator(undefined, {
         callOllama: createMockOllama(),
       });
@@ -324,8 +323,7 @@ describe('SwarmOrchestrator', () => {
   // ─── getRoutedPersonas ────────────────────────────────────────────────
 
   describe('getRoutedPersonas()', () => {
-    // TODO: depends on routePromptToExperts selecting ≥2 experts for visual prompts
-    it.skip('returns personas matching routed experts', () => {
+    it('returns personas matching routed experts', () => {
       const orchestrator = new SwarmOrchestrator(undefined, {
         callOllama: createMockOllama(),
       });
@@ -802,8 +800,7 @@ describe('SwarmOrchestrator', () => {
   // ─── Code Extraction ─────────────────────────────────────────────────
 
   describe('code extraction', () => {
-    // TODO: run() doesn't strip markdown fences from ollama responses
-    it.skip('extracts code from markdown fence responses', async () => {
+    it('extracts code from markdown fence responses', async () => {
       const mockOllama = vi.fn(async () =>
         'Here is my code:\n```javascript\nfunction setup() { createCanvas(400, 400); }\n```\nThat was the code.'
       );

@@ -1,49 +1,9 @@
 {
   "contract": "liminal-final-qa-test-surface-ledger-v1",
-  "updatedAt": "2026-05-06T16:27:53.699Z",
+  "updatedAt": "2026-05-06T17:31:38.886Z",
   "policy": "No test file may remain under test/pending for final QA. Every skipped/gated test file must have owner, launch risk, reason, action, and verification before final QA can be claimed.",
   "pendingTests": [],
   "skippedOrGatedTests": [
-    {
-      "path": "test/security/csrf-protection.test.ts",
-      "owner": "Security",
-      "launchRisk": "release-blocking-for-security-claims",
-      "reason": "CSRF suite is skipped in the default test environment.",
-      "action": "Run under a non-test security smoke before security claims.",
-      "verification": "pnpm vitest run test/security/csrf-protection.test.ts --coverage=false"
-    },
-    {
-      "path": "test/security/security-headers.test.ts",
-      "owner": "Security",
-      "launchRisk": "release-blocking-for-security-claims",
-      "reason": "Security headers are part of launch trust proof.",
-      "action": "Keep in default security suite and rerun for release.",
-      "verification": "pnpm vitest run test/security/security-headers.test.ts --coverage=false"
-    },
-    {
-      "path": "test/security/rate-limiting.test.ts",
-      "owner": "Security",
-      "launchRisk": "release-blocking-for-security-claims",
-      "reason": "Rate limiting is part of launch trust proof.",
-      "action": "Keep in default security suite and rerun for release.",
-      "verification": "pnpm vitest run test/security/rate-limiting.test.ts --coverage=false"
-    },
-    {
-      "path": "test/render/render-and-score.test.ts",
-      "owner": "Render",
-      "launchRisk": "release-blocking-for-render-claims",
-      "reason": "Browser/render suite is gated on local browser availability.",
-      "action": "Run in browser/e2e lane before render launch claims.",
-      "verification": "pnpm test:ci:slow"
-    },
-    {
-      "path": "test/unit/sandbox.test.ts",
-      "owner": "Sandbox",
-      "launchRisk": "release-blocking-for-sandbox-claims",
-      "reason": "Sandbox suite is skipped under CI or unavailable CDN.",
-      "action": "Run in slow/browser lane before sandbox claims.",
-      "verification": "pnpm test:ci:slow"
-    },
     {
       "path": "test/integration/dual-llm.test.ts",
       "owner": "Provider runtime",
@@ -51,22 +11,6 @@
       "reason": "Dual LLM integration is skipped in CI or without local backend.",
       "action": "Run only for live-provider/local-backend claims.",
       "verification": "LIMINAL_LLM_BASE_URL=<url> pnpm vitest run test/integration/dual-llm.test.ts --coverage=false"
-    },
-    {
-      "path": "test/integration/renderer.test.js",
-      "owner": "Renderer",
-      "launchRisk": "release-blocking-for-render-claims",
-      "reason": "Renderer integration is gated on browser/CDN availability.",
-      "action": "Run in slow/browser lane before renderer claims.",
-      "verification": "pnpm test:ci:slow"
-    },
-    {
-      "path": "test/unit/swarm/SwarmOrchestrator.test.ts",
-      "owner": "Swarm",
-      "launchRisk": "hardening-before-swarm-claims",
-      "reason": "Three route/persona/code-extraction assertions are explicitly skipped.",
-      "action": "Unskip before claiming production-ready swarm output.",
-      "verification": "pnpm vitest run test/unit/swarm/SwarmOrchestrator.test.ts --coverage=false"
     },
     {
       "path": "test/e2e/sandbox-self-improve.e2e.test.ts",

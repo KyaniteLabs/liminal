@@ -10,6 +10,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { Logger } from '../utils/Logger.js';
 import { RenderEvidence } from '../core/types/GenerationEvaluation.js';
+import { getLocalP5ScriptForUrl } from '../utils/browserAssetFallbacks.js';
 
 export type RenderDomain = 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'tone' | 'unknown';
 
@@ -238,6 +239,7 @@ export class HeadlessRenderer {
       }
 
       page = await this.context.newPage();
+      await this.installLocalAssetFallbacks(page);
       
       // Set viewport size
       await page.setViewportSize({ width: opts.width, height: opts.height });
@@ -344,6 +346,31 @@ export class HeadlessRenderer {
         }
       }
     }
+  }
+
+  private async installLocalAssetFallbacks(page: Page): Promise<void> {
+    if (typeof page.route !== 'function') return;
+
+    await page.route('**/*', async (route) => {
+      try {
+        const localScript = await getLocalP5ScriptForUrl(route.request().url());
+        if (localScript) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/javascript; charset=utf-8',
+            body: localScript,
+          });
+          return;
+        }
+
+        await route.continue();
+      } catch (err) {
+        Logger.debug('HeadlessRenderer', 'Asset fallback route handling failed:', err);
+        await route.continue().catch((continueErr) => {
+          Logger.debug('HeadlessRenderer', 'Route continue failed:', continueErr);
+        });
+      }
+    });
   }
 
   /**

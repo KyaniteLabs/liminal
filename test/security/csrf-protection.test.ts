@@ -1,21 +1,28 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PreviewServer } from '../../src/render/PreviewServer.js';
 
-// Skip CSRF tests in test environment since CSRF is disabled for easier testing
-// Run these tests manually with NODE_ENV=development to verify CSRF protection
-const isTestEnv = process.env.NODE_ENV === 'test';
-
-describe.skipIf(isTestEnv)('CSRF Protection', () => {
+describe('CSRF Protection', () => {
   let server: PreviewServer;
-  const TEST_PORT = 3459;
+  let baseUrl: string;
   let csrfToken: string;
   let cookieHeader: string;
+  let previousNodeEnv: string | undefined;
+  let previousCsrfSecret: string | undefined;
 
   beforeAll(async () => {
+    previousNodeEnv = process.env.NODE_ENV;
+    previousCsrfSecret = process.env.CSRF_SECRET;
+    process.env.NODE_ENV = 'development';
+    process.env.CSRF_SECRET = 'test-secret';
+
     server = new PreviewServer();
-    await server.start(TEST_PORT);
+    await server.start(0);
+    const port = server.getPort();
+    if (!port) throw new Error('PreviewServer did not report a bound port');
+    baseUrl = `http://127.0.0.1:${port}`;
+
     // Get CSRF token and cookie
-    const resp = await fetch(`http://localhost:${TEST_PORT}/api/csrf-token`);
+    const resp = await fetch(`${baseUrl}/api/csrf-token`);
     const data = await resp.json();
     csrfToken = data.csrfToken;
     // Extract cookie from response
@@ -23,14 +30,19 @@ describe.skipIf(isTestEnv)('CSRF Protection', () => {
     if (cookies) {
       cookieHeader = cookies.split(';')[0];
     }
+    if (!cookieHeader) throw new Error('CSRF token endpoint did not set a cookie');
   });
 
   afterAll(async () => {
     await server.stop();
+    if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = previousNodeEnv;
+    if (previousCsrfSecret === undefined) delete process.env.CSRF_SECRET;
+    else process.env.CSRF_SECRET = previousCsrfSecret;
   });
 
   it('should reject POST without CSRF token', async () => {
-    const response = await fetch(`http://localhost:${TEST_PORT}/api/export`, {
+    const response = await fetch(`${baseUrl}/api/export`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ code: 'test', format: 'js' }),
@@ -39,7 +51,7 @@ describe.skipIf(isTestEnv)('CSRF Protection', () => {
   });
 
   it('should accept POST with valid CSRF token and cookie', async () => {
-    const response = await fetch(`http://localhost:${TEST_PORT}/api/export`, {
+    const response = await fetch(`${baseUrl}/api/export`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -53,7 +65,7 @@ describe.skipIf(isTestEnv)('CSRF Protection', () => {
   });
 
   it('should reject POST with valid token but without cookie', async () => {
-    const response = await fetch(`http://localhost:${TEST_PORT}/api/export`, {
+    const response = await fetch(`${baseUrl}/api/export`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -67,7 +79,7 @@ describe.skipIf(isTestEnv)('CSRF Protection', () => {
   });
 
   it('should provide CSRF token endpoint', async () => {
-    const response = await fetch(`http://localhost:${TEST_PORT}/api/csrf-token`);
+    const response = await fetch(`${baseUrl}/api/csrf-token`);
     expect(response.status).toBe(200);
     const data = await response.json();
     expect(data.csrfToken).toBeTruthy();

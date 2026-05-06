@@ -124,6 +124,8 @@ let originalTestEnv: string | undefined;
 function shouldPreserveLiveLLMEnv(): boolean {
   return Boolean(
     process.env.RUN_CLOUD_MODEL_TESTS
+    || process.env.RUN_LOCAL_MODEL_TESTS
+    || process.env.RUN_LFM_MODEL_TESTS
     || process.env.RUN_MODEL_COMPARISON
     || process.env.RUN_MINIMAX_HIGHSPEED_MODEL_TESTS
     || process.env.LIMINAL_ALLOW_LIVE_LLM_TESTS

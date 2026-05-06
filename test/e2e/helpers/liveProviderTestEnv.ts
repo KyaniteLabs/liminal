@@ -69,6 +69,43 @@ export function createLiveProviderClient(provider: ProviderType, modelOverride?:
   };
 }
 
+export async function listLmStudioModels(baseUrl = 'http://localhost:1234/v1'): Promise<string[]> {
+  const response = await fetch(`${baseUrl.replace(/\/+$/, '')}/models`, {
+    signal: AbortSignal.timeout(3000),
+  });
+  if (!response.ok) {
+    throw new Error(`LM Studio model list failed with ${response.status}`);
+  }
+  const body = await response.json() as { data?: Array<{ id?: string }> };
+  return (body.data ?? []).map(model => model.id).filter((id): id is string => Boolean(id));
+}
+
+export async function selectLmStudioModel(patterns: RegExp[]): Promise<string> {
+  const models = await listLmStudioModels();
+  const selected = patterns
+    .map(pattern => models.find(model => pattern.test(model)))
+    .find((model): model is string => Boolean(model));
+  if (!selected) {
+    throw new Error(`No LM Studio model matched ${patterns.map(String).join(', ')}. Available: ${models.join(', ') || 'none'}`);
+  }
+  return selected;
+}
+
+export function createLmStudioClient(model: string): LLMClient {
+  const baseUrl = 'http://localhost:1234/v1';
+  process.env.LIMINAL_LLM_PROVIDER = 'lmstudio';
+  process.env.LIMINAL_LLM_BASE_URL = baseUrl;
+  process.env.LIMINAL_LLM_MODEL = model;
+  delete process.env.LIMINAL_LLM_API_KEY;
+
+  return new LLMClient({
+    baseUrl,
+    model,
+    temperature: 0.3,
+    maxTokens: 1024,
+  });
+}
+
 export interface IsolatedRunRoot {
   root: string;
   galleryDir: string;

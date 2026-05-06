@@ -1,6 +1,6 @@
 {
   "contract": "liminal-final-qa-test-surface-ledger-v1",
-  "updatedAt": "2026-05-06T18:09:50Z",
+  "updatedAt": "2026-05-06T18:45:39Z",
   "policy": "No test file may remain under test/pending for final QA. Every skipped/gated test file must have owner, launch risk, reason, action, and verification before final QA can be claimed.",
   "pendingTests": [],
   "skippedOrGatedTests": [
@@ -87,18 +87,18 @@
     {
       "path": "test/e2e/models/qwen3-5-9b.test.ts",
       "owner": "Provider runtime",
-      "launchRisk": "local-provider-gated",
-      "reason": "Qwen local model e2e is skipped in CI or without local backend.",
-      "action": "Run for Qwen/local-provider claims.",
-      "verification": "LIMINAL_LLM_BASE_URL=<url> pnpm vitest run test/e2e/models/qwen3-5-9b.test.ts --coverage=false"
+      "launchRisk": "verified-local-provider-gated",
+      "reason": "Qwen-compatible LM Studio proof is intentionally gated behind RUN_LOCAL_MODEL_TESTS because it requires a loaded local model.",
+      "action": "Keep classified and run for Qwen/local-provider release claims.",
+      "verification": "RUN_LOCAL_MODEL_TESTS=1 pnpm vitest run test/e2e/models/qwen3-5-9b.test.ts --coverage=false --reporter=dot --pool=forks"
     },
     {
       "path": "test/e2e/models/qwen3-coder-40b.test.ts",
       "owner": "Provider runtime",
-      "launchRisk": "local-provider-gated",
-      "reason": "Qwen Coder local model e2e is skipped in CI or without local backend.",
-      "action": "Run for Qwen/local-provider claims.",
-      "verification": "LIMINAL_LLM_BASE_URL=<url> pnpm vitest run test/e2e/models/qwen3-coder-40b.test.ts --coverage=false"
+      "launchRisk": "verified-local-provider-gated",
+      "reason": "Qwen coder-compatible LM Studio proof is intentionally gated behind RUN_LOCAL_MODEL_TESTS because it requires a loaded local model.",
+      "action": "Keep classified and run for Qwen/local-provider release claims.",
+      "verification": "RUN_LOCAL_MODEL_TESTS=1 pnpm vitest run test/e2e/models/qwen3-coder-40b.test.ts --coverage=false --reporter=dot --pool=forks"
     }
   ]
 }

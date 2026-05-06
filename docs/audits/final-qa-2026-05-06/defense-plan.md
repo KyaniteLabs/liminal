@@ -10,7 +10,7 @@ Status: first-pass defense plan for future agents.
 - Treat empty successful model output as suspicious until the event stream proves content, error state, and provider provenance.
 - Treat fallback success as degraded unless the fallback path produces explicit evidence.
 - Treat visual proof as false until decoded pixels show meaningful nonblank output.
-- Treat cancellation as incomplete until provider work and retry sleeps actually abort.
+- Treat cancellation as incomplete until provider work, draft timeout controllers, and retry sleeps actually abort.
 - Treat branch protection and CI as live infrastructure, not repo intent. Read the remote state before claiming enforcement.
 
 ## Review Prompts For Future Persona Clusters
@@ -26,5 +26,6 @@ Status: first-pass defense plan for future agents.
 - Keep `findings-ledger.md` alive until every material row is `verified`.
 - Require remediation commits to mention the finding ID they close.
 - Add regression tests before or with each fix.
+- Keep stop/cancel regressions close to the UI, bridge timeout, provider call, and retry-sleep boundaries instead of relying on one broad smoke.
 - Rerun saturation only after fixes land, not while known material issues are open.
 - Preserve audit artifacts under `docs/audits/final-qa-2026-05-06/` so future agents can compare pass-to-pass deltas.

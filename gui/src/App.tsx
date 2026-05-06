@@ -1251,6 +1251,7 @@ export default function App() {
       prompt={createPrompt}
       onPromptChange={setCreatePrompt}
       onRun={handleWorkbenchRun}
+      onCancelRun={bridgeSummary.active ? () => void bridge.cancelCurrent() : undefined}
       runDisabled={activeMode.id === 'improve' ? improveLoading : bridge.submitting || runStatus === 'running' || !createPrompt.trim() || (runNeedsBridgeSession && !bridge.session)}
       stageBusy={bridgeSummary.active || runStatus === 'running'}
       artifactReady={activeMode.id === 'generate' && hasSyncTarget}

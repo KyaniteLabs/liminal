@@ -88,6 +88,7 @@ Release risk: high. These items make customers angry even when the core code run
    - Findings: FQA-016, FQA-023, FQA-024
    - Action: visible active-run stop affordance; propagate AbortSignal through draft generation, provider calls, and retry sleeps.
    - Proof: UI smoke shows stop button; fake provider confirms abort; retry backoff aborts immediately.
+   - Remediation status: verified. The Studio composer now exposes a visible active-run stop control wired to `bridge.cancelCurrent()`, draft timeout aborts the underlying generation controller, `LLMClient` passes generation and completion signals into `RetryManager`, and retry backoff sleeps abort immediately.
 
 3. Fix Revideo/video intent routing and preview failure states.
    - Findings: FQA-017, FQA-019

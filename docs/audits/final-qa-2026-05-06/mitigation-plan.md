@@ -16,7 +16,7 @@ Mitigations are temporary. They do not make Liminal launch-ready while material 
 
 - During manual demos, keep provider failure logs visible and do not treat empty assistant output as success.
 - Avoid claiming visual correctness from screenshot byte size or dimensions alone; decoded-pixel checks are now required for screenshot-backed proof.
-- When testing cancel/stop, watch process lifetime and late events after the UI reports timeout.
+- When testing cancel/stop, the verified paths now abort draft timeout controllers and retry sleeps; still watch process lifetime and late events during manual live-provider demos.
 - For provider setup, rely on the provider-aware diagnostics before starting a run and keep the exact chosen-provider env key visible in manual demo notes.
 
 ## Docs Guardrails

@@ -169,6 +169,33 @@ describe('RetryManager', () => {
       expect(fn).toHaveBeenCalledTimes(3); // Initial + 2 retries
     });
 
+    it('aborts retry backoff immediately without waiting for the next retry timer', async () => {
+      const controller = new AbortController();
+      const fn = vi.fn().mockRejectedValue(new LLMTimeoutError('slow provider'));
+
+      const promise = RetryManager.executeWithRetry(fn, {
+        maxRetries: 1,
+        baseDelayMs: 1000,
+        signal: controller.signal,
+      }).catch((error: unknown) => error);
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(fn).toHaveBeenCalledTimes(1);
+
+      controller.abort(new Error('operator stop'));
+      await vi.advanceTimersByTimeAsync(0);
+
+      const outcome = await Promise.race([
+        promise,
+        Promise.resolve('pending'),
+      ]);
+
+      expect(outcome).toBeInstanceOf(Error);
+      expect((outcome as Error).message).toContain('operator stop');
+      expect(fn).toHaveBeenCalledTimes(1);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
     it('succeeds immediately if no errors', async () => {
       const fn = vi.fn().mockResolvedValue('immediate success');
       

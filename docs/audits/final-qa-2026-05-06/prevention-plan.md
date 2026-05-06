@@ -14,7 +14,7 @@ Status: first-pass prevention plan.
 - Live creative-domain proof must cover every public launch domain or the launch docs must declare the narrower set.
 - Provider setup diagnostics: run credential-free validation for every documented provider and keep CLI provider shorthands aligned with ProviderRuntime defaults.
 - Browser/UI smoke: prove visible stop control, visible preview error state, and at least one Studio prompt-to-preview path.
-- Cancellation smoke: prove AbortSignal reaches provider calls and retry backoff.
+- Cancellation smoke: keep regression tests proving AbortSignal reaches provider calls, draft timeout aborts the active generation controller, and retry backoff aborts immediately.
 - Visual proof fixture suite: blank, solid, transparent, corrupt, and valid screenshots.
 - Prompt-runtime contract tests: audit prompts through the actual generator wrappers.
 - Event-contract schema test: backend TUI event types and GUI telemetry parser stay in lockstep.

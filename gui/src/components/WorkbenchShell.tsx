@@ -10,6 +10,7 @@ interface WorkbenchShellProps {
   prompt: string;
   onPromptChange: (value: string) => void;
   onRun: () => void;
+  onCancelRun?: () => void;
   runDisabled: boolean;
   stageBusy: boolean;
   artifactReady: boolean;
@@ -34,6 +35,7 @@ export function WorkbenchShell({
   prompt,
   onPromptChange,
   onRun,
+  onCancelRun,
   runDisabled,
   stageBusy,
   artifactReady,
@@ -270,6 +272,11 @@ export function WorkbenchShell({
                 <summary>Options</summary>
                 <div>{audioSlot}</div>
               </details>
+            ) : null}
+            {stageBusy && onCancelRun ? (
+              <button className="liminal-stop-button" type="button" onClick={onCancelRun} aria-label="Stop active generation">
+                Stop
+              </button>
             ) : null}
             <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled} aria-busy={stageBusy}>
               {runLabel}

@@ -788,7 +788,7 @@ export class LLMClient {
           provenance: this.requestProvenanceForProvider(provider),
         };
       });
-      }).catch(async (primaryError: unknown) => {
+      }, { signal }).catch(async (primaryError: unknown) => {
         // Only attempt fallbacks on network/auth errors
         if (!this.isFallbackableError(primaryError)) {
           throw primaryError;
@@ -1042,7 +1042,7 @@ export class LLMClient {
           fallbackUsed: false,
           provenance: this.requestProvenanceForProvider(provider),
         };
-      }).catch(async (primaryError: unknown) => {
+      }, { signal }).catch(async (primaryError: unknown) => {
         if (!this.isFallbackableError(primaryError)) {
           throw primaryError;
         }

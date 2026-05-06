@@ -4,9 +4,12 @@ interface RetryOptions {
   maxRetries?: number;
   baseDelayMs?: number;
   maxDelayMs?: number;
+  signal?: AbortSignal;
 }
 
-const DEFAULT_OPTIONS: Required<RetryOptions> = {
+type RetryTimingOptions = Required<Omit<RetryOptions, 'signal'>>;
+
+const DEFAULT_OPTIONS: RetryTimingOptions = {
   maxRetries: 5,
   baseDelayMs: 2000,
   maxDelayMs: 60000,
@@ -26,6 +29,7 @@ export class RetryManager {
     let lastError: Error | undefined;
 
     for (let attempt = 0; attempt <= opts.maxRetries; attempt++) {
+      this.throwIfAborted(opts.signal);
       try {
         return await fn();
       } catch (error) {
@@ -53,11 +57,44 @@ export class RetryManager {
         // Cap at max delay
         delay = Math.min(delay, opts.maxDelayMs);
 
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await this.abortableDelay(delay, opts.signal);
       }
     }
 
     throw lastError;
+  }
+
+  private static abortError(signal?: AbortSignal): Error {
+    if (signal?.reason instanceof Error) return signal.reason;
+    const error = new Error('Operation aborted');
+    error.name = 'AbortError';
+    return error;
+  }
+
+  private static throwIfAborted(signal?: AbortSignal): void {
+    if (signal?.aborted) throw this.abortError(signal);
+  }
+
+  private static async abortableDelay(delayMs: number, signal?: AbortSignal): Promise<void> {
+    this.throwIfAborted(signal);
+    await new Promise<void>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        cleanup();
+        resolve();
+      }, delayMs);
+
+      function cleanup(): void {
+        clearTimeout(timeoutId);
+        signal?.removeEventListener('abort', onAbort);
+      }
+
+      function onAbort(): void {
+        cleanup();
+        reject(RetryManager.abortError(signal));
+      }
+
+      signal?.addEventListener('abort', onAbort, { once: true });
+    });
   }
 
   /**

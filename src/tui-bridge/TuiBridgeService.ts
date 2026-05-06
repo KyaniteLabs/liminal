@@ -2273,7 +2273,7 @@ export class TuiBridgeService {
               logBridge('generation.draft.background_failed', { sessionId, generatorModel: generatorModelName, message });
             }
           });
-          let attemptResult = await this.awaitDraftAttempt(generationPromise, controller.signal, timeoutMinutes);
+          let attemptResult = await this.awaitDraftAttempt(generationPromise, controller, timeoutMinutes);
           if (!attemptResult) {
             this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
             return;
@@ -2317,7 +2317,7 @@ export class TuiBridgeService {
                 logBridge('generation.draft.domain_retry_failed', { sessionId, generatorModel: generatorModelName, message });
               }
             });
-            const retryResult = await this.awaitDraftAttempt(retryPromise, controller.signal, timeoutMinutes);
+            const retryResult = await this.awaitDraftAttempt(retryPromise, controller, timeoutMinutes);
             if (!retryResult) {
               this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
               return;
@@ -2462,9 +2462,10 @@ export class TuiBridgeService {
 
   private async awaitDraftAttempt<T>(
     generationPromise: Promise<T>,
-    signal: AbortSignal,
+    controller: AbortController,
     timeoutMinutes: number,
   ): Promise<T | undefined> {
+    const { signal } = controller;
     if (signal.aborted) return undefined;
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -2474,7 +2475,9 @@ export class TuiBridgeService {
       signal.addEventListener('abort', onAbort, { once: true });
       removeAbortListener = () => signal.removeEventListener('abort', onAbort);
       timeoutId = setTimeout(() => {
-        reject(new Error(`Generation timed out after ${timeoutMinutes} minute${timeoutMinutes === 1 ? '' : 's'}`));
+        const timeoutError = new Error(`Generation timed out after ${timeoutMinutes} minute${timeoutMinutes === 1 ? '' : 's'}`);
+        reject(timeoutError);
+        controller.abort(timeoutError);
       }, timeoutMinutes * 60_000);
     });
 

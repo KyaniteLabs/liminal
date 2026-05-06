@@ -810,6 +810,55 @@ describe('Bubble Tea operator routing', () => {
     expect(service.getEvents(session.sessionId).some((event) => event.type === 'generation.complete')).toBe(false);
   });
 
+  it('aborts the underlying draft generation signal when a draft attempt times out', async () => {
+    vi.useFakeTimers();
+    try {
+      const service = new TuiBridgeService();
+      const session = service.createSession();
+      const pendingDraft = deferred<{
+        needsClarification: false;
+        code: string;
+        thinking: string;
+        model: string;
+      }>();
+      const observedSignals: AbortSignal[] = [];
+      draftGenerate.mockImplementationOnce((_prompt, _rawPrompt, _draft, signal) => {
+        observedSignals.push(signal as AbortSignal);
+        return pendingDraft.promise;
+      });
+
+      await service.submitInput(
+        session.sessionId,
+        {
+          mode: 'chat',
+          text: 'slow timeout garden',
+          clientIntent: 'creative',
+          executionMode: 'draft',
+          timeoutMinutes: 1,
+        },
+        fakeLlm() as never,
+      );
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(observedSignals).toHaveLength(1);
+      expect(observedSignals[0].aborted).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(60_000);
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(observedSignals[0].aborted).toBe(true);
+      expect(service.getStatus(session.sessionId).run).toMatchObject({
+        phase: 'failed',
+        outcome: 'failed',
+        error: 'Generation timed out after 1 minute',
+      });
+      expect(service.getEvents(session.sessionId).some((event) => event.type === 'generation.complete')).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('labels creative telemetry with generator and evaluator role models, not the harness model', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession({

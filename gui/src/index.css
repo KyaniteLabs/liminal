@@ -636,6 +636,16 @@ body::before {
   cursor: pointer;
 }
 
+.liminal-stop-button {
+  min-width: 88px;
+  border: 1px solid rgba(252, 165, 165, 0.72);
+  border-radius: 8px;
+  background: rgba(127, 29, 29, 0.52);
+  color: #fee2e2;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .liminal-run-button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -1870,6 +1880,7 @@ body::before {
 .liminal-receipt-details summary:focus-visible,
 .liminal-advanced-drawer summary:focus-visible,
 .liminal-run-button:focus-visible,
+.liminal-stop-button:focus-visible,
 .liminal-rail-button:focus-visible,
 .liminal-subnav-button:focus-visible,
 .liminal-skip-link:focus-visible {

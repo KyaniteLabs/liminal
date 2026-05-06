@@ -559,6 +559,81 @@ describe('LLMClient fallback diagnostics', () => {
     );
   });
 
+  it('passes generate AbortSignal into the retry manager so retry backoff can stop', async () => {
+    const client = new LLMClient({ provider: 'lmstudio', model: 'primary-model' } as any);
+    const internal = client as any;
+    const controller = new AbortController();
+    const provider = {
+      name: 'lmstudio',
+      getModel: vi.fn(() => 'primary-model'),
+      getConfig: vi.fn(() => ({ baseUrl: 'http://localhost:1234/v1', model: 'primary-model' })),
+      generate: vi.fn(async () => ({
+        isErr: () => false,
+        value: {
+          success: true,
+          content: 'function setup() { createCanvas(10, 10); }',
+        },
+      })),
+    };
+
+    vi.spyOn(RetryManager, 'executeWithRetry').mockImplementation(async (fn: () => Promise<unknown>, options?: any) => {
+      expect(options?.signal).toBe(controller.signal);
+      return fn();
+    });
+
+    internal.resolveModel = vi.fn(async () => 'primary-model');
+    internal.syncResolvedModel = vi.fn();
+    internal.detectProvider = vi.fn(() => 'lmstudio');
+    internal.generateWithBreaker = vi.fn(async (_provider: string, fn: () => Promise<unknown>) => fn());
+    internal.getProvider = vi.fn(async () => provider);
+    internal.getFallbackProviders = vi.fn(() => []);
+
+    const result = await client.generate('sys', 'user', controller.signal, true);
+
+    expect(result.success).toBe(true);
+    expect(provider.generate).toHaveBeenCalledWith(expect.objectContaining({ signal: controller.signal }));
+  });
+
+  it('passes complete AbortSignal into the retry manager so retry backoff can stop', async () => {
+    const client = new LLMClient({ provider: 'lmstudio', model: 'primary-model' } as any);
+    const internal = client as any;
+    const controller = new AbortController();
+    let retryOptions: unknown;
+    const provider = {
+      name: 'lmstudio',
+      getModel: vi.fn(() => 'primary-model'),
+      getConfig: vi.fn(() => ({ baseUrl: 'http://localhost:1234/v1', model: 'primary-model' })),
+      generate: vi.fn(async () => ({
+        isErr: () => false,
+        value: {
+          success: true,
+          content: 'complete text',
+        },
+      })),
+    };
+
+    vi.spyOn(RetryManager, 'executeWithRetry').mockImplementation(async (fn: () => Promise<unknown>, options?: unknown) => {
+      retryOptions = options;
+      return fn();
+    });
+
+    internal.resolveModel = vi.fn(async () => 'primary-model');
+    internal.syncResolvedModel = vi.fn();
+    internal.detectProvider = vi.fn(() => 'lmstudio');
+    internal.getProvider = vi.fn(async () => provider);
+    internal.getFallbackProviders = vi.fn(() => []);
+
+    const result = await client.complete({
+      prompt: 'user',
+      systemPrompt: 'sys',
+      signal: controller.signal,
+    });
+
+    expect(result.success).toBe(true);
+    expect(retryOptions).toEqual(expect.objectContaining({ signal: controller.signal }));
+    expect(provider.generate).toHaveBeenCalledWith(expect.objectContaining({ signal: controller.signal }));
+  });
+
   it('includes exhausted fallback reasons in complete() failure payloads', async () => {
     const client = new LLMClient({ provider: 'lmstudio', model: 'primary-model' } as any);
     const internal = client as any;

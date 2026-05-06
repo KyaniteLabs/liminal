@@ -28,6 +28,12 @@ describe('GUI workbench accessibility contract', () => {
     expect(shell).toContain('Use the message box to revise, make a variation, or polish this direction.');
   });
 
+  it('keeps the active-run stop control beside the composer instead of hiding it in details', () => {
+    expect(shell).toContain('onCancelRun');
+    expect(shell).toContain('Stop active generation');
+    expect(shell).toContain('liminal-stop-button');
+    expect(app).toContain('onCancelRun={bridgeSummary.active ? () => void bridge.cancelCurrent() : undefined}');
+  });
 
   it('keeps secondary modes available without making the default surface a dashboard', () => {
     expect(shell).toContain('liminal-primary-mode');

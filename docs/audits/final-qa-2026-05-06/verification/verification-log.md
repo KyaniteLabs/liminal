@@ -60,3 +60,17 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm build` | pass | Receipt hardening builds. | Exit 0. |
 | 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the receipt-hardening tests. | 662 files scanned; all checks passed. |
 | 2026-05-06 remediation | `git diff --check` | pass | Receipt-hardening diff has no whitespace errors. | Exit 0. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/llm/RetryManager.test.ts --coverage=false --testNamePattern "aborts retry backoff"` | pass | Retry backoff sleeps abort immediately when the active signal aborts. | 1 file passed, 1 test passed, 14 skipped. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/llm/LLMClientExtended.test.ts --coverage=false --testNamePattern "passes generate AbortSignal"` | pass | `LLMClient.generate()` passes its AbortSignal into retry orchestration. | 1 file passed, 1 test passed, 78 skipped. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/llm/LLMClientExtended.test.ts --coverage=false --testNamePattern "passes complete AbortSignal"` | pass | `LLMClient.complete()` passes its AbortSignal into retry orchestration. | Red-first proof failed with retry options `undefined`, then passed after restoring `{ signal }`; 1 file passed, 1 test passed, 79 skipped. |
+| 2026-05-06 remediation | `pnpm vitest run test/tui-bridge/tui-bridge-no-chat-lane.test.ts --coverage=false --testNamePattern "aborts the underlying draft generation signal"` | pass | Draft timeout aborts the underlying generation signal instead of only racing the promise. | 1 file passed, 1 test passed, 21 skipped. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/gui-workbench-accessibility.test.ts --coverage=false --testNamePattern "active-run stop"` | pass | Active runs expose a stop control beside the composer. | 1 file passed, 1 test passed, 9 skipped. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/llm/RetryManager.test.ts test/unit/llm/LLMClientExtended.test.ts test/tui-bridge/tui-bridge-no-chat-lane.test.ts test/tui-bridge/tui-bridge-service.test.ts test/unit/gui-workbench-accessibility.test.ts test/unit/gui-workbench-telemetry.test.ts test/unit/gui-operator-cockpit-state.test.ts --coverage=false` | pass | Adjacent cancellation, bridge, LLM, and GUI telemetry/accessibility regressions pass together. | 7 files passed; 192 tests passed. |
+| 2026-05-06 remediation | `pnpm typecheck` | pass | Cancellation remediation typechecks. | Exit 0. |
+| 2026-05-06 remediation | `pnpm build` | pass | Root build succeeds after cancellation remediation. | Exit 0. |
+| 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after cancellation remediation. | Exit 0. |
+| 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle builds with the composer stop affordance. | Vite built 35 modules. |
+| 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the cancellation regression tests. | 663 files scanned; all checks passed. |
+| 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after cancellation remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
+| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid. | Exit 0. |
+| 2026-05-06 remediation | `git diff --check` | pass | Cancellation remediation diff has no whitespace errors. | Exit 0. |

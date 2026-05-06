@@ -85,3 +85,14 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after Revideo/preview remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
 | 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after Revideo/preview remediation. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | Revideo/preview remediation diff has no whitespace errors. | Exit 0. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/docs/what-to-expect-current-surface.test.ts --coverage=false` | pass | `docs/WHAT_TO_EXPECT.md` describes the current Studio/workbench first-run path and rejects retired harness task-runner wording. | Red-first proof failed on the old harness title, then passed; 1 file passed, 1 test passed. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/docs/what-to-expect-current-surface.test.ts test/unit/docs/market-quickstart.test.ts test/unit/docs/visual-bible-consistency.test.ts test/unit/launch-claim-ledger.test.ts --coverage=false` | pass | Neighboring docs and launch-claim contracts pass with the first-run rewrite. | 4 files passed; 7 tests passed. |
+| 2026-05-06 remediation | `pnpm gui` with `LIMINAL_STUDIO_API_PORT=5184` and `LIMINAL_STUDIO_GUI_PORT=5183` | pass | Studio first-run command starts backend and frontend locally. | Backend health returned `{"ok":true}`; frontend served Studio HTML; Ctrl-C stopped both ports. |
+| 2026-05-06 remediation | `pnpm typecheck` | pass | First-run doc contract typechecks. | Exit 0. |
+| 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the first-run docs contract. | 664 files scanned; all checks passed. |
+| 2026-05-06 remediation | `git diff --check` | pass | First-run docs remediation diff has no whitespace errors. | Exit 0. |
+| 2026-05-06 remediation | `pnpm build` | pass | Root build succeeds after first-run docs remediation. | Exit 0. |
+| 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after first-run docs remediation. | Exit 0. |
+| 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production build still succeeds after first-run docs remediation. | Vite built 35 modules. |
+| 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after first-run docs remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
+| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after first-run docs remediation. | Exit 0. |

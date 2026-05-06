@@ -100,6 +100,7 @@ Release risk: high. These items make customers angry even when the core code run
    - Findings: FQA-018
    - Action: replace harness-era commands with current Studio/workbench/CLI paths.
    - Proof: docs claim scan plus manual first-run smoke.
+   - Remediation status: verified. `docs/WHAT_TO_EXPECT.md` now describes `pnpm gui`, Message Liminal, Generate, Polish, same-screen preview, visible preview errors, provider setup, and current local verification commands; a focused docs contract rejects the retired harness task-runner path.
 
 ## Batch 3: Runtime Contracts And Examples
 

@@ -1,323 +1,126 @@
-# What to Expect When Running the Harness
+# What to Expect When Running Liminal Studio
 
 **First-Time User Guide**
 
----
+This guide describes the current product path: open Studio, write a creative prompt, generate an artifact, inspect the same-screen preview, and either revise or polish the result.
 
-## 🎬 The Experience
+## Start Studio
 
-### Starting the TUI
-
-```bash
-npm run tui
-```
-
-**You'll see:**
-```
-╔═══════════════════════════════════════════════════════════════╗
-║  🎨 LIMINAL                                    Hybrid TUI     ║
-╠═══════════════════════════════════════════════════════════════╣
-║                                                               ║
-║  Hybrid TUI initialized.                                      ║
-║  Type /help for commands. /preview <file> to view content.    ║
-║                                                               ║
-╚═══════════════════════════════════════════════════════════════╝
-❯ █
-```
-
-**Type:** `/status`
-
-**Expected:**
-```
-Harness: 🟢 Online
-Provider: lmstudio (or your provider)
-Failures: 0
-Patterns: 0
-Browser: ⚪ Stopped
-Audio: ⚪ Stopped
-```
-
----
-
-## 🏃 Running Your First Task (M1)
-
-### Step-by-Step
-
-**1. Type the command:**
-```
-/run M1
-```
-
-**2. You'll see execution:**
-```
-❯ /run M1
-
-[HarnessAgent] Starting task: Fix Tone.js Validation Gate
-[HarnessAgent] Budget: 10 steps, 300000ms timeout
-[HarnessAgent] Reading src/core/CodeValidator.ts
-[HarnessAgent] Applied edit to src/core/CodeValidator.ts
-[HarnessAgent] Running build...
-[HarnessAgent] Build passed
-[HarnessAgent] Task completed successfully!
-[HarnessAgent] Steps executed: 4
-```
-
-**3. Result appears:**
-```
-Task M1: SUCCESS
-Steps: 4
-Duration: 2.3s
-```
-
----
-
-## ✅ Success Scenario
-
-### What Success Looks Like
-
-```
-┌─────────────────────────────────────────────┐
-│  Task M1: SUCCESS                           │
-│                                             │
-│  ✓ File read                                │
-│  ✓ Edit applied                             │
-│  ✓ Build passed                             │
-│  ✓ Verification complete                    │
-│                                             │
-│  Changes: 1 file modified                   │
-│  Lines changed: 1                           │
-└─────────────────────────────────────────────┘
-```
-
-### Verify It Worked
-
-In a **separate terminal**:
-```bash
-cd /Users/simongonzalezdecruz/workspaces/liminal
-npm run build          # Should pass
-git diff               # Should show the change
-```
-
----
-
-## ❌ Failure Scenario (And What Happens)
-
-### If Build Fails
-
-```
-[HarnessAgent] Running build...
-[HarnessAgent] Build failed: src/core/CodeValidator.ts(45,10): error TS2345
-[HarnessAgent] Rolling back changes...
-[HarnessAgent] Restored from backup: .liminal/backups/M1-20260401-120304.ts
-[HarnessAgent] Rollback complete
-
-Task M1: ROLLED_BACK
-Reason: Build failed after edit
-```
-
-**What you should do:**
-1. Check the error message
-2. Look at the task file: `cat harness-tasks/M1.json`
-3. The task might need adjustment
-4. Try again: `/run M1`
-
----
-
-## 🔄 Rollback Details
-
-### How Auto-Rollback Works
-
-```
-1. Task starts
-   ↓
-2. Backup created automatically (.liminal/backups/)
-   ↓
-3. Edit applied
-   ↓
-4. Build runs
-   ↓
-5a. Build PASS → Keep changes → SUCCESS
-   ↓
-5b. Build FAIL → Restore backup → ROLLED_BACK
-```
-
-### Manual Rollback (if needed)
+From the repository root:
 
 ```bash
-# List backups
-ls -lt .liminal/backups/ | head -5
-
-# Restore specific backup
-cp .liminal/backups/M1-[timestamp].ts src/core/CodeValidator.ts
-
-# Rebuild
-npm run build
+pnpm gui
 ```
 
----
+The command builds the local package and starts the Studio backend. Open the local Studio URL printed by the command. The first screen is the chat-first workbench, not a task dashboard.
 
-## ⏱️ Timing Expectations
+You should see:
 
-| Task | Estimated Time | What Happens |
-|------|----------------|--------------|
-| M1 | 2-3 seconds | Read → Edit → Build → Done |
-| M4 | 2-3 seconds | Same pattern |
-| M6 | 2-3 seconds | Logger fix |
-| Complex tasks | 5-10 seconds | More verification |
+- **Liminal Studio** at the top of the workbench.
+- A **Message Liminal** composer.
+- A right-side preview panel for generated sketches, shaders, images, motion, and playable sound.
+- Generate tools for choosing Auto, p5.js, Three.js, SVG, GLSL, Hydra, Strudel, Tone.js, HyperFrames, Kinetic, ASCII, Text, Revideo, or Organism output.
+- Secondary tools such as Improve, Review, Evolve, Observe, and Settings behind the workbench navigation.
 
-**Timeout:** 5 minutes per task (automatic)
+## Provider Readiness
 
----
+If Studio cannot connect to a model provider, fix provider setup before judging generation quality.
 
-## 📊 What Gets Modified
+The setup paths are provider-specific:
 
-### After Running M1-M8
+- Local providers: LM Studio and Ollama can run without cloud API keys.
+- Cloud providers: MiniMax, OpenAI, OpenRouter, GLM, Kimi, Moonshot, or a custom OpenAI-compatible endpoint need their matching key.
+- The CLI and onboarding diagnostics name the exact missing key for the selected provider.
 
-**Files that will change:**
-```
-src/core/CodeValidator.ts          (M1)
-src/llm/LLMClient.ts               (M4)
-src/harness/FailureLogger.ts       (M6)
-src/harness/PatternDetector.ts     (M7)
-src/harness/HarnessUpdater.ts      (M8)
-```
-
-**Each change:**
-- ~1-3 lines modified
-- Single purpose
-- Build must pass
-- Backed up before change
-
----
-
-## 🎯 Verification Checklist
-
-After each task, verify:
+For a quick local sanity check:
 
 ```bash
-# In separate terminal:
-cd /Users/simongonzalezdecruz/workspaces/liminal
-
-# 1. Build passes
-npm run build
-
-# 2. Change is present
-git diff --stat
-
-# 3. Tests still pass
-npm test 2>&1 | tail -5
+liminal provider help
 ```
 
----
+## Generate Your First Artifact
 
-## 🚨 Common Issues & Solutions
+In the **Message Liminal** box, write a normal creative request, for example:
 
-### Issue 1: "Task not found"
-```
-/run M99
-Error: Task M99 not found
-```
-**Solution:** Use `/tasks` to see available IDs
-
-### Issue 2: "LLM not configured"
-```
-[MetaHarness] No LLM provider configured
-```
-**Solution:** Set environment variables (see HARNESS_PREFLIGHT.md)
-
-### Issue 3: "Build failed"
-```
-Task M1: ROLLED_BACK
-Build failed after edit
-```
-**Solution:** 
-- Check the search/replace in task file
-- May need to update task if code changed
-
-### Issue 4: TUI looks broken
-```
-# Characters not rendering
-```
-**Solution:** Your terminal might not support Unicode. Try:
-```bash
-export TERM=xterm-256color
-npm run tui
+```text
+Create a p5.js sketch of luminous blue-green particles orbiting a dark center.
 ```
 
----
+Click **Generate**.
 
-## 🎓 Pro Tips
+Expected behavior:
 
-### 1. Keep a Terminal Open for Verification
-Always have a second terminal ready to:
-- Check git diff
-- Run npm build
-- View logs
+- The composer changes from Ready to Working.
+- A visible **Stop** button appears beside Generate while the run is active.
+- The work log opens with live generation steps.
+- The preview panel changes from the empty state to a same-screen preview when an artifact is available.
+- If the prompt says a specific domain, such as Hydra, Revideo, Tone.js, or GLSL, the prompt overrides a stale selected mode.
 
-### 2. Run Tasks in Order
-```
-M1 → M4 → M6 → M7 → M8
-```
-Each is independent, but this order builds confidence.
+## Revise Or Polish
 
-### 3. Check Backups After Success
-```bash
-ls .liminal/backups/
-```
-You should see backup files - this means the system is working.
+After a draft preview appears, keep working in the same message box.
 
-### 4. Don't Panic on Rollback
-Rollback is a **feature**, not a bug. It means the harness is protecting your codebase.
+Use natural follow-up language:
 
----
-
-## 📈 Expected Outcomes
-
-### After All 5 Tasks (M1, M4, M6-8)
-
-**Code Quality:**
-- Tone.js validation works on 'music' domain ✅
-- Thinking regex is non-greedy ✅
-- Logger calls are proper ✅
-
-**Files Modified:** 5 files
-**Lines Changed:** ~10 lines total
-**Build Status:** ✅ Passes
-**Tests:** ✅ Still pass
-
----
-
-## 🎉 Success Criteria
-
-You've successfully used the harness when:
-
-- [ ] You ran `/run M1` and it succeeded
-- [ ] You verified the change with `git diff`
-- [ ] Build passes: `npm run build`
-- [ ] You understand that rollback = safety
-- [ ] You're ready to queue up M4, M6, M7, M8
-
----
-
-## 💬 Quick Commands Reference
-
-```
-START:    npm run tui
-CHECK:    /status
-LIST:     /tasks
-RUN:      /run M1
-PREVIEW:  /preview output/file.js
-CLEAR:    /clear
-EXIT:     /exit
-
-EMERGENCY: Ctrl+C
+```text
+Make the particles move more slowly and add a soft red ring near the center.
 ```
 
----
+Choose **Generate** for a fast new draft, or **Polish** when you want the slower quality pass with scoring, repair, and preview checks.
 
-**You're ready. Go run that first task! 🚀**
+Expected behavior:
+
+- Existing code context is carried into the follow-up.
+- The preview stays visible while the next run prepares a replacement.
+- If an inline image preview fails to load, Studio shows a visible preview error with a retry control instead of silently hiding the failure.
+
+## If Generation Fails
+
+Failures should be visible in the workbench. Look for:
+
+- A provider or endpoint error in the work log.
+- A preview unavailable state in the preview panel.
+- A stopped state if you clicked Stop.
+- A clarification request if the prompt is too ambiguous.
+
+Useful first checks:
 
 ```bash
-npm run tui
-/run M1
+pnpm typecheck
+pnpm --dir gui build
+pnpm test:quality
+```
+
+These commands do not prove live model quality, but they tell you whether the local app and regression checks are healthy.
+
+## CLI Fast Path
+
+If you want the quickest non-GUI smoke, use the natural-language CLI:
+
+```bash
+liminal "a luminous blue-green particle garden"
+```
+
+Use Studio when you want the product experience: prompt, timeline, stop control, preview, revision, and polish in one place.
+
+## Success Criteria
+
+You have completed a healthy first run when:
+
+- Studio starts with `pnpm gui`.
+- The **Message Liminal** composer accepts a creative prompt.
+- **Generate** starts a run and shows a visible Stop control.
+- A same-screen preview appears, or a visible error explains why it could not.
+- A follow-up prompt can revise the artifact.
+- **Polish** remains available for the slower quality pass.
+- `pnpm typecheck` and `pnpm --dir gui build` pass locally.
+
+## Quick Reference
+
+```bash
+pnpm gui                  # Start Studio
+liminal provider help     # Check provider setup guidance
+pnpm typecheck            # Root TypeScript check
+pnpm --dir gui build      # Studio production build
+pnpm test:quality         # Test quality scan
 ```

@@ -1,0 +1,9 @@
+{
+  "missingCount": 1,
+  "missing": [
+    {
+      "script": "proof:route-performance",
+      "target": "scripts/proof/route-performance-budget.ts"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+Wrote QA cockpit bundle: /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506/.omx/qa-cockpit/2026-05-06T01-52-18-919Z
+Missing artifacts: glsl, three, hydra, hyperframes, ascii, kinetic, textgen
+Static bundle written. Serve it to use iframe machine checks:
+  node scripts/qa-creative-domains.mjs --input /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506/.omx/proof/domain-gauntlet-live.json --out /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506/.omx/qa-cockpit/2026-05-06T01-52-18-919Z

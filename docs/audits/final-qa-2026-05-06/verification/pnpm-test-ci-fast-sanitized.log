@@ -1,0 +1,831 @@
+
+> liminal-ai@2.1.0 test:ci:fast /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+> LIMINAL_CI_FAST=1 vitest run --coverage --pool=forks
+
+
+ RUN  v4.1.2 /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+      Coverage enabled with v8
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Basic Loop Functionality > should terminate on max iterations
+[RalphLoop] Prompt has 1 high-priority ambiguity issues:
+[RalphLoop]   [missing_context] Pronoun "it" used without a clear referent in a short request.
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Basic Loop Functionality > should terminate on max iterations
+[ScoringEngine] Rendered evidence LLM scoring failed: Expected double-quoted property name in JSON at position 1287 (line 9 column 3)
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Basic Loop Functionality > should terminate on max iterations
+[RalphLoop] Evaluator LLM unavailable for rendered-evidence scoring, falling back to legacy scoring
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Context Accumulation > should include previous code in context
+[RalphLoop] Prompt has 1 high-priority ambiguity issues:
+[RalphLoop]   [missing_context] Pronoun "this" used without a clear referent in a short request.
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Context Accumulation > should maintain context immutability
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Safety Mechanisms > should handle empty prompt gracefully
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: p5.js code has invalid JavaScript syntax: Unexpected token (176:69)
+
+ ❯ test/unit/generate-music.test.ts (7 tests | 5 failed) 24179ms
+     × generateMusic({ prompt: "beeps", platform: "p5-webaudio" }) returns code containing createOscillator or Web Audio 5005ms
+     × generateMusic({ prompt: "glitch", platform: "strudel" }) returns distinct Strudel code containing glitch-like pattern 2248ms
+     × generateMusic({ prompt: "reactive", platform: "strudel" }) returns distinct Strudel code 4136ms
+     × falls back to template when LLM is not configured 5000ms
+     × template fallback works for p5-webaudio platform 5003ms
+ ❯ test/unit/generateMusicToVisual.test.ts (4 tests | 4 failed) 20012ms
+     × returns both musicCode and visualCode for prompt 'ambient glitch' 5005ms
+     × includes audioInput when music generates something 5002ms
+     × accepts options with musicPlatform and visualPlatform 5001ms
+     × accepts traits (bpm, palette) and passes them to generators 5001ms
+ ❯ test/unit/sandbox.test.ts (5 tests | 1 failed) 29418ms
+       × code containing require("fs") does not escape sandbox 15009ms
+ ❯ test/unit/generate-visuals.test.ts (9 tests | 5 failed) 34400ms
+     × with audioInput returns code that references fft or bpm 5004ms
+     × with platform "p5" returns valid p5-style code 5001ms
+     × with platform "p5" and audioInput returns code referencing fft or bpm when provided 5002ms
+     × prompt "reactive" returns distinct Hydra code 5002ms
+     × template fallback works for p5 platform 5000ms
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Quality Evaluation > should track quality improvement
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Quality gate > should break loop when score below minQualityScore
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: p5.js code references undeclared identifier: Blob; p5.js code references undeclared identifier: atob; p5.js code references undeclared identifier: canvas
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Quality gate > should break loop when score below minQualityScore
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Promise Detection > should detect exact promise string
+[RalphLoop] Prompt has 1 high-priority ambiguity issues:
+[RalphLoop]   [missing_context] Pronoun "this" used without a clear referent in a short request.
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Promise Detection > should not detect partial promise matches
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Prompt Consistency > should use same prompt every iteration
+[RalphLoop] Prompt has 1 high-priority ambiguity issues:
+[RalphLoop]   [missing_context] Pronoun "this" used without a clear referent in a short request.
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Prompt Consistency > should use same prompt every iteration
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Prompt Consistency > should use same prompt every iteration
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Prompt Consistency > should inject context into prompt
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Prompt Consistency > should inject context into prompt
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Result Object > should return comprehensive result object
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: p5.js code references undeclared identifier: day; p5.js code references undeclared identifier: hour; p5.js code references undeclared identifier: minute; p5.js code references undeclared identifier: month; p5.js code references undeclared identifier: nf; p5.js code references undeclared identifier: safeName; p5.js code references undeclared identifier: saveCanvas; p5.js code references undeclared identifier: second; p5.js code references undeclared identifier: year
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Edge Cases > should handle concurrent loop executions
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Utility Methods > reset should clear loop state
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Utility Methods > getProgress should return progress when loop is running
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Utility Methods > getProgress should calculate progress correctly
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: p5.js code references undeclared identifier: ArrowLeft; p5.js code references undeclared identifier: ArrowRight; p5.js code references undeclared identifier: arc; p5.js code references undeclared identifier: createButton; p5.js code references undeclared identifier: millis; p5.js code references undeclared identifier: saveCanvas
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Utility Methods > getProgress should calculate progress correctly
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Utility Methods > getProgress should calculate progress correctly
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+ ❯ test/integration/ralph-loop.test.js (38 tests | 35 failed) 167054ms
+       × should run single iteration 5005ms
+       × should run multiple iterations 5003ms
+       × should terminate on promise detection 5006ms
+       × should terminate on max iterations 5003ms
+       × should pass context between iterations 5016ms
+       × should include previous code in context 5001ms
+       × should maintain context immutability 5003ms
+       × should enforce max iterations limit 5003ms
+       × should handle empty prompt gracefully 5003ms
+       × should handle null/undefined options 5002ms
+       × should handle generator errors gracefully 5003ms
+       × should save iterations to gallery 5001ms
+       × should create gallery directory structure 5003ms
+       × should handle gallery save failures gracefully 5002ms
+       × should throw error when gallery save fails and tolerateErrors is false 5001ms
+       × should evaluate each iteration 5001ms
+       × should track quality improvement 5002ms
+       × should break loop when score below minQualityScore 5001ms
+       × should detect exact promise string 5005ms
+       × should not detect partial promise matches 5002ms
+       × should require exact formatting 5002ms
+       × should use same prompt every iteration 1135ms
+       × should inject context into prompt 829ms
+       × should return comprehensive result object 5001ms
+       × should include final code in result 5003ms
+       × should track completion time 5001ms
+       × should handle very long prompts 5002ms
+       × should handle unicode in prompts 5001ms
+       × should handle special characters in project name 5001ms
+       × should handle concurrent loop executions 5002ms
+       × getState should return current loop state 5002ms
+       × reset should clear loop state 5002ms
+       × isRunning should return true when loop has run 5003ms
+       × getProgress should return progress when loop is running 5002ms
+       × getProgress should calculate progress correctly 5002ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 50 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Basic Loop Functionality > should run single iteration
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:55:9
+     53|
+     54|   describe('Basic Loop Functionality', () => {
+     55|     test('should run single iteration', async () => {
+       |         ^
+     56|       if (skipIfNoLLM()) return;
+     57|       const prompt = 'Generate a simple p5.js sketch';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Basic Loop Functionality > should run multiple iterations
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:70:9
+     68|     });
+     69|
+     70|     test('should run multiple iterations', async () => {
+       |         ^
+     71|       if (skipIfNoLLM()) return;
+     72|       const prompt = 'Generate a particle system';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Basic Loop Functionality > should terminate on promise detection
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:83:9
+     81|     });
+     82|
+     83|     test('should terminate on promise detection', async () => {
+       |         ^
+     84|       if (skipIfNoLLM()) return;
+     85|       const prompt = 'Generate a sketch and output <promise>COMPLETE</…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Basic Loop Functionality > should terminate on max iterations
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:96:9
+     94|     });
+     95|
+     96|     test('should terminate on max iterations', async () => {
+       |         ^
+     97|       if (skipIfNoLLM()) return;
+     98|       const prompt = 'Generate a sketch but never complete it';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Context Accumulation > should pass context between iterations
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:112:9
+    110|
+    111|   describe('Context Accumulation', () => {
+    112|     test('should pass context between iterations', async () => {
+       |         ^
+    113|       if (skipIfNoLLM()) return;
+    114|       const prompt = 'Generate and improve a sketch';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Context Accumulation > should include previous code in context
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:134:9
+    132|     });
+    133|
+    134|     test('should include previous code in context', async () => {
+       |         ^
+    135|       if (skipIfNoLLM()) return;
+    136|       const prompt = 'Iterate on this sketch';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Context Accumulation > should maintain context immutability
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:156:9
+    154|     });
+    155|
+    156|     test('should maintain context immutability', async () => {
+       |         ^
+    157|       if (skipIfNoLLM()) return;
+    158|       const prompt = 'Test context';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Safety Mechanisms > should enforce max iterations limit
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:175:9
+    173|
+    174|   describe('Safety Mechanisms', () => {
+    175|     test('should enforce max iterations limit', async () => {
+       |         ^
+    176|       if (skipIfNoLLM()) return;
+    177|       const prompt = 'Run forever';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Safety Mechanisms > should handle empty prompt gracefully
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:187:9
+    185|     });
+    186|
+    187|     test('should handle empty prompt gracefully', async () => {
+       |         ^
+    188|       if (skipIfNoLLM()) return;
+    189|       const prompt = '';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Safety Mechanisms > should handle null/undefined options
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:199:9
+    197|     });
+    198|
+    199|     test('should handle null/undefined options', async () => {
+       |         ^
+    200|       if (skipIfNoLLM()) return;
+    201|       const prompt = 'Test';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Safety Mechanisms > should handle generator errors gracefully
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:209:9
+    207|     });
+    208|
+    209|     test('should handle generator errors gracefully', async () => {
+       |         ^
+    210|       if (skipIfNoLLM()) return;
+    211|       const prompt = 'Test error handling';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Gallery Integration > should save iterations to gallery
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:225:9
+    223|
+    224|   describe('Gallery Integration', () => {
+    225|     test('should save iterations to gallery', async () => {
+       |         ^
+    226|       if (skipIfNoLLM()) return;
+    227|       const prompt = 'Save my iterations';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Gallery Integration > should create gallery directory structure
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:247:9
+    245|     });
+    246|
+    247|     test('should create gallery directory structure', async () => {
+       |         ^
+    248|       if (skipIfNoLLM()) return;
+    249|       const prompt = 'Create directory structure';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Gallery Integration > should handle gallery save failures gracefully
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:266:9
+    264|     });
+    265|
+    266|     test('should handle gallery save failures gracefully', async () =>…
+       |         ^
+    267|       if (skipIfNoLLM()) return;
+    268|       const prompt = 'Handle save failures';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Gallery Integration > should throw error when gallery save fails and tolerateErrors is false
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:282:9
+    280|     });
+    281|
+    282|     test('should throw error when gallery save fails and tolerateError…
+       |         ^
+    283|       if (skipIfNoLLM()) return;
+    284|       const prompt = 'Throw on save failure';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Quality Evaluation > should evaluate each iteration
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:297:9
+    295|
+    296|   describe('Quality Evaluation', () => {
+    297|     test('should evaluate each iteration', async () => {
+       |         ^
+    298|       if (skipIfNoLLM()) return;
+    299|       const prompt = 'Generate quality code';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Quality Evaluation > should track quality improvement
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:317:9
+    315|     });
+    316|
+    317|     test('should track quality improvement', async () => {
+       |         ^
+    318|       if (skipIfNoLLM()) return;
+    319|       const prompt = 'Improve quality over iterations';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Quality gate > should break loop when score below minQualityScore
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:342:9
+    340|
+    341|   describe('Quality gate', () => {
+    342|     test('should break loop when score below minQualityScore', async (…
+       |         ^
+    343|       if (skipIfNoLLM()) return;
+    344|       RalphLoop.reset();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Promise Detection > should detect exact promise string
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:370:9
+    368|
+    369|   describe('Promise Detection', () => {
+    370|     test('should detect exact promise string', async () => {
+       |         ^
+    371|       if (skipIfNoLLM()) return;
+    372|       const prompt = 'Complete this task <promise>COMPLETE</promise>';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Promise Detection > should not detect partial promise matches
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:383:9
+    381|     });
+    382|
+    383|     test('should not detect partial promise matches', async () => {
+       |         ^
+    384|       if (skipIfNoLLM()) return;
+    385|       const prompt = 'Almost complete but not quite promise COMPLETE a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Promise Detection > should require exact formatting
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:397:9
+    395|     });
+    396|
+    397|     test('should require exact formatting', async () => {
+       |         ^
+    398|       if (skipIfNoLLM()) return;
+    399|       const prompt = 'complete with wrong format PROMISE COMPLETE';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Prompt Consistency > should use same prompt every iteration
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/ralph-loop.test.js:417:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Prompt Consistency > should inject context into prompt
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/ralph-loop.test.js:434:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Result Object > should return comprehensive result object
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:454:9
+    452|
+    453|   describe('Result Object', () => {
+    454|     test('should return comprehensive result object', async () => {
+       |         ^
+    455|       if (skipIfNoLLM()) return;
+    456|       const prompt = 'Generate comprehensive result';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Result Object > should include final code in result
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:474:9
+    472|     });
+    473|
+    474|     test('should include final code in result', async () => {
+       |         ^
+    475|       if (skipIfNoLLM()) return;
+    476|       const prompt = 'Return final code';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Result Object > should track completion time
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:492:9
+    490|     });
+    491|
+    492|     test('should track completion time', async () => {
+       |         ^
+    493|       if (skipIfNoLLM()) return;
+    494|       const prompt = 'Track time';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Edge Cases > should handle very long prompts
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:508:9
+    506|
+    507|   describe('Edge Cases', () => {
+    508|     test('should handle very long prompts', async () => {
+       |         ^
+    509|       if (skipIfNoLLM()) return;
+    510|       const longPrompt = 'A'.repeat(10000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Edge Cases > should handle unicode in prompts
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:520:9
+    518|     });
+    519|
+    520|     test('should handle unicode in prompts', async () => {
+       |         ^
+    521|       if (skipIfNoLLM()) return;
+    522|       const unicodePrompt = 'Generate art with emoji 🎨 and unicode ca…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Edge Cases > should handle special characters in project name
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:532:9
+    530|     });
+    531|
+    532|     test('should handle special characters in project name', async () …
+       |         ^
+    533|       if (skipIfNoLLM()) return;
+    534|       const prompt = 'Test special chars';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Edge Cases > should handle concurrent loop executions
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:545:9
+    543|     });
+    544|
+    545|     test('should handle concurrent loop executions', async () => {
+       |         ^
+    546|       if (skipIfNoLLM()) return;
+    547|       const prompt = 'Concurrent test';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Utility Methods > getState should return current loop state
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:569:9
+    567|     });
+    568|
+    569|     test('getState should return current loop state', async () => {
+       |         ^
+    570|       if (skipIfNoLLM()) return;
+    571|       const prompt = 'Test getState';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Utility Methods > reset should clear loop state
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:592:9
+    590|     });
+    591|
+    592|     test('reset should clear loop state', async () => {
+       |         ^
+    593|       if (skipIfNoLLM()) return;
+    594|       const prompt = 'Test reset';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Utility Methods > isRunning should return true when loop has run
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:609:9
+    607|     });
+    608|
+    609|     test('isRunning should return true when loop has run', async () =>…
+       |         ^
+    610|       if (skipIfNoLLM()) return;
+    611|       const prompt = 'Test isRunning';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Utility Methods > getProgress should return progress when loop is running
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:632:9
+    630|     });
+    631|
+    632|     test('getProgress should return progress when loop is running', as…
+       |         ^
+    633|       if (skipIfNoLLM()) return;
+    634|       const prompt = 'Test getProgress';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/50]⎯
+
+ FAIL  test/integration/ralph-loop.test.js > RalphLoop Integration Tests > Utility Methods > getProgress should calculate progress correctly
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/ralph-loop.test.js:649:9
+    647|     });
+    648|
+    649|     test('getProgress should calculate progress correctly', async () =…
+       |         ^
+    650|       if (skipIfNoLLM()) return;
+    651|       const prompt = 'Test progress calculation';
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/50]⎯
+
+ FAIL  test/unit/generate-music.test.ts > generateMusic > generateMusic({ prompt: "beeps", platform: "p5-webaudio" }) returns code containing createOscillator or Web Audio
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/generate-music.test.ts:32:3
+     30|   });
+     31|
+     32|   it('generateMusic({ prompt: "beeps", platform: "p5-webaudio" }) retu…
+       |   ^
+     33|     const result = await generateMusic({ prompt: 'beeps', platform: 'p…
+     34|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/50]⎯
+
+ FAIL  test/unit/generate-music.test.ts > generateMusic > generateMusic({ prompt: "glitch", platform: "strudel" }) returns distinct Strudel code containing glitch-like pattern
+AssertionError: expected '$: s("bd*8").delay(0.4).every(3, rev)…' to match /stutter|degrade|hurry|jux|glitch/i
+
+- Expected:
+/stutter|degrade|hurry|jux|glitch/i
+
++ Received:
+"$: s(\"bd*8\").delay(0.4).every(3, rev)
+$: note(\"c5 g4 c4 b4\").s(\"sawtooth\")
+$: stack(
+  $: s(\"~ sd ~ sd\"),
+  $: s(\"b1 e2 d1 f1 a1\").gain(-0.6),
+  $: note(\"e3 c4 g4 a5\").delay(0.8).every(4, rev)
+)"
+
+ ❯ test/unit/generate-music.test.ts:46:25
+     44|
+     45|     expect(result.code?.length).toBeGreaterThan(0);
+     46|     expect(result.code).toMatch(/stutter|degrade|hurry|jux|glitch/i);
+       |                         ^
+     47|   });
+     48|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/50]⎯
+
+ FAIL  test/unit/generate-music.test.ts > generateMusic > generateMusic({ prompt: "reactive", platform: "strudel" }) returns distinct Strudel code
+AssertionError: expected '$: s("bd*4").gain(1.5).room(0.8)\n$: …' to match /reactive|setcps|strudel/i
+
+- Expected:
+/reactive|setcps|strudel/i
+
++ Received:
+"$: s(\"bd*4\").gain(1.5).room(0.8)
+$: s(\"sd*3, sd*6\")
+$.delay(0.2)
+$.every(4, rev)
+stack(
+  $: note(\"g4 e4 c4 b4 d4\"),
+  $.sawtooth(1)
+).gain(0.7)"
+
+ ❯ test/unit/generate-music.test.ts:53:25
+     51|
+     52|     expect(result.code?.length).toBeGreaterThan(0);
+     53|     expect(result.code).toMatch(/reactive|setcps|strudel/i);
+       |                         ^
+     54|   });
+     55|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/50]⎯
+
+ FAIL  test/unit/generate-music.test.ts > generateMusic > falls back to template when LLM is not configured
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/generate-music.test.ts:56:3
+     54|   });
+     55|
+     56|   it('falls back to template when LLM is not configured', async () => {
+       |   ^
+     57|     // Without LIMINAL_LLM_API_KEY, should use template fallback
+     58|     const result = await generateMusic({ prompt: 'ambient chill', plat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/50]⎯
+
+ FAIL  test/unit/generate-music.test.ts > generateMusic > template fallback works for p5-webaudio platform
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/generate-music.test.ts:62:3
+     60|   });
+     61|
+     62|   it('template fallback works for p5-webaudio platform', async () => {
+       |   ^
+     63|     const result = await generateMusic({ prompt: 'beeps', platform: 'p…
+     64|     expect(result.code).toContain('createOscillator');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/50]⎯
+
+ FAIL  test/unit/generate-visuals.test.ts > generateVisuals > with audioInput returns code that references fft or bpm
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/generate-visuals.test.ts:32:3
+     30|   });
+     31|
+     32|   it('with audioInput returns code that references fft or bpm', async …
+       |   ^
+     33|     const result = await generateVisuals({
+     34|       prompt: 'reactive',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/50]⎯
+
+ FAIL  test/unit/generate-visuals.test.ts > generateVisuals > with platform "p5" returns valid p5-style code
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/generate-visuals.test.ts:44:3
+     42|   });
+     43|
+     44|   it('with platform "p5" returns valid p5-style code', async () => {
+       |   ^
+     45|     const result = await generateVisuals({
+     46|       prompt: 'reactive',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/50]⎯
+
+ FAIL  test/unit/generate-visuals.test.ts > generateVisuals > with platform "p5" and audioInput returns code referencing fft or bpm when provided
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/generate-visuals.test.ts:53:3
+     51|   });
+     52|
+     53|   it('with platform "p5" and audioInput returns code referencing fft o…
+       |   ^
+     54|     const result = await generateVisuals({
+     55|       prompt: 'reactive',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/50]⎯
+
+ FAIL  test/unit/generate-visuals.test.ts > generateVisuals > prompt "reactive" returns distinct Hydra code
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/generate-visuals.test.ts:72:3
+     70|   });
+     71|
+     72|   it('prompt "reactive" returns distinct Hydra code', async () => {
+       |   ^
+     73|     const result = await generateVisuals({ prompt: 'reactive', platfor…
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/50]⎯
+
+ FAIL  test/unit/generate-visuals.test.ts > generateVisuals > template fallback works for p5 platform
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/generate-visuals.test.ts:84:3
+     82|   });
+     83|
+     84|   it('template fallback works for p5 platform', async () => {
+       |   ^
+     85|     const result = await generateVisuals({ prompt: 'particles', platfo…
+     86|     expect(result.code).toMatch(/setup|draw/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/50]⎯
+
+ FAIL  test/unit/generateMusicToVisual.test.ts > generateMusicToVisual > returns both musicCode and visualCode for prompt 'ambient glitch'
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/generateMusicToVisual.test.ts:12:3
+     10|
+     11| describe('generateMusicToVisual', () => {
+     12|   it("returns both musicCode and visualCode for prompt 'ambient glitch…
+       |   ^
+     13|     const result = await generateMusicToVisual('ambient glitch');
+     14|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/50]⎯
+
+ FAIL  test/unit/generateMusicToVisual.test.ts > generateMusicToVisual > includes audioInput when music generates something
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/generateMusicToVisual.test.ts:24:3
+     22|   });
+     23|
+     24|   it('includes audioInput when music generates something', async () =>…
+       |   ^
+     25|     const result = await generateMusicToVisual('ambient glitch');
+     26|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/50]⎯
+
+ FAIL  test/unit/generateMusicToVisual.test.ts > generateMusicToVisual > accepts options with musicPlatform and visualPlatform
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/generateMusicToVisual.test.ts:34:3
+     32|   });
+     33|
+     34|   it('accepts options with musicPlatform and visualPlatform', async ()…
+       |   ^
+     35|     const result = await generateMusicToVisual('ambient glitch', {
+     36|       musicPlatform: 'strudel',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/50]⎯
+
+ FAIL  test/unit/generateMusicToVisual.test.ts > generateMusicToVisual > accepts traits (bpm, palette) and passes them to generators
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/generateMusicToVisual.test.ts:44:3
+     42|   });
+     43|
+     44|   it('accepts traits (bpm, palette) and passes them to generators', as…
+       |   ^
+     45|     const result = await generateMusicToVisual('ambient', {
+     46|       traits: { bpm: 90, palette: 'mono' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/50]⎯
+
+ FAIL  test/unit/sandbox.test.ts > Sandbox runInSandbox > escape attempts (no Node/fs or process) > code containing require("fs") does not escape sandbox
+Error: Test timed out in 15000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/unit/sandbox.test.ts:45:5
+     43|
+     44|   describe('escape attempts (no Node/fs or process)', () => {
+     45|     it('code containing require("fs") does not escape sandbox', async …
+       |     ^
+     46|       const code = `function setup(){ try { require('fs'); } catch(e) …
+     47|       const result = await runInSandbox(code, { timeoutMs: 10000 });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/50]⎯
+
+
+ Test Files  5 failed | 623 passed | 1 skipped (629)
+      Tests  50 failed | 10106 passed | 7 skipped (10163)
+   Start at  18:40:52
+   Duration  178.86s (transform 26.66s, setup 12.05s, import 101.88s, tests 353.92s, environment 14.35s)
+
+ ELIFECYCLE  Command failed with exit code 1.

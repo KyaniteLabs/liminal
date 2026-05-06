@@ -1,0 +1,12 @@
+
+> liminal-ai@2.1.0 proof:ml-value /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+> tsx scripts/proof/ml-value-proof.ts
+
+ML value proof written: /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506/.omx/proof/ml-value-proof.json
+taste-learning: experimental | agreement beats baseline
+emergence-garden: experimental | novelty and archive-health lift
+compost: experimental | reused fragments producing valid outputs
+routing: proven | successful route selection with provider labels
+aesthetic-guardrails: experimental | quality gate catches low-score outputs
+failure-pattern-detection: proven | recurring patterns produce repair advice
+prompt-enhancement: experimental | validated prompt contract output

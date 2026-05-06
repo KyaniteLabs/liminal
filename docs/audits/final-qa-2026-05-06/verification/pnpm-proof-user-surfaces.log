@@ -1,0 +1,5 @@
+
+> liminal-ai@2.1.0 proof:user-surfaces /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+> tsx scripts/proof/user-surfaces-e2e.ts
+
+User-surface proof written: /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506/.omx/proof/user-surfaces-e2e.json

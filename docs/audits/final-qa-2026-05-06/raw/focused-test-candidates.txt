@@ -1,0 +1,1 @@
+gui/src/gui/syncPreview.ts:52:  function fit(canvas) {

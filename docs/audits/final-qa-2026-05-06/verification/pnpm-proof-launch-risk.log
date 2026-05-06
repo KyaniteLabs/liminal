@@ -1,0 +1,13 @@
+
+> liminal-ai@2.1.0 proof:launch-risk /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+> tsx scripts/proof/launch-risk-proof.ts
+
+Launch risk proof written: /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506/.omx/proof/launch-risk-proof.json
+harden-release-receipts: leverage=33.3 roi=33.3 status=mitigated
+harden-package-lock-review: leverage=24 roi=30 status=mitigated
+harden-skipped-tests: leverage=21.3 roi=26.7 status=mitigated
+harden-integration-coupling: leverage=20 roi=20 status=mitigated
+harden-process-cleanup: leverage=20 roi=20 status=mitigated
+harden-gui-smoke-gate: leverage=20 roi=16 status=mitigated
+harden-warning-budget: leverage=16 roi=20 status=mitigated
+improve-ml-value-gates: leverage=13.3 roi=16.7 status=mitigated

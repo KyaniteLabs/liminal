@@ -1,0 +1,5 @@
+
+> liminal-ai@2.1.0 proof:gui-bundle-budget /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+> tsx scripts/proof/gui-bundle-budget.ts
+
+GUI bundle budget proof written: /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506/.omx/proof/gui-bundle-budget.json

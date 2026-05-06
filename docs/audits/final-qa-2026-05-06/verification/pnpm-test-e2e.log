@@ -1,0 +1,12 @@
+
+> liminal-ai@2.1.0 test:e2e /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+> vitest run test/e2e --coverage=false
+
+
+ RUN  v4.1.2 /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+
+
+ Test Files  5 passed | 11 skipped (16)
+      Tests  46 passed | 50 skipped (96)
+   Start at  18:52:44
+   Duration  7.76s (transform 13.84s, setup 428ms, import 39.63s, tests 14.31s, environment 3ms)

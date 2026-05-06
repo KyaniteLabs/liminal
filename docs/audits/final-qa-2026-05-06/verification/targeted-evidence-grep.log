@@ -1,0 +1,814 @@
+package.json:69:    "proof:route-performance": "tsx scripts/proof/route-performance-budget.ts"
+scripts/dogfood/true-dogfood-generation.js:112:    console.log(`   Status: ${result.completed ? 'Completed' : 'Stopped'} (${result.reason})`);
+scripts/dogfood-telemetry-focused.ts:77:        isComplete: response.isComplete,
+test/pending/generators/TierBasedGenerator.test.ts:53:  metaHarness: { onGenerationComplete: vi.fn() },
+docs/AGENT_GENERATOR_ARCHITECTURE.md:299:### Phase 1: ✅ Thinking Field Capture (Complete)
+docs/AGENT_GENERATOR_ARCHITECTURE.md:304:### Phase 2: ✅ Model-Specific Prompts (Complete)
+scripts/testing/run-p5-all.ts:77:  console.log(`Complete: ${results.filter(r => r.success).length}/${results.length} successful`);
+scripts/testing/test-llm-client.ts:20:    console.log(`✅ Completed in ${duration}ms`);
+test/pending/tui/confirm-flow.test.ts:20:  const llmComplete = vi.fn();
+test/pending/tui/confirm-flow.test.ts:34:    llmComplete.mockResolvedValue({ success: true, text: 'PASS' });
+test/pending/tui/confirm-flow.test.ts:41:      llmClient: { complete: llmComplete, getConfig: () => ({ model: 'test-model' }) } as any,
+test/pending/tui/confirm-flow.test.ts:59:      llmClient: { complete: llmComplete, getConfig: () => ({ model: 'test-model' }) } as any,
+test/pending/tui/confirm-flow.test.ts:79:      llmClient: { complete: llmComplete, getConfig: () => ({ model: 'test-model' }) } as any,
+test/pending/tui/confirm-flow.test.ts:96:      llmClient: { complete: llmComplete, getConfig: () => ({ model: 'test-model' }) } as any,
+test/pending/core/RalphLoop.best-of-n.test.ts:145:  metaHarness: { onGenerationComplete: vi.fn() },
+scripts/testing/observable-test-runner.ts:52:  testsCompleted: number;
+scripts/testing/observable-test-runner.ts:54:  modelsCompleted: number;
+scripts/testing/observable-test-runner.ts:105:      testsCompleted: 0,
+scripts/testing/observable-test-runner.ts:107:      modelsCompleted: 0,
+scripts/testing/observable-test-runner.ts:170:      this.metrics.testsCompleted++;
+scripts/testing/observable-test-runner.ts:187:      this.metrics.modelsCompleted++;
+scripts/testing/observable-test-runner.ts:188:      this.log('INFO', `✅ Completed ${C.cyan}${modelId}${C.reset} in ${run.totalDurationMs}ms`);
+scripts/testing/observable-test-runner.ts:198:      this.metrics.modelsCompleted++;
+scripts/testing/observable-test-runner.ts:205:    const progress = (this.metrics.testsCompleted / this.metrics.testsTotal * 100).toFixed(1);
+scripts/testing/observable-test-runner.ts:209:    output += `${C.dim}Elapsed: ${elapsed}s | Progress: ${progress}% | Models: ${this.metrics.modelsCompleted}/${this.metrics.modelsTotal}${C.reset}\n`;
+scripts/testing/observable-test-runner.ts:254:    summary += `Tests Run: ${this.metrics.testsCompleted}/${this.metrics.testsTotal}\n\n`;
+test/pending/core/ralph-loop-thinking.test.ts:203:    onGenerationComplete: vi.fn(async (result) => {
+test/pending/core/ralph-loop-thinking.test.ts:339:    it('Test 3: RalphLoop passes thinking to metaHarness → verify onGenerationComplete receives thinking', async () => {
+scripts/resume-dogfood-campaign.ts:44:function getCompletedTests(): Set<string> {
+scripts/resume-dogfood-campaign.ts:113:  const completed = getCompletedTests();
+test/core/validators/ThreeValidator.test.ts:59:      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+test/core/validators/ThreeValidator.test.ts:102:      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+test/core/validators/ThreeValidator.test.ts:160:      "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+scripts/campaign-local-resume.ts:72:function loadCompleted(outputBase: string): Set<string> {
+scripts/campaign-local-resume.ts:249:  const completed = loadCompleted(outputBase);
+test/unit/LLMModeAgent.test.ts:5:  mockComplete,
+test/unit/LLMModeAgent.test.ts:33:    mockComplete: complete,
+test/unit/LLMModeAgent.test.ts:130:    mockComplete.mockResolvedValueOnce({ text });
+test/unit/LLMModeAgent.test.ts:137:    stepsCompleted: 2,
+test/unit/LLMModeAgent.test.ts:161:    mockComplete.mockReset();
+test/unit/LLMModeAgent.test.ts:196:    mockComplete.mockResolvedValue({ text: '{"tool":"complete","params":{},"thought":"done"}' });
+test/unit/LLMModeAgent.test.ts:207:    mockComplete.mockResolvedValue({ text: '{"tool":"complete"}' });
+test/unit/LLMModeAgent.test.ts:244:    mockComplete.mockResolvedValue({ text: 'not json' });
+test/unit/LLMModeAgent.test.ts:276:    const prompt = mockComplete.mock.calls[0][0].prompt as string;
+test/unit/LLMModeAgent.test.ts:302:    mockComplete.mockResolvedValue({
+test/unit/LLMModeAgent.test.ts:347:    expect(mockComplete).not.toHaveBeenCalled();
+test/unit/LLMModeAgent.test.ts:355:    mockComplete.mockResolvedValueOnce({ text: '' });
+test/unit/LLMModeAgent.test.ts:365:    expect(mockComplete).toHaveBeenCalledTimes(1);
+test/unit/LLMModeAgent.test.ts:374:    mockComplete.mockResolvedValueOnce({ text: '{"tool":"complete","params":{},"thought":"done","expectedResult":"done"}' });
+test/unit/LLMModeAgent.test.ts:384:    expect(mockComplete).toHaveBeenCalledTimes(1);
+test/unit/LLMModeAgent.test.ts:390:    mockComplete
+test/unit/LLMModeAgent.test.ts:404:    expect(mockComplete).toHaveBeenCalledTimes(2);
+test/unit/LLMModeAgent.test.ts:410:    mockComplete.mockResolvedValue({ text: 'This is not JSON at all' });
+test/unit/LLMModeAgent.test.ts:421:    mockComplete
+test/unit/LLMModeAgent.test.ts:437:    mockComplete.mockResolvedValue({ text: '' });
+test/unit/LLMModeAgent.test.ts:453:    mockComplete.mockResolvedValue({
+test/unit/LLMModeAgent.test.ts:474:    mockComplete.mockResolvedValue({ text: 'not json' });
+test/unit/LLMModeAgent.test.ts:485:    mockComplete.mockResolvedValue({
+test/unit/LLMModeAgent.test.ts:516:    mockComplete
+test/unit/LLMModeAgent.test.ts:547:      stepsCompleted: 1,
+test/unit/LLMModeAgent.test.ts:559:    expect(mockComplete.mock.calls[1][0].prompt).toContain('resume context');
+test/unit/LLMModeAgent.test.ts:577:      stepsCompleted: 2,
+test/unit/LLMModeAgent.test.ts:598:    expect(mockComplete).not.toHaveBeenCalled();
+test/unit/LLMModeAgent.test.ts:618:      stepsCompleted: 4,
+test/unit/LLMModeAgent.test.ts:630:    mockComplete.mockResolvedValue({
+test/unit/LLMModeAgent.test.ts:644:    expect(mockComplete).toHaveBeenCalledTimes(1);
+test/unit/LLMModeAgent.test.ts:645:    expect(mockComplete.mock.calls[0][0].prompt).toContain('resume context');
+test/unit/LLMModeAgent.test.ts:656:    mockComplete
+test/unit/LLMModeAgent.test.ts:874:    mockComplete.mockResolvedValue({ text: 'not json' });
+test/unit/LLMModeAgent.test.ts:879:    expect(mockComplete).toHaveBeenCalledWith(
+test/unit/LLMModeAgent.test.ts:886:    const callArg = mockComplete.mock.calls[0][0];
+test/unit/LLMModeAgent.test.ts:892:    mockComplete.mockResolvedValue({ text: '{"tool":"complete","params":{},"thought":"done"}' });
+test/unit/LLMModeAgent.test.ts:906:    mockComplete
+test/unit/LLMModeAgent.test.ts:929:    mockComplete
+test/unit/LLMModeAgent.test.ts:948:    mockComplete
+test/unit/LLMModeAgent.test.ts:968:    mockComplete.mockResolvedValue({
+test/unit/LLMModeAgent.test.ts:989:    mockComplete.mockResolvedValue({ text: 'done inspecting; no safe change warranted' });
+test/unit/LLMModeAgent.test.ts:1042:    expect(mockComplete).toHaveBeenCalledTimes(1);
+test/unit/LLMModeAgent.test.ts:1081:    const userPrompt = mockComplete.mock.calls[0][0].prompt as string;
+test/unit/LLMModeAgent.test.ts:1183:    expect(mockComplete.mock.calls[2][0].prompt).toContain('resume context');
+test/unit/LLMModeAgent.test.ts:1200:      stepsCompleted: 2,
+test/unit/LLMModeAgent.test.ts:1229:    expect(mockComplete.mock.calls[0][0].prompt).toContain('resume context');
+test/unit/LLMModeAgent.test.ts:1254:    const firstPrompt = mockComplete.mock.calls[0][0].prompt;
+test/unit/LLMModeAgent.test.ts:1284:    const firstPrompt = mockComplete.mock.calls[0][0].prompt;
+test/unit/LLMModeAgent.test.ts:1321:    const firstPrompt = mockComplete.mock.calls[0][0].prompt;
+test/unit/LLMModeAgent.test.ts:1358:    const firstPrompt = mockComplete.mock.calls[0][0].prompt;
+test/unit/LLMModeAgent.test.ts:1694:    mockComplete.mockResolvedValue({ text: 'not json' });
+test/unit/LLMModeAgent.test.ts:1753:    mockComplete.mockResolvedValue({ text: 'not json' });
+test/unit/LLMModeAgent.test.ts:1764:    mockComplete.mockResolvedValue({ text: 'not json' });
+test/render/render-and-score.test.ts:38:const describeIfBrowser = browserReady ? describe : describe.skip;
+test/security/csrf-protection.test.ts:8:describe.skipIf(isTestEnv)('CSRF Protection', () => {
+scripts/dogfood-all-providers-telemetry.ts:183:        isComplete: response.isComplete,
+scripts/dogfood-all-providers-telemetry.ts:426:  let md = `# Dogfood Complete Report with Maximum Telemetry\n\n`;
+test/core/wrappers/ThreeWrapper.test.ts:39:      const code = 'import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";\nconst scene = new THREE.Scene();';
+test/core/wrappers/ThreeWrapper.test.ts:43:      expect(result).toContain('https://unpkg.com/three@0.160.0/build/three.module.js');
+test/pending/unit/brain/CreativePreferenceExtractor.test.ts:21:    expect(result.profileCompleteness).toBeGreaterThan(0);
+test/helpers/mockLLM.ts:31:  const mockComplete = vi.fn(async () => ({
+test/helpers/mockLLM.ts:50:    this.complete = mockComplete;
+test/helpers/mockLLM.ts:60:    mockComplete,
+test/helpers/mockLLM.ts:98:  createMockComplete: (defaultText: string = 'mock response') =>
+test/helpers/networkCheck.ts:12: *   describe.skipIf(process.env.CI || !cdnAvailable)('...', () => { ... });
+docs/features.html:29:    <p>Complete feature status, guardrail details, and generation modes.</p>
+docs/features.html:40:            <tr><td>11 Generators</td><td><span class="badge badge-success">Complete</span></td><td>p5, GLSL, Three.js, Strudel, Hydra, Tone.js, Revideo, HTML, ASCII, Kinetic, TextGen</td></tr>
+docs/features.html:41:            <tr><td>Multi-Agent Critique</td><td><span class="badge badge-success">Complete</span></td><td>3-agent board: Minimalist, Expressionist, Technician</td></tr>
+docs/features.html:42:            <tr><td>Compost Mill</td><td><span class="badge badge-success">Complete</span></td><td>Digest &rarr; Shred &rarr; Collide &rarr; Score &rarr; Promote pipeline</td></tr>
+docs/features.html:43:            <tr><td>Self-Improving Harness</td><td><span class="badge badge-success">Complete</span></td><td>Failure logging, pattern detection, targeted fixes via 21 tools</td></tr>
+docs/features.html:44:            <tr><td>Music Theory Engine</td><td><span class="badge badge-success">Complete</span></td><td>Euclidean rhythms, Markov chains, scales, chord progressions</td></tr>
+docs/features.html:45:            <tr><td>Audio Pipeline</td><td><span class="badge badge-success">Complete</span></td><td>Audio analysis, pitch detection, visual parameter mapping</td></tr>
+docs/features.html:46:            <tr><td>Aesthetic Guardrails</td><td><span class="badge badge-success">Complete</span></td><td>Color harmony, layout, typography, sound quality critics</td></tr>
+docs/features.html:47:            <tr><td>Model-Agnostic LLM</td><td><span class="badge badge-success">Complete</span></td><td>7+ providers via ProviderFactory with circuit breaker</td></tr>
+docs/features.html:48:            <tr><td>Circuit Breaker</td><td><span class="badge badge-success">Complete</span></td><td>Automatic failover with role-specific fallback chains</td></tr>
+docs/features.html:49:            <tr><td>Bubble Tea TUI</td><td><span class="badge badge-success">Complete</span></td><td>Go-based TUI with HTTP/SSE bridge, provider switching</td></tr>
+docs/features.html:50:            <tr><td>Task Ledger</td><td><span class="badge badge-success">Complete</span></td><td>Self-hosting corpus, runner, verifier (<code>src/ledger/</code>)</td></tr>
+docs/features.html:51:            <tr><td>LiminalFS</td><td><span class="badge badge-success">Complete</span></td><td>ProjectStore, EventStore, AssetStore (<code>src/fs/</code>)</td></tr>
+docs/features.html:52:            <tr><td>Guardrails M1-M18</td><td><span class="badge badge-success">Complete</span></td><td>Core, extended, and compliance layers</td></tr>
+docs/features.html:53:            <tr><td>Security Hardening</td><td><span class="badge badge-success">Complete</span></td><td>SSRF protection, rate limiting, sandbox, CSRF, helmet</td></tr>
+docs/features.html:198:            <tr><td>M1-M8</td><td>Core correctness and safety</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/features.html:199:            <tr><td>M9-M11</td><td>Semantic validation, runtime health, accessibility</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/features.html:200:            <tr><td>M12-M18</td><td>Compliance: privacy, fairness, supply chain, resilience, audit, explainability, injection</td><td><span class="badge badge-success">Complete</span></td></tr>
+test/integration/dual-llm.test.ts:34:describe.skipIf(process.env.CI)('Dual LLM (cloud vs local)', () => {
+test/integration/dual-llm.test.ts:53:  test.skipIf(process.env.CI || !process.env.LIMINAL_LLM_BASE_URL)('getEffectiveConfig + LLMClient path with cloud (lmstudio) backend', async () => {
+docs/PROMPTS.md:32:| `three.generate` | generator | `${prompt}`, `${threeVersion}` | Generate Three.js 3D scenes (CDN v0.172.0) |
+src/tui-bridge/PostGenerationCognitiveWriter.ts:49:export interface CompletedGenerationContext extends PrepareGenerationContext {
+src/tui-bridge/PostGenerationCognitiveWriter.ts:103:  async writeBackGeneration(context: CompletedGenerationContext): Promise<CognitiveWriteBackResult> {
+src/tui-bridge/PostGenerationCognitiveWriter.ts:176:  private async writeArtifact(context: CompletedGenerationContext): Promise<string> {
+src/tui-bridge/PostGenerationCognitiveWriter.ts:196:  private estimateDescriptor(context: CompletedGenerationContext): number[] {
+test/chat/integration.test.ts:100:      // Complete interview
+test/unit/sandbox.test.ts:28:describe.skipIf(process.env.CI || !cdnAvailable)('Sandbox runInSandbox', () => {
+test/integration/ralph-loop.test.js:372:      const prompt = 'Complete this task <promise>COMPLETE</promise>';
+test/pending/unit/TextGenerativeGenerator.test.ts:41:  metaHarness: { getQualityHint: vi.fn(() => null), onGenerationComplete: vi.fn(async () => {}) },
+test/integration/renderer.test.js:23:describe.skipIf(process.env.CI || !cdnAvailable)('Renderer Integration Tests', () => {
+test/tui-bridge/tui-bridge-service.test.ts:96:    expect(events.map(e => e.type)).toContain('response.completed');
+test/tui-bridge/tui-bridge-service.test.ts:488:        expect(types).toContain('response.completed');
+test/tui-bridge/tui-bridge-service.test.ts:492:        const completed = events.find(e => e.type === 'response.completed');
+test/tui-bridge/tui-bridge-service.test.ts:493:        expect(completed?.type === 'response.completed' && completed.content).toContain('chunked');
+src/tui-bridge/types.ts:158:  | { type: 'response.completed'; sessionId: string; content: string }
+test/pending/unit/ralph-loop.test.ts:197:    onGenerationComplete: async () => {},
+test/chat/ConversationManager.test.ts:101:      // Complete all previous phases
+test/chat/ConversationManager.test.ts:181:      // Complete interview: greeting + 6 discovery + confirm
+test/tui-bridge/tui-bridge-no-chat-lane.test.ts:961:      .find(event => event.type === 'response.completed' && String(event.content).includes('Last planning failure:')));
+src/tui-bridge/TuiBridgeService.ts:472:    this.emit(sessionId, { type: 'response.completed', sessionId, content });
+src/tui-bridge/TuiBridgeService.ts:481:  emitVideoRenderComplete(sessionId: string, domain: string, videoPath: string): void {
+src/tui-bridge/TuiBridgeService.ts:702:      this.emit(sessionId, { type: 'response.completed', sessionId, content: input.text });
+src/tui-bridge/TuiBridgeService.ts:1660:      this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+src/tui-bridge/TuiBridgeService.ts:2014:        this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+src/tui-bridge/TuiBridgeService.ts:2384:      this.emit(sessionId, { type: 'response.completed', sessionId, content: result.code });
+src/tui-bridge/TuiBridgeService.ts:2537:      this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+src/tui-bridge/TuiBridgeService.ts:2647:      this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+src/tui-bridge/TuiBridgeService.ts:2856:    this.emit(sessionId, { type: 'response.completed', sessionId, content });
+docs/tutorials/first-composition.md:906:- **[p5.js Reference](https://p5js.org/reference/)** - Complete p5.js documentation
+test/pending/unit/core/RalphLoop.test.ts:178:  metaHarness: { onGenerationComplete: vi.fn(async () => {}) },
+test/pending/unit/core/RalphLoop.test.ts:286:  describe('isCodeComplete()', () => {
+test/pending/unit/core/RalphLoop.test.ts:289:      expect(RalphLoop.isCodeComplete(code)).toBe(true);
+test/pending/unit/core/RalphLoop.test.ts:294:      expect(RalphLoop.isCodeComplete(code)).toBe(false);
+test/pending/unit/core/RalphLoop.test.ts:299:      expect(RalphLoop.isCodeComplete(code)).toBe(false);
+test/pending/unit/core/RalphLoop.test.ts:304:      expect(RalphLoop.isCodeComplete(code)).toBe(false);
+test/pending/unit/core/RalphLoop.test.ts:309:      expect(RalphLoop.isCodeComplete(code)).toBe(false);
+test/pending/unit/core/RalphLoop.test.ts:313:      expect(RalphLoop.isCodeComplete('')).toBe(true);
+test/pending/unit/core/RalphLoop.test.ts:318:      expect(RalphLoop.isCodeComplete(code)).toBe(true);
+test/integration/ledger-cli.test.ts:164:      description: 'Completed task',
+test/integration/ledger-cli.test.ts:188:    expect(output).toContain('Completed:   1');
+test/unit/tui-bridge/goalCommand.test.ts:11:  mockAddGoal, mockListGoals, mockRemoveGoal, mockCompleteGoal,
+test/unit/tui-bridge/goalCommand.test.ts:26:    mockCompleteGoal: completeGoal,
+test/unit/tui-bridge/goalCommand.test.ts:231:    mockCompleteGoal.mockReturnValue({ ...FAKE_GOAL, status: 'completed' });
+test/unit/tui-bridge/goalCommand.test.ts:235:    expect(mockCompleteGoal).toHaveBeenCalledWith('goal-123');
+test/unit/tui-bridge/goalCommand.test.ts:240:    mockCompleteGoal.mockReturnValue(null);
+test/unit/tui-bridge/goalCommand.test.ts:250:    expect(mockCompleteGoal).not.toHaveBeenCalled();
+docs/marketing/building-in-public-strategy.md:457:- HarnessUpdater: Injects lighting requirements into Three.js prompt template
+test/integration/full-loop.test.js:11: * - Complete workflow from start to finish
+test/integration/full-loop.test.js:53:  describe('Complete Loop Workflow', () => {
+test/integration/full-loop.test.js:552:  describe('Result Object Completeness', () => {
+test/integration/generator-renderer.test.js:97:  describe('Complete Generation-Render Workflow', () => {
+test/unit/swarm/SwarmOrchestrator.test.ts:274:    it.skip('routes visual prompt to visual experts', () => {
+test/unit/swarm/SwarmOrchestrator.test.ts:328:    it.skip('returns personas matching routed experts', () => {
+test/unit/swarm/SwarmOrchestrator.test.ts:806:    it.skip('extracts code from markdown fence responses', async () => {
+scripts/dogfood-with-telemetry.ts:103:        isComplete: response.isComplete,
+test/e2e/provider-pipeline.test.ts:580:  it('reports isComplete for balanced braces', () => {
+test/e2e/provider-pipeline.test.ts:582:    expect(result.isComplete).toBe(true);
+test/e2e/provider-pipeline.test.ts:585:  it('reports !isComplete for unbalanced braces', () => {
+test/e2e/provider-pipeline.test.ts:587:    expect(result.isComplete).toBe(false);
+test/e2e/sandbox-self-improve.e2e.test.ts:34:describe.skipIf(process.env.CI)('E2E sandbox self-improve', () => {
+test/unit/compost/ModelRouter.test.ts:246:      primaryLLM = new MockLLMClient([{ success: true, code: 'Completely different response from primary' }]);
+test/e2e/guardrails-e2e.test.ts:381:    it.skipIf(!LLMClient.isConfigured())('should generate code with guardrail validation', async () => {
+test/e2e/guardrails-e2e.test.ts:493:    it.skipIf(!LLMClient.isConfigured())('should learn from failed generations', async () => {
+docs/WHAT_TO_EXPECT.md:182:src/harness/HarnessUpdater.ts      (M8)
+test/e2e/full-loop-local.test.ts:148:      await metaHarness.onGenerationComplete({
+test/e2e/models/minimax-m2-5.test.ts:16:describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('MiniMax-M2.5', () => {
+docs/GUARDRAIL_TAXONOMY.md:161:1. **Logs failure** via `onGenerationComplete()`
+test/e2e/models/qwen3-5-9b.test.ts:17:describe.skipIf(process.env.CI || !process.env.LIMINAL_LLM_BASE_URL)('Qwen 3.5 9B', () => {
+test/generators/TierBasedGenerator.test.ts:53:  metaHarness: { onGenerationComplete: vi.fn() },
+test/e2e/models/qwen3-coder-40b.test.ts:16:describe.skipIf(process.env.CI || !process.env.LIMINAL_LLM_BASE_URL)('Qwen 3 Coder 40B', () => {
+docs/README.md:36:| [GUARDRAIL_EXHAUSTIVE.md](./GUARDRAIL_EXHAUSTIVE.md) | Complete guardrail analysis |
+test/e2e/models/lfm-2-5-1-2b.test.ts:20:describe.skipIf(skipNoLLM)('LFM 2.5 1.2B', () => {
+test/e2e/models/minimax-m2-7-highspeed.test.ts:16:describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('MiniMax-M2.7-highspeed', () => {
+test/e2e/models/minimax-m2-7.test.ts:16:describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('MiniMax-M2.7', () => {
+docs/MASTER_PLAN.md:39:- [ ] Complete full matrix run
+test/unit/core/CreativeIterationGate.test.ts:12:    isComplete: true,
+test/unit/core/CreativeIterationGate.test.ts:40:    const decision = decide({ iteration: 1, score: 0.93, isComplete: true });
+test/unit/core/CreativeIterationGate.test.ts:47:    const decision = decide({ iteration: 1, score: 0.93, isComplete: false });
+test/unit/core/CreativeIterationGate.test.ts:54:    const decision = decide({ iteration: 3, score: 0.65, isComplete: true, maxIterations: 5, minQualityScore: 0.6 });
+test/unit/core/CreativeIterationGate.test.ts:69:      isComplete: true,
+src/release/GoldenSuiteRunner.ts:27:  onCaseComplete?: (caseId: string, passed: boolean, score: number) => void;
+src/release/GoldenSuiteRunner.ts:48:  private onCaseComplete?: (caseId: string, passed: boolean, score: number) => void;
+src/release/GoldenSuiteRunner.ts:55:    this.onCaseComplete = options?.onCaseComplete;
+src/release/GoldenSuiteRunner.ts:100:      this.onCaseComplete?.(goldenCase.id, passed, judgment.score);
+test/e2e/models/kimi-k2p5.test.ts:16:describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('Kimi-k2p5', () => {
+src/compost/CompostRehydrator.ts:21:  isComplete: boolean;
+src/compost/CompostRehydrator.ts:82:        isComplete: complexity > 0.5,
+src/compost/CompostRehydrator.ts:97:        isComplete: false, // Cross-domain is a template, not complete
+test/ui/TransparencyViewer.test.ts:197:    expect(summary).toContain('Generation Complete');
+test/e2e/models/glm-5-1.test.ts:16:describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('GLM-5.1', () => {
+test/unit/promise-detector.test.js:55:      const output = '<promise>Complete</promise>';
+test/e2e/full-loop-cloud.test.ts:59:  test.skipIf(process.env.CI || !process.env.RUN_CLOUD_MODEL_TESTS)('run() full loop with cloud (lmstudio): result has code, iterations, output files', async () => {
+test/e2e/model-comparison.test.ts:107:describe.skipIf(!runModelComparison)('Model Comparison Suite', () => {
+test/e2e/model-comparison.test.ts:119:      const testFn = model.type === 'cloud' && !model.apiKey ? it.skip : it;
+test/prompts/prompt-validation.test.ts:149:    it('no prompt should reference stale Three.js CDN version 0.160.0', () => {
+test/prompts/prompt-validation.test.ts:151:      expect(threePrompt?.systemPrompt).not.toContain('0.160.0');
+test/e2e/cloud-providers.test.ts:41:describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('Cloud Provider Smoke Tests', () => {
+src/utils/htmlWrapper.ts:15: * - html: Complete HTML pages (pass-through)
+src/utils/htmlWrapper.ts:157:    // Complete HTML detection
+test/unit/core/RalphLoop.repairAdvice-regression.test.ts:38:      { score: 0.4, confidence: 0.8, failureClass: 'none' },
+test/unit/core/RalphLoop.repairAdvice-regression.test.ts:39:      { score: 0.9, confidence: 0.95, failureClass: 'none', repairAdvice: { issue: 'Missing fill', fix: 'Add fill() call', constraint: 'Must have visible shapes' } },
+test/unit/core/RalphLoop.repairAdvice-regression.test.ts:50:      { code: 'function setup(){createCanvas(400,400)}function draw(){background(0)}', score: 0.4, issues: ['Low candidate issue'], index: 0, genEval: { score: 0.4, confidence: 0.8, failureClass: 'none', repairAdvice: { issue: 'Loser issue', fix: 'Loser fix', constraint: 'Loser constraint' } } as GenerationEvaluation },
+test/unit/core/RalphLoop.repairAdvice-regression.test.ts:51:      { code: 'function setup(){createCanvas(400,400)}function draw(){background(0)}', score: 0.9, issues: ['Winner issue'], index: 1, genEval: { score: 0.9, confidence: 0.95, failureClass: 'none', repairAdvice: { issue: 'Winner issue', fix: 'Winner fix', constraint: 'Winner constraint' } } as GenerationEvaluation },
+test/unit/core/RalphLoop.repairAdvice-regression.test.ts:77:      { code: 'identical_code', score: 0.3, index: 0, genEval: { score: 0.3, confidence: 0.5, failureClass: 'none', repairAdvice: { issue: 'WRONG', fix: 'WRONG', constraint: 'WRONG' } } as GenerationEvaluation },
+test/unit/core/RalphLoop.repairAdvice-regression.test.ts:78:      { code: 'identical_code', score: 0.95, index: 1, genEval: { score: 0.95, confidence: 0.9, failureClass: 'none', repairAdvice: { issue: 'CORRECT', fix: 'CORRECT', constraint: 'CORRECT' } } as GenerationEvaluation },
+docs/agents/factory-artists/theobrowne.md:28:### 3. Modularity Over Completeness
+test/unit/core/RalphLoop.comprehensive.test.ts:193:  metaHarness: { onGenerationComplete: vi.fn(async () => {}) },
+test/unit/core/RalphLoop.comprehensive.test.ts:354:  describe('isCodeComplete()', () => {
+test/unit/core/RalphLoop.comprehensive.test.ts:356:      expect(RalphLoop.isCodeComplete('function setup() { createCanvas(400, 400); }')).toBe(true);
+test/unit/core/RalphLoop.comprehensive.test.ts:360:      expect(RalphLoop.isCodeComplete('function setup() { createCanvas(400, 400);')).toBe(false);
+test/unit/core/RalphLoop.comprehensive.test.ts:364:      expect(RalphLoop.isCodeComplete('function setup( { }')).toBe(false);
+test/unit/core/RalphLoop.comprehensive.test.ts:368:      expect(RalphLoop.isCodeComplete('const arr = [1, 2;')).toBe(false);
+test/unit/core/RalphLoop.comprehensive.test.ts:372:      expect(RalphLoop.isCodeComplete('')).toBe(true);
+test/unit/core/RalphLoop.comprehensive.test.ts:1025:  describe('isCodeComplete() — branch coverage for cutoff patterns', () => {
+test/unit/core/RalphLoop.comprehensive.test.ts:1028:      expect(RalphLoop.isCodeComplete(code)).toBe(false);
+test/unit/core/RalphLoop.comprehensive.test.ts:1033:      expect(RalphLoop.isCodeComplete(code)).toBe(false);
+test/unit/core/RalphLoop.comprehensive.test.ts:1332:  // ─── isCodeComplete additional branches ─────────────────────────────
+test/unit/core/RalphLoop.comprehensive.test.ts:1334:  describe('isCodeComplete() — additional branch coverage', () => {
+test/unit/core/RalphLoop.comprehensive.test.ts:1337:      expect(RalphLoop.isCodeComplete(code)).toBe(false);
+test/unit/core/RalphLoop.comprehensive.test.ts:1342:      expect(RalphLoop.isCodeComplete(code)).toBe(false);
+test/unit/core/RalphLoop.comprehensive.test.ts:1346:      expect(RalphLoop.isCodeComplete('const x = 1;')).toBe(true);
+test/unit/llm/LLMClientExtended.test.ts:12:  isCodeComplete,
+test/unit/llm/LLMClientExtended.test.ts:30:    expect(result.isComplete).toBe(true);
+test/unit/llm/LLMClientExtended.test.ts:182:describe('isCodeComplete', () => {
+test/unit/llm/LLMClientExtended.test.ts:184:    expect(isCodeComplete('function hello() { return 42; }')).toBe(true);
+test/unit/llm/LLMClientExtended.test.ts:188:    expect(isCodeComplete('function hello() { return 42;')).toBe(false);
+test/unit/llm/LLMClientExtended.test.ts:192:    expect(isCodeComplete('const x = foo(')).toBe(false);
+test/unit/llm/LLMClientExtended.test.ts:196:    expect(isCodeComplete('const x = 1;')).toBe(true);
+test/unit/llm/LLMClientExtended.test.ts:200:    expect(isCodeComplete('')).toBe(true);
+test/unit/llm/LLMClientExtended.test.ts:204:    expect(isCodeComplete('if (a) { foo(b => { return c; }); }')).toBe(true);
+test/unit/llm/LLMClientExtended.test.ts:211:    expect(isCodeComplete(code)).toBe(false);
+src/tui/index.tsx:271:        addLog("success", `Complete: ${result.iterations} iters`);
+test/unit/generators/GeneratorHarnessTools.test.ts:420:            constraint: 'Complete artifact',
+test/unit/generators/GeneratorHarnessTools.test.ts:440:            constraint: 'Complete artifact',
+test/unit/generators/GeneratorHarnessTools.test.ts:718:        { score: 0.3, confidence: 1, failureClass: 'none' as const },
+test/unit/generators/GeneratorHarnessTools.test.ts:719:        { score: 0.9, confidence: 1, failureClass: 'none' as const },
+test/unit/generators/GeneratorHarnessTools.test.ts:720:        { score: 0.5, confidence: 1, failureClass: 'none' as const },
+test/unit/generators/HyperFramesGenerator.test.ts:42:  metaHarness: { onGenerationComplete: vi.fn() },
+test/unit/llm/UniversalSanitizer.test.ts:115:      expect(result.isComplete).toBe(true);
+test/unit/llm/UniversalSanitizer.test.ts:121:      expect(result.isComplete).toBe(false);
+test/unit/llm/UniversalSanitizer.test.ts:127:      expect(result.isComplete).toBe(false);
+scripts/proof/user-surface-observability.ts:168:    previewCompleted: observabilityEvents.some((item) => item.event.type === 'preview.completed'),
+src/export/Exporter.ts:290:   * @returns Complete HTML string
+scripts/proof/mic-preview-browser-smoke.ts:28:  previewCompleted: boolean;
+scripts/proof/mic-preview-browser-smoke.ts:29:  previewCompletedBytes: number;
+scripts/proof/mic-preview-browser-smoke.ts:88:  const previewCompleted = events.some((event) => event.type === 'preview.completed');
+scripts/proof/mic-preview-browser-smoke.ts:120:  const happyPathOk = pageErrors.length === 0 && previewCompleted && /RMS:|Peak:|Status: stopped/.test(outText ?? '');
+scripts/proof/mic-preview-browser-smoke.ts:131:    previewCompleted,
+scripts/proof/mic-preview-browser-smoke.ts:132:    previewCompletedBytes: completedContent.length,
+scripts/proof/automated-bridge-session.ts:149:    error ? `**Error:** ${error}` : `**Status:** Complete`,
+test/unit/generators/TierBasedGenerator.expanded.test.ts:101:  metaHarness: { onGenerationComplete: mockMetaHarnessOnGen },
+test/unit/generators/StrudelGenerator.test.ts:3:const { mockToolLoop, mockComplete, mockGetConfig } = vi.hoisted(() => ({
+test/unit/generators/StrudelGenerator.test.ts:10:  mockComplete: vi.fn().mockResolvedValue({
+test/unit/generators/StrudelGenerator.test.ts:20:    complete = mockComplete;
+test/unit/generators/StrudelGenerator.test.ts:47:  metaHarness: { onGenerationComplete: vi.fn() },
+test/unit/generators/StrudelGenerator.test.ts:66:    mockComplete.mockReset();
+test/unit/generators/StrudelGenerator.test.ts:67:    mockComplete.mockResolvedValue({
+test/unit/generators/StrudelGenerator.test.ts:95:    mockComplete.mockResolvedValueOnce({ text: '', success: true });
+test/unit/generators/StrudelGenerator.test.ts:107:    mockComplete.mockResolvedValueOnce({ text: '', success: true });
+test/unit/generators/StrudelGenerator.test.ts:138:    mockComplete.mockResolvedValueOnce({ text: '$: s("bd sd").fast(2)\\n$: note("c3 eb3").slow(2)', success: true });
+test/unit/generators/StrudelGenerator.test.ts:144:    expect(mockComplete).toHaveBeenCalledTimes(1);
+test/unit/generators/StrudelGenerator.test.ts:149:    mockComplete.mockResolvedValueOnce({ text: '', success: true });
+test/unit/generators/StrudelGenerator.test.ts:165:    mockComplete.mockResolvedValueOnce({
+test/unit/generators/HTMLWebGenerator.test.ts:44:  metaHarness: { onGenerationComplete: vi.fn() },
+test/unit/llm/CodeValidation.test.ts:2:import { sanitizeOutput, isCodeComplete } from '../../../src/llm/LLMClient.js';
+test/unit/llm/CodeValidation.test.ts:16:      expect(result.isComplete).toBe(false);
+test/unit/llm/CodeValidation.test.ts:22:      expect(result.isComplete).toBe(false);
+test/unit/llm/CodeValidation.test.ts:29:      expect(result.isComplete).toBe(true);
+test/unit/llm/CodeValidation.test.ts:55:  describe('isCodeComplete', () => {
+test/unit/llm/CodeValidation.test.ts:57:      expect(isCodeComplete('function test() { return 42; }')).toBe(true);
+test/unit/llm/CodeValidation.test.ts:61:      expect(isCodeComplete('function test() { return 42;')).toBe(false);
+test/unit/llm/CodeValidation.test.ts:65:      expect(isCodeComplete('function test((')).toBe(false);
+src/guardrails/rules/CatastrophicGuardrails.ts:63:          stepsCompleted: context.step,
+test/unit/generators/ASCIIArtGenerator.test.ts:45:  metaHarness: { onGenerationComplete: vi.fn() },
+src/aesthetic/critics/SoundHarmonyCritic.ts:283:  const audioChainComplete = audioTokens.some(t =>
+src/aesthetic/critics/SoundHarmonyCritic.ts:288:  if (audioChainComplete) score += 0.05;
+test/harness/RunStateStore.test.ts:31:    stepsCompleted: 3,
+test/harness/RunStateStore.test.ts:66:    expect(loaded!.stepsCompleted).toBe(3);
+test/unit/generators/P5GeneratorV2.test.ts:54:    onGenerationComplete: vi.fn(),
+test/unit/generators/ThreeGenerator.test.ts:42:  metaHarness: { onGenerationComplete: vi.fn() },
+test/unit/generators/ThreeGenerator.test.ts:74:    expect(wrapped).toContain('three@0.160.0');
+test/unit/generators/TextGenerativeGenerator.test.ts:50:  metaHarness: { onGenerationComplete: vi.fn() },
+src/render/RenderAndScorePipeline.ts:174:      Logger.info('RenderAndScorePipeline', `Completed in ${duration}ms with score ${score.toFixed(3)}`);
+test/unit/generators/KineticGenerator.test.ts:44:  metaHarness: { onGenerationComplete: vi.fn() },
+test/unit/generators/ToneGenerator.test.ts:3:const { mockToolLoop, mockComplete, mockGetConfig } = vi.hoisted(() => ({
+test/unit/generators/ToneGenerator.test.ts:10:  mockComplete: vi.fn().mockResolvedValue({
+test/unit/generators/ToneGenerator.test.ts:20:    complete = mockComplete;
+test/unit/generators/ToneGenerator.test.ts:47:  metaHarness: { onGenerationComplete: vi.fn() },
+test/unit/generators/ToneGenerator.test.ts:66:    mockComplete.mockReset();
+test/unit/generators/ToneGenerator.test.ts:67:    mockComplete.mockResolvedValue({
+test/unit/generators/ToneGenerator.test.ts:80:    mockComplete.mockResolvedValue({ text: '', success: true });
+test/unit/generators/ToneGenerator.test.ts:92:    mockComplete.mockResolvedValue({ text: '', success: true });
+test/unit/generators/ToneGenerator.test.ts:138:    mockComplete.mockResolvedValue({ text: '', success: true });
+test/unit/generators/ToneGenerator.test.ts:178:    mockComplete.mockResolvedValueOnce({
+test/unit/generators/ToneGenerator.test.ts:194:    expect(mockComplete).toHaveBeenCalledTimes(2);
+test/unit/generators/ToneGenerator.test.ts:211:    mockComplete
+test/unit/generators/ToneGenerator.test.ts:224:    expect(mockComplete).toHaveBeenCalledTimes(2);
+test/unit/release/GoldenSuiteRunner.test.ts:117:    it('calls onCaseComplete callback for each case', async () => {
+test/unit/release/GoldenSuiteRunner.test.ts:120:        onCaseComplete: (id, passed, score) => completed.push({ id, passed, score }),
+test/unit/tui/NaturalInterface.test.ts:5:  mockComplete,
+test/unit/tui/NaturalInterface.test.ts:17:  mockComplete: vi.fn(),
+test/unit/tui/NaturalInterface.test.ts:41:    complete = mockComplete;
+test/unit/tui/NaturalInterface.test.ts:191:      mockComplete
+test/unit/tui/NaturalInterface.test.ts:201:      mockComplete
+test/unit/tui/NaturalInterface.test.ts:211:      mockComplete
+test/unit/tui/NaturalInterface.test.ts:221:      mockComplete
+src/constants.ts:23:  THREE_VERSION: '0.160.0',
+src/generators/TierBasedGenerator.ts:312:      await metaHarness.onGenerationComplete({
+src/generators/TierBasedGenerator.ts:395:      isComplete: this.isStructurallyComplete(code),
+src/generators/TierBasedGenerator.ts:413:  private isStructurallyComplete(code: string): boolean {
+src/generators/TierBasedGenerator.ts:518:      await metaHarness.onGenerationComplete({
+test/unit/generators/HydraGenerator.test.ts:3:const { mockToolLoop, mockComplete, mockGetConfig } = vi.hoisted(() => ({
+test/unit/generators/HydraGenerator.test.ts:10:  mockComplete: vi.fn().mockResolvedValue({
+test/unit/generators/HydraGenerator.test.ts:20:    complete = mockComplete;
+test/unit/generators/HydraGenerator.test.ts:52:  metaHarness: { onGenerationComplete: vi.fn() },
+test/unit/generators/HydraGenerator.test.ts:66:    mockComplete.mockClear();
+test/unit/generators/HydraGenerator.test.ts:429:    mockComplete.mockResolvedValueOnce({
+test/unit/generators/HydraGenerator.test.ts:439:    expect(mockComplete).toHaveBeenCalledOnce();
+test/unit/generators/HydraGenerator.test.ts:449:    mockComplete.mockResolvedValueOnce({
+src/harness/HarnessMemory.ts:87:// Complete memory state
+src/harness/HarnessMemory.ts:687:    tasksCompleted: number;
+src/harness/HarnessMemory.ts:701:      tasksCompleted: this.state.tasks.filter(t => t.status === Status.COMPLETED).length,
+test/unit/generators/TierBasedGenerator.test.ts:40:  metaHarness: { onGenerationComplete: vi.fn() },
+src/collab/CreativeBoard.ts:681:      actions.push('Complete missing lifecycle handlers identified by the Technician');
+src/harness/RunStateStore.ts:88:  stepsCompleted: number;
+src/harness/RunStateStore.ts:276:    `A previous run of this task was suspended after ${state.stepsCompleted}/${state.maxSteps} steps.`,
+src/prompts/three.ts:42:  metadata: { defaultThreeVersion: '0.172.0' },
+src/generators/three/ThreeGenerator.ts:121:{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+src/harness/agent/LLMModeAgent.ts:293:      Logger.debug('LLMModeAgent', `Resuming suspended run: ${existingRunState.stepsCompleted}/${existingRunState.maxSteps} steps completed`);
+src/harness/agent/LLMModeAgent.ts:882:      const implicitComplete = this.tryImplicitCompletion(session, text);
+src/harness/agent/LLMModeAgent.ts:883:      if (implicitComplete) {
+src/harness/agent/LLMModeAgent.ts:885:        return implicitComplete;
+src/harness/agent/LLMModeAgent.ts:1588:    session.stepCount = existingRunState.stepsCompleted;
+src/harness/agent/LLMModeAgent.ts:1627:      stepsCompleted: session.stepCount,
+src/harness/agent/LLMModeAgent.ts:1633:      progressSummary: `Completed ${session.stepCount} steps. ${session.mutatedFiles.size} files mutated. Phase: ${phase}`,
+docs/internal/COMPOSITION_IMPLEMENTATION_PLAN.md:1:# Layer-Based Architecture: Complete Implementation Plan
+docs/internal/COMPOSITION_IMPLEMENTATION_PLAN.md:177:  - Complete API reference
+test/unit/intuition.test.ts:1430:    for (let i = 0; i < 6; i++) scheduler.markDreamCompleted();
+test/unit/intuition.test.ts:1440:    scheduler.markDreamCompleted();
+test/unit/intuition.test.ts:1456:    scheduler.markDreamCompleted();
+test/unit/intuition.test.ts:1498:    scheduler.markDreamCompleted();
+docs/internal/LOOSE_ENDS.md:34:| M12: Privacy Guardrail | `src/guardrails/compliance/PrivacyGuardrail.ts` | ✅ Complete | 5 passing |
+docs/internal/LOOSE_ENDS.md:35:| M13: Prompt Injection Defense | `src/guardrails/compliance/InjectionGuardrail.ts` | ✅ Complete | 4 passing |
+docs/internal/LOOSE_ENDS.md:36:| M14: Supply Chain Guardrail | `src/guardrails/compliance/SupplyChainGuardrail.ts` | ✅ Complete | 2 passing |
+docs/internal/LOOSE_ENDS.md:37:| M15: Audit & Compliance | `src/guardrails/compliance/AuditGuardrail.ts` | ✅ Complete | 2 passing |
+docs/internal/LOOSE_ENDS.md:38:| M16: Fairness & Bias | `src/guardrails/compliance/FairnessGuardrail.ts` | ✅ Complete | 2 passing |
+docs/internal/LOOSE_ENDS.md:39:| M17: Explainability | `src/guardrails/compliance/ExplainabilityGuardrail.ts` | ✅ Complete | 2 passing |
+docs/internal/LOOSE_ENDS.md:40:| M18: Resilience | `src/guardrails/compliance/ResilienceGuardrail.ts` | ✅ Complete | 2 passing |
+docs/internal/LOOSE_ENDS.md:54:| Sandbox tests skipped in CI | `test/unit/sandbox.test.ts:22` | `describe.skipIf(process.env.CI)` |
+docs/internal/LOOSE_ENDS.md:55:| Infinite loop test skipped | `test/unit/sandbox.test.ts:66` | `it.skip` |
+docs/internal/LOOSE_ENDS.md:56:| Generator-renderer tests skipped | `test/integration/generator-renderer.test.js:38` | `describe.skipIf(process.env.CI)` |
+docs/internal/LOOSE_ENDS.md:57:| Renderer tests skipped | `test/integration/renderer.test.js:16` | `describe.skipIf(process.env.CI)` |
+docs/internal/LOOSE_ENDS.md:58:| Dual LLM tests skipped | `test/integration/dual-llm.test.ts:31` | `describe.skipIf(process.env.CI)` |
+docs/internal/LOOSE_ENDS.md:59:| E2E guardrail tests skipped | `test/e2e/guardrails-e2e.test.ts:66` | `describe.skipIf(process.env.CI)` |
+docs/internal/LOOSE_ENDS.md:60:| E2E sandbox tests skipped | `test/e2e/sandbox-self-improve.e2e.test.ts:34` | `describe.skipIf(process.env.CI)` |
+docs/internal/LOOSE_ENDS.md:61:| MiniMax tests skipped | `test/e2e/models/minimax-*.ts` | `describe.skipIf(!process.env.MINIMAX_API_KEY)` |
+docs/internal/CONSOLIDATION_SUMMARY.md:152:**Status:** ✅ Complete and Verified
+src/generators/GeneratorHarnessTools.ts:311:  tone: 'Complete HTML page with Tone.js loaded via CDN, synth/pattern code in a <script type="module">, audio-playing pattern.',
+src/generators/GeneratorHarnessTools.ts:312:  strudel: 'Complete HTML page with Strudel REPL loaded via CDN, pattern code calling .out() in a <script type="module">.',
+src/generators/GeneratorHarnessTools.ts:314:  three: 'Complete HTML page with Three.js loaded via ES module importmap/CDN, scene code in <script type="module">.',
+src/generators/GeneratorHarnessTools.ts:317:  hydra: 'Complete HTML page with Hydra loaded via CDN, visual synth code in <script type="module">.',
+src/generators/GeneratorHarnessTools.ts:318:  kinetic: 'Complete HTML page with kineticjs or raw DOM animation, full document structure.',
+src/generators/GeneratorHarnessTools.ts:320:  p5: 'Complete HTML page with p5.js loaded via CDN, draw() and setup() functions in <script>.',
+src/generators/tone/ToneGenerator.ts:52:    const isCompleteHtml = /^(?:html\s*)?<!DOCTYPE|^(?:html\s*)?<html/i.test(clean);
+src/generators/tone/ToneGenerator.ts:53:    if (!isCompleteHtml && /<\/(?:script|body|html)>/i.test(clean)) {
+src/generators/tone/ToneGenerator.ts:57:    if (isCompleteHtml) {
+src/core/ScoringEngine.ts:736:      failureClass: 'none',
+docs/internal/TIER_0_REMEDIATION_SUMMARY.md:2:## Liminal Codebase - Critical Fixes Completed
+docs/internal/TIER_0_REMEDIATION_SUMMARY.md:29:| `src/harness/HarnessUpdater.ts` | 7 console.log → Logger.info |
+docs/internal/TIER_0_REMEDIATION_SUMMARY.md:198:4. **Complete documentation sync**
+test/unit/evolution/meta-mode.test.ts:14:    expect(meta.getCompletedCount()).toBe(0);
+test/unit/evolution/meta-mode.test.ts:98:  test('getCompletedCount returns 0 initially', () => {
+test/unit/evolution/meta-mode.test.ts:99:    expect(meta.getCompletedCount()).toBe(0);
+test/unit/evolution/meta-mode.test.ts:102:  test('getCompletedCount increments after each runExperiment', async () => {
+test/unit/evolution/meta-mode.test.ts:105:    expect(meta.getCompletedCount()).toBe(0);
+test/unit/evolution/meta-mode.test.ts:107:    expect(meta.getCompletedCount()).toBe(1);
+test/unit/evolution/meta-mode.test.ts:109:    expect(meta.getCompletedCount()).toBe(2);
+test/unit/evolution/meta-mode.test.ts:111:    expect(meta.getCompletedCount()).toBe(3);
+test/unit/evolution/meta-mode.test.ts:121:    expect(meta.getCompletedCount()).toBeGreaterThan(0);
+test/unit/evolution/meta-mode.test.ts:127:    expect(meta.getCompletedCount()).toBe(0);
+test/unit/evolution/meta-mode.test.ts:140:    expect(meta.getCompletedCount()).toBe(6);
+docs/internal/ADVERSARIAL_REVIEW_AND_ROADMAP.md:259:| **"Complete but Boring"** | ~0.50 | Code is structurally complete but produces no visual interest | p5.js sketch with setup/draw but static output |
+docs/internal/ADVERSARIAL_REVIEW_AND_ROADMAP.md:432:#### 3. `SpecCompletenessGuardrail`
+docs/internal/ADVERSARIAL_REVIEW_AND_ROADMAP.md:444:// src/guardrails/correctness/SpecCompletenessGuardrail.ts
+docs/internal/ADVERSARIAL_REVIEW_AND_ROADMAP.md:445:export class SpecCompletenessGuardrail extends BaseGuardrail {
+docs/internal/ADVERSARIAL_REVIEW_AND_ROADMAP.md:474:**Target file:** `src/guardrails/correctness/SpecCompletenessGuardrail.ts`
+src/index.ts:308:      await metaHarness.onGenerationComplete({
+src/index.ts:341:      await metaHarness.onGenerationComplete({
+docs/internal/REMEDIATION_COMPLETE.txt:131:  • Complete ESLint async enforcement
+src/audio/types.ts:56:/** Complete audio analysis result for a single frame. */
+src/runtime-core/SelfImprovementReflexes.ts:116:        failureClass: 'none',
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:2:## Liminal Codebase - Complete Transformation
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:7:**Waves Completed:** 16/16
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:27:| Type safety | Stringly-typed | Full enums | Complete |
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:34:**Status:** ✅ Complete
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:52:**Status:** ✅ Complete
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:74:**Status:** ✅ Complete
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:128:**Status:** ✅ Complete
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:174:**Status:** ✅ Complete
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:218:**Status:** ✅ Complete
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:246:**Status:** ✅ Complete
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:278:**Status:** ✅ Complete
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:325:**Status:** ✅ Complete
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:346:**Status:** ✅ Complete
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:367:- `harness-tasks/archive/M8.json` - HarnessUpdater console fix
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:505:- [ ] Complete ESLint async rule enforcement
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:567:## Appendix: Complete File Manifest
+src/brain/comprehensive-artistic-knowledge.ts:1063:  { name: 'Closure', type: 'principle', description: 'Completeness, filling gaps, mental completion', keywords: ['complete', 'fill', 'mental', 'gestalt'] },
+src/core/RalphLoop.ts:486:                      await metaHarness.onGenerationComplete({
+src/core/RalphLoop.ts:504:                  const isComplete = RalphLoop.isCodeComplete(candidateCode);
+src/core/RalphLoop.ts:508:                  const quickScore = isComplete ? 0.5 : 0.3; // Basic completeness bonus
+src/core/RalphLoop.ts:606:                      failureClass: 'none',
+src/core/RalphLoop.ts:640:                        failureClass: 'none',
+src/core/RalphLoop.ts:663:                    failureClass: 'none',
+src/core/RalphLoop.ts:709:        const isComplete = RalphLoop.isCodeComplete(currentCode);
+src/core/RalphLoop.ts:876:              failureClass: 'none',
+src/core/RalphLoop.ts:1000:          failureClass: 'none',
+src/core/RalphLoop.ts:1002:            ? { issue: evaluation.issues[0], fix: 'Address the reported issue.', constraint: 'Complete artifact.' }
+src/core/RalphLoop.ts:1195:          isComplete,
+src/core/RalphLoop.ts:1432:          await metaHarness.onGenerationComplete({
+src/core/RalphLoop.ts:1468:        await metaHarness.onGenerationComplete({
+src/core/RalphLoop.ts:1612:  static isCodeComplete(code: string): boolean {
+docs/internal/SYNTHESIS.md:37:On March 19 at 9:30 PM, the atelier repository was renamed to "Liminal." Two commits handle this: "chore: Rename Atelier to Liminal" (21:30:56) and "chore: Complete rename from Atelier to Liminal" (21:41:42). This was the moment the project found its identity -- no longer an "atelier" (a workshop) but something liminal (a threshold, an in-between space).
+docs/internal/USER_TESTING_READINESS_REPORT.md:57:All failures trace back to **no headless browser installed** (no Chromium/Puppeteer/Playwright binary in this environment). Every failing test is correctly guarded with `describe.skipIf(process.env.CI)` — they will be skipped in CI and in properly configured local dev environments.
+src/core/types/GenerationEvaluation.ts:37:  failureClass: 'none' | 'render' | 'validator' | 'scorer' | 'infra';
+src/core/CreativeIterationGate.ts:7:  isComplete: boolean;
+src/core/CreativeIterationGate.ts:49:    if (input.score >= 0.90 && input.isComplete) {
+src/core/CreativeIterationGate.ts:60:    const incompleteLog = !input.isComplete && input.iteration < input.maxIterations
+src/core/CreativeIterationGate.ts:65:      const isWorkingWell = input.score >= 0.70 && input.isComplete;
+src/core/CreativeIterationGate.ts:76:            logMessage: `Extending max iterations to ${newMax} (score: ${input.score.toFixed(2)}, complete: ${input.isComplete})`,
+src/evolution/MetaMode.ts:102:  getCompletedCount(): number {
+docs/internal/DOGFOOD_READINESS_AUDIT_REPORT.md:42:### 1.2 Domain Coverage (9/9 Complete)
+docs/internal/DOGFOOD_READINESS_AUDIT_REPORT.md:80:| HarnessUpdater | `src/harness/HarnessUpdater.ts` | Applies adaptations | ✅ Active |
+docs/internal/DOGFOOD_READINESS_AUDIT_REPORT.md:390:  ✅ HarnessUpdater.ts           - Self-improvement
+docs/internal/DOGFOOD_READINESS_AUDIT_REPORT.md:409:| Infrastructure | 95% | Complete and functional |
+docs/internal/FINAL_VERIFICATION_REPORT.txt:108:Documentation:           ✅ Complete
+docs/internal/FORENSIC_AUDIT_REPORT.md:7:**Scope:** Complete codebase analysis including architecture, security, error handling, async flows, type safety, and test coverage
+docs/internal/FORENSIC_AUDIT_REPORT.md:37:### 1. Self-Improvement Loop Completely Non-Functional
+docs/internal/FORENSIC_AUDIT_REPORT.md:38:**File:** `src/harness/HarnessUpdater.ts`
+docs/internal/FORENSIC_AUDIT_REPORT.md:445:   - Either implement actual adaptations in `HarnessUpdater.ts`
+docs/internal/FORENSIC_AUDIT_REPORT.md:488:- Complete ToneValidator class list
+docs/internal/FORENSIC_AUDIT_REPORT.md:523:| 🔴 | `src/harness/HarnessUpdater.ts` | 1 | Self-improvement no-op |
+docs/internal/FORENSIC_AUDIT_REPORT.md:575:- Completely broken self-improvement
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:52:scripts/dogfood/true-dogfood-generation.js:112:    console.log(`   Status: ${result.completed ? 'Completed' : 'Stopped'} (${result.reason})`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:453:bin/liminal:996:      console.log(`  motifDensity=${c.motifDensity.toFixed(3)} complexity=${c.complexity.toFixed(3)} complete=${c.isComplete} sources=${c.sourceIds.length}`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:1811:scripts/testing/test-llm-client.ts:20:    console.log(`✅ Completed in ${duration}ms`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:2326:scripts/testing/run-p5-all.ts:77:  console.log(`Complete: ${results.filter(r => r.success).length}/${results.length} successful`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:2435:src/ledger/cli.ts:92:      console.log(`  Completed:   ${completed}`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:2471:src/ledger/cli.ts:163:      console.log(`  Completed:   ${attempt.completed}`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:2517:src/ledger/cli.ts:340:      console.log(`  Completed:   ${completed.length}`);
+src/harness/MetaHarnessIntegration.ts:13: *   await metaHarness.onGenerationComplete(result);
+src/harness/MetaHarnessIntegration.ts:22:// HarnessUpdater removed - was a no-op that only logged
+src/harness/MetaHarnessIntegration.ts:148:   * Complete a harness task
+src/harness/MetaHarnessIntegration.ts:165:  async onGenerationComplete(result: {
+src/core/wrappers/ThreeWrapper.ts:8:const THREE_CDN = 'https://unpkg.com/three@0.160.0/build/three.module.js';
+src/core/wrappers/ThreeWrapper.ts:9:const THREE_EXAMPLES_CDN = 'https://unpkg.com/three@0.160.0/examples/jsm/';
+docs/internal/TIER_3_COMPLETE.md:1:# Tier 3 Complete - Make It Smart
+docs/index.html:146:                    <tr><td>M1</td><td>Code Validation</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:147:                    <tr><td>M2</td><td>Type Safety</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:148:                    <tr><td>M3</td><td>Test Verification</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:149:                    <tr><td>M4</td><td>Schema Validation</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:150:                    <tr><td>M5</td><td>Resource Limits</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:151:                    <tr><td>M6</td><td>Code Style</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:152:                    <tr><td>M7</td><td>Catastrophic Failure</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:153:                    <tr><td>M8</td><td>Registry</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:162:                    <tr><td>M9</td><td>Semantic Validator</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:163:                    <tr><td>M10</td><td>Runtime Health</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:164:                    <tr><td>M11</td><td>Accessibility</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:165:                    <tr><td>M12</td><td>Privacy</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:166:                    <tr><td>M13</td><td>Fairness</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:167:                    <tr><td>M14</td><td>Supply Chain</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:168:                    <tr><td>M15</td><td>Resilience</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:169:                    <tr><td>M16</td><td>Audit Trail</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:170:                    <tr><td>M17</td><td>Explainability</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/index.html:171:                    <tr><td>M18</td><td>Injection Prevention</td><td><span class="badge badge-success">Complete</span></td></tr>
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:6:test/pending/tui/confirm-flow.test.ts:20:  const llmComplete = vi.fn();
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:11:docs/internal/LOOSE_ENDS.md:54:| Sandbox tests skipped in CI | `test/unit/sandbox.test.ts:22` | `describe.skipIf(process.env.CI)` |
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:12:docs/internal/LOOSE_ENDS.md:55:| Infinite loop test skipped | `test/unit/sandbox.test.ts:66` | `it.skip` |
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:13:docs/internal/LOOSE_ENDS.md:56:| Generator-renderer tests skipped | `test/integration/generator-renderer.test.js:38` | `describe.skipIf(process.env.CI)` |
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:14:docs/internal/LOOSE_ENDS.md:57:| Renderer tests skipped | `test/integration/renderer.test.js:16` | `describe.skipIf(process.env.CI)` |
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:15:docs/internal/LOOSE_ENDS.md:58:| Dual LLM tests skipped | `test/integration/dual-llm.test.ts:31` | `describe.skipIf(process.env.CI)` |
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:16:docs/internal/LOOSE_ENDS.md:59:| E2E guardrail tests skipped | `test/e2e/guardrails-e2e.test.ts:66` | `describe.skipIf(process.env.CI)` |
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:17:docs/internal/LOOSE_ENDS.md:60:| E2E sandbox tests skipped | `test/e2e/sandbox-self-improve.e2e.test.ts:34` | `describe.skipIf(process.env.CI)` |
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:18:docs/internal/LOOSE_ENDS.md:61:| MiniMax tests skipped | `test/e2e/models/minimax-*.ts` | `describe.skipIf(!process.env.MINIMAX_API_KEY)` |
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:19:test/helpers/networkCheck.ts:12: *   describe.skipIf(process.env.CI || !cdnAvailable)('...', () => { ... });
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:20:docs/internal/USER_TESTING_READINESS_REPORT.md:57:All failures trace back to **no headless browser installed** (no Chromium/Puppeteer/Playwright binary in this environment). Every failing test is correctly guarded with `describe.skipIf(process.env.CI)` — they will be skipped in CI and in properly configured local dev environments.
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:25:docs/launch/repo-improvement-baseline-2026-05-01.md:71:- `describe.skip` / `describe.skipIf`: 17 occurrences.
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:26:docs/launch/repo-improvement-baseline-2026-05-01.md:72:- `it.skip` / `it.skipIf`: 6 occurrences.
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:27:docs/launch/repo-improvement-baseline-2026-05-01.md:73:- `test.skip` / `test.skipIf`: 2 occurrences.
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:38:test/e2e/sandbox-self-improve.e2e.test.ts:34:describe.skipIf(process.env.CI)('E2E sandbox self-improve', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:39:test/security/csrf-protection.test.ts:8:describe.skipIf(isTestEnv)('CSRF Protection', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:40:docs/archive/internal-audits/AUDIT_FULL.md:412:| 3 | E2E tests `return` instead of `it.skip()` — silently passes instead of reporting skip | `test/e2e/full-loop-local.test.ts` |
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:43:test/integration/dual-llm.test.ts:34:describe.skipIf(process.env.CI)('Dual LLM (cloud vs local)', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:44:test/integration/dual-llm.test.ts:53:  test.skipIf(process.env.CI || !process.env.LIMINAL_LLM_BASE_URL)('getEffectiveConfig + LLMClient path with cloud (lmstudio) backend', async () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:45:test/integration/renderer.test.js:23:describe.skipIf(process.env.CI || !cdnAvailable)('Renderer Integration Tests', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:49:test/e2e/model-comparison.test.ts:107:describe.skipIf(!runModelComparison)('Model Comparison Suite', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:50:test/e2e/model-comparison.test.ts:119:      const testFn = model.type === 'cloud' && !model.apiKey ? it.skip : it;
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:51:test/e2e/cloud-providers.test.ts:41:describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('Cloud Provider Smoke Tests', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:52:test/e2e/models/minimax-m2-5.test.ts:16:describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('MiniMax-M2.5', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:53:test/render/render-and-score.test.ts:38:const describeIfBrowser = browserReady ? describe : describe.skip;
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:54:test/e2e/models/qwen3-5-9b.test.ts:17:describe.skipIf(process.env.CI || !process.env.LIMINAL_LLM_BASE_URL)('Qwen 3.5 9B', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:55:test/e2e/guardrails-e2e.test.ts:381:    it.skipIf(!LLMClient.isConfigured())('should generate code with guardrail validation', async () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:56:test/e2e/guardrails-e2e.test.ts:493:    it.skipIf(!LLMClient.isConfigured())('should learn from failed generations', async () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:57:test/e2e/models/minimax-m2-7.test.ts:16:describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('MiniMax-M2.7', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:58:test/e2e/models/kimi-k2p5.test.ts:16:describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('Kimi-k2p5', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:59:test/e2e/models/qwen3-coder-40b.test.ts:16:describe.skipIf(process.env.CI || !process.env.LIMINAL_LLM_BASE_URL)('Qwen 3 Coder 40B', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:60:test/e2e/models/lfm-2-5-1-2b.test.ts:20:describe.skipIf(skipNoLLM)('LFM 2.5 1.2B', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:71:test/unit/sandbox.test.ts:28:describe.skipIf(process.env.CI || !cdnAvailable)('Sandbox runInSandbox', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:82:test/e2e/models/minimax-m2-7-highspeed.test.ts:16:describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('MiniMax-M2.7-highspeed', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:91:test/unit/swarm/SwarmOrchestrator.test.ts:274:    it.skip('routes visual prompt to visual experts', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:92:test/unit/swarm/SwarmOrchestrator.test.ts:328:    it.skip('returns personas matching routed experts', () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:93:test/unit/swarm/SwarmOrchestrator.test.ts:806:    it.skip('extracts code from markdown fence responses', async () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:95:test/e2e/full-loop-cloud.test.ts:59:  test.skipIf(process.env.CI || !process.env.RUN_CLOUD_MODEL_TESTS)('run() full loop with cloud (lmstudio): result has code, iterations, output files', async () => {
+docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:96:test/e2e/models/glm-5-1.test.ts:16:describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('GLM-5.1', () => {
+docs/internal/COMPLETE_REMEDIATION_SUMMARY.md:1:# Complete Remediation Summary
+docs/internal/COMPLETE_REMEDIATION_SUMMARY.md:143:**Consolidation Completed:**
+docs/internal/COMPLETE_REMEDIATION_SUMMARY.md:190:| COMPLETE_REMEDIATION_SUMMARY.md | (this file) | Complete summary |
+docs/internal/COMPLETE_REMEDIATION_SUMMARY.md:197:- src/harness/HarnessUpdater.ts
+docs/internal/COMPLETE_REMEDIATION_SUMMARY.md:273:*Remediation Complete: April 3, 2026*
+src/llm/LLMClient.ts:95:  isComplete?: boolean;
+src/llm/LLMClient.ts:107:export interface LLMCompleteResult {
+src/llm/LLMClient.ts:982:  }): Promise<LLMCompleteResult> {
+src/llm/LLMClient.ts:1539:    let isComplete = sanitized.isComplete;
+src/llm/LLMClient.ts:1545:        isComplete = recovered.sanitized.isComplete;
+src/llm/LLMClient.ts:1556:      isComplete,
+src/llm/LLMClient.ts:1570:  sanitized: { code: string; success: boolean; isComplete: boolean };
+src/llm/LLMClient.ts:1601:      sanitized: { code: cleanCode, success: cleanCode.length > 0, isComplete: isCodeComplete(cleanCode) },
+src/llm/LLMClient.ts:1641:    sanitized: { code: cleanCode, success: cleanCode.length > 0, isComplete: isCodeComplete(cleanCode) },
+src/llm/LLMClient.ts:1651:export function sanitizeOutput(content: string): { code: string; success: boolean; isComplete: boolean } {
+src/llm/LLMClient.ts:1691:  const isComplete = isCodeComplete(cleanCode);
+src/llm/LLMClient.ts:1696:    isComplete,
+src/llm/LLMClient.ts:1701:export function isCodeComplete(code: string): boolean {
+src/intuition/SleepScheduler.ts:155:  markDreamCompleted(): void {
+docs/internal/INTEGRATION_AUDIT_REPORT.md:6:**Scope:** Complete application wiring and component integration
+docs/internal/INTEGRATION_AUDIT_REPORT.md:202:**Components:** MetaHarnessIntegration, FailureLogger, PatternDetector, HarnessUpdater, HarnessMemory
+docs/internal/PROJECT_RULES.md:98:| ✅ Complete | Fully implemented | `<span class="badge badge-success">✅ Complete</span>` |
+docs/internal/PROJECT_RULES.md:194:| docs-site | Documentation site | Complete, ready to merge |
+docs/ARCHITECTURE_AND_PHILOSOPHY.md:59:│  │ FailureLogger │──▶│ PatternDetector │──▶│ HarnessUpdater  │          │
+docs/internal/PUBLIC_AUDIT_REPORT.md:150:2. Complete `package.json` public metadata (`author`, `repository`, `homepage`, `bugs`).
+docs/EMERGENT_LANGUAGE_ARCHITECTURE.md:183:| P0: Foundation | Complete | 3 | Existing |
+docs/EMERGENT_LANGUAGE_ARCHITECTURE.md:184:| P1: Performance | Complete | 3 | 10 (ModelRouter) |
+docs/EMERGENT_LANGUAGE_ARCHITECTURE.md:185:| Phase A: Notation | Complete | 3 | 15 (CreativeNotation + NotationEvolution) |
+docs/EMERGENT_LANGUAGE_ARCHITECTURE.md:186:| Phase B: Agora | Complete | 4 | 13 (RoutineChannel + AgoraProtocol) |
+docs/EMERGENT_LANGUAGE_ARCHITECTURE.md:187:| **Total** | **Complete** | **13** | **38** |
+docs/audits/final-qa-2026-05-06/raw/security-boundary-candidates.txt:1427:src/llm/LLMClient.ts:1539:    let isComplete = sanitized.isComplete;
+docs/audits/final-qa-2026-05-06/raw/security-boundary-candidates.txt:1431:src/llm/LLMClient.ts:1545:        isComplete = recovered.sanitized.isComplete;
+docs/audits/final-qa-2026-05-06/raw/security-boundary-candidates.txt:1434:src/llm/LLMClient.ts:1570:  sanitized: { code: string; success: boolean; isComplete: boolean };
+docs/audits/final-qa-2026-05-06/raw/security-boundary-candidates.txt:1435:src/llm/LLMClient.ts:1601:      sanitized: { code: cleanCode, success: cleanCode.length > 0, isComplete: isCodeComplete(cleanCode) },
+docs/audits/final-qa-2026-05-06/raw/security-boundary-candidates.txt:1436:src/llm/LLMClient.ts:1641:    sanitized: { code: cleanCode, success: cleanCode.length > 0, isComplete: isCodeComplete(cleanCode) },
+docs/audits/final-qa-2026-05-06/raw/security-boundary-candidates.txt:1438:src/llm/LLMClient.ts:1651:export function sanitizeOutput(content: string): { code: string; success: boolean; isComplete: boolean } {
+docs/audits/final-qa-2026-05-06/raw/security-boundary-candidates.txt:2263:test/unit/llm/CodeValidation.test.ts:2:import { sanitizeOutput, isCodeComplete } from '../../../src/llm/LLMClient.js';
+docs/plans/2026-03-29-github-repo-mining.md:147:> **Goal**: Complete voice-to-visual pipeline from voice-to-scultpure-app + VoxForge + noise.sh
+docs/plans/2026-03-29-github-repo-mining.md:239:> **Goal**: Complete generative music system from Generative-Score-Lab + lyrics-engine
+docs/plans/2026-03-29-github-repo-mining.md:266:Complete music theory engine:
+docs/plans/2026-03-29-github-repo-mining.md:578:Complete color harmony system:
+docs/features/thinking-trace-feedback-loop.md:43:│  │    → metaHarness.onGenerationComplete({thinking})          │ │
+src/intuition/IntuitionEngine.ts:458:    this.sleepScheduler.markDreamCompleted();
+src/intuition/IntuitionEngine.ts:473:    this.sleepScheduler.markDreamCompleted();
+docs/plans/2026-03-29-repo-mining-blueprint.md:497:Complete voice-to-visual capability.
+docs/plans/2026-03-29-repo-mining-blueprint.md:512:Complete generative music system.
+docs/launch/repo-improvement-baseline-2026-05-01.md:71:- `describe.skip` / `describe.skipIf`: 17 occurrences.
+docs/launch/repo-improvement-baseline-2026-05-01.md:72:- `it.skip` / `it.skipIf`: 6 occurrences.
+docs/launch/repo-improvement-baseline-2026-05-01.md:73:- `test.skip` / `test.skipIf`: 2 occurrences.
+docs/archive/IMPACT_ANALYSIS.md:23:## 2. Phases Completed (Waves 0–7)
+docs/archive/IMPACT_ANALYSIS.md:174:| **Waves 0–7** | Completed (one task per subagent, TDD, smoke). |
+docs/research/audit/config/duplicate-code-report.md:77:#### 2.4 Complete Fallback Chain List
+docs/plans/2026-04-29-human-perception-creative-vocabulary-design.md:73:- `src/core/CreativeEvaluator.ts` — useful for domain richness/substance, not aesthetic guardrails. Better conceptual name: `DomainRichnessEvaluator` or `CreativeCompletenessEvaluator`.
+docs/plans/2026-04-29-human-perception-creative-vocabulary-design.md:369:- **Creative Completeness / Domain Richness Evaluation** — non-triviality/substance checks.
+docs/archive/html/architecture-deep-dive.html:61:    M -->|Yes| N[Task Complete]
+docs/archive/html/architecture-deep-dive.html:255:│  3. HarnessUpdater.applyAdaptation()    │
+docs/archive/html/architecture-deep-dive.html:284:├── HarnessUpdater.ts             # Auto-fix generation
+docs/plans/2026-04-06-bubble-tea-tui-implementation.md:469:- `response.completed` finalizes active response
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:120:gui/src/gui/workbenchTelemetry.ts:445:  const hasComplete = events.some((event) => event.type === 'generation.complete');
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:134:gui/src/gui/workbenchTelemetry.ts:495:        : hasPreview ? `artifact mounted${selectedDomain !== 'unknown' ? ` (${selectedDomain})` : ''}` : hasCandidate || hasComplete ? 'rendering receipt' : 'waiting for artifact',
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:135:gui/src/gui/workbenchTelemetry.ts:507:      detail: hasCancelled ? 'stopped by operator' : hasDisconnected ? 'event stream disconnected' : hasComplete && completeEvent?.executionMode === 'draft' ? 'preview ready; waiting for your revise/new variation/polish choice' : hasComplete ? 'run completed' : 'not ready yet',
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:184:gui/src/gui/workbenchTelemetry.ts:596:        return { label: 'Complete', detail: `Score ${event.finalScore ?? 'n/a'} in ${event.duration ?? 0}ms`, status: 'ok' };
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:350:gui/src/gui/cockpitDerivation.ts:255:      previewCompletedAt = readEventTime(event) || previewCompletedAt;
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:352:gui/src/gui/cockpitDerivation.ts:259:      previewCompletedAt = readEventTime(event) || previewCompletedAt || now;
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:356:gui/src/gui/cockpitDerivation.ts:267:      previewCompletedAt = readEventTime(event) || previewCompletedAt || now;
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:369:gui/src/gui/cockpitDerivation.ts:291:      generationCompletedAt = readEventTime(event) || generationCompletedAt;
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:1072:src/llm/LLMClient.ts:107:export interface LLMCompleteResult {
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:1360:src/llm/LLMClient.ts:982:  }): Promise<LLMCompleteResult> {
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:2375:test/pending/tui/confirm-flow.test.ts:41:      llmClient: { complete: llmComplete, getConfig: () => ({ model: 'test-model' }) } as any,
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:2376:test/pending/tui/confirm-flow.test.ts:59:      llmClient: { complete: llmComplete, getConfig: () => ({ model: 'test-model' }) } as any,
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:2377:test/pending/tui/confirm-flow.test.ts:79:      llmClient: { complete: llmComplete, getConfig: () => ({ model: 'test-model' }) } as any,
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:2379:test/pending/tui/confirm-flow.test.ts:96:      llmClient: { complete: llmComplete, getConfig: () => ({ model: 'test-model' }) } as any,
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:2804:gui/src/App.tsx:1271:        <form id="atelier-config-form" onSubmit={(e: React.FormEvent) => e.preventDefault()} className="atelier-panel" style={{ maxWidth: 560 }} autoComplete="off">
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:3310:src/harness/agent/LLMModeAgent.ts:293:      Logger.debug('LLMModeAgent', `Resuming suspended run: ${existingRunState.stepsCompleted}/${existingRunState.maxSteps} steps completed`);
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:4889:test/integration/dual-llm.test.ts:34:describe.skipIf(process.env.CI)('Dual LLM (cloud vs local)', () => {
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:4894:test/integration/dual-llm.test.ts:53:  test.skipIf(process.env.CI || !process.env.LIMINAL_LLM_BASE_URL)('getEffectiveConfig + LLMClient path with cloud (lmstudio) backend', async () => {
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:5592:scripts/proof/user-surface-observability.ts:168:    previewCompleted: observabilityEvents.some((item) => item.event.type === 'preview.completed'),
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:5627:scripts/proof/mic-preview-browser-smoke.ts:88:  const previewCompleted = events.some((event) => event.type === 'preview.completed');
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:5654:scripts/proof/automated-bridge-session.ts:149:    error ? `**Error:** ${error}` : `**Status:** Complete`,
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:6717:test/tui-bridge/tui-bridge-no-chat-lane.test.ts:961:      .find(event => event.type === 'response.completed' && String(event.content).includes('Last planning failure:')));
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:6812:test/tui-bridge/tui-bridge-service.test.ts:96:    expect(events.map(e => e.type)).toContain('response.completed');
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:6852:test/tui-bridge/tui-bridge-service.test.ts:492:        const completed = events.find(e => e.type === 'response.completed');
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:7777:test/e2e/guardrails-e2e.test.ts:381:    it.skipIf(!LLMClient.isConfigured())('should generate code with guardrail validation', async () => {
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:7792:test/e2e/guardrails-e2e.test.ts:493:    it.skipIf(!LLMClient.isConfigured())('should learn from failed generations', async () => {
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:8085:test/e2e/models/qwen3-5-9b.test.ts:17:describe.skipIf(process.env.CI || !process.env.LIMINAL_LLM_BASE_URL)('Qwen 3.5 9B', () => {
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:8121:test/e2e/model-comparison.test.ts:119:      const testFn = model.type === 'cloud' && !model.apiKey ? it.skip : it;
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:8380:test/e2e/models/qwen3-coder-40b.test.ts:16:describe.skipIf(process.env.CI || !process.env.LIMINAL_LLM_BASE_URL)('Qwen 3 Coder 40B', () => {
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:8410:test/e2e/models/lfm-2-5-1-2b.test.ts:20:describe.skipIf(skipNoLLM)('LFM 2.5 1.2B', () => {
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:9665:test/unit/llm/CodeValidation.test.ts:2:import { sanitizeOutput, isCodeComplete } from '../../../src/llm/LLMClient.js';
+docs/audits/final-qa-2026-05-06/raw/provider-event-candidates.txt:12519:test/unit/compost/ModelRouter.test.ts:246:      primaryLLM = new MockLLMClient([{ success: true, code: 'Completely different response from primary' }]);
+src/ui/TransparencyViewer.ts:276:    lines.push('Generation Complete');
+docs/THE_BIBLE.md:117:| `6c721ffe` | B6 - Remove self-improvement no-op (HarnessUpdater) |
+docs/THE_BIBLE.md:184:│  │  ├── HarnessUpdater         - Applies adaptations                   │    │
+docs/THE_BIBLE.md:259:| HarnessUpdater | `HarnessUpdater.ts` | Applies adaptations to fix issues | 🟢 Active |
+docs/THE_BIBLE.md:278:- Generator thinking traces are captured by `TierBasedGenerator` and passed to `metaHarness.onGenerationComplete()`
+docs/THE_BIBLE.md:287:| Self-improvement loop | ❌ REMOVED | HarnessUpdater was no-op, removed in B6 |
+docs/THE_BIBLE.md:304:| M1 | Fix Tone.js Validation Gate | `src/core/CodeValidator.ts` | Tone.js validation only fired on 'unknown' domain, now also fires on 'music' domain | ✅ Complete |
+docs/THE_BIBLE.md:305:| M4 | Fix Thinking Regex Greedy Match | `src/llm/LLMClient.ts` | Changed `[\s\S]*` to `[\s\S]*?` to fix greedy matching issue | ✅ Complete |
+docs/THE_BIBLE.md:306:| M6 | Fix Console.log in FailureLogger | `src/harness/FailureLogger.ts` | Replaced console.log with Logger.info | ✅ Complete |
+docs/THE_BIBLE.md:307:| M7 | Fix Console.log in PatternDetector | `src/harness/PatternDetector.ts` | Replaced console.log with Logger.info | ✅ Complete |
+docs/THE_BIBLE.md:308:| M8 | Fix Console.log in HarnessUpdater | HarnessUpdater.ts (removed in B6) | Replaced console.log with Logger.info | ✅ Complete |
+docs/THE_BIBLE.md:924:16. `6c721ffe` - fix(harness): B6 - Remove self-improvement no-op (HarnessUpdater)
+docs/THE_BIBLE.md:966:| Self-improvement no-op | B6 - Removed HarnessUpdater | 2026-04-08 |
+docs/archive/html/visual-bible.html:205:                <h4>✅ DGF Phase 3 Complete</h4>
+docs/archive/html/visual-bible.html:272:                        <span class="metric-value" class="text-green">✅ 7/7 Complete</span>
+docs/archive/html/visual-bible.html:338:                        <td><span class="badge badge-success">✅ Complete</span></td>
+docs/archive/html/visual-bible.html:344:                        <td><span class="badge badge-success">✅ Complete</span></td>
+docs/archive/html/visual-bible.html:380:                        <td><span class="badge badge-success">✅ Complete</span></td>
+docs/archive/html/visual-bible.html:386:                        <td><span class="badge badge-success">✅ Complete</span></td>
+docs/archive/html/visual-bible.html:392:                        <td><span class="badge badge-success">✅ Complete</span></td>
+docs/archive/html/visual-bible.html:398:                        <td><span class="badge badge-success">✅ Complete</span></td>
+docs/archive/html/visual-bible.html:404:                        <td><span class="badge badge-success">✅ Complete</span></td>
+docs/archive/html/visual-bible.html:465:                    <h4>✅ Complete (19/19)</h4>
+docs/archive/html/visual-bible.html:638:                <h4>✅ Core 19-System Platform Complete</h4>
+docs/archive/html/visual-bible.html:649:                <h4 style="color: var(--accent-green);">✅ M12-M18 Compliance Guardrails Complete</h4>
+docs/archive/html/visual-bible.html:664:                <p>Complete documentation at <a href="THE_BIBLE.md" class="text-cyan"><strong>docs/THE_BIBLE.md</strong></a></p>
+docs/archive/html/visual-bible.html:739:                        <span class="metric-value text-green">✅ Complete</span>
+docs/archive/html/visual-bible.html:743:                        <span class="metric-value text-green">✅ Complete</span>
+docs/archive/html/visual-bible.html:747:                        <span class="metric-value text-green">✅ Complete</span>
+docs/archive/html/visual-bible.html:751:                        <span class="metric-value text-green">✅ 4/4 Complete</span>
+docs/archive/html/visual-bible.html:848:                <h4>✅ Atomic Recovery Complete</h4>
+docs/archive/html/harness-tasks.html:50:            <h3 style="color: var(--accent-green); margin-top: 1.5rem;">Core Completed Tasks (M1-M8)</h3>
+docs/archive/html/harness-tasks.html:65:                        <td><span class="badge badge-success">✅ Complete</span></td>
+docs/archive/html/harness-tasks.html:71:                        <td><span class="badge badge-success">✅ Complete</span></td>
+docs/archive/html/harness-tasks.html:77:                        <td><span class="badge badge-success">✅ Complete</span></td>
+docs/archive/html/harness-tasks.html:83:                        <td><span class="badge badge-success">✅ Complete</span></td>
+docs/archive/html/harness-tasks.html:87:                        <td>Fix Console.log in HarnessUpdater</td>
+docs/archive/html/harness-tasks.html:88:                        <td><code>src/harness/HarnessUpdater.ts</code></td>
+docs/archive/html/harness-tasks.html:89:                        <td><span class="badge badge-success">✅ Complete</span></td>
+docs/research/audit/config/test-hygiene-report.md:72:| security/sandbox-config.test.ts | Full env replacement (`process.env = originalEnv`) | Complete isolation, simple pattern |
+docs/research/audit/config/test-hygiene-report.md:73:| security/url-validator.test.ts | Full env replacement (`process.env = originalEnv`) | Complete isolation, simple pattern |
+docs/research/audit/config/default-values.json:24:      "THREE_VERSION": "0.160.0"
+docs/research/audit/config/default-values.json:29:      "THREE_CDN": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+docs/research/audit/config/default-values.json:30:      "THREE_ADDONS_CDN": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+src/ledger/cli.ts:92:      console.log(`  Completed:   ${completed}`);
+src/ledger/cli.ts:163:      console.log(`  Completed:   ${attempt.completed}`);
+src/ledger/cli.ts:340:      console.log(`  Completed:   ${completed.length}`);
+src/ledger/ConveyorMonitor.ts:45:  artifactCompleteness: string;
+src/ledger/ConveyorMonitor.ts:101:    const artifactCompleteness = acceptedResults.length > 0
+src/ledger/ConveyorMonitor.ts:122:      artifactCompleteness,
+docs/archive/internal-audits/PUBLIC_AUDIT_REPORT.md:150:2. Complete `package.json` public metadata (`author`, `repository`, `homepage`, `bugs`).
+docs/archive/internal-audits/LIMINAL_IMPROVEMENTS_SUMMARY.md:302:| `AUDIT_FINDINGS.md` | NEW | 334 | Complete audit analysis |
+docs/archive/internal-audits/LIMINAL_IMPROVEMENTS_SUMMARY.md:304:| `src/prompts/hydra.ts` | MODIFIED | 112 | Complete API reference |
+docs/archive/internal-audits/LIMINAL_IMPROVEMENTS_SUMMARY.md:312:| `src/harness/HarnessUpdater.ts` | NEW | 140 | Adaptation application |
+docs/archive/internal-audits/LIMINAL_IMPROVEMENTS_SUMMARY.md:330:| **HarnessUpdater** | `src/harness/HarnessUpdater.ts` | Applies adaptations based on detected patterns |
+docs/io-catalog.html:332:                        <li><strong>Output:</strong> Complete standalone HTML with import maps</li>
+docs/io-catalog.html:752:            <p class="domain-desc">Complete HTML documents with WebGL 3D rendering. Liminal's ThreeGenerator produces full standalone HTML pages with import maps and Three.js setup.</p>
+docs/archive/internal-audits/PRD.md:69:**Critical:** Liminal has **zero dependency** on BrainLoop. Completely independent implementation.
+docs/archive/internal-audits/PRD.md:852:│  │ FailureLogger │──▶│ PatternDetector │──▶│ HarnessUpdater  │    │
+docs/archive/internal-audits/PRD.md:873:| **HarnessUpdater** | Applies adaptations based on detected patterns | `src/harness/HarnessUpdater.ts` |
+docs/archive/internal-audits/AUDIT_PROMPT.md:33:- `src/harness/MetaHarnessIntegration.ts` - onGenerationComplete wired
+docs/archive/internal-audits/AUDIT_PROMPT.md:46:- `harness-tasks/M8.json` - Logger fix (HarnessUpdater)
+docs/archive/internal-audits/AUDIT_PROMPT.md:142:1. RalphLoop → MetaHarnessIntegration (onGenerationComplete called)
+docs/audits/final-qa-2026-05-06/preflight-inventory.md:48:- `pnpm proof:route-performance`
+docs/archive/internal-audits/ATOMIC_TASKS.md:12:- `[x]` — Complete (verified)
+docs/archive/internal-audits/ATOMIC_TASKS.md:385:**Status:** [x] Complete
+docs/archive/internal-audits/ATOMIC_TASKS.md:391:- [x] **META.3** — HarnessUpdater with adaptations (`src/harness/HarnessUpdater.ts`)
+docs/archive/internal-audits/ATOMIC_TASKS.md:419:| `src/harness/HarnessUpdater.ts` | 140 | NEW |
+docs/archive/internal-audits/ATOMIC_TASKS.md:434:| Category | Total Tasks | Complete | Remaining |
+docs/archive/internal-audits/ATOMIC_TASKS.md:448:| Task ID | Assignee | Start Date | Complete Date | Notes |
+docs/archive/internal-audits/REMEDIATION_PLAN.md:497:10. P2.3.1-3.4 — Complete ArchiveLearning wiring
+docs/archive/internal-audits/architecture-v2.html:432:        <span class="comp comp-harness">HarnessUpdater</span>
+docs/archive/internal-audits/architecture-v2.html:819:                            <strong>Files:</strong> <code>FailureLogger.ts, PatternDetector.ts, HarnessUpdater.ts</code>
+docs/archive/internal-audits/REMEDIATION_QUICKSTART.md:94:### Day 1-2: P0 Critical (Complete All)
+docs/archive/internal-audits/REMEDIATION_QUICKSTART.md:229:P0 Complete: X/3
+docs/archive/internal-audits/REMEDIATION_QUICKSTART.md:230:P1 Complete: X/4
+docs/archive/internal-audits/REMEDIATION_QUICKSTART.md:231:P2 Complete: X/6
+docs/archive/internal-audits/AUDIT_FULL.md:108:### Completely orphaned files (zero imports from anywhere)
+docs/archive/internal-audits/AUDIT_FULL.md:227:| 3 | **`isCodeComplete()` fooled by braces in comments/strings** — `// { }` counts as balanced | LOW |
+docs/archive/internal-audits/AUDIT_FULL.md:310:- `src/utils/htmlWrapper.ts` hardcodes CDN URLs independently from `src/constants.ts` — p5 `1.9.0` vs `SERVICE_DEFAULTS.P5_VERSION`, Three.js `0.160.0` vs `SERVICE_DEFAULTS.THREE_VERSION`
+docs/archive/internal-audits/AUDIT_FULL.md:412:| 3 | E2E tests `return` instead of `it.skip()` — silently passes instead of reporting skip | `test/e2e/full-loop-local.test.ts` |
+docs/archive/internal-audits/AUDIT_FULL.md:543:| 3 | Shows internal dev stats ("20 Tasks Completed", "8 Files Modified") — meaningless to visitors | MEDIUM |
+docs/archive/internal-audits/AUDIT_FULL.md:847:**Files:** `src/harness/FailureLogger.ts`, `PatternDetector.ts`, `HarnessUpdater.ts`, `index.ts`
+docs/archive/internal-audits/AUDIT_FULL.md:854:| 2 | **HarnessUpdater is performative no-op** — all `apply*` methods log `applied: true` but don't modify any prompts or configs. The "adaptations" are theater. | HIGH |
+docs/archive/internal-audits/AUDIT_FULL.md:994:| N2 | **HarnessUpdater is performative no-op** — logs adaptations that don't actually happen | HIGH |
+docs/archive/internal-audits/GAPS_AND_IMPROVEMENTS.md:15:| **MH.1** | No failure pattern detection | **Meta-Harness implemented** — FailureLogger captures rich context; PatternDetector identifies 6 known patterns (Qwen thinking trap, GLSL undefined functions, Tone.js hallucinations, Strudel/Tidal confusion, ASCII timeout, HTML 404); HarnessUpdater applies adaptations. |
+docs/archive/internal-audits/RED_TEAM_AUDIT_REPORT.md:352:| 2026-03-30 | Remediation Complete | Development Team |
+docs/archive/internal-audits/architecture-all-guardrails.html:6:    <title>Complete Guardrail Architecture - 18 Types</title>
+docs/archive/internal-audits/architecture-all-guardrails.html:246:                <div class="card-subtitle">Syntax, Structure, Completeness</div>
+docs/archive/internal-audits/architecture-all-guardrails.html:330:                        <li>Completely missing elements</li>
+docs/archive/internal-audits/architecture.html:6:    <title>Liminal Architecture - Complete System Map</title>
+docs/archive/internal-audits/architecture.html:398:        <div class="header-meta">Complete system map with wiring status | Last updated: 2026-04-01</div>
+docs/archive/internal-audits/architecture.html:489:                    <p><strong>Recently Fixed:</strong> RalphLoop now reports failures to Meta-Harness via <code>onGenerationComplete()</code> calls. E2E tests also report to harness.</p>
+docs/archive/internal-audits/architecture.html:548:                            <span class="component-name">HarnessUpdater</span>
+docs/archive/internal-audits/architecture.html:551:                        <div class="component-path">src/harness/HarnessUpdater.ts</div>
+docs/archive/internal-audits/architecture.html:626:                        <div class="component-desc">Self-recursive iteration engine. NOW REPORTS TO HARNESS via onGenerationComplete().</div>
+docs/archive/internal-audits/architecture.html:1124:                    <li>✅ <strong>RalphLoop → Meta-Harness:</strong> Now calls <code>onGenerationComplete()</code> after each iteration and on validation failure</li>
+docs/archive/internal-audits/architecture.html:1133:                    <li>⚠️ <strong>HarnessUpdater → Auto-Execute:</strong> Creates tasks but doesn't auto-run them. Requires manual approval via TUI.</li>
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:16:package.json:69:    "proof:route-performance": "tsx scripts/proof/route-performance-budget.ts"
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:47:gui/src/gui/workbenchTelemetry.ts:445:  const hasComplete = events.some((event) => event.type === 'generation.complete');
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:54:gui/src/gui/workbenchTelemetry.ts:474:      status: hasClarification ? 'needs-input' : hasIntent || hasPlan || hasAttempt || hasComplete ? 'done' : phase === 'idle' ? 'pending' : 'active',
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:55:gui/src/gui/workbenchTelemetry.ts:479:      detail: hasComplete && completeEvent?.executionMode === 'draft' ? completedDraftRouteDetail(selectedDomain, backupWasUsed, failedDomains) : routeSummary,
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:56:gui/src/gui/workbenchTelemetry.ts:480:      status: hasRoute || hasPlan || hasAttempt || hasComplete ? 'done' : hasIntent && !hasClarification ? 'active' : 'pending',
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:57:gui/src/gui/workbenchTelemetry.ts:486:      status: (hasError && !hasComplete) || hasCancelled || hasDisconnected ? 'failed' : hasCandidate || hasPreview || hasComplete ? 'done' : hasAttempt ? 'active' : 'pending',
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:59:gui/src/gui/workbenchTelemetry.ts:496:      status: hasMissingPreview || hasDisconnected ? 'failed' : hasVerifiedPreview || hasPreview ? 'done' : hasCandidate || hasComplete ? 'active' : 'pending',
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:60:gui/src/gui/workbenchTelemetry.ts:502:      status: hasComplete ? 'done' : hasError ? 'failed' : 'active',
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:62:gui/src/gui/workbenchTelemetry.ts:507:      detail: hasCancelled ? 'stopped by operator' : hasDisconnected ? 'event stream disconnected' : hasComplete && completeEvent?.executionMode === 'draft' ? 'preview ready; waiting for your revise/new variation/polish choice' : hasComplete ? 'run completed' : 'not ready yet',
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:63:gui/src/gui/workbenchTelemetry.ts:508:      status: hasComplete ? 'done' : hasError || hasCancelled || hasDisconnected ? 'failed' : 'pending',
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:88:scripts/dogfood/true-dogfood-generation.js:112:    console.log(`   Status: ${result.completed ? 'Completed' : 'Stopped'} (${result.reason})`);
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:238:gui/src/gui/cockpitDerivation.ts:258:      if (!hasGenerationComplete) phase = 'verified preview';
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:245:gui/src/gui/cockpitDerivation.ts:303:  const isTerminal = hasGenerationComplete || hasCancelled || hasMissingPreview || isDisconnected || phase === 'complete' || phase === 'previewed' || phase === 'verified preview' || phase === 'preview missing' || phase === 'stopped' || phase === 'disconnected';
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:313:test/pending/tui/confirm-flow.test.ts:41:      llmClient: { complete: llmComplete, getConfig: () => ({ model: 'test-model' }) } as any,
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:314:test/pending/tui/confirm-flow.test.ts:59:      llmClient: { complete: llmComplete, getConfig: () => ({ model: 'test-model' }) } as any,
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:315:test/pending/tui/confirm-flow.test.ts:79:      llmClient: { complete: llmComplete, getConfig: () => ({ model: 'test-model' }) } as any,
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:316:test/pending/tui/confirm-flow.test.ts:96:      llmClient: { complete: llmComplete, getConfig: () => ({ model: 'test-model' }) } as any,
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:489:test/tui-bridge/tui-bridge-service.test.ts:96:    expect(events.map(e => e.type)).toContain('response.completed');
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:493:test/tui-bridge/tui-bridge-service.test.ts:488:        expect(types).toContain('response.completed');
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:494:test/tui-bridge/tui-bridge-service.test.ts:492:        const completed = events.find(e => e.type === 'response.completed');
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:495:test/tui-bridge/tui-bridge-service.test.ts:493:        expect(completed?.type === 'response.completed' && completed.content).toContain('chunked');
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:571:test/tui-bridge/tui-bridge-no-chat-lane.test.ts:961:      .find(event => event.type === 'response.completed' && String(event.content).includes('Last planning failure:')));
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:590:src/tui-bridge/types.ts:158:  | { type: 'response.completed'; sessionId: string; content: string }
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:660:test/helpers/mockLLM.ts:50:    this.complete = mockComplete;
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:726:src/tui-bridge/TuiBridgeService.ts:472:    this.emit(sessionId, { type: 'response.completed', sessionId, content });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:729:src/tui-bridge/TuiBridgeService.ts:702:      this.emit(sessionId, { type: 'response.completed', sessionId, content: input.text });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:749:src/tui-bridge/TuiBridgeService.ts:1660:      this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:755:src/tui-bridge/TuiBridgeService.ts:2014:        this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:762:src/tui-bridge/TuiBridgeService.ts:2384:      this.emit(sessionId, { type: 'response.completed', sessionId, content: result.code });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:771:src/tui-bridge/TuiBridgeService.ts:2537:      this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:774:src/tui-bridge/TuiBridgeService.ts:2647:      this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:781:src/tui-bridge/TuiBridgeService.ts:2856:    this.emit(sessionId, { type: 'response.completed', sessionId, content });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:886:test/unit/LLMModeAgent.test.ts:33:    mockComplete: complete,
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:888:test/unit/LLMModeAgent.test.ts:196:    mockComplete.mockResolvedValue({ text: '{"tool":"complete","params":{},"thought":"done"}' });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:889:test/unit/LLMModeAgent.test.ts:207:    mockComplete.mockResolvedValue({ text: '{"tool":"complete"}' });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:892:test/unit/LLMModeAgent.test.ts:374:    mockComplete.mockResolvedValueOnce({ text: '{"tool":"complete","params":{},"thought":"done","expectedResult":"done"}' });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:927:test/unit/LLMModeAgent.test.ts:892:    mockComplete.mockResolvedValue({ text: '{"tool":"complete","params":{},"thought":"done"}' });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:934:test/unit/LLMModeAgent.test.ts:989:    mockComplete.mockResolvedValue({ text: 'done inspecting; no safe change warranted' });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:1069:scripts/resume-dogfood-campaign.ts:113:  const completed = getCompletedTests();
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:1080:scripts/campaign-local-resume.ts:249:  const completed = loadCompleted(outputBase);
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:1156:test/unit/tui-bridge/goalCommand.test.ts:26:    mockCompleteGoal: completeGoal,
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:1159:test/unit/tui-bridge/goalCommand.test.ts:231:    mockCompleteGoal.mockReturnValue({ ...FAKE_GOAL, status: 'completed' });
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:1183:src/compost/CompostRehydrator.ts:97:        isComplete: false, // Cross-domain is a template, not complete
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:1201:src/release/GoldenSuiteRunner.ts:27:  onCaseComplete?: (caseId: string, passed: boolean, score: number) => void;
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:1202:src/release/GoldenSuiteRunner.ts:48:  private onCaseComplete?: (caseId: string, passed: boolean, score: number) => void;
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:1207:src/release/GoldenSuiteRunner.ts:100:      this.onCaseComplete?.(goldenCase.id, passed, judgment.score);
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:2154:scripts/proof/user-surface-observability.ts:168:    previewCompleted: observabilityEvents.some((item) => item.event.type === 'preview.completed'),
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:2336:src/harness/agent/LLMModeAgent.ts:293:      Logger.debug('LLMModeAgent', `Resuming suspended run: ${existingRunState.stepsCompleted}/${existingRunState.maxSteps} steps completed`);
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:2635:scripts/proof/mic-preview-browser-smoke.ts:88:  const previewCompleted = events.some((event) => event.type === 'preview.completed');
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:2637:scripts/proof/mic-preview-browser-smoke.ts:132:    previewCompletedBytes: completedContent.length,
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:2741:src/core/RalphLoop.ts:508:                  const quickScore = isComplete ? 0.5 : 0.3; // Basic completeness bonus
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:2770:test/unit/generators/StrudelGenerator.test.ts:20:    complete = mockComplete;
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:2967:src/brain/comprehensive-artistic-knowledge.ts:1063:  { name: 'Closure', type: 'principle', description: 'Completeness, filling gaps, mental completion', keywords: ['complete', 'fill', 'mental', 'gestalt'] },
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3047:test/unit/generators/ToneGenerator.test.ts:20:    complete = mockComplete;
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3084:src/ledger/cli.ts:92:      console.log(`  Completed:   ${completed}`);
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3085:src/ledger/cli.ts:163:      console.log(`  Completed:   ${attempt.completed}`);
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3089:src/ledger/cli.ts:340:      console.log(`  Completed:   ${completed.length}`);
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3112:test/unit/release/GoldenSuiteRunner.test.ts:120:        onCaseComplete: (id, passed, score) => completed.push({ id, passed, score }),
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3201:src/core/CreativeIterationGate.ts:60:    const incompleteLog = !input.isComplete && input.iteration < input.maxIterations
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3204:src/core/CreativeIterationGate.ts:76:            logMessage: `Extending max iterations to ${newMax} (score: ${input.score.toFixed(2)}, complete: ${input.isComplete})`,
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3270:test/unit/tui/NaturalInterface.test.ts:41:    complete = mockComplete;
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3295:test/unit/generators/HydraGenerator.test.ts:20:    complete = mockComplete;
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3380:docs/THE_BIBLE.md:278:- Generator thinking traces are captured by `TierBasedGenerator` and passed to `metaHarness.onGenerationComplete()`
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3492:docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:52:scripts/dogfood/true-dogfood-generation.js:112:    console.log(`   Status: ${result.completed ? 'Completed' : 'Stopped'} (${result.reason})`);
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3506:docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:453:bin/liminal:996:      console.log(`  motifDensity=${c.motifDensity.toFixed(3)} complexity=${c.complexity.toFixed(3)} complete=${c.isComplete} sources=${c.sourceIds.length}`);
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3604:docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:2435:src/ledger/cli.ts:92:      console.log(`  Completed:   ${completed}`);
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3605:docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:2471:src/ledger/cli.ts:163:      console.log(`  Completed:   ${attempt.completed}`);
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3607:docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:2517:src/ledger/cli.ts:340:      console.log(`  Completed:   ${completed.length}`);
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3734:docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:25:docs/launch/repo-improvement-baseline-2026-05-01.md:71:- `describe.skip` / `describe.skipIf`: 17 occurrences.
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3735:docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:26:docs/launch/repo-improvement-baseline-2026-05-01.md:72:- `it.skip` / `it.skipIf`: 6 occurrences.
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:3736:docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:27:docs/launch/repo-improvement-baseline-2026-05-01.md:73:- `test.skip` / `test.skipIf`: 2 occurrences.
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:7973:docs/audits/final-qa-2026-05-06/preflight-inventory.md:48:- `pnpm proof:route-performance`
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:8009:docs/archive/html/visual-bible.html:272:                        <span class="metric-value" class="text-green">✅ 7/7 Complete</span>
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:8022:docs/archive/html/visual-bible.html:649:                <h4 style="color: var(--accent-green);">✅ M12-M18 Compliance Guardrails Complete</h4>
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:8024:docs/archive/html/visual-bible.html:739:                        <span class="metric-value text-green">✅ Complete</span>
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:8025:docs/archive/html/visual-bible.html:743:                        <span class="metric-value text-green">✅ Complete</span>
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:8026:docs/archive/html/visual-bible.html:747:                        <span class="metric-value text-green">✅ Complete</span>
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:8027:docs/archive/html/visual-bible.html:751:                        <span class="metric-value text-green">✅ 4/4 Complete</span>
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:8051:docs/archive/html/harness-tasks.html:50:            <h3 style="color: var(--accent-green); margin-top: 1.5rem;">Core Completed Tasks (M1-M8)</h3>
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:8114:docs/internal/ADVERSARIAL_REVIEW_AND_ROADMAP.md:259:| **"Complete but Boring"** | ~0.50 | Code is structurally complete but produces no visual interest | p5.js sketch with setup/draw but static output |
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:9550:docs/archive/internal-audits/ATOMIC_TASKS.md:12:- `[x]` — Complete (verified)
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:9696:docs/archive/internal-audits/PUBLIC_AUDIT_REPORT.md:150:2. Complete `package.json` public metadata (`author`, `repository`, `homepage`, `bugs`).
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:9736:docs/plans/2026-04-06-bubble-tea-tui-implementation.md:469:- `response.completed` finalizes active response
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:9774:docs/internal/PROJECT_RULES.md:194:| docs-site | Documentation site | Complete, ready to merge |
+docs/audits/final-qa-2026-05-06/raw/launch-claim-candidates.txt:9793:docs/internal/PUBLIC_AUDIT_REPORT.md:150:2. Complete `package.json` public metadata (`author`, `repository`, `homepage`, `bugs`).
+docs/archive/internal-audits/FUNCTIONAL_ADVERSARIAL_AUDIT.md:18:| **Feature Completeness** | ⚠️ PARTIAL | B- | Many features exist but aren't wired to core loop |
+docs/archive/internal-audits/IMPACT_REPORT.html:718:                    <div class="stat-label">Tasks Completed</div>
+docs/archive/internal-audits/IMPACT_REPORT.html:1234:            <p style="margin-top: 0.5rem; font-size: 0.8rem;">2026-03-21 • The Unification Complete</p>
+docs/archive/internal-audits/SECURITY_AUDIT_CHECKLIST.md:133:**Audit Completed:** 2026-03-30
+docs/archive/internal-audits/architecture-guardrails.html:6:    <title>Liminal Guardrail Architecture - Complete Taxonomy</title>
+docs/archive/internal-audits/architecture-guardrails.html:714:            <p>Complete Guardrail Taxonomy | Liminal Architecture</p>

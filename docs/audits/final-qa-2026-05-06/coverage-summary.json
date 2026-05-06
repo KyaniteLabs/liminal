@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-05-06T01:32:30.866Z",
+  "totalTrackedFiles": 5229,
+  "highRiskFiles": 364,
+  "clusters": {
+    "customer_fury": {
+      "name": "Customer Fury",
+      "personas": [
+        "natebjones",
+        "alexhormozi",
+        "andywarhol"
+      ]
+    },
+    "codecraft": {
+      "name": "Codecraft",
+      "personas": [
+        "mattpocock",
+        "theobrowne",
+        "petersteinberger"
+      ]
+    },
+    "ai_systems": {
+      "name": "AI Systems",
+      "personas": [
+        "andrejkarpathy",
+        "yannlecun",
+        "dwarkeshpatel"
+      ]
+    },
+    "production_flow": {
+      "name": "Production Flow",
+      "personas": [
+        "charitymajors",
+        "donreinertsen",
+        "steveyegge"
+      ]
+    },
+    "agentic_reality": {
+      "name": "Agentic Reality",
+      "personas": [
+        "davidisler",
+        "lizthedeveloper"
+      ]
+    }
+  },
+  "summary": {
+    "customer_fury": {
+      "primary": 42,
+      "secondary": 4633,
+      "tertiary": 0
+    },
+    "codecraft": {
+      "primary": 1450,
+      "secondary": 303,
+      "tertiary": 7
+    },
+    "ai_systems": {
+      "primary": 91,
+      "secondary": 132,
+      "tertiary": 44
+    },
+    "production_flow": {
+      "primary": 3290,
+      "secondary": 70,
+      "tertiary": 313
+    },
+    "agentic_reality": {
+      "primary": 356,
+      "secondary": 91,
+      "tertiary": 0
+    }
+  }
+}

@@ -1,0 +1,7 @@
+
+> liminal-ai@2.1.0 proof:live-provider-smoke /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+> tsx scripts/proof/live-provider-smoke.ts
+
+Live provider smoke pass: glm/GLM-5v-turbo
+Artifact: .omx/proof/live-provider-smoke/p5.js
+Receipt: /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506/.omx/proof/live-provider-smoke.json

@@ -1,0 +1,132 @@
+# Remediation Plan
+
+Status: first-pass plan, not executed.
+
+Saturation is not achieved. This plan converts confirmed first-pass findings into an execution order so remediation can begin without new strategic decisions once the audit owner opens implementation worktrees.
+
+No remediation is complete until its finding is marked `fixed` and then `verified` in `findings-ledger.md` with command or live-run evidence.
+
+## Batch 0: Containment And Truth Repair
+
+Release risk: highest. These items prevent honest launch claims and false release gates.
+
+1. Fix or remove `proof:route-performance`.
+   - Findings: FQA-001
+   - Action: either restore `scripts/proof/route-performance-budget.ts` with real assertions or remove the package script and every launch claim that depends on it.
+   - Proof: package-script target scan passes; `pnpm proof:route-performance` exits 0 and writes a receipt.
+
+2. Repair launch claim truth.
+   - Findings: FQA-004, FQA-005, FQA-008, FQA-009
+   - Action: create a feature-claim ledger and downgrade every public claim that lacks live proof. Replace placeholder PR review language with explicit placeholder truth or a real gate.
+   - Proof: every launch/public claim maps to a passing command, live receipt, or documented caveat.
+
+3. Make branch protection real before publication.
+   - Findings: FQA-007
+   - Action: configure required checks and PR review policy on `main`.
+   - Proof: live `gh api` readback shows required checks/reviews.
+
+4. Correct self-healing/HarnessUpdater claims.
+   - Findings: FQA-012
+   - Action: either restore a tested runtime implementation or rewrite docs to the current manual-memory behavior.
+   - Proof: docs/runtime consistency test or direct source check.
+
+## Batch 1: Silent Failure And Evidence Integrity
+
+Release risk: high. These items turn failures into success or weak proof into readiness.
+
+1. Fix streaming fallback error handling.
+   - Findings: FQA-003, FQA-033
+   - Action: propagate fallback stream errors through LLM client and TUI bridge terminal events.
+   - Proof: failing-provider stream test proves no empty completed response is emitted, and integration/slow CI no longer fail from empty-code generation.
+
+2. Harden release-gate receipts.
+   - Findings: FQA-004
+   - Action: require commit SHA, timestamp freshness, provider identity, case matrix, and artifact existence checks.
+   - Proof: receipt validator rejects stale, wrong-SHA, missing-artifact, and insufficient-case receipts.
+
+3. Make evaluator degradation explicit.
+   - Findings: FQA-010
+   - Action: evaluator exceptions must mark degraded evidence and block confidence-1 success.
+   - Proof: evaluator-throws regression produces degraded/non-passing result.
+
+4. Add decoded-pixel visual proof.
+   - Findings: FQA-011
+   - Action: replace byte-pattern visibility checks with decoded-pixel validation.
+   - Proof: blank/solid/transparent fixtures fail; real visual fixture passes.
+
+5. Block reasoning/thinking artifact leakage.
+   - Findings: FQA-029
+   - Action: artifact extraction must use final user-visible content only unless a provider explicitly marks a content field safe for display.
+   - Proof: reasoning-only provider fixture fails extraction.
+
+## Batch 2: First-Run And Customer-Control UX
+
+Release risk: high. These items make customers angry even when the core code runs.
+
+1. Align provider setup and diagnostics.
+   - Findings: FQA-006
+   - Action: update CLI help, onboarding, and env validation around documented providers, especially GLM.
+   - Proof: credential-free provider setup diagnostics tests.
+
+2. Make stop/cancel visible and effective.
+   - Findings: FQA-016, FQA-023, FQA-024
+   - Action: visible active-run stop affordance; propagate AbortSignal through draft generation, provider calls, and retry sleeps.
+   - Proof: UI smoke shows stop button; fake provider confirms abort; retry backoff aborts immediately.
+
+3. Fix Revideo/video intent routing and preview failure states.
+   - Findings: FQA-017, FQA-019
+   - Action: route common video/timeline prompts correctly and render visible image-preview failure states.
+   - Proof: routing tests and broken-preview browser test.
+
+4. Rewrite first-time user docs.
+   - Findings: FQA-018
+   - Action: replace harness-era commands with current Studio/workbench/CLI paths.
+   - Proof: docs claim scan plus manual first-run smoke.
+
+## Batch 3: Runtime Contracts And Examples
+
+Release risk: medium-high. These items reduce integration debt and future bug generation.
+
+1. Share event contracts between bridge and GUI.
+   - Findings: FQA-014
+   - Action: move GUI telemetry/cockpit event parsing onto shared types or generated schema; expose public conversation history API.
+   - Proof: backend/frontend type-contract test.
+
+2. Fix examples and include them in verification.
+   - Findings: FQA-021
+   - Action: export documented composition APIs or update imports; replace CJS `require` in ESM examples; compile examples.
+   - Proof: example compile/smoke script passes.
+
+3. Correct Studio executor provenance.
+   - Findings: FQA-022
+   - Action: receipts must name actual executor path and delegation boundary.
+   - Proof: per-mode provenance tests.
+
+4. Fix Anthropic-compatible provenance URL.
+   - Findings: FQA-027
+   - Action: derive displayed endpoint from the adapter request path.
+   - Proof: adapter/provenance contract test.
+
+5. Align Three prompt and runtime wrapper.
+   - Findings: FQA-028
+   - Action: choose one contract: full HTML or raw scene JS, one Three version, one audited path.
+   - Proof: prompt audit renders through actual generator path.
+
+## Batch 4: Coverage And Guardrails
+
+Release risk: medium. These items prevent recurrence.
+
+1. Expand final QA gate coverage.
+   - Findings: FQA-013, FQA-015, FQA-034
+   - Action: include GUI, Bubble Tea, scripts, examples, pending-test classification, strict test-quality scanning, and all launch-scoped creative domains in final QA.
+   - Proof: final QA script prints included surfaces/domains and fails on weak assertion fixtures or missing live artifacts.
+
+2. Repair observability proof and SSE replay.
+   - Findings: FQA-025, FQA-026
+   - Action: prove real runtime-originated events and preserve lifecycle/provenance in replay.
+   - Proof: real generation observability proof and long-stream replay test.
+
+3. Resolve non-material copy drift.
+   - Findings: FQA-030, FQA-031, FQA-032
+   - Action: copy/terminology/logging cleanup after material truth is fixed.
+   - Proof: docs terminology scan and operator smoke.

@@ -1,0 +1,112 @@
+gui/src/gui/syncPreview.ts:17:  try { Object.defineProperty(window, 'DeviceMotionEvent', { value: undefined, configurable: true }); } catch {}
+gui/src/gui/syncPreview.ts:18:  try { Object.defineProperty(window, 'DeviceOrientationEvent', { value: undefined, configurable: true }); } catch {}
+gui/src/gui/useTuiBridgeSession.ts:166:      await refreshStatus().catch(() => undefined);
+test/pending/integration/gui-config-api.test.js:47:    await fs.rm(TEST_DIR, { recursive: true, force: true }).catch(() => {});
+test/pending/integration/gui-config-api.test.js:53:    } catch (_) {}
+test/pending/integration/preview-server-api.test.js:30:    await fs.rm(testGalleryDir, { recursive: true, force: true }).catch(() => {});
+test/pending/integration/preview-server-api.test.js:31:    await fs.rm(testOutputDir, { recursive: true, force: true }).catch(() => {});
+test/pending/integration/preview-server-api.test.js:50:    if (server) await server.stop().catch(() => {});
+test/pending/integration/preview-server-versioned.test.js:23:      } catch (_) {}
+gui/server.js:78:      try { Object.defineProperty(window, 'DeviceMotionEvent', { value: undefined, configurable: true }); } catch {}
+gui/server.js:79:      try { Object.defineProperty(window, 'DeviceOrientationEvent', { value: undefined, configurable: true }); } catch {}
+test/e2e/full-loop-local.test.ts:158:      await fs.rm(outputDir, { recursive: true, force: true }).catch(() => {});
+src/musicToVisual/generateMusicToVisual.ts:94:    .catch(() => null);
+test/unit/gui-export-selected.test.js:22:    } catch (_) {}
+test/unit/gui-export-selected.test.js:28:    } catch (_) {}
+test/unit/prompt-history.test.ts:22:    try { await fs.rm(TEST_HISTORY_DIR, { recursive: true, force: true }); } catch {}
+test/unit/sandbox.test.ts:46:      const code = `function setup(){ try { require('fs'); } catch(e) {} createCanvas(100,100); noLoop(); } function draw(){}`;
+scripts/qa-creative-domains.mjs:282:    try { parent.postMessage({ source: 'liminal-qa-artifact', domain, type, data }, location.origin); } catch {}
+scripts/testing/run-mini-wave.ts:47:      try { const m = stdout.match(/RESULT: ({.+})/); if (m) result = JSON.parse(m[1]); } catch {}
+scripts/testing/run-local-only.ts:99:      } catch {}
+scripts/testing/run-local-only.ts:116:    } catch {}
+scripts/testing/run-batch.ts:44:      } catch {}
+test/unit/core/ParsingCache.test.ts:20:    } catch {}
+src/tui-bridge/TuiBridgeService.ts:3201:      if (page) await page.close().catch(() => undefined);
+src/tui-bridge/TuiBridgeService.ts:3202:      await browser.close().catch(() => undefined);
+scripts/testing/run-p5-all.ts:47:      } catch {}
+src/tui-bridge/endpoints/TuiMicPreviewEndpoints.ts:25:async function send(content, done=false, imageBase64){await fetch(location.pathname+'/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content,done,imageBase64})}).catch(()=>{})}
+src/tui-bridge/endpoints/TuiMicPreviewEndpoints.ts:36:function showMicError(err){cancelAnimationFrame(raf);recognition?.stop?.();stream?.getTracks?.().forEach(t=>t.stop());ctx?.close?.();stream=null;ctx=null;analyser=null;document.getElementById('start').disabled=false;document.getElementById('stop').disabled=true;const c=['Status: microphone unavailable',formatMicCaptureError(err,'press Start recording again'),'No audio was captured yet.'].join('\n');out.textContent=c;send(c,false).catch(()=>{})}
+src/composition/ProjectSerializer.ts:206:          .catch(() => null);
+src/composition/ProjectSerializer.ts:247:          .catch(() => null);
+scripts/testing/test-single.mjs:42:  } catch {}
+scripts/testing/run-wave.ts:118:      } catch {}
+scripts/testing/run-all-sequential.ts:52:      } catch {}
+scripts/utils/generate-parallel.ts:110:      } catch {}
+scripts/utils/create-live-organism.js:23:  const userConfig = await loadConfig(configPath).catch(() => null);
+scripts/utils/create-live-organism.js:24:  const projectConfig = await loadProjectConfig(cwd).catch(() => null);
+test/unit/core/prompt-enhancer-lir.test.ts:213:        await fs.rm(testDir, { recursive: true, force: true }).catch(() => {});
+test/unit/core/prompt-enhancer-lir.test.ts:229:        await fs.rm(testDir, { recursive: true, force: true }).catch(() => {});
+test/unit/core/prompt-enhancer-lir.test.ts:243:        await fs.rm(testDir, { recursive: true, force: true }).catch(() => {});
+scripts/start-bubbletea-tui.mjs:90:    await server.stop().catch(() => {});
+scripts/start-bubbletea-tui.mjs:98:  await server.stop().catch(() => {});
+scripts/analysis/agent-b-test-runner.ts:61:    } catch {}
+scripts/analysis/run-agent-b.ts:151:      } catch {}
+scripts/analysis/run-agent-b.ts:187:    } catch {}
+scripts/analysis/run-agent-a.ts:149:      } catch {}
+scripts/analysis/run-agent-a.ts:183:    } catch {}
+scripts/analysis/run-agent-b-batched.ts:104:    } catch {}
+scripts/analysis/run-agent-b-batched.ts:126:    } catch {}
+scripts/analysis/agent-b-batch.ts:94:    } catch {}
+test/unit/config-loader.test.ts:16:    try { await fs.unlink(TEST_CONFIG_PATH); } catch {}
+test/unit/config-loader.test.ts:20:    try { await fs.rm(TEST_CONFIG_DIR, { recursive: true, force: true }); } catch {}
+test/unit/config-loader.test.ts:56:      try { await fs.rm(TEST_PROJECT_DIR, { recursive: true, force: true }); } catch {}
+test/unit/config-loader.test.ts:110:      try { await fs.rm(TEST_PROJECT_DIR, { recursive: true, force: true }); } catch {}
+test/unit/config-loader.test.ts:134:      try { await fs.rm(TEST_PROJECT_DIR, { recursive: true, force: true }); } catch {}
+test/unit/render/VideoPipeline.test.ts:38:    await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+test/unit/render/HyperFramesRenderer.test.ts:42:    await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+test/unit/render/RevideoRenderer.test.ts:52:    await fs.rm(tempDir, { recursive: true, force: true }).catch(() => {});
+scripts/proof/loop-intelligence-proof.ts:125:    await page.close().catch(() => undefined);
+scripts/proof/loop-intelligence-proof.ts:126:    await browser.close().catch(() => undefined);
+scripts/proof/loop-intelligence-proof.ts:146:  const [artifactStat, screenshotStat] = await Promise.all([fs.stat(artifactPath).catch(() => null), fs.stat(screenshotPath).catch(() => null)]);
+test/unit/path-sanitization.test.js:24:    await fs.rm(base, { recursive: true, force: true }).catch(() => {});
+test/unit/path-sanitization.test.js:70:    await fs.rm(testDir, { recursive: true, force: true }).catch(() => {});
+test/unit/path-sanitization.test.js:75:    await fs.mkdir(output, { recursive: true }).catch(() => {});
+test/unit/path-sanitization.test.js:92:    await fs.mkdir(testOut, { recursive: true }).catch(() => {});
+test/unit/path-sanitization.test.js:107:    await fs.rm(galleryBase, { recursive: true, force: true }).catch(() => {});
+test/unit/path-sanitization.test.js:135:    await fs.rm(archiveDir, { recursive: true, force: true }).catch(() => {});
+scripts/proof/composition-proof.ts:116:    await page.close().catch(() => undefined);
+scripts/proof/composition-proof.ts:117:    await browser.close().catch(() => undefined);
+src/render/RevideoRenderer.ts:118:      await fs.rm(projectDir, { recursive: true, force: true }).catch(() => {});
+src/render/RevideoRenderer.ts:217:    ].map((file) => fs.unlink(file).catch(() => {})));
+scripts/proof/studio-launch-gauntlet.mjs:177:      } catch {}
+scripts/proof/studio-launch-gauntlet.mjs:194:        try { child.kill(signal); } catch {}
+scripts/proof/studio-launch-gauntlet.mjs:353:    } catch {}
+scripts/proof/studio-launch-gauntlet.mjs:423:      await context.close().catch(() => undefined);
+scripts/proof/studio-launch-gauntlet.mjs:448:    if (browser) await browser.close().catch(() => undefined);
+test/unit/interactive-mode.test.ts:25:    try { await fs.rm(TEST_DIR, { recursive: true, force: true }); } catch {}
+scripts/proof/user-surfaces-e2e.ts:51:    await reader.cancel().catch(() => undefined);
+scripts/proof/user-surfaces-e2e.ts:147:  await bridgeServer?.stop().catch(() => undefined);
+scripts/proof/creative-copilot-proof.ts:149:    if (page) await page.close().catch(() => undefined);
+scripts/proof/creative-copilot-proof.ts:150:    await browser.close().catch(() => undefined);
+scripts/proof/visual-output-preview-contract.ts:322:    if (item.domain === 'tone') await page.locator('button').first().click({ timeout: 5_000 }).catch(() => undefined);
+scripts/proof/mic-preview-browser-smoke.ts:139:  await browser?.close().catch(() => undefined);
+scripts/proof/mic-preview-browser-smoke.ts:140:  await server.stop().catch(() => undefined);
+scripts/proof/user-surface-controls.ts:59:    await reader.cancel().catch(() => undefined);
+scripts/proof/user-surface-controls.ts:176:  await bridgeServer?.stop().catch(() => undefined);
+scripts/proof/user-surface-observability.ts:64:    await reader.cancel().catch(() => undefined);
+scripts/proof/user-surface-observability.ts:194:  await bridgeServer?.stop().catch(() => undefined);
+test/unit/config/RoleConfig.test.ts:453:    } catch {}
+test/unit/config/PromptHistory.test.ts:16:    try { await fs.unlink(HISTORY_FILE); } catch {}
+test/unit/config/PromptHistory.test.ts:21:    try { await fs.rm(TMP_DIR, { recursive: true, force: true }); } catch {}
+test/unit/config/RoleConfig-fileloading.test.ts:25:  } catch {}
+test/integration/gui-security-regression.test.js:30:  const cleanup = () => fs.rm(dir, { recursive: true, force: true }).catch(() => {});
+test/integration/gui-security-regression.test.js:66:  await res.body?.cancel().catch(() => {});
+test/integration/gui-security-regression.test.js:628:    await fs.rm(galleryDir, { recursive: true, force: true }).catch(() => {});
+test/integration/generator-renderer.test.js:328:          await previewServer.stop().catch(() => {});
+test/integration/generator-renderer.test.js:332:        await fs.unlink(screenshotPath).catch(() => {});
+test/integration/generator-renderer.test.js:532:        await fs.unlink(screenshotPath).catch(() => {});
+test/integration/generator-renderer.test.js:585:        await fs.unlink(screenshotPath).catch(() => {});
+test/integration/generator-renderer.test.js:695:            await stepServer.stop().catch(() => {});
+src/cortex/LiminalCortex.ts:58:    this.loop(this.abortController.signal).catch(() => {});
+src/config/ConfigLoader.ts:277:    const stat = await fs.stat(configDirOrPath).catch(() => null);
+src/harness/skills/SkillLoader.ts:91:    const raw = await fs.readFile(skillPath, 'utf-8').catch(() => null);
+test/integration/run-merge-approve-api.test.js:52:    await fs.rm(TEST_DIR, { recursive: true, force: true }).catch(() => {});
+src/core/wrappers/SecurityHeaders.ts:21:      try { Object.defineProperty(window, 'DeviceMotionEvent', { value: undefined, configurable: true }); } catch {}
+src/core/wrappers/SecurityHeaders.ts:22:      try { Object.defineProperty(window, 'DeviceOrientationEvent', { value: undefined, configurable: true }); } catch {}
+test/integration/user-surface-e2e.test.js:36:    await reader.cancel().catch(() => {});
+test/integration/interactive-mode.test.ts:22:    try { await fs.rm(TEST_DIR, { recursive: true, force: true }); } catch {}
+test/integration/cli.test.js:36:    try { await fs.rm(testOutputDir, { recursive: true, force: true }); } catch {}
+src/harness/tools/ReadFileTool.ts:63:      const stats = await fs.stat(filePath).catch(() => null);
+src/harness/tools/WriteFileTool.ts:30:      const exists = await fs.stat(filePath).catch(() => null);
+src/harness/tools/backup.ts:55:    const stats = await fs.stat(backupPath).catch(() => null);
+src/harness/tools/ApplyEditTool.ts:68:      const content = await fs.readFile(filePath, 'utf-8').catch(() => null);

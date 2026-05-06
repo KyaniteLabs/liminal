@@ -1,0 +1,1247 @@
+
+> liminal-ai@2.1.0 test:ci:slow /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+> LIMINAL_CI_SLOW=1 vitest run --pool=forks
+
+
+ RUN  v4.1.2 /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Complete Generation-Render Workflow > should generate p5.js sketch and render via PreviewServer
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Complete Generation-Render Workflow > should generate sketch, render via PreviewServer, and capture screenshot
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Complete Generation-Render Workflow > should validate generated code renders correctly
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > P5.js Generation and Rendering > should generate and render particle system sketch
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > P5.js Generation and Rendering > should generate and render animated sketch
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should run complete loop with real p5.js generation
+[RalphLoop] Prompt has 1 high-priority ambiguity issues:
+[RalphLoop]   [missing_context] Pronoun "that" used without a clear referent in a short request.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should run complete loop with real p5.js generation
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should run complete loop with real p5.js generation
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > P5.js Generation and Rendering > should generate and render interactive sketch
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should run complete loop and terminate on COMPLETE promise
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should run complete loop and terminate on COMPLETE promise
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > P5.js Generation and Rendering > should generate and render cellular automata sketch
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should verify iterations accumulate in context
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should verify iterations accumulate in context
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Screenshot Quality and Validation > should produce high-quality screenshots for generated sketches
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should save all iterations to gallery
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should save all iterations to gallery
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Screenshot Quality and Validation > should handle different canvas sizes in generated sketches
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should evaluate quality of each iteration
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should evaluate quality of each iteration
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Screenshot Quality and Validation > should validate screenshot dimensions match canvas size
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should generate valid p5.js setup function
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should generate valid p5.js setup function
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Error Handling and Edge Cases > should handle generation errors gracefully
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should generate valid p5.js draw function
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should generate valid p5.js draw function
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Error Handling and Edge Cases > should handle unicode and special characters in prompts
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should generate p5.js sketches with proper syntax
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should generate p5.js sketches with proper syntax
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Error Handling and Edge Cases > should handle multiple rapid generation-render cycles
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Integration with Context and Iteration > should generate and render sketches with iteration context
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should generate different code on each iteration
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should generate different code on each iteration
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should include p5.js specific functions and methods
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should include p5.js specific functions and methods
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Integration with Context and Iteration > should demonstrate evolution across multiple iterations
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Context Injection and Evolution > should inject context into prompt when placeholder exists
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Context Injection and Evolution > should inject context into prompt when placeholder exists
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Performance and Resource Management > should complete generation and render within reasonable time
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Context Injection and Evolution > should build proper context for injection
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Context Injection and Evolution > should build proper context for injection
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Performance and Resource Management > should handle memory efficiently for multiple renders
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Context Injection and Evolution > should maintain prompt consistency across iterations
+[RalphLoop] Prompt has 1 high-priority ambiguity issues:
+[RalphLoop]   [missing_context] Pronoun "this" used without a clear referent in a short request.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Context Injection and Evolution > should maintain prompt consistency across iterations
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Context Injection and Evolution > should maintain prompt consistency across iterations
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Code Quality and Validation > should generate syntactically valid p5.js code
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Safety Mechanisms > should enforce max iterations hard limit
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Safety Mechanisms > should enforce max iterations hard limit
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Code Quality and Validation > should include proper p5.js structure in generated code
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Real-World Scenarios > should handle typical creative coding workflow
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+stderr | test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Real-World Scenarios > should support rapid prototyping iterations
+[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL are set.
+
+ ❯ test/integration/generator-renderer.test.js (21 tests | 21 failed) 9059ms
+       × should generate p5.js sketch and render via PreviewServer 636ms
+       × should generate sketch, render via PreviewServer, and capture screenshot 426ms
+       × should validate generated code renders correctly 430ms
+       × should generate and render particle system sketch 412ms
+       × should generate and render animated sketch 427ms
+       × should generate and render interactive sketch 460ms
+       × should generate and render cellular automata sketch 426ms
+       × should produce high-quality screenshots for generated sketches 424ms
+       × should handle different canvas sizes in generated sketches 416ms
+       × should validate screenshot dimensions match canvas size 419ms
+       × should handle generation errors gracefully 416ms
+       × should handle unicode and special characters in prompts 417ms
+       × should handle multiple rapid generation-render cycles 423ms
+       × should generate and render sketches with iteration context 408ms
+       × should demonstrate evolution across multiple iterations 410ms
+       × should complete generation and render within reasonable time 424ms
+       × should handle memory efficiently for multiple renders 405ms
+       × should generate syntactically valid p5.js code 419ms
+       × should include proper p5.js structure in generated code 416ms
+       × should handle typical creative coding workflow 424ms
+       × should support rapid prototyping iterations 408ms
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Safety Mechanisms > should maintain state immutability
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Safety Mechanisms > should maintain state immutability
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Promise Detection Integration > should terminate immediately on COMPLETE promise
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Promise Detection Integration > should terminate immediately on COMPLETE promise
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Promise Detection Integration > should not terminate on partial promise matches
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Promise Detection Integration > should not terminate on partial promise matches
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Promise Detection Integration > should preserve promise in final output
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Promise Detection Integration > should preserve promise in final output
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Gallery Integration > should save complete iteration history to gallery
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Gallery Integration > should save complete iteration history to gallery
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Gallery Integration > should create proper directory structure
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Gallery Integration > should create proper directory structure
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Gallery Integration > should save valid JavaScript to gallery files
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Gallery Integration > should save valid JavaScript to gallery files
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Result Object Completeness > should return comprehensive result object
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Result Object Completeness > should return comprehensive result object
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Result Object Completeness > should track execution duration accurately
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Result Object Completeness > should track execution duration accurately
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle very long prompts
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle very long prompts
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle unicode in prompts
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle unicode in prompts
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle special characters in project names
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle special characters in project names
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle concurrent loop executions
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle concurrent loop executions
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle concurrent loop executions
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle concurrent loop executions
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Quality Evolution Tracking > should track quality scores across iterations
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Quality Evolution Tracking > should track quality scores across iterations
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Quality Evolution Tracking > should track quality scores across iterations
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Quality Evolution Tracking > should track quality scores across iterations
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Quality Evolution Tracking > should calculate quality trends in context
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > Quality Evolution Tracking > should calculate quality trends in context
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > RalphLoop State Management > should maintain accurate state information
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > RalphLoop State Management > should maintain accurate state information
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > RalphLoop State Management > should provide accurate progress information
+[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools
+
+stderr | test/integration/full-loop.test.js > Full-Loop Integration Tests > RalphLoop State Management > should provide accurate progress information
+[RalphLoop] Candidate 0 generation failed: RalphLoop: P5GeneratorV2: LLM returned empty code
+
+ ❯ test/integration/full-loop.test.js (32 tests | 31 failed) 15034ms
+       × should run complete loop with real p5.js generation 794ms
+       × should run complete loop and terminate on COMPLETE promise 453ms
+       × should verify iterations accumulate in context 424ms
+       × should save all iterations to gallery 405ms
+       × should evaluate quality of each iteration 470ms
+       × should generate valid p5.js setup function 441ms
+       × should generate valid p5.js draw function 428ms
+       × should generate p5.js sketches with proper syntax 466ms
+       × should generate different code on each iteration 432ms
+       × should include p5.js specific functions and methods 427ms
+       × should inject context into prompt when placeholder exists 436ms
+       × should build proper context for injection 416ms
+       × should maintain prompt consistency across iterations 435ms
+       × should enforce max iterations hard limit 436ms
+       × should maintain state immutability 438ms
+       × should terminate immediately on COMPLETE promise 446ms
+       × should not terminate on partial promise matches 439ms
+       × should preserve promise in final output 430ms
+       × should save complete iteration history to gallery 430ms
+       × should create proper directory structure 430ms
+       × should save valid JavaScript to gallery files 426ms
+       × should return comprehensive result object 427ms
+       × should track execution duration accurately 423ms
+       × should handle very long prompts 434ms
+       × should handle unicode in prompts 425ms
+       × should handle special characters in project names 792ms
+       × should handle concurrent loop executions 437ms
+       × should track quality scores across iterations 425ms
+       × should calculate quality trends in context 425ms
+       × should maintain accurate state information 441ms
+       × should provide accurate progress information 441ms
+ ❯ test/integration/run-merge-approve-api.test.js (4 tests | 4 failed) 27076ms
+       × accepts mode=organism and traits, returns 200, gallery has organism iterations 5004ms
+       × returns 200 with proposed musicCode/visualCode when merging two organism versions 5001ms
+       × saves proposed as next version and returns 200 3377ms
+       × with traits only returns proposed organism with updated BPM/palette (no LLM) 5002ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 56 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should run complete loop with real p5.js generation
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:59:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should run complete loop and terminate on COMPLETE promise
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:87:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should verify iterations accumulate in context
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:113:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should save all iterations to gallery
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:152:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Complete Loop Workflow > should evaluate quality of each iteration
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:188:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should generate valid p5.js setup function
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:218:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should generate valid p5.js draw function
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:232:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should generate p5.js sketches with proper syntax
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:245:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should generate different code on each iteration
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:270:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Real p5.js Code Generation > should include p5.js specific functions and methods
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:295:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Context Injection and Evolution > should inject context into prompt when placeholder exists
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:316:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Context Injection and Evolution > should build proper context for injection
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:339:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Context Injection and Evolution > should maintain prompt consistency across iterations
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:362:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Safety Mechanisms > should enforce max iterations hard limit
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:381:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Safety Mechanisms > should maintain state immutability
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:410:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Promise Detection Integration > should terminate immediately on COMPLETE promise
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:432:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Promise Detection Integration > should not terminate on partial promise matches
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:447:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Promise Detection Integration > should preserve promise in final output
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:461:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Gallery Integration > should save complete iteration history to gallery
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:479:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Gallery Integration > should create proper directory structure
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:507:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Gallery Integration > should save valid JavaScript to gallery files
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:535:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Result Object Completeness > should return comprehensive result object
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:558:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Result Object Completeness > should track execution duration accurately
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:598:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle very long prompts
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:616:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle unicode in prompts
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:629:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle special characters in project names
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:643:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Edge Cases and Error Handling > should handle concurrent loop executions
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:657:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Quality Evolution Tracking > should track quality scores across iterations
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:685:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > Quality Evolution Tracking > should calculate quality trends in context
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:705:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > RalphLoop State Management > should maintain accurate state information
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:728:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/56]⎯
+
+ FAIL  test/integration/full-loop.test.js > Full-Loop Integration Tests > RalphLoop State Management > should provide accurate progress information
+GenerationError: P5GeneratorV2: LLM returned empty code
+ ❯ P5GeneratorV2.generateInternal src/generators/TierBasedGenerator.ts:261:17
+    259|           response = directResponse;
+    260|         } else {
+    261|           throw new GenerationError(`${this.constructor.name}: LLM ret…
+       |                 ^
+    262|         }
+    263|       }
+ ❯ P5GeneratorV2.generate src/generators/TierBasedGenerator.ts:112:22
+ ❯ P5GeneratorV2.generate src/generators/p5/P5GeneratorV2.ts:27:18
+ ❯ GenerationOrchestrator.generate src/core/GenerationOrchestrator.ts:162:11
+ ❯ src/core/RalphLoop.ts:467:44
+ ❯ RalphLoop.run src/core/RalphLoop.ts:531:32
+ ❯ test/integration/full-loop.test.js:748:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Complete Generation-Render Workflow > should generate p5.js sketch and render via PreviewServer
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a simple p5.js sketch with a red circle on white background
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:103:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Complete Generation-Render Workflow > should generate sketch, render via PreviewServer, and capture screenshot
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a p5.js sketch with a blue rectangle on black background
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:130:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Complete Generation-Render Workflow > should validate generated code renders correctly
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a p5.js sketch with multiple colored shapes
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:156:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > P5.js Generation and Rendering > should generate and render particle system sketch
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a p5.js particle system with 50 particles
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:183:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > P5.js Generation and Rendering > should generate and render animated sketch
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create an animated p5.js sketch with moving elements
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:207:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > P5.js Generation and Rendering > should generate and render interactive sketch
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a p5.js sketch that responds to mouse interaction
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:231:31
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > P5.js Generation and Rendering > should generate and render cellular automata sketch
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a p5.js cellular automata simulation
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:254:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Screenshot Quality and Validation > should produce high-quality screenshots for generated sketches
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a high-quality p5.js visualization
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:279:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Screenshot Quality and Validation > should handle different canvas sizes in generated sketches
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a p5.js sketch with canvas size 400x400
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:309:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Screenshot Quality and Validation > should validate screenshot dimensions match canvas size
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a p5.js sketch with 600x400 canvas
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:341:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Error Handling and Edge Cases > should handle generation errors gracefully
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt:
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:371:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Error Handling and Edge Cases > should handle unicode and special characters in prompts
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create sketch with emoji 🎨 🖼️ ✨
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:410:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Error Handling and Edge Cases > should handle multiple rapid generation-render cycles
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create iteration 0 p5.js sketch
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:441:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Integration with Context and Iteration > should generate and render sketches with iteration context
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Improve the sketch
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:473:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Integration with Context and Iteration > should demonstrate evolution across multiple iterations
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a basic p5.js sketch
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:512:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Performance and Resource Management > should complete generation and render within reasonable time
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a simple p5.js sketch
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:545:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Performance and Resource Management > should handle memory efficiently for multiple renders
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create sketch 0
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:571:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Code Quality and Validation > should generate syntactically valid p5.js code
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a particle system
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:601:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Code Quality and Validation > should include proper p5.js structure in generated code
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a complete p5.js sketch
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:634:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Real-World Scenarios > should handle typical creative coding workflow
+Error: Workflow step "Initial creation" failed: P5GeneratorLLM: LLM returned empty code for prompt: Create a simple particle system
+ ❯ test/integration/generator-renderer.test.js:699:17
+    697|         } catch (error) {
+    698|           // Fail the test with descriptive error
+    699|           throw new Error(`Workflow step "${step.description}" failed:…
+       |                 ^
+    700|         }
+    701|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[51/56]⎯
+
+ FAIL  test/integration/generator-renderer.test.js > Generator-Renderer Integration Tests > Real-World Scenarios > should support rapid prototyping iterations
+GenerationError: P5GeneratorLLM: LLM returned empty code for prompt: Create a generative art sketch
+ ❯ P5GeneratorLLM.generateInternal src/generators/p5/P5GeneratorLLM.ts:129:13
+    127|
+    128|     if (!llmResponse.code || llmResponse.code.trim() === '') {
+    129|       throw new GenerationError(
+       |             ^
+    130|         'P5GeneratorLLM: LLM returned empty code for prompt: ' + promp…
+    131|         'p5',
+ ❯ P5GeneratorLLM.generate src/generators/p5/P5GeneratorLLM.ts:58:22
+ ❯ test/integration/generator-renderer.test.js:713:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[52/56]⎯
+
+ FAIL  test/integration/run-merge-approve-api.test.js > Run / Merge / Approve / Propose-mutate API > POST /api/run with mode=organism (W1-R) > accepts mode=organism and traits, returns 200, gallery has organism iterations
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/run-merge-approve-api.test.js:77:7
+     75|
+     76|   describe('POST /api/run with mode=organism (W1-R)', () => {
+     77|     it('accepts mode=organism and traits, returns 200, gallery has org…
+       |       ^
+     78|       if (skipIfNoLLM()) return;
+     79|       const projectName = `organism-${Date.now()}`;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[53/56]⎯
+
+ FAIL  test/integration/run-merge-approve-api.test.js > Run / Merge / Approve / Propose-mutate API > POST /api/merge (W1-M) > returns 200 with proposed musicCode/visualCode when merging two organism versions
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/run-merge-approve-api.test.js:106:7
+    104|
+    105|   describe('POST /api/merge (W1-M)', () => {
+    106|     it('returns 200 with proposed musicCode/visualCode when merging tw…
+       |       ^
+    107|       if (skipIfNoLLM()) return;
+    108|       const projectName = `merge-test-${Date.now()}`;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[54/56]⎯
+
+ FAIL  test/integration/run-merge-approve-api.test.js > Run / Merge / Approve / Propose-mutate API > POST /api/approve (W1-A) > saves proposed as next version and returns 200
+Error: Invalid gallery path
+ ❯ get test/integration/run-merge-approve-api.test.js:72:24
+     70|     });
+     71|     const body = await res.json().catch(() => ({}));
+     72|     if (!res.ok) throw new Error(body.error || res.statusText);
+       |                        ^
+     73|     return body;
+     74|   }
+ ❯ test/integration/run-merge-approve-api.test.js:157:26
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[55/56]⎯
+
+ FAIL  test/integration/run-merge-approve-api.test.js > Run / Merge / Approve / Propose-mutate API > POST /api/propose-mutate (W1-PT) > with traits only returns proposed organism with updated BPM/palette (no LLM)
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/integration/run-merge-approve-api.test.js:165:7
+    163|
+    164|   describe('POST /api/propose-mutate (W1-PT)', () => {
+    165|     it('with traits only returns proposed organism with updated BPM/pa…
+       |       ^
+    166|       if (skipIfNoLLM()) return;
+    167|       const projectName = `mutate-traits-${Date.now()}`;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[56/56]⎯
+
+
+ Test Files  3 failed | 13 passed | 11 skipped (27)
+      Tests  56 failed | 159 passed | 51 skipped (266)
+   Start at  18:53:47
+   Duration  61.56s (transform 18.03s, setup 418ms, import 27.82s, tests 160.66s, environment 5ms)
+
+ ELIFECYCLE  Command failed with exit code 1.

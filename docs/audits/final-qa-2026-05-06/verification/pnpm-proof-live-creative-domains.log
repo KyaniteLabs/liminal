@@ -1,0 +1,15 @@
+
+> liminal-ai@2.1.0 proof:live-creative-domains /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+> tsx scripts/proof/live-creative-domain-execution.ts
+
+live creative domain: p5 via glm/GLM-5v-turbo
+[LLMClient] Config properties silently dropped: provider, name, description. Add to LLMConfig or constructor.
+live creative domain: svg via glm/GLM-5v-turbo
+[LLMClient] Config properties silently dropped: provider, name, description. Add to LLMConfig or constructor.
+live creative domain: strudel via glm/GLM-5v-turbo
+[LLMClient] Config properties silently dropped: provider, name, description. Add to LLMConfig or constructor.
+live creative domain: tone via glm/GLM-5v-turbo
+[LLMClient] Config properties silently dropped: provider, name, description. Add to LLMConfig or constructor.
+live creative domain: revideo via glm/GLM-5v-turbo
+[LLMClient] Config properties silently dropped: provider, name, description. Add to LLMConfig or constructor.
+live creative-domain receipt: /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506/.omx/proof/domain-gauntlet-live.json

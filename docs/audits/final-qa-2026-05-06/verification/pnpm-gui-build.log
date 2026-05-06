@@ -1,0 +1,19 @@
+
+> liminal-studio-gui@ build /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506/gui
+> vite build
+
+vite v8.0.9 building client environment for production...
+[2Ktransforming...✓ 35 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                              0.86 kB │ gzip:  0.52 kB
+dist/assets/index-DGQyyMJJ.css              38.17 kB │ gzip:  7.06 kB
+dist/assets/rolldown-runtime-jpDsebLB.js     0.56 kB │ gzip:  0.36 kB
+dist/assets/CompostVisualizer-DZJoAfUr.js    3.60 kB │ gzip:  1.74 kB
+dist/assets/CuratorMode-C4npDiIf.js          5.72 kB │ gzip:  1.97 kB
+dist/assets/OperatorCockpit-ASmLcLCS.js     10.95 kB │ gzip:  2.84 kB
+dist/assets/ActivityDashboard-BFOqgSvp.js   11.43 kB │ gzip:  3.19 kB
+dist/assets/index-Dt5WEt3Q.js               86.15 kB │ gzip: 24.97 kB
+dist/assets/vendor-react-Dk6ikdJX.js       139.88 kB │ gzip: 45.35 kB
+
+✓ built in 443ms

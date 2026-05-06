@@ -1,0 +1,9 @@
+
+> liminal-ai@2.1.0 test:quality /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+> node scripts/testing/test-quality-check.mjs
+
+
+🔍 Test Quality Check: scanning 658 test files...
+
+
+✅ All test quality checks passed!

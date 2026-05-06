@@ -1,0 +1,9 @@
+
+> liminal-ai@2.1.0 proof:visual-output-previews /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+> tsx scripts/proof/visual-output-preview-contract.ts
+
+{
+  "outDir": ".omx/proof/visual-output-preview-contract",
+  "checked": 13,
+  "failures": []
+}

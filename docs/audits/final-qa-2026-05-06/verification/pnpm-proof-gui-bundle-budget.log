@@ -1,0 +1,16 @@
+
+> liminal-ai@2.1.0 proof:gui-bundle-budget /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506
+> tsx scripts/proof/gui-bundle-budget.ts
+
+/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506/scripts/proof/gui-bundle-budget.ts:12
+  throw new Error('GUI dist assets not found. Run `pnpm --filter liminal-studio-gui build` first.');
+        ^
+
+Error: GUI dist assets not found. Run `pnpm --filter liminal-studio-gui build` first.
+    at <anonymous> (/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506/scripts/proof/gui-bundle-budget.ts:12:9)
+    at ModuleJob.run (node:internal/modules/esm/module_job:430:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:655:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v25.6.1
+ ELIFECYCLE  Command failed with exit code 1.

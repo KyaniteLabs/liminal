@@ -2,7 +2,7 @@
 
 Status: not achieved.
 
-First-pass persona-cluster review plus verification sweep found 31 material findings and 3 non-material findings. Batch 0 remediation has verified FQA-001, FQA-005, FQA-007, FQA-008, and FQA-012, and fixed FQA-009 pending a real GitHub PR run. The stop condition still requires two independent saturation passes with no new material findings, so saturation remains impossible to claim while the remaining material findings are open or only fixed-but-unverified.
+First-pass persona-cluster review plus verification sweep found 31 material findings and 3 non-material findings. Remediation has verified FQA-001, FQA-003, FQA-005, FQA-007, FQA-008, and FQA-012, and fixed FQA-009 pending a real GitHub PR run. The stop condition still requires two independent saturation passes with no new material findings, so saturation remains impossible to claim while the remaining material findings are open or only fixed-but-unverified.
 
 ## Current Passes
 

@@ -2531,6 +2531,9 @@ export class TuiBridgeService {
         fullContent += chunk;
         this.emit(sessionId, { type: 'response.delta', sessionId, delta: chunk });
       }
+      if (!fullContent.trim()) {
+        throw new Error('Empty response from LLM stream');
+      }
 
       const duration = Date.now() - startTime;
 
@@ -2565,6 +2568,11 @@ export class TuiBridgeService {
         }),
       });
       logBridge('chat.completed', { sessionId, model: modelName, duration, chars: fullContent.length });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.emit(sessionId, this.errorEvent(sessionId, err, { model: modelName, endpoint: config.baseUrl }));
+      logBridge('chat.failed', { sessionId, model: modelName, error: message });
+      throw err;
     } finally {
       this.activeStreams.delete(sessionId);
     }

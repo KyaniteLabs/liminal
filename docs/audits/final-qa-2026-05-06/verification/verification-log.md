@@ -46,3 +46,9 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the new regression tests. | 661 files scanned; all checks passed. |
 | 2026-05-06 remediation | `pnpm test:e2e` | pass with known skip caveat | Local command behind the new `browser-and-e2e-smoke` PR job exits 0. | 5 files passed, 11 skipped; 46 tests passed, 50 skipped. FQA-009 remains fixed pending first GitHub PR run and skipped-test launch classification. |
 | 2026-05-06 remediation | `git diff --check` | pass | Batch 0 diff has no whitespace errors. | Exit 0. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/llm/LLMClientExtended.test.ts --coverage=false` | pass | Fallback stream error events now reject with exhausted-fallback diagnostics instead of resolving as empty success. | 1 file passed, 78 tests passed. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/tui-bridge/stream-chat-failure.test.ts test/unit/tui-bridge/goalCommand.test.ts test/unit/tui-bridge/TuiBridgeService-swarm.test.ts --coverage=false` | pass | TUI bridge emits error events and avoids empty `response.completed` commits when chat streaming fails. | 3 files passed, 21 tests passed. |
+| 2026-05-06 remediation | `pnpm typecheck` | pass | Batch 1 streaming fix typechecks. | Exit 0. |
+| 2026-05-06 remediation | `pnpm build` | pass | Batch 1 streaming fix builds. | Exit 0. |
+| 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the added streaming regression. | 662 files scanned; all checks passed. |
+| 2026-05-06 remediation | `git diff --check` | pass | Batch 1 streaming diff has no whitespace errors. | Exit 0. |

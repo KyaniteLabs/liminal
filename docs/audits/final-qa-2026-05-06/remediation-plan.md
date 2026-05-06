@@ -42,6 +42,7 @@ Release risk: high. These items turn failures into success or weak proof into re
    - Findings: FQA-003, FQA-033
    - Action: propagate fallback stream errors through LLM client and TUI bridge terminal events.
    - Proof: failing-provider stream test proves no empty completed response is emitted, and integration/slow CI no longer fail from empty-code generation.
+   - Remediation status: FQA-003 verified for streaming fallback errors. FQA-033 remains open because integration/slow suites still need their broader empty-code and run/merge/approve failures fixed.
 
 2. Harden release-gate receipts.
    - Findings: FQA-004

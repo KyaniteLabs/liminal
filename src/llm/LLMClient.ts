@@ -1389,6 +1389,7 @@ export class LLMClient {
       Logger.info('LLMClient.fallback',
         `stream(): primary failed, trying ${fallbacks.length} fallback(s)`);
 
+      const fallbackFailures: string[] = [];
       for (const fallback of fallbacks) {
         try {
           Logger.info('LLMClient.fallback', `stream() trying fallback: ${fallback.getModel()}`);
@@ -1397,19 +1398,20 @@ export class LLMClient {
             if (event.type === 'content') {
               yield event.content;
             } else if (event.type === 'error') {
-              break; // Try next fallback
+              throw new LLMError(event.error, fallback.name, undefined, false);
             }
           }
           Logger.info('LLMClient.fallback', `stream() fallback succeeded: ${fallback.getModel()}`);
           return;
         } catch (err) {
+          fallbackFailures.push(this.formatFallbackFailure(fallback.getModel(), err));
           Logger.debug('LLMClient', 'Fallback provider failed in stream():', err);
           continue;
         }
       }
 
       // All fallbacks exhausted
-      throw primaryError;
+      throw this.withFallbackDiagnostics(primaryError, fallbackFailures);
     }
   }
 
@@ -1479,6 +1481,7 @@ export class LLMClient {
       Logger.info('LLMClient.fallback',
         `streamWithThinking(): primary failed, trying ${fallbacks.length} fallback(s)`);
 
+      const fallbackFailures: string[] = [];
       for (const fallback of fallbacks) {
         try {
           Logger.info('LLMClient.fallback', `streamWithThinking() trying fallback: ${fallback.getModel()}`);
@@ -1489,12 +1492,13 @@ export class LLMClient {
             } else if (event.type === 'content') {
               yield { type: 'content' as const, content: event.content };
             } else if (event.type === 'error') {
-              break; // Try next fallback
+              throw new LLMError(event.error, fallback.name, undefined, false);
             }
           }
           Logger.info('LLMClient.fallback', `streamWithThinking() fallback succeeded: ${fallback.getModel()}`);
           return;
         } catch (err) {
+          fallbackFailures.push(this.formatFallbackFailure(fallback.getModel(), err));
           Logger.debug('LLMClient', 'Fallback provider failed in streamWithThinking():', err);
           continue;
         }
@@ -1509,7 +1513,7 @@ export class LLMClient {
         duration: Date.now() - startTime,
         error: primaryError instanceof Error ? primaryError.message : 'Unknown error',
       });
-      throw primaryError;
+      throw this.withFallbackDiagnostics(primaryError, fallbackFailures);
     }
   }
 

@@ -587,6 +587,76 @@ describe('LLMClient fallback diagnostics', () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain('Fallbacks exhausted (glm-4.5: GLM offline)');
   });
+
+  it('throws instead of completing empty when fallback stream emits an error event', async () => {
+    const client = new LLMClient({ provider: 'lmstudio', model: 'primary-model' } as any);
+    const internal = client as any;
+
+    internal.resolveModel = vi.fn(async () => 'primary-model');
+    internal.syncResolvedModel = vi.fn();
+    internal.detectProvider = vi.fn(() => 'lmstudio');
+    internal.getProvider = vi.fn(async () => ({
+      name: 'lmstudio',
+      getModel: () => 'primary-model',
+      async *stream() {
+        yield { type: 'error' as const, error: 'network unavailable' };
+      },
+    }));
+    internal.getFallbackProviders = vi.fn(() => ([
+      {
+        name: 'glm',
+        getModel: () => 'glm-4.5',
+        async *stream() {
+          yield { type: 'error' as const, error: 'fallback network unavailable' };
+        },
+      },
+    ]));
+
+    const collectStream = async () => {
+      const chunks: string[] = [];
+      for await (const chunk of client.stream('sys', 'user')) {
+        chunks.push(chunk);
+      }
+      return chunks;
+    };
+
+    await expect(collectStream()).rejects.toThrow(/Fallbacks exhausted \(glm-4.5: fallback network unavailable\)/);
+  });
+
+  it('throws instead of completing empty when fallback thinking stream emits an error event', async () => {
+    const client = new LLMClient({ provider: 'lmstudio', model: 'primary-model' } as any);
+    const internal = client as any;
+
+    internal.resolveModel = vi.fn(async () => 'primary-model');
+    internal.syncResolvedModel = vi.fn();
+    internal.detectProvider = vi.fn(() => 'lmstudio');
+    internal.getProvider = vi.fn(async () => ({
+      name: 'lmstudio',
+      getModel: () => 'primary-model',
+      async *stream() {
+        yield { type: 'error' as const, error: 'network unavailable' };
+      },
+    }));
+    internal.getFallbackProviders = vi.fn(() => ([
+      {
+        name: 'glm',
+        getModel: () => 'glm-4.5',
+        async *stream() {
+          yield { type: 'error' as const, error: 'fallback network unavailable' };
+        },
+      },
+    ]));
+
+    const collectStream = async () => {
+      const chunks: string[] = [];
+      for await (const event of client.streamWithThinking('sys', 'user')) {
+        chunks.push(event.content);
+      }
+      return chunks;
+    };
+
+    await expect(collectStream()).rejects.toThrow(/Fallbacks exhausted \(glm-4.5: fallback network unavailable\)/);
+  });
 });
 
 describe('LLMClient tool loop diagnostics', () => {

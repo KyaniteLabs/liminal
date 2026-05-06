@@ -654,7 +654,7 @@ export class TuiBridgeService {
     }
 
     // Record user message in conversation history
-    conversation['recordMessage']('user', input.text);
+    conversation.appendMessage('user', input.text);
 
     // Step 2: Route via StudioAgent classification
     this.emit(sessionId, { type: 'response.started', sessionId });
@@ -703,7 +703,7 @@ export class TuiBridgeService {
       this.emit(sessionId, { type: 'response.delta', sessionId, delta: input.text });
       this.emit(sessionId, { type: 'response.completed', sessionId, content: input.text });
       this.emit(sessionId, { type: 'response.committed', sessionId, content: input.text });
-      conversation['recordMessage']('assistant', input.text);
+      conversation.appendMessage('assistant', input.text);
       emitSessionTurn('echo', input.text);
       this.emit(sessionId, {
         type: 'status.updated',
@@ -1027,7 +1027,7 @@ export class TuiBridgeService {
       conversation.startNewSession();
       this.conversations.set(sessionId, conversation);
     }
-    conversation['recordMessage']('user', input);
+    conversation.appendMessage('user', input);
 
     if (!llm) {
       this.emitCommandResponse(sessionId, result.prompt);
@@ -1630,17 +1630,7 @@ export class TuiBridgeService {
 
     try {
       // Build conversation context from history (same pattern as streamChatResponse)
-      const history = conversation['sessionHistory']?.find(
-        (s: { sessionId: string }) => s.sessionId === conversation['currentSession']?.id
-      );
-      const messages = history?.messages || [];
-      let conversationContext = '';
-      if (messages.length > 1) {
-        const contextMessages = messages.slice(0, -1);
-        conversationContext = contextMessages
-          .map((m: { role: string; content: string }) => `${m.role}: ${m.content}`)
-          .join('\n\n') + '\n\n';
-      }
+      const conversationContext = conversation.getConversationContext({ excludeLatest: true });
       const fullPrompt = conversationContext
         ? `${conversationContext}user: ${userText}`
         : userText;
@@ -1662,7 +1652,7 @@ export class TuiBridgeService {
 
       this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
       this.emit(sessionId, { type: 'response.committed', sessionId, content: fullContent });
-      conversation['recordMessage']('assistant', fullContent);
+      conversation.appendMessage('assistant', fullContent);
 
       this.emit(sessionId, {
         type: 'response.metadata',
@@ -2076,7 +2066,7 @@ export class TuiBridgeService {
         await this.emitPreviewArtifacts(sessionId, result.code, activeDomain, routeTruth);
 
         // Record in conversation
-        conversation['recordMessage']('assistant', `Generated code (${result.iterations} iterations, score: ${result.finalScore.toFixed(2)}):\n\n${result.code}`);
+        conversation.appendMessage('assistant', `Generated code (${result.iterations} iterations, score: ${result.finalScore.toFixed(2)}):\n\n${result.code}`);
 
         // Create review candidate from generation result
         const candidate = this.reviewManager.addCandidate(
@@ -2399,7 +2389,7 @@ export class TuiBridgeService {
         this.emit(sessionId, { type: 'preview.content', sessionId, content: codeContent, previewType: 'code' });
       }
 
-      conversation['recordMessage']('assistant', `Generated artifact ready:\n\n${result.code}`);
+      conversation.appendMessage('assistant', `Generated artifact ready:\n\n${result.code}`);
       this.emit(sessionId, {
         type: 'generation.complete',
         sessionId,
@@ -2512,20 +2502,7 @@ export class TuiBridgeService {
 
     try {
       // Build conversation context from history
-      const history = conversation['sessionHistory']?.find(
-        (s: { sessionId: string }) => s.sessionId === conversation['currentSession']?.id
-      );
-      const messages = history?.messages || [];
-
-      // Build full prompt with conversation history
-      let conversationContext = '';
-      if (messages.length > 1) {
-        // Skip the most recent user message (that's userText)
-        const contextMessages = messages.slice(0, -1);
-        conversationContext = contextMessages
-          .map((m: { role: string; content: string }) => `${m.role}: ${m.content}`)
-          .join('\n\n') + '\n\n';
-      }
+      const conversationContext = conversation.getConversationContext({ excludeLatest: true });
 
       const fullPrompt = conversationContext
         ? `${conversationContext}user: ${userText}`
@@ -2555,7 +2532,7 @@ export class TuiBridgeService {
       });
 
       // Record assistant response in conversation
-      conversation['recordMessage']('assistant', fullContent);
+      conversation.appendMessage('assistant', fullContent);
 
       // Detect code in response and emit preview events for TUI
       const codeContent = this.extractCodeContent(fullContent);
@@ -2661,7 +2638,7 @@ export class TuiBridgeService {
       }
       this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
       this.emit(sessionId, { type: 'response.committed', sessionId, content: fullContent });
-      conversation['recordMessage']('assistant', fullContent);
+      conversation.appendMessage('assistant', fullContent);
 
       const duration = new Date(session.endTime || new Date().toISOString()).getTime() - new Date(session.startTime).getTime();
       const lifecycle = describeStatusLifecycle(session.status, session.lastPlanError, {
@@ -2870,7 +2847,7 @@ export class TuiBridgeService {
     this.emit(sessionId, { type: 'response.delta', sessionId, delta: content });
     this.emit(sessionId, { type: 'response.completed', sessionId, content });
     this.emit(sessionId, { type: 'response.committed', sessionId, content });
-    conversation['recordMessage']('assistant', content);
+    conversation.appendMessage('assistant', content);
     this.emit(sessionId, {
       type: 'status.updated',
       sessionId,

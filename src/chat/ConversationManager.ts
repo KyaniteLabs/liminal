@@ -252,9 +252,42 @@ export class ConversationManager {
   }
 
   /**
+   * Append a message to the active session history.
+   */
+  appendMessage(role: ConversationMessage['role'], content: string): ConversationMessage {
+    return this.recordMessage(role, content);
+  }
+
+  /**
+   * Return a defensive copy of the active session's messages.
+   */
+  getCurrentSessionMessages(): ConversationMessage[] {
+    if (!this.currentSession) return [];
+    const session = this.sessionHistory.find(s => s.sessionId === this.currentSession?.id);
+    return (session?.messages ?? []).map(message => ({
+      ...message,
+      timestamp: new Date(message.timestamp),
+      metadata: message.metadata ? { ...message.metadata } : undefined,
+    }));
+  }
+
+  /**
+   * Format session history as role/content prompt context.
+   */
+  getConversationContext(options: { excludeLatest?: boolean } = {}): string {
+    const messages = options.excludeLatest
+      ? this.getCurrentSessionMessages().slice(0, -1)
+      : this.getCurrentSessionMessages();
+    if (messages.length === 0) return '';
+    return messages
+      .map((message) => `${message.role}: ${message.content}`)
+      .join('\n\n') + '\n\n';
+  }
+
+  /**
    * Record a message in the current session
    */
-  private recordMessage(role: 'user' | 'assistant' | 'system', content: string): void {
+  private recordMessage(role: 'user' | 'assistant' | 'system', content: string): ConversationMessage {
     const message: ConversationMessage = {
       id: this.generateUniqueId(),
       role,
@@ -278,6 +311,7 @@ export class ConversationManager {
     }
 
     session.messages.push(message);
+    return message;
   }
 
   /**

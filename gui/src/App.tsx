@@ -924,7 +924,7 @@ export default function App() {
               onLoad={() => {
                 if (failedPreviewSrc === bridgeImagePreview.src) setFailedPreviewSrc(null);
               }}
-              onError={() => setFailedPreviewSrc(bridgeImagePreview.src)}
+              onError={() => setFailedPreviewSrc(bridgeImagePreview.src ?? null)}
             />
           )}
           <figcaption>{bridgeImagePreview.label}</figcaption>

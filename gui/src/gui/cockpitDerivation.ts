@@ -1,49 +1,5 @@
-export type BridgeEvent = {
-  type: string;
-  sessionId?: string;
-  message?: string;
-  domain?: string;
-  domains?: string[];
-  attempt?: number;
-  attemptTotal?: number;
-  iteration?: number;
-  score?: number;
-  codeSize?: number;
-  artifactLabel?: string;
-  artifactPath?: string;
-  imageUrl?: string;
-  model?: string;
-  provider?: string;
-  endpoint?: string;
-  statusCode?: number;
-  retryable?: boolean;
-  responseBody?: string;
-  duration?: number;
-  finalScore?: number;
-  qualityState?: 'scored' | 'unscored';
-  error?: string;
-  reason?: string;
-  startedAt?: string;
-  timeoutMinutes?: number;
-  executionMode?: 'draft' | 'prove';
-  stageTimings?: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }>;
-  requirements?: string[];
-  questions?: string[];
-  willClarify?: boolean;
-  phase?: string;
-  thought?: string;
-  source?: string;
-  previewType?: string;
-  checks?: string[];
-  toolName?: string;
-  displayLabel?: string;
-  argsSummary?: string;
-  resultSummary?: string;
-  success?: boolean;
-  receivedAt?: number;
-  action?: { id: string; title: string };
-  receipts?: Array<{ organ?: string; status?: string; detail?: string }>;
-};
+import type { BridgeEvent } from './bridgeEvents';
+export type { BridgeEvent } from './bridgeEvents';
 
 const HUMAN_DOMAIN_CHECKS: Record<string, string[]> = {
   p5: ['motion quality', 'visual taste', 'recognizability'],
@@ -66,6 +22,18 @@ function humanChecksForDomain(domain: string): string[] {
 
 function uniqueStrings(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))];
+}
+
+function optionalString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function optionalNumber(value: unknown): number | undefined {
+  return typeof value === 'number' ? value : undefined;
+}
+
+function optionalBoolean(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined;
 }
 
 export type FailureReceipt = {
@@ -107,12 +75,12 @@ function buildFailureReceipt(event: BridgeEvent): FailureReceipt {
     title,
     message: failureMessage(event),
     summary: formatProviderFailureSummary(event),
-    provider: event.provider,
-    model: event.model,
-    endpoint: event.endpoint,
-    statusCode: event.statusCode,
-    retryable: event.retryable,
-    responseBody: event.responseBody,
+    provider: optionalString(event.provider),
+    model: optionalString(event.model),
+    endpoint: optionalString(event.endpoint),
+    statusCode: optionalNumber(event.statusCode),
+    retryable: optionalBoolean(event.retryable),
+    responseBody: optionalString(event.responseBody),
   };
 }
 
@@ -406,9 +374,10 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
 
 function readEventTime(event?: BridgeEvent): number {
   if (!event) return 0;
-  const parsed = event.startedAt ? Date.parse(event.startedAt) : NaN;
+  const startedAt = optionalString(event.startedAt);
+  const parsed = startedAt ? Date.parse(startedAt) : NaN;
   if (Number.isFinite(parsed)) return parsed;
-  return event.receivedAt || 0;
+  return optionalNumber(event.receivedAt) || 0;
 }
 
 function formatDuration(ms: number): string {

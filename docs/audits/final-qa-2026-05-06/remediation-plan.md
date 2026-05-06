@@ -110,6 +110,7 @@ Release risk: medium-high. These items reduce integration debt and future bug ge
    - Findings: FQA-014
    - Action: move GUI telemetry/cockpit event parsing onto shared types or generated schema; expose public conversation history API.
    - Proof: backend/frontend type-contract test.
+   - Remediation status: verified. GUI telemetry and cockpit derivation now import `WorkbenchBridgeEvent` / `BridgeEvent` from `gui/src/gui/bridgeEvents.ts`, which is anchored on the backend `TuiBridgeEvent` union plus explicit GUI-local events. `ConversationManager` exposes `appendMessage()`, `getCurrentSessionMessages()`, and `getConversationContext()`, and `TuiBridgeService` no longer reaches through private conversation fields or methods. The GUI TypeScript config now supports direct typechecking of that shared contract.
 
 2. Fix examples and include them in verification.
    - Findings: FQA-021

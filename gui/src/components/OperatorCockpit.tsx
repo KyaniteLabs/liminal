@@ -290,7 +290,7 @@ export function OperatorCockpit() {
             {events.slice(-24).map((event, index) => (
               <div key={`${index}-${event.type}`} className="cockpit-event">
                 <span>{event.type}</span>
-                <small>{event.message || event.domain || event.artifactLabel || event.model || ''}</small>
+                <small>{String(event.message || event.domain || event.artifactLabel || event.model || '')}</small>
               </div>
             ))}
           </div>

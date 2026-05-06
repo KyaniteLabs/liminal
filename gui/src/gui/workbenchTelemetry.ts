@@ -1,9 +1,6 @@
 import { deriveCockpit } from './cockpitDerivation';
-
-export type WorkbenchBridgeEvent = {
-  type: string;
-  [key: string]: unknown;
-};
+import type { BridgeEventByType, BridgeEventType, WorkbenchBridgeEvent } from './bridgeEvents';
+export type { WorkbenchBridgeEvent } from './bridgeEvents';
 
 export interface WorkbenchBridgeSummary {
   active: boolean;
@@ -113,7 +110,7 @@ export function summarizeWorkbenchBridge(
   events: WorkbenchBridgeEvent[],
   now = Date.now(),
 ): WorkbenchBridgeSummary {
-  const derived = deriveCockpit(events as any, now);
+  const derived = deriveCockpit(events, now);
   const phase = String(derived.phase || 'idle');
   const processSteps = summarizeProcessSteps(events, phase);
   const readyDone = processSteps.some((step) => step.id === 'ready' && step.status === 'done');
@@ -137,8 +134,11 @@ export function summarizeWorkbenchBridge(
 }
 
 
-function latestEvent(events: WorkbenchBridgeEvent[], type: string): WorkbenchBridgeEvent | undefined {
-  return [...events].reverse().find((event) => event.type === type);
+function latestEvent<T extends BridgeEventType>(
+  events: WorkbenchBridgeEvent[],
+  type: T,
+): BridgeEventByType<T> | undefined {
+  return [...events].reverse().find((event): event is BridgeEventByType<T> => event.type === type);
 }
 
 

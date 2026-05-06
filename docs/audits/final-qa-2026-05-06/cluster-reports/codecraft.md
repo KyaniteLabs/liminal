@@ -52,6 +52,7 @@ Status: first-pass white-box review complete. This cluster found release-blockin
 - Failure mode: the GUI has local event typing and the bridge accesses private conversation internals, increasing drift between frontend and backend truth.
 - Customer impact: telemetry and UI state can disagree with runtime events.
 - Recommended proof: shared event schema test and public conversation history API.
+- Remediation: verified. `gui/src/gui/bridgeEvents.ts` now anchors GUI event types on `TuiBridgeEvent`, cockpit/telemetry consume that shared shim, and bridge conversation access goes through public `ConversationManager` methods with regression tests.
 
 ### CC-006: Test-quality checker misses weak assertions
 

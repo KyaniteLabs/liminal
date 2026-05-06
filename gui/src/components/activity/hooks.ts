@@ -26,7 +26,7 @@ export function useEventStream() {
   const [events, setEvents] = useState<BusEvent[]>([]);
   const [connected, setConnected] = useState(false);
   const esRef = useRef<EventSource | null>(null);
-  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>();
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const connect = useCallback(() => {
     if (esRef.current) esRef.current.close();

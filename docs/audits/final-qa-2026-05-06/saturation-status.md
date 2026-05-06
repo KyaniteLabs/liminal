@@ -2,7 +2,7 @@
 
 Status: not achieved.
 
-First-pass persona-cluster review plus verification sweep found 31 material findings and 3 non-material findings. Remediation has verified FQA-001, FQA-002, FQA-003, FQA-004, FQA-005, FQA-006, FQA-007, FQA-008, FQA-010, FQA-011, FQA-012, FQA-013, FQA-014, FQA-015, FQA-016, FQA-017, FQA-018, FQA-019, FQA-020, FQA-021, FQA-022, FQA-023, FQA-024, FQA-025, FQA-026, FQA-027, FQA-028, FQA-029, and FQA-034, and fixed FQA-009 pending a real GitHub PR run. The stop condition still requires two independent saturation passes with no new material findings, so saturation remains impossible to claim while the remaining material findings are open or only fixed-but-unverified.
+First-pass persona-cluster review plus verification sweep found 31 material findings and 3 non-material findings. Remediation has verified FQA-001, FQA-002, FQA-003, FQA-004, FQA-005, FQA-006, FQA-007, FQA-008, FQA-010, FQA-011, FQA-012, FQA-013, FQA-014, FQA-015, FQA-016, FQA-017, FQA-018, FQA-019, FQA-020, FQA-021, FQA-022, FQA-023, FQA-024, FQA-025, FQA-026, FQA-027, FQA-028, FQA-029, and FQA-034, fixed FQA-009 pending a real GitHub PR run, and partially remediated FQA-033 by closing the run/merge/approve API failure class. The stop condition still requires two independent saturation passes with no new material findings, so saturation remains impossible to claim while the remaining material findings are open or only fixed-but-unverified.
 
 ## Current Passes
 
@@ -13,7 +13,7 @@ First-pass persona-cluster review plus verification sweep found 31 material find
 | Live control-plane proof | Package-script target check, route-performance command, GitHub branch-protection readback | Batch 0 blockers remediated; browser/e2e PR check still needs first GitHub run | no |
 | Fast CI | Fully sanitized `pnpm test:ci:fast` | Passed enabled fast lane | no |
 | Product proof sweep | Studio smoke, user surfaces, controls, visual previews, GUI bundle, live provider smoke | Mostly passed, with proof limitations captured in FQA-025 and FQA-034 | no |
-| Integration and slow CI | `pnpm verify:integration`, `pnpm test:e2e`, `pnpm test:ci:slow` | Integration and slow CI failed; e2e passed with 50 skipped tests | no |
+| Integration and slow CI | `pnpm verify:integration`, `pnpm test:e2e`, `pnpm test:ci:slow` | Run/merge/approve API failures are fixed, but integration still fails 79 tests in `full-loop`, `ralph-loop`, and `generator-renderer`; e2e passed with 50 skipped tests | no |
 
 ## Next Required Passes
 

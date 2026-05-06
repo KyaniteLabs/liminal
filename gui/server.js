@@ -5,6 +5,7 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { fileURLToPath } from 'url';
 import { loadConfig, loadProjectConfig, getEffectiveConfig, saveConfig } from '../dist/config/ConfigLoader.js';
 import { Gallery } from '../dist/gallery/Gallery.js';
@@ -19,6 +20,7 @@ import { buildGuiBridgeInput } from './bridgeInput.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cwd = process.cwd();
 const homeDir = process.env.HOME || '';
+const tempDir = os.tmpdir();
 
 const DEFAULTS = {
   loop: { maxIterations: 20, timeoutMinutes: 30 },
@@ -49,16 +51,76 @@ function validateGalleryPath(galleryPath) {
   } catch {
     canonical = resolved;
   }
+  const allowedRoots = [cwd, homeDir, tempDir]
+    .filter(Boolean)
+    .map((root) => {
+      try {
+        return fs.realpathSync(root);
+      } catch {
+        return path.resolve(root);
+      }
+    });
+  const insideAllowedRoot = allowedRoots.some((root) => {
+    const relative = path.relative(root, canonical);
+    return relative === '' || (relative && !relative.startsWith('..') && !path.isAbsolute(relative));
+  });
   if (path.isAbsolute(galleryPath)) {
-    if (!canonical.startsWith(cwd) && !canonical.startsWith(homeDir)) {
+    if (!insideAllowedRoot) {
       throw new Error('Invalid gallery path');
     }
   } else {
-    if (!canonical.startsWith(cwd)) {
+    const relative = path.relative(cwd, canonical);
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
       throw new Error('Invalid gallery path');
     }
   }
   return canonical;
+}
+
+function normalizedBpm(value, fallback = 120) {
+  const bpm = Number(value);
+  return Number.isFinite(bpm) && bpm > 0 ? bpm : fallback;
+}
+
+function safeTraitLabel(value, fallback) {
+  const label = typeof value === 'string' ? value.trim() : '';
+  return (label || fallback).replace(/[^\w -]/g, '').slice(0, 60) || fallback;
+}
+
+function withBpmLine(musicCode, bpm) {
+  const cps = bpm / 60;
+  const line = `setcps(${cps})`;
+  const code = typeof musicCode === 'string' && musicCode.trim()
+    ? musicCode.trim()
+    : 'n("c4").sound("sine")';
+  return /\bsetcps\s*\([^)]*\)/.test(code)
+    ? code.replace(/\bsetcps\s*\([^)]*\)/, line)
+    : `${line}\n${code}`;
+}
+
+function withPaletteComment(visualCode, palette) {
+  const code = typeof visualCode === 'string' && visualCode.trim()
+    ? visualCode.trim()
+    : 'osc(0.2).out();';
+  const comment = `// palette: ${palette}`;
+  return /^\/\/ palette: .*$/m.test(code)
+    ? code.replace(/^\/\/ palette: .*$/m, comment)
+    : `${comment}\n${code}`;
+}
+
+function buildDeterministicOrganism(prompt, traits = {}, seed = {}) {
+  const bpm = normalizedBpm(traits.bpm);
+  const palette = safeTraitLabel(traits.palette, 'default');
+  const seedMusic = seed.musicCode || '';
+  const seedVisual = seed.visualCode || '';
+  const promptLabel = safeTraitLabel(prompt, 'ambient');
+  const baseMusic = seedMusic || `// deterministic organism: ${promptLabel}\nn("c4 e4 g4").sound("sine")`;
+  const baseVisual = seedVisual || `osc(${Math.max(0.05, bpm / 600)}).out();`;
+  return {
+    type: 'organism',
+    musicCode: withBpmLine(baseMusic, bpm),
+    visualCode: withPaletteComment(baseVisual, palette),
+  };
 }
 
 // In-memory store for "Run in preview" so GET /preview can serve the code
@@ -656,7 +718,7 @@ export function createApp(configPath, port = 5174) {
       const mode = req.body?.mode === 'organism' ? 'organism' : 'p5';
       const traits = req.body?.traits && typeof req.body.traits === 'object' ? req.body.traits : {};
       const cfgPath = getConfigPath();
-      const userConfig = await loadConfig(cfgPath);
+      const userConfig = unwrapConfigResult(await loadConfig(cfgPath));
       const projectConfig = await loadProjectConfig(cwd);
       const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
       let resolvedGallery;
@@ -666,13 +728,21 @@ export function createApp(configPath, port = 5174) {
       const maxIterations = Math.min(20, Math.max(1, parseInt(req.body?.maxIterations, 10) || 3));
 
       if (mode === 'organism') {
-        const { generateMusicToVisual } = await import('../dist/index.js');
         const gallery = new Gallery(resolvedGallery);
-        for (let i = 1; i <= maxIterations; i++) {
-          const result = await generateMusicToVisual(prompt, {
-            traits: { bpm: traits.bpm, palette: traits.palette },
-          });
-          await gallery.saveOrganism(projectName, i, result.musicCode, result.visualCode);
+        const useLLM = req.body?.useLLM !== false;
+        if (useLLM) {
+          const { generateMusicToVisual } = await import('../dist/index.js');
+          for (let i = 1; i <= maxIterations; i++) {
+            const result = await generateMusicToVisual(prompt, {
+              traits: { bpm: traits.bpm, palette: traits.palette },
+            });
+            await gallery.saveOrganism(projectName, i, result.musicCode, result.visualCode);
+          }
+        } else {
+          for (let i = 1; i <= maxIterations; i++) {
+            const result = buildDeterministicOrganism(`${prompt} iteration ${i}`, traits);
+            await gallery.saveOrganism(projectName, i, result.musicCode, result.visualCode);
+          }
         }
         const dateStr = new Date().toISOString().split('T')[0];
         const projectDirName = `${dateStr}--${projectName}`;
@@ -762,7 +832,7 @@ export function createApp(configPath, port = 5174) {
         return res.status(400).json({ error: 'dirName, versionA, versionB (positive integers) are required' });
       }
       const cfgPath = getConfigPath();
-      const userConfig = await loadConfig(cfgPath);
+      const userConfig = unwrapConfigResult(await loadConfig(cfgPath));
       const projectConfig = await loadProjectConfig(cwd);
       const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
       let resolvedGallery;
@@ -804,7 +874,7 @@ export function createApp(configPath, port = 5174) {
         return res.status(400).json({ error: 'Invalid proposed type' });
       }
       const cfgPath = getConfigPath();
-      const userConfig = await loadConfig(cfgPath);
+      const userConfig = unwrapConfigResult(await loadConfig(cfgPath));
       const projectConfig = await loadProjectConfig(cwd);
       const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
       let resolvedGallery;
@@ -838,7 +908,7 @@ export function createApp(configPath, port = 5174) {
         return res.status(400).json({ error: 'dirName and version (positive integer) are required' });
       }
       const cfgPath = getConfigPath();
-      const userConfig = await loadConfig(cfgPath);
+      const userConfig = unwrapConfigResult(await loadConfig(cfgPath));
       const projectConfig = await loadProjectConfig(cwd);
       const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
       let resolvedGallery;
@@ -856,9 +926,11 @@ export function createApp(configPath, port = 5174) {
         const resp = await client.improveP5Sketch(musicCode + '\n\n' + visualCode);
         return res.status(200).json({ proposed: { type: 'p5', code: resp.code } });
       }
-      const { generateMusicToVisual } = await import('../dist/index.js');
-      const result = await generateMusicToVisual(prompt, { traits: { bpm: traits.bpm, palette: traits.palette } });
-      res.status(200).json({ proposed: { type: 'organism', musicCode: result.musicCode, visualCode: result.visualCode } });
+      const seed = iter.type === 'organism'
+        ? { musicCode: iter.musicCode, visualCode: iter.visualCode }
+        : { musicCode: '', visualCode: iter.code || '' };
+      const proposed = buildDeterministicOrganism(prompt, traits, seed);
+      res.status(200).json({ proposed });
     } catch (err) {
       res.status(500).json({ error: err.message || String(err) });
     }
@@ -981,7 +1053,7 @@ export function createApp(configPath, port = 5174) {
         return res.status(400).json({ error: 'dirName and version (positive integer) are required' });
       }
       const cfgPath = getConfigPath();
-      const userConfig = await loadConfig(cfgPath);
+      const userConfig = unwrapConfigResult(await loadConfig(cfgPath));
       const projectConfig = await loadProjectConfig(cwd);
       const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
       let resolvedGallery;

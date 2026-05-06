@@ -7,17 +7,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import http from 'http';
-import { LLMClient } from '../../src/llm/LLMClient.js';
 
 const realFetch = globalThis.__liminalNativeFetch || globalThis.fetch.bind(globalThis);
-
-function skipIfNoLLM() {
-  if (!LLMClient.isConfigured()) {
-    console.log('[SKIP] LLM not configured — skipping organism API test');
-    return true;
-  }
-  return false;
-}
 
 const TEST_DIR = path.join(os.tmpdir(), `atelier-run-merge-${Date.now()}`);
 const TEST_CONFIG_PATH = path.join(TEST_DIR, 'config.json');
@@ -73,9 +64,28 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
     return body;
   }
 
+  async function forbidExternalFetches(action) {
+    const originalFetch = globalThis.fetch;
+    const externalUrls = [];
+    globalThis.fetch = async (input, init) => {
+      const rawUrl = typeof input === 'string' ? input : input?.url || '';
+      const url = String(rawUrl);
+      if (url.startsWith(`http://127.0.0.1:${port}`)) {
+        return originalFetch(input, init);
+      }
+      externalUrls.push(url || '<unknown>');
+      throw new Error(`External fetch is forbidden in this deterministic API path: ${url}`);
+    };
+    try {
+      const result = await action();
+      return { result, externalUrls };
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  }
+
   describe('POST /api/run with mode=organism (W1-R)', () => {
     it('accepts mode=organism and traits, returns 200, gallery has organism iterations', async () => {
-      if (skipIfNoLLM()) return;
       const projectName = `organism-${Date.now()}`;
       const { status, body } = await post('/api/run', {
         prompt: 'ambient glitch',
@@ -83,6 +93,7 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
         project: projectName,
         maxIterations: 2,
         traits: { bpm: 100, palette: 'warm' },
+        useLLM: false,
       });
 
       expect(status).toBe(200);
@@ -104,13 +115,13 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
 
   describe('POST /api/merge (W1-M)', () => {
     it('returns 200 with proposed musicCode/visualCode when merging two organism versions', async () => {
-      if (skipIfNoLLM()) return;
       const projectName = `merge-test-${Date.now()}`;
       await post('/api/run', {
         prompt: 'ambient',
         mode: 'organism',
         project: projectName,
         maxIterations: 2,
+        useLLM: false,
       });
       const dateStr = new Date().toISOString().split('T')[0];
       const dirName = `${dateStr}--${projectName}`;
@@ -131,13 +142,13 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
 
   describe('POST /api/approve (W1-A)', () => {
     it('saves proposed as next version and returns 200', async () => {
-      if (skipIfNoLLM()) return;
       const projectName = `approve-test-${Date.now()}`;
       await post('/api/run', {
         prompt: 'reactive',
         mode: 'organism',
         project: projectName,
         maxIterations: 1,
+        useLLM: false,
       });
       const dateStr = new Date().toISOString().split('T')[0];
       const dirName = `${dateStr}--${projectName}`;
@@ -163,27 +174,60 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
 
   describe('POST /api/propose-mutate (W1-PT)', () => {
     it('with traits only returns proposed organism with updated BPM/palette (no LLM)', async () => {
-      if (skipIfNoLLM()) return;
       const projectName = `mutate-traits-${Date.now()}`;
       await post('/api/run', {
         prompt: 'ambient',
         mode: 'organism',
         project: projectName,
         maxIterations: 1,
+        useLLM: false,
       });
       const dateStr = new Date().toISOString().split('T')[0];
       const dirName = `${dateStr}--${projectName}`;
 
-      const { status, body } = await post('/api/propose-mutate', {
-        dirName,
-        version: 1,
-        traits: { bpm: 88, palette: 'mono' },
-      });
+      const { result, externalUrls } = await forbidExternalFetches(() => post('/api/propose-mutate', {
+          dirName,
+          version: 1,
+          traits: { bpm: 88, palette: 'mono' },
+        })
+      );
+      const { status, body } = result;
 
+      expect(externalUrls).toEqual([]);
       expect(status).toBe(200);
       expect(body.proposed).not.toBeNull();
-      expect(body.proposed.musicCode).not.toBeNull();
-      expect(body.proposed.visualCode).not.toBeNull();
+      expect(body.proposed.musicCode).toContain('setcps');
+      expect(body.proposed.musicCode).toContain(String(88 / 60));
+      expect(body.proposed.visualCode).toContain('palette: mono');
+    });
+
+    it('with traits only does not require a prior LLM-generated run', async () => {
+      const projectName = `mutate-fixture-${Date.now()}`;
+      const dateStr = new Date().toISOString().split('T')[0];
+      const dirName = `${dateStr}--${projectName}`;
+      const projectDir = path.join(TEST_GALLERY, dirName);
+      await fs.mkdir(projectDir, { recursive: true });
+      await fs.writeFile(path.join(projectDir, 'v1.js'), JSON.stringify({
+        type: 'organism',
+        musicCode: 'setcps(1)\nn("c4").sound("sine")',
+        visualCode: 'osc(0.2).out();',
+      }));
+
+      const { result, externalUrls } = await forbidExternalFetches(() => post('/api/propose-mutate', {
+          dirName,
+          version: 1,
+          traits: { bpm: 72, palette: 'amber' },
+        })
+      );
+      const { status, body } = result;
+
+      expect(externalUrls).toEqual([]);
+      expect(status).toBe(200);
+      expect(body.proposed).toMatchObject({
+        type: 'organism',
+      });
+      expect(body.proposed.musicCode).toContain(String(72 / 60));
+      expect(body.proposed.visualCode).toContain('palette: amber');
     });
   });
 });

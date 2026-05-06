@@ -16,7 +16,7 @@ process.env.LIMINAL_ALLOW_LOCALHOST_LLM = "true";
  * - CI environment (too slow)
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -35,6 +35,7 @@ import { classifyError } from '../../src/guardrails/remediation/ErrorTaxonomy.js
 import { LLMClient } from '../../src/llm/LLMClient.js';
 import { runInSandbox } from '../../src/sandbox/index.js';
 import { createResourceLimiter } from '../../src/guardrails/core/ResourceLimiter.js';
+import { applyProviderEnv } from './helpers/liveProviderTestEnv.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -60,9 +61,6 @@ async function isLLMAvailable(): Promise<boolean> {
   }
 }
 
-// Check if running in CI environment
-const isCI = (): boolean => !!process.env.CI;
-
 // Check if Chrome/Puppeteer is available
 function isChromeUnavailableError(error: string | undefined): boolean {
   if (!error) return false;
@@ -76,6 +74,9 @@ describe('E2E Guardrails with Real LLM', () => {
   let system: ReturnType<typeof initializeGuardrailSystem>;
 
   beforeAll(async () => {
+    if (!LLMClient.isConfigured()) {
+      applyProviderEnv('glm');
+    }
     llmAvailable = await isLLMAvailable();
     if (!llmAvailable) {
       console.warn('[E2E] LLM not available - LLM-dependent tests will be skipped');
@@ -114,6 +115,12 @@ describe('E2E Guardrails with Real LLM', () => {
       enablePrevention: true,
       enableSuggestions: true,
     }));
+  });
+
+  beforeEach(() => {
+    if (!LLMClient.isConfigured()) {
+      applyProviderEnv('glm');
+    }
   });
 
   describe('Phase 1: Foundation Layer', () => {
@@ -378,7 +385,7 @@ describe('E2E Guardrails with Real LLM', () => {
   });
 
   describe('Full Integration: Real LLM + Guardrails', () => {
-    it.skipIf(!LLMClient.isConfigured())('should generate code with guardrail validation', async () => {
+    it('should generate code with guardrail validation', async () => {
       if (!llmAvailable) {
         console.warn('[E2E] LLM not available - skipping LLM-dependent guardrail test');
         return;
@@ -410,8 +417,8 @@ Output only the code, no explanation.`;
         generationError = error instanceof Error ? error : new Error(String(error));
       }
       
-      // Skip assertions if generation failed - the skipIf should prevent reaching here
-      // but we handle edge cases gracefully
+      // The live gate should produce code; keep the diagnostic explicit if a
+      // configured provider fails after the availability probe passed.
       if (generationError) {
         console.warn('[E2E] LLM generation failed:', generationError.message);
         expect.unreachable('LLM generation should not fail when test is configured to run');
@@ -490,7 +497,7 @@ Output only the code, no explanation.`;
       }
     }, E2E_TIMEOUT_MS);
 
-    it.skipIf(!LLMClient.isConfigured())('should learn from failed generations', async () => {
+    it('should learn from failed generations', async () => {
       const taskId = `e2e-fail-${Date.now()}`;
       
       // Simulate a "failed" generation (incomplete code)

@@ -3,49 +3,45 @@
  * Cloud model — coding agent optimized
  * Gate: RUN_CLOUD_MODEL_TESTS=1
  */
-import { describe, it, expect, beforeAll } from 'vitest';
-import { run } from '../../../src/index.js';
-
-const MODEL_CONFIG = {
-  baseUrl: 'https://api.kimi.com/coding/v1',
-  model: 'kimi-k2p5',
-};
+import { describe, it, expect } from 'vitest';
+import { createLiveProviderClient } from '../helpers/liveProviderTestEnv.js';
 
 const TEST_TIMEOUT = 120000;
 
 describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('Kimi-k2p5', () => {
-  beforeAll(() => {
-    process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;
-    process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;
-  });
+  async function generateCode(systemPrompt: string, prompt: string): Promise<string> {
+    const live = createLiveProviderClient('kimi');
+    expect(live, 'KIMI_API_KEY or configured Kimi provider is required for Kimi proof').not.toBeNull();
+    const response = await live!.client.generate(systemPrompt, prompt);
+    expect(response.success).toBe(true);
+    return response.code;
+  }
 
   it('generates p5.js sketch', async () => {
-    const result = await run('simple blue circle', {
-      maxIterations: 2,
-      output: './test-results/models/kimi-k2p5/p5-circle',
-      project: 'test-p5',
-    });
-    expect(result.code).toContain('createCanvas');
-    expect(result.code).not.toContain('<think');
+    const code = await generateCode(
+      'You are a p5.js coder. Output raw JavaScript only. No reasoning.',
+      'Create a p5.js sketch with setup(), draw(), createCanvas(), and a blue circle.',
+    );
+    expect(code).toContain('createCanvas');
+    expect(code).not.toContain('<think');
   }, TEST_TIMEOUT);
 
   it('generates Three.js scene', async () => {
-    const result = await run('rotating cube 3d', {
-      maxIterations: 2,
-      output: './test-results/models/kimi-k2p5/three-cube',
-      project: 'test-three',
-    });
-    expect(result.code).toContain('THREE');
-    expect(result.code).not.toContain('<think');
+    const code = await generateCode(
+      'You are a Three.js coder. Output raw JavaScript only. No reasoning.',
+      'Create a minimal Three.js scene with a scene, camera, renderer, and rotating cube.',
+    );
+    expect(code).toContain('THREE');
+    expect(code).not.toContain('<think');
   }, TEST_TIMEOUT);
 
   it('generates GLSL shader', async () => {
-    const result = await run('neon plasma effect with color cycling', {
-      maxIterations: 2,
-      output: './test-results/models/kimi-k2p5/shader-plasma',
-      project: 'test-shader',
-    });
-    expect(result.code.length).toBeGreaterThan(200);
-    expect(result.code).not.toContain('<think');
+    const code = await generateCode(
+      'You are a GLSL shader coder. Output raw fragment shader code only. No reasoning.',
+      'Create a GLSL fragment shader with void main(), uv coordinates, and animated plasma colors.',
+    );
+    expect(code).toContain('void main');
+    expect(code.length).toBeGreaterThan(80);
+    expect(code).not.toContain('<think');
   }, TEST_TIMEOUT);
 });

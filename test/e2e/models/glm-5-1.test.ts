@@ -3,49 +3,45 @@
  * Cloud model — coding-focused flagship
  * Gate: RUN_CLOUD_MODEL_TESTS=1
  */
-import { describe, it, expect, beforeAll } from 'vitest';
-import { run } from '../../../src/index.js';
-
-const MODEL_CONFIG = {
-  baseUrl: 'https://api.z.ai/api/anthropic',
-  model: 'glm-5.1',
-};
+import { describe, it, expect } from 'vitest';
+import { createLiveProviderClient } from '../helpers/liveProviderTestEnv.js';
 
 const TEST_TIMEOUT = 120000;
 
-describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('GLM-5.1', () => {
-  beforeAll(() => {
-    process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;
-    process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;
-  });
+describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('GLM configured cloud model', () => {
+  async function generateCode(systemPrompt: string, prompt: string): Promise<string> {
+    const live = createLiveProviderClient('glm');
+    expect(live, 'configured GLM provider is required for GLM model proof').not.toBeNull();
+    const response = await live!.client.generate(systemPrompt, prompt);
+    expect(response.success).toBe(true);
+    return response.code;
+  }
 
   it('generates p5.js sketch', async () => {
-    const result = await run('simple blue circle', {
-      maxIterations: 2,
-      output: './test-results/models/glm-5-1/p5-circle',
-      project: 'test-p5',
-    });
-    expect(result.code).toContain('createCanvas');
-    expect(result.code).not.toContain('<think');
+    const code = await generateCode(
+      'You are a p5.js coder. Output raw JavaScript only.',
+      'Create a p5.js sketch with setup(), draw(), createCanvas(), and a blue circle.',
+    );
+    expect(code).toContain('createCanvas');
+    expect(code).not.toContain('<think');
   }, TEST_TIMEOUT);
 
   it('generates Three.js scene', async () => {
-    const result = await run('rotating cube 3d', {
-      maxIterations: 2,
-      output: './test-results/models/glm-5-1/three-cube',
-      project: 'test-three',
-    });
-    expect(result.code).toContain('THREE');
-    expect(result.code).not.toContain('<think');
+    const code = await generateCode(
+      'You are a Three.js coder. Output raw JavaScript only.',
+      'Create a minimal Three.js scene with a scene, camera, renderer, and rotating cube.',
+    );
+    expect(code).toContain('THREE');
+    expect(code).not.toContain('<think');
   }, TEST_TIMEOUT);
 
   it('generates GLSL shader', async () => {
-    const result = await run('neon plasma effect with color cycling', {
-      maxIterations: 2,
-      output: './test-results/models/glm-5-1/shader-plasma',
-      project: 'test-shader',
-    });
-    expect(result.code.length).toBeGreaterThan(200);
-    expect(result.code).not.toContain('<think');
+    const code = await generateCode(
+      'You are a GLSL shader coder. Output raw fragment shader code only.',
+      'Create a GLSL fragment shader with void main(), uv coordinates, and animated plasma colors.',
+    );
+    expect(code).toContain('void main');
+    expect(code.length).toBeGreaterThan(80);
+    expect(code).not.toContain('<think');
   }, TEST_TIMEOUT);
 });

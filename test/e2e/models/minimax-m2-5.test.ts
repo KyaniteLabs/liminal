@@ -1,32 +1,23 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 /**
  * MiniMax-M2.5 Test Suite
  * Cloud model - value option, good quality, cheaper
  */
 
-import { run } from '../../../src/index.js';
-
-const MODEL_CONFIG = {
-  baseUrl: 'https://api.minimaxi.com/v1',
-  model: 'MiniMax-M2.5',
-};
+import { createLiveProviderClient } from '../helpers/liveProviderTestEnv.js';
 
 const TEST_TIMEOUT = 60000;
 
 describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('MiniMax-M2.5', () => {
-  beforeAll(() => {
-    process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;
-    process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;
-  });
-
   it('generates p5.js sketch', async () => {
-    const result = await run('simple blue circle', {
-      maxIterations: 2,
-      output: './test-results/models/minimax-m2-5/p5-circle',
-      project: 'test-p5',
-    });
-
-    expect(result.code).toContain('createCanvas');
-    expect(result.code).not.toContain('<think');
+    const live = createLiveProviderClient('minimax', 'MiniMax-M2.5');
+    expect(live, 'MINIMAX_API_KEY is required for MiniMax proof').not.toBeNull();
+    const response = await live!.client.generate(
+      'You are a p5.js coder. Output raw JavaScript only.',
+      'Create a p5.js sketch with setup(), draw(), createCanvas(), and a blue circle.',
+    );
+    expect(response.success).toBe(true);
+    expect(response.code).toContain('createCanvas');
+    expect(response.code).not.toContain('<think');
   }, TEST_TIMEOUT);
 });

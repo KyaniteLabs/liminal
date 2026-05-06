@@ -4,35 +4,28 @@
  */
 import { describe, it, expect, beforeAll } from 'vitest';
 import { LLMClient } from '../../src/llm/LLMClient.js';
-import fs from 'fs/promises';
-import path from 'path';
-import os from 'os';
+import { getProviderConfig, listConfiguredProviders, type ProviderType } from '../../src/harness/MultiProviderConfig.js';
 
-interface CloudProvider { name: string; baseUrl: string; model: string; apiKey: string; }
+interface CloudProvider { provider: ProviderType; name: string; baseUrl: string; model: string; apiKey: string; }
 interface ProviderResult { provider: string; success: boolean; latencyMs: number; codeLength: number; hasContamination: boolean; error?: string; }
 
 const TEST_TIMEOUT = 60_000;
 const MAX_LATENCY_MS = 45_000;
 
-async function loadCloudProviders(): Promise<CloudProvider[]> {
-  const configPath = path.join(os.homedir(), '.liminal', 'config.json');
-  let raw: string;
-  try { raw = await fs.readFile(configPath, 'utf-8'); } catch { return []; }
-  const config = JSON.parse(raw) as {
-    providers?: Record<string, { baseUrl?: string; model?: string; apiKey?: string }>;
-  };
+function loadCloudProviders(): CloudProvider[] {
   const localHosts = ['localhost', '127.0.0.1', '0.0.0.0'];
   const providers: CloudProvider[] = [];
-  for (const [, provider] of Object.entries(config.providers ?? {})) {
-    if (!provider.baseUrl || !provider.model) continue;
-    const url = new URL(provider.baseUrl);
+  for (const provider of listConfiguredProviders()) {
+    const config = getProviderConfig(provider);
+    if (!config?.baseUrl || !config.model || !config.apiKey) continue;
+    const url = new URL(config.baseUrl);
     if (localHosts.some(h => url.hostname === h)) continue;
-    if (!provider.apiKey) continue;
     providers.push({
-      name: `${provider.model}@${url.hostname}`,
-      baseUrl: provider.baseUrl,
-      model: provider.model,
-      apiKey: provider.apiKey,
+      provider,
+      name: `${provider}:${config.model}@${url.hostname}`,
+      baseUrl: config.baseUrl,
+      model: config.model,
+      apiKey: config.apiKey,
     });
   }
   return providers;
@@ -43,7 +36,7 @@ describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('Cloud Provider Smoke Tests'
   const results: ProviderResult[] = [];
 
   beforeAll(async () => {
-    cloudProviders = await loadCloudProviders();
+    cloudProviders = loadCloudProviders();
     expect(cloudProviders.length).toBeGreaterThan(0);
     console.log(`\nCloud providers found: ${cloudProviders.map(p => p.name).join(', ')}\n`);
   });
@@ -56,7 +49,7 @@ describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('Cloud Provider Smoke Tests'
       try {
         const client = new LLMClient({
           baseUrl: provider.baseUrl, model: provider.model,
-          apiKey: provider.apiKey, maxTokens: 1024,
+          apiKey: provider.apiKey, maxTokens: 4096,
         });
         const response = await client.generate(systemPrompt, userPrompt);
         const latencyMs = Date.now() - start;

@@ -1,6 +1,6 @@
 {
   "contract": "liminal-final-qa-test-surface-ledger-v1",
-  "updatedAt": "2026-05-06T17:31:38.886Z",
+  "updatedAt": "2026-05-06T18:09:50Z",
   "policy": "No test file may remain under test/pending for final QA. Every skipped/gated test file must have owner, launch risk, reason, action, and verification before final QA can be claimed.",
   "pendingTests": [],
   "skippedOrGatedTests": [
@@ -13,38 +13,6 @@
       "verification": "LIMINAL_LLM_BASE_URL=<url> pnpm vitest run test/integration/dual-llm.test.ts --coverage=false"
     },
     {
-      "path": "test/e2e/sandbox-self-improve.e2e.test.ts",
-      "owner": "E2E",
-      "launchRisk": "hardening-before-self-improve-claims",
-      "reason": "Self-improve e2e is skipped in CI.",
-      "action": "Run before self-improve workflow launch claims.",
-      "verification": "pnpm test:e2e"
-    },
-    {
-      "path": "test/e2e/guardrails-e2e.test.ts",
-      "owner": "E2E",
-      "launchRisk": "live-provider-gated",
-      "reason": "Guardrail generation tests skip without configured LLM.",
-      "action": "Run with provider config before live guardrail claims.",
-      "verification": "pnpm test:e2e with configured LLMClient"
-    },
-    {
-      "path": "test/e2e/cloud-providers.test.ts",
-      "owner": "Provider runtime",
-      "launchRisk": "live-provider-gated",
-      "reason": "Cloud provider smoke is gated behind RUN_CLOUD_MODEL_TESTS.",
-      "action": "Run for live-provider release claims.",
-      "verification": "RUN_CLOUD_MODEL_TESTS=1 pnpm test:cloud"
-    },
-    {
-      "path": "test/e2e/full-loop-cloud.test.ts",
-      "owner": "Provider runtime",
-      "launchRisk": "live-provider-gated",
-      "reason": "Cloud full-loop tests require live credentials.",
-      "action": "Run for cloud provider launch claims.",
-      "verification": "RUN_CLOUD_MODEL_TESTS=1 pnpm test:cloud"
-    },
-    {
       "path": "test/e2e/model-comparison.test.ts",
       "owner": "Provider runtime",
       "launchRisk": "live-provider-gated",
@@ -53,19 +21,35 @@
       "verification": "RUN_MODEL_COMPARISON=1 pnpm vitest run test/e2e/model-comparison.test.ts --coverage=false"
     },
     {
+      "path": "test/e2e/cloud-providers.test.ts",
+      "owner": "Provider runtime",
+      "launchRisk": "verified-live-provider-gated",
+      "reason": "Cloud provider smoke is intentionally gated behind RUN_CLOUD_MODEL_TESTS to avoid credential use in normal CI.",
+      "action": "Keep classified and run for live-provider release claims.",
+      "verification": "RUN_CLOUD_MODEL_TESTS=1 pnpm test:cloud"
+    },
+    {
+      "path": "test/e2e/full-loop-cloud.test.ts",
+      "owner": "Provider runtime",
+      "launchRisk": "verified-live-provider-gated",
+      "reason": "Cloud full-loop proof requires configured live credentials and is intentionally excluded from normal CI.",
+      "action": "Keep classified and run before cloud full-loop launch claims.",
+      "verification": "RUN_CLOUD_MODEL_TESTS=1 pnpm test:cloud"
+    },
+    {
       "path": "test/e2e/models/glm-5-1.test.ts",
       "owner": "Provider runtime",
-      "launchRisk": "live-provider-gated",
-      "reason": "GLM model e2e requires RUN_CLOUD_MODEL_TESTS.",
-      "action": "Run for GLM provider claims.",
+      "launchRisk": "verified-live-provider-gated",
+      "reason": "GLM provider proof is intentionally gated behind RUN_CLOUD_MODEL_TESTS to avoid live credential use in normal CI.",
+      "action": "Keep classified and run for GLM provider claims.",
       "verification": "RUN_CLOUD_MODEL_TESTS=1 pnpm test:cloud"
     },
     {
       "path": "test/e2e/models/kimi-k2p5.test.ts",
       "owner": "Provider runtime",
-      "launchRisk": "live-provider-gated",
-      "reason": "Kimi model e2e requires RUN_CLOUD_MODEL_TESTS.",
-      "action": "Run for Kimi provider claims.",
+      "launchRisk": "verified-live-provider-gated",
+      "reason": "Kimi provider proof is intentionally gated behind RUN_CLOUD_MODEL_TESTS to avoid live credential use in normal CI.",
+      "action": "Keep classified and run for Kimi provider claims.",
       "verification": "RUN_CLOUD_MODEL_TESTS=1 pnpm test:cloud"
     },
     {
@@ -79,25 +63,25 @@
     {
       "path": "test/e2e/models/minimax-m2-5.test.ts",
       "owner": "Provider runtime",
-      "launchRisk": "live-provider-gated",
-      "reason": "MiniMax model e2e requires RUN_CLOUD_MODEL_TESTS.",
-      "action": "Run for MiniMax provider claims.",
+      "launchRisk": "verified-live-provider-gated",
+      "reason": "MiniMax M2.5 provider proof is intentionally gated behind RUN_CLOUD_MODEL_TESTS to avoid live credential use in normal CI.",
+      "action": "Keep classified and run for MiniMax provider claims.",
       "verification": "RUN_CLOUD_MODEL_TESTS=1 pnpm test:cloud"
     },
     {
       "path": "test/e2e/models/minimax-m2-7-highspeed.test.ts",
       "owner": "Provider runtime",
-      "launchRisk": "live-provider-gated",
-      "reason": "MiniMax highspeed model e2e requires RUN_CLOUD_MODEL_TESTS.",
-      "action": "Run for MiniMax provider claims.",
-      "verification": "RUN_CLOUD_MODEL_TESTS=1 pnpm test:cloud"
+      "launchRisk": "unsupported-provider-entitlement",
+      "reason": "The current MiniMax token plan rejects MiniMax-M2.7-highspeed with provider error 2061.",
+      "action": "Run only before claiming MiniMax highspeed entitlement or upgrade the token plan.",
+      "verification": "RUN_MINIMAX_HIGHSPEED_MODEL_TESTS=1 pnpm vitest run test/e2e/models/minimax-m2-7-highspeed.test.ts --coverage=false"
     },
     {
       "path": "test/e2e/models/minimax-m2-7.test.ts",
       "owner": "Provider runtime",
-      "launchRisk": "live-provider-gated",
-      "reason": "MiniMax model e2e requires RUN_CLOUD_MODEL_TESTS.",
-      "action": "Run for MiniMax provider claims.",
+      "launchRisk": "verified-live-provider-gated",
+      "reason": "MiniMax M2.7 provider proof is intentionally gated behind RUN_CLOUD_MODEL_TESTS to avoid live credential use in normal CI.",
+      "action": "Keep classified and run for MiniMax provider claims.",
       "verification": "RUN_CLOUD_MODEL_TESTS=1 pnpm test:cloud"
     },
     {

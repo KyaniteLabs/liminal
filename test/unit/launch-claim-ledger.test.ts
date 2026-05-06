@@ -18,6 +18,7 @@ describe('launch claim truth ledger', () => {
       'docs/features.html',
       'docs/launch/ml-feature-value-matrix.md',
       'docs/launch/test-ci-truth-matrix-2026-05-01.md',
+      'docs/SECURITY.md',
       '.github/workflows/ci.yml',
       '.github/workflows/pr-review.yml',
     ]) {
@@ -60,5 +61,18 @@ describe('launch claim truth ledger', () => {
     expect(prReview).not.toContain('automated review not yet implemented');
     expect(truthMatrix).not.toContain('Required automated PR review check');
     expect(truthMatrix).toContain('GitHub branch protection PR review policy');
+  });
+
+  it('keeps public security-header claims route-specific', () => {
+    const security = readRepoFile('docs/SECURITY.md');
+    const ledger = readRepoFile('docs/launch/feature-claim-ledger-2026-05-06.md');
+
+    expect(security).not.toContain('All HTTP responses include:');
+    expect(security).toContain('`PreviewServer` responses include');
+    expect(security).toContain('X-Frame-Options: DENY');
+    expect(security).toContain('Studio GUI/API/SSE responses include');
+    expect(security).toContain('X-Frame-Options: SAMEORIGIN');
+    expect(security).toContain("frame-ancestors 'self'");
+    expect(ledger).toContain('Do not claim every HTTP response has CSP');
   });
 });

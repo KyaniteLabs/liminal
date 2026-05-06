@@ -8,6 +8,7 @@ Audited public claim surfaces:
 - `docs/features.html`
 - `docs/launch/ml-feature-value-matrix.md`
 - `docs/launch/test-ci-truth-matrix-2026-05-01.md`
+- `docs/SECURITY.md`
 - `.github/workflows/ci.yml`
 - `.github/workflows/pr-review.yml`
 
@@ -26,6 +27,7 @@ Audited public claim surfaces:
 | `docs/features.html` | Guardrails M1-M18 and security hardening are complete. | proof-limited | Unit/static proof exists for many guardrails; final QA found release controls and evidence gaps. | Public security claims remain gated by branch protection, browser/e2e smoke, decoded-pixel proof, and security-specific remediation. |
 | `docs/launch/ml-feature-value-matrix.md` | ML features marked proven can be claimed as product value. | proof-hardened | Existing proof commands pass for some unit scopes; FQA-004 receipt validation now requires current commit, freshness, provider/model identity where live providers are involved, artifacts, and case coverage. | Broad launch claims still require fresh receipts generated on the release commit. |
 | `docs/launch/test-ci-truth-matrix-2026-05-01.md` | Required checks prove release readiness. | caveated | `build-and-test` includes script-target and route-performance proof; `browser-and-e2e-smoke` runs on PRs; `pnpm verify:integration` and `pnpm test:ci:slow` passed during FQA-033 remediation. | Fast CI still must not be used as proof for live-provider, release-commit, scheduled slow-lane, or broad launch claims. |
+| `docs/SECURITY.md` | Security headers are present across PreviewServer and Studio surfaces. | proof-hardened | `test/security/security-headers.test.ts` proves PreviewServer CSP, `X-Frame-Options: DENY`, nosniff, HSTS, and powered-by removal; `test/integration/gui-security-regression.test.js` proves Studio common headers and preview CSP boundaries. | Do not claim every HTTP response has CSP or `X-Frame-Options: DENY`; Studio `/preview` stays same-origin iframe compatible for live preview. |
 | `.github/workflows/ci.yml` | PR browser/e2e surface is checked. | smoke-proven | `browser-and-e2e-smoke` runs `pnpm test:e2e` on PRs and passed on PR #497. | Existing e2e suite still has skipped tests; exhaustive slow/browser coverage remains a non-PR lane and must be checked for release-specific browser claims. |
 | `.github/workflows/pr-review.yml` | Automated PR review is a release gate. | informational only | Workflow now prints PR metadata and states that it is not an automated review gate. | Real PR review enforcement belongs to GitHub branch protection policy, not this placeholder workflow. |
 

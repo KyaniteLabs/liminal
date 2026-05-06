@@ -16,6 +16,7 @@ Status: first-pass defense plan for future agents.
 - Treat branch protection and CI as live infrastructure, not repo intent. Read the remote state before claiming enforcement.
 - Treat public launch docs as mutable evidence, not a one-time fix; re-scan them after remediation commits because old blocker language can become false.
 - Treat broken local docs links as customer-facing trust failures and gate them in CI.
+- Treat blanket security-header claims as suspect; verify each public header claim against the exact server surface and iframe/product constraints.
 
 ## Review Prompts For Future Persona Clusters
 

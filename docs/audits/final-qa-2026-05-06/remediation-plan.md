@@ -147,10 +147,10 @@ Release risk: medium. These items prevent recurrence.
    - Remediation status: verified. `docs/agents/factory-artists/README.md` and `docs/agents/factory-artists/rag/README.md` now state the non-runtime boundary explicitly, and `test/unit/docs/factory-persona-boundary.test.ts` locks both the documentation and runtime `SkillLoader` behavior.
 
 1. Expand final QA gate coverage.
-   - Findings: FQA-013, FQA-015, FQA-034, FQA-035, FQA-037, FQA-038
+   - Findings: FQA-013, FQA-015, FQA-034, FQA-035, FQA-037, FQA-038, FQA-039
    - Action: include GUI, Bubble Tea, scripts, examples, pending-test classification, strict test-quality scanning, and all launch-scoped creative domains in final QA.
    - Proof: final QA script prints included surfaces/domains and fails on weak assertion fixtures or missing live artifacts.
-   - Remediation status: verified. `scripts/testing/test-quality-check.mjs` now has strict CLI mode and a warning baseline, `package.json` exposes `pnpm final-qa:test-quality`, `pnpm final-qa:surface`, `pnpm gui:build`, `pnpm bubbletea:test`, and `pnpm check:doc-links`, `docs/launch/final-qa-test-surface-ledger.json` classifies every pending and skipped/gated test file, and `scripts/proof/live-creative-domain-execution.ts` defaults to all 12 launch domains. Live proof: post-FQA-037 `pnpm proof:live-creative-domains -- --timeout-ms=180000` passed with 12/12 GLM-generated artifacts carrying `artifactValidation: pass`, and `pnpm final-qa:surface` accepted the validated current-commit receipt.
+   - Remediation status: verified. `scripts/testing/test-quality-check.mjs` now has strict CLI mode and a warning baseline, `package.json` exposes `pnpm final-qa:test-quality`, `pnpm final-qa:surface`, `pnpm gui:build`, `pnpm bubbletea:test`, and `pnpm check:doc-links`, `docs/launch/final-qa-test-surface-ledger.json` classifies every pending and skipped/gated test file, and `scripts/proof/live-creative-domain-execution.ts` defaults to all 12 launch domains. Live proof: post-FQA-037 `pnpm proof:live-creative-domains -- --timeout-ms=180000` passed with 12/12 GLM-generated artifacts carrying `artifactValidation: pass`, and `pnpm final-qa:surface` accepted the validated current-commit receipt. Public security proof now includes `docs/SECURITY.md` in the claim ledger and distinguishes PreviewServer `DENY` headers from Studio same-origin preview behavior.
 
 2. Repair observability proof and SSE replay.
    - Findings: FQA-025, FQA-026

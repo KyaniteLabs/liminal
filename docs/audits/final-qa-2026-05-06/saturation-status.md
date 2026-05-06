@@ -2,7 +2,7 @@
 
 Status: not achieved.
 
-First-pass persona-cluster review plus verification sweep found 31 material findings and 3 non-material findings. Initial post-remediation saturation passes found two additional material findings, FQA-035 and FQA-036. The next saturation pair found FQA-037 and FQA-038. Remediation has verified FQA-001, FQA-002, FQA-003, FQA-004, FQA-005, FQA-006, FQA-007, FQA-008, FQA-009, FQA-010, FQA-011, FQA-012, FQA-013, FQA-014, FQA-015, FQA-016, FQA-017, FQA-018, FQA-019, FQA-020, FQA-021, FQA-022, FQA-023, FQA-024, FQA-025, FQA-026, FQA-027, FQA-028, FQA-029, FQA-033, FQA-034, FQA-035, FQA-036, FQA-037, and FQA-038. The stop condition still requires two independent saturation passes with no new material findings after these latest fixes.
+First-pass persona-cluster review plus verification sweep found 31 material findings and 3 non-material findings. Initial post-remediation saturation passes found two additional material findings, FQA-035 and FQA-036. The next saturation pair found FQA-037 and FQA-038. The next B pass found FQA-039 while the paired A pass found no new material findings. Remediation has verified FQA-001, FQA-002, FQA-003, FQA-004, FQA-005, FQA-006, FQA-007, FQA-008, FQA-009, FQA-010, FQA-011, FQA-012, FQA-013, FQA-014, FQA-015, FQA-016, FQA-017, FQA-018, FQA-019, FQA-020, FQA-021, FQA-022, FQA-023, FQA-024, FQA-025, FQA-026, FQA-027, FQA-028, FQA-029, FQA-033, FQA-034, FQA-035, FQA-036, FQA-037, FQA-038, and FQA-039. The stop condition still requires two independent saturation passes with no new material findings after these latest fixes.
 
 ## Current Passes
 
@@ -18,9 +18,11 @@ First-pass persona-cluster review plus verification sweep found 31 material find
 | Initial post-remediation saturation B | Customer Fury, Agentic Reality, launch truth | Found FQA-036; fixed and verified by public docs regression | no |
 | Second post-remediation saturation A | Codecraft, AI Systems, Production Flow | Found FQA-037; fixed and verified by domain artifact validation and live proof evidence | no |
 | Second post-remediation saturation B | Customer Fury, Agentic Reality, launch truth | Found FQA-038; fixed and verified by restored docs quick reference and local link checker | no |
+| Third post-remediation saturation A | Codecraft, AI Systems, Production Flow | No new material findings after FQA-037/FQA-038 remediation | no |
+| Third post-remediation saturation B | Customer Fury, Agentic Reality, launch truth | Found FQA-039; fixed and verified by Studio header regressions and route-specific security docs | no |
 
 ## Next Required Passes
 
-1. Run two independent cross-cluster saturation passes after the FQA-037/FQA-038 remediation.
+1. Run two independent cross-cluster saturation passes after the FQA-039 remediation.
 2. Mark saturation achieved only if both passes find no new material issues.
 3. If either pass finds a new material issue, add it to `findings-ledger.md`, remediate it, verify it, and restart the two-pass saturation requirement.

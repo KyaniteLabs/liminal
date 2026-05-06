@@ -89,12 +89,11 @@ Chrome sandbox is enabled by default. Only disable when:
 
 ## Security Headers
 
-All HTTP responses include:
-- Content-Security-Policy
-- X-Frame-Options: DENY
-- X-Content-Type-Options: nosniff
-- Strict-Transport-Security
-- Referrer-Policy
+Liminal uses route-specific security headers instead of one universal header claim:
+
+- `PreviewServer` responses include `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, and `Referrer-Policy`.
+- Studio GUI/API/SSE responses include `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`, and `X-Frame-Options: SAMEORIGIN`.
+- Studio `/preview` responses include the Studio common headers plus a sandbox preview `Content-Security-Policy` with `frame-ancestors 'self'`. The route must remain same-origin iframe compatible for the live preview surface.
 
 ## Incident Response
 

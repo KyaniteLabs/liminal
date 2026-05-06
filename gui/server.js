@@ -141,9 +141,18 @@ const P5_SENSOR_POLICY_SCRIPT = `
       try { Object.defineProperty(window, 'DeviceOrientationEvent', { value: undefined, configurable: true }); } catch {}
     })();
   </script>`;
+const STUDIO_HSTS_HEADER = 'max-age=31536000; includeSubDomains';
+
+function setStudioCommonSecurityHeaders(res) {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Strict-Transport-Security', STUDIO_HSTS_HEADER);
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+}
 
 function setPreviewSecurityHeaders(res, options = {}) {
   const organism = options.profile === 'organism';
+  setStudioCommonSecurityHeaders(res);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Content-Security-Policy', [
     "default-src 'none'",
@@ -157,12 +166,11 @@ function setPreviewSecurityHeaders(res, options = {}) {
     "connect-src 'none'",
     "font-src 'none'",
     "frame-src 'none'",
+    "frame-ancestors 'self'",
     "object-src 'none'",
     "base-uri 'none'",
     "form-action 'none'",
   ].join('; '));
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('Referrer-Policy', 'no-referrer');
 }
 
 function escapeHtml(value) {
@@ -353,6 +361,11 @@ function validateSSEOrigin(req, res, next) {
  */
 export function createApp(configPath, port = 5174) {
   const app = express();
+  app.disable('x-powered-by');
+  app.use((_req, res, next) => {
+    setStudioCommonSecurityHeaders(res);
+    next();
+  });
   app.use(express.json({ limit: '1mb' }));
 
   if (process.env.TRUST_PROXY === 'true') {
@@ -478,8 +491,7 @@ export function createApp(configPath, port = 5174) {
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
       res.setHeader('X-Accel-Buffering', 'no');
-      res.setHeader('X-Content-Type-Options', 'nosniff');
-      res.setHeader('Referrer-Policy', 'no-referrer');
+      setStudioCommonSecurityHeaders(res);
       res.flushHeaders();
       res.write(': connected\n\n');
 
@@ -982,8 +994,7 @@ export function createApp(configPath, port = 5174) {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no');
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('Referrer-Policy', 'no-referrer');
+    setStudioCommonSecurityHeaders(res);
     res.flushHeaders();
     res.write(': connected\n\n');
 

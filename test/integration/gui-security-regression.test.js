@@ -66,6 +66,13 @@ async function closeResponse(res) {
   await res.body?.cancel().catch(() => {});
 }
 
+function expectStudioCommonSecurityHeaders(headers) {
+  expect(headers.get('X-Content-Type-Options')).toBe('nosniff');
+  expect(headers.get('Referrer-Policy')).toBe('no-referrer');
+  expect(headers.get('Strict-Transport-Security')).toContain('max-age=31536000');
+  expect(headers.get('X-Frame-Options')).toBe('SAMEORIGIN');
+}
+
 // ===========================================================================
 // Wave 1 — Containment
 // ===========================================================================
@@ -339,6 +346,7 @@ describe('Security regression — Wave 3 preview isolation', () => {
     // CSP must block outbound connections and framing
     expect(csp).toContain("connect-src 'none'");
     expect(csp).toContain("frame-src 'none'");
+    expect(csp).toContain("frame-ancestors 'self'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("base-uri 'none'");
     expect(csp).toContain("form-action 'none'");
@@ -347,8 +355,7 @@ describe('Security regression — Wave 3 preview isolation', () => {
   it('preview response includes security headers', async () => {
     const res = await realFetch(`http://127.0.0.1:${port}/preview?version=1`);
 
-    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
-    expect(res.headers.get('Referrer-Policy')).toBe('no-referrer');
+    expectStudioCommonSecurityHeaders(res.headers);
     expect(res.headers.get('Content-Type')).toContain('text/html');
   });
 });
@@ -466,10 +473,11 @@ describe('Security regression — Wave 5 security headers', () => {
     expect(html.indexOf('liminalSensorPolicy')).toBeLessThan(html.indexOf('p5.min.js'));
   });
 
-  it('API JSON responses have correct content type', async () => {
+  it('API JSON responses include Studio common security headers', async () => {
     const res = await realFetch(`http://127.0.0.1:${port}/api/config`);
     const ct = res.headers.get('Content-Type') || '';
     expect(ct).toContain('application/json');
+    expectStudioCommonSecurityHeaders(res.headers);
   });
 });
 
@@ -586,13 +594,12 @@ describe('Security regression — Wave 7 red team remediation', () => {
   });
 
   // F11: SSE security headers
-  it('/api/events includes X-Content-Type-Options and Referrer-Policy', async () => {
+  it('/api/events includes Studio common security headers', async () => {
     const res = await realFetch(`http://127.0.0.1:${port}/api/events`, {
       headers: { Accept: 'text/event-stream' },
     });
     try {
-      expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
-      expect(res.headers.get('Referrer-Policy')).toBe('no-referrer');
+      expectStudioCommonSecurityHeaders(res.headers);
     } finally {
       await closeResponse(res);
     }

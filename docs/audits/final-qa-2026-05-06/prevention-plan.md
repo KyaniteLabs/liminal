@@ -14,6 +14,7 @@ Status: first-pass prevention plan.
 - Live creative-domain proof must cover every public launch domain or the launch docs must declare the narrower set.
 - Live creative-domain proof must include per-domain artifact validation evidence, and the final-QA surface gate must recompute domain validation instead of trusting receipt fields alone.
 - Documentation link validation must run for public docs indexes, feature docs, and launch docs.
+- Security-header claim validation must keep `docs/SECURITY.md` route-specific and prove Studio common headers plus PreviewServer header behavior in tests.
 - Provider setup diagnostics: run credential-free validation for every documented provider and keep CLI provider shorthands aligned with ProviderRuntime defaults.
 - Browser/UI smoke: prove visible stop control, visible preview error state, and at least one Studio prompt-to-preview path.
 - Cancellation smoke: keep regression tests proving AbortSignal reaches provider calls, draft timeout aborts the active generation controller, and retry backoff aborts immediately.

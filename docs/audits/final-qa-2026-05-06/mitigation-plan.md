@@ -24,5 +24,6 @@ Mitigations are temporary. They do not make Liminal launch-ready while material 
 - Any doc change using words like `ready`, `complete`, `production`, `GA`, `launch`, `proof`, or `verified` must cite a current command or receipt.
 - Public launch docs must not retain stale resolved-blocker phrases such as `FQA-003 remains open`, five-domain live proof wording, or `Integration and slow CI remain red` after their matching findings are verified.
 - Public docs indexes must pass `pnpm check:doc-links`; a missing local docs link is launch-trust debt, not a harmless typo.
+- Public security docs must distinguish PreviewServer response headers from Studio GUI/API/SSE and Studio `/preview`; do not claim universal CSP or `X-Frame-Options: DENY` while Studio preview remains an iframe product surface.
 - Public docs must not mention nonexistent runtime behavior such as a live `HarnessUpdater` unless the implementation and tests exist.
 - First-time user docs must use Studio/workbench-facing language, not internal harness commands.

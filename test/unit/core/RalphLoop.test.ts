@@ -75,6 +75,14 @@ const mockRenderPipelineProcess = vi.hoisted(() =>
 );
 const mockRenderPipelineClose = vi.hoisted(() => vi.fn(async () => {}));
 const mockRenderPipelineBlendScores = vi.hoisted(() => vi.fn(({ baseScore, renderScore, renderWeight = 0.5 }) => baseScore * (1 - renderWeight) + renderScore * renderWeight));
+const mockScoreRenderedEvidence = vi.hoisted(() =>
+  vi.fn(async () => ({
+    score: 0.92,
+    confidence: 0.95,
+    failureClass: 'none' as const,
+    reasoning: 'rendered evaluator passed',
+  }))
+);
 
 // ─── Mock registrations ────────────────────────────────────────────────────
 
@@ -123,6 +131,12 @@ vi.mock('../../../src/utils/Logger.js', () => ({
 
 vi.mock('../../../src/core/ScoringEngine.js', () => ({
   ScoringEngine: class { score = mockScoringEngineScore; scoreReliable = mockScoringEngineScoreReliable; },
+  scoreRenderedEvidence: mockScoreRenderedEvidence,
+}));
+
+vi.mock('../../../src/config/FeatureFlags.js', () => ({
+  getEvalMode: vi.fn(() => 'legacy'),
+  getRepairMode: vi.fn(() => 'off'),
 }));
 
 vi.mock('../../../src/core/GenerationOrchestrator.js', () => ({
@@ -246,6 +260,12 @@ function resetAllMocks(): void {
   // Reset return values that may have been overridden
   mockScoringEngineScoreReliable.mockResolvedValue({ score: 0.75, issues: [] });
   mockScoringEngineScore.mockResolvedValue({ score: 0.75, issues: [] });
+  mockScoreRenderedEvidence.mockResolvedValue({
+    score: 0.92,
+    confidence: 0.95,
+    failureClass: 'none',
+    reasoning: 'rendered evaluator passed',
+  });
   mockGeneratorGenerate.mockResolvedValue({
     code: 'function setup() {} function draw() {}',
     thinking: 'test-thinking',
@@ -350,9 +370,9 @@ describe('RalphLoop', () => {
       ]);
       const progress = RalphLoop.getProgress();
       expect(progress).not.toBeNull();
-      expect(progress!.iteration).toBe(2);
+      expect(progress!.iteration).toBe(5);
       expect(progress!.maxIterations).toBe(10);
-      expect(progress!.progress).toBeCloseTo(0.2);
+      expect(progress!.progress).toBeCloseTo(0.5);
     });
   });
 

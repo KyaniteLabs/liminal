@@ -51,12 +51,12 @@ describe('disambiguation flow — integration', () => {
 
     const result = await ni.processInput('draw a blue circle at center 200 200 with radius 50');
 
-    // Agent SHOULD have been called
-    expect(llmAgentExecuteTask).toHaveBeenCalledTimes(1);
+    // Agent work is approval-gated; the prompt should queue without executing.
+    expect(llmAgentExecuteTask).not.toHaveBeenCalled();
 
     // Should be routed to agent, not clarification
     expect(result.type).toBe('agent');
-    expect(result.response).toContain('success');
+    expect(result.response).toContain('awaiting approval');
   });
 
   it('slash commands bypass disambiguation entirely', async () => {

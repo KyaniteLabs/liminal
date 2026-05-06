@@ -324,6 +324,15 @@ export class VotingEngine {
       }
     }
 
+    if (maxScore <= 0) {
+      // Local/lightweight models often return unparseable vote text. In that
+      // case, preserve a viable generation instead of electing an error marker.
+      const viableOutput = [...outputs.values()].find(output =>
+        output.content.trim().length > 0 && !output.content.startsWith('[Generation error')
+      );
+      winnerId = viableOutput?.personaId ?? winnerId;
+    }
+
     return { scores, winnerId, votes };
   }
 

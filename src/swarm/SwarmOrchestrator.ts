@@ -604,7 +604,8 @@ export class SwarmOrchestrator {
         activePersonas,
         roundNum,
         this.config,
-        this.callOllama
+        this.callOllama,
+        seed,
       );
     } else {
       votingResult = HeuristicScorer.score(

@@ -186,6 +186,7 @@ export interface ModelConfig {
 /** Type guard for ProjectConfig */
 function isValidProjectConfig(value: unknown): value is ProjectConfig {
   if (typeof value !== 'object' || value === null) return false;
+  if (Array.isArray(value)) return false;
 
   // Basic structure validation - allow empty object as valid minimal config
   return true;
@@ -194,11 +195,12 @@ function isValidProjectConfig(value: unknown): value is ProjectConfig {
 /** Type guard for UserConfig */
 function isValidUserConfig(value: unknown): value is UserConfig {
   if (typeof value !== 'object' || value === null) return false;
+  if (Array.isArray(value)) return false;
   const obj = value as Record<string, unknown>;
   
   // Must have providers object if present
   if (obj.providers !== undefined) {
-    if (typeof obj.providers !== 'object' || obj.providers === null) return false;
+    if (typeof obj.providers !== 'object' || obj.providers === null || Array.isArray(obj.providers)) return false;
   }
   
   // defaultProvider must be string if present

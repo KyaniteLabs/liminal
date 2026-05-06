@@ -195,7 +195,7 @@ describe('getModelRanking', () => {
     expect(ranking).not.toBeUndefined();
     expect(ranking!.quality).toBe(1);
     expect(ranking!.reliability).toBe(3);
-    expect(ranking!.issues).toEqual(['❌ FAILED - 66b empty output']);
+    expect(ranking!.issues).toEqual(['FAILED - 66b empty output']);
   });
 });
 

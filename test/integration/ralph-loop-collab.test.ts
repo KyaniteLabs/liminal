@@ -20,7 +20,13 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
   describe('Collaboration with different domains', () => {
     it('works with ASCII art domain', async () => {
       const mockLLM = async (_prompt: string, _systemPrompt?: string): Promise<string> => {
-        return '   /\\_/\\  \n  ( o.o ) \n   > ^ <';
+        return [
+          '        /\\_/\\        ',
+          '       ( o.o )       ',
+          '        > ^ <        ',
+          '   cat face study    ',
+          '  whiskers in moon   ',
+        ].join('\n');
       };
 
       const result = await RalphLoop.run('cat face', {
@@ -33,6 +39,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
           maxPhases: 1,
         },
         collabDomain: 'ascii',
+        evalMode: 'legacy',
       });
 
       expect(result.iterations).toBe(1);
@@ -41,7 +48,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
 
     it('works with music domain', async () => {
       const mockLLM = async (_prompt: string, _systemPrompt?: string): Promise<string> => {
-        return 'X:1\nT:Test\nM:4/4\nK:C\nC D E F | G A B c |]';
+        return '$: s("bd*2 [~ cp] hh*4").slow(2).gain(0.8)\n$: note("c4 e4 g4 b4").s("sine").slow(4)\n$: n("0 2 4 7").scale("C:minor").s("sawtooth").gain(0.45)';
       };
 
       const result = await RalphLoop.run('simple melody', {
@@ -54,6 +61,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
           maxRounds: 1,
         },
         collabDomain: 'music',
+        evalMode: 'legacy',
       });
 
       expect(result.iterations).toBe(1);
@@ -69,7 +77,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
         if (callCount === 1) {
           throw new Error('LLM error');
         }
-        return 'function setup() { createCanvas(400, 400); }';
+        return 'function setup() { createCanvas(400, 400); background(20); }\nfunction draw() { background(20, 10); fill(255); circle(width / 2, height / 2, 80); }';
       };
 
       const result = await RalphLoop.run('test sketch', {
@@ -83,6 +91,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
         },
         collabDomain: 'p5',
         tolerateErrors: true,
+        evalMode: 'legacy',
       });
 
       // Should complete despite error
@@ -95,7 +104,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
         await new Promise(resolve => setTimeout(resolve, 10));
         // Return longer code to pass quality threshold
         return `function setup() { createCanvas(400, 400); background(200); }
-                function draw() { circle(200, 200, 50); }`;
+                function draw() { background(200, 10); fill(80, 120, 220); circle(200, 200, 50 + sin(frameCount * 0.05) * 10); }`;
       };
 
       const ac = new AbortController();
@@ -112,6 +121,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
         },
         collabDomain: 'p5',
         minQualityScore: 0.5, // Lower threshold
+        evalMode: 'legacy',
         signal: ac.signal,
         onProgress: (data) => {
           progressCalls.push(data.iteration);

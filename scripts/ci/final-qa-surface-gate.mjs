@@ -214,7 +214,11 @@ function validateLedger(ledgerPath, errors) {
   const pending = findPendingTests();
   const skipped = findSkippedOrGatedTests();
 
+  for (const entry of pendingEntries) {
+    errors.push(`Ledger still lists resolved pending test: ${entry.path || '<unknown>'}`);
+  }
   for (const file of pending) {
+    errors.push(`Pending test is a release blocker: ${file}`);
     if (!pendingPaths.has(file)) errors.push(`Unclassified pending test: ${file}`);
   }
   for (const file of skipped) {
@@ -345,7 +349,7 @@ function printReport({ ledgerResult, receiptResult }) {
   }
   console.log('');
   console.log(`Creative domains: ${receiptResult.covered.length}/${LAUNCH_CREATIVE_DOMAINS.length} covered`);
-  console.log(`Pending tests classified: ${ledgerResult.pendingCount}/${ledgerResult.pendingCount}`);
+  console.log(`Pending tests open: ${ledgerResult.pendingCount}`);
   console.log(`Skipped/gated tests classified: ${ledgerResult.skippedCount}/${ledgerResult.skippedCount}`);
 }
 
@@ -373,6 +377,7 @@ function main(argv = process.argv.slice(2)) {
     launchCreativeDomains: LAUNCH_CREATIVE_DOMAINS,
     coveredCreativeDomains: receiptResult.covered,
     missingCreativeDomains: receiptResult.missing,
+    pendingTestsOpen: ledgerResult.pendingCount,
     pendingTestsClassified: ledgerResult.pendingCount,
     skippedOrGatedTestsClassified: ledgerResult.skippedCount,
     errors,

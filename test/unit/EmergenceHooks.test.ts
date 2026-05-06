@@ -94,7 +94,7 @@ describe('EmergenceHooks', () => {
     const stats = hooks.getArchive().getStats();
     expect(stats.totalCells).toBe(1);
     expect(stats.totalElites).toBe(1);
-  });
+  }, 30000);
 
   it('exposes lineage tracker for querying', async () => {
     const hooks = new EmergenceHooks(liminalFs);

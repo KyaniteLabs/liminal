@@ -21,6 +21,15 @@ async function startServer(app) {
   });
 }
 
+async function stopServer(server) {
+  if (!server) return;
+  // Broad-suite load can leave keep-alive sockets open long enough to flake teardown.
+  server.closeAllConnections?.();
+  await new Promise((resolve, reject) => {
+    server.close((err) => err ? reject(err) : resolve());
+  });
+}
+
 async function postJson(url, body) {
   const res = await realFetch(url, {
     method: 'POST',
@@ -59,12 +68,14 @@ describe('GUI role config API', () => {
     const started = await startServer(createApp(configPath));
     server = started.server;
     baseUrl = started.baseUrl;
-  });
+  }, 30000);
 
   afterEach(async () => {
-    await new Promise((resolve) => server?.close(resolve));
+    await stopServer(server);
+    server = undefined;
     await fs.rm(tmpDir, { recursive: true, force: true });
-  });
+    tmpDir = undefined;
+  }, 30000);
 
   it('does not carry a stored evaluator key across provider changes', async () => {
     const response = await postJson(`${baseUrl}/api/config`, {

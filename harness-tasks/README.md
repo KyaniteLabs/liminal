@@ -10,7 +10,7 @@ This directory contains the harness task definitions used by the Liminal Meta-Ha
 | M4  | Fix Thinking Regex Greedy Match |
 | M6  | Fix Console.log Leaks in FailureLogger |
 | M7  | Fix Console.log Leaks in PatternDetector |
-| M8  | Fix Console.log Leaks in HarnessUpdater |
+| M8  | Verify Removed HarnessUpdater Claim |
 | M9  | Implement SemanticValidator |
 | M10 | Implement AccessibilityGuardrails |
 | M11 | Implement RuntimeHealthMonitor |

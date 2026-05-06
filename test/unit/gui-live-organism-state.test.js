@@ -7,13 +7,13 @@ import {
   liveOrganismReducer,
   INITIAL_LIVE_ORGANISM_STATE,
   switchToLiveOrganismView,
-  setSandboxRunResult,
-} from '../../src/gui/liveOrganismState.js';
+  setPreviewRunResult,
+} from '../../gui/src/gui/liveOrganismState.js';
 
 describe('GUI live organism state', () => {
   it('initial state has activeTab config and no sandboxUrl', () => {
-    expect(INITIAL_LIVE_ORGANISM_STATE.activeTab).toBe('config');
-    expect(INITIAL_LIVE_ORGANISM_STATE.sandboxUrl).toBeNull();
+    expect(INITIAL_LIVE_ORGANISM_STATE.activeTab).toBe('create');
+    expect(INITIAL_LIVE_ORGANISM_STATE.previewUrl).toBeNull();
     expect(INITIAL_LIVE_ORGANISM_STATE.runError).toBeNull();
   });
 
@@ -23,7 +23,7 @@ describe('GUI live organism state', () => {
     expect(action.tab).toBe('live');
     const next = liveOrganismReducer(INITIAL_LIVE_ORGANISM_STATE, action);
     expect(next.activeTab).toBe('live');
-    expect(next.sandboxUrl).toBeNull();
+    expect(next.previewUrl).toBeNull();
   });
 
   it('SWITCH_VIEW to config keeps config tab', () => {
@@ -34,28 +34,28 @@ describe('GUI live organism state', () => {
   });
 
   it('SANDBOX_RUN_RESULT sets sandboxUrl and triggers display update', () => {
-    const action = setSandboxRunResult('/preview?version=2');
-    expect(action.type).toBe('SANDBOX_RUN_RESULT');
+    const action = setPreviewRunResult('/preview?version=2');
+    expect(action.type).toBe('PREVIEW_RUN_RESULT');
     expect(action.url).toBe('/preview?version=2');
     const next = liveOrganismReducer(INITIAL_LIVE_ORGANISM_STATE, action);
-    expect(next.sandboxUrl).toBe('/preview?version=2');
+    expect(next.previewUrl).toBe('/preview?version=2');
     expect(next.runError).toBeNull();
   });
 
   it('SANDBOX_RUN_RESULT with error sets runError', () => {
-    const action = setSandboxRunResult(null, 'Network error');
+    const action = setPreviewRunResult(null, 'Network error');
     const next = liveOrganismReducer(INITIAL_LIVE_ORGANISM_STATE, action);
-    expect(next.sandboxUrl).toBeNull();
+    expect(next.previewUrl).toBeNull();
     expect(next.runError).toBe('Network error');
   });
 
   it('CLEAR_RUN_RESULT resets sandboxUrl and runError', () => {
     const state = liveOrganismReducer(
       INITIAL_LIVE_ORGANISM_STATE,
-      setSandboxRunResult('/preview?version=1')
+      setPreviewRunResult('/preview?version=1')
     );
     const next = liveOrganismReducer(state, { type: 'CLEAR_RUN_RESULT' });
-    expect(next.sandboxUrl).toBeNull();
+    expect(next.previewUrl).toBeNull();
     expect(next.runError).toBeNull();
   });
 });

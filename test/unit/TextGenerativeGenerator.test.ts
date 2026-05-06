@@ -106,15 +106,14 @@ describe('TextGenerativeGenerator', () => {
     }
   });
 
-  it('generate() rejects markdown code blocks via validation', async () => {
+  it('generate() strips markdown text fences before returning text art', async () => {
     mockGenerate.mockResolvedValueOnce({
       code: '```text\nhello\nworld\n```',
       thinking: '',
       recoveredFromThinking: false,
     });
     const gen = new TextGenerativeGenerator();
-    // validateOutput detects backticks as code markers BEFORE formatOutput can strip them
-    await expect(gen.generate('test')).rejects.toThrow('Output appears to be code');
+    await expect(gen.generate('test')).resolves.toBe('hello\nworld');
   });
 
   it('generate() strips // comments', async () => {
@@ -176,9 +175,9 @@ describe('TextGenerativeGenerator', () => {
     expect((gen as any).validateOutput('hello world\nsecond line').valid).toBe(true);
   });
 
-  it('validateOutput rejects single-line output', () => {
+  it('validateOutput accepts single-line text', () => {
     const gen = new TextGenerativeGenerator();
-    expect((gen as any).validateOutput('just one line').valid).toBe(false);
+    expect((gen as any).validateOutput('just one line').valid).toBe(true);
   });
 
   // ── getDefaultOptions by tier ────────────────────────────────────

@@ -259,7 +259,7 @@ export class GenerationOrchestrator {
       maxRounds: this.options.collabConfig?.maxRounds ?? this.options.collabConfig?.maxPhases,
       swarmConfig: {
         mode: this.options.swarmMode ?? 'hybrid',
-        maxRounds: this.options.swarmConfig?.maxRounds ?? 4,
+        maxRounds: this.options.swarmConfig?.maxRounds ?? this.options.collabConfig?.maxRounds ?? this.options.collabConfig?.maxPhases ?? 4,
         ...this.options.swarmConfig,
       },
       onProgress: (update: PhaseUpdate & { mode: string }) => {

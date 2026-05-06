@@ -525,7 +525,7 @@ export class RalphLoop {
                     : usedPrompt;
                   // Generate code (bypass cache to ensure fresh generation each iteration)
                   // Ralph Loop requires fresh LLM calls each iteration - caching would defeat the iterative improvement pattern
-                  const generationResult = await generator.generate(diversityPrompt, loadedPrompt, true);
+                  const generationResult = await generator.generate(diversityPrompt, loadedPrompt, true, normalizedOptions.signal);
 
                   if (generationResult.needsClarification) {
                     const msgs = generationResult.clarifyingQuestions.map(q => q.question).join('; ');
@@ -538,7 +538,10 @@ export class RalphLoop {
                   const { code, thinking, model } = generationResult;
 
                   // Validate generated code before accepting it
-                  const validation = CodeValidator.validate(code);
+                  const validation = CodeValidator.validate(
+                    code,
+                    String(normalizedOptions.collabDomain || normalizedOptions.mode || 'p5'),
+                  );
 
                   if (!validation.valid) {
                     Logger.warn('RalphLoop', `Candidate ${index} validation failed: ${validation.errors.join('; ')}`);
@@ -929,10 +932,13 @@ export class RalphLoop {
               if (entropyResult) {
                 repairPrompt = harness.modulateRepairPrompt(repairPrompt, entropyResult.phrase);
               }
-              const repairResult = await generator.generate(repairPrompt, loadedPrompt, true);
+              const repairResult = await generator.generate(repairPrompt, loadedPrompt, true, normalizedOptions.signal);
 
               if (!repairResult.needsClarification) {
-                const repairValidation = CodeValidator.validate(repairResult.code);
+                const repairValidation = CodeValidator.validate(
+                  repairResult.code,
+                  String(normalizedOptions.collabDomain || normalizedOptions.mode || 'p5'),
+                );
                 if (repairValidation.valid) {
                   const repairCode = repairValidation.cleanedCode;
 
@@ -1228,6 +1234,15 @@ export class RalphLoop {
         normalizedOptions.onIteration?.(iterationContext);
         finalScore = evaluation.score;
         let persistedCurrentIteration = false;
+        const promiseDetected = PromiseDetector.detect(currentCode);
+
+        normalizedOptions.onProgress?.({
+          iteration,
+          score: evaluation.score,
+          promiseDetected,
+          code: currentCode,
+          timestamp: iterationContext.timestamp,
+        });
 
         // Persist before any break gate below. High-quality first iterations can
         // stop immediately, but they still need gallery and run artifacts.
@@ -1235,6 +1250,11 @@ export class RalphLoop {
         await persistence.saveIteration(iteration, currentCode);
         await persistence.saveMergeStep(iteration);
         persistedCurrentIteration = true;
+
+        if (normalizedOptions.signal?.aborted) {
+          reason = 'aborted by user';
+          break;
+        }
 
         const gateDecision = creativeIterationGate.decide({
           iteration,
@@ -1439,15 +1459,6 @@ export class RalphLoop {
             break;
           }
         }
-
-        const promiseDetected = PromiseDetector.detect(currentCode);
-        normalizedOptions.onProgress?.({
-          iteration,
-          score: evaluation.score,
-          promiseDetected,
-          code: currentCode,
-          timestamp: iterationContext.timestamp,
-        });
 
         eventBus.emit(EventTypes.LOOP_ITERATION, 'RalphLoop', {
           iteration,

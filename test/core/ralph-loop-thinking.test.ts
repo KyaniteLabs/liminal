@@ -243,6 +243,17 @@ vi.mock('../../src/core/ScoringEngine.js', () => ({
       return this.score();
     }
   },
+  scoreRenderedEvidence: vi.fn(async () => ({
+    score: 0.75,
+    confidence: 0.9,
+    failureClass: 'none',
+    reasoning: 'test render evidence',
+  })),
+}));
+
+vi.mock('../../src/config/FeatureFlags.js', () => ({
+  getEvalMode: vi.fn(() => 'legacy'),
+  getRepairMode: vi.fn(() => 'off'),
 }));
 
 vi.mock('../../src/core/PromptStore.js', () => ({

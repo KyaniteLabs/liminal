@@ -12,7 +12,6 @@ import { PreviewServer } from '../../src/render/PreviewServer.js';
 describe('PreviewServer API', () => {
   let server;
   let testPort;
-  const getTestPort = () => 3456 + Math.floor(Math.random() * 1000) + (process.pid % 100);
 
   const testGalleryDir = path.join(process.cwd(), 'test-api-gallery-temp');
   const testOutputDir = path.join(process.cwd(), 'test-api-export-temp');
@@ -33,17 +32,9 @@ describe('PreviewServer API', () => {
 
   beforeEach(async () => {
     server = new PreviewServer({ galleryDir: testGalleryDir });
-    // Retry with different ports to avoid EADDRINUSE flakiness
-    for (let attempt = 0; attempt < 10; attempt++) {
-      testPort = getTestPort();
-      try {
-        await server.start(testPort);
-        return;
-      } catch {
-        // Port in use, try another
-      }
-    }
-    throw new Error('Could not start test server after 10 attempts');
+    await server.start(0);
+    testPort = server.getPort();
+    expect(testPort).toBeGreaterThan(0);
   });
 
   afterEach(async () => {
@@ -62,9 +53,10 @@ describe('PreviewServer API', () => {
 
     it('returns empty list when galleryDir not set', async () => {
       await server.stop();
-      const port2 = getTestPort();
       server = new PreviewServer();
-      await server.start(port2);
+      await server.start(0);
+      const port2 = server.getPort();
+      expect(port2).toBeGreaterThan(0);
       const res = await fetch(`http://localhost:${port2}/api/gallery`);
       expect(res.status).toBe(200);
       const data = await res.json();

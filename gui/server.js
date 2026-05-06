@@ -301,6 +301,26 @@ function sanitizeRoles(roles = {}) {
   }]));
 }
 
+function sanitizeProviders(providers = {}) {
+  return Object.fromEntries(Object.entries(providers).map(([provider, cfg]) => [provider, {
+    baseUrl: cfg?.baseUrl,
+    model: cfg?.model,
+    apiKeyStored: Boolean(cfg?.apiKey),
+  }]));
+}
+
+function sanitizeConfigForClient(config) {
+  if (!config) return null;
+  return {
+    defaultProvider: config.defaultProvider,
+    providers: sanitizeProviders(config.providers || {}),
+    roles: sanitizeRoles(config.roles || {}),
+    loop: config.loop,
+    creative: config.creative,
+    galleryPath: config.galleryPath,
+  };
+}
+
 function mergeProviderConfigs(existing = {}, incoming = {}) {
   const merged = { ...existing };
   for (const [name, cfg] of Object.entries(incoming)) {
@@ -550,6 +570,7 @@ export function createApp(configPath, port = 5174) {
         creative,
         galleryPath,
         roles: sanitizeRoles(userConfig?.roles || {}),
+        userConfig: sanitizeConfigForClient(userConfig),
       });
     } catch (err) {
       res.status(500).json({ error: err.message });

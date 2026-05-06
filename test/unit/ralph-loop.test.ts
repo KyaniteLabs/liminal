@@ -238,6 +238,12 @@ vi.mock('../../src/core/ScoringEngine.js', () => {
         return this.score();
       }
     },
+    scoreRenderedEvidence: vi.fn(async () => ({
+      score: 0.74,
+      confidence: 0.9,
+      failureClass: 'none',
+      reasoning: 'test render evidence',
+    })),
   };
 });
 
@@ -418,8 +424,19 @@ vi.mock('../../src/core/ScoringEngine.js', () => {
         return this.score();
       }
     },
+    scoreRenderedEvidence: vi.fn(async () => ({
+      score: 0.74,
+      confidence: 0.9,
+      failureClass: 'none',
+      reasoning: 'test render evidence',
+    })),
   };
 });
+
+vi.mock('../../src/config/FeatureFlags.js', () => ({
+  getEvalMode: vi.fn(() => 'legacy'),
+  getRepairMode: vi.fn(() => 'off'),
+}));
 
 vi.mock('../../src/core/OrganismLoop.js', () => ({
   runOrganismMode: vi.fn(async (_prompt: string, options: any, startTime: number) => {

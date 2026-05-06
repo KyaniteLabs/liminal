@@ -8,12 +8,10 @@ import { PreviewServer } from '../../src/render/PreviewServer.js';
 
 describe('PreviewServer versioned preview', () => {
   let previewServer;
-  const getTestPort = () => 3456 + Math.floor(Math.random() * 1000) + (process.pid % 100);
   let TEST_PORT;
 
   beforeEach(() => {
     previewServer = new PreviewServer();
-    TEST_PORT = getTestPort();
   });
 
   afterEach(async () => {
@@ -24,8 +22,14 @@ describe('PreviewServer versioned preview', () => {
     }
   });
 
+  async function startPreviewServer() {
+    await previewServer.start(0);
+    TEST_PORT = previewServer.getPort();
+    expect(TEST_PORT).toBeGreaterThan(0);
+  }
+
   it('should serve GET /preview?version=N with code set for that version', async () => {
-    await previewServer.start(TEST_PORT);
+    await startPreviewServer();
     previewServer.setVersionCode(1, 'createCanvas(100, 100);');
     previewServer.setVersionCode(2, 'createCanvas(200, 200);');
 
@@ -43,7 +47,7 @@ describe('PreviewServer versioned preview', () => {
   });
 
   it('should support setAllVersions to set multiple iterations at once', async () => {
-    await previewServer.start(TEST_PORT);
+    await startPreviewServer();
     previewServer.setAllVersions([
       { version: 1, code: 'code_v1', timestamp: '' },
       { version: 2, code: 'code_v2', timestamp: '' },
@@ -59,7 +63,7 @@ describe('PreviewServer versioned preview', () => {
   });
 
   it('should return 400 or empty sketch when version param missing', async () => {
-    await previewServer.start(TEST_PORT);
+    await startPreviewServer();
     previewServer.setVersionCode(1, 'x');
 
     const res = await fetch(`http://localhost:${TEST_PORT}/preview`);
@@ -69,7 +73,7 @@ describe('PreviewServer versioned preview', () => {
   });
 
   it('should serve HTML with p5 CDN for valid version', async () => {
-    await previewServer.start(TEST_PORT);
+    await startPreviewServer();
     previewServer.setVersionCode(3, 'function setup() { createCanvas(400, 400); }');
 
     const res = await fetch(`http://localhost:${TEST_PORT}/preview?version=3`);
@@ -79,7 +83,7 @@ describe('PreviewServer versioned preview', () => {
   });
 
   it('should serve GUI at /gui when run from project root', async () => {
-    await previewServer.start(TEST_PORT);
+    await startPreviewServer();
     const res = await fetch(`http://localhost:${TEST_PORT}/gui`);
     expect(res.status).toBe(200);
     const html = await res.text();

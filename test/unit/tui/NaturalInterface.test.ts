@@ -173,14 +173,19 @@ describe('NaturalInterface', () => {
       expect(result.response).toBe('Task task-999 not found');
     });
 
-    it('executes task and returns status when found', async () => {
+    it('queues task execution until confirmed', async () => {
       const task = { id: 'job-x', title: 'Run me', description: 'Do it' };
       const { iface, harnessAgent } = createInterface([task]);
       harnessAgent.executeTask.mockResolvedValue({ status: 'failed', stepCount: 2 });
 
       const result = await iface.processInput('/run job-x');
-      expect(result.response).toBe('Task job-x: FAILED');
-      expect(harnessAgent.executeTask).toHaveBeenCalledWith(task);
+      expect(result.response).toContain('awaiting approval');
+      expect(harnessAgent.executeTask).not.toHaveBeenCalled();
+
+      const [pending] = iface.getPendingActions();
+      const confirmed = await iface.processInput(`/confirm ${pending.id}`);
+      expect(confirmed.response).toBe('Task job-x: FAILED');
+      expect(harnessAgent.executeTask).toHaveBeenCalledWith(expect.objectContaining({ id: 'job-x', approved: true }));
     });
   });
 
@@ -251,7 +256,8 @@ describe('NaturalInterface', () => {
 
       expect(result.response).toContain('status - Show harness status');
       expect(result.response).toContain('preview <file> - Preview a file');
-      expect(result.response).toContain('does not support /agent, /confirm, /cancel, /play, or /browser');
+      expect(result.response).toContain('confirm <id> - Approve a pending action');
+      expect(result.response).toContain('cancel <id> - Cancel a pending action');
     });
   });
 
@@ -310,9 +316,13 @@ describe('NaturalInterface', () => {
 
       const result = await iface.processInput('fix the broken test');
       expect(result.type).toBe('agent');
-      expect(result.response).toContain('Task success');
-      expect(result.response).toContain('changes have been applied');
-      expect(result.actionTaken).toBe('Executed 4 steps');
+      expect(result.response).toContain('awaiting approval');
+
+      const [pending] = iface.getPendingActions();
+      const confirmed = await iface.processInput(`/confirm ${pending.id}`);
+      expect(confirmed.response).toContain('Task success');
+      expect(confirmed.response).toContain('changes have been applied');
+      expect(llmAgent.executeTask).toHaveBeenCalledWith(expect.objectContaining({ approved: true }));
     });
 
     it('returns rolled_back message for rolled back session', async () => {
@@ -323,7 +333,9 @@ describe('NaturalInterface', () => {
         messages: [],
       });
 
-      const result = await iface.processInput('fix the error');
+      await iface.processInput('fix the error');
+      const [pending] = iface.getPendingActions();
+      const result = await iface.processInput(`/confirm ${pending.id}`);
       expect(result.response).toContain('rolled back');
       expect(result.response).toContain('Changes were rolled back');
     });
@@ -336,7 +348,9 @@ describe('NaturalInterface', () => {
         messages: [],
       });
 
-      const result = await iface.processInput('fix the crash');
+      await iface.processInput('fix the crash');
+      const [pending] = iface.getPendingActions();
+      const result = await iface.processInput(`/confirm ${pending.id}`);
       expect(result.response).toContain('could not be completed');
     });
 
@@ -349,6 +363,8 @@ describe('NaturalInterface', () => {
       });
 
       await iface.processInput('fix the import');
+      const [pending] = iface.getPendingActions();
+      await iface.processInput(`/confirm ${pending.id}`);
       expect(mockOnLog).toHaveBeenCalledWith(expect.stringContaining('readFile'));
     });
 
@@ -356,8 +372,10 @@ describe('NaturalInterface', () => {
       const { iface, llmAgent } = createInterface();
       llmAgent.executeTask.mockRejectedValue(new Error('Agent crashed'));
 
-      const result = await iface.processInput('fix the crash');
-      expect(result.type).toBe('agent');
+      await iface.processInput('fix the crash');
+      const [pending] = iface.getPendingActions();
+      const result = await iface.processInput(`/confirm ${pending.id}`);
+      expect(result.type).toBe('command');
       expect(result.response).toContain('Agent crashed');
       expect(mockFormatError).toHaveBeenCalledWith('Agent', expect.any(Error));
     });
@@ -372,13 +390,14 @@ describe('NaturalInterface', () => {
       expect(result.clarifyingQuestions!.length).toBeGreaterThan(0);
     });
 
-    it('calls the agent for unambiguous prompts', async () => {
+    it('queues the agent for unambiguous prompts', async () => {
       const { iface, llmAgent } = createInterface();
       // "fix the auth bug" — no "cool", "better", etc. — unambiguous
       llmAgent.executeTask.mockResolvedValue({ status: 'success', stepCount: 1, messages: [] });
       const result = await iface.processInput('fix the auth bug');
-      expect(llmAgent.executeTask).toHaveBeenCalledTimes(1);
+      expect(llmAgent.executeTask).not.toHaveBeenCalled();
       expect(result.type).toBe('agent');
+      expect(result.response).toContain('awaiting approval');
     });
 
     it('includes domain suggestions in ambiguous result', async () => {

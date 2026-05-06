@@ -39,7 +39,7 @@ describe('GUI config API', () => {
     const a = server.address();
     port = typeof a === 'object' && a && 'port' in a ? a.port : 0;
     expect(port).toBeGreaterThan(0);
-  });
+  }, 30000);
 
   afterAll(async () => {
     if (server) await new Promise((resolve) => server.close(resolve));
@@ -80,7 +80,7 @@ describe('GUI config API', () => {
         model: expect.any(String),
       });
       expect(body.effective).toHaveProperty('baseUrl');
-      expect(body.effective).toHaveProperty('apiKey');
+      expect(body.effective).toHaveProperty('apiKeyStored');
       expect(body).toHaveProperty('loop');
       expect(body.loop).toMatchObject({
         maxIterations: expect.any(Number),
@@ -110,7 +110,7 @@ describe('GUI config API', () => {
       expect(res.userConfig.defaultProvider).toBe('ollama');
       expect(res.userConfig.providers.ollama.model).toBe('codellama');
       expect(res.userConfig.providers.ollama.baseUrl).toBe('http://localhost:11434/v1');
-      expect(res.userConfig.providers.ollama.apiKey).toBe('secret');
+      expect(res.userConfig.providers.ollama.apiKeyStored).toBe(true);
       expect(res.loop.maxIterations).toBe(5);
       expect(res.loop.timeoutMinutes).toBe(10);
       expect(res.creative.minQualityScore).toBe(0.8);

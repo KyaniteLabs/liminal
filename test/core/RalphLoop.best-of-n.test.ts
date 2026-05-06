@@ -63,13 +63,24 @@ vi.mock('../../src/core/ScoringEngine.js', () => ({
       scoreReliable: scoreFn,
     };
   }),
+  scoreRenderedEvidence: vi.fn(async () => ({
+    score: 0.7,
+    confidence: 0.9,
+    failureClass: 'none',
+    reasoning: 'test render evidence',
+  })),
+}));
+
+vi.mock('../../src/config/FeatureFlags.js', () => ({
+  getEvalMode: vi.fn(() => 'legacy'),
+  getRepairMode: vi.fn(() => 'off'),
 }));
 
 vi.mock('../../src/core/CodeValidator.js', () => ({
   CodeValidator: {
     validate: vi.fn((code: string) => {
-      const idx = currentGenerateCall; // Corresponds to current generate call
-      if (validateFailures.has(idx)) {
+      const idx = currentGenerateCall; // Kept for legacy sequence-driven cases.
+      if (validateFailures.has(idx) || code.startsWith('Invalid')) {
         return { valid: false, cleanedCode: '', errors: ['Syntax error'] };
       }
       return { valid: true, cleanedCode: code, errors: [] };
@@ -305,7 +316,7 @@ describe('RalphLoop Best-of-N', () => {
     expect(result.finalScore).toBe(0.8);
   });
 
-  it('should handle all candidates failing validation', async () => {
+  it('should fail explicitly when all candidates fail validation', async () => {
     generateSequence = [
       { code: 'Invalid 1' },
       { code: 'Invalid 2' },
@@ -316,15 +327,14 @@ describe('RalphLoop Best-of-N', () => {
     validateFailures.add(2);
     validateFailures.add(3);
 
-    const result = await RalphLoop.run('test prompt', {
+    await expect(RalphLoop.run('test prompt', {
       maxIterations: 1,
       numCandidates: 3,
       minQualityScore: 0.5,
       _disableIterationExtension: true,
+    })).rejects.toMatchObject({
+      code: 'ERR_ALL_CANDIDATES_FAILED',
     });
-
-    expect(result.iterations).toBe(1);
-    expect(result.completed).toBe(false);
   });
 
   it('should respect numCandidates limit and not exceed it', async () => {

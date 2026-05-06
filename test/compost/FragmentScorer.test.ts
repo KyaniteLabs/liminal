@@ -32,7 +32,7 @@ describe('FragmentScorer', () => {
   let scorer: FragmentScorer;
 
   beforeEach(() => {
-    mockLLM = { generate: vi.fn() };
+    mockLLM = { generate: vi.fn(), generateWithToolLoop: vi.fn() };
     scorer = new FragmentScorer(mergeConfig(), mockLLM);
   });
 
@@ -73,8 +73,11 @@ describe('FragmentScorer', () => {
         code: JSON.stringify({ score: 8.5, reasoning: 'High quality' }),
       });
       const frag = makeFragment();
-      const score = await scorer.scoreLLM(frag);
-      expect(score).toBeGreaterThanOrEqual(0);
+      const result = await scorer.scoreLLM(frag);
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value).toBeGreaterThanOrEqual(0);
+      }
       expect(mockLLM.generate).toHaveBeenCalled();
     });
   });

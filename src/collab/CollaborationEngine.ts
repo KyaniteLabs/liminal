@@ -93,9 +93,19 @@ export class CollaborationEngine {
    */
   async run(prompt: string): Promise<CollaborationEngineResult> {
     const swarmMode = (this.config.swarmConfig?.mode ?? 'hybrid') as SwarmMode;
+    const systemPrompt = this.config.systemPrompt ?? '';
+    const swarmConfig = {
+      ...this.config.swarmConfig,
+      maxRounds: this.config.swarmConfig?.maxRounds ?? this.config.maxRounds,
+      convergenceThreshold: this.config.swarmConfig?.convergenceThreshold ?? this.config.convergenceThreshold,
+    };
 
-    const orchestrator = new SwarmOrchestrator(this.config.swarmConfig, {
+    const orchestrator = new SwarmOrchestrator(swarmConfig, {
       ...this.config.swarmOptions,
+      // CollaborationEngine owns the runtime LLM adapter; keep swarm from silently
+      // falling back to its default Ollama path when callers inject another provider.
+      callOllama: (_model, personaSystemPrompt, userPrompt) =>
+        this.config.callLLM(userPrompt, [systemPrompt, personaSystemPrompt].filter(Boolean).join('\n\n')),
       onProgress: (data) => {
         this.config.onProgress?.({
           mode: 'swarm',

@@ -111,9 +111,37 @@ describe('final QA surface gate', () => {
       expect(output).toContain('GUI production build');
       expect(output).toContain('Bubble Tea Go tests');
       expect(output).toContain('Creative domains: 12/12 covered');
-      expect(output).toContain('Pending tests classified');
+      expect(output).toContain('Pending tests open: 0');
       expect(output).toContain('Skipped/gated tests classified');
     } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('fails when any test file remains under test/pending', () => {
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-final-qa-surface-pending-'));
+    const sentinelPath = path.join(repoRoot, 'test/pending/final-qa-gate-sentinel.test.ts');
+    try {
+      mkdirSync(path.dirname(sentinelPath), { recursive: true });
+      writeFileSync(sentinelPath, 'import { it } from "vitest"; it("sentinel", () => {});\n');
+      const receiptPath = makeReceipt(tempRoot);
+      const result = spawnSync(process.execPath, [
+        scriptPath,
+        '--receipt',
+        receiptPath,
+        '--ledger',
+        ledgerPath,
+        '--no-write-proof',
+      ], {
+        cwd: repoRoot,
+        encoding: 'utf8',
+      });
+      const output = `${result.stdout}\n${result.stderr}`;
+
+      expect(result.status).toBe(1);
+      expect(output).toContain('Pending test is a release blocker: test/pending/final-qa-gate-sentinel.test.ts');
+    } finally {
+      rmSync(sentinelPath, { force: true });
       rmSync(tempRoot, { recursive: true, force: true });
     }
   });

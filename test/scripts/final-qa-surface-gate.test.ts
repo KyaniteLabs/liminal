@@ -4,11 +4,50 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
+import { validateCreativeDomainArtifact } from '../../scripts/lib/creative-domain-artifact-validation.mjs';
 
 const repoRoot = path.resolve(import.meta.dirname, '../..');
 const scriptPath = path.join(repoRoot, 'scripts/ci/final-qa-surface-gate.mjs');
 const ledgerPath = path.join(repoRoot, 'docs/launch/final-qa-test-surface-ledger.json');
 const launchDomains = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel', 'tone', 'revideo', 'hyperframes', 'ascii', 'kinetic', 'textgen'];
+const extensions: Record<string, string> = {
+  p5: 'js',
+  svg: 'svg',
+  glsl: 'frag',
+  three: 'js',
+  hydra: 'js',
+  strudel: 'js',
+  tone: 'html',
+  revideo: 'tsx',
+  hyperframes: 'html',
+  ascii: 'txt',
+  kinetic: 'html',
+  textgen: 'txt',
+};
+
+const artifactSource: Record<string, string> = {
+  p5: 'function setup(){ createCanvas(400,400); } function draw(){ background(0); }',
+  svg: '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40"/></svg>',
+  glsl: 'precision mediump float; uniform vec2 u_resolution; void main(){ vec2 uv=gl_FragCoord.xy/u_resolution; gl_FragColor=vec4(uv,0.0,1.0); }',
+  three: 'const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(); const renderer = new THREE.WebGLRenderer(); renderer.render(scene, camera);',
+  hydra: 'osc(8, 0.1, 1).color(1,0,1).out(); render();',
+  strudel: 's("bd sn hh").note("c1 g1").out()',
+  tone: '<!doctype html><html><body><button>Start</button><script src="Tone.js"></script><script>Tone.start();</script></body></html>',
+  revideo: 'import { makeScene2D, Txt } from "@revideo/2d"; import { waitFor } from "@revideo/core"; export default makeScene2D(function*(view){ view.add(<Txt text="hi" />); yield* waitFor(1); });',
+  hyperframes: '<!doctype html><html><body><div data-composition-id="x"><div class="clip" data-start="0" data-duration="1" data-track-index="0"></div><div class="clip" data-start="1" data-duration="1" data-track-index="1"></div><div class="clip" data-start="2" data-duration="1" data-track-index="2"></div></div><script>const tl = gsap.timeline(); window.__timelines = { x: tl };</script></body></html>',
+  ascii: `/\\
+ /  \\
+/____\\
+|    |
+|____|`,
+  kinetic: '<!doctype html><html><head><style>@keyframes spin{to{transform:rotate(360deg)}} .word{animation:spin 1s linear infinite}</style></head><body><div class="word">Orbit</div></body></html>',
+  textgen: `loop
+  dream
+    memory
+      signal
+        threshold
+          machine breathing in lines of language`,
+};
 
 function currentGitCommit(): string {
   return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).trim();
@@ -28,9 +67,11 @@ function makeReceipt(tempRoot: string, domains = launchDomains, overrides: Recor
     provider: 'test-provider',
     model: 'test-model',
     domains: domains.map((domain) => {
-      const artifactPath = path.join(artifactDir, `${domain}.txt`);
-      writeFileSync(artifactPath, `${domain} artifact`);
-      return { domain, status: 'pass', artifactPath, codeBytes: 16 };
+      const code = artifactSource[domain];
+      const artifactPath = path.join(artifactDir, `${domain}.${extensions[domain]}`);
+      writeFileSync(artifactPath, code);
+      const artifactValidation = validateCreativeDomainArtifact(domain, artifactPath, code);
+      return { domain, status: 'pass', artifactPath, codeBytes: Buffer.byteLength(code, 'utf8'), artifactValidation };
     }),
     ...overrides,
   };
@@ -145,6 +186,56 @@ describe('final QA surface gate', () => {
 
       expect(result.status).toBe(1);
       expect(output).toContain('Live creative-domain receipt is stale');
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('fails when a complete receipt points at non-empty junk instead of domain artifacts', () => {
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-final-qa-surface-junk-artifacts-'));
+    try {
+      const artifactDir = path.join(tempRoot, 'artifacts');
+      mkdirSync(artifactDir, { recursive: true });
+      const receiptPath = path.join(tempRoot, 'domain-gauntlet-live.json');
+      const domains = launchDomains.map((domain) => {
+        const artifactPath = path.join(artifactDir, `${domain}.txt`);
+        writeFileSync(artifactPath, `${domain} artifact`);
+        return {
+          domain,
+          status: 'pass',
+          artifactPath,
+          codeBytes: 16,
+          artifactValidation: { status: 'pass', checks: [{ name: 'fake', passed: true }], errors: [] },
+        };
+      });
+      writeFileSync(receiptPath, JSON.stringify({
+        contract: 'liminal-live-creative-domain-execution-v1',
+        status: 'pass',
+        ready: true,
+        mode: 'live-execution',
+        generatedAt: new Date().toISOString(),
+        gitCommit: currentGitCommit(),
+        provider: 'test-provider',
+        model: 'test-model',
+        domains,
+      }, null, 2));
+
+      const result = spawnSync(process.execPath, [
+        scriptPath,
+        '--receipt',
+        receiptPath,
+        '--ledger',
+        ledgerPath,
+        '--no-write-proof',
+      ], {
+        cwd: repoRoot,
+        encoding: 'utf8',
+      });
+      const output = `${result.stdout}\n${result.stderr}`;
+
+      expect(result.status).toBe(1);
+      expect(output).toContain('p5 artifact failed domain validation');
+      expect(output).toContain('Missing creative-domain live artifacts');
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
     }

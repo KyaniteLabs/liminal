@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateCreativeDomainArtifact } from '../lib/creative-domain-artifact-validation.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const LAUNCH_CREATIVE_DOMAINS = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel', 'tone', 'revideo', 'hyperframes', 'ascii', 'kinetic', 'textgen'];
@@ -16,6 +17,7 @@ const REQUIRED_PACKAGE_SCRIPTS = {
   'lint': 'eslint src/ --cache --cache-location .eslintcache',
   'check:orphans': 'bash scripts/check-orphans.sh',
   'check:script-targets': 'node scripts/ci/check-package-script-targets.mjs',
+  'check:doc-links': 'node scripts/ci/check-doc-links.mjs',
   'check:examples': 'node scripts/ci/smoke-composition-examples.mjs',
   'test:quality:strict': 'node scripts/testing/test-quality-check.mjs --strict --baseline scripts/testing/test-quality-baseline.txt',
   'final-qa:test-quality': 'pnpm test:quality:strict',
@@ -35,6 +37,7 @@ const INCLUDED_SURFACES = [
   ['Root lint', 'pnpm lint'],
   ['Orphan source scan', 'pnpm check:orphans'],
   ['Package script target scan', 'pnpm check:script-targets'],
+  ['Documentation link scan', 'pnpm check:doc-links'],
   ['Strict test quality', 'pnpm final-qa:test-quality'],
   ['Example smoke', 'pnpm check:examples'],
   ['GUI production build', 'pnpm gui:build'],
@@ -269,8 +272,19 @@ function validateLiveReceipt(receiptPath, errors) {
     const artifactPath = resolveArtifactPath(result?.artifactPath || result?.artifact || result?.html || result?.path, receiptPath);
     const statusPass = result?.status === 'pass' || result?.success === true;
     const hasBytes = Number(result?.codeBytes ?? (artifactPath ? fs.statSync(artifactPath).size : 0)) > 0;
-    if (result && statusPass && artifactPath && hasBytes) covered.push(domain);
-    else missing.push(domain);
+    const artifactValidation = artifactPath ? validateCreativeDomainArtifact(domain, artifactPath, fs.readFileSync(artifactPath, 'utf8')) : null;
+    const receiptValidationPass = result?.artifactValidation?.status === 'pass';
+    if (result && statusPass && artifactPath && hasBytes && artifactValidation?.status === 'pass' && receiptValidationPass) {
+      covered.push(domain);
+    } else {
+      missing.push(domain);
+      if (artifactValidation?.status === 'fail') {
+        errors.push(`${domain} artifact failed domain validation: ${artifactValidation.errors.join('; ')}`);
+      }
+      if (result && !receiptValidationPass) {
+        errors.push(`${domain} receipt missing passing artifactValidation evidence`);
+      }
+    }
   }
 
   if (missing.length > 0) {

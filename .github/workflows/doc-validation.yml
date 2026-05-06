@@ -23,3 +23,5 @@ jobs:
           node-version: 20
       - name: Check Version Consistency
         run: node -e "const pkg = require('./package.json'); console.log('Package version:', pkg.version); console.log('OK');"
+      - name: Check Documentation Links
+        run: node scripts/ci/check-doc-links.mjs

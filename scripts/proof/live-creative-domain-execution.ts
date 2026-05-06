@@ -11,6 +11,7 @@ import path from 'node:path';
 import { getProviderConfig, listConfiguredProviders, type ProviderType } from '../../src/harness/MultiProviderConfig.js';
 import { selectLiveSmokeProvider } from '../../src/market/LiveProviderSmokeReceipt.js';
 import { readCurrentGitCommit } from '../../src/runtime-core/ProofReceiptValidator.js';
+import { validateCreativeDomainArtifact } from '../lib/creative-domain-artifact-validation.mjs';
 import { P5GeneratorV2 } from '../../src/generators/p5/P5GeneratorV2.js';
 import { SVGGenerator } from '../../src/generators/svg/SVGGenerator.js';
 import { StrudelGenerator } from '../../src/generators/strudel/StrudelGenerator.js';
@@ -57,6 +58,7 @@ interface DomainResult {
   codeBytes: number;
   provider: string;
   model: string;
+  artifactValidation?: { status: 'pass' | 'fail'; checks: Array<{ name: string; passed: boolean; message?: string }>; errors: string[] };
   error?: string;
 }
 
@@ -138,9 +140,10 @@ async function runDomain(domain: Domain, rootOutDir: string, timeoutMs: number, 
     const code = String(await generator.generate(prompt, generateOptions)).trim();
     const codeBytes = Buffer.byteLength(code, 'utf8');
     const artifactPath = path.join(rootOutDir, `${domain}.${EXTENSIONS[domain]}`);
+    const artifactValidation = validateCreativeDomainArtifact(domain, artifactPath, code);
     await mkdir(path.dirname(artifactPath), { recursive: true });
     await writeFile(artifactPath, `${code}\n`, 'utf8');
-    const status = codeBytes > 0 ? 'pass' : 'fail';
+    const status = codeBytes > 0 && artifactValidation.status === 'pass' ? 'pass' : 'fail';
     return {
       domain,
       prompt,
@@ -150,7 +153,8 @@ async function runDomain(domain: Domain, rootOutDir: string, timeoutMs: number, 
       codeBytes,
       provider,
       model,
-      error: status === 'pass' ? undefined : 'Generated code was empty',
+      artifactValidation,
+      error: status === 'pass' ? undefined : codeBytes > 0 ? `Artifact validation failed: ${artifactValidation.errors.join('; ')}` : 'Generated code was empty',
     };
   } catch (error) {
     return {

@@ -7,11 +7,15 @@ Status: first-pass defense plan for future agents.
 - Do not mark launch readiness from one passing root command. Map the exact claim to the exact proof.
 - Treat public docs as product surface. A stale public claim is a customer-facing bug.
 - Treat proof scripts as product code. A broken proof script is release-blocking if any claim depends on it.
+- Treat any proof receipt that is not bound to the current commit as suspect, even if every artifact path exists.
+- Treat non-empty artifact files as insufficient proof. Domain artifacts need structural validation and, for visual/audio/video claims, the deeper preview or human-senses proof where applicable.
 - Treat empty successful model output as suspicious until the event stream proves content, error state, and provider provenance.
 - Treat fallback success as degraded unless the fallback path produces explicit evidence.
 - Treat visual proof as false until decoded pixels show meaningful nonblank output.
 - Treat cancellation as incomplete until provider work, draft timeout controllers, and retry sleeps actually abort.
 - Treat branch protection and CI as live infrastructure, not repo intent. Read the remote state before claiming enforcement.
+- Treat public launch docs as mutable evidence, not a one-time fix; re-scan them after remediation commits because old blocker language can become false.
+- Treat broken local docs links as customer-facing trust failures and gate them in CI.
 
 ## Review Prompts For Future Persona Clusters
 

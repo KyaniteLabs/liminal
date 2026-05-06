@@ -6,12 +6,14 @@ Status: first-pass prevention plan.
 
 - Package script target integrity: parse `package.json` scripts and fail when local script targets do not exist.
 - Git/CI package install proof: install the current repo as a clean git dependency with `CI=1`, import `liminal-ai`, and run `liminal --version`.
-- Claim-to-proof ledger: fail launch docs when public claims lack command/live proof or explicit caveat.
-- Receipt integrity: validate commit SHA, timestamp freshness, provider identity, artifact existence, and case matrix for release-gate receipts.
+- Claim-to-proof ledger: fail launch docs when public claims lack command/live proof or explicit caveat, and reject stale resolved-blocker phrases after the matching FQA row is verified.
+- Receipt integrity: validate commit SHA, timestamp freshness, provider identity, artifact existence, and case matrix for release-gate receipts and final-QA surface receipts.
 - Strict test-quality mode: fail new or unbaselined weak assertions, empty tests, `.only`, skipped material tests without ledger entry, and untested examples.
 - Example smoke: compile or execute every public example exactly as written.
 - Integration and slow CI must be green before release readiness can be claimed.
 - Live creative-domain proof must cover every public launch domain or the launch docs must declare the narrower set.
+- Live creative-domain proof must include per-domain artifact validation evidence, and the final-QA surface gate must recompute domain validation instead of trusting receipt fields alone.
+- Documentation link validation must run for public docs indexes, feature docs, and launch docs.
 - Provider setup diagnostics: run credential-free validation for every documented provider and keep CLI provider shorthands aligned with ProviderRuntime defaults.
 - Browser/UI smoke: prove visible stop control, visible preview error state, and at least one Studio prompt-to-preview path.
 - Cancellation smoke: keep regression tests proving AbortSignal reaches provider calls, draft timeout aborts the active generation controller, and retry backoff aborts immediately.

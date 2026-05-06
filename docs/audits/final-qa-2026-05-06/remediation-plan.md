@@ -17,10 +17,10 @@ Release risk: highest. These items prevent honest launch claims and false releas
    - Remediation status: verified. Added `scripts/proof/route-performance-budget.ts`, `scripts/ci/check-package-script-targets.mjs`, `pnpm check:script-targets`, and regression coverage.
 
 2. Repair launch claim truth.
-   - Findings: FQA-004, FQA-005, FQA-008, FQA-009
+   - Findings: FQA-004, FQA-005, FQA-008, FQA-009, FQA-036, FQA-038
    - Action: create a feature-claim ledger and downgrade every public claim that lacks live proof. Replace placeholder PR review language with explicit placeholder truth or a real gate.
    - Proof: every launch/public claim maps to a passing command, live receipt, or documented caveat.
-   - Remediation status: verified. FQA-004, FQA-005, and FQA-008 are verified, and FQA-009 is live-proved by PR #497 passing `browser-and-e2e-smoke` and `build-and-test` on head `bfd6d963a62215caf335f70b8640c74165cd5cff`.
+   - Remediation status: verified. FQA-004, FQA-005, and FQA-008 are verified, FQA-009 is live-proved by PR #497 passing `browser-and-e2e-smoke` and `build-and-test` on head `bfd6d963a62215caf335f70b8640c74165cd5cff`, FQA-036 is fixed by updating public launch docs to the verified remediation state while retaining release-rerun caveats, and FQA-038 is fixed by restoring the missing architecture quick reference plus a local docs-link gate.
 
 3. Make branch protection real before publication.
    - Findings: FQA-007
@@ -51,10 +51,10 @@ Release risk: high. These items turn failures into success or weak proof into re
    - Remediation status: verified. FQA-003 is verified for streaming fallback errors. FQA-033 is verified across the API, generator, integration, and slow-CI failure classes: deterministic run/merge/approve paths pass; p5 generator empty output and invalid output retry intentionally; p5 generated globals are validated; local integration proof-model paths cover `generator-renderer`, `full-loop`, and `ralph-loop`; context/progress/gallery persistence no longer turns loop evidence into silent false success; `pnpm verify:integration` and `pnpm test:ci:slow` pass.
 
 2. Harden release-gate receipts.
-   - Findings: FQA-004
+   - Findings: FQA-004, FQA-035, FQA-037
    - Action: require commit SHA, timestamp freshness, provider identity, case matrix, and artifact existence checks.
    - Proof: receipt validator rejects stale, wrong-SHA, missing-artifact, and insufficient-case receipts.
-   - Remediation status: verified. `ProofReceiptValidator` now backs market readiness and Level 6 live receipts; model-assimilation reports include `gitCommit` and case coverage.
+   - Remediation status: verified. `ProofReceiptValidator` now backs market readiness and Level 6 live receipts; model-assimilation reports include `gitCommit` and case coverage. FQA-035 extends that defense to `pnpm final-qa:surface`: live creative-domain receipts now include `gitCommit`, and the surface gate rejects stale, wrong-commit, non-live, or provider/model-less receipts before counting all-domain artifacts. FQA-037 adds per-domain artifact validation so current-commit receipts cannot pass with non-empty junk files.
 
 3. Make evaluator degradation explicit.
    - Findings: FQA-010
@@ -147,10 +147,10 @@ Release risk: medium. These items prevent recurrence.
    - Remediation status: verified. `docs/agents/factory-artists/README.md` and `docs/agents/factory-artists/rag/README.md` now state the non-runtime boundary explicitly, and `test/unit/docs/factory-persona-boundary.test.ts` locks both the documentation and runtime `SkillLoader` behavior.
 
 1. Expand final QA gate coverage.
-   - Findings: FQA-013, FQA-015, FQA-034
+   - Findings: FQA-013, FQA-015, FQA-034, FQA-035, FQA-037, FQA-038
    - Action: include GUI, Bubble Tea, scripts, examples, pending-test classification, strict test-quality scanning, and all launch-scoped creative domains in final QA.
    - Proof: final QA script prints included surfaces/domains and fails on weak assertion fixtures or missing live artifacts.
-   - Remediation status: verified. `scripts/testing/test-quality-check.mjs` now has strict CLI mode and a warning baseline, `package.json` exposes `pnpm final-qa:test-quality`, `pnpm final-qa:surface`, `pnpm gui:build`, and `pnpm bubbletea:test`, `docs/launch/final-qa-test-surface-ledger.json` classifies every pending and skipped/gated test file, and `scripts/proof/live-creative-domain-execution.ts` defaults to all 12 launch domains. Live proof: `pnpm proof:live-creative-domains` passed with 12/12 GLM-generated artifacts and `pnpm final-qa:surface` reported 12/12 creative-domain coverage.
+   - Remediation status: verified. `scripts/testing/test-quality-check.mjs` now has strict CLI mode and a warning baseline, `package.json` exposes `pnpm final-qa:test-quality`, `pnpm final-qa:surface`, `pnpm gui:build`, `pnpm bubbletea:test`, and `pnpm check:doc-links`, `docs/launch/final-qa-test-surface-ledger.json` classifies every pending and skipped/gated test file, and `scripts/proof/live-creative-domain-execution.ts` defaults to all 12 launch domains. Live proof: post-FQA-037 `pnpm proof:live-creative-domains -- --timeout-ms=180000` passed with 12/12 GLM-generated artifacts carrying `artifactValidation: pass`, and `pnpm final-qa:surface` accepted the validated current-commit receipt.
 
 2. Repair observability proof and SSE replay.
    - Findings: FQA-025, FQA-026

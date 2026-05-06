@@ -34,3 +34,15 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 | `pnpm test:e2e` | pass with large skip count | E2E lane exits 0 for the enabled subset. | 5 files passed, 11 skipped; 46 tests passed, 50 skipped. Skips require launch-risk classification. |
 | 2026-05-06 | `pnpm test:ci:slow` | fail | Proves slow CI lane is not release-ready. | 3 files failed, 13 passed, 11 skipped; 56 tests failed, 159 passed, 51 skipped. |
 | 2026-05-06 | `jq` parse of `coverage-summary.json` | pass | Coverage summary JSON is syntactically valid and reports 5,229 tracked files plus 364 high-risk files. | Does not validate every `jsonl` row. |
+| 2026-05-06 remediation | `pnpm vitest run test/scripts/package-script-targets.test.ts --coverage=false` | pass | Package scripts no longer reference missing local command targets and route-performance proof remains wired. | 1 file passed, 2 tests passed. |
+| 2026-05-06 remediation | `pnpm check:script-targets` | pass | Local package script target scan passes and writes a receipt. | Receipt: `.omx/proof/package-script-targets.json`. |
+| 2026-05-06 remediation | `pnpm proof:route-performance` | pass | Creative-domain route selection and preview-domain detection proof executes and writes a receipt. | Receipt: `.omx/proof/route-performance-budget.json`. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/launch-claim-ledger.test.ts --coverage=false` | pass | Public claim surfaces now point to a launch-truth ledger and placeholder PR-review language is not represented as a required gate. | 1 file passed, 3 tests passed. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/harness-self-healing-docs.test.ts --coverage=false` | pass | HarnessUpdater docs now match the current manual-memory runtime behavior. | 1 file passed, 1 test passed. |
+| 2026-05-06 remediation | `gh api repos/KyaniteLabs/liminal/branches/main/protection` | pass | Live `main` branch protection now requires status checks and PR review. | Required checks: `build-and-test`, `browser-and-e2e-smoke`, `validate-docs`; one approval; admin enforcement; conversation resolution; no force pushes/deletions. |
+| 2026-05-06 remediation | `pnpm typecheck` | pass | New TS proof and regression tests typecheck under the root TypeScript gate. | Exit 0. |
+| 2026-05-06 remediation | `pnpm build` | pass | Root build succeeds after Batch 0 remediation. | Exit 0. |
+| 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate still passes. | Exit 0. |
+| 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the new regression tests. | 661 files scanned; all checks passed. |
+| 2026-05-06 remediation | `pnpm test:e2e` | pass with known skip caveat | Local command behind the new `browser-and-e2e-smoke` PR job exits 0. | 5 files passed, 11 skipped; 46 tests passed, 50 skipped. FQA-009 remains fixed pending first GitHub PR run and skipped-test launch classification. |
+| 2026-05-06 remediation | `git diff --check` | pass | Batch 0 diff has no whitespace errors. | Exit 0. |

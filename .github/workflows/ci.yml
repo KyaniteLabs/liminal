@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 10 * * 1'
 
 permissions:
   contents: read
@@ -32,10 +35,14 @@ jobs:
         run: pnpm audit --audit-level moderate
       - name: Orphan source check
         run: pnpm check:orphans
+      - name: Package script target check
+        run: pnpm check:script-targets
       - run: pnpm lint
       - run: pnpm build
       - name: Prompt surface audit
         run: npx tsx scripts/ci/check-prompt-surface.ts
+      - name: Route performance proof
+        run: pnpm proof:route-performance
       - run: pnpm test:ci:fast
       - name: Test quality check
         run: pnpm test:quality
@@ -100,6 +107,25 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 7
+
+  browser-and-e2e-smoke:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Verify toolchain
+        run: |
+          echo "Node: $(node --version)"
+          echo "pnpm: $(pnpm --version)"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec playwright install chromium
+      - run: pnpm test:e2e
 
   slow-browser-and-e2e:
     if: github.event_name != 'pull_request'

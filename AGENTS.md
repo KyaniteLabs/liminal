@@ -38,7 +38,7 @@ Liminal is configured as a single-context repo; read available domain docs oppor
 
 ## Overview
 
-Liminal is a creative coding agent with a **Meta-Harness** — a self-improving outer loop that observes failures, detects patterns, and applies targeted fixes. Agents operate inside this loop, using tools to generate, evaluate, and improve creative code.
+Liminal is a creative coding agent with a **Meta-Harness** — an outer-loop observability system that observes failures, detects patterns, and records manual adaptation advice. Agents operate inside this loop, using tools to generate, evaluate, and improve creative code; automatic HarnessUpdater runtime fixes are not current launch behavior.
 
 ### Architecture
 
@@ -145,7 +145,7 @@ git branch -d <branch-name>
 |-----------|----------|---------|
 | FailureLogger | `src/harness/FailureLogger.ts` | Logs failures with metadata for pattern analysis |
 | PatternDetector | `src/harness/PatternDetector.ts` | Analyzes failures to detect recurring patterns |
-| HarnessUpdater | `src/harness/HarnessUpdater.ts` | Applies adaptations based on detected patterns |
+| HarnessUpdater | `src/harness/HarnessUpdater.ts` | Records manual adaptation advice based on detected patterns; automatic runtime fixes are not active launch behavior |
 | HarnessAgent | `src/harness/agent/HarnessAgent.ts` | Executes tasks with rollback capability |
 | ValidationGuard | `src/harness/tools/ValidationGuard.ts` | Safety checks before applying changes |
 | RateLimiter | `src/harness/tools/RateLimiter.ts` | Prevents API abuse |

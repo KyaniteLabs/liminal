@@ -1,4 +1,4 @@
-name: PR Review
+name: PR Metadata Summary
 
 on:
   pull_request:
@@ -7,20 +7,19 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  issues: write
 
 concurrency:
   group: liminal-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  review:
+  metadata-summary:
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 5
     steps:
-      - name: PR Review Summary
+      - name: Informational PR summary
         run: |
-          echo "PR Review check — automated review not yet implemented."
+          echo "Informational PR metadata summary. This is not an automated review gate."
+          echo "Required human review is enforced by GitHub branch protection PR review policy."
           echo "PR Number: ${{ github.event.pull_request.number }}"
           echo "Branch: ${{ github.head_ref }}"

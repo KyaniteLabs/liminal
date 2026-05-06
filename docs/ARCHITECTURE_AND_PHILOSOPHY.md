@@ -50,18 +50,18 @@ Key subsystems and their roles:
 
 ## Meta-Harness (added 2026-04-01)
 
-The Meta-Harness implements the **Ralph Wiggum Principle**: the harness (agent model) "sits on the loop" and learns from failures, while the generators (generator models) run "in the loop" creating code. It is an outer-loop observability system that observes failures, detects patterns, and updates the harness itself.
+The Meta-Harness implements the **Ralph Wiggum Principle**: the harness (agent model) "sits on the loop" and learns from failures, while the generators (generator models) run "in the loop" creating code. It is currently in manual-memory mode: it observes failures, detects patterns, records adaptation advice, and requires a human or agent remediation pass to apply code changes.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                      META-HARNESS (Outer Loop)                       │
 │  ┌──────────────┐  ┌────────────────┐  ┌──────────────────┐          │
-│  │ FailureLogger │──▶│ PatternDetector │──▶│ HarnessUpdater  │          │
+│  │ FailureLogger │──▶│ PatternDetector │──▶│ Manual Memory   │          │
 │  └──────────────┘  └────────────────┘  └──────────────────┘          │
 │         │                   │                     │                  │
 │         ▼                   ▼                     ▼                  │
 │  ~/.liminal/         Known Patterns        Applied Adaptations       │
-│  failures/           (6 patterns)          (logged + reported)       │
+│  failures/           (6 patterns)          (manual fix advice)       │
 └─────────────────────────────────────────────────────────────────────┘
                               │
                               ▼ observes

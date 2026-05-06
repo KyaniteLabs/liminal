@@ -26,7 +26,7 @@
 
 <section class="hero">
     <h1>Features &amp; Guardrails</h1>
-    <p>Complete feature status, guardrail details, and generation modes.</p>
+    <p>Feature status, proof coverage, guardrail details, and generation modes.</p>
 </section>
 
 <div class="container">
@@ -34,23 +34,24 @@
 <!-- Feature Status -->
 <section class="section">
     <h2 class="section-title">Feature Status</h2>
+    <p class="section-subtitle">Launch labels are governed by <a href="launch/feature-claim-ledger-2026-05-06.md">feature-claim-ledger-2026-05-06.md</a>. A feature can be implemented while still needing live launch proof.</p>
     <table>
         <thead><tr><th>Feature</th><th>Status</th><th>Details</th></tr></thead>
         <tbody>
-            <tr><td>11 Generators</td><td><span class="badge badge-success">Complete</span></td><td>p5, GLSL, Three.js, Strudel, Hydra, Tone.js, Revideo, HTML, ASCII, Kinetic, TextGen</td></tr>
-            <tr><td>Multi-Agent Critique</td><td><span class="badge badge-success">Complete</span></td><td>3-agent board: Minimalist, Expressionist, Technician</td></tr>
-            <tr><td>Compost Mill</td><td><span class="badge badge-success">Complete</span></td><td>Digest &rarr; Shred &rarr; Collide &rarr; Score &rarr; Promote pipeline</td></tr>
-            <tr><td>Self-Improving Harness</td><td><span class="badge badge-success">Complete</span></td><td>Failure logging, pattern detection, targeted fixes via 21 tools</td></tr>
-            <tr><td>Music Theory Engine</td><td><span class="badge badge-success">Complete</span></td><td>Euclidean rhythms, Markov chains, scales, chord progressions</td></tr>
-            <tr><td>Audio Pipeline</td><td><span class="badge badge-success">Complete</span></td><td>Audio analysis, pitch detection, visual parameter mapping</td></tr>
-            <tr><td>Aesthetic Guardrails</td><td><span class="badge badge-success">Complete</span></td><td>Color harmony, layout, typography, sound quality critics</td></tr>
-            <tr><td>Model-Agnostic LLM</td><td><span class="badge badge-success">Complete</span></td><td>7+ providers via ProviderFactory with circuit breaker</td></tr>
-            <tr><td>Circuit Breaker</td><td><span class="badge badge-success">Complete</span></td><td>Automatic failover with role-specific fallback chains</td></tr>
-            <tr><td>Bubble Tea TUI</td><td><span class="badge badge-success">Complete</span></td><td>Go-based TUI with HTTP/SSE bridge, provider switching</td></tr>
-            <tr><td>Task Ledger</td><td><span class="badge badge-success">Complete</span></td><td>Self-hosting corpus, runner, verifier (<code>src/ledger/</code>)</td></tr>
-            <tr><td>LiminalFS</td><td><span class="badge badge-success">Complete</span></td><td>ProjectStore, EventStore, AssetStore (<code>src/fs/</code>)</td></tr>
-            <tr><td>Guardrails M1-M18</td><td><span class="badge badge-success">Complete</span></td><td>Core, extended, and compliance layers</td></tr>
-            <tr><td>Security Hardening</td><td><span class="badge badge-success">Complete</span></td><td>SSRF protection, rate limiting, sandbox, CSRF, helmet</td></tr>
+            <tr><td>11 Generators</td><td><span class="badge badge-warning">Implemented; proof partial</span></td><td>Default live proof currently covers p5, SVG, Strudel, Tone.js, and Revideo. GLSL, Three.js, Hydra, HyperFrames, ASCII, Kinetic, and TextGen need all-domain live receipts before launch copy can call them proven.</td></tr>
+            <tr><td>Multi-Agent Critique</td><td><span class="badge badge-info">Implemented</span></td><td>3-agent board: Minimalist, Expressionist, Technician. Product launch claims require the claim ledger proof row.</td></tr>
+            <tr><td>Compost Mill</td><td><span class="badge badge-info">Experimental</span></td><td>Digest &rarr; Shred &rarr; Collide &rarr; Score &rarr; Promote pipeline; public value claims stay experimental until live proof is current.</td></tr>
+            <tr><td>Self-Improving Harness</td><td><span class="badge badge-warning">Manual-memory mode</span></td><td>Failure logging and pattern detection record manual adaptation advice; automatic HarnessUpdater runtime fixes are not active launch behavior.</td></tr>
+            <tr><td>Music Theory Engine</td><td><span class="badge badge-info">Implemented</span></td><td>Euclidean rhythms, Markov chains, scales, chord progressions; claim ledger maps the current proof boundary.</td></tr>
+            <tr><td>Audio Pipeline</td><td><span class="badge badge-info">Implemented</span></td><td>Audio analysis, pitch detection, visual parameter mapping; launch proof is feature-specific.</td></tr>
+            <tr><td>Aesthetic Guardrails</td><td><span class="badge badge-info">Experimental</span></td><td>Color harmony, layout, typography, sound quality critics; not a blanket guarantee of visual quality.</td></tr>
+            <tr><td>Model-Agnostic LLM</td><td><span class="badge badge-warning">Setup caveated</span></td><td>ProviderFactory supports multiple providers, but setup diagnostics and live proof are provider-specific.</td></tr>
+            <tr><td>Circuit Breaker</td><td><span class="badge badge-warning">Evidence-limited</span></td><td>Fallback chains exist, but final QA found fallback stream error handling still needs remediation before broad reliability claims.</td></tr>
+            <tr><td>Bubble Tea TUI</td><td><span class="badge badge-info">Smoke-proven</span></td><td>Go-based TUI with HTTP/SSE bridge, provider switching, and deterministic user-surface proofs.</td></tr>
+            <tr><td>Task Ledger</td><td><span class="badge badge-info">Implemented</span></td><td>Self-hosting corpus, runner, verifier (<code>src/ledger/</code>); examples and provenance proof remain tracked separately.</td></tr>
+            <tr><td>LiminalFS</td><td><span class="badge badge-info">Implemented</span></td><td>ProjectStore, EventStore, AssetStore (<code>src/fs/</code>).</td></tr>
+            <tr><td>Guardrails M1-M18</td><td><span class="badge badge-warning">Proof-limited</span></td><td>Core, extended, and compliance layers exist; launch wording must reference the current command proof per guardrail surface.</td></tr>
+            <tr><td>Security Hardening</td><td><span class="badge badge-warning">Audit pending</span></td><td>SSRF protection, rate limiting, sandbox, CSRF, and helmet exist, but release security claims remain gated by final QA findings.</td></tr>
             <tr><td>Thinking-Trace Loop</td><td><span class="badge badge-info">Active</span></td><td>Meta-learning from LLM reasoning traces</td></tr>
             <tr><td>Plugin System</td><td><span class="badge badge-info">Active</span></td><td>PluginManager, extensible generator registry</td></tr>
         </tbody>

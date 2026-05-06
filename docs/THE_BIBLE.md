@@ -249,6 +249,8 @@ Failures:   0 critical
 
 **Location:** `src/harness/`
 
+Current runtime truth: the Meta-Harness is in manual-memory mode. It logs failures, detects patterns, and records adaptation advice for a human or agent remediation pass. Automatic HarnessUpdater code edits are not active launch behavior.
+
 **Components:**
 
 | Component | File | Purpose | Status |
@@ -256,7 +258,7 @@ Failures:   0 critical
 | HarnessMemory | `HarnessMemory.ts` | Persistent storage for tasks, adaptations, episodes | 🟢 Active |
 | FailureLogger | `FailureLogger.ts` | Logs failures to ~/.liminal/failures/ | 🟢 Active |
 | PatternDetector | `PatternDetector.ts` | Detects patterns in failures | 🟢 Active |
-| HarnessUpdater | `HarnessUpdater.ts` | Applies adaptations to fix issues | 🟢 Active |
+| HarnessUpdater | `HarnessUpdater.ts` | Records manual adaptation advice from detected patterns | 🟡 Manual-memory mode |
 | HarnessAgent | `agent/HarnessAgent.ts` | coding tools, jmunch search, skill loading | 🟢 Active |
 | ValidationGuard | `tools/ValidationGuard.ts` | Prevents invalid edits | 🟢 Active |
 | RateLimiter | `tools/RateLimiter.ts` | Limits execution rate | 🟢 Active |

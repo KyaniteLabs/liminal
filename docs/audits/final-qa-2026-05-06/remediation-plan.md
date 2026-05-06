@@ -1,6 +1,6 @@
 # Remediation Plan
 
-Status: first-pass plan, not executed.
+Status: first-pass plan; Batch 0 partially executed in `fix/final-qa-batch0-remediation-20260506`.
 
 Saturation is not achieved. This plan converts confirmed first-pass findings into an execution order so remediation can begin without new strategic decisions once the audit owner opens implementation worktrees.
 
@@ -14,21 +14,25 @@ Release risk: highest. These items prevent honest launch claims and false releas
    - Findings: FQA-001
    - Action: either restore `scripts/proof/route-performance-budget.ts` with real assertions or remove the package script and every launch claim that depends on it.
    - Proof: package-script target scan passes; `pnpm proof:route-performance` exits 0 and writes a receipt.
+   - Remediation status: verified. Added `scripts/proof/route-performance-budget.ts`, `scripts/ci/check-package-script-targets.mjs`, `pnpm check:script-targets`, and regression coverage.
 
 2. Repair launch claim truth.
    - Findings: FQA-004, FQA-005, FQA-008, FQA-009
    - Action: create a feature-claim ledger and downgrade every public claim that lacks live proof. Replace placeholder PR review language with explicit placeholder truth or a real gate.
    - Proof: every launch/public claim maps to a passing command, live receipt, or documented caveat.
+   - Remediation status: FQA-005 and FQA-008 verified; FQA-009 fixed in workflow/branch-protection config but still needs a GitHub PR run; FQA-004 remains open for receipt-hardening in Batch 1.
 
 3. Make branch protection real before publication.
    - Findings: FQA-007
    - Action: configure required checks and PR review policy on `main`.
    - Proof: live `gh api` readback shows required checks/reviews.
+   - Remediation status: verified. Live readback requires `build-and-test`, `browser-and-e2e-smoke`, `validate-docs`, one PR approval, stale-review dismissal, admin enforcement, conversation resolution, linear history, and no force pushes/deletions.
 
 4. Correct self-healing/HarnessUpdater claims.
    - Findings: FQA-012
    - Action: either restore a tested runtime implementation or rewrite docs to the current manual-memory behavior.
    - Proof: docs/runtime consistency test or direct source check.
+   - Remediation status: verified. Docs now describe manual-memory behavior and `test/unit/harness-self-healing-docs.test.ts` locks the claim.
 
 ## Batch 1: Silent Failure And Evidence Integrity
 

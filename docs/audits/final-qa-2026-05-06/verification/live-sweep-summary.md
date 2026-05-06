@@ -21,11 +21,17 @@ This summary distinguishes deterministic local proof from live provider proof.
 
 ## Failed Or Limited Release Proofs
 
-- `pnpm proof:route-performance`: failed because `scripts/proof/route-performance-budget.ts` is missing.
+- `pnpm proof:route-performance`: remediated after audit. The restored proof now passes and writes `.omx/proof/route-performance-budget.json`.
 - `pnpm verify:integration`: failed, with 86 failed tests across 4 integration files.
 - `pnpm test:ci:slow`: failed, with 56 failed tests across 3 slow-suite files.
 - `pnpm test:e2e`: exited 0, but 50 of 96 tests were skipped.
 - `qa-creative-domains --no-serve`: wrote a cockpit bundle but reported missing live artifacts for glsl, three, hydra, hyperframes, ascii, kinetic, and textgen.
+
+## Remediated Release-Control Proofs
+
+- Package script target integrity: `pnpm check:script-targets` passes and writes `.omx/proof/package-script-targets.json`.
+- Branch protection: live `gh api` readback now requires `build-and-test`, `browser-and-e2e-smoke`, `validate-docs`, one PR approval, stale-review dismissal, admin enforcement, conversation resolution, linear history, and no force pushes/deletions.
+- PR review placeholder truth: `.github/workflows/pr-review.yml` is now informational only; the required review gate is GitHub branch protection.
 
 ## Audit Interpretation
 

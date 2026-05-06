@@ -11,6 +11,8 @@ describe('live creative-domain execution matrix', () => {
       expect(script).toMatch(new RegExp(`['"]${domain}['"]`));
     }
     expect(script).toMatch(/let domains: Domain\[\] = \[\.\.\.LAUNCH_CREATIVE_DOMAINS\]/);
+    expect(script).toContain('readCurrentGitCommit');
+    expect(script).toMatch(/gitCommit:\s*readCurrentGitCommit\(process\.cwd\(\)\)/);
   });
 
   it('treats HyperFrames as the HTML-backed video output and does not promote generic HTML in --all', () => {

@@ -31,6 +31,25 @@ describe('launch claim truth ledger', () => {
     expect(features).toContain('feature-claim-ledger-2026-05-06.md');
     expect(features).not.toContain('<tr><td>11 Generators</td><td><span class="badge badge-success">Complete</span></td>');
     expect(features).not.toContain('<tr><td>Self-Improving Harness</td><td><span class="badge badge-success">Complete</span></td>');
+    expect(features).toContain('12 Creative Domains');
+    expect(features).toContain('Live-covered; release-rerun required');
+  });
+
+  it('does not retain stale final-QA blocker copy after remediation is verified', () => {
+    const publicLaunchDocs = [
+      readRepoFile('docs/features.html'),
+      readRepoFile('docs/launch/feature-claim-ledger-2026-05-06.md'),
+      readRepoFile('docs/launch/ml-feature-value-matrix.md'),
+    ].join('\n');
+
+    for (const stalePhrase of [
+      'Default live proof currently covers p5, SVG, Strudel, Tone.js, and Revideo',
+      'FQA-003 remains open',
+      'Integration and slow CI remain red',
+      'FQA-004 tracks the remaining receipt-hardening work',
+    ]) {
+      expect(publicLaunchDocs).not.toContain(stalePhrase);
+    }
   });
 
   it('keeps automated PR-review placeholder language out of required-gate docs', () => {

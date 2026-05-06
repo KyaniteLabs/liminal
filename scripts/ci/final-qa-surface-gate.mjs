@@ -8,6 +8,7 @@ const LAUNCH_CREATIVE_DOMAINS = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel
 const DEFAULT_RECEIPT = path.join(ROOT, '.omx/proof/domain-gauntlet-live.json');
 const DEFAULT_LEDGER = path.join(ROOT, 'docs/launch/final-qa-test-surface-ledger.json');
 const DEFAULT_PROOF_OUT = path.join(ROOT, '.omx/proof/final-qa-surface-gate.json');
+const DEFAULT_RECEIPT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const REQUIRED_PACKAGE_SCRIPTS = {
   'typecheck': 'tsc --noEmit',
@@ -91,6 +92,59 @@ function parseArgs(argv) {
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+function readCurrentGitCommit(repoRoot) {
+  const gitDir = resolveGitDir(repoRoot);
+  if (!gitDir) return null;
+
+  const headPath = path.join(gitDir, 'HEAD');
+  const head = readText(headPath)?.trim();
+  if (!head) return null;
+  if (/^[0-9a-f]{40}$/i.test(head)) return head;
+
+  const refPrefix = 'ref: ';
+  if (!head.startsWith(refPrefix)) return null;
+  const refName = head.slice(refPrefix.length).trim();
+  const directRef = readText(path.join(gitDir, refName))?.trim();
+  if (directRef && /^[0-9a-f]{40}$/i.test(directRef)) return directRef;
+
+  const commonDir = resolveCommonGitDir(gitDir);
+  const commonRef = commonDir ? readText(path.join(commonDir, refName))?.trim() : null;
+  if (commonRef && /^[0-9a-f]{40}$/i.test(commonRef)) return commonRef;
+
+  const packedRefs = commonDir ? readText(path.join(commonDir, 'packed-refs')) : readText(path.join(gitDir, 'packed-refs'));
+  const packed = packedRefs
+    ?.split('\n')
+    .map(line => line.trim())
+    .find(line => line.endsWith(` ${refName}`))
+    ?.split(' ')[0];
+  return packed && /^[0-9a-f]{40}$/i.test(packed) ? packed : null;
+}
+
+function resolveGitDir(repoRoot) {
+  const dotGit = path.join(repoRoot, '.git');
+  if (!fs.existsSync(dotGit)) return null;
+  const stat = fs.statSync(dotGit);
+  if (stat.isDirectory()) return dotGit;
+  const content = readText(dotGit)?.trim();
+  const prefix = 'gitdir: ';
+  if (!content?.startsWith(prefix)) return null;
+  const gitDir = content.slice(prefix.length).trim();
+  return path.resolve(repoRoot, gitDir);
+}
+
+function resolveCommonGitDir(gitDir) {
+  const commonDir = readText(path.join(gitDir, 'commondir'))?.trim();
+  return commonDir ? path.resolve(gitDir, commonDir) : gitDir;
+}
+
+function readText(filePath) {
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return null;
+  }
 }
 
 function walkFiles(dir) {
@@ -200,6 +254,7 @@ function validateLiveReceipt(receiptPath, errors) {
   }
 
   const receipt = readJson(receiptPath);
+  validateReceiptIntegrity(receipt, errors);
   const results = normalizeReceiptResults(receipt);
   const byDomain = new Map();
   for (const result of results) {
@@ -223,6 +278,45 @@ function validateLiveReceipt(receiptPath, errors) {
   }
 
   return { covered, missing };
+}
+
+function validateReceiptIntegrity(receipt, errors) {
+  if (!(receipt?.status === 'pass' || receipt?.ready === true)) {
+    errors.push(`Live creative-domain receipt status ${String(receipt?.status ?? receipt?.ready ?? 'unknown')} is not pass`);
+  }
+
+  if (receipt?.mode !== 'live-execution') {
+    errors.push(`Live creative-domain receipt mode ${String(receipt?.mode ?? 'missing')} is not live-execution`);
+  }
+
+  if (typeof receipt?.generatedAt !== 'string') {
+    errors.push('Live creative-domain receipt missing generatedAt');
+  } else {
+    const generatedAt = Date.parse(receipt.generatedAt);
+    if (Number.isNaN(generatedAt)) {
+      errors.push('Live creative-domain receipt generatedAt is unreadable');
+    } else if (Date.now() - generatedAt > DEFAULT_RECEIPT_MAX_AGE_MS) {
+      errors.push(`Live creative-domain receipt is stale (${receipt.generatedAt})`);
+    } else if (generatedAt - Date.now() > 5 * 60 * 1000) {
+      errors.push(`Live creative-domain receipt generatedAt is in the future (${receipt.generatedAt})`);
+    }
+  }
+
+  const gitCommit = readCurrentGitCommit(ROOT);
+  if (!gitCommit) {
+    errors.push('Current git commit unavailable for live creative-domain receipt validation');
+  } else if (typeof receipt?.gitCommit !== 'string' || receipt.gitCommit.length === 0) {
+    errors.push('Live creative-domain receipt missing gitCommit');
+  } else if (receipt.gitCommit !== gitCommit) {
+    errors.push(`Live creative-domain receipt gitCommit ${receipt.gitCommit} does not match current ${gitCommit}`);
+  }
+
+  if (typeof receipt?.provider !== 'string' || receipt.provider.trim().length === 0) {
+    errors.push('Live creative-domain receipt missing provider');
+  }
+  if (typeof receipt?.model !== 'string' || receipt.model.trim().length === 0) {
+    errors.push('Live creative-domain receipt missing model');
+  }
 }
 
 function printReport({ ledgerResult, receiptResult }) {

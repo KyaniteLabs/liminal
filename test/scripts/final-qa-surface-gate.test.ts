@@ -10,18 +10,29 @@ const scriptPath = path.join(repoRoot, 'scripts/ci/final-qa-surface-gate.mjs');
 const ledgerPath = path.join(repoRoot, 'docs/launch/final-qa-test-surface-ledger.json');
 const launchDomains = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel', 'tone', 'revideo', 'hyperframes', 'ascii', 'kinetic', 'textgen'];
 
-function makeReceipt(tempRoot: string, domains = launchDomains): string {
+function currentGitCommit(): string {
+  return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).trim();
+}
+
+function makeReceipt(tempRoot: string, domains = launchDomains, overrides: Record<string, unknown> = {}): string {
   const artifactDir = path.join(tempRoot, 'artifacts');
   mkdirSync(artifactDir, { recursive: true });
   const receiptPath = path.join(tempRoot, 'domain-gauntlet-live.json');
   const receipt = {
     contract: 'liminal-live-creative-domain-execution-v1',
     status: domains.length === launchDomains.length ? 'pass' : 'fail',
+    ready: domains.length === launchDomains.length,
+    mode: 'live-execution',
+    generatedAt: new Date().toISOString(),
+    gitCommit: currentGitCommit(),
+    provider: 'test-provider',
+    model: 'test-model',
     domains: domains.map((domain) => {
       const artifactPath = path.join(artifactDir, `${domain}.txt`);
       writeFileSync(artifactPath, `${domain} artifact`);
       return { domain, status: 'pass', artifactPath, codeBytes: 16 };
     }),
+    ...overrides,
   };
   writeFileSync(receiptPath, JSON.stringify(receipt, null, 2));
   return receiptPath;
@@ -85,6 +96,55 @@ describe('final QA surface gate', () => {
 
       expect(result.status).toBe(1);
       expect(output).toContain('Missing creative-domain live artifacts: glsl');
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('fails when a complete live receipt is not bound to the current commit', () => {
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-final-qa-surface-stale-commit-'));
+    try {
+      const receiptPath = makeReceipt(tempRoot, launchDomains, { gitCommit: '0'.repeat(40) });
+      const result = spawnSync(process.execPath, [
+        scriptPath,
+        '--receipt',
+        receiptPath,
+        '--ledger',
+        ledgerPath,
+        '--no-write-proof',
+      ], {
+        cwd: repoRoot,
+        encoding: 'utf8',
+      });
+      const output = `${result.stdout}\n${result.stderr}`;
+
+      expect(result.status).toBe(1);
+      expect(output).toContain('Live creative-domain receipt gitCommit');
+      expect(output).toContain('does not match current');
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('fails when a complete live receipt is stale', () => {
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-final-qa-surface-stale-time-'));
+    try {
+      const receiptPath = makeReceipt(tempRoot, launchDomains, { generatedAt: '2020-01-01T00:00:00.000Z' });
+      const result = spawnSync(process.execPath, [
+        scriptPath,
+        '--receipt',
+        receiptPath,
+        '--ledger',
+        ledgerPath,
+        '--no-write-proof',
+      ], {
+        cwd: repoRoot,
+        encoding: 'utf8',
+      });
+      const output = `${result.stdout}\n${result.stderr}`;
+
+      expect(result.status).toBe(1);
+      expect(output).toContain('Live creative-domain receipt is stale');
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
     }

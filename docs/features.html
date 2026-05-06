@@ -38,7 +38,7 @@
     <table>
         <thead><tr><th>Feature</th><th>Status</th><th>Details</th></tr></thead>
         <tbody>
-            <tr><td>11 Generators</td><td><span class="badge badge-warning">Implemented; proof partial</span></td><td>Default live proof currently covers p5, SVG, Strudel, Tone.js, and Revideo. GLSL, Three.js, Hydra, HyperFrames, ASCII, Kinetic, and TextGen need all-domain live receipts before launch copy can call them proven.</td></tr>
+            <tr><td>12 Creative Domains</td><td><span class="badge badge-info">Live-covered; release-rerun required</span></td><td>Current final QA proof covers p5, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, and TextGen. Public launch copy must use a fresh, current-commit live receipt before calling release output proven.</td></tr>
             <tr><td>Multi-Agent Critique</td><td><span class="badge badge-info">Implemented</span></td><td>3-agent board: Minimalist, Expressionist, Technician. Product launch claims require the claim ledger proof row.</td></tr>
             <tr><td>Compost Mill</td><td><span class="badge badge-info">Experimental</span></td><td>Digest &rarr; Shred &rarr; Collide &rarr; Score &rarr; Promote pipeline; public value claims stay experimental until live proof is current.</td></tr>
             <tr><td>Self-Improving Harness</td><td><span class="badge badge-warning">Manual-memory mode</span></td><td>Failure logging and pattern detection record manual adaptation advice; automatic HarnessUpdater runtime fixes are not active launch behavior.</td></tr>
@@ -46,7 +46,7 @@
             <tr><td>Audio Pipeline</td><td><span class="badge badge-info">Implemented</span></td><td>Audio analysis, pitch detection, visual parameter mapping; launch proof is feature-specific.</td></tr>
             <tr><td>Aesthetic Guardrails</td><td><span class="badge badge-info">Experimental</span></td><td>Color harmony, layout, typography, sound quality critics; not a blanket guarantee of visual quality.</td></tr>
             <tr><td>Model-Agnostic LLM</td><td><span class="badge badge-warning">Setup caveated</span></td><td>ProviderFactory supports multiple providers, but setup diagnostics and live proof are provider-specific.</td></tr>
-            <tr><td>Circuit Breaker</td><td><span class="badge badge-warning">Evidence-limited</span></td><td>Fallback chains exist, but final QA found fallback stream error handling still needs remediation before broad reliability claims.</td></tr>
+            <tr><td>Circuit Breaker</td><td><span class="badge badge-warning">Stream-failure guarded</span></td><td>Fallback stream errors now surface as failures instead of empty successful assistant responses. Broad automatic failover reliability claims still need provider-specific live proof.</td></tr>
             <tr><td>Bubble Tea TUI</td><td><span class="badge badge-info">Smoke-proven</span></td><td>Go-based TUI with HTTP/SSE bridge, provider switching, and deterministic user-surface proofs.</td></tr>
             <tr><td>Task Ledger</td><td><span class="badge badge-info">Implemented</span></td><td>Self-hosting corpus, runner, verifier (<code>src/ledger/</code>); examples and provenance proof remain tracked separately.</td></tr>
             <tr><td>LiminalFS</td><td><span class="badge badge-info">Implemented</span></td><td>ProjectStore, EventStore, AssetStore (<code>src/fs/</code>).</td></tr>

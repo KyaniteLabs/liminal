@@ -10,6 +10,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { getProviderConfig, listConfiguredProviders, type ProviderType } from '../../src/harness/MultiProviderConfig.js';
 import { selectLiveSmokeProvider } from '../../src/market/LiveProviderSmokeReceipt.js';
+import { readCurrentGitCommit } from '../../src/runtime-core/ProofReceiptValidator.js';
 import { P5GeneratorV2 } from '../../src/generators/p5/P5GeneratorV2.js';
 import { SVGGenerator } from '../../src/generators/svg/SVGGenerator.js';
 import { StrudelGenerator } from '../../src/generators/strudel/StrudelGenerator.js';
@@ -65,6 +66,7 @@ interface LiveCreativeDomainReceipt {
   status: 'pass' | 'fail';
   ready: boolean;
   mode: 'live-execution';
+  gitCommit: string | null;
   provider: string;
   model: string;
   launchDomains: Domain[];
@@ -186,6 +188,7 @@ async function main(): Promise<void> {
     status: failed.length === 0 && missingDomains.length === 0 ? 'pass' : 'fail',
     ready: failed.length === 0 && missingDomains.length === 0,
     mode: 'live-execution',
+    gitCommit: readCurrentGitCommit(process.cwd()),
     provider,
     model: config.model,
     launchDomains: [...LAUNCH_CREATIVE_DOMAINS],

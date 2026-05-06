@@ -9,6 +9,7 @@ import puppeteer, { Browser } from 'puppeteer';
 import { generateHTML } from '../utils/generateHTML.js';
 import { getChromeArgs } from '../security/SandboxConfig.js';
 import { Logger } from '../utils/Logger.js';
+import { getLocalP5ScriptForUrl } from '../utils/browserAssetFallbacks.js';
 
 
 export interface SandboxResult {
@@ -81,22 +82,27 @@ export async function runInSandbox(
     page.setDefaultTimeout(timeoutMs);
     page.setDefaultNavigationTimeout(timeoutMs);
 
-    // Restrict network: only allow p5 CDN
+    // Restrict network: only allow generated p5 script requests, fulfilled locally.
     await page.setRequestInterception(true);
     page.on('request', (req) => {
-      const url = req.url();
-      if (
-        url.startsWith('https://cdnjs.cloudflare.com/') &&
-        url.includes('p5')
-      ) {
-        void req.continue().catch((err) => {
-          Logger.debug('SandboxRunner', 'Request continue failed:', err);
+      void (async () => {
+        const localScript = await getLocalP5ScriptForUrl(req.url());
+        if (localScript) {
+          await req.respond({
+            status: 200,
+            contentType: 'application/javascript; charset=utf-8',
+            body: localScript,
+          });
+          return;
+        }
+
+        await req.abort();
+      })().catch((err) => {
+        Logger.debug('SandboxRunner', 'Request handling failed:', err);
+        void req.abort().catch((abortErr) => {
+          Logger.debug('SandboxRunner', 'Request abort failed:', abortErr);
         });
-      } else {
-        void req.abort().catch((err) => {
-          Logger.debug('SandboxRunner', 'Request abort failed:', err);
-        });
-      }
+      });
     });
 
     const html = generateHTML({

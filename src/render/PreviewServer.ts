@@ -4,7 +4,7 @@
  * Activity: SSE /api/events, GET /api/status, GET /api/compost/seeds
  */
 
-import express, { Express } from 'express';
+import express, { Express, NextFunction, Request, Response } from 'express';
 import path from 'path';
 import { Server } from 'http';
 import type { AddressInfo } from 'node:net';
@@ -467,6 +467,28 @@ export class PreviewServer {
         }
         return res.status(500).json({ error: 'Export failed' });
       }
+    });
+
+    this.app.use((err: unknown, _req: Request, res: Response, next: NextFunction) => {
+      if (res.headersSent) {
+        next(err);
+        return;
+      }
+
+      const error = err as { code?: string; status?: number; statusCode?: number; message?: string };
+      if (error.code === 'EBADCSRFTOKEN') {
+        // CSRF failures are expected denials. Keep them observable as 403s,
+        // not generic 500s that hide whether protection is actually active.
+        return res.status(403).json({ error: 'invalid csrf token' });
+      }
+
+      const status = error.status ?? error.statusCode;
+      if (typeof status === 'number' && status >= 400 && status < 500) {
+        return res.status(status).json({ error: error.message ?? 'Request rejected' });
+      }
+
+      Logger.error('PreviewServer', 'Unhandled request error:', err);
+      return res.status(500).json({ error: 'Internal server error' });
     });
   }
 

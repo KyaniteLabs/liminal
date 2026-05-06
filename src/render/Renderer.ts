@@ -13,6 +13,7 @@ import path from 'path';
 import { Logger } from '../utils/Logger.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { validateString } from '../utils/validation.js';
+import { getLocalP5ScriptForUrl } from '../utils/browserAssetFallbacks.js';
 
 export class Renderer {
   private readonly RENDER_TIMEOUT = 30000;
@@ -88,6 +89,7 @@ export class Renderer {
     try {
       const browser = await Renderer.getBrowser();
       page = await browser.newPage();
+      await this.installLocalAssetFallbacks(page);
 
       page.on('pageerror', (error) => {
         pageErrors.push(error instanceof Error ? error.message : String(error));
@@ -142,6 +144,32 @@ export class Renderer {
 
   private generateHTML(code: string): string {
     return HTMLWrapper.wrap(code);
+  }
+
+  private async installLocalAssetFallbacks(page: Page): Promise<void> {
+    if (typeof page.setRequestInterception !== 'function') return;
+
+    await page.setRequestInterception(true);
+    page.on('request', (request) => {
+      void (async () => {
+        const localScript = await getLocalP5ScriptForUrl(request.url());
+        if (localScript) {
+          await request.respond({
+            status: 200,
+            contentType: 'application/javascript; charset=utf-8',
+            body: localScript,
+          });
+          return;
+        }
+
+        await request.continue();
+      })().catch((err) => {
+        Logger.debug('Renderer', 'Asset fallback request handling failed:', err);
+        void request.continue().catch((continueErr) => {
+          Logger.debug('Renderer', 'Request continue failed:', continueErr);
+        });
+      });
+    });
   }
 
   private async waitForP5Initialization(page: Page): Promise<void> {

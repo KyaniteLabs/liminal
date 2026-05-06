@@ -16,26 +16,6 @@ import {
   AudioScorer,
   RenderAndScorePipeline
 } from '../../src/render/index.js';
-import { isCdnAvailable } from '../helpers/networkCheck.js';
-
-// Browser-dependent tests require:
-// 1. Playwright installed (HeadlessRenderer.initialize() will use a fallback chromium if needed)
-// 2. CDN reachable — rendered pages load p5.js from cdnjs.cloudflare.com
-let playwrightAvailable = false;
-try {
-  require.resolve('playwright');
-  playwrightAvailable = true;
-} catch {
-  playwrightAvailable = false;
-}
-
-const cdnAvailable = await isCdnAvailable();
-// Browser tests run when playwright is installed and CDN is reachable.
-// CI has both (pnpm exec playwright install chromium runs before tests).
-// Sandboxed/offline dev environments skip via the CDN check.
-const browserReady = playwrightAvailable && cdnAvailable;
-
-const describeIfBrowser = browserReady ? describe : describe.skip;
 
 // Sample p5.js code for testing
 const sampleP5Code = `
@@ -118,7 +98,7 @@ describe('HeadlessRenderer domain detection', () => {
   });
 });
 
-describeIfBrowser('HeadlessRenderer rendering', () => {
+describe('HeadlessRenderer rendering', () => {
   let renderer: HeadlessRenderer;
 
   beforeAll(async () => {
@@ -165,7 +145,7 @@ describeIfBrowser('HeadlessRenderer rendering', () => {
   }, 30000);
 });
 
-describeIfBrowser('VisualScorer', () => {
+describe('VisualScorer', () => {
   let scorer: VisualScorer;
   let renderer: HeadlessRenderer;
 
@@ -305,7 +285,7 @@ describe('AudioScorer', () => {
   });
 });
 
-describeIfBrowser('RenderAndScorePipeline', () => {
+describe('RenderAndScorePipeline', () => {
   let pipeline: RenderAndScorePipeline;
 
   beforeEach(() => {

@@ -39,6 +39,22 @@ describe('ColorExtractor', () => {
     expect(harmony).toBe('monochromatic');
   });
 
+  it('detects monochromatic harmony across the hue wrap boundary', () => {
+    const harmony = detectHarmony([
+      { h: 355, s: 80, l: 50 },
+      { h: 5, s: 75, l: 52 },
+    ]);
+    expect(harmony).toBe('monochromatic');
+  });
+
+  it('detects analogous harmony across the hue wrap boundary', () => {
+    const harmony = detectHarmony([
+      { h: 330, s: 80, l: 50 },
+      { h: 20, s: 75, l: 52 },
+    ]);
+    expect(harmony).toBe('analogous');
+  });
+
   it('returns fallback for empty code', () => {
     const result = extractColorsFromCode('');
     expect(result.colors.length).toBe(1);

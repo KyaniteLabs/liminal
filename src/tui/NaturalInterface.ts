@@ -18,6 +18,7 @@ import { Logger } from '../utils/Logger.js';
 import { commands } from './commands.js';
 import { handleProviderCommand } from './ProviderCommand.js';
 import { PendingActionStore, type PendingActionRecord } from './PendingActionStore.js';
+import { isSuccessfulStatus } from '../types/status.js';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -477,18 +478,20 @@ export class NaturalInterface {
   }
 
   private async confirmPendingAction(id: string): Promise<string> {
-    const record = this.pendingActions.confirm(id);
+    const record = this.pendingActions.get(id);
     if (!record) return `Pending action ${id} not found.`;
 
     try {
       if (record.kind === 'structured') {
         const task = { ...(record.task as AgentTask), approved: true };
         const session = await this.harnessAgent.executeTask(task);
+        if (isSuccessfulStatus(session.status)) this.pendingActions.cancel(id);
         return `Task ${task.id}: ${session.status.toUpperCase()}`;
       }
 
       const task = { ...(record.task as LLMTask), approved: true };
       const session = await this.llmAgent.executeTask(task);
+      if (isSuccessfulStatus(session.status)) this.pendingActions.cancel(id);
       for (const msg of session.messages) {
         if (msg.role === 'assistant' && msg.toolCall) {
           this.onLog(`\u2192 ${msg.toolCall.tool}`);

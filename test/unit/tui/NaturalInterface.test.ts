@@ -323,6 +323,7 @@ describe('NaturalInterface', () => {
       expect(confirmed.response).toContain('Task success');
       expect(confirmed.response).toContain('changes have been applied');
       expect(llmAgent.executeTask).toHaveBeenCalledWith(expect.objectContaining({ approved: true }));
+      expect(iface.getPendingActions()).toHaveLength(0);
     });
 
     it('returns rolled_back message for rolled back session', async () => {
@@ -338,6 +339,7 @@ describe('NaturalInterface', () => {
       const result = await iface.processInput(`/confirm ${pending.id}`);
       expect(result.response).toContain('rolled back');
       expect(result.response).toContain('Changes were rolled back');
+      expect(iface.getPendingActions()).toEqual([pending]);
     });
 
     it('returns failure message for failed session', async () => {
@@ -352,6 +354,7 @@ describe('NaturalInterface', () => {
       const [pending] = iface.getPendingActions();
       const result = await iface.processInput(`/confirm ${pending.id}`);
       expect(result.response).toContain('could not be completed');
+      expect(iface.getPendingActions()).toEqual([pending]);
     });
 
     it('logs tool calls from session messages', async () => {
@@ -378,6 +381,7 @@ describe('NaturalInterface', () => {
       expect(result.type).toBe('command');
       expect(result.response).toContain('Agent crashed');
       expect(mockFormatError).toHaveBeenCalledWith('Agent', expect.any(Error));
+      expect(iface.getPendingActions()).toEqual([pending]);
     });
 
     it('returns type ambiguous without calling agent when prompt is vague', async () => {

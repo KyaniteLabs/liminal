@@ -85,8 +85,8 @@ export function getNamedColor(hex: string): string | undefined {
 
 export function detectHarmony(colors: HSLColor[]): string {
   if (colors.length <= 1) return 'monochromatic';
-  const hues = colors.map((color) => color.h).sort((a, b) => a - b);
-  const span = hues[hues.length - 1] - hues[0];
+  const hues = colors.map((color) => normalizeHue(color.h)).sort((a, b) => a - b);
+  const span = circularHueSpan(hues);
   if (span <= 15) return 'monochromatic';
   if (hues.some((hue) => hues.some((other) => angularDistance(hue, other) >= 170 && angularDistance(hue, other) <= 190))) {
     return 'complementary';
@@ -142,6 +142,23 @@ function toExtractedColor(hex: string, count: number): ExtractedColor | undefine
 function angularDistance(a: number, b: number): number {
   const diff = Math.abs(a - b) % 360;
   return Math.min(diff, 360 - diff);
+}
+
+function normalizeHue(hue: number): number {
+  return ((hue % 360) + 360) % 360;
+}
+
+function circularHueSpan(hues: number[]): number {
+  if (hues.length <= 1) return 0;
+
+  let largestGap = 0;
+  for (let index = 0; index < hues.length; index++) {
+    const current = hues[index];
+    const next = index === hues.length - 1 ? hues[0] + 360 : hues[index + 1];
+    largestGap = Math.max(largestGap, next - current);
+  }
+
+  return 360 - largestGap;
 }
 
 function hasTriad(hues: number[]): boolean {

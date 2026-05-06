@@ -15,6 +15,7 @@ This matrix maps commands to the claims they actually prove. Do not use a narrow
 | Orphan-source scan is clean | `pnpm check:orphans` | Static import scan from `scripts/check-orphans.sh`. | Deletion authority; #455 archaeology owns keep/retire decisions. |
 | Package-script target integrity | `pnpm check:script-targets` | Local package scripts point to existing local command targets. | Runtime behavior of those commands. |
 | Test quality rules are respected | `pnpm test:quality` | Static test-quality scanner. | Runtime test success or coverage. |
+| Final QA surface ledger is complete | `pnpm final-qa:surface` | Included/excluded product surfaces are printed, pending/skipped tests are classified, and live creative-domain receipt covers all launch domains. | It does not run every listed surface command itself; it checks their wiring/classification and the latest live-domain receipt. |
 | Diff hygiene is clean | `git diff --check` | Whitespace/conflict marker check. | Build/test correctness. |
 
 ## CI gates

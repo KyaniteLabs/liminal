@@ -2,6 +2,9 @@
 
 Launch label: demo-mitigated, owned before broad production claims.
 
+Machine-checked ledger: `docs/launch/final-qa-test-surface-ledger.json`.
+`pnpm final-qa:surface` verifies that every file under `test/pending` and every skipped/gated test file has owner, launch risk, reason, action, and verification.
+
 ## Current explicit skips
 
 | Test / suite | Owner | Reason | Action | Verification |

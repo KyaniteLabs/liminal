@@ -25,7 +25,7 @@ This summary distinguishes deterministic local proof from live provider proof.
 - `pnpm verify:integration`: failed, with 86 failed tests across 4 integration files.
 - `pnpm test:ci:slow`: failed, with 56 failed tests across 3 slow-suite files.
 - `pnpm test:e2e`: exited 0, but 50 of 96 tests were skipped.
-- `qa-creative-domains --no-serve`: wrote a cockpit bundle but reported missing live artifacts for glsl, three, hydra, hyperframes, ascii, kinetic, and textgen.
+- `qa-creative-domains --no-serve`: originally wrote a cockpit bundle but reported missing live artifacts for glsl, three, hydra, hyperframes, ascii, kinetic, and textgen. Remediation update: `pnpm proof:live-creative-domains` now defaults to all 12 launch domains and passed with live GLM artifacts for p5, svg, glsl, three, hydra, strudel, tone, revideo, hyperframes, ascii, kinetic, and textgen; `pnpm qa:creative-domains:static` then wrote a cockpit bundle with no missing domains.
 
 ## Remediated Release-Control Proofs
 

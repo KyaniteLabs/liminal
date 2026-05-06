@@ -8,6 +8,8 @@
 
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 import { HyperFramesValidator } from '../../core/validators/HyperFramesValidator.js';
+import { GenerationError } from '../../errors/GenerationError.js';
+import type { LLMResponse } from '../../llm/LLMClient.js';
 
 export interface HyperFramesGeneratorOptions extends TierBasedGeneratorOptions {}
 
@@ -32,47 +34,38 @@ export class HyperFramesGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: HyperFramesGeneratorOptions): Promise<string> {
-    const hyperframesPrompt = [
-      'Generate HyperFrames HTML code only.',
-      'The output must be a single self-contained HTML file with an embedded GSAP timeline.',
-      '',
-      'Required structure:',
-      '- A root <div> with data-composition-id attribute (the stage).',
-      '- All timed elements must have class="clip" and data-start, data-duration, data-track-index attributes.',
-      '- A GSAP timeline created with { paused: true }.',
-      '- The timeline registered on window.__timelines[data-composition-id].',
-      '- GSAP loaded from CDN: https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js',
-      '- Do not use random remote image URLs.',
-      '- Use CSS gradients, generated shapes, inline SVG/data URIs, or explicit user-provided asset URLs.',
-      '- Use GSAP 3 syntax only: use tl.from(".item", { stagger: 0.3, ... }, at), not tl.staggerFrom().',
-      '',
-      'Minimal valid example:',
-      '<div id="stage" data-composition-id="demo" data-start="0" data-width="1920" data-height="1080">',
-      '  <h1 id="title" class="clip" data-start="0" data-duration="5" data-track-index="0"',
-      '      style="position:absolute;color:white;font-size:96px;">Hello</h1>',
-      '</div>',
-      '<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>',
-      '<script>',
-      '  const tl = gsap.timeline({ paused: true });',
-      '  tl.from("#title", { opacity: 0, y: 50, duration: 1 }, 0);',
-      '  tl.to("#title", { opacity: 0, duration: 1 }, 4);',
-      '  window.__timelines = window.__timelines || {};',
-      '  window.__timelines["demo"] = tl;',
-      '</script>',
-      '',
-      'Do not use React, Remotion, p5.js, createCanvas, setup(), draw(),',
-      'makeScene, @revideo/core, useFrame, useCurrentFrame, or TypeScript.',
-      '',
-      `User request: ${prompt}`,
-    ].join('\n');
+    let response = await this.llm.generate(
+      this.hyperFramesSystemPrompt(),
+      this.buildHyperFramesPrompt(prompt),
+      options?.signal,
+      options?.bypassCache,
+    );
+    let code = this.normalizeHyperFramesHtml(response);
 
-    try {
-      return await super.generate(hyperframesPrompt, options);
-    } catch (error) {
-      const direct = await this.retryHyperFramesDirect(prompt, options);
-      if (direct) return direct;
-      throw error;
+    if (!code) {
+      throw new GenerationError(`${this.constructor.name}: LLM returned empty code`, 'hyperframes');
     }
+
+    let validated = this.validateOutput(code);
+    if (!validated.valid) {
+      response = await this.llm.generate(
+        this.hyperFramesSystemPrompt(),
+        this.buildHyperFramesRetryPrompt(prompt, code, validated.error ?? 'Validation failed'),
+        options?.signal,
+        true,
+      );
+      code = this.normalizeHyperFramesHtml(response);
+      validated = this.validateOutput(code);
+    }
+
+    if (!validated.valid) {
+      throw new GenerationError(`${this.constructor.name}: ${validated.error}`, 'hyperframes', {
+        validationError: validated.error,
+        generatedCode: code,
+      });
+    }
+
+    return code;
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
@@ -83,27 +76,72 @@ export class HyperFramesGenerator extends TierBasedGenerator {
     return { valid: true };
   }
 
-  private async retryHyperFramesDirect(prompt: string, options?: HyperFramesGeneratorOptions): Promise<string | null> {
-    const result = await this.llm.complete({
-      systemPrompt: 'You write single-file HTML compositions using GSAP. Output only HTML code.',
-      prompt: [
-        `Create a HyperFrames HTML composition for: ${prompt}`,
-        'Return one self-contained HTML file.',
-        'Required: GSAP timeline with { paused: true }, window.__timelines registration,',
-        'class="clip" on timed elements, data-start/data-duration/data-track-index attributes,',
-        'data-composition-id on root div.',
-        'Load GSAP from https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js',
-        'Do not use random remote image URLs.',
-        'Use CSS gradients, generated shapes, or explicit user-provided asset URLs for visual placeholders.',
-        'Use GSAP 3 syntax only: use tl.from(".item", { stagger: 0.3, ... }, at), not tl.staggerFrom().',
-        'Do not use React, Remotion, p5.js, createCanvas, setup(), draw(), makeScene, or @revideo/core.',
-      ].join('\n'),
-      maxTokens: options?.maxTokens ?? 4000,
-      temperature: this.llm.getConfig().temperature,
-      signal: options?.signal,
-    });
-    if (!result.success || !result.text) return null;
-    return this.validateOutput(result.text).valid ? result.text.trim() : null;
+  private hyperFramesSystemPrompt(): string {
+    return [
+      'You write single-file HTML motion compositions using GSAP.',
+      'Output raw HTML only. Do not include markdown fences, explanations, JSON, React, Revideo, p5.js, or TypeScript.',
+      'The HTML must be complete enough to save directly as a .html artifact.',
+    ].join('\n');
+  }
+
+  private buildHyperFramesPrompt(prompt: string): string {
+    return [
+      `Create a HyperFrames composition for: ${prompt}`,
+      '',
+      'Required output:',
+      '- Start with <!doctype html>.',
+      '- Include a root stage element with data-composition-id.',
+      '- Include at least three visible elements with class="clip".',
+      '- Every clip must include data-start, data-duration, and data-track-index.',
+      '- Load GSAP from https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js.',
+      '- Create const tl = gsap.timeline({ paused: true }).',
+      '- Register the timeline on window.__timelines[data-composition-id].',
+      '- Use CSS gradients, generated shapes, or explicit user-provided asset URLs; inline SVG/data URIs are allowed.',
+      '- Do not use random remote image URLs.',
+      '- Use GSAP 3 syntax only: tl.from(...), tl.to(...), or tl.fromTo(...).',
+      '',
+      'Minimal structure to follow:',
+      '<!doctype html>',
+      '<html><head><script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script></head>',
+      '<body>',
+      '<div id="stage" data-composition-id="demo">',
+      '  <h1 id="title" class="clip" data-start="0" data-duration="4" data-track-index="0">Title</h1>',
+      '</div>',
+      '<script>',
+      '  const tl = gsap.timeline({ paused: true });',
+      '  tl.from("#title", { opacity: 0, y: 40, duration: 1 }, 0);',
+      '  window.__timelines = window.__timelines || {};',
+      '  window.__timelines["demo"] = tl;',
+      '</script>',
+      '</body></html>',
+      '',
+      'Return only the final HTML file.',
+    ].join('\n');
+  }
+
+  private buildHyperFramesRetryPrompt(prompt: string, failedCode: string, error: string): string {
+    return [
+      this.buildHyperFramesPrompt(prompt),
+      '',
+      'The previous HTML failed validation.',
+      `Validation error: ${error}`,
+      '',
+      'Previous output:',
+      '```html',
+      failedCode,
+      '```',
+      '',
+      'Regenerate a complete valid HyperFrames HTML file now.',
+    ].join('\n');
+  }
+
+  private normalizeHyperFramesHtml(response: LLMResponse): string {
+    let code = response.code || '';
+    code = code.replace(/^```(?:html)?\n?/i, '').replace(/\n?```$/i, '').trim();
+    if (!/^<!doctype\s+html/i.test(code) && /<html\b/i.test(code)) {
+      code = `<!doctype html>\n${code}`;
+    }
+    return code;
   }
 
   wrapForGallery(code: string): string {

@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockToolLoop, mockGetConfig } = vi.hoisted(() => ({
+const { mockToolLoop, mockGenerate, mockGetConfig } = vi.hoisted(() => ({
   mockToolLoop: vi.fn().mockResolvedValue({
     content: '<div data-composition-id="test"><h1 class="clip" data-start="0" data-duration="5">Hello</h1></div>',
     iterations: 1,
     toolCallsMade: 0,
+    success: true,
+  }),
+  mockGenerate: vi.fn().mockResolvedValue({
+    code: '<!doctype html><html><body><div data-composition-id="test"><h1 class="clip" data-start="0" data-duration="5" data-track-index="0">Hello</h1><script>window.__timelines={test:gsap.timeline({paused:true})}</script></div></body></html>',
     success: true,
   }),
   mockGetConfig: vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' }),
@@ -13,6 +17,7 @@ const { mockToolLoop, mockGetConfig } = vi.hoisted(() => ({
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
     generateWithToolLoop = mockToolLoop;
+    generate = mockGenerate;
     getConfig = mockGetConfig;
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);
@@ -61,7 +66,24 @@ describe('HyperFramesGenerator', () => {
 
   beforeEach(() => {
     mockToolLoop.mockClear();
+    mockGenerate.mockClear();
     gen = new HyperFramesGenerator();
+  });
+
+  describe('generation path', () => {
+    it('uses direct HTML generation instead of the generic tool loop', async () => {
+      const result = await gen.generate('make a launch promo');
+
+      expect(result).toContain('data-composition-id');
+      expect(result).toContain('window.__timelines');
+      expect(mockGenerate).toHaveBeenCalledWith(
+        expect.stringContaining('single-file HTML'),
+        expect.stringContaining('make a launch promo'),
+        undefined,
+        undefined,
+      );
+      expect(mockToolLoop).not.toHaveBeenCalled();
+    });
   });
 
   describe('canHandle routing', () => {

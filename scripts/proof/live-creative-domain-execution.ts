@@ -23,10 +23,10 @@ import { ASCIIArtGenerator } from '../../src/generators/ascii/ASCIIArtGenerator.
 import { TextGenerativeGenerator } from '../../src/generators/textgen/TextGenerativeGenerator.js';
 import { KineticGenerator } from '../../src/generators/kinetic/KineticGenerator.js';
 
-const DEFAULT_DOMAINS = ['p5', 'svg', 'strudel', 'tone', 'revideo'] as const;
-type Domain = typeof DEFAULT_DOMAINS[number] | 'glsl' | 'three' | 'hydra' | 'hyperframes' | 'ascii' | 'kinetic' | 'textgen';
+const LAUNCH_CREATIVE_DOMAINS = ['p5', 'svg', 'glsl', 'three', 'hydra', 'strudel', 'tone', 'revideo', 'hyperframes', 'ascii', 'kinetic', 'textgen'] as const;
+type Domain = typeof LAUNCH_CREATIVE_DOMAINS[number];
 
-type GeneratorLike = { generate(prompt: string, options?: { signal?: AbortSignal; maxTokens?: number }): Promise<string> | string };
+type GeneratorLike = { generate(prompt: string, options?: { signal?: AbortSignal; maxTokens?: number; useGeneratorTools?: boolean }): Promise<string> | string };
 
 const PROMPTS: Record<Domain, string> = {
   p5: 'create a concise p5 generative sketch with blue green particles and visible motion',
@@ -67,15 +67,17 @@ interface LiveCreativeDomainReceipt {
   mode: 'live-execution';
   provider: string;
   model: string;
+  launchDomains: Domain[];
   domains: DomainResult[];
   passed: number;
   failed: number;
+  missingDomains: Domain[];
   blockers: string[];
 }
 
 function parseArgs(argv: string[]): { outDir: string; domains: Domain[]; timeoutMs: number; provider?: ProviderType } {
   let outDir = path.join(process.cwd(), '.omx', 'proof', 'live-creative-domains');
-  let domains: Domain[] = [...DEFAULT_DOMAINS];
+  let domains: Domain[] = [...LAUNCH_CREATIVE_DOMAINS];
   let timeoutMs = 120_000;
   let provider: ProviderType | undefined;
   for (let i = 0; i < argv.length; i += 1) {
@@ -85,7 +87,7 @@ function parseArgs(argv: string[]): { outDir: string; domains: Domain[]; timeout
     else if (arg.startsWith('--out=')) outDir = arg.slice('--out='.length);
     else if (arg === '--domains') domains = parseDomains(argv[++i] ?? '');
     else if (arg.startsWith('--domains=')) domains = parseDomains(arg.slice('--domains='.length));
-    else if (arg === '--all') domains = Object.keys(PROMPTS) as Domain[];
+    else if (arg === '--all') domains = [...LAUNCH_CREATIVE_DOMAINS];
     else if (arg === '--timeout-ms') timeoutMs = Number(argv[++i] ?? timeoutMs);
     else if (arg.startsWith('--timeout-ms=')) timeoutMs = Number(arg.slice('--timeout-ms='.length));
     else if (arg === '--provider') provider = argv[++i] as ProviderType;
@@ -126,7 +128,12 @@ async function runDomain(domain: Domain, rootOutDir: string, timeoutMs: number, 
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const generator = createGenerator(domain, config);
-    const code = String(await generator.generate(prompt, { signal: controller.signal, maxTokens: 4096 })).trim();
+    const generateOptions = {
+      signal: controller.signal,
+      maxTokens: 4096,
+      ...(domain === 'hyperframes' ? { useGeneratorTools: false } : {}),
+    };
+    const code = String(await generator.generate(prompt, generateOptions)).trim();
     const codeBytes = Buffer.byteLength(code, 'utf8');
     const artifactPath = path.join(rootOutDir, `${domain}.${EXTENSIONS[domain]}`);
     await mkdir(path.dirname(artifactPath), { recursive: true });
@@ -171,18 +178,25 @@ async function main(): Promise<void> {
     results.push(await runDomain(domain, outDir, timeoutMs, provider, config.model, config));
   }
   const failed = results.filter(result => result.status !== 'pass');
+  const passedDomains = new Set(results.filter(result => result.status === 'pass').map(result => result.domain));
+  const missingDomains = LAUNCH_CREATIVE_DOMAINS.filter(domain => !passedDomains.has(domain));
   const receipt: LiveCreativeDomainReceipt = {
     contract: 'liminal-live-creative-domain-execution-v1',
     generatedAt: new Date().toISOString(),
-    status: failed.length === 0 ? 'pass' : 'fail',
-    ready: failed.length === 0,
+    status: failed.length === 0 && missingDomains.length === 0 ? 'pass' : 'fail',
+    ready: failed.length === 0 && missingDomains.length === 0,
     mode: 'live-execution',
     provider,
     model: config.model,
+    launchDomains: [...LAUNCH_CREATIVE_DOMAINS],
     domains: results,
     passed: results.length - failed.length,
     failed: failed.length,
-    blockers: failed.map(result => `${result.domain}: ${result.error ?? 'failed'}`),
+    missingDomains,
+    blockers: [
+      ...failed.map(result => `${result.domain}: ${result.error ?? 'failed'}`),
+      ...missingDomains.map(domain => `${domain}: not covered by this live run`),
+    ],
   };
   const receiptPath = path.join(process.cwd(), '.omx', 'proof', 'domain-gauntlet-live.json');
   await mkdir(path.dirname(receiptPath), { recursive: true });

@@ -5,6 +5,9 @@
  * Standalone script that enforces test quality patterns without ESLint plugin
  * registration hassles. Run as:
  *   - `node scripts/testing/test-quality-check.mjs`
+ *   - `node scripts/testing/test-quality-check.mjs --strict`
+ *   - `node scripts/testing/test-quality-check.mjs --baseline scripts/testing/test-quality-baseline.txt`
+ *   - `node scripts/testing/test-quality-check.mjs --write-baseline scripts/testing/test-quality-baseline.txt`
  *   - CI step (parallel to eslint)
  *
  * Exit codes:
@@ -12,11 +15,28 @@
  *   1 = violations found (warnings treated as errors in CI)
  */
 
-import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, basename, dirname } from 'node:path';
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
+import { join, basename, dirname, resolve } from 'node:path';
 import { cwd } from 'node:process';
 
 const ROOT = cwd();
+const args = process.argv.slice(2);
+
+function getArgValue(flag) {
+  const equalsArg = args.find(arg => arg.startsWith(`${flag}=`));
+  if (equalsArg) return equalsArg.slice(flag.length + 1);
+
+  const index = args.indexOf(flag);
+  if (index >= 0) return args[index + 1];
+
+  return undefined;
+}
+
+const strictMode = process.env.STRICT_QUALITY === '1' || args.includes('--strict');
+const baselineArg = getArgValue('--baseline') ?? process.env.TEST_QUALITY_BASELINE;
+const writeBaselineArg = getArgValue('--write-baseline');
+const baselinePath = baselineArg ? resolve(ROOT, baselineArg) : undefined;
+const writeBaselinePath = writeBaselineArg ? resolve(ROOT, writeBaselineArg) : undefined;
 
 // ── Configuration ────────────────────────────────────────────────────────
 const CONFIG = {
@@ -27,13 +47,13 @@ const CONFIG = {
   maxErrors: Infinity,
   maxWarnings: Infinity,
 
-  // Treat warnings as errors only in strict mode (STRICT_QUALITY=1).
+  // Treat warnings as errors only in strict mode (STRICT_QUALITY=1 or --strict).
   // Pre-existing warnings are tracked as tech debt; they don't block CI
   // until STRICT_QUALITY enforcement is turned on deliberately.
-  warningAsError: process.env.STRICT_QUALITY === '1',
+  warningAsError: strictMode,
 
-  // toBeDefined cap: warning now, error when STRICT_QUALITY=1
-  toBeDefinedStrict: process.env.STRICT_QUALITY === '1',
+  // toBeDefined cap: warning now, error in strict mode.
+  toBeDefinedStrict: strictMode,
 };
 
 // ── Violation tracking ────────────────────────────────────────────────────
@@ -49,6 +69,27 @@ function addViolation(severity, rule, file, line, message) {
     line,
     message,
   });
+}
+
+function fingerprintViolation(violation) {
+  const loc = violation.line ? `:${violation.line}` : '';
+  return `${violation.rule}\t${violation.file}${loc}\t${violation.message}`;
+}
+
+function loadBaseline() {
+  if (!baselinePath) return new Set();
+
+  if (!existsSync(baselinePath)) {
+    console.error(`Missing test-quality baseline: ${baselinePath}`);
+    process.exit(1);
+  }
+
+  const lines = readFileSync(baselinePath, 'utf8')
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0 && !line.startsWith('#'));
+
+  return new Set(lines);
 }
 
 // ── Rule: require-vi-hoisted ──────────────────────────────────────────────
@@ -160,7 +201,7 @@ function checkWeakAssertions(content, filePath) {
     }
 
     // toBeTruthy() — passes for any truthy value
-    if (line.includes('. toBeTruthy()')) {
+    if (/\.toBeTruthy\s*\(\s*\)/.test(line)) {
       addViolation(
         'warning',
         'no-weak-test-assertions',
@@ -168,6 +209,18 @@ function checkWeakAssertions(content, filePath) {
         i + 1,
         'toBeTruthy() passes for any truthy value (1, "abc", {}, []). ' +
         'Use toBe(true), toBe(expectedValue), or toEqual(expectedShape) instead.',
+      );
+    }
+
+    // toBeFalsy() — passes for any falsy value
+    if (/\.toBeFalsy\s*\(\s*\)/.test(line)) {
+      addViolation(
+        'warning',
+        'no-weak-test-assertions',
+        filePath,
+        i + 1,
+        'toBeFalsy() passes for any falsy value (false, 0, "", null, undefined). ' +
+        'Use toBe(false), toBeNull(), toBeUndefined(), or a concrete expected value instead.',
       );
     }
 
@@ -184,7 +237,7 @@ function checkWeakAssertions(content, filePath) {
     }
 
     // toContain with single character
-    const singleCharMatch = line.match(/\. toContain\(\s*['"](\w)['"]\s*\)/);
+    const singleCharMatch = line.match(/\.toContain\s*\(\s*['"]([^'"]{1})['"]\s*\)/);
     if (singleCharMatch) {
       addViolation(
         'warning',
@@ -193,6 +246,32 @@ function checkWeakAssertions(content, filePath) {
         i + 1,
         `toContain('${singleCharMatch[1]}') with single char matches almost anything. ` +
         'Use a longer, more specific substring or toMatch(/pattern/) instead.',
+      );
+    }
+
+    // not.toBeNull()/not.toBeUndefined() — proves non-empty existence only
+    const notNullishMatch = line.match(/\.not\.toBe(Null|Undefined)\s*\(\s*\)/);
+    if (notNullishMatch) {
+      const matcher = `not.toBe${notNullishMatch[1]}`;
+      addViolation(
+        'warning',
+        'no-weak-test-assertions',
+        filePath,
+        i + 1,
+        `${matcher}() only proves the value exists, not that it is correct. ` +
+        'Use toEqual(expectedShape), toMatchObject(expectedShape), or an exact expected value instead.',
+      );
+    }
+
+    // expect.anything() — accepts any non-nullish value
+    if (/\.(?:toEqual|toStrictEqual)\s*\(\s*expect\.anything\s*\(\s*\)\s*\)/.test(line)) {
+      addViolation(
+        'warning',
+        'no-weak-test-assertions',
+        filePath,
+        i + 1,
+        'expect.anything() accepts any non-nullish value. ' +
+        'Assert a concrete value, shape, or domain-specific invariant instead.',
       );
     }
   }
@@ -302,9 +381,30 @@ for (const file of testFiles) {
   checkFile(file);
 }
 
+if (writeBaselinePath) {
+  const baseline = [
+    '# Test quality warning baseline.',
+    '# Each line is: rule<TAB>file[:line]<TAB>message',
+    '# Re-generate only after deliberately remediating or accepting current warning debt.',
+    ...violations.warnings.map(fingerprintViolation).sort(),
+    '',
+  ].join('\n');
+  writeFileSync(writeBaselinePath, baseline);
+  console.log(`\n🧾 Wrote test-quality warning baseline: ${writeBaselinePath}`);
+}
+
+const baseline = loadBaseline();
+const activeWarnings = [];
+const knownWarnings = [];
+
+for (const warning of violations.warnings) {
+  if (baseline.has(fingerprintViolation(warning))) knownWarnings.push(warning);
+  else activeWarnings.push(warning);
+}
+
 // Report
 const totalErrors = violations.errors.length;
-const totalWarnings = violations.warnings.length;
+const totalWarnings = activeWarnings.length;
 
 if (totalErrors > 0) {
   console.log(`\n❌ Errors: ${totalErrors}`);
@@ -316,16 +416,20 @@ if (totalErrors > 0) {
 
 if (totalWarnings > 0) {
   console.log(`\n⚠️  Warnings: ${totalWarnings}`);
-  for (const v of violations.warnings) {
+  for (const v of activeWarnings) {
     const loc = v.line ? `:${v.line}` : '';
     console.log(`  ${v.file}${loc}  [${v.rule}]  ${v.message}`);
   }
 }
 
+if (knownWarnings.length > 0) {
+  console.log(`\n🧾 Known baseline warnings: ${knownWarnings.length}`);
+}
+
 if (totalErrors === 0 && totalWarnings === 0) {
   console.log('\n✅ All test quality checks passed!\n');
 } else {
-  console.log(`\n📊 Summary: ${totalErrors} errors, ${totalWarnings} warnings\n`);
+  console.log(`\n📊 Summary: ${totalErrors} errors, ${totalWarnings} new warnings\n`);
 }
 
 // Exit code

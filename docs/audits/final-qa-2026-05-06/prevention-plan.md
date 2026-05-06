@@ -8,7 +8,7 @@ Status: first-pass prevention plan.
 - Git/CI package install proof: install the current repo as a clean git dependency with `CI=1`, import `liminal-ai`, and run `liminal --version`.
 - Claim-to-proof ledger: fail launch docs when public claims lack command/live proof or explicit caveat.
 - Receipt integrity: validate commit SHA, timestamp freshness, provider identity, artifact existence, and case matrix for release-gate receipts.
-- Strict test-quality mode: fail weak assertions, empty tests, `.only`, skipped material tests without ledger entry, and untested examples.
+- Strict test-quality mode: fail new or unbaselined weak assertions, empty tests, `.only`, skipped material tests without ledger entry, and untested examples.
 - Example smoke: compile or execute every public example exactly as written.
 - Integration and slow CI must be green before release readiness can be claimed.
 - Live creative-domain proof must cover every public launch domain or the launch docs must declare the narrower set.

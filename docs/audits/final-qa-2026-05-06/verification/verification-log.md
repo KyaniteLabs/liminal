@@ -182,3 +182,17 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-020 boundary docs. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-020 final diff, including audit-doc updates, has no whitespace errors. | Exit 0. |
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-020 boundary docs. | Vite built 35 modules. |
+| 2026-05-06 remediation | `pnpm vitest run test/scripts/test-quality-check-script.test.ts --coverage=false` | fail, red-first | New checker fixture caught that strict mode did not reject weak assertion fixtures and package scripts had no strict final-QA quality entrypoint. | Red failed with `result.status` 0 instead of 1 and missing `test:quality:strict`. |
+| 2026-05-06 remediation | `pnpm vitest run test/scripts/test-quality-check-script.test.ts --coverage=false` | pass | Checker fixture now proves unbaselined weak assertions fail under `--strict`, baselined warnings are accepted, new warnings still fail, and package scripts expose baseline-aware strict/final-QA commands. | 1 file passed; 3 tests passed. |
+| 2026-05-06 remediation | `pnpm test:quality` | pass | Normal quality gate uses the warning baseline and reports only new warnings. | 666 test files scanned; 841 known baseline warnings; 0 new warnings. |
+| 2026-05-06 remediation | `pnpm test:quality:strict` | pass | Strict quality gate fails new/unbaselined warnings while accepting the checked-in baseline. | 666 test files scanned; 841 known baseline warnings; 0 new warnings. |
+| 2026-05-06 remediation | `pnpm final-qa:test-quality` | pass | Final-QA quality command delegates to strict baseline-aware scanner. | 666 test files scanned; 841 known baseline warnings; 0 new warnings. |
+| 2026-05-06 remediation | `node --check scripts/testing/test-quality-check.mjs` | pass | Test quality checker script syntax is valid after strict/baseline mode changes. | Exit 0. |
+| 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan accepts the new final-QA quality command. | Receipt: `.omx/proof/package-script-targets.json`. |
+| 2026-05-06 remediation | `pnpm typecheck` | pass | Root TypeScript gate passes after FQA-015 scanner and fixture tests. | Exit 0. |
+| 2026-05-06 remediation | `pnpm build` | pass | Root package builds after FQA-015 scanner and fixture tests. | Exit 0. |
+| 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after FQA-015 scanner and fixture tests. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-015 remediation. | Exit 0. |
+| 2026-05-06 remediation | `git diff --check` | pass | FQA-015 code diff has no whitespace errors before audit-doc append. | Exit 0. |
+| 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-015 remediation. | Vite built 35 modules. |
+| 2026-05-06 remediation | `git diff --check` | pass | FQA-015 final diff, including audit-doc updates, has no whitespace errors. | Exit 0. |

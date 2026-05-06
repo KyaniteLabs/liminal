@@ -149,6 +149,7 @@ Release risk: medium. These items prevent recurrence.
    - Findings: FQA-013, FQA-015, FQA-034
    - Action: include GUI, Bubble Tea, scripts, examples, pending-test classification, strict test-quality scanning, and all launch-scoped creative domains in final QA.
    - Proof: final QA script prints included surfaces/domains and fails on weak assertion fixtures or missing live artifacts.
+   - Remediation status: FQA-015 verified. `scripts/testing/test-quality-check.mjs` now has strict CLI mode and a warning baseline, `package.json` exposes `pnpm final-qa:test-quality`, and `test/scripts/test-quality-check-script.test.ts` proves unbaselined weak assertions fail. FQA-013 and FQA-034 remain open for the broader final-QA surface/domain coverage script.
 
 2. Repair observability proof and SSE replay.
    - Findings: FQA-025, FQA-026

@@ -14,6 +14,7 @@ import type {
   StudioResponse,
   ResponseMetadata,
   DelegationDecision,
+  ExecutionProvenance,
 } from './types.js';
 
 // ── Composer ──
@@ -32,6 +33,7 @@ export class ResponseComposer {
       artifactRefs?: string[];
       taskRefs?: string[];
       model?: string;
+      executor?: ExecutionProvenance;
     },
   ): StudioResponse {
     const metadata: ResponseMetadata = {
@@ -42,6 +44,7 @@ export class ResponseComposer {
       taskRefs: opts?.taskRefs ?? [],
       durationMs,
       model: opts?.model,
+      executor: opts?.executor,
     };
 
     return {
@@ -92,12 +95,13 @@ export class ResponseComposer {
     durationMs: number,
     taskRefs: string[],
     model?: string,
+    executor: ExecutionProvenance = 'external-engineering-delegate',
   ): StudioResponse {
     return this.compose(content, turnId, 'engineering', {
-      target: 'conveyor',
+      target: 'engineering-delegate',
       params: {},
-      reason: 'Engineering task via ConveyorRunner',
-    }, durationMs, { taskRefs, model });
+      reason: 'Engineering task via injected engineering delegate',
+    }, durationMs, { taskRefs, model, executor });
   }
 
   /**

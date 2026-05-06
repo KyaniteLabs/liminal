@@ -6,7 +6,7 @@ import { TuiSessionStore } from './TuiSessionStore.js';
 import { ConversationManager } from '../chat/ConversationManager.js';
 import { RalphLoop } from '../core/RalphLoop.js';
 import type { LLMClient } from '../llm/LLMClient.js';
-import type { TuiBridgeEvent, TuiFailureProvenance, TuiInputRequest, TuiPendingAction, TuiRunKind, TuiRunLifecycle, TuiRunPhase, TuiSessionStatus } from './types.js';
+import type { TuiBridgeEvent, TuiFailureProvenance, TuiInputRequest, TuiPendingAction, TuiRunExecutor, TuiRunKind, TuiRunLifecycle, TuiRunPhase, TuiSessionStatus } from './types.js';
 import { Domain } from '../types/domains.js';
 import { eventBus, EventTypes, type BusEvent } from '../core/EventBus.js';
 import { createLLMModeAgent, type LLMSession } from '../harness/agent/index.js';
@@ -355,6 +355,7 @@ export class TuiBridgeService {
       kind: TuiRunKind;
       label: string;
       executionMode?: 'draft' | 'prove';
+      executor?: TuiRunExecutor;
       model?: string;
       provider?: string;
     },
@@ -368,6 +369,7 @@ export class TuiBridgeService {
       startedAt: now,
       updatedAt: now,
       executionMode: details.executionMode,
+      executor: details.executor,
       model: details.model,
       provider: details.provider,
     };
@@ -667,7 +669,7 @@ export class TuiBridgeService {
       }));
     };
 
-    const emitSessionTurn = (delegatedTo: string, responseContent?: string, extras?: { artifactRefs?: string[]; taskRefs?: string[] }) => {
+    const emitSessionTurn = (delegatedTo: string, responseContent?: string, extras?: { executor?: TuiRunExecutor; artifactRefs?: string[]; taskRefs?: string[] }) => {
       const turnId = `turn-${Date.now()}`;
       const durationMs = Date.now() - routeStart;
       this.emit(sessionId, {
@@ -798,7 +800,7 @@ export class TuiBridgeService {
         }
         logBridge('input.routed', { sessionId, route: 'studio.engineering', confidence: classification.confidence });
         this.streamEngineeringTask(sessionId, input.text, conversation, llm)
-          .then(() => emitSessionTurn('conveyor'))
+          .then(() => emitSessionTurn('engineering-agent', undefined, { executor: 'llm-mode-agent' }))
           .catch(handleError);
         break;
       }
@@ -887,7 +889,8 @@ export class TuiBridgeService {
           sessionId,
           turnId: `turn-${Date.now()}`,
           intent: route === 'creative' ? 'creative' : route === 'hybrid' ? 'hybrid' : 'engineering',
-          delegatedTo: route === 'creative' || route === 'hybrid' ? 'ralph-loop' : 'conveyor',
+          delegatedTo: route === 'creative' || route === 'hybrid' ? 'ralph-loop' : 'engineering-agent',
+          executor: route === 'creative' || route === 'hybrid' ? 'ralph-loop' : 'llm-mode-agent',
           durationMs: Date.now() - routeStart,
         });
       })
@@ -2605,6 +2608,7 @@ export class TuiBridgeService {
     this.beginRun(sessionId, {
       kind: 'engineering',
       label: `Engineering task queued: ${userText.slice(0, 60)}`,
+      executor: 'llm-mode-agent',
       model: modelName,
       provider,
     });

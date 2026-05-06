@@ -59,7 +59,8 @@ describe('ResponseComposer', () => {
 
       expect(response.content).toBe('Fixed the test');
       expect(response.metadata.intent).toBe('engineering');
-      expect(response.metadata.delegatedTo).toBe('conveyor');
+      expect(response.metadata.delegatedTo).toBe('engineering-delegate');
+      expect(response.metadata.executor).toBe('external-engineering-delegate');
       expect(response.metadata.taskRefs).toEqual(['T-001']);
     });
   });

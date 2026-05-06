@@ -963,8 +963,18 @@ describe('Bubble Tea operator routing', () => {
     expect(turn).toMatchObject({
       type: 'session.turn',
       intent: 'engineering',
-      delegatedTo: 'conveyor',
+      delegatedTo: 'engineering-agent',
+      executor: 'llm-mode-agent',
     });
+    expect(service.getEvents(session.sessionId)
+      .find(event => event.type === 'run.lifecycle' && event.run.kind === 'engineering'))
+      .toMatchObject({
+        type: 'run.lifecycle',
+        run: {
+          kind: 'engineering',
+          executor: 'llm-mode-agent',
+        },
+      });
   });
 
   it('shows persisted planning failure receipts in engineering run status', async () => {

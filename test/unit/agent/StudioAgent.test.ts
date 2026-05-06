@@ -83,12 +83,13 @@ describe('StudioAgent', () => {
   });
 
   describe('processInput with engineeringDelegate', () => {
-    it('delegates engineering intents to ConveyorRunner', async () => {
+    it('delegates engineering intents to the injected engineering executor', async () => {
       const mockEngineering = vi.fn<[], [string, AbortSignal?], Promise<EngineeringResult>>(
         async () => ({
           content: 'Fixed the test',
           taskRefs: ['T-001'],
           model: 'glm-5.1',
+          executor: 'conveyor-runner',
         }),
       );
 
@@ -97,7 +98,8 @@ describe('StudioAgent', () => {
 
       expect(mockEngineering).toHaveBeenCalledOnce();
       expect(response.metadata.intent).toBe('engineering');
-      expect(response.metadata.delegatedTo).toBe('conveyor');
+      expect(response.metadata.delegatedTo).toBe('engineering-delegate');
+      expect(response.metadata.executor).toBe('conveyor-runner');
       expect(response.metadata.taskRefs).toEqual(['T-001']);
     });
 

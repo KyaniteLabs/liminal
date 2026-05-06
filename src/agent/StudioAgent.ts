@@ -15,6 +15,7 @@ import type {
   StudioResponse,
   StudioAgentConfig,
   DelegationDecision,
+  ExecutionProvenance,
 } from './types.js';
 import { IntentRouter } from './IntentRouter.js';
 import { ModeAwareRouter } from './ProductMode.js';
@@ -27,7 +28,7 @@ import { ResponseComposer } from './ResponseComposer.js';
 /** Function that runs a creative generation (RalphLoop) */
 export type CreativeDelegate = (prompt: string, signal?: AbortSignal) => Promise<CreativeResult>;
 
-/** Function that runs an engineering task (ConveyorRunner) */
+/** Function that runs an engineering task through an injected executor */
 export type EngineeringDelegate = (description: string, signal?: AbortSignal) => Promise<EngineeringResult>;
 
 /** Function that streams a direct chat response */
@@ -45,6 +46,7 @@ export interface EngineeringResult {
   content: string;
   taskRefs: string[];
   model?: string;
+  executor?: ExecutionProvenance;
 }
 
 // ── System Prompt ──
@@ -139,6 +141,7 @@ export class StudioAgent {
       case 'ralph-loop':
         response = await this.executeCreative(input, turnId, startTime, signal);
         break;
+      case 'engineering-delegate':
       case 'conveyor':
         response = await this.executeEngineering(input, turnId, startTime, signal);
         break;
@@ -191,9 +194,9 @@ export class StudioAgent {
         };
       case 'engineering':
         return {
-          target: 'conveyor',
+          target: 'engineering-delegate',
           params: { description: input },
-          reason: 'Engineering task via ConveyorRunner',
+          reason: 'Engineering task via injected engineering delegate',
         };
       case 'hybrid':
         return {
@@ -283,6 +286,7 @@ export class StudioAgent {
       Date.now() - startTime,
       result.taskRefs,
       result.model,
+      result.executor,
     );
   }
 

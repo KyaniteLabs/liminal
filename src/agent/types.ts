@@ -34,9 +34,22 @@ export interface IntentClassification {
 export type DelegationTarget =
   | 'llm-chat'        // Direct conversational response
   | 'ralph-loop'      // Creative generation via RalphLoop
-  | 'conveyor'        // Engineering task via ConveyorRunner
+  | 'engineering-delegate' // Engineering work via the injected delegate boundary
+  | 'engineering-agent' // Engineering work via the TUI bridge engineering lane
+  | 'conveyor'        // Legacy label for ConveyorRunner-backed integrations
   | 'conveyor-verify' // Verify a specific task
   | 'none';           // No delegation — direct response
+
+/** Concrete executor that actually ran work behind a delegation boundary */
+export type ExecutionProvenance =
+  | 'llm-chat'
+  | 'ralph-loop'
+  | 'draft-generator'
+  | 'llm-mode-agent'
+  | 'conveyor-runner'
+  | 'external-engineering-delegate'
+  | 'echo'
+  | 'none';
 
 /** A delegation decision made by StudioAgent */
 export interface DelegationDecision {
@@ -91,6 +104,8 @@ export interface ResponseMetadata {
   durationMs: number;
   /** LLM model used */
   model?: string;
+  /** Concrete executor path used behind the delegation boundary */
+  executor?: ExecutionProvenance;
 }
 
 /** The structured response from StudioAgent */

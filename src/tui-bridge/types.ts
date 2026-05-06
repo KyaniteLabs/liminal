@@ -41,6 +41,14 @@ export type TuiRunPhase =
 
 export type TuiRunKind = 'chat' | 'creative' | 'engineering' | 'hybrid';
 export type TuiRunOutcome = 'completed' | 'failed' | 'cancelled' | 'suspended';
+export type TuiRunExecutor =
+  | 'llm-chat'
+  | 'ralph-loop'
+  | 'draft-generator'
+  | 'llm-mode-agent'
+  | 'conveyor-runner'
+  | 'echo'
+  | 'none';
 
 export interface TuiFailureProvenance {
   provider?: string;
@@ -64,6 +72,8 @@ export interface TuiRunLifecycle {
   startedAt: string;
   updatedAt: string;
   executionMode?: 'draft' | 'prove';
+  /** Concrete executor path that produced this run lifecycle state. */
+  executor?: TuiRunExecutor;
   model?: string;
   provider?: string;
   artifactPath?: string;
@@ -196,7 +206,7 @@ export type TuiBridgeEvent =
   | { type: 'artifact.found'; sessionId: string; artifactLabel: string; artifactPath: string }
   | ({ type: 'swarm.round'; sessionId: string } & SwarmRoundEvent)
   // Session turn: recorded after every agent routing decision
-  | { type: 'session.turn'; sessionId: string; turnId: string; intent: string; delegatedTo: string; durationMs: number; artifactRefs?: string[]; taskRefs?: string[] }
+  | { type: 'session.turn'; sessionId: string; turnId: string; intent: string; delegatedTo: string; durationMs: number; executor?: TuiRunExecutor; artifactRefs?: string[]; taskRefs?: string[] }
   // Task lifecycle: engineering delegation events
   | { type: 'task.queued'; sessionId: string; taskId: string; description: string }
   | { type: 'task.started'; sessionId: string; taskId: string }

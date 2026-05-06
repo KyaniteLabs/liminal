@@ -4,7 +4,7 @@
  * Classifies user input into one of four execution paths:
  *   direct     → conversational response via LLM
  *   creative   → RalphLoop generation
- *   engineering → ConveyorRunner task
+ *   engineering → injected engineering delegate
  *   hybrid     → creative + engineering verification
  *
  * Uses keyword detection with confidence scoring.

@@ -121,6 +121,7 @@ Release risk: medium-high. These items reduce integration debt and future bug ge
    - Findings: FQA-022
    - Action: receipts must name actual executor path and delegation boundary.
    - Proof: per-mode provenance tests.
+   - Remediation status: verified. Studio response metadata and TUI bridge lifecycle/session-turn events now separate delegation boundary from concrete executor. Engineering bridge runs report `delegatedTo: "engineering-agent"` and `executor: "llm-mode-agent"`; injected Studio engineering delegates report `delegatedTo: "engineering-delegate"` plus the delegate-supplied executor when available. Compatibility note: existing consumers matching `delegatedTo: "conveyor"` should migrate to `engineering-agent` and use `executor` for the actual runtime path.
 
 4. Fix Anthropic-compatible provenance URL.
    - Findings: FQA-027

@@ -342,6 +342,22 @@ describe('AnthropicProvider', () => {
     expect(url).toBe('https://api.anthropic.com/v1/messages');
   });
 
+  it('does not double-prefix /v1 when the configured base URL already includes it', async () => {
+    provider = new AnthropicProvider(makeConfig({
+      baseUrl: 'https://api.anthropic.com/v1',
+      model: 'claude-sonnet-4-20250514',
+    }));
+    mockFetchResponse({
+      content: [{ type: 'text', text: 'Hello from Claude' }],
+      model: 'claude-sonnet-4-20250514',
+    });
+
+    await provider.generate(makeRequest());
+
+    const [url] = mockFetch.mock.calls[0];
+    expect(url).toBe('https://api.anthropic.com/v1/messages');
+  });
+
   it('includes x-api-key and anthropic-version headers', async () => {
     mockFetchResponse({
       content: [{ type: 'text', text: 'ok' }],

@@ -634,6 +634,42 @@ describe('LLMClient fallback diagnostics', () => {
     expect(provider.generate).toHaveBeenCalledWith(expect.objectContaining({ signal: controller.signal }));
   });
 
+  it('reports Anthropic-compatible provenance with the effective /v1/messages request path', async () => {
+    const client = new LLMClient({
+      baseUrl: 'https://api.z.ai/api/anthropic',
+      model: 'glm-5v',
+      apiKey: 'test-key',
+    } as any);
+    const internal = client as any;
+    const provider = {
+      name: 'anthropic',
+      getModel: vi.fn(() => 'glm-5v'),
+      getConfig: vi.fn(() => ({ baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-5v' })),
+      generate: vi.fn(async () => ({
+        isErr: () => false,
+        value: {
+          success: true,
+          content: 'function setup() { createCanvas(10, 10); }',
+        },
+      })),
+    };
+
+    vi.spyOn(RetryManager, 'executeWithRetry').mockImplementation(async (fn: () => Promise<unknown>) => fn());
+
+    internal.resolveModel = vi.fn(async () => 'glm-5v');
+    internal.syncResolvedModel = vi.fn();
+    internal.detectProvider = vi.fn(() => 'anthropic');
+    internal.generateWithBreaker = vi.fn(async (_provider: string, fn: () => Promise<unknown>) => fn());
+    internal.getProvider = vi.fn(async () => provider);
+    internal.getFallbackProviders = vi.fn(() => []);
+
+    const result = await client.generate('sys', 'user', undefined, true);
+
+    expect(result.success).toBe(true);
+    expect(result.provenance?.endpoint).toBe('https://api.z.ai/api/anthropic/v1/messages');
+    expect(result.provenance?.endpointStyle).toBe('anthropic');
+  });
+
   it('includes exhausted fallback reasons in complete() failure payloads', async () => {
     const client = new LLMClient({ provider: 'lmstudio', model: 'primary-model' } as any);
     const internal = client as any;

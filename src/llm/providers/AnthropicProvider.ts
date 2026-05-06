@@ -36,6 +36,14 @@ function buildAnthropicUserContent(req: ProviderRequest): unknown {
   ];
 }
 
+export function anthropicMessagesEndpoint(baseUrl: string): string {
+  const trimmed = baseUrl.replace(/\/+$/, '');
+  if (/\/v1\/messages$/i.test(trimmed)) return trimmed;
+  if (/\/messages$/i.test(trimmed)) return `${trimmed.replace(/\/messages$/i, '')}/v1/messages`;
+  if (/\/v1$/i.test(trimmed)) return `${trimmed}/messages`;
+  return `${trimmed}/v1/messages`;
+}
+
 export class AnthropicProvider extends BaseProvider {
   readonly name = 'anthropic';
 
@@ -45,7 +53,7 @@ export class AnthropicProvider extends BaseProvider {
 
   async generate(req: ProviderRequest): Promise<Result<ProviderResponse, LLMError>> {
     try {
-      const url = `${this.config.baseUrl}/v1/messages`;
+      const url = anthropicMessagesEndpoint(this.config.baseUrl);
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'anthropic-version': '2023-06-01',
@@ -167,7 +175,7 @@ export class AnthropicProvider extends BaseProvider {
       const message = error instanceof Error ? error.message : 'Unknown error';
       return err(new LLMError(message, this.name, undefined, true, {
         model: this.config.model,
-        endpoint: `${this.config.baseUrl}/messages`,
+        endpoint: anthropicMessagesEndpoint(this.config.baseUrl),
       }));
     }
   }
@@ -185,7 +193,7 @@ export class AnthropicProvider extends BaseProvider {
   }
 
   async *stream(req: ProviderRequest): AsyncGenerator<StreamEvent> {
-    const url = `${this.config.baseUrl}/v1/messages`;
+    const url = anthropicMessagesEndpoint(this.config.baseUrl);
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'anthropic-version': '2023-06-01',

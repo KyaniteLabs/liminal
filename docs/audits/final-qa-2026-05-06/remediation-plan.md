@@ -125,6 +125,7 @@ Release risk: medium-high. These items reduce integration debt and future bug ge
    - Findings: FQA-027
    - Action: derive displayed endpoint from the adapter request path.
    - Proof: adapter/provenance contract test.
+   - Remediation status: verified. `AnthropicProvider` and `LLMClient` now share the same effective `/v1/messages` endpoint builder, including already-`/v1` base URLs and Anthropic-compatible GLM/Z.ai paths.
 
 5. Align Three prompt and runtime wrapper.
    - Findings: FQA-028

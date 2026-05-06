@@ -24,6 +24,7 @@ const LOCAL_MODEL_DETECT_TIMEOUT_MS = 2500;
 // ── Provider system imports ──
 import { createProvider } from './ProviderFactory.js';
 import { BaseProvider } from './providers/BaseProvider.js';
+import { anthropicMessagesEndpoint } from './providers/AnthropicProvider.js';
 import type { ProviderImageInput, ProviderRequest, ProviderResponse } from './ProviderTypes.js';
 import type { ModelRole, ResolvedRoleConfig, RoleConfigFile } from '../config/RoleConfig.js';
 import { loadRoleConfig, getFallbacks } from '../config/RoleConfig.js';
@@ -549,7 +550,7 @@ export class LLMClient {
   private providerEndpoint(providerName = this.detectProvider(), baseUrlValue = this.config.baseUrl, model = this.config.model): string {
     const baseUrl = baseUrlValue.replace(/\/+$/, '');
     if (providerName === Provider.OLLAMA && !baseUrl.endsWith('/v1')) return `${baseUrl}/api/generate`;
-    if (providerName === 'anthropic') return `${baseUrl}/messages`;
+    if (providerName === 'anthropic') return anthropicMessagesEndpoint(baseUrl);
     if (providerName === 'google') return `${baseUrl}/models/${model}:generateContent`;
     return `${baseUrl}/chat/completions`;
   }

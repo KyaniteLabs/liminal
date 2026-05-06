@@ -96,3 +96,13 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production build still succeeds after first-run docs remediation. | Vite built 35 modules. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after first-run docs remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
 | 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after first-run docs remediation. | Exit 0. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/llm/provider-adapters.test.ts --coverage=false --testNamePattern "does not double-prefix"` | pass | AnthropicProvider uses one effective `/v1/messages` path even when base URL already includes `/v1`. | Red-first proof failed with `/v1/v1/messages`, then passed; 1 file passed, 1 test passed, 56 skipped. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/llm/LLMClientExtended.test.ts --coverage=false --testNamePattern "Anthropic-compatible provenance"` | pass | LLM provenance reports the same `/v1/messages` path used by Anthropic-compatible adapter calls. | Red-first proof failed with `/messages`, then passed; 1 file passed, 1 test passed, 80 skipped. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/llm/provider-adapters.test.ts test/unit/llm/LLMClientExtended.test.ts test/unit/llm/ProviderFactory.test.ts test/unit/config/ProviderRuntime.test.ts --coverage=false` | pass | Provider adapter, factory, runtime detection, and LLM provenance suites pass together. | 4 files passed; 175 tests passed. |
+| 2026-05-06 remediation | `pnpm typecheck` | pass | Anthropic endpoint/provenance remediation typechecks. | Exit 0. |
+| 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after Anthropic endpoint/provenance remediation. | Exit 0. |
+| 2026-05-06 remediation | `pnpm build` | pass | Root build succeeds after Anthropic endpoint/provenance remediation. | Exit 0. |
+| 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the Anthropic endpoint/provenance regression tests. | 664 files scanned; all checks passed. |
+| 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after Anthropic endpoint/provenance remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
+| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after Anthropic endpoint/provenance remediation. | Exit 0. |
+| 2026-05-06 remediation | `git diff --check` | pass | Anthropic endpoint/provenance remediation diff has no whitespace errors. | Exit 0. |

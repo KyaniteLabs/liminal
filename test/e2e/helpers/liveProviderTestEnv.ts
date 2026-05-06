@@ -19,7 +19,16 @@ const PROVIDER_ENV_KEYS = [
   'KIMI_API_KEY',
   'MOONSHOT_API_KEY',
   'ANTHROPIC_AUTH_TOKEN',
+  'ZAI_API_KEY',
 ];
+
+const GENERIC_LLM_ENV_KEYS = [
+  'LIMINAL_LLM_PROVIDER',
+  'LIMINAL_LLM_BASE_URL',
+  'LIMINAL_LLM_MODEL',
+  'LIMINAL_LLM_API_KEY',
+  'LIMINAL_LLM_API_STYLE',
+] as const;
 
 export function backupProviderEnv(extraKeys: string[] = []): EnvBackup {
   return [...PROVIDER_ENV_KEYS, ...extraKeys].reduce<EnvBackup>((backup, key) => {
@@ -36,7 +45,12 @@ export function restoreProviderEnv(backup: EnvBackup): void {
 }
 
 export function applyProviderEnv(provider: ProviderType, modelOverride?: string): ReturnType<typeof getProviderConfig> {
+  const genericBackup = backupProviderEnv([...GENERIC_LLM_ENV_KEYS]);
+  for (const key of GENERIC_LLM_ENV_KEYS) {
+    delete process.env[key];
+  }
   const config = getProviderConfig(provider);
+  restoreProviderEnv(genericBackup);
   if (!config) return null;
   if (providerRequiresApiKey(provider) && !config.apiKey) return null;
 

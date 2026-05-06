@@ -1,24 +1,24 @@
 {
   "contract": "liminal-final-qa-test-surface-ledger-v1",
-  "updatedAt": "2026-05-06T18:45:39Z",
+  "updatedAt": "2026-05-06T23:51:58Z",
   "policy": "No test file may remain under test/pending for final QA. Every skipped/gated test file must have owner, launch risk, reason, action, and verification before final QA can be claimed.",
   "pendingTests": [],
   "skippedOrGatedTests": [
     {
       "path": "test/integration/dual-llm.test.ts",
       "owner": "Provider runtime",
-      "launchRisk": "live-provider-gated",
-      "reason": "Dual LLM integration is skipped in CI or without local backend.",
-      "action": "Run only for live-provider/local-backend claims.",
-      "verification": "LIMINAL_LLM_BASE_URL=<url> pnpm vitest run test/integration/dual-llm.test.ts --coverage=false"
+      "launchRisk": "verified-live-and-local-provider-gated",
+      "reason": "Dual provider proof is intentionally gated behind RUN_DUAL_LLM_TESTS because it exercises both loaded local LM Studio and configured live GLM provider paths.",
+      "action": "Keep classified and run before dual-provider release claims.",
+      "verification": "RUN_DUAL_LLM_TESTS=1 pnpm vitest run test/integration/dual-llm.test.ts --coverage=false --reporter=dot --pool=forks"
     },
     {
       "path": "test/e2e/model-comparison.test.ts",
       "owner": "Provider runtime",
-      "launchRisk": "live-provider-gated",
-      "reason": "Model comparison suite is opt-in.",
-      "action": "Run only for model comparison claims.",
-      "verification": "RUN_MODEL_COMPARISON=1 pnpm vitest run test/e2e/model-comparison.test.ts --coverage=false"
+      "launchRisk": "verified-provider-comparison-gated",
+      "reason": "Provider comparison proof is intentionally gated behind RUN_MODEL_COMPARISON because it uses local LM Studio plus live cloud credentials.",
+      "action": "Keep classified and run before model-comparison release claims.",
+      "verification": "RUN_MODEL_COMPARISON=1 pnpm vitest run test/e2e/model-comparison.test.ts --coverage=false --reporter=dot --pool=forks"
     },
     {
       "path": "test/e2e/cloud-providers.test.ts",
@@ -55,10 +55,10 @@
     {
       "path": "test/e2e/models/lfm-2-5-1-2b.test.ts",
       "owner": "Provider runtime",
-      "launchRisk": "live-provider-gated",
-      "reason": "LFM model e2e requires provider availability.",
-      "action": "Run for LFM provider claims.",
-      "verification": "RUN_CLOUD_MODEL_TESTS=1 pnpm test:cloud"
+      "launchRisk": "verified-local-provider-gated",
+      "reason": "LFM 2.5 1.2B proof is intentionally gated behind RUN_LFM_MODEL_TESTS because it requires the model to be loaded in LM Studio.",
+      "action": "Keep classified and run for LFM/local-provider release claims.",
+      "verification": "RUN_LFM_MODEL_TESTS=1 pnpm vitest run test/e2e/models/lfm-2-5-1-2b.test.ts --coverage=false --reporter=dot --pool=forks"
     },
     {
       "path": "test/e2e/models/minimax-m2-5.test.ts",

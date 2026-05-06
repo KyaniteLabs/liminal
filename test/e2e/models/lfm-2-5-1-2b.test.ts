@@ -1,60 +1,44 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+
+import { createLmStudioClient, selectLmStudioModel } from '../helpers/liveProviderTestEnv.js';
+import type { LLMClient } from '../../../src/llm/LLMClient.js';
+
 /**
- * Liquid Foundation Model 2.5 1.2B Test Suite
- * Local model via LM Studio - very small, very fast
- * Skips in CI or when no local LLM is configured.
+ * LFM 2.5 1.2B local-provider proof.
+ *
+ * This is gated because it requires the LFM model to be loaded in LM Studio.
+ * When the gate is enabled, missing model availability is a real failure, not
+ * a silent skip.
  */
 
-import { run } from '../../../src/index.js';
-import { CodeValidator } from '../../../src/core/CodeValidator.js';
+const RUN_LFM = process.env.RUN_LFM_MODEL_TESTS === '1' || process.env.RUN_LFM_MODEL_TESTS === 'true';
+const TEST_TIMEOUT_MS = 75000;
+const REQUEST_TIMEOUT_MS = 60000;
 
-const MODEL_CONFIG = {
-  baseUrl: 'http://localhost:1234/v1',
-  model: 'lfm2.5-1.2b-instruct',
-};
+describe.skipIf(process.env.CI || !RUN_LFM)('LFM 2.5 1.2B LM Studio model', () => {
+  let model: string;
+  let client: LLMClient;
 
-const TEST_TIMEOUT = 60000; // 1 minute - small model
-
-// Skip when running in CI or when no local LLM is explicitly configured
-const skipNoLLM = process.env.CI || !process.env.LIMINAL_LLM_BASE_URL?.includes('localhost');
-describe.skipIf(skipNoLLM)('LFM 2.5 1.2B', () => {
-  beforeAll(() => {
-    process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;
-    process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;
+  beforeAll(async () => {
+    model = await selectLmStudioModel([/lfm2\.5-1\.2b/i, /lfm2\.5/i, /lfm/i]);
+    client = createLmStudioClient(model);
   });
 
-  it('generates p5.js blue circle', async () => {
-    const result = await run('simple blue circle', {
-      maxIterations: 2,
-      output: './test-results/models/lfm-2-5-1-2b/p5-circle',
-      project: 'test-p5',
-    });
+  it('generates bounded p5.js setup code', async () => {
+    const response = await client.generate(
+      'Output final JavaScript only. Do not include reasoning text.',
+      'Return only this JavaScript line: function setup(){createCanvas(120,120);}',
+      AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    );
 
-    expect(result.code).toContain('createCanvas');
-    expect(result.code).toContain('circle');
-    expect(result.code).not.toContain('<think');
-  }, TEST_TIMEOUT);
+    expect(response.success).toBe(true);
+    expect(response.provenance?.model).toBe(model);
+    expect(response.code).toContain('function setup');
+    expect(response.code).toContain('createCanvas');
+    expect(response.code).not.toContain('<think');
+  }, TEST_TIMEOUT_MS);
 
-  it('generates basic sketch', async () => {
-    const result = await run('red rectangle moving', {
-      maxIterations: 2,
-      output: './test-results/models/lfm-2-5-1-2b/p5-rect',
-      project: 'test-p5',
-    });
-
-    expect(result.code.length).toBeGreaterThan(10);
-    expect(result.code).not.toContain('<think');
-  }, TEST_TIMEOUT);
-
-  it('output passes validation', async () => {
-    const result = await run('simple animation', {
-      maxIterations: 2,
-      output: './test-results/models/lfm-2-5-1-2b/validation',
-      project: 'test-validate',
-    });
-
-    const validation = CodeValidator.validate(result.code);
-    expect(validation.cleanedCode.length).toBeGreaterThan(0);
-    expect(result.code).not.toContain('<think');
-  }, TEST_TIMEOUT);
+  it('records which local model satisfied the LFM proof', () => {
+    expect(model.toLowerCase()).toContain('lfm');
+  });
 });

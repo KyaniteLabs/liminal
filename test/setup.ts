@@ -71,14 +71,41 @@ const LLM_ENV_KEYS = [
   'LIMINAL_LLM_API_KEY',
   'LIMINAL_LLM_BASE_URL',
   'LIMINAL_LLM_MODEL',
+  'LIMINAL_HARNESS_API_KEY',
+  'LIMINAL_HARNESS_BASE_URL',
+  'LIMINAL_HARNESS_MODEL',
+  'LIMINAL_EVALUATOR_API_KEY',
+  'LIMINAL_EVALUATOR_BASE_URL',
+  'LIMINAL_EVALUATOR_MODEL',
   'ATELIER_LLM_API_KEY',
   'ATELIER_LLM_BASE_URL',
   'OPENAI_API_KEY',
+  'ANTHROPIC_API_KEY',
+  'ANTHROPIC_AUTH_TOKEN',
+  'ANTHROPIC_BASE_URL',
+  'GLM_API_KEY',
+  'KIMI_API_KEY',
+  'MOONSHOT_API_KEY',
+  'GEMINI_API_KEY',
+  'GOOGLE_API_KEY',
+  'OPENROUTER_API_KEY',
   'MINIMAX_API_KEY',
+  'MISTRAL_API_KEY',
+  'DEEPSEEK_API_KEY',
+  'ZAI_API_KEY',
+  'LMSTUDIO_API_KEY',
+  'OLLAMA_API_KEY',
   'LIMINAL_REASONING_URL',
   'LLM_PROVIDER',
   'LLM_API_KEY',
   'LLM_BASE_URL',
+  'LLM_MODEL',
+  'HARNESS_API_KEY',
+  'HARNESS_BASE_URL',
+  'HARNESS_MODEL',
+  'EVALUATOR_API_KEY',
+  'EVALUATOR_BASE_URL',
+  'EVALUATOR_MODEL',
 ] as const;
 
 // CI-specific variables that tests might depend on
@@ -115,6 +142,10 @@ beforeAll(() => {
 beforeEach(() => {
   installQuietCanvasFallbacks();
   installQuietAudioFallbacks();
+
+  for (const key of LLM_ENV_KEYS) {
+    delete process.env[key];
+  }
 
   // Ensure test environment is set
   process.env.NODE_ENV = 'test';

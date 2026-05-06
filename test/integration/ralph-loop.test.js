@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterEach, test } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, test, vi } from 'vitest';
 /**
  * Integration tests for RalphLoop iteration engine
  *
@@ -20,6 +20,9 @@ import { Gallery } from '../../src/gallery/Gallery.js';
 import { LLMClient } from '../../src/llm/LLMClient.js';
 import fs from 'fs/promises';
 import path from 'path';
+import { installIntegrationProofLLMEnv } from './helpers/proof-llm-server.js';
+
+vi.setConfig({ testTimeout: 60_000 });
 
 /** Skip when LLM not configured (template fallback returns same code, no promise). */
 function skipIfNoLLM() {
@@ -33,11 +36,17 @@ function skipIfNoLLM() {
 describe('RalphLoop Integration Tests', () => {
   let testGalleryDir;
   let gallery;
+  let proofLLMCleanup;
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    proofLLMCleanup = await installIntegrationProofLLMEnv();
     // Create a test gallery directory
     testGalleryDir = path.join(process.cwd(), 'test-gallery');
     gallery = new Gallery(testGalleryDir);
+  });
+
+  afterAll(async () => {
+    await proofLLMCleanup?.();
   });
 
   afterEach(async () => {
@@ -282,11 +291,14 @@ describe('RalphLoop Integration Tests', () => {
     test('should throw error when gallery save fails and tolerateErrors is false', async () => {
       if (skipIfNoLLM()) return;
       const prompt = 'Throw on save failure';
+      const blockingGalleryPath = path.join(testGalleryDir, 'not-a-directory');
+      await fs.mkdir(testGalleryDir, { recursive: true });
+      await fs.writeFile(blockingGalleryPath, 'blocking file');
 
-      // Use invalid gallery directory to trigger save error and expect error to be thrown
+      // Use a file where a gallery directory is expected to trigger a deterministic save error.
       await expect(RalphLoop.run(prompt, {
         maxIterations: 1,
-        galleryDir: '/invalid/path/that/cannot/be/created',
+        galleryDir: blockingGalleryPath,
         tolerateErrors: false,
         project: 'test-project'
       })).rejects.toThrow();
@@ -653,7 +665,8 @@ describe('RalphLoop Integration Tests', () => {
 
       await RalphLoop.run(prompt, {
         maxIterations: maxIter,
-        galleryDir: testGalleryDir
+        galleryDir: testGalleryDir,
+        _disableIterationExtension: true
       });
 
       const progress = RalphLoop.getProgress();

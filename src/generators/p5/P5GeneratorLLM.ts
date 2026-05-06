@@ -3,6 +3,7 @@ import { GenerationError } from '../../errors/GenerationError.js';
 import { Layer, createLayer, LayerRole } from '../../composition/types.js';
 import { getEffectiveConfig } from '../../config/ConfigLoader.js';
 import { GENERATOR_TOOLS, createGeneratorToolExecutor } from '../../harness/tools/generator-tools.js';
+import { P5Validator } from '../../core/validators/P5Validator.js';
 
 export interface P5GeneratorOptions {
   maxIterations?: number;
@@ -123,17 +124,111 @@ export class P5GeneratorLLM {
       maxIterations: 3,
       signal: options?.signal,
     });
-    const llmResponse: LLMResponse = { code: toolLoopResult.content, success: toolLoopResult.success, error: toolLoopResult.error };
+    let llmResponse: LLMResponse = {
+      code: this.sanitizeP5Code(toolLoopResult.content),
+      success: toolLoopResult.success,
+      error: toolLoopResult.error,
+    };
 
     if (!llmResponse.code || llmResponse.code.trim() === '') {
-      throw new GenerationError(
-        'P5GeneratorLLM: LLM returned empty code for prompt: ' + prompt.slice(0, 100),
-        'p5',
-        { prompt: prompt.slice(0, 100) }
+      const retryResponse = await this.retryWithDirectCompletion(
+        prompt,
+        systemPrompt,
+        userPrompt,
+        'The previous tool-assisted attempt returned no p5.js code.',
+        options?.signal
       );
+      if (!retryResponse) {
+        throw new GenerationError(
+          'P5GeneratorLLM: LLM returned empty code for prompt: ' + prompt.slice(0, 100),
+          'p5',
+          { prompt: prompt.slice(0, 100) }
+        );
+      }
+      llmResponse = retryResponse;
+    }
+
+    const validation = P5Validator.validate(llmResponse.code);
+    if (!validation.valid) {
+      const retryResponse = await this.retryWithDirectCompletion(
+        prompt,
+        systemPrompt,
+        userPrompt,
+        `p5.js validation failed: ${validation.errors.join('; ')}`,
+        options?.signal,
+        llmResponse.code
+      );
+      if (retryResponse) {
+        const retryValidation = P5Validator.validate(retryResponse.code);
+        if (retryValidation.valid) {
+          llmResponse = retryResponse;
+        } else {
+          throw new GenerationError(
+            `P5GeneratorLLM: p5.js validation failed after retry: ${retryValidation.errors.join('; ')}`,
+            'p5',
+            { prompt: prompt.slice(0, 100), validationErrors: retryValidation.errors, generatedCode: retryResponse.code }
+          );
+        }
+      } else {
+        throw new GenerationError(
+          `P5GeneratorLLM: p5.js validation failed: ${validation.errors.join('; ')}`,
+          'p5',
+          { prompt: prompt.slice(0, 100), validationErrors: validation.errors, generatedCode: llmResponse.code }
+        );
+      }
     }
 
     return llmResponse;
+  }
+
+  private async retryWithDirectCompletion(
+    originalPrompt: string,
+    systemPrompt: string,
+    userPrompt: string,
+    reason: string,
+    signal?: AbortSignal,
+    failedCode?: string
+  ): Promise<LLMResponse | null> {
+    if (typeof this.llm.complete !== 'function') return null;
+
+    const directResult = await this.llm.complete({
+      systemPrompt,
+      prompt: [
+        userPrompt,
+        '',
+        reason,
+        'Regenerate the entire p5.js sketch now.',
+        'Return only runnable p5.js JavaScript with function setup(), function draw(), and createCanvas().',
+        `Original request: ${originalPrompt}`,
+        failedCode ? `Previous failed output:\n${failedCode.slice(0, 4000)}` : '',
+      ].filter(Boolean).join('\n'),
+      signal,
+    });
+
+    const code = this.sanitizeP5Code(directResult.text ?? '');
+    if (!code) return null;
+
+    return {
+      code,
+      explanation: directResult.text,
+      success: directResult.success,
+      error: directResult.error,
+    };
+  }
+
+  private sanitizeP5Code(code: string): string {
+    let clean = code ?? '';
+    clean = clean.replace(/<think\b[^>]*>[\s\S]*?<\/think>/gi, '');
+    const fencedSketch = clean.match(/```(?:javascript|js)?\s*\n?([\s\S]*?)```/i);
+    if (fencedSketch?.[1] && /function\s+setup\s*\(/.test(fencedSketch[1])) {
+      clean = fencedSketch[1];
+    } else {
+      const unclosedFenceSketch = clean.match(/```(?:javascript|js)?\s*\n?([\s\S]*)/i);
+      if (unclosedFenceSketch?.[1] && /function\s+setup\s*\(/.test(unclosedFenceSketch[1])) {
+        clean = unclosedFenceSketch[1];
+      }
+    }
+    return clean.trim();
   }
 
   /**

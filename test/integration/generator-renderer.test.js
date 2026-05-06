@@ -17,6 +17,7 @@ import path from 'path';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { LLMClient } from '../../src/llm/LLMClient.js';
+import { installIntegrationProofLLMEnv } from './helpers/proof-llm-server.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -47,10 +48,12 @@ function skipIfNoLLM() {
 describe('Generator-Renderer Integration Tests', () => {
   let previewServer;
   let renderer;
+  let proofLLMCleanup;
   const TEST_PORT = 3457;
   const testOutputDir = path.resolve(__dirname, 'test-generator-renderer-output');
 
   beforeAll(async () => {
+    proofLLMCleanup = await installIntegrationProofLLMEnv();
     // Create test output directory
     try {
       await fs.mkdir(testOutputDir, { recursive: true });
@@ -67,6 +70,7 @@ describe('Generator-Renderer Integration Tests', () => {
     try {
       await previewServer.stop();
       await fs.rm(testOutputDir, { recursive: true, force: true });
+      await proofLLMCleanup?.();
     } catch (error) {
       // Ignore cleanup errors
     }

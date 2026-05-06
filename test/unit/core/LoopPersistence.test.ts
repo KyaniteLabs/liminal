@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Gallery } from '../../../src/gallery/Gallery.js';
@@ -81,6 +81,25 @@ describe('LoopPersistence', () => {
     expect(history).toHaveLength(1);
   });
 
+  it('saveIteration with LiminalFS propagates gallery write failures when tolerateErrors is false', async () => {
+    const blockedRoot = mkdtempSync(join(tmpdir(), 'liminal-blocked-gallery-test-'));
+    const blockedGalleryPath = join(blockedRoot, 'not-a-directory');
+    writeFileSync(blockedGalleryPath, 'blocking file');
+
+    const blockedGallery = new Gallery(blockedGalleryPath);
+    const persistence = new LoopPersistence(
+      blockedGallery,
+      { project: 'my-project', tolerateErrors: false } as any,
+      fs,
+    );
+
+    try {
+      await expect(persistence.saveIteration(1, 'const x = 1;')).rejects.toThrow();
+    } finally {
+      rmSync(blockedRoot, { recursive: true, force: true });
+    }
+  });
+
   it('saveMergeStep with LiminalFS — writes artifact for merged code at iteration+1', async () => {
     const { ContextAccumulation } = await import('../../../src/core/ContextAccumulation.js');
 
@@ -101,8 +120,7 @@ describe('LoopPersistence', () => {
       await persistence.saveMergeStep(2);
 
       const ref = fs.readRef('gallery/my-project/v3');
-      expect(ref).not.toBeNull();
-      expect(ref?.kind).toBe('gallery-version');
+      expect(ref).toMatchObject({ kind: 'gallery-version' });
     });
   });
 });

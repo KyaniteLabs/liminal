@@ -354,6 +354,30 @@ describe('P5Validator', () => {
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
+
+    it('should allow common typography, timing, and point helpers from generated p5 sketches', () => {
+      const code = `
+        function setup() {
+          createCanvas(400, 400);
+          rectMode(CENTER);
+          textStyle(NORMAL);
+        }
+
+        function draw() {
+          background(20);
+          const pulse = millis() / 1000;
+          rotate(radians(frameCount % 360));
+          point(width / 2 + sin(pulse) * 20, height / 2);
+          textStyle(BOLD);
+          text(nf(frameCount, 3), 10, 20);
+          textStyle(NORMAL);
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
   });
 
   describe('getMinSize', () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterEach, test } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, test, vi } from 'vitest';
 /**
  * Full-Loop Integration Tests for RalphLoop
  *
@@ -21,6 +21,9 @@ import { Gallery } from '../../src/gallery/Gallery.js';
 import { LLMClient } from '../../src/llm/LLMClient.js';
 import fs from 'fs/promises';
 import path from 'path';
+import { installIntegrationProofLLMEnv } from './helpers/proof-llm-server.js';
+
+vi.setConfig({ testTimeout: 60_000 });
 
 /** Skip test when LLM is not configured (template fallback returns same code, no promise). */
 function skipIfNoLLM() {
@@ -34,10 +37,16 @@ function skipIfNoLLM() {
 describe('Full-Loop Integration Tests', () => {
   let testGalleryDir;
   let gallery;
+  let proofLLMCleanup;
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    proofLLMCleanup = await installIntegrationProofLLMEnv();
     testGalleryDir = path.join(process.cwd(), 'test-full-loop-gallery');
     gallery = new Gallery(testGalleryDir);
+  });
+
+  afterAll(async () => {
+    await proofLLMCleanup?.();
   });
 
   afterEach(async () => {

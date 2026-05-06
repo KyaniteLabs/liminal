@@ -51,19 +51,18 @@ const contextStorage = new AsyncLocalStorage<ContextAccumulation>();
 export class ContextAccumulation {
   private history: State[] = [];
   private static readonly MAX_HISTORY_SIZE = 50;
+  private static readonly defaultInstance = new ContextAccumulation();
 
   /** 
    * Get the current context instance for this async context.
-   * Creates a new instance if none exists in the current async context.
+   * Falls back to the shared legacy instance if none exists in the current async context.
    */
   private static getCurrentInstance(): ContextAccumulation {
     const existing = contextStorage.getStore();
     if (existing) {
       return existing;
     }
-    // Fallback: create isolated instance for backward compatibility
-    // This prevents the singleton race condition
-    return new ContextAccumulation();
+    return ContextAccumulation.defaultInstance;
   }
 
   /**

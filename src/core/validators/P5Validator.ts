@@ -19,16 +19,16 @@ export class P5Validator {
   private static readonly P5_GLOBALS = new Set([
     'Array', 'Boolean', 'Date', 'Error', 'JSON', 'Map', 'Math', 'Number', 'Object', 'Promise', 'Set', 'String',
     'console', 'document', 'p5', 'window',
-    'ADD', 'BASELINE', 'BLEND', 'MULTIPLY', 'CENTER', 'CLOSE', 'CORNER', 'DEGREES', 'DOWN_ARROW', 'HALF_PI', 'HSB', 'LEFT', 'LEFT_ARROW', 'PI', 'QUARTER_PI', 'RADIANS', 'RGB', 'RIGHT', 'RIGHT_ARROW', 'TWO_PI', 'UP_ARROW',
+    'ADD', 'BASELINE', 'BLEND', 'MULTIPLY', 'BOLD', 'CENTER', 'CLOSE', 'CORNER', 'DEGREES', 'DOWN_ARROW', 'HALF_PI', 'HSB', 'ITALIC', 'LEFT', 'LEFT_ARROW', 'NORMAL', 'PI', 'QUARTER_PI', 'RADIANS', 'RGB', 'RIGHT', 'RIGHT_ARROW', 'TWO_PI', 'UP_ARROW',
     'POINTS', 'LINES', 'TRIANGLES', 'TRIANGLE_FAN', 'TRIANGLE_STRIP', 'QUADS', 'QUAD_STRIP',
     'draw', 'drawingContext', 'frameCount', 'height', 'key', 'keyCode', 'keyIsPressed', 'mouseButton', 'mouseIsPressed', 'mouseX', 'mouseY', 'pixels', 'pmouseX', 'pmouseY', 'setup', 'windowHeight', 'windowWidth', 'width',
     'abs', 'acos', 'angleMode', 'asin', 'atan', 'atan2', 'background', 'beginShape', 'bezier', 'blendMode',
     'bezierVertex', 'ceil', 'circle', 'color', 'colorMode', 'constrain', 'cos', 'createCanvas', 'createGraphics', 'curveVertex', 'dist', 'ellipse', 'endShape', 'exp',
-    'fill', 'floor', 'frameRate', 'image', 'lerp', 'line', 'map', 'max', 'min', 'noFill', 'noise', 'noLoop',
+    'fill', 'floor', 'frameRate', 'image', 'lerp', 'line', 'map', 'max', 'millis', 'min', 'nf', 'noFill', 'noise', 'noLoop',
     'createVector',
-    'loadPixels', 'noStroke', 'pixelDensity', 'pop', 'pow', 'push', 'random', 'rect', 'red', 'green', 'blue', 'lerpColor',
+    'loadPixels', 'noStroke', 'pixelDensity', 'point', 'pop', 'pow', 'push', 'radians', 'random', 'rect', 'rectMode', 'red', 'green', 'blue', 'lerpColor',
     'resizeCanvas', 'rotate', 'round', 'scale', 'sin', 'sqrt',
-    'stroke', 'strokeWeight', 'text', 'textAlign', 'textFont', 'textSize', 'translate', 'triangle', 'updatePixels', 'vertex',
+    'stroke', 'strokeWeight', 'text', 'textAlign', 'textFont', 'textSize', 'textStyle', 'translate', 'triangle', 'updatePixels', 'vertex',
     // p5.sound
     'loadSound', 'createAudio', 'getAudioContext', 'userStartAudio',
     // Web Audio API
@@ -42,9 +42,9 @@ export class P5Validator {
   private static readonly P5_CALLABLE_GLOBALS = new Set([
     'background', 'beginShape', 'bezier', 'bezierVertex', 'blendMode', 'circle', 'color', 'colorMode',
     'constrain', 'cos', 'createCanvas', 'createGraphics', 'createVector', 'curveVertex', 'dist', 'ellipse',
-    'endShape', 'fill', 'image', 'lerp', 'lerpColor', 'line', 'map', 'max', 'min', 'noise', 'noFill',
-    'noLoop', 'noStroke', 'pixelDensity', 'pop', 'push', 'random', 'rect', 'resizeCanvas', 'rotate',
-    'scale', 'sin', 'stroke', 'strokeWeight', 'text', 'textAlign', 'textFont', 'textSize', 'translate',
+    'endShape', 'fill', 'image', 'lerp', 'lerpColor', 'line', 'map', 'max', 'millis', 'min', 'nf', 'noise', 'noFill',
+    'noLoop', 'noStroke', 'pixelDensity', 'point', 'pop', 'push', 'radians', 'random', 'rect', 'rectMode', 'resizeCanvas', 'rotate',
+    'scale', 'sin', 'stroke', 'strokeWeight', 'text', 'textAlign', 'textFont', 'textSize', 'textStyle', 'translate',
     'triangle', 'vertex',
   ]);
 

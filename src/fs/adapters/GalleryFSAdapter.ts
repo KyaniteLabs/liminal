@@ -17,7 +17,14 @@ export class GalleryFSAdapter {
     code: string,
   ): Promise<LiminalObjectRef> {
     await this.gallery.saveIteration(project, version, code);
+    return this.writeGalleryVersionRef(project, version, code);
+  }
 
+  writeGalleryVersionRef(
+    project: string,
+    version: number,
+    code: string,
+  ): LiminalObjectRef {
     const ref = this.fs.writeArtifact({
       kind: 'gallery-version',
       content: code,

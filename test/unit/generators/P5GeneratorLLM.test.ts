@@ -5,9 +5,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockIsConfigured, mockGenerateP5Sketch, mockGetConfig, LLMClientMock } = vi.hoisted(() => {
+const { mockIsConfigured, mockGenerateP5Sketch, mockComplete, mockGetConfig, LLMClientMock } = vi.hoisted(() => {
   const mockIsConfigured = vi.fn().mockReturnValue(false);
   const mockGenerateP5Sketch = vi.fn();
+  const mockComplete = vi.fn();
   const mockGetConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://test', role: 'generator' });
 
   const LLMClientMock = vi.fn(function(this: any) {
@@ -22,11 +23,12 @@ const { mockIsConfigured, mockGenerateP5Sketch, mockGetConfig, LLMClientMock } =
         recoveredFromThinking: r?.recoveredFromThinking,
       }));
     });
+    this.complete = mockComplete;
     this.getConfig = mockGetConfig;
   });
   (LLMClientMock as any).isConfigured = mockIsConfigured;
 
-  return { mockIsConfigured, mockGenerateP5Sketch, mockGetConfig, LLMClientMock };
+  return { mockIsConfigured, mockGenerateP5Sketch, mockComplete, mockGetConfig, LLMClientMock };
 });
 
 vi.mock('../../../src/llm/LLMClient.js', () => ({
@@ -51,6 +53,7 @@ describe('P5GeneratorLLM', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetConfig.mockReturnValue({ model: 'test-model', baseUrl: 'http://test', role: 'generator' });
+    mockComplete.mockResolvedValue({ text: '', success: true });
   });
 
   // ---------------------------------------------------------------------------
@@ -126,6 +129,35 @@ describe('P5GeneratorLLM', () => {
       mockGenerateP5Sketch.mockResolvedValue({ code: '   \n\t  ', success: true });
       const gen = new P5GeneratorLLM();
       await expect(gen.generate('test')).rejects.toThrow(GenerationError);
+    });
+
+    it('retries once with direct completion when the tool loop returns empty code', async () => {
+      mockIsConfigured.mockReturnValue(true);
+      mockGenerateP5Sketch.mockResolvedValue({ code: '', success: true });
+      mockComplete.mockResolvedValue({ text: VALID_LLM_RESPONSE.code, success: true });
+
+      const gen = new P5GeneratorLLM();
+      await expect(gen.generate('draw a circle')).resolves.toBe(VALID_LLM_RESPONSE.code);
+
+      expect(mockComplete).toHaveBeenCalledWith(expect.objectContaining({
+        prompt: expect.stringContaining('previous tool-assisted attempt returned no p5.js code'),
+      }));
+    });
+
+    it('regenerates invalid p5 output instead of returning code that will fail preview', async () => {
+      mockIsConfigured.mockReturnValue(true);
+      mockGenerateP5Sketch.mockResolvedValue({
+        code: 'function setup() { createCanvas(400, 400); }\nfunction draw() { missingSketchState.show(); }',
+        success: true,
+      });
+      mockComplete.mockResolvedValue({ text: VALID_LLM_RESPONSE.code, success: true });
+
+      const gen = new P5GeneratorLLM();
+      await expect(gen.generate('draw a stable sketch')).resolves.toBe(VALID_LLM_RESPONSE.code);
+
+      expect(mockComplete).toHaveBeenCalledWith(expect.objectContaining({
+        prompt: expect.stringContaining('p5.js validation failed'),
+      }));
     });
   });
 

@@ -37,20 +37,20 @@ export class LoopPersistence {
   async saveIteration(iteration: number, code: string): Promise<void> {
     if (!this.options.project) return;
 
-    if (this.adapter) {
-      try {
-        await this.adapter.saveGalleryVersion(this.options.project, iteration, code);
-      } catch {
-        // GalleryFSAdapter failure must not affect loop operation
-      }
-      return;
-    }
-
     try {
       await this.gallery.saveIteration(this.options.project, iteration, code);
     } catch (error) {
       if (!this.options.tolerateErrors) {
         throw error;
+      }
+      return;
+    }
+
+    if (this.adapter) {
+      try {
+        this.adapter.writeGalleryVersionRef(this.options.project, iteration, code);
+      } catch {
+        // LiminalFS reference failures must not hide a successful gallery save.
       }
     }
   }
@@ -79,19 +79,19 @@ export class LoopPersistence {
 
     if (!this.options.project) return;
 
-    if (this.adapter) {
-      try {
-        await this.adapter.saveGalleryVersion(this.options.project, iteration + 1, proposed);
-      } catch {
-        // GalleryFSAdapter failure must not affect loop operation
-      }
-      return;
-    }
-
     try {
       await this.gallery.saveIteration(this.options.project, iteration + 1, proposed);
     } catch (error) {
       if (!this.options.tolerateErrors) throw error;
+      return;
+    }
+
+    if (this.adapter) {
+      try {
+        this.adapter.writeGalleryVersionRef(this.options.project, iteration + 1, proposed);
+      } catch {
+        // LiminalFS reference failures must not hide a successful gallery save.
+      }
     }
   }
 }

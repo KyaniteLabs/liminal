@@ -1499,7 +1499,7 @@ export class RalphLoop {
     if (!reason) {
       if (iteration >= normalizedOptions.maxIterations) {
         reason = `max iterations reached (${normalizedOptions.maxIterations})`;
-        completed = true;
+        completed = false;
       } else {
         reason = 'Loop terminated';
       }
@@ -1648,11 +1648,18 @@ export class RalphLoop {
     const history = ContextAccumulation.getHistory();
     if (history.length === 0) return null;
 
-    const iteration = history.length;
-    const mostRecentContext = history[history.length - 1] as IterationContext;
+    const mostRecentRealContext = [...history].reverse().find((context) => (
+      Number.isInteger(context.iteration) && context.iteration > 0
+    ));
+    const mostRecentContext = (mostRecentRealContext ?? history[history.length - 1]) as IterationContext;
+    const iteration = mostRecentContext?.iteration ?? history.length;
     const maxIterations = mostRecentContext?.maxIterations || DEFAULT_MAX_ITERATIONS;
 
-    return { iteration, maxIterations, progress: iteration / maxIterations };
+    return {
+      iteration,
+      maxIterations,
+      progress: Math.min(1, iteration / maxIterations),
+    };
   }
 
   /**
@@ -1672,15 +1679,15 @@ export class RalphLoop {
     const openBrackets = (code.match(/\[/g) || []).length;
     const closeBrackets = (code.match(/\]/g) || []).length;
 
-    // Check for common cutoff patterns
-    const hasCutoffPattern = /\n\s{0,4}$/m.test(code.slice(-100)); // Ends with whitespace only
-    const endsMidFunction = /function\s+\w+\s*\([^)]*\)\s*\{[^}]*$/.test(code.slice(-200));
-    const endsMidClass = /class\s+\w+.*\{[^}]*$/.test(code.slice(-200));
+    // Check for common cutoff patterns after harmless trailing whitespace is removed.
+    const trimmedCode = code.trimEnd();
+    const tail = trimmedCode.slice(-200);
+    const endsMidFunction = /function\s+\w+\s*\([^)]*\)\s*\{[^}]*$/.test(tail);
+    const endsMidClass = /class\s+\w+.*\{[^}]*$/.test(tail);
 
     return openBraces === closeBraces &&
            openParens === closeParens &&
            openBrackets === closeBrackets &&
-           !hasCutoffPattern &&
            !endsMidFunction &&
            !endsMidClass;
   }

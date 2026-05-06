@@ -48,7 +48,7 @@ Release risk: high. These items turn failures into success or weak proof into re
    - Findings: FQA-003, FQA-033
    - Action: propagate fallback stream errors through LLM client and TUI bridge terminal events.
    - Proof: failing-provider stream test proves no empty completed response is emitted, and integration/slow CI no longer fail from empty-code generation.
-   - Remediation status: FQA-003 verified for streaming fallback errors. FQA-033 remains open; the run/merge/approve API root is fixed and covered by `test/integration/run-merge-approve-api.test.js`, but `pnpm verify:integration` still fails 79 tests in `full-loop`, `ralph-loop`, and `generator-renderer` from broader generator empty-code and p5 validation issues.
+   - Remediation status: verified. FQA-003 is verified for streaming fallback errors. FQA-033 is verified across the API, generator, integration, and slow-CI failure classes: deterministic run/merge/approve paths pass; p5 generator empty output and invalid output retry intentionally; p5 generated globals are validated; local integration proof-model paths cover `generator-renderer`, `full-loop`, and `ralph-loop`; context/progress/gallery persistence no longer turns loop evidence into silent false success; `pnpm verify:integration` and `pnpm test:ci:slow` pass.
 
 2. Harden release-gate receipts.
    - Findings: FQA-004

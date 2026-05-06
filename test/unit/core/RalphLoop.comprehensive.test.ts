@@ -453,9 +453,20 @@ describe('RalphLoop — comprehensive', () => {
       ]);
       const progress = RalphLoop.getProgress();
       expect(progress).not.toBeNull();
-      expect(progress!.iteration).toBe(2);
+      expect(progress!.iteration).toBe(5);
       expect(progress!.maxIterations).toBe(10);
-      expect(progress!.progress).toBeCloseTo(0.2);
+      expect(progress!.progress).toBeCloseTo(0.5);
+    });
+
+    it('ignores fractional hint contexts when reporting progress', () => {
+      mockContextAccumulationGetHistory.mockReturnValue([
+        { iteration: 10, maxIterations: 10, evaluation: { score: 0.82 } },
+        { iteration: 10.5, maxIterations: undefined, evaluation: { score: 0 } },
+      ]);
+
+      const progress = RalphLoop.getProgress();
+
+      expect(progress).toEqual({ iteration: 10, maxIterations: 10, progress: 1 });
     });
   });
 
@@ -1419,9 +1430,9 @@ describe('RalphLoop — comprehensive', () => {
   // ─── isCodeComplete additional branches ─────────────────────────────
 
   describe('isCodeComplete() — additional branch coverage', () => {
-    it('returns false for code ending with whitespace-only line', () => {
+    it('returns true for balanced code with a trailing whitespace-only line', () => {
       const code = 'function setup() { createCanvas(400, 400); }\n  ';
-      expect(RalphLoop.isCodeComplete(code)).toBe(false);
+      expect(RalphLoop.isCodeComplete(code)).toBe(true);
     });
 
     it('returns false for code ending mid-class', () => {

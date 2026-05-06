@@ -6,7 +6,7 @@ Mitigations are temporary. They do not make Liminal launch-ready while material 
 
 ## Immediate Launch Guardrails
 
-- Do not publish or tag a release while FQA-002, FQA-006, FQA-009, FQA-011, FQA-033, or FQA-034 remain open or fixed-but-unverified.
+- Do not publish or tag a release while FQA-002, FQA-006, FQA-009, FQA-033, or FQA-034 remain open or fixed-but-unverified.
 - Treat integration/slow CI as red until FQA-033 is fixed, even when fast CI is green.
 - Treat live creative-domain readiness as limited to the five default live-proof domains until FQA-034 is fixed or the launch scope is narrowed.
 - Treat the browser/e2e PR job as unproved until FQA-009 has a real GitHub PR run under branch protection.
@@ -15,7 +15,7 @@ Mitigations are temporary. They do not make Liminal launch-ready while material 
 ## Operator Guardrails
 
 - During manual demos, keep provider failure logs visible and do not treat empty assistant output as success.
-- Avoid claiming visual correctness from screenshot byte size or dimensions alone.
+- Avoid claiming visual correctness from screenshot byte size or dimensions alone; decoded-pixel checks are now required for screenshot-backed proof.
 - When testing cancel/stop, watch process lifetime and late events after the UI reports timeout.
 - For provider setup, validate the exact documented env keys for the chosen provider before starting a run.
 

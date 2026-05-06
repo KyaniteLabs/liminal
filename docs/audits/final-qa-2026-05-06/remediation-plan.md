@@ -60,6 +60,7 @@ Release risk: high. These items turn failures into success or weak proof into re
    - Findings: FQA-011
    - Action: replace byte-pattern visibility checks with decoded-pixel validation.
    - Proof: blank/solid/transparent fixtures fail; real visual fixture passes.
+   - Remediation status: verified. Screenshot scoring and render-evidence perception now decode pixels and fail closed for undecodable, transparent, blank, or solid screenshots.
 
 5. Block reasoning/thinking artifact leakage.
    - Findings: FQA-029

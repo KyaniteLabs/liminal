@@ -8,6 +8,8 @@
  * - Brightness/contrast
  */
 
+import { analyzeDecodedPixels, decodeImagePixels } from './DecodedImageVisibility.js';
+
 export interface VisualScoreResult {
   /** Overall visual quality score (0-1) */
   score: number;
@@ -61,20 +63,24 @@ export class VisualScorer {
   /**
    * Score a screenshot buffer for visual quality
    */
-  // eslint-disable-next-line @typescript-eslint/require-await
   async score(screenshotBuffer: Buffer): Promise<VisualScoreResult> {
     try {
       // Validate buffer
-      if (!screenshotBuffer || screenshotBuffer.length < 100) {
+      if (!screenshotBuffer || screenshotBuffer.length < 16) {
         return this.getEmptyResult('Visual scoring skipped: screenshot buffer too small');
       }
 
-      // Parse PNG to raw pixel data
-      const { width, height, data } = this.parsePNG(screenshotBuffer);
+      // Decode actual image pixels. Fail closed if the screenshot cannot be decoded.
+      const { width, height, data } = await decodeImagePixels(screenshotBuffer);
 
       // Validate parsed data
       if (!data || data.length === 0 || width === 0 || height === 0) {
         return this.getEmptyResult('Visual scoring skipped: decoded image data unavailable');
+      }
+
+      const visibility = analyzeDecodedPixels({ width, height, data });
+      if (!visibility.hasVisibleContent) {
+        return this.getEmptyResult(`Visual scoring skipped: ${visibility.reason ?? 'decoded screenshot lacks visible content'}`);
       }
 
       // Calculate metrics
@@ -139,93 +145,6 @@ export class VisualScorer {
       return 0;
     }
     return Math.max(0, Math.min(1, value));
-  }
-
-  /**
-   * Parse PNG buffer to raw RGBA data
-   * Simplified PNG parser - extracts basic info and creates synthetic data
-   */
-  private parsePNG(buffer: Buffer): { width: number; height: number; data: Uint8Array } {
-    // Check PNG signature
-    const pngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
-    for (let i = 0; i < 8; i++) {
-      if (buffer[i] !== pngSignature[i]) {
-        // Return synthetic data for non-PNG buffers
-        return this.createSyntheticData(buffer);
-      }
-    }
-
-    // Find IHDR chunk (starts at offset 8)
-    let offset = 8;
-    
-    while (offset < buffer.length && offset < 10000) {
-      if (offset + 8 > buffer.length) break;
-      
-      const length = buffer.readUInt32BE(offset);
-      const type = buffer.toString('ascii', offset + 4, offset + 8);
-      
-      if (type === 'IHDR' && offset + 24 <= buffer.length) {
-        const width = buffer.readUInt32BE(offset + 8);
-        const height = buffer.readUInt32BE(offset + 12);
-        
-        // Validate dimensions
-        if (width > 0 && width < 10000 && height > 0 && height < 10000) {
-          // Create synthetic pixel data based on buffer content
-          const data = this.extractPixelData(buffer, offset + 24, width, height);
-          return { width, height, data };
-        }
-      }
-      
-      // Move to next chunk (length + type + data + CRC)
-      const nextOffset = offset + 4 + 4 + length + 4;
-      if (nextOffset <= offset || nextOffset > buffer.length) break;
-      offset = nextOffset;
-    }
-    
-    // Fallback to synthetic data
-    return this.createSyntheticData(buffer);
-  }
-
-  /**
-   * Create synthetic pixel data from buffer content
-   */
-  private createSyntheticData(buffer: Buffer): { width: number; height: number; data: Uint8Array } {
-    const width = 400;
-    const height = 400;
-    const data = new Uint8Array(width * height * 4);
-    
-    // Use buffer bytes to create synthetic image
-    for (let i = 0; i < data.length; i++) {
-      data[i] = buffer[i % buffer.length] || 0;
-    }
-    
-    return { width, height, data };
-  }
-
-  /**
-   * Extract pixel data from buffer
-   * Creates a synthetic representation for analysis
-   */
-  private extractPixelData(buffer: Buffer, startOffset: number, width: number, height: number): Uint8Array {
-    const pixelCount = width * height;
-    const data = new Uint8Array(pixelCount * 4);
-    
-    // Use buffer content to generate pixel values
-    // This creates a deterministic "image" based on the buffer
-    const start = Math.max(0, Math.min(startOffset, buffer.length - 1));
-    
-    for (let i = 0; i < pixelCount; i++) {
-      const idx = (i * 4) % data.length;
-      const bufferIdx = (start + i) % buffer.length;
-      
-      // Create RGBA values from buffer
-      data[idx] = buffer[bufferIdx] || 0;           // R
-      data[idx + 1] = buffer[(bufferIdx + 1) % buffer.length] || 0;  // G
-      data[idx + 2] = buffer[(bufferIdx + 2) % buffer.length] || 0;  // B
-      data[idx + 3] = 255;  // A (fully opaque)
-    }
-    
-    return data;
   }
 
   /**

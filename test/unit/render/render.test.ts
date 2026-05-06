@@ -75,6 +75,44 @@ import { VisualScorer } from '../../../src/render/VisualScorer.js';
 import { HeadlessRenderer } from '../../../src/render/HeadlessRenderer.js';
 import { RenderAndScorePipeline } from '../../../src/render/RenderAndScorePipeline.js';
 
+async function getSharp() {
+  const mod = await import('sharp');
+  return (mod.default ?? mod) as unknown as {
+    (input: unknown, options?: unknown): {
+      png(): { toBuffer(): Promise<Buffer> };
+    };
+  };
+}
+
+async function createSolidPng(background: { r: number; g: number; b: number; alpha: number }): Promise<Buffer> {
+  const sharp = await getSharp();
+  return sharp({
+    create: {
+      width: 8,
+      height: 8,
+      channels: 4,
+      background,
+    },
+  }).png().toBuffer();
+}
+
+async function createVariedPng(): Promise<Buffer> {
+  const sharp = await getSharp();
+  const width = 8;
+  const height = 8;
+  const data = Buffer.alloc(width * height * 4);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
+      data[idx] = x * 32;
+      data[idx + 1] = y * 32;
+      data[idx + 2] = (x + y) * 16;
+      data[idx + 3] = 255;
+    }
+  }
+  return sharp(data, { raw: { width, height, channels: 4 } }).png().toBuffer();
+}
+
 // ─── AudioScorer ────────────────────────────────────────────────────
 
 describe('AudioScorer', () => {
@@ -242,15 +280,37 @@ describe('VisualScorer', () => {
     expect(result.score).toBe(0);
   });
 
-  it('scores a synthetic buffer with varied content', async () => {
+  it('rejects non-decodable buffers instead of synthetic visual scoring', async () => {
     const scorer = new VisualScorer();
-    // Create a buffer > 100 bytes with varied content
     const buf = Buffer.alloc(1000);
     for (let i = 0; i < 1000; i++) buf[i] = i % 256;
     const result = await scorer.score(buf);
-    expect(result.score).toBeGreaterThanOrEqual(0);
+    expect(result.score).toBe(0);
+    expect(result.metrics.uniqueColors).toBe(0);
+    expect(result.warnings?.join(' ')).toMatch(/decoded image data unavailable|Visual scoring failed/);
+  });
+
+  it('rejects a decoded transparent PNG', async () => {
+    const scorer = new VisualScorer();
+    const result = await scorer.score(await createSolidPng({ r: 0, g: 0, b: 0, alpha: 0 }));
+    expect(result.score).toBe(0);
+    expect(result.warnings?.join(' ')).toContain('transparent');
+  });
+
+  it('rejects a decoded solid PNG', async () => {
+    const scorer = new VisualScorer();
+    const result = await scorer.score(await createSolidPng({ r: 255, g: 255, b: 255, alpha: 1 }));
+    expect(result.score).toBe(0);
+    expect(result.warnings?.join(' ')).toMatch(/blank|solid/);
+  });
+
+  it('scores a decoded PNG with visible pixel variation', async () => {
+    const scorer = new VisualScorer();
+    const result = await scorer.score(await createVariedPng());
+    expect(result.score).toBeGreaterThan(0);
     expect(result.score).toBeLessThanOrEqual(1);
-    expect(result.metrics.uniqueColors).toBeGreaterThan(0);
+    expect(result.metrics.uniqueColors).toBeGreaterThan(1);
+    expect(result.warnings).toBeUndefined();
   });
 
   it('uses custom weights from options', async () => {
@@ -260,18 +320,14 @@ describe('VisualScorer', () => {
       compositionWeight: 0,
       contrastWeight: 0,
     });
-    // Create a buffer with many different byte values for high color variety
-    const buf = Buffer.alloc(5000);
-    for (let i = 0; i < 5000; i++) buf[i] = (i * 37) % 256;
+    const buf = await createVariedPng();
     const result = await scorer.score(buf);
     expect(result.score).toBeCloseTo(result.colorVariety, 5);
   });
 
   it('handles NaN in calculations gracefully', async () => {
     const scorer = new VisualScorer();
-    // A buffer of all same value should not cause NaN
-    const buf = Buffer.alloc(500);
-    buf.fill(128);
+    const buf = await createSolidPng({ r: 128, g: 128, b: 128, alpha: 1 });
     const result = await scorer.score(buf);
     expect(Number.isNaN(result.score)).toBe(false);
     expect(result.score).toBeGreaterThanOrEqual(0);

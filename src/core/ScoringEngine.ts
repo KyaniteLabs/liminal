@@ -632,7 +632,7 @@ export async function scoreRenderedEvidence(
     };
   }
 
-  const perceptionReport = domain ? evaluateRenderEvidencePerception(evidence, domain) : undefined;
+  const perceptionReport = domain ? await evaluateRenderEvidencePerception(evidence, domain) : undefined;
   if (perceptionReport && !perceptionReport.passed) {
     const issueIds = perceptionReport.issues.map(issue => issue.id).join(', ');
     return {

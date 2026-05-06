@@ -6,6 +6,7 @@ import {
   evaluateVisualPerception,
 } from './HumanPerceptionGuardrails.js';
 import type { PerceptionCheckResult } from './types.js';
+import { analyzeScreenshotBase64 } from '../render/DecodedImageVisibility.js';
 
 function isAudioDomain(domain: string): boolean {
   return /audio|music|tone|strudel/i.test(domain);
@@ -19,14 +20,18 @@ function isTextDomain(domain: string): boolean {
   return /text|ascii|caption|creative-writing/i.test(domain);
 }
 
-function hasVisibleScreenshot(evidence: RenderEvidence): boolean {
-  return !!(evidence.screenshot && (evidence.screenshot.width ?? 0) > 0 && (evidence.screenshot.height ?? 0) > 0);
+async function hasVisibleScreenshot(evidence: RenderEvidence): Promise<boolean> {
+  if (!evidence.screenshot || (evidence.screenshot.width ?? 0) <= 0 || (evidence.screenshot.height ?? 0) <= 0) {
+    return false;
+  }
+  const visibility = await analyzeScreenshotBase64(evidence.screenshot.dataBase64);
+  return visibility.hasVisibleContent;
 }
 
-export function evaluateRenderEvidencePerception(
+export async function evaluateRenderEvidencePerception(
   evidence: RenderEvidence,
   domain: string,
-): PerceptionCheckResult {
+): Promise<PerceptionCheckResult> {
   if (isAudioDomain(domain)) {
     return evaluateAudioPerception({
       kind: 'audio',
@@ -38,21 +43,22 @@ export function evaluateRenderEvidencePerception(
   if (isVideoDomain(domain)) {
     return evaluateVideoPerception({
       kind: 'video',
-      hasVisibleFrames: hasVisibleScreenshot(evidence),
+      hasVisibleFrames: await hasVisibleScreenshot(evidence),
       fps: evidence.video?.fps,
       durationSeconds: evidence.video?.durationSeconds,
     });
   }
 
   if (isTextDomain(domain)) {
+    const hasVisibleTextEvidence = await hasVisibleScreenshot(evidence);
     return evaluateTextPerception({
       kind: 'text',
-      text: evidence.screenshot ? 'rendered text evidence available' : '',
+      text: hasVisibleTextEvidence ? 'rendered text evidence available' : '',
     });
   }
 
   return evaluateVisualPerception({
     kind: 'visual',
-    hasVisibleContent: hasVisibleScreenshot(evidence),
+    hasVisibleContent: await hasVisibleScreenshot(evidence),
   });
 }

@@ -1,0 +1,5 @@
+{
+  "version": 1,
+  "description": "Active operations broadcast. All Factory agents read this during brief assembly to understand ongoing work.",
+  "active_operations": []
+}

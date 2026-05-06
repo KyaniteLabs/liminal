@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "description": "The Factory department structure. Each department has a lead artist, a set of agents, and a purpose. Departments coordinate through the pipeline but think independently through their lead artist's cognitive lens.",
+  "departments": {
+    "engineering": {
+      "name": "Engineering",
+      "description": "Code quality, architecture, testing, verification. The production floor.",
+      "lead_artist": "mattpocock",
+      "agents": [
+        "scanner",
+        "deterministic-fixer",
+        "issue-closer",
+        "code-quality-fixer",
+        "verifier",
+        "tier1-reviewer",
+        "tier2-reviewer",
+        "architecture-reviewer",
+        "spec-auditor",
+        "adversarial-reviewer"
+      ]
+    },
+    "stack_types": {
+      "name": "Stack & Types",
+      "description": "Language selection, build systems, type safety, stack remediation. Making sure the foundation is right.",
+      "lead_artist": "theobrowne",
+      "agents": [
+        "type-safety-agent",
+        "stack-sanity",
+        "stack-remediation"
+      ]
+    },
+    "platform_infra": {
+      "name": "Platform & Infrastructure",
+      "description": "CI/CD, PR management, deployment, branching. The machinery that ships.",
+      "lead_artist": "steveyegge",
+      "agents": [
+        "pr-maintainer",
+        "branch-cleaner"
+      ]
+    },
+    "security": {
+      "name": "Security",
+      "description": "OWASP, supply chain, secret scanning, vulnerability detection. The locks on the doors.",
+      "lead_artist": "steveyegge",
+      "agents": [
+        "security-agent",
+        "secret-scanner",
+        "deps-scanner",
+        "license-scanner"
+      ]
+    },
+    "reliability": {
+      "name": "Reliability & Observability",
+      "description": "CI monitoring, deployment, production health. Making sure what ships stays up.",
+      "lead_artist": "charitymajors",
+      "agents": [
+        "ci-monitor",
+        "deployer"
+      ]
+    },
+    "operations": {
+      "name": "Operations",
+      "description": "Issue triage, PR triage, work routing, hygiene. Keeping work flowing through the factory.",
+      "lead_artist": "donreinertsen",
+      "agents": [
+        "issue-surfacer",
+        "issue-triage",
+        "pr-triage",
+        "hygiene-agent"
+      ]
+    },
+    "ai_systems": {
+      "name": "AI Systems",
+      "description": "Model evaluation, context engineering, prompt optimization, local LLM tuning. Making the agents themselves smarter.",
+      "lead_artist": "andrejkarpathy",
+      "agents": [
+        "model-evaluator",
+        "context-engineer",
+        "prompt-optimizer"
+      ]
+    },
+    "ai_architecture": {
+      "name": "AI Architecture",
+      "description": "Long-term AI strategy, system design, planning capabilities, architectural evolution of The Factory itself.",
+      "lead_artist": "yannlecun",
+      "agents": [
+        "ai-architect",
+        "planning-agent"
+      ]
+    },
+    "product_intelligence": {
+      "name": "Product Intelligence",
+      "description": "Market analysis, competitive intelligence, product-market fit, growth metrics. Knowing what to build and why.",
+      "lead_artist": "alexhormozi",
+      "agents": [
+        "silver-star",
+        "swot-analyst",
+        "porter-analyst",
+        "gold-standard",
+        "pmf-tracker",
+        "blue-ocean-navigator",
+        "jtbd-analyst",
+        "growth-accountant",
+        "reality-check"
+      ]
+    },
+    "research": {
+      "name": "Research & Intelligence",
+      "description": "Technology scouting, deep research, community monitoring, idea discovery. The eyes and ears of The Factory.",
+      "lead_artist": "dwarkeshpatel",
+      "agents": [
+        "deep-researcher",
+        "idea-scout",
+        "superstar-scout",
+        "pestel-scanner",
+        "feature-parity-tracker",
+        "interview-editor"
+      ]
+    },
+    "product_strategy": {
+      "name": "Product Strategy",
+      "description": "Product validation, jobs-to-be-done, structure-driven product decisions.",
+      "lead_artist": "natebjones",
+      "agents": []
+    },
+    "content_culture": {
+      "name": "Content & Culture",
+      "description": "Content strategy, documentation quality, SEO, The Factory's public voice.",
+      "lead_artist": "andywarhol",
+      "agents": [
+        "velvet-underground"
+      ]
+    },
+    "agentic_tooling": {
+      "name": "Agentic Tooling",
+      "description": "Agent orchestration, dispatch system, hermes handoff, human-initiated workflows, onboarding communication.",
+      "lead_artist": "davidisler",
+      "supporting_artists": ["lizthedeveloper", "petersteinberger"],
+      "agents": [
+        "hermes",
+        "hermes-handoff",
+        "claude-code",
+        "codex"
+      ]
+    }
+  }
+}

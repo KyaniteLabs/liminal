@@ -34,6 +34,12 @@ Release risk: highest. These items prevent honest launch claims and false releas
    - Proof: docs/runtime consistency test or direct source check.
    - Remediation status: verified. Docs now describe manual-memory behavior and `test/unit/harness-self-healing-docs.test.ts` locks the claim.
 
+5. Repair git/CI packaging.
+   - Findings: FQA-002
+   - Action: ensure git dependency installs build package artifacts under `CI=1` and that installed consumers can import the package and run the CLI.
+   - Proof: clean temp git dependency install with `CI=1`, import package, and run `liminal --version`.
+   - Remediation status: verified. `prepare` now builds missing `dist`, `postinstall` is a backstop instead of a CI blind spot, package file allowlisting keeps lifecycle helpers, the self `link:` dependency is removed, runtime `typescript` is installed for parser imports, and `pnpm proof:git-ci-install` verifies the full clean install path.
+
 ## Batch 1: Silent Failure And Evidence Integrity
 
 Release risk: high. These items turn failures into success or weak proof into readiness.

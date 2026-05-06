@@ -38,9 +38,9 @@ npm-debug.log*
 .liminal/
 
 # Generated artifacts
-gallery/
-output/
-test-output/
+/gallery/
+/output/
+/test-output/
 
 # Test session logs
 test-stream/

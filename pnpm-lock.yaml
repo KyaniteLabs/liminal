@@ -69,9 +69,6 @@ importers:
       ink:
         specifier: ^5.2.1
         version: 5.2.1(@types/react@18.3.28)(react@18.3.1)
-      liminal-ai:
-        specifier: 'link:'
-        version: 'link:'
       lodash:
         specifier: ^4.18.0
         version: 4.18.1
@@ -111,6 +108,9 @@ importers:
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
       unified:
         specifier: ^11.0.5
         version: 11.0.5
@@ -175,9 +175,6 @@ importers:
       playwright:
         specifier: ^1.59.1
         version: 1.59.1
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
       vite:
         specifier: 8.0.9
         version: 8.0.9(@types/node@20.19.35)(esbuild@0.27.3)(terser@5.46.1)(tsx@4.21.0)

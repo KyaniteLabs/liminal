@@ -5,6 +5,7 @@ Status: first-pass prevention plan.
 ## Required New Gates
 
 - Package script target integrity: parse `package.json` scripts and fail when local script targets do not exist.
+- Git/CI package install proof: install the current repo as a clean git dependency with `CI=1`, import `liminal-ai`, and run `liminal --version`.
 - Claim-to-proof ledger: fail launch docs when public claims lack command/live proof or explicit caveat.
 - Receipt integrity: validate commit SHA, timestamp freshness, provider identity, artifact existence, and case matrix for release-gate receipts.
 - Strict test-quality mode: fail weak assertions, empty tests, `.only`, skipped material tests without ledger entry, and untested examples.
@@ -21,7 +22,7 @@ Status: first-pass prevention plan.
 
 ## CI Policy
 
-- Required PR checks must include root typecheck/build/lint, strict quality, package-script target integrity, claim-to-proof docs lint, example smoke, and one product-facing browser/e2e smoke.
+- Required PR checks must include root typecheck/build/lint, strict quality, package-script target integrity, git/CI package install proof, claim-to-proof docs lint, example smoke, and one product-facing browser/e2e smoke.
 - Slow exhaustive browser/e2e and provider proofs may run on schedule or release branches, but the PR path must still cover representative user-facing surfaces.
 - Branch protection must enforce required checks and pull-request review before publication.
 

@@ -674,8 +674,17 @@ export class LLMClient {
       const data = await response.json() as { data?: Array<{ id: string }> };
       const models = data.data || [];
 
+      if (this.config.model !== SERVICE_DEFAULTS.DEFAULT_MODEL) {
+        const modelIds = new Set(models.map(model => model.id));
+        if (models.length > 0 && !modelIds.has(this.config.model)) {
+          Logger.info('LLMClient', `Configured local model not advertised by /models; preserving explicit model: ${this.config.model}`);
+        }
+        this.resolvedModel = this.config.model;
+        return this.resolvedModel;
+      }
+
       if (models.length > 0) {
-        // Use first available model (LM Studio typically has one loaded)
+        // Only the "auto" sentinel may choose the first loaded local model.
         this.resolvedModel = models[0].id;
         Logger.info('LLMClient', `Auto-detected model: ${this.resolvedModel}`);
         return this.resolvedModel;

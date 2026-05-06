@@ -172,6 +172,32 @@ describe('OpenAI provider pipeline', () => {
     expect(body.messages[1].role).toBe('user');
   });
 
+  it('preserves an explicitly configured local model instead of taking the first advertised model', async () => {
+    mockFetch
+      .mockResolvedValueOnce(mockModelsResponse(['wrong-first-model', 'repo-pipeline-qwen35-q8-prod']))
+      .mockResolvedValueOnce(mockJsonResponse({
+        choices: [{
+          message: { content: 'function setup(){createCanvas(120,120);}' },
+          finish_reason: 'stop',
+        }],
+        model: 'repo-pipeline-qwen35-q8-prod',
+      }));
+
+    const client = new LLMClient({
+      baseUrl: 'http://localhost:1234/v1',
+      model: 'repo-pipeline-qwen35-q8-prod',
+    });
+
+    const result = await client.generate('You are a coder.', 'Create a tiny p5 setup.');
+
+    expect(result.success).toBe(true);
+    expect(result.provenance?.model).toBe('repo-pipeline-qwen35-q8-prod');
+
+    const completionCall = mockFetch.mock.calls[1];
+    const body = JSON.parse(completionCall[1].body as string);
+    expect(body.model).toBe('repo-pipeline-qwen35-q8-prod');
+  });
+
   it('handles code wrapped in markdown fences', async () => {
     mockFetch
       .mockResolvedValueOnce(mockModelsResponse(['gpt-4o']))

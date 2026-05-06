@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { validateProofReceipt } from '../runtime-core/ProofReceiptValidator.js';
 
 export type MarketReadinessCheckStatus = 'pass' | 'fail' | 'unknown';
 
@@ -93,14 +94,29 @@ function liveProviderSmokeCheck(repoRoot: string): MarketReadinessCheck {
   }
 
   try {
-    const receipt = JSON.parse(fs.readFileSync(found, 'utf8')) as { status?: unknown; generatedAt?: unknown };
+    const receipt = JSON.parse(fs.readFileSync(found, 'utf8')) as { status?: unknown; generatedAt?: unknown; provider?: unknown; model?: unknown };
     if (receipt.status === 'pass') {
+      const validation = validateProofReceipt(repoRoot, receipt, {
+        requireProviderModel: true,
+        requireArtifactPaths: true,
+      });
+      if (!validation.ok) {
+        return {
+          id: 'live-provider-smoke',
+          label: 'Live provider smoke',
+          status: 'fail',
+          evidence: `Live provider smoke receipt is not release-proof: ${validation.failures.join('; ')}`,
+        };
+      }
       const generatedAt = typeof receipt.generatedAt === 'string' ? ` (${receipt.generatedAt})` : '';
+      const provider = typeof receipt.provider === 'string' && typeof receipt.model === 'string'
+        ? ` via ${receipt.provider}/${receipt.model}`
+        : '';
       return {
         id: 'live-provider-smoke',
         label: 'Live provider smoke',
         status: 'pass',
-        evidence: `Found passing ${path.relative(repoRoot, found)}${generatedAt}`,
+        evidence: `Found passing ${path.relative(repoRoot, found)}${provider}${generatedAt}`,
       };
     }
     return {

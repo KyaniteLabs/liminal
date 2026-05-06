@@ -4,6 +4,7 @@ import { collectRepositoryMarketReadinessStatus } from '../market/MarketReadines
 import { runCreativeDomainGauntlet } from './CreativeDomainGauntlet.js';
 import { buildCognitiveRunReceipt } from './CognitiveRunReceipt.js';
 import { runModelAssimilationGauntlet } from './ModelAssimilationGauntlet.js';
+import { validateProofReceipt } from './ProofReceiptValidator.js';
 import { runSelfImprovementGauntlet } from './SelfImprovementReflexes.js';
 
 export interface Level6ReleaseGateCheck {
@@ -44,11 +45,11 @@ export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6
   const liveDomainEvidence = findPassingReceipt(repoRoot, [
     '.omx/proof/domain-gauntlet-live.json',
     '.omx/domain-gauntlet-live.json',
-  ], { requiredMode: 'live-execution' });
+  ], { requiredMode: 'live-execution', requireProviderModel: true, requireArtifactPaths: true });
   const liveModelEvidence = findPassingReceipt(repoRoot, [
     '.omx/proof/model-assimilation-live.json',
     '.omx/model-assimilation-live.json',
-  ], { requiredMode: 'live' });
+  ], { requiredMode: 'live', requireProviderModel: true, requireCaseCoverage: true });
 
   const checks: Level6ReleaseGateCheck[] = [
     {
@@ -93,18 +94,18 @@ export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6
       {
         id: 'live-creative-domain-execution',
         label: 'Live creative-domain execution',
-        status: liveDomainEvidence ? 'pass' : 'fail',
-        evidence: liveDomainEvidence
-          ? `Found passing live creative-domain execution receipt: ${liveDomainEvidence}`
-          : 'No passing live creative-domain execution receipt found; source-contract gauntlet is not enough for completed Level 6.',
+        status: liveDomainEvidence.validPath ? 'pass' : 'fail',
+        evidence: liveDomainEvidence.validPath
+          ? `Found passing live creative-domain execution receipt: ${liveDomainEvidence.validPath}`
+          : liveDomainEvidence.failure ?? 'No passing live creative-domain execution receipt found; source-contract gauntlet is not enough for completed Level 6.',
       },
       {
         id: 'live-model-assimilation',
         label: 'Live model assimilation',
-        status: liveModelEvidence ? 'pass' : 'fail',
-        evidence: liveModelEvidence
-          ? `Found passing live model-assimilation receipt: ${liveModelEvidence}`
-          : 'No passing live model-assimilation receipt found; dry-run audition is not enough for completed Level 6.',
+        status: liveModelEvidence.validPath ? 'pass' : 'fail',
+        evidence: liveModelEvidence.validPath
+          ? `Found passing live model-assimilation receipt: ${liveModelEvidence.validPath}`
+          : liveModelEvidence.failure ?? 'No passing live model-assimilation receipt found; dry-run audition is not enough for completed Level 6.',
       },
     );
   }
@@ -128,17 +129,24 @@ export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6
   };
 }
 
-function findPassingReceipt(repoRoot: string, relativePaths: string[], options: { requiredMode: string }): string | null {
+function findPassingReceipt(
+  repoRoot: string,
+  relativePaths: string[],
+  options: { requiredMode: string; requireProviderModel?: boolean; requireArtifactPaths?: boolean; requireCaseCoverage?: boolean },
+): { validPath: string | null; failure?: string } {
+  let failure: string | undefined;
   for (const relativePath of relativePaths) {
     const fullPath = path.join(repoRoot, relativePath);
     if (!fs.existsSync(fullPath)) continue;
     try {
       const parsed = JSON.parse(fs.readFileSync(fullPath, 'utf8')) as { status?: unknown; ready?: unknown; mode?: unknown };
-      const passes = parsed.status === 'pass' || parsed.ready === true;
-      if (passes && parsed.mode === options.requiredMode) return relativePath;
-    } catch {
-      continue;
+      const validation = validateProofReceipt(repoRoot, parsed, options);
+      if (validation.ok) return { validPath: relativePath };
+      failure = `${relativePath} is not release-proof: ${validation.failures.join('; ')}`;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      failure = `${relativePath} is unreadable: ${reason}`;
     }
   }
-  return null;
+  return { validPath: null, failure };
 }

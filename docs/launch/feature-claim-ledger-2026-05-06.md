@@ -24,14 +24,14 @@ Audited public claim surfaces:
 | `docs/features.html` | Circuit breaker gives automatic failover reliability. | evidence-limited | Circuit breaker code exists. | FQA-003 remains open: fallback stream errors can still appear as empty success until remediated. |
 | `docs/features.html` | Bubble Tea TUI is complete. | smoke-proven | `pnpm proof:user-surfaces`, `pnpm proof:user-surface-controls`, and `pnpm proof:studio-smoke` passed. | Does not prove live provider generation quality or slow/browser exhaustive coverage. |
 | `docs/features.html` | Guardrails M1-M18 and security hardening are complete. | proof-limited | Unit/static proof exists for many guardrails; final QA found release controls and evidence gaps. | Public security claims remain gated by branch protection, browser/e2e smoke, decoded-pixel proof, and security-specific remediation. |
-| `docs/launch/ml-feature-value-matrix.md` | ML features marked proven can be claimed as product value. | caveated | Existing proof commands pass for some unit scopes. | FQA-004 remains open: receipts must become commit-bound, fresh, provider-identified, and coverage-checked before broad launch claims. |
+| `docs/launch/ml-feature-value-matrix.md` | ML features marked proven can be claimed as product value. | proof-hardened | Existing proof commands pass for some unit scopes; FQA-004 receipt validation now requires current commit, freshness, provider/model identity where live providers are involved, artifacts, and case coverage. | Broad launch claims still require fresh receipts generated on the release commit. |
 | `docs/launch/test-ci-truth-matrix-2026-05-01.md` | Required checks prove release readiness. | caveated | `build-and-test` now includes script-target and route-performance proof; `browser-and-e2e-smoke` now runs on PRs. | Integration and slow CI remain red; the matrix must not present fast CI as launch-wide proof. |
 | `.github/workflows/ci.yml` | PR browser/e2e surface is checked. | smoke-proven | `browser-and-e2e-smoke` runs `pnpm test:e2e` on PRs. | Existing e2e suite still has skipped tests; exhaustive slow suite remains non-PR and currently release-blocking when red. |
 | `.github/workflows/pr-review.yml` | Automated PR review is a release gate. | informational only | Workflow now prints PR metadata and states that it is not an automated review gate. | Real PR review enforcement belongs to GitHub branch protection policy, not this placeholder workflow. |
 
 ## Required Before Public Launch
 
-- FQA-004 receipt hardening: reject stale/wrong-commit/narrow proof receipts.
+- Fresh release receipts on the release commit: stale/wrong-commit/narrow receipts are now rejected.
 - FQA-007 branch protection: require PR review and status checks on `main`, verified by live `gh api` readback.
 - FQA-009 browser/e2e truth: keep PR smoke required and classify every skipped e2e test against launch risk.
 - FQA-033 integration/slow CI: no broad launch-readiness claim while configured integration or slow suites are red.

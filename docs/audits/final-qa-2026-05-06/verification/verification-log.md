@@ -52,3 +52,11 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm build` | pass | Batch 1 streaming fix builds. | Exit 0. |
 | 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the added streaming regression. | 662 files scanned; all checks passed. |
 | 2026-05-06 remediation | `git diff --check` | pass | Batch 1 streaming diff has no whitespace errors. | Exit 0. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/market/MarketReadinessStatus.test.ts --coverage=false` | pass | Market readiness rejects passing live-provider receipts unless they are fresh, current-commit-bound, provider/model-identified, and artifact-backed. | 1 file passed, 6 tests passed. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/runtime-core/Level6ReleaseGate.test.ts --coverage=false` | pass | Level 6 gate rejects stale live receipts and requires hardened live receipt proof. | 1 file passed, 4 tests passed. |
+| 2026-05-06 remediation | `pnpm vitest run test/scripts/model-assimilation-proof-script.test.ts --coverage=false` | pass | Model-assimilation report includes current git commit and complete case coverage. | 1 file passed, 1 test passed. |
+| 2026-05-06 remediation | `pnpm proof:model-assimilation` | pass | Model-assimilation proof command writes a hardened fixture receipt/report. | Wrote `.omx/proof/model-assimilation/<timestamp>/report.md` and `report.json`. |
+| 2026-05-06 remediation | `pnpm typecheck` | pass | Receipt hardening typechecks. | Exit 0. |
+| 2026-05-06 remediation | `pnpm build` | pass | Receipt hardening builds. | Exit 0. |
+| 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the receipt-hardening tests. | 662 files scanned; all checks passed. |
+| 2026-05-06 remediation | `git diff --check` | pass | Receipt-hardening diff has no whitespace errors. | Exit 0. |

@@ -10,6 +10,14 @@ const execFileAsync = promisify(execFile);
 interface ModelAssimilationReport {
   contract: 'liminal-model-assimilation-v1';
   mode: 'fixture' | 'live';
+  gitCommit: string;
+  caseCoverage: {
+    complete: boolean;
+    roles: string[];
+    domains: string[];
+    assignmentCount: number;
+    fallbackProvenanceCount: number;
+  };
   candidates: Array<{ model: string; provider: string }>;
   recommendedAssignments: Array<{ role: string; domain: string; model: string; decision: 'promote' | 'hold' | 'demote'; reason: string }>;
   fallbackProvenance: Array<{ role: string; domain: string; chain: string[] }>;
@@ -42,6 +50,7 @@ describe('model-assimilation proof script', () => {
 
     expect(report.contract).toBe('liminal-model-assimilation-v1');
     expect(report.mode).toBe('fixture');
+    expect(report.gitCommit).toMatch(/^[0-9a-f]{7,40}$/);
     expect(report.candidates.map(candidate => candidate.model)).toEqual(expect.arrayContaining([
       'gpt-5.4-mini',
       'gpt-5.4-nano',
@@ -51,6 +60,11 @@ describe('model-assimilation proof script', () => {
     expect(new Set(report.recommendedAssignments.map(item => item.domain))).toEqual(new Set(finishLineDomains));
     expect(report.recommendedAssignments).toHaveLength(finishLineDomains.length * 3);
     expect(report.fallbackProvenance).toHaveLength(finishLineDomains.length * 3);
+    expect(report.caseCoverage).toMatchObject({
+      complete: true,
+      assignmentCount: finishLineDomains.length * 3,
+      fallbackProvenanceCount: finishLineDomains.length * 3,
+    });
     expect(report.recommendedAssignments).toEqual(expect.arrayContaining([
       expect.objectContaining({ role: 'generator', domain: 'svg', decision: 'promote' }),
       expect.objectContaining({ role: 'generator', domain: 'tone', decision: 'hold' }),

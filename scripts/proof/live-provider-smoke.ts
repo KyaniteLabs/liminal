@@ -5,6 +5,7 @@ import { LLMClient } from '../../src/llm/LLMClient.js';
 import { getProviderConfig, listConfiguredProviders, type ProviderType } from '../../src/harness/MultiProviderConfig.js';
 import { P5GeneratorV2 } from '../../src/generators/p5/P5GeneratorV2.js';
 import { buildLiveProviderSmokeReceipt, selectLiveSmokeProvider, writeLiveProviderSmokeReceipt } from '../../src/market/LiveProviderSmokeReceipt.js';
+import { readCurrentGitCommit } from '../../src/runtime-core/ProofReceiptValidator.js';
 
 const repoRoot = process.cwd();
 const args = process.argv.slice(2);
@@ -24,6 +25,7 @@ const started = Date.now();
 function writeBlocked(reason: string): never {
   const receipt = {
     generatedAt: new Date().toISOString(),
+    gitCommit: readCurrentGitCommit(repoRoot),
     status: 'blocked' as const,
     provider,
     model: providerConfig?.model ?? 'unknown',
@@ -62,6 +64,7 @@ try {
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(artifactPath, `${code.trim()}\n`, 'utf8');
   const receipt = buildLiveProviderSmokeReceipt({
+    repoRoot,
     provider,
     model: providerConfig.model,
     durationMs: Date.now() - started,

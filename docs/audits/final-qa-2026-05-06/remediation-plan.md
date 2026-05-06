@@ -20,7 +20,7 @@ Release risk: highest. These items prevent honest launch claims and false releas
    - Findings: FQA-004, FQA-005, FQA-008, FQA-009
    - Action: create a feature-claim ledger and downgrade every public claim that lacks live proof. Replace placeholder PR review language with explicit placeholder truth or a real gate.
    - Proof: every launch/public claim maps to a passing command, live receipt, or documented caveat.
-   - Remediation status: FQA-005 and FQA-008 verified; FQA-009 fixed in workflow/branch-protection config but still needs a GitHub PR run; FQA-004 remains open for receipt-hardening in Batch 1.
+   - Remediation status: FQA-004, FQA-005, and FQA-008 verified; FQA-009 fixed in workflow/branch-protection config but still needs a GitHub PR run.
 
 3. Make branch protection real before publication.
    - Findings: FQA-007
@@ -48,6 +48,7 @@ Release risk: high. These items turn failures into success or weak proof into re
    - Findings: FQA-004
    - Action: require commit SHA, timestamp freshness, provider identity, case matrix, and artifact existence checks.
    - Proof: receipt validator rejects stale, wrong-SHA, missing-artifact, and insufficient-case receipts.
+   - Remediation status: verified. `ProofReceiptValidator` now backs market readiness and Level 6 live receipts; model-assimilation reports include `gitCommit` and case coverage.
 
 3. Make evaluator degradation explicit.
    - Findings: FQA-010

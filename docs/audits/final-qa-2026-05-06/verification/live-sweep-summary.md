@@ -32,6 +32,7 @@ This summary distinguishes deterministic local proof from live provider proof.
 - Package script target integrity: `pnpm check:script-targets` passes and writes `.omx/proof/package-script-targets.json`.
 - Branch protection: live `gh api` readback now requires `build-and-test`, `browser-and-e2e-smoke`, `validate-docs`, one PR approval, stale-review dismissal, admin enforcement, conversation resolution, linear history, and no force pushes/deletions.
 - PR review placeholder truth: `.github/workflows/pr-review.yml` is now informational only; the required review gate is GitHub branch protection.
+- Release receipt hardening: market readiness and Level 6 live gates now reject stale, wrong-commit, missing-provider/model, missing-artifact, and missing-case-coverage receipts. `pnpm proof:model-assimilation` now writes `gitCommit` and case coverage.
 
 ## Audit Interpretation
 

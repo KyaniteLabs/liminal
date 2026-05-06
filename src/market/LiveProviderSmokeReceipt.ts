@@ -1,11 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { ProviderType } from '../harness/MultiProviderConfig.js';
+import { readCurrentGitCommit } from '../runtime-core/ProofReceiptValidator.js';
 
 export type LiveProviderSmokeStatus = 'pass' | 'fail' | 'blocked';
 
 export interface LiveProviderSmokeReceipt {
   generatedAt: string;
+  gitCommit: string | null;
   status: LiveProviderSmokeStatus;
   provider: string;
   model: string;
@@ -30,6 +32,7 @@ export function selectLiveSmokeProvider(configuredProviders: ProviderType[], exp
 }
 
 export function buildLiveProviderSmokeReceipt(input: {
+  repoRoot?: string;
   provider: string;
   model: string;
   durationMs: number;
@@ -51,6 +54,7 @@ export function buildLiveProviderSmokeReceipt(input: {
 
   return {
     generatedAt: input.generatedAt ?? new Date().toISOString(),
+    gitCommit: readCurrentGitCommit(input.repoRoot ?? process.cwd()),
     status: blockers.length === 0 ? 'pass' : 'fail',
     provider: input.provider,
     model: input.model,

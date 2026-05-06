@@ -11,6 +11,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import fs from 'node:fs';
 import path from 'node:path';
+import { readCurrentGitCommit, validateProofReceipt } from '../../src/runtime-core/ProofReceiptValidator.js';
 
 type Mode = 'fixture' | 'live';
 type Decision = 'promote' | 'hold' | 'demote';
@@ -38,11 +39,21 @@ interface RecommendedAssignment {
 interface ModelAssimilationReport {
   contract: 'liminal-model-assimilation-v1';
   generatedAt: string;
+  gitCommit: string | null;
   mode: Mode;
   status?: 'pass' | 'fail';
   ready?: boolean;
-  liveEvidence?: Array<{ source: string; status: string; provider?: string; model?: string }>;
+  provider?: string;
+  model?: string;
+  liveEvidence?: Array<{ source: string; status: string; provider?: string; model?: string; generatedAt?: string; gitCommit?: string; artifactPath?: string }>;
   blockers?: string[];
+  caseCoverage: {
+    complete: boolean;
+    roles: Role[];
+    domains: Domain[];
+    assignmentCount: number;
+    fallbackProvenanceCount: number;
+  };
   baselinePolicy: {
     promoteMargin: number;
     holdMargin: number;
@@ -134,15 +145,27 @@ function bestCandidate(role: Role, domain: Domain, candidates: CandidateEvidence
   return { role, domain, model: best.candidate.model, score: best.score, baseline, decision, reason };
 }
 
-async function readLiveEvidence(): Promise<{ evidence: Array<{ source: string; status: string; provider?: string; model?: string }>; blockers: string[] }> {
+async function readLiveEvidence(): Promise<{ evidence: Array<{ source: string; status: string; provider?: string; model?: string; generatedAt?: string; gitCommit?: string; artifactPath?: string }>; blockers: string[] }> {
   const liveSmokePath = path.join(process.cwd(), '.omx', 'proof', 'live-provider-smoke.json');
   if (!fs.existsSync(liveSmokePath)) {
     return { evidence: [], blockers: ['Missing .omx/proof/live-provider-smoke.json; run proof:live-provider-smoke first'] };
   }
   try {
-    const parsed = JSON.parse(await readFile(liveSmokePath, 'utf8')) as { status?: string; provider?: string; model?: string };
-    const evidence = [{ source: '.omx/proof/live-provider-smoke.json', status: String(parsed.status ?? 'unknown'), provider: parsed.provider, model: parsed.model }];
-    return { evidence, blockers: parsed.status === 'pass' ? [] : [`Live provider smoke status ${String(parsed.status ?? 'unknown')}`] };
+    const parsed = JSON.parse(await readFile(liveSmokePath, 'utf8')) as { status?: string; provider?: string; model?: string; generatedAt?: string; gitCommit?: string; artifactPath?: string };
+    const validation = validateProofReceipt(process.cwd(), parsed, {
+      requireProviderModel: true,
+      requireArtifactPaths: true,
+    });
+    const evidence = [{
+      source: '.omx/proof/live-provider-smoke.json',
+      status: String(parsed.status ?? 'unknown'),
+      provider: parsed.provider,
+      model: parsed.model,
+      generatedAt: parsed.generatedAt,
+      gitCommit: parsed.gitCommit,
+      artifactPath: parsed.artifactPath,
+    }];
+    return { evidence, blockers: validation.ok ? [] : validation.failures.map(failure => `Live provider smoke ${failure}`) };
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     return { evidence: [], blockers: [`Unreadable live provider smoke receipt: ${reason}`] };
@@ -161,15 +184,31 @@ async function buildReport(mode: Mode): Promise<ModelAssimilationReport> {
   });
 
   const live = mode === 'live' ? await readLiveEvidence() : { evidence: [], blockers: [] };
-  const blockers = mode === 'live' ? live.blockers : [];
+  const caseCoverage = {
+    complete: recommendedAssignments.length === roles.length * domains.length && fallbackProvenance.length === roles.length * domains.length,
+    roles,
+    domains: [...domains],
+    assignmentCount: recommendedAssignments.length,
+    fallbackProvenanceCount: fallbackProvenance.length,
+  };
+  const blockers = [
+    ...(mode === 'live' ? live.blockers : []),
+    caseCoverage.complete ? null : 'Model-assimilation case coverage incomplete',
+  ].filter(Boolean) as string[];
+  const liveProvider = live.evidence[0]?.provider;
+  const liveModel = live.evidence[0]?.model;
   return {
     contract: 'liminal-model-assimilation-v1',
     generatedAt: new Date().toISOString(),
+    gitCommit: readCurrentGitCommit(process.cwd()),
     mode,
     status: blockers.length === 0 ? 'pass' : 'fail',
     ready: blockers.length === 0,
+    provider: mode === 'live' ? liveProvider : undefined,
+    model: mode === 'live' ? liveModel : undefined,
     liveEvidence: live.evidence,
     blockers,
+    caseCoverage,
     baselinePolicy,
     candidates: fixtureCandidates,
     recommendedAssignments,

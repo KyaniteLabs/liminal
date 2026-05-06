@@ -47,6 +47,7 @@ export function getCreateModeOption(mode: string): CreateModeOption {
 export function detectPromptCreateMode(prompt: string): CreateModeId | null {
   const lower = prompt.toLowerCase();
   if (/\bhydra\b|\bvideo synth\b/.test(lower)) return 'hydra';
+  if (/\brevideo\b|\bvideo\b|\btimeline\b|\bmp4\b|\bmotion graphics?\b|\brender video\b|\bshot sequence\b|\bstoryboard\b/.test(lower)) return 'revideo';
   if (/\btone(?:\.js)?\b|\bweb audio\b|\bsynth\b/.test(lower)) return 'tone';
   if (/\bstrudel\b|\blive coding\b/.test(lower)) return 'strudel';
   if (/\bthree(?:\.js)?\b|\b3d\b|\bwebgl scene\b/.test(lower)) return 'three';

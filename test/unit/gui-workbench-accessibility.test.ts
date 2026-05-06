@@ -74,6 +74,14 @@ describe('GUI workbench accessibility contract', () => {
     expect(app).not.toContain('allow="accelerometer;');
   });
 
+  it('shows a visible recovery state when an inline image preview fails to load', () => {
+    expect(app).toContain('failedPreviewSrc');
+    expect(app).toContain('liminal-stage-preview-error');
+    expect(app).toContain('role="alert"');
+    expect(app).toContain('Image preview failed to load');
+    expect(app).not.toContain("event.currentTarget.style.display = 'none'");
+  });
+
   it('keeps reduced-motion and visible preview-status fallbacks in CSS', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     expect(css).toContain('animation: none');

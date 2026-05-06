@@ -94,6 +94,7 @@ Release risk: high. These items make customers angry even when the core code run
    - Findings: FQA-017, FQA-019
    - Action: route common video/timeline prompts correctly and render visible image-preview failure states.
    - Proof: routing tests and broken-preview browser test.
+   - Remediation status: verified. Common video/timeline/mp4/motion-graphics prompts now route to Revideo, and broken inline image previews render a visible alert/retry state instead of disappearing.
 
 4. Rewrite first-time user docs.
    - Findings: FQA-018

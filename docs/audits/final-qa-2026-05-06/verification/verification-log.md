@@ -74,3 +74,14 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after cancellation remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
 | 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | Cancellation remediation diff has no whitespace errors. | Exit 0. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/gui-create-modes.test.ts --coverage=false --testNamePattern "video and timeline"` | pass | Common video/timeline prompts route to Revideo and get the Revideo prompt hint. | Red-first proof failed with `null`, then passed; 1 file passed, 1 test passed, 5 skipped. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/gui-workbench-accessibility.test.ts --coverage=false --testNamePattern "image preview fails"` | pass | Broken inline image previews expose a visible error and do not hide the image without recovery. | Red-first proof failed on missing `failedPreviewSrc`, then passed; 1 file passed, 1 test passed, 10 skipped. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/gui-create-modes.test.ts test/unit/gui-workbench-accessibility.test.ts test/unit/gui-workbench-telemetry.test.ts test/unit/gui-operator-cockpit-state.test.ts --coverage=false` | pass | Adjacent GUI routing, accessibility, telemetry, and cockpit state tests pass together. | 4 files passed; 52 tests passed. |
+| 2026-05-06 remediation | `pnpm typecheck` | pass | Revideo routing and preview-failure UI typecheck. | Exit 0. |
+| 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after Revideo/preview remediation. | Exit 0. |
+| 2026-05-06 remediation | `pnpm build` | pass | Root build succeeds after Revideo/preview remediation. | Exit 0. |
+| 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle builds with Revideo routing and visible preview failure state. | Vite built 35 modules. |
+| 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the Revideo/preview regression tests. | 663 files scanned; all checks passed. |
+| 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after Revideo/preview remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
+| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after Revideo/preview remediation. | Exit 0. |
+| 2026-05-06 remediation | `git diff --check` | pass | Revideo/preview remediation diff has no whitespace errors. | Exit 0. |

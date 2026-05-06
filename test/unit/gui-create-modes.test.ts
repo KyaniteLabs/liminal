@@ -52,6 +52,12 @@ describe('createModes', () => {
     expect(detectPromptCreateMode('make an HTML landing page')).toBe('hyperframes');
   });
 
+  it('routes common video and timeline language to Revideo', () => {
+    expect(detectPromptCreateMode('make a product video with timeline cuts')).toBe('revideo');
+    expect(detectPromptCreateMode('render an mp4 motion graphics piece')).toBe('revideo');
+    expect(buildWorkbenchPrompt('auto', 'make a product video with timeline cuts')).toContain('Revideo composition');
+  });
+
   it('keeps organism as the dedicated paired music and visual API mode', () => {
     expect(usesOrganismApi('organism')).toBe(true);
     for (const mode of ['auto', 'p5', 'three', 'svg', 'hydra', 'strudel'] as CreateModeId[]) {

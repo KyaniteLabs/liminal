@@ -20,4 +20,3 @@ Evidence:
 Status: verified.
 
 The live proof writer now records per-domain `artifactValidation` evidence, and the final-QA surface gate recomputes domain-specific structural checks before counting a domain covered. It rejects non-empty junk files even if the receipt lies and says validation passed. A real GLM live run produced all 12 domains with `artifactValidation: pass`, and `pnpm final-qa:surface` passed only after that evidence existed.
-

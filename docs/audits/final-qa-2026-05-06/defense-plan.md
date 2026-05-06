@@ -1,6 +1,6 @@
 # Defense Plan
 
-Status: first-pass defense plan for future agents.
+Status: final defense plan for future agents.
 
 ## Agent Operating Rules
 

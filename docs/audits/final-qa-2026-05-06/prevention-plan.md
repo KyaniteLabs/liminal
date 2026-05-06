@@ -1,6 +1,6 @@
 # Prevention Plan
 
-Status: first-pass prevention plan.
+Status: verified prevention plan.
 
 ## Required New Gates
 

@@ -1,8 +1,8 @@
 # Remediation Plan
 
-Status: first-pass plan; Batch 0 partially executed in `fix/final-qa-batch0-remediation-20260506`.
+Status: verified for `fix/final-qa-batch0-remediation-20260506`.
 
-Saturation is not achieved. This plan converts confirmed first-pass findings into an execution order so remediation can begin without new strategic decisions once the audit owner opens implementation worktrees.
+Saturation is achieved after the final independent post-FQA-039 A and B passes produced no new material findings. This plan now records the executed remediation order and proof expectations for future release branches.
 
 No remediation is complete until its finding is marked `fixed` and then `verified` in `findings-ledger.md` with command or live-run evidence.
 

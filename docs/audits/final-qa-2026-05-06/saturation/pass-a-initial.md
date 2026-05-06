@@ -20,4 +20,3 @@ Evidence:
 Status: verified.
 
 The live proof writer now records `gitCommit`, and the final-QA surface gate rejects receipts that are stale, future-dated, missing `gitCommit`, wrong-commit, missing provider/model, not `live-execution`, or not passing. A patched live GLM run on commit `1986f35323fc97f65d01941021eaa890faad0956` passed all 12 domains, and `pnpm final-qa:surface` accepted the current-commit-bound receipt.
-

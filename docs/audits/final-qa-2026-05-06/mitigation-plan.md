@@ -1,12 +1,12 @@
 # Mitigation Plan
 
-Status: active interim guardrails for first-pass findings.
+Status: final release guardrails after verified remediation.
 
-Mitigations are temporary. They do not make Liminal launch-ready while material findings remain open.
+No material findings remain open in the 2026-05-06 final-QA ledger. These guardrails remain in force for release tags and future material changes.
 
 ## Immediate Launch Guardrails
 
-- Do not publish or tag a release until the post-remediation saturation passes complete with no new material findings.
+- Do not publish or tag a release after material code changes unless the relevant proof receipts are refreshed on the exact release commit and the saturation status remains achieved.
 - Treat integration/slow CI as red if any future FQA-033-class generator/integration proof regresses, even when fast CI is green.
 - Treat live creative-domain readiness as limited to the all-domain receipt that FQA-034/FQA-035/FQA-037 verifies; refresh that receipt on the exact release commit before any release tag.
 - Treat the browser/e2e PR job as proved for PR #497 head `bfd6d963a62215caf335f70b8640c74165cd5cff`; rerun the check after any CI/workflow or browser-surface change.

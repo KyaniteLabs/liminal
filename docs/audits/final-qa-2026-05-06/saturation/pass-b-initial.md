@@ -21,4 +21,3 @@ Evidence:
 Status: verified.
 
 Public claim docs now say the 12 launch-scoped creative domains are live-covered but require a fresh release-commit rerun before public launch copy can call release output proven. Circuit-breaker and integration/slow-CI rows now match FQA-003/FQA-033 verified status while preserving provider-specific and release-candidate caveats. `test/unit/launch-claim-ledger.test.ts` rejects the stale blocker phrases.
-

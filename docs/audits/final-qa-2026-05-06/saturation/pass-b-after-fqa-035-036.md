@@ -19,4 +19,3 @@ Evidence:
 Status: verified.
 
 `docs/ARCHITECTURE_QUICKREF.md` now exists, `scripts/ci/check-doc-links.mjs` checks README, docs index, features page, and launch docs for broken local links, `pnpm check:doc-links` is wired in package scripts, and the `validate-docs` workflow runs the link checker.
-

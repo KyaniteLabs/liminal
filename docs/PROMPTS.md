@@ -29,7 +29,7 @@ src/prompts/
 |---|---|---|---|
 | `p5.generate` | p5 | `${prompt}` | Generate p5.js sketches from natural language |
 | `p5.improve` | p5 | `${code}` | Improve existing p5.js sketch code |
-| `three.generate` | generator | `${prompt}`, `${threeVersion}` | Generate Three.js 3D scenes (CDN v0.172.0) |
+| `three.generate` | generator | `${prompt}` | Generate raw Three.js scene JavaScript wrapped by the gallery harness (CDN v0.160.0) |
 | `glsl.generate` | generator | `${prompt}` | Generate GLSL fragment shaders |
 | `music.strudel` | generator | `${prompt}`, `${bpm}` | Generate Strudel mini-notation music |
 | `music.p5-webaudio` | generator | `${prompt}`, `${bpm}` | Generate p5.js + Web Audio sketches |

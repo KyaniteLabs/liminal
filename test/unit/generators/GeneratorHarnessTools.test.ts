@@ -599,6 +599,35 @@ describe('GeneratorHarnessTools', () => {
       }
     });
 
+    it('Three harness hints match raw scene JS wrapper contract', () => {
+      const observedHints = new Set<string>();
+
+      for (let seed = 0; seed < 12; seed++) {
+        const ctx = new GeneratorHarnessTools({ seededRandom: makeSeededRng(seed) }).prepare('three');
+        expect(ctx.skeletonHint).toContain('THREE.Scene');
+        expect(ctx.skeletonHint).toContain('THREE.WebGLRenderer');
+        expect(ctx.skeletonHint).toContain('window.innerWidth');
+        expect(ctx.skeletonHint).toContain('document.body.appendChild(renderer.domElement)');
+        expect(ctx.skeletonHint).not.toContain('import * as THREE');
+        expect(ctx.skeletonHint).not.toContain('{ canvas }');
+        expect(ctx.skeletonHint).not.toContain('w/h');
+        ctx.hardeningHints.forEach(hint => observedHints.add(hint));
+      }
+
+      const allHints = [...observedHints].join('\n');
+      expect(allHints).not.toContain('Return a complete HTML file');
+      expect(allHints).not.toContain('Include all required import statements');
+      expect(allHints).not.toContain('importmap');
+
+      const failure = tools.classifyFailure(
+        'Output does not match wrapper: expected raw Three scene JavaScript',
+        'const badWrapper = "<!DOCTYPE html>"; const scene = new THREE.Scene();',
+      );
+      const repairPrompt = tools.buildRepairPrompt('three', 'make a scene', '<html></html>', failure);
+      expect(repairPrompt).toMatch(/raw Three\.js scene JavaScript/i);
+      expect(repairPrompt).not.toContain('Complete HTML page');
+    });
+
     it('GLSL skeleton contains precision and void main', () => {
       const ctx = tools.prepare('glsl');
       if (ctx.skeletonHint) {
@@ -626,7 +655,7 @@ describe('GeneratorHarnessTools', () => {
       expect(joined).toMatch(/quoted pattern strings|truncated stack|close it and include complete child patterns/);
     });
 
-    it('Three hardening hints mention avoiding nested HTML documents inside scripts', () => {
+    it('Three hardening hints require raw wrapper-compatible scene code', () => {
       const seen = new Set<string>();
       for (let seed = 0; seed < 12; seed++) {
         const seededTools = new GeneratorHarnessTools({ seededRandom: makeSeededRng(seed) });
@@ -634,7 +663,8 @@ describe('GeneratorHarnessTools', () => {
         for (const hint of ctx.hardeningHints) seen.add(hint);
       }
       const joined = [...seen].join(' ');
-      expect(joined).toMatch(/second <!DOCTYPE html>|inside a <script> block/);
+      expect(joined).toContain('Return raw Three.js scene JavaScript only');
+      expect(joined).not.toContain('Return a complete HTML file');
     });
   });
 

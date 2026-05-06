@@ -4,6 +4,7 @@ import { describe, it, expect } from 'vitest';
  * and meet quality standards.
  */
 import { PromptLibrary } from '../../src/prompts/index.js';
+import { SERVICE_DEFAULTS } from '../../src/constants.js';
 
 // Expected prompt IDs across all categories
 const EXPECTED_IDS = [
@@ -146,9 +147,10 @@ describe('Prompt Library Validation', () => {
       }
     });
 
-    it('no prompt should reference stale Three.js CDN version 0.160.0', () => {
+    it('three.generate should not reference stale Three.js CDN versions', () => {
       const threePrompt = PromptLibrary.get('three.generate');
-      expect(threePrompt?.systemPrompt).not.toContain('0.160.0');
+      expect(threePrompt?.systemPrompt).not.toContain('0.172.0');
+      expect(threePrompt?.metadata?.defaultThreeVersion).toBe(SERVICE_DEFAULTS.THREE_VERSION);
     });
   });
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PromptLibrary } from '../../../src/prompts/index.js';
 import { SELF_IMPROVE_SYSTEM_PROMPT } from '../../../src/harness/prompts/self-improve.js';
+import { SERVICE_DEFAULTS } from '../../../src/constants.js';
 
 describe('system prompt audit guardrails', () => {
   it('code-only generator prompts do not require markdown code blocks', () => {
@@ -22,14 +23,18 @@ describe('system prompt audit guardrails', () => {
     }
   });
 
-  it('three.generate uses a consistent modern OrbitControls module path', () => {
+  it('three.generate matches the raw-scene ThreeGenerator wrapper contract', () => {
     const threePrompt = PromptLibrary.get('three.generate');
 
-    expect(threePrompt?.systemPrompt).toContain('three/addons/controls/OrbitControls.js');
-    expect(threePrompt?.systemPrompt).toContain('import map');
-    expect(threePrompt?.systemPrompt).toContain('module script');
+    expect(threePrompt?.systemPrompt).toContain('raw Three.js scene JavaScript');
+    expect(threePrompt?.systemPrompt).toContain('Do not return a full HTML document');
+    expect(threePrompt?.systemPrompt).toContain('Do not include import statements');
+    expect(threePrompt?.systemPrompt).not.toContain('Return raw HTML');
+    expect(threePrompt?.systemPrompt).not.toContain('Use an import map');
+    expect(threePrompt?.systemPrompt).not.toContain('Use an import map plus a module script');
+    expect(threePrompt?.systemPrompt).not.toContain('Include OrbitControls');
     expect(threePrompt?.systemPrompt).not.toContain('examples/jsm/controls/OrbitControls.js');
-    expect(threePrompt?.systemPrompt).not.toContain('global THREE from CDN');
+    expect(threePrompt?.metadata?.defaultThreeVersion).toBe(SERVICE_DEFAULTS.THREE_VERSION);
   });
 
   it('glsl.generate aligns complexity guidance with validator minimum size', () => {

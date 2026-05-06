@@ -48,6 +48,8 @@ vi.mock('../../../src/harness/tools/generator-tools.js', () => ({
 }));
 
 import { ThreeGenerator } from '../../../src/generators/three/ThreeGenerator.js';
+import { PromptLibrary } from '../../../src/prompts/index.js';
+import { SERVICE_DEFAULTS } from '../../../src/constants.js';
 
 class TestableThreeGenerator extends ThreeGenerator {
   validateForTest(code: string) {
@@ -73,6 +75,18 @@ describe('ThreeGenerator', () => {
     expect(wrapped).toContain('importmap');
     expect(wrapped).toContain('three@0.160.0');
     expect(wrapped).toContain('import*as THREE');
+  });
+
+  it('registered prompt and wrapper agree on raw scene JavaScript plus the Three version', () => {
+    const gen = new ThreeGenerator();
+    const prompt = PromptLibrary.get('three.generate');
+    const wrapped = gen.wrapForGallery('const scene = new THREE.Scene();');
+
+    expect(prompt?.systemPrompt).toContain('raw Three.js scene JavaScript');
+    expect(prompt?.systemPrompt).not.toContain('Return raw HTML');
+    expect(prompt?.systemPrompt).not.toContain('Include OrbitControls');
+    expect(prompt?.metadata?.defaultThreeVersion).toBe(SERVICE_DEFAULTS.THREE_VERSION);
+    expect(wrapped).toContain(`three@${SERVICE_DEFAULTS.THREE_VERSION}`);
   });
 
   it('wrapForGallery extracts script from existing DOCTYPE HTML with Three code', () => {

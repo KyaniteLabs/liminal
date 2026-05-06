@@ -134,11 +134,13 @@ stack(
   {
     domain: 'three',
     skeletonText: `// Three.js scene skeleton
-import * as THREE from 'three';
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(75, w/h, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({ canvas });
-renderer.setSize(w, h);
+const width = window.innerWidth;
+const height = window.innerHeight;
+const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(width, height);
+document.body.appendChild(renderer.domElement);
 // Mesh:
 const geo = new THREE.BoxGeometry(1, 1, 1);
 const mat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
@@ -210,7 +212,7 @@ const DOMAIN_API_VOCAB: DomainApiVocab[] = [
   },
   {
     domain: 'three',
-    apis: ['THREE.Scene', 'THREE.WebGLRenderer', 'THREE.PerspectiveCamera', 'THREE.OrthographicCamera', 'THREE.Mesh', 'THREE.BoxGeometry', 'THREE.SphereGeometry', 'THREE.PlaneGeometry', 'THREE.MeshStandardMaterial', 'THREE.MeshBasicMaterial', 'THREE.Color', 'THREE.DirectionalLight', 'THREE.AmbientLight', 'THREE.PointLight', 'THREE.BufferGeometry', 'THREE.BufferAttribute', 'scene.add(', 'requestAnimationFrame', 'renderer.render(', 'camera.position', '.setSize(', 'import * as THREE from'],
+    apis: ['THREE.Scene', 'THREE.WebGLRenderer', 'THREE.PerspectiveCamera', 'THREE.OrthographicCamera', 'THREE.Mesh', 'THREE.BoxGeometry', 'THREE.SphereGeometry', 'THREE.PlaneGeometry', 'THREE.MeshStandardMaterial', 'THREE.MeshBasicMaterial', 'THREE.Color', 'THREE.DirectionalLight', 'THREE.AmbientLight', 'THREE.PointLight', 'THREE.BufferGeometry', 'THREE.BufferAttribute', 'scene.add(', 'requestAnimationFrame', 'renderer.render(', 'camera.position', '.setSize('],
     contaminationDomains: ['three-glfx', 'three-bokeh', 'generic WebGL without THREE namespace', 'Remotion THREE import'],
   },
   {
@@ -237,8 +239,8 @@ interface HardeningHint {
 
 const HARDENING_HINTS: HardeningHint[] = [
   { id: 'raw_code_only', text: 'Output only raw code. No prose, no markdown fences, no explanation.', domains: 'all' },
-  { id: 'include_required_imports', text: 'Include all required import statements or CDN links for the target library.', domains: 'all' },
-  { id: 'full_html_shell', text: 'Wrap output in a complete, runnable HTML document (doctype + html + head + body).', domains: 'all' },
+  { id: 'include_required_imports', text: 'Include all required import statements or CDN links for the target library.', domains: ['tone', 'strudel', 'hydra', 'revideo', 'p5'] },
+  { id: 'full_html_shell', text: 'Wrap output in a complete, runnable HTML document (doctype + html + head + body).', domains: ['tone', 'strudel', 'hydra', 'p5', 'kinetic'] },
   { id: 'tone_transport_pattern', text: 'Use Tone.Transport.scheduleRepeat or Tone.Sequence for rhythmic patterns. Do not use Tone.start() without Transport.', domains: ['tone'] },
   { id: 'tone_synth_chain', text: 'Chain: Synth -> Channel/Effects -> toDestination(). Include Tone.Transport.start().', domains: ['tone'] },
   { id: 'strudel_stack', text: 'Wrap patterns in stack() to combine multiple voices. Use .out() at the end.', domains: ['strudel'] },
@@ -248,15 +250,14 @@ const HARDENING_HINTS: HardeningHint[] = [
   { id: 'ascii_monospace', text: 'ASCII art must be fixed-width monospace. Prefer standard ASCII symbols, but extended art glyphs like box drawing, block elements, stars, and diagonal strokes are allowed when they improve the piece.', domains: ['ascii'] },
   { id: 'ascii_no_fences', text: 'Output raw ASCII only. No code fences, no triple-backtick, no markdown markers.', domains: ['ascii'] },
   { id: 'three_scene_camera_renderer', text: 'Include THREE.Scene, THREE.PerspectiveCamera, THREE.WebGLRenderer, and a mesh in scene. Call renderer.render in a loop.', domains: ['three'] },
-  { id: 'three_module_import', text: 'Use ES module import: import * as THREE from "three". Use importmap or CDN URL for three.js.', domains: ['three'] },
-  { id: 'three_no_nested_html', text: 'If you return HTML, include exactly one HTML document. Never place a second <!DOCTYPE html> or <html> document inside a <script> block.', domains: ['three'] },
+  { id: 'three_wrapper_raw_scene', text: 'Return raw Three.js scene JavaScript only. Do not include imports, import maps, <script>, <!DOCTYPE html>, or <html>; the gallery wrapper supplies those.', domains: ['three'] },
   { id: 'glsl_precision', text: 'Always start with precision mediump float; and declare all uniforms (u_time, u_resolution).', domains: ['glsl'] },
   { id: 'glsl_main_or_mainimage', text: 'Use either void main() with gl_FragColor, or void mainImage(out vec4, in vec2) -- not both mixed.', domains: ['glsl'] },
   { id: 'revideo_makescene_shape', text: 'Use export default makeScene2D("SceneName", function* (view) { ... }). Do not use makeScene({ render: ... }).', domains: ['revideo'] },
   { id: 'revideo_no_react', text: 'Do not use Remotion, @revideo/react, React.FC, useFrame, or useCurrentFrame. Use @revideo/core plus @revideo/2d.', domains: ['revideo'] },
   { id: 'revideo_scene_components', text: 'Use view.add(...), yield* animations, and @revideo/2d components such as Txt and Rect.', domains: ['revideo'] },
   { id: 'no_contamination', text: 'Do not mix frameworks. For Three.js, use only THREE namespace. For GLSL, use only WebGL/GLSL conventions.', domains: 'all' },
-  { id: 'wrapper_full_html', text: 'Return a complete HTML file. Do not return a fragment or code block -- wrapForGallery depends on full HTML.', domains: ['tone', 'strudel', 'three'] },
+  { id: 'wrapper_full_html', text: 'Return a complete HTML file. Do not return a fragment or code block -- wrapForGallery depends on full HTML.', domains: ['tone', 'strudel'] },
 ];
 
 // ---------------------------------------------------------------------------
@@ -311,7 +312,7 @@ const WRAPPER_CONTRACTS: Record<string, string> = {
   tone: 'Complete HTML page with Tone.js loaded via CDN, synth/pattern code in a <script type="module">, audio-playing pattern.',
   strudel: 'Complete HTML page with Strudel REPL loaded via CDN, pattern code calling .out() in a <script type="module">.',
   ascii: 'Raw fixed-width ASCII art text only -- no HTML, no code fences, no markdown.',
-  three: 'Complete HTML page with Three.js loaded via ES module importmap/CDN, scene code in <script type="module">.',
+  three: 'Raw Three.js scene JavaScript only; the gallery wrapper injects the HTML shell, module script, and Three.js CDN. Do not return <!DOCTYPE html>, <html>, <script>, import maps, or import statements.',
   glsl: 'GLSL fragment shader code only (precision + uniforms + main or mainImage), no HTML wrapper.',
   shader: 'GLSL fragment shader code only (precision + uniforms + main or mainImage), no HTML wrapper.',
   hydra: 'Complete HTML page with Hydra loaded via CDN, visual synth code in <script type="module">.',

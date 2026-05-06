@@ -133,6 +133,7 @@ Release risk: medium-high. These items reduce integration debt and future bug ge
    - Findings: FQA-028
    - Action: choose one contract: full HTML or raw scene JS, one Three version, one audited path.
    - Proof: prompt audit renders through actual generator path.
+   - Remediation status: verified. `three.generate`, `docs/PROMPTS.md`, Three harness skeleton/repair hints, and `ThreeGenerator.wrapForGallery()` now share the raw-scene JavaScript contract. Prompt metadata uses `SERVICE_DEFAULTS.THREE_VERSION`, the gallery import map uses `THREE_CDN`, and regression tests block full HTML/import-map/import-statement drift and undefined skeleton dimensions from returning through prompt or harness recovery paths.
 
 ## Batch 4: Coverage And Guardrails
 

@@ -3,6 +3,7 @@
  */
 
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
+import { THREE_CDN } from '../../constants.js';
 
 export class ThreeGenerator extends TierBasedGenerator {
   constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {
@@ -118,7 +119,7 @@ canvas{display:block}
 </head>
 <body>
 <script type="importmap">
-{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+{"imports":{"three":"${THREE_CDN}"}}
 </script>
 <script type="module">
 import*as THREE from'three';

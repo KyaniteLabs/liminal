@@ -15,6 +15,7 @@ const ROOT = path.resolve(__dirname, '..');
 const bridgeOnly = process.argv.includes('--bridge-only');
 const portArg = process.argv.find((arg) => arg.startsWith('--port='));
 const port = Number(portArg?.split('=')[1] || process.env.LIMINAL_BRIDGE_PORT || 3000);
+if (!process.env.LIMINAL_LOG_LEVEL) process.env.LIMINAL_LOG_LEVEL = 'info';
 const originalConsole = {
   log: console.log.bind(console),
   info: console.info.bind(console),
@@ -69,6 +70,7 @@ const bridgeLogFile = path.join(ROOT, '.omx', 'logs', 'bubbletea-bridge.log');
 originalConsole.log(`Bubble Tea bridge: ${server.address}`);
 originalConsole.log(`Harness provider/model: ${providerConfig.provider}/${providerConfig.model}`);
 originalConsole.log(`Bridge logs: ${bridgeLogFile}`);
+originalConsole.log(`Bridge log level: ${process.env.LIMINAL_LOG_LEVEL}`);
 
 let child;
 let bridgeLogStream;

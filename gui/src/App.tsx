@@ -189,7 +189,7 @@ export default function App() {
   const [improveLoading, setImproveLoading] = useState<boolean>(false);
   const [improveError, setImproveError] = useState<string | null>(null);
 
-  // Live Music: generated code
+  // Live AV: generated code
   const [liveMusicPrompt, setLiveMusicPrompt] = useState<string>('ambient glitch');
   const [musicCode, setMusicCode] = useState<string>('');
   const [visualsCode, setVisualsCode] = useState<string>('');
@@ -1457,9 +1457,9 @@ export default function App() {
 
       {activeTab === 'liveMusic' && (
         <div className="atelier-panel" style={{ maxWidth: 960, width: '100%' }}>
-          <h2 className="atelier-heading">Live Music</h2>
+          <h2 className="atelier-heading">Live AV</h2>
           <p style={{ color: 'var(--atelier-text-muted)', fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>
-            Generate Strudel (music) and Hydra (visuals). Music runs in the embedded REPL; visuals are shown as sandbox-pending code until an isolated Hydra runtime is available.
+            Generate Strudel music and Hydra video-synth code. Strudel runs in the embedded REPL; Hydra remains read-only here.
           </p>
           <label style={{ display: 'block', marginBottom: 12 }}>
             <span className="atelier-label">Prompt</span>
@@ -1522,7 +1522,7 @@ export default function App() {
 
           {visualsCode && (
             <div style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 13, color: 'var(--atelier-visual)', marginBottom: 8, fontFamily: 'var(--font-body)', fontWeight: 600 }}>Hydra — sandbox-pending code</h3>
+              <h3 style={{ fontSize: 13, color: 'var(--atelier-visual)', marginBottom: 8, fontFamily: 'var(--font-body)', fontWeight: 600 }}>Hydra — read-only video synth code</h3>
               <div
                 style={{
                   overflow: 'hidden',

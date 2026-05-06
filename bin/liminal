@@ -262,8 +262,8 @@ function printHelp() {
   console.log('  --favorite <prompt>         Add prompt to favorites');
   console.log('  --favorites                 List favorite prompts');
   console.log('  --interactive, -i           Interactive TUI mode');
-  console.log('  --mode <mode>              Mode: live-music (generate Strudel/Hydra to --output)');
-  console.log('  --use-swarm                Use Liminal swarm (7-persona Ollama) for generation');
+  console.log('  --mode <mode>              Mode: live-music (Live AV Strudel + Hydra to --output)');
+  console.log('  --use-swarm                Use Liminal swarm (5 default personas) for generation');
   console.log('  --swarm-mode <mode>        Swarm mode: competitive, hybrid, ring, mesh (default: hybrid)');
   console.log('  --swarm-rounds <num>       Max swarm rounds (default: 10)');
   console.log('  --fast-model <name>        Primary/fast model for dual-mode (e.g., qwen3.5:9b)');
@@ -803,7 +803,7 @@ if (isLiveMusic) {
   const liveOpts = liveConfig?.live || {};
 
   console.log('');
-  console.log('🎵 Liminal: Live Music');
+  console.log('🎵 Liminal: Live AV');
   console.log('📝 Prompt: "' + livePrompt + '"');
   console.log('📁 Output: ' + liveOutDir);
   if (liveOpts.oscHost || liveOpts.syncMode) {

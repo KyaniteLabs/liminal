@@ -310,3 +310,16 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm build` | pass | Root package builds after FQA-037/FQA-038 remediation. | Exit 0. |
 | 2026-05-06 remediation | `pnpm final-qa:test-quality` | pass | Strict test-quality gate accepts the new FQA-037/FQA-038 regression tests. | 671 test files scanned; all checks passed. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-037/FQA-038 remediation diff has no whitespace errors before commit. | Exit 0. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/docs/final-qa-copy-drift.test.ts test/unit/docs/market-quickstart.test.ts test/scripts/bubbletea-launcher.test.ts --coverage=false --reporter=dot` | pass | FQA-030/FQA-031/FQA-032 regressions lock public domain copy, CreativeBoard/swarm terminology, Live AV copy, and Bubble Tea bridge logging defaults. | 3 files passed; 7 tests passed. |
+| 2026-05-06 remediation | `node --check bin/liminal && node --check scripts/start-bubbletea-tui.mjs` | pass | CLI and Bubble Tea launcher syntax remains valid after copy/logging cleanup. | Exit 0. |
+| 2026-05-06 remediation | `pnpm typecheck` | pass | Root TypeScript gate passes after non-material copy/logging cleanup. | Exit 0. |
+| 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after non-material copy/logging cleanup. | Exit 0. |
+| 2026-05-06 remediation | `pnpm check:doc-links` | pass | Public doc links remain valid after README, feature, architecture, and launch-thread copy updates. | 10 files scanned. |
+| 2026-05-06 remediation | `pnpm final-qa:test-quality` | pass | Strict final-QA test-quality gate accepts the new copy-drift regression file. | 672 test files scanned; all checks passed. |
+| 2026-05-06 remediation | `pnpm gui:build` | pass | Studio GUI builds after Live AV copy cleanup in `gui/src/App.tsx`. | Vite production build completed. |
+| 2026-05-06 remediation | `pnpm bubbletea:test` | pass | Bubble Tea Go packages pass after launcher logging default cleanup. | `internal/app` and `internal/bridge` passed; no-test packages reported cleanly. |
+| 2026-05-06 remediation | `pnpm build` | pass | Root package builds after non-material copy/logging cleanup. | Exit 0. |
+| 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script targets remain valid after the Bubble Tea launcher update. | Receipt `.omx/proof/package-script-targets.json`. |
+| 2026-05-06 remediation | `pnpm check:orphans` | pass | No orphaned files were introduced by the non-material copy/logging cleanup. | No orphaned files found. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/user-surfaces-contract.test.ts test/unit/docs/final-qa-copy-drift.test.ts test/unit/docs/market-quickstart.test.ts test/scripts/bubbletea-launcher.test.ts --coverage=false --reporter=dot` | pass | The stale GUI surface contract assertion found by PR CI now rejects the old sandbox-pending copy and accepts the Live AV/Hydra read-only wording. | 4 files passed; 11 tests passed. |
+| 2026-05-06 remediation | `pnpm test:ci:fast` | pass | The full fast CI lane passes after folding the GUI surface contract fix into the non-material cleanup branch. | 643 files passed, 1 skipped; 10,233 tests passed, 7 skipped; coverage totals above ratchet. |

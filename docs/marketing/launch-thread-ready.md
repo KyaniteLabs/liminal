@@ -49,7 +49,7 @@ Same screen. No pop-up-only workflow.
 
 Liminal can target multiple creative-code domains:
 
-p5.js, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HTML, ASCII, Kinetic, TextGen, SVG.
+p5.js, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, TextGen.
 
 The user can name a medium explicitly, or Liminal can choose one from the creative brief.
 

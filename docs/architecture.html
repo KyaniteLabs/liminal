@@ -54,8 +54,8 @@
         </div>
         <div class="card">
             <h3>Layer 4: Generators</h3>
-            <p>11 creative domains</p>
-            <p style="margin-top:0.5rem;font-size:0.85rem;">p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, Revideo, HTML, ASCII, Kinetic, TextGen.</p>
+            <p>12 launch creative domains</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">p5.js, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, TextGen.</p>
         </div>
         <div class="card">
             <h3>Layer 5: Infrastructure</h3>
@@ -144,19 +144,20 @@
 <!-- Generator Architecture -->
 <section class="section">
     <h2 class="section-title">Generator Architecture</h2>
-    <p class="section-subtitle">11 generators unified under the TierBasedGenerator base class.</p>
+    <p class="section-subtitle">12 launch generators unified under the TierBasedGenerator base class.</p>
 
     <table>
         <thead><tr><th>Generator</th><th>Domain</th><th>Directory</th><th>Status</th></tr></thead>
         <tbody>
             <tr><td>p5.js</td><td>2D Canvas</td><td>src/generators/p5/</td><td><span class="badge badge-success">Stable</span></td></tr>
+            <tr><td>SVG</td><td>Vector Art</td><td>src/generators/svg/</td><td><span class="badge badge-success">Stable</span></td></tr>
             <tr><td>GLSL</td><td>Shaders</td><td>src/generators/glsl/</td><td><span class="badge badge-success">Stable</span></td></tr>
             <tr><td>Three.js</td><td>3D Scenes</td><td>src/generators/three/</td><td><span class="badge badge-success">Stable</span></td></tr>
             <tr><td>Strudel</td><td>Live Music</td><td>src/generators/strudel/</td><td><span class="badge badge-success">Stable</span></td></tr>
             <tr><td>Hydra</td><td>Visual Synth</td><td>src/generators/hydra/</td><td><span class="badge badge-success">Stable</span></td></tr>
             <tr><td>Tone.js</td><td>Web Audio</td><td>src/generators/tone/</td><td><span class="badge badge-success">Stable</span></td></tr>
             <tr><td>Revideo</td><td>Video</td><td>src/generators/revideo/</td><td><span class="badge badge-info">Active</span></td></tr>
-            <tr><td>HTML</td><td>Web Pages</td><td>src/generators/html/</td><td><span class="badge badge-success">Stable</span></td></tr>
+            <tr><td>HyperFrames</td><td>HTML/GSAP Composition</td><td>src/generators/hyperframes/</td><td><span class="badge badge-info">Active</span></td></tr>
             <tr><td>ASCII</td><td>Terminal Art</td><td>src/generators/ascii/</td><td><span class="badge badge-success">Stable</span></td></tr>
             <tr><td>Kinetic</td><td>Motion Art</td><td>src/generators/kinetic/</td><td><span class="badge badge-info">Active</span></td></tr>
             <tr><td>TextGen</td><td>Generative Text</td><td>src/generators/textgen/</td><td><span class="badge badge-success">Stable</span></td></tr>
@@ -164,7 +165,7 @@
     </table>
 
     <div class="alert alert-info" style="margin-top:1rem;">
-        <strong>TierBasedGenerator:</strong> All generators inherit from a common base class that provides template scaffolding, evaluation integration, and model-tier awareness. This ensures consistent behavior across all 11 domains.
+        <strong>TierBasedGenerator:</strong> The launch generators inherit from a common base class that provides template scaffolding, evaluation integration, and model-tier awareness. This ensures consistent behavior across all 12 launch domains.
     </div>
 </section>
 

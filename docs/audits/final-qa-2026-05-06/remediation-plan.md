@@ -162,3 +162,4 @@ Release risk: medium. These items prevent recurrence.
    - Findings: FQA-030, FQA-031, FQA-032
    - Action: copy/terminology/logging cleanup after material truth is fixed.
    - Proof: docs terminology scan and operator smoke.
+   - Remediation status: verified. Public README, launch-thread, feature, architecture, GUI, and CLI copy now share the 12-domain launch surface, distinguish Live AV from single-medium music, distinguish CreativeBoard's 3-agent critique from the 5-persona swarm, and remove the stale 7-persona CLI help claim. The Bubble Tea bridge launcher defaults route logs to `info` when the operator has not set `LIMINAL_LOG_LEVEL`, while still honoring explicit overrides, and prints the active bridge log level next to `.omx/logs/bubbletea-bridge.log`. Guardrails: `test/unit/docs/final-qa-copy-drift.test.ts`, `test/unit/docs/market-quickstart.test.ts`, and `test/scripts/bubbletea-launcher.test.ts`.

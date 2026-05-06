@@ -58,7 +58,7 @@ liminal improve scan
 
 ## Ready-to-show market path
 
-Use this path when you want to try Liminal as a product instead of asking an agent to babysit a proof run. It keeps the full creative surface in scope: p5, GLSL, Three.js, SVG, Hydra, Strudel, Tone.js, Revideo, ASCII, Kinetic, and TextGen.
+Use this path when you want to try Liminal as a product instead of asking an agent to babysit a proof run. It keeps the full creative surface in scope: p5, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, and TextGen.
 
 ```bash
 # 1. Install and build
@@ -85,7 +85,7 @@ pnpm exec tsx scripts/proof/creative-copilot-proof.ts --provider=glm --all --tim
 liminal market status
 ```
 
-Expected current result: `liminal market status` prints `Market readiness: READY` after the live smoke receipt exists. The current launch-candidate proof also includes Studio p5 generation, same-screen preview, revision, microphone preview smoke, and permission-denied UX receipts summarized in `docs/launch/launch-candidate-2026-04-30.md`. Strudel patterns are saved with an external playback link, Tone.js saves playable HTML, and Revideo code artifacts are generated; native rendered video/still capture is a separate follow-up.
+Expected current result: `liminal market status` prints `Market readiness: READY` after the live smoke receipt exists. The current launch-candidate proof also includes Studio p5 generation, same-screen preview, revision, microphone preview smoke, and permission-denied UX receipts summarized in `docs/launch/launch-candidate-2026-04-30.md`. Strudel patterns are saved with an external playback link, Tone.js saves playable HTML, HyperFrames saves HTML/GSAP composition artifacts, and Revideo code artifacts are generated; native rendered video/still capture is a separate follow-up.
 
 ---
 
@@ -102,8 +102,9 @@ Each iteration, Liminal:
 
 **Key capabilities:**
 
-- **12 creative domains** — SVG, p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, Revideo, HTML, ASCII, Kinetic, TextGen
-- **Multi-agent critique** — 3-agent board (Minimalist / Expressionist / Technician) deliberates on output
+- **12 creative domains** — p5.js, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, TextGen
+- **CreativeBoard critique** — 3-agent board (Minimalist / Expressionist / Technician) deliberates on output
+- **Swarm generation** — 5 default runtime personas (Kai / Nova / Rex / Sam / Max) generate in parallel and vote on best
 - **Compost Mill** — Digests past work into reusable creative seeds that improve every generation
 - **Self-healing harness** — Observes failures, detects patterns, and proposes repair, hardening, and optimization work with verification targets
 - **Music theory engine** — Euclidean rhythms, Markov chains, scales, chord progressions
@@ -125,9 +126,9 @@ Each iteration, Liminal:
 | Mode | Flag | Description |
 |------|------|-------------|
 | **Single** | default | One model generates, evaluates, iterates |
-| **Swarm** | `--use-swarm` | Multiple personas generate in parallel, vote on best |
+| **Swarm** | `--use-swarm` | Five default personas (Kai, Nova, Rex, Sam, Max) generate in parallel and vote on best |
 | **Deep Collab** | `--routing-mode` | Dual-model routing (fast + powerful) |
-| **Live Music** | `--mode live-music` | Generate Strudel + Hydra code |
+| **Live AV** | `--mode live-music` | Generate Strudel music + Hydra video-synth code |
 | **Studio** | `liminal studio` | Chat-first GUI with same-screen preview, revision, and optional Improve/details drawers |
 | **Cortex** | (in Studio) | Background executive manages goals and improvements |
 
@@ -140,7 +141,7 @@ Each iteration, Liminal:
 liminal -p "Create a particle system"              # Generate with prompt
 liminal -p "sketch" -m 10 -o ./output              # Custom iterations + output dir
 liminal -p "idea" --use-swarm --swarm-mode hybrid  # Swarm generation
-liminal -p "ambient glitch set" --mode live-music  # Music mode
+liminal -p "ambient glitch set" --mode live-music  # Live AV mode
 
 # Interactive
 pnpm gui                                            # GUI workbench
@@ -190,7 +191,7 @@ liminal --configure                                 # Setup config
 | `-p, --prompt <text>` | Generation prompt |
 | `-m, --max-iterations <n>` | Max iterations (default: 3) |
 | `-o, --output <path>` | Output directory |
-| `--mode <mode>` | Mode: `live-music` |
+| `--mode <mode>` | Mode: `live-music` (Live AV Strudel + Hydra) |
 | `--use-swarm` | Enable swarm generation |
 | `--swarm-mode <mode>` | Swarm strategy: `competitive`, `hybrid`, `ring`, `mesh` |
 | `--voice` | Use microphone for audio input |

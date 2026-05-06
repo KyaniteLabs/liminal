@@ -34,7 +34,8 @@ describe('user-facing TUI/GUI surface contract', () => {
     expect(app).not.toContain('Run the Ralph loop: same prompt every iteration');
     expect(app).not.toContain('visuals run live below');
     expect(app).toContain('pnpm gui');
-    expect(app).toContain('visuals are shown as sandbox-pending code');
+    expect(app).toContain('Hydra remains read-only here');
+    expect(app).not.toContain('visuals are shown as sandbox-pending code');
     expect(bubbleReadme).not.toContain('Bubble Tea MVP Shell');
     expect(bubbleReadme).toContain('Bubble Tea Operator Cockpit');
   });

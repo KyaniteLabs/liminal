@@ -19,7 +19,7 @@ describe('market quickstart docs', () => {
     expect(readme).toContain('pnpm run proof:live-provider-smoke -- --provider=glm --timeout-ms=120000');
     expect(readme).toContain('pnpm exec tsx scripts/proof/creative-copilot-proof.ts --provider=glm --all --timeout-ms=120000 --max-tokens=4096 --out=.omx/proof/market-all-domain-sweep');
     expect(readme).toContain('liminal market status');
-    expect(readme).toContain('p5, GLSL, Three.js, SVG, Hydra, Strudel, Tone.js, Revideo');
-    expect(readme).toContain('Revideo code artifacts are generated; native rendered video/still capture is a separate follow-up.');
+    expect(readme).toContain('p5, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, and TextGen');
+    expect(readme).toContain('HyperFrames saves HTML/GSAP composition artifacts, and Revideo code artifacts are generated; native rendered video/still capture is a separate follow-up.');
   });
 });

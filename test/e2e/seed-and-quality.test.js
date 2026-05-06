@@ -9,9 +9,12 @@ import { describe, it, expect, beforeAll, afterEach, afterAll, test } from 'vite
 import { run, RalphLoop } from '../../src/index.js';
 import path from 'path';
 import fs from 'fs/promises';
+import os from 'os';
 
 const LLM_REQUEST_TIMEOUT_MS = 60000;
-const E2E_GALLERY_DIR = path.join(process.cwd(), 'test-e2e-seed-quality-gallery');
+let originalCwd;
+let e2eProjectRoot;
+let e2eGalleryDir;
 
 function isLLMUnavailable(err) {
   const msg = err instanceof Error ? err.message : String(err);
@@ -22,7 +25,14 @@ function isLLMUnavailable(err) {
 
 describe('E2E: seed and quality gate', () => {
   beforeAll(async () => {
-    await fs.mkdir(E2E_GALLERY_DIR, { recursive: true });
+    originalCwd = process.cwd();
+    e2eProjectRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-e2e-seed-quality-'));
+    e2eGalleryDir = 'gallery';
+    await fs.mkdir(path.join(e2eProjectRoot, e2eGalleryDir), { recursive: true });
+
+    // run() opens .liminal/project.liminal under process.cwd(); give this
+    // e2e file its own project root so parallel CI workers cannot lock it.
+    process.chdir(e2eProjectRoot);
   });
 
   afterEach(() => {
@@ -30,8 +40,12 @@ describe('E2E: seed and quality gate', () => {
   });
 
   afterAll(async () => {
+    if (originalCwd) process.chdir(originalCwd);
+
     try {
-      await fs.rm(E2E_GALLERY_DIR, { recursive: true, force: true });
+      if (e2eProjectRoot) {
+        await fs.rm(e2eProjectRoot, { recursive: true, force: true });
+      }
     } catch {
       // ignore
     }
@@ -49,7 +63,7 @@ describe('E2E: seed and quality gate', () => {
       result = await run(prompt, {
         seedCode,
         maxIterations,
-        galleryDir: E2E_GALLERY_DIR,
+        galleryDir: e2eGalleryDir,
         project: 'e2e-seed',
       });
     } catch (err) {
@@ -84,7 +98,7 @@ describe('E2E: seed and quality gate', () => {
       result = await run(prompt, {
         minQualityScore,
         maxIterations,
-        galleryDir: E2E_GALLERY_DIR,
+        galleryDir: e2eGalleryDir,
         project: 'e2e-quality-gate',
       });
     } catch (err) {

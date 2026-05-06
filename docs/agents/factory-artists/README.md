@@ -12,6 +12,7 @@ Temporary guidance import for agent-led review work in Liminal.
 
 This folder is reference material only.
 
+- These are not `SKILL.md` skills and are not loaded by `SkillLoader`.
 - Do not load these files as Liminal runtime configuration.
 - Do not wire these files into `src/prompts/`, swarm personas, or Studio behavior.
 - Do not treat this import as an audit procedure or review protocol.

@@ -139,6 +139,12 @@ Release risk: medium-high. These items reduce integration debt and future bug ge
 
 Release risk: medium. These items prevent recurrence.
 
+0. Make Factory persona/RAG boundaries explicit.
+   - Findings: FQA-020
+   - Action: label the imported Factory profiles and RAG manifests as docs-only reference material, not runtime skills or prompt wiring.
+   - Proof: docs boundary test proves the folders are not `SKILL.md` skills and are not loaded by `SkillLoader`.
+   - Remediation status: verified. `docs/agents/factory-artists/README.md` and `docs/agents/factory-artists/rag/README.md` now state the non-runtime boundary explicitly, and `test/unit/docs/factory-persona-boundary.test.ts` locks both the documentation and runtime `SkillLoader` behavior.
+
 1. Expand final QA gate coverage.
    - Findings: FQA-013, FQA-015, FQA-034
    - Action: include GUI, Bubble Tea, scripts, examples, pending-test classification, strict test-quality scanning, and all launch-scoped creative domains in final QA.

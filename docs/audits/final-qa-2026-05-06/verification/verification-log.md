@@ -170,3 +170,15 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-025 observability proof remediation. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-025 final diff, including audit-doc updates, has no whitespace errors. | Exit 0. |
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-025 observability proof remediation. | Vite built 35 modules. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/docs/factory-persona-boundary.test.ts --coverage=false --reporter verbose` | fail, red-first | New Factory persona boundary contract caught missing explicit `SKILL.md` / `SkillLoader` language in the imported guidance docs. | Red failed because `docs/agents/factory-artists/README.md` did not contain `not \`SKILL.md\` skills`. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/docs/factory-persona-boundary.test.ts --coverage=false` | pass | Factory persona and RAG docs now state the reference-only boundary, and `SkillLoader` cannot load/list those docs as runtime skills. | 1 file passed; 1 test passed. |
+| 2026-05-06 remediation | `pnpm test:quality` | fail, red-first | Test quality scanner rejected the first boundary-test shape as padding because the test title included a `factory` false positive and did not exercise runtime behavior. | Fixed by renaming the test and asserting `SkillLoader([factoryRoot]).loadSkill('rag')` returns null and `listSkills()` returns empty. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/docs/factory-persona-boundary.test.ts test/unit/docs/what-to-expect-current-surface.test.ts test/unit/docs/market-quickstart.test.ts test/unit/docs/visual-bible-consistency.test.ts --coverage=false` | pass | Neighboring docs contracts pass with the Factory persona boundary doc update. | 4 files passed; 5 tests passed. |
+| 2026-05-06 remediation | `pnpm typecheck` | pass | Root TypeScript gate passes after FQA-020 docs boundary test. | Exit 0. |
+| 2026-05-06 remediation | `pnpm build` | pass | Root package builds after FQA-020 docs boundary test. | Exit 0. |
+| 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after FQA-020 docs boundary test. | Exit 0. |
+| 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the strengthened FQA-020 boundary test. | 665 test files scanned; all checks passed. |
+| 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after FQA-020 boundary docs. | Receipt: `.omx/proof/package-script-targets.json`. |
+| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-020 boundary docs. | Exit 0. |
+| 2026-05-06 remediation | `git diff --check` | pass | FQA-020 final diff, including audit-doc updates, has no whitespace errors. | Exit 0. |
+| 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-020 boundary docs. | Vite built 35 modules. |

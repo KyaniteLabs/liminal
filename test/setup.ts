@@ -121,11 +121,22 @@ const CI_ENV_KEYS = [
 const saved: Record<string, string | undefined> = {};
 let originalTestEnv: string | undefined;
 
+function shouldPreserveLiveLLMEnv(): boolean {
+  return Boolean(
+    process.env.RUN_CLOUD_MODEL_TESTS
+    || process.env.RUN_MODEL_COMPARISON
+    || process.env.RUN_MINIMAX_HIGHSPEED_MODEL_TESTS
+    || process.env.LIMINAL_ALLOW_LIVE_LLM_TESTS
+  );
+}
+
 beforeAll(() => {
+  const preserveLiveLLMEnv = shouldPreserveLiveLLMEnv();
+
   // Save and clear LLM environment variables
   for (const key of LLM_ENV_KEYS) {
     saved[key] = process.env[key];
-    delete process.env[key];
+    if (!preserveLiveLLMEnv) delete process.env[key];
   }
   
   // Save CI environment state
@@ -143,8 +154,12 @@ beforeEach(() => {
   installQuietCanvasFallbacks();
   installQuietAudioFallbacks();
 
-  for (const key of LLM_ENV_KEYS) {
-    delete process.env[key];
+  // Normal tests stay hermetic. Explicit live-provider gates keep credentials
+  // because those suites exist to prove real configured provider behavior.
+  if (!shouldPreserveLiveLLMEnv()) {
+    for (const key of LLM_ENV_KEYS) {
+      delete process.env[key];
+    }
   }
 
   // Ensure test environment is set

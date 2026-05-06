@@ -9,6 +9,7 @@ import { describe, it, expect } from 'vitest';
 import { runInSandbox } from '../../src/sandbox/index.js';
 import { requestImprovement } from '../../src/improvement/requestImprovement.js';
 import { LLMClient } from '../../src/llm/LLMClient.js';
+import { applyProviderEnv } from './helpers/liveProviderTestEnv.js';
 
 const MINIMAL_P5 = `
 function setup() {
@@ -31,7 +32,7 @@ function isChromeUnavailableError(error: string | undefined): boolean {
   );
 }
 
-describe.skipIf(process.env.CI)('E2E sandbox self-improve', () => {
+describe('E2E sandbox self-improve', () => {
   describe('SandboxRunner.runInSandbox', () => {
     it('runs minimal p5 sketch: no timeout, no crash, result indicates success', async () => {
       const result = await runInSandbox(MINIMAL_P5, { timeoutMs: 20000 });
@@ -68,10 +69,13 @@ describe.skipIf(process.env.CI)('E2E sandbox self-improve', () => {
   describe('requestImprovement (one improvement step)', () => {
     it('code -> requestImprovement -> returns improved code (skip if LLM unavailable)', async () => {
       if (!LLMClient.isConfigured()) {
-        console.warn(
-          'Skipping E2E improvement test: LLM unavailable (set LIMINAL_LLM_API_KEY or ATELIER_LLM_API_KEY or ATELIER_LLM_BASE_URL).'
-        );
-        return;
+        const providerConfig = applyProviderEnv('glm');
+        if (!providerConfig || !LLMClient.isConfigured()) {
+          console.warn(
+            'Skipping E2E improvement test: LLM unavailable (set LIMINAL_LLM_API_KEY or configure GLM).'
+          );
+          return;
+        }
       }
 
       const result = await requestImprovement(MINIMAL_P5);

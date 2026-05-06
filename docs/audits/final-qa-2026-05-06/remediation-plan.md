@@ -54,6 +54,7 @@ Release risk: high. These items turn failures into success or weak proof into re
    - Findings: FQA-010
    - Action: evaluator exceptions must mark degraded evidence and block confidence-1 success.
    - Proof: evaluator-throws regression produces degraded/non-passing result.
+   - Remediation status: verified. RalphLoop now records auto evaluator/scorer fallback as `confidence:0` degraded evidence, and the creative gate blocks completion when fallback evidence is degraded.
 
 4. Add decoded-pixel visual proof.
    - Findings: FQA-011

@@ -4,6 +4,8 @@ export interface CreativeIterationGateInput {
   iteration: number;
   prompt: string;
   score: number;
+  evaluationConfidence?: number;
+  evaluationFailureClass?: string;
   isComplete: boolean;
   maxIterations: number;
   minQualityScore: number;
@@ -34,6 +36,19 @@ export class CreativeIterationGate {
   decide(input: CreativeIterationGateInput): CreativeIterationGateDecision {
     const domain = this.detectDomain(input.prompt, input.collabDomain);
     const qualityThreshold = input.domainQualityThresholds[domain] ?? input.minQualityScore;
+    const evaluationFailureClass = input.evaluationFailureClass ?? 'none';
+    const evaluationConfidence = input.evaluationConfidence ?? 1;
+
+    if (evaluationFailureClass !== 'none' && evaluationConfidence <= 0) {
+      return {
+        shouldBreak: true,
+        completed: false,
+        reason: `evaluation evidence degraded (${evaluationFailureClass}, confidence ${evaluationConfidence.toFixed(2)})`,
+        domain,
+        qualityThreshold,
+        maxIterations: input.maxIterations,
+      };
+    }
 
     if (input.iteration >= 2 && input.score < qualityThreshold) {
       return {

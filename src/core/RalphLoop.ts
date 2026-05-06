@@ -84,11 +84,72 @@ void getEvalMode;
 void getRepairMode;
 void 0 as unknown as GenerationEvaluation;
 
+type RalphQualityEvaluation = {
+  score: number;
+  issues?: string[];
+  dimensions?: Record<string, number>;
+  repairAdvice?: ConcreteRepairAdvice;
+  evaluatorReasoning?: string;
+  report?: unknown;
+  confidence?: number;
+  failureClass?: GenerationEvaluation['failureClass'];
+};
+
 function extractScoringReasoning(result: { report?: unknown }): string | undefined {
   const report = result.report;
   if (!report || typeof report !== 'object') return undefined;
   const reasoning = (report as { reasoning?: unknown }).reasoning;
   return typeof reasoning === 'string' && reasoning.trim() ? reasoning : undefined;
+}
+
+function buildGenerationEvaluationFromReliableScore(
+  evaluation: { score: number; issues?: string[]; report?: unknown },
+  degradation?: { failureClass: Exclude<GenerationEvaluation['failureClass'], 'none'>; reason: string },
+): GenerationEvaluation {
+  const legacyReasoning = extractScoringReasoning(evaluation);
+  const reasoning = degradation
+    ? [
+        degradation.reason,
+        `Legacy fallback score ${evaluation.score.toFixed(2)} is diagnostic only.`,
+        legacyReasoning,
+      ].filter(Boolean).join(' ')
+    : legacyReasoning;
+
+  return {
+    score: evaluation.score,
+    confidence: degradation ? 0 : 1,
+    failureClass: degradation?.failureClass ?? 'none',
+    repairAdvice: evaluation.issues?.[0]
+      ? { issue: evaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
+      : degradation
+        ? { issue: degradation.reason, fix: 'Restore evaluator evidence before trusting this score.', constraint: 'Do not mark degraded evaluator fallback as release-ready.' }
+        : undefined,
+    reasoning,
+  };
+}
+
+function qualityEvaluationFromGenerationEvaluation(genEval: GenerationEvaluation): RalphQualityEvaluation {
+  return {
+    score: genEval.score,
+    issues: genEval.repairAdvice ? [genEval.repairAdvice.issue] : [],
+    dimensions: {},
+    repairAdvice: genEval.repairAdvice,
+    evaluatorReasoning: genEval.reasoning,
+    confidence: genEval.confidence,
+    failureClass: genEval.failureClass,
+  };
+}
+
+function generationEvaluationFromQualityEvaluation(evaluation: RalphQualityEvaluation): GenerationEvaluation {
+  return {
+    score: evaluation.score,
+    confidence: evaluation.confidence ?? 1,
+    failureClass: evaluation.failureClass ?? 'none',
+    repairAdvice: evaluation.repairAdvice ?? (evaluation.issues && evaluation.issues.length > 0
+      ? { issue: evaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
+      : undefined),
+    reasoning: evaluation.evaluatorReasoning ?? extractScoringReasoning(evaluation),
+  };
 }
 
 export class RalphLoop {
@@ -600,15 +661,10 @@ export class RalphLoop {
                       criteria: normalizedOptions.evaluationCriteria,
                       lirContext,
                     });
-                    genEval = {
-                      score: quickEvaluation.score,
-                      confidence: 1,
-                      failureClass: 'none',
-                      repairAdvice: quickEvaluation.issues?.[0]
-                        ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
-                        : undefined,
-                      reasoning: extractScoringReasoning(quickEvaluation),
-                    };
+                    genEval = buildGenerationEvaluationFromReliableScore(quickEvaluation, {
+                      failureClass: 'infra',
+                      reason: 'Browser render infrastructure is unavailable in auto evaluation mode.',
+                    });
                     candidate.score = quickEvaluation.score;
                     candidate.issues = quickEvaluation.issues ?? [];
                   } else {
@@ -634,15 +690,10 @@ export class RalphLoop {
                         criteria: normalizedOptions.evaluationCriteria,
                         lirContext,
                       });
-                      genEval = {
-                        score: quickEvaluation.score,
-                        confidence: 1,
-                        failureClass: 'none',
-                        repairAdvice: quickEvaluation.issues?.[0]
-                          ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
-                          : undefined,
-                        reasoning: extractScoringReasoning(quickEvaluation),
-                      };
+                      genEval = buildGenerationEvaluationFromReliableScore(quickEvaluation, {
+                        failureClass: 'scorer',
+                        reason: genEval.reasoning ?? 'Evaluator LLM is unavailable in auto evaluation mode.',
+                      });
                       candidate.score = quickEvaluation.score;
                       candidate.issues = quickEvaluation.issues ?? [];
                     } else {
@@ -657,15 +708,7 @@ export class RalphLoop {
                     criteria: normalizedOptions.evaluationCriteria,
                     lirContext,
                   });
-                  genEval = {
-                    score: quickEvaluation.score,
-                    confidence: 1,
-                    failureClass: 'none',
-                    repairAdvice: quickEvaluation.issues?.[0]
-                      ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
-                      : undefined,
-                    reasoning: extractScoringReasoning(quickEvaluation),
-                  };
+                  genEval = buildGenerationEvaluationFromReliableScore(quickEvaluation);
                   candidate.score = quickEvaluation.score;
                   candidate.issues = quickEvaluation.issues ?? [];
                 }
@@ -741,7 +784,7 @@ export class RalphLoop {
         // Evaluate quality
         // If we already evaluated multiple candidates, use the best candidate's score
         // Otherwise, run evaluation for the single candidate
-        let evaluation: { score: number; issues?: string[]; dimensions?: Record<string, number>; repairAdvice?: ConcreteRepairAdvice; evaluatorReasoning?: string; report?: unknown };
+        let evaluation: RalphQualityEvaluation;
         let lirContext: LIREvaluationContext | undefined;
 
         // Handle case where all candidates failed validation
@@ -757,6 +800,8 @@ export class RalphLoop {
             dimensions: {},
             repairAdvice: winner?.genEval?.repairAdvice,
             evaluatorReasoning: winner?.genEval?.reasoning,
+            confidence: winner?.genEval?.confidence,
+            failureClass: winner?.genEval?.failureClass,
           };
           if (normalizedOptions.chatMode) {
             normalizedOptions.onThought?.(`Using pre-evaluated score: ${evaluation.score.toFixed(2)}`);
@@ -804,12 +849,18 @@ export class RalphLoop {
               }
               Logger.warn('RalphLoop', 'Browser render infra unavailable, falling back to legacy scoring');
               const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-              evaluation = await scoringEngine.scoreReliable(
+              const quickEvaluation = await scoringEngine.scoreReliable(
                 {
                   output: currentCode,
                   criteria: normalizedOptions.evaluationCriteria,
                   lirContext,
                 },
+              );
+              evaluation = qualityEvaluationFromGenerationEvaluation(
+                buildGenerationEvaluationFromReliableScore(quickEvaluation, {
+                  failureClass: 'infra',
+                  reason: 'Browser render infrastructure is unavailable in auto evaluation mode.',
+                }),
               );
             } else {
               const { scoreRenderedEvidence } = await import('../core/ScoringEngine.js');
@@ -829,21 +880,21 @@ export class RalphLoop {
                 }
                 Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence scoring, falling back to legacy scoring');
                 const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-                evaluation = await scoringEngine.scoreReliable(
+                const quickEvaluation = await scoringEngine.scoreReliable(
                   {
                     output: currentCode,
                     criteria: normalizedOptions.evaluationCriteria,
                     lirContext,
                   },
                 );
+                evaluation = qualityEvaluationFromGenerationEvaluation(
+                  buildGenerationEvaluationFromReliableScore(quickEvaluation, {
+                    failureClass: 'scorer',
+                    reason: genEval.reasoning ?? 'Evaluator LLM is unavailable in auto evaluation mode.',
+                  }),
+                );
               } else {
-                evaluation = {
-                  score: genEval.score,
-                  issues: genEval.repairAdvice ? [genEval.repairAdvice.issue] : [],
-                  dimensions: {},
-                  repairAdvice: genEval.repairAdvice,
-                  evaluatorReasoning: genEval.reasoning,
-                };
+                evaluation = qualityEvaluationFromGenerationEvaluation(genEval);
               }
             }
           } else {
@@ -870,15 +921,7 @@ export class RalphLoop {
             const harness = new GeneratorHarnessTools({ seededRandom: Math.random });
 
             // Build repair packet with repeated-failure detection
-            const genEval: GenerationEvaluation = {
-              score: evaluation.score,
-              confidence: 1,
-              failureClass: 'none',
-              repairAdvice: evaluation.repairAdvice ?? (evaluation.issues && evaluation.issues.length > 0
-                ? { issue: evaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
-                : undefined),
-              reasoning: evaluation.evaluatorReasoning ?? extractScoringReasoning(evaluation),
-            };
+            const genEval = generationEvaluationFromQualityEvaluation(evaluation);
             const repairPacket = harness.buildRepairPacket(genEval, repairHistory);
 
             if (repairPacket) {
@@ -894,7 +937,7 @@ export class RalphLoop {
                   const repairCode = repairValidation.cleanedCode;
 
                   // Evaluate repair candidate using the same path
-                  let repairEval: { score: number; issues?: string[]; dimensions?: Record<string, number>; repairAdvice?: ConcreteRepairAdvice };
+                  let repairEval: RalphQualityEvaluation;
                   let repairLirContext: LIREvaluationContext | undefined;
 
                   if (normalizedOptions.lirEnabled) {
@@ -924,11 +967,17 @@ export class RalphLoop {
 
                     if (renderEvidence.infraUnavailable) {
                       const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-                      repairEval = await scoringEngine.scoreReliable({
+                      const quickRepairEval = await scoringEngine.scoreReliable({
                         output: repairCode,
                         criteria: normalizedOptions.evaluationCriteria,
                         lirContext: repairLirContext,
                       });
+                      repairEval = qualityEvaluationFromGenerationEvaluation(
+                        buildGenerationEvaluationFromReliableScore(quickRepairEval, {
+                          failureClass: 'infra',
+                          reason: 'Browser render infrastructure is unavailable during repair evaluation.',
+                        }),
+                      );
                     } else {
                       const { scoreRenderedEvidence } = await import('../core/ScoringEngine.js');
                       const genEvalRepair = await scoreRenderedEvidence(
@@ -947,18 +996,19 @@ export class RalphLoop {
                         }
                         Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence repair scoring, falling back to legacy scoring');
                         const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-                        repairEval = await scoringEngine.scoreReliable({
+                        const quickRepairEval = await scoringEngine.scoreReliable({
                           output: repairCode,
                           criteria: normalizedOptions.evaluationCriteria,
                           lirContext: repairLirContext,
                         });
+                        repairEval = qualityEvaluationFromGenerationEvaluation(
+                          buildGenerationEvaluationFromReliableScore(quickRepairEval, {
+                            failureClass: 'scorer',
+                            reason: genEvalRepair.reasoning ?? 'Evaluator LLM is unavailable during repair evaluation.',
+                          }),
+                        );
                       } else {
-                        repairEval = {
-                          score: genEvalRepair.score,
-                          issues: genEvalRepair.repairAdvice ? [genEvalRepair.repairAdvice.issue] : [],
-                          dimensions: {},
-                          repairAdvice: genEvalRepair.repairAdvice,
-                        };
+                        repairEval = qualityEvaluationFromGenerationEvaluation(genEvalRepair);
                       }
                     }
                   } else {
@@ -994,14 +1044,7 @@ export class RalphLoop {
         evaluationDurationMs = Math.max(0, Date.now() - evaluationPhaseStartedAt);
 
         // Record evaluation for repeated-failure detection
-        repairHistory.push({
-          score: evaluation.score,
-          confidence: 1,
-          failureClass: 'none',
-          repairAdvice: evaluation.repairAdvice ?? (evaluation.issues && evaluation.issues.length > 0
-            ? { issue: evaluation.issues[0], fix: 'Address the reported issue.', constraint: 'Complete artifact.' }
-            : undefined),
-        });
+        repairHistory.push(generationEvaluationFromQualityEvaluation(evaluation));
 
         const shouldRunHumanPerception = normalizedOptions.useHumanPerceptionGuardrails;
         let aestheticScore = evaluation.dimensions?.aesthetic ?? evaluation.dimensions?.creative ?? 0;
@@ -1162,7 +1205,12 @@ export class RalphLoop {
           prompt: loadedPrompt,
           usedPrompt,
           code: currentCode,
-          evaluation: { score: evaluation.score, issues: evaluation.issues ?? [] },
+          evaluation: {
+            score: evaluation.score,
+            issues: evaluation.issues ?? [],
+            confidence: evaluation.confidence ?? 1,
+            failureClass: evaluation.failureClass ?? 'none',
+          },
           timestamp: new Date().toISOString(),
           maxIterations: normalizedOptions.maxIterations,
           selectedCandidateIndex: candidates.length > 0 ? (candidates[winnerIndex]?.index ?? winnerIndex) : 0,
@@ -1192,6 +1240,8 @@ export class RalphLoop {
           iteration,
           prompt,
           score: evaluation.score,
+          evaluationConfidence: evaluation.confidence ?? 1,
+          evaluationFailureClass: evaluation.failureClass ?? 'none',
           isComplete,
           maxIterations: normalizedOptions.maxIterations,
           minQualityScore: normalizedOptions.minQualityScore,

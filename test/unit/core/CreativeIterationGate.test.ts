@@ -43,6 +43,20 @@ describe('CreativeIterationGate', () => {
     expect(decision.reason).toContain('excellent quality achieved');
   });
 
+  it('blocks degraded evaluator evidence even when the fallback score is excellent', () => {
+    const decision = decide({
+      iteration: 1,
+      score: 0.99,
+      isComplete: true,
+      evaluationConfidence: 0,
+      evaluationFailureClass: 'scorer',
+    });
+
+    expect(decision).toMatchObject({ shouldBreak: true, completed: false });
+    expect(decision.reason).toContain('evaluation evidence degraded');
+    expect(decision.reason).toContain('scorer');
+  });
+
   it('continues instead of accepting excellent but incomplete code', () => {
     const decision = decide({ iteration: 1, score: 0.93, isComplete: false });
 

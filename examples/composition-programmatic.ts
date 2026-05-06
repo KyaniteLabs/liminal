@@ -5,9 +5,11 @@
  * Creates layers with pre-defined code.
  */
 
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 import {
   CompositionEngine,
-  LayerManager,
+  type LayerManager,
   createLayer,
   createComposition,
   p5Adapter,
@@ -117,7 +119,7 @@ function main() {
   console.log(`Composition has ${engine.getLayers().length} layers\n`);
 
   // Demonstrate LayerManager operations
-  const layerManager = engine.getLayerManager();
+  const layerManager: LayerManager = engine.getLayerManager();
   
   console.log('Layer operations demo:');
   
@@ -142,21 +144,20 @@ function main() {
   const html = engine.generateHTML();
   
   // Write to file
-  const fs = require('fs');
-  const outputDir = './output';
+  const outputDir = process.env.LIMINAL_EXAMPLE_OUTPUT_DIR ?? './output';
   
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+  if (!existsSync(outputDir)) {
+    mkdirSync(outputDir, { recursive: true });
   }
   
-  const htmlPath = `${outputDir}/composition-programmatic.html`;
-  fs.writeFileSync(htmlPath, html);
+  const htmlPath = path.join(outputDir, 'composition-programmatic.html');
+  writeFileSync(htmlPath, html);
   console.log(`✓ HTML exported to ${htmlPath}`);
 
   // Export project
   const project = engine.exportProject('Programmatic Demo');
-  const projectPath = `${outputDir}/composition-programmatic.json`;
-  fs.writeFileSync(projectPath, JSON.stringify(project, null, 2));
+  const projectPath = path.join(outputDir, 'composition-programmatic.json');
+  writeFileSync(projectPath, JSON.stringify(project, null, 2));
   console.log(`✓ Project saved to ${projectPath}`);
 
   // Demonstrate createComposition
@@ -167,6 +168,7 @@ function main() {
   console.log(`\n✓ Created empty composition: ${composition.id}`);
   console.log(`  - Size: ${composition.globalSettings.width}x${composition.globalSettings.height}`);
   console.log(`  - Layers: ${composition.layers.length}`);
+  console.log(`  - Export version: ${exportProject(composition).version}`);
 
   console.log('\n🎉 Done! Open the HTML file in a browser to see the composition.');
   console.log('   Note: Click anywhere to start audio (browser autoplay policy)');

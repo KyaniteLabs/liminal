@@ -106,3 +106,14 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after Anthropic endpoint/provenance remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
 | 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after Anthropic endpoint/provenance remediation. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | Anthropic endpoint/provenance remediation diff has no whitespace errors. | Exit 0. |
+| 2026-05-06 remediation | `pnpm check:examples` | fail, red-first | New example gate caught the composition examples being outside the verified public API contract. | First red failed on unused imports in `examples/composition-programmatic.ts`; after example cleanup, second red failed on ESM runtime `require()` in `CompositionEngine.exportProject()`; third red failed because the requested project name was discarded. |
+| 2026-05-06 remediation | `pnpm check:examples` | pass | Composition examples compile against the public root API and the no-provider programmatic example runs to real HTML/JSON output in a temp directory. | Smoke checked `composition-programmatic.html` contains `Liminal Composition` and `composition-programmatic.json` contains `Programmatic Demo`. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/composition/CompositionEngine.test.ts test/unit/composition/ProjectSerializer.test.ts test/unit/composition/ImportExport.test.ts --coverage=false` | pass | Composition export/import regression suites pass after replacing deprecated runtime `require()` with ESM-safe imports. | 3 files passed; 130 tests passed. |
+| 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan includes the new `check:examples` local script target. | Receipt: `.omx/proof/package-script-targets.json`. |
+| 2026-05-06 remediation | `pnpm typecheck` | pass | Root TypeScript gate passes after composition example verification changes. | Exit 0. |
+| 2026-05-06 remediation | `pnpm build` | pass | Root package builds after replacing composition runtime `require()` and adding example checks. | Exit 0. |
+| 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after FQA-021 remediation. | Exit 0. |
+| 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the FQA-021 regression surface. | 664 files scanned; all checks passed. |
+| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-021 remediation. | Exit 0. |
+| 2026-05-06 remediation | `git diff --check` | pass | FQA-021 remediation diff has no whitespace errors after final verification-log append. | Exit 0. |
+| 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-021 remediation. | Vite built 35 modules. |

@@ -38,6 +38,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src/ --cache --cache-location .eslintcache",
+    "check:examples": "node scripts/ci/smoke-composition-examples.mjs",
     "test:quality": "node scripts/testing/test-quality-check.mjs",
     "typecheck": "tsc --noEmit",
     "docs": "typedoc --out docs src/",

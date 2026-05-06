@@ -115,6 +115,7 @@ Release risk: medium-high. These items reduce integration debt and future bug ge
    - Findings: FQA-021
    - Action: export documented composition APIs or update imports; replace CJS `require` in ESM examples; compile examples.
    - Proof: example compile/smoke script passes.
+   - Remediation status: verified. `pnpm check:examples` now compiles the composition examples against the public root API and smokes `examples/composition-programmatic.ts` into a temp output directory; examples use ESM filesystem imports and `CompositionEngine.exportProject()` no longer relies on runtime `require()`.
 
 3. Correct Studio executor provenance.
    - Findings: FQA-022

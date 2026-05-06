@@ -11,6 +11,7 @@ import { LayerAdapter, Import } from './adapters/index.js';
 import { LayerMaskManager } from './LayerMask.js';
 import { getCSSBlendMode } from './utils/blendModes.js';
 import { Logger } from '../utils/Logger.js';
+import { ProjectSerializer } from './ProjectSerializer.js';
 
 export interface CompositionEngineOptions {
   /** Container element for rendering */
@@ -286,12 +287,13 @@ export class CompositionEngine {
    * Export composition to Liminal project format.
    * @deprecated Use ProjectSerializer.exportProject() instead
    */
-  exportProject(_name: string): LiminalProject {
-    // Use dynamic import to avoid circular dependency issues
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { ProjectSerializer } = require('./ProjectSerializer.js');
+  exportProject(name: string): LiminalProject {
     const serializer = new ProjectSerializer();
-    return serializer.exportProject(this, { includeAssets: true });
+    const project = serializer.exportProject(this, { includeAssets: true });
+    if (name.trim().length > 0) {
+      project.composition.metadata.name = name;
+    }
+    return project;
   }
 
   /**
@@ -299,9 +301,6 @@ export class CompositionEngine {
    * @deprecated Use ProjectSerializer.importProject() instead
    */
   async importProject(project: LiminalProject): Promise<void> {
-    // Use dynamic import to avoid circular dependency issues
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { ProjectSerializer } = require('./ProjectSerializer.js');
     const serializer = new ProjectSerializer();
     await serializer.importProject(project, this);
   }

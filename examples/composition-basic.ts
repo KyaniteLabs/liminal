@@ -7,6 +7,8 @@
  * 3. Exporting standalone HTML
  */
 
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 import {
   CompositionEngine,
   p5Adapter,
@@ -73,21 +75,21 @@ async function main() {
   const html = engine.generateHTML();
   
   // Write to file
-  const fs = await import('fs');
-  const outputPath = './output/composition-example.html';
+  const outputDir = process.env.LIMINAL_EXAMPLE_OUTPUT_DIR ?? './output';
+  const outputPath = path.join(outputDir, 'composition-example.html');
   
   // Ensure output directory exists
-  if (!fs.existsSync('./output')) {
-    fs.mkdirSync('./output', { recursive: true });
+  if (!existsSync(outputDir)) {
+    mkdirSync(outputDir, { recursive: true });
   }
   
-  fs.writeFileSync(outputPath, html);
+  writeFileSync(outputPath, html);
   console.log(`\n✓ Exported to ${outputPath}`);
 
   // Export project format
   const project = engine.exportProject('Rainbow Drone Composition');
-  const projectPath = './output/composition-example.json';
-  fs.writeFileSync(projectPath, JSON.stringify(project, null, 2));
+  const projectPath = path.join(outputDir, 'composition-example.json');
+  writeFileSync(projectPath, JSON.stringify(project, null, 2));
   console.log(`✓ Project saved to ${projectPath}`);
 
   console.log('\n🎉 Done! Open the HTML file in a browser to see the composition.');

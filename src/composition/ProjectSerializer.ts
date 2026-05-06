@@ -9,7 +9,7 @@
  * - Import from URL
  */
 
-import { CompositionEngine } from './CompositionEngine.js';
+import type { CompositionEngine } from './CompositionEngine.js';
 import { Logger } from '../utils/Logger.js';
 import {
   LiminalProject,

@@ -18,5 +18,8 @@ describe('user-surface observability proof script', () => {
     expect(source).toContain('artifact.found');
     expect(source).toContain('preview.verified');
     expect(source).toContain("clientIntent: 'creative'");
+    expect(source).toContain('startProofModel');
+    expect(source).toContain('proofModelCalled');
+    expect(source).not.toContain('bridge.publishEvent(session.sessionId');
   });
 });

@@ -23,6 +23,85 @@ describe('TuiEventStream', () => {
     expect(stream.getEventsSince('s1', 2).map((stored) => stored.id)).toEqual([3]);
   });
 
+  it('retains replay-critical lifecycle, provenance, terminal status, and errors across long content streams', () => {
+    stream = new TuiEventStream({ maxStoredEventsPerSession: 5 });
+
+    stream.emit('s1', {
+      type: 'run.lifecycle',
+      sessionId: 's1',
+      run: {
+        runId: 'run-1',
+        kind: 'creative',
+        phase: 'generating',
+        label: 'Generate p5 sketch',
+        startedAt: '2026-05-06T00:00:00.000Z',
+        updatedAt: '2026-05-06T00:00:00.000Z',
+        executor: 'ralph-loop',
+        provider: 'test-provider',
+        model: 'test-model',
+      },
+    });
+    stream.emit('s1', {
+      type: 'generation.route.selected',
+      sessionId: 's1',
+      domain: 'p5',
+      domains: ['p5'],
+      requestedDomain: 'p5',
+      selectedDomain: 'p5',
+      promptDomainLocked: true,
+      source: 'prompt',
+    });
+    stream.emit('s1', {
+      type: 'response.metadata',
+      sessionId: 's1',
+      model: 'test-model',
+      duration: 120,
+      tokenCount: 42,
+    });
+
+    for (let i = 0; i < 20; i++) {
+      stream.emit('s1', { type: 'response.delta', sessionId: 's1', delta: `chunk-${i}` });
+    }
+
+    stream.emit('s1', {
+      type: 'error',
+      sessionId: 's1',
+      message: 'provider timed out',
+      provider: 'test-provider',
+      model: 'test-model',
+      endpoint: 'https://example.invalid/v1/chat/completions',
+      errorSource: 'provider',
+    });
+    stream.emit('s1', {
+      type: 'run.lifecycle',
+      sessionId: 's1',
+      run: {
+        runId: 'run-1',
+        kind: 'creative',
+        phase: 'failed',
+        label: 'Generate p5 sketch',
+        startedAt: '2026-05-06T00:00:00.000Z',
+        updatedAt: '2026-05-06T00:00:05.000Z',
+        failedAt: '2026-05-06T00:00:05.000Z',
+        outcome: 'failed',
+        executor: 'ralph-loop',
+        provider: 'test-provider',
+        model: 'test-model',
+        error: 'provider timed out',
+      },
+    });
+
+    const replay = stream.replayAfter('s1', 0);
+    const replayedTypes = replay.map((stored) => stored.event.type);
+
+    expect(replayedTypes).toContain('generation.route.selected');
+    expect(replayedTypes).toContain('response.metadata');
+    expect(replayedTypes).toContain('error');
+    expect(replayedTypes.filter((type) => type === 'run.lifecycle')).toHaveLength(2);
+    expect(replayedTypes.filter((type) => type === 'response.delta')).toHaveLength(3);
+    expect(replay.map((stored) => stored.id)).toEqual([...replay].map((stored) => stored.id).sort((a, b) => a - b));
+  });
+
   it('emit stores event and notifies listener', () => {
     const listener = vi.fn();
     stream.subscribe('s1', listener);

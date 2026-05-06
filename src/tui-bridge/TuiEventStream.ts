@@ -14,6 +14,37 @@ export interface TuiRunEventReplay {
   subscribeStored(sessionId: string, listener: (stored: StoredEvent) => void): () => void;
 }
 
+// Preserve enough state for reconnecting Studio clients to rebuild a run after
+// high-frequency content chunks have rolled out of the replay tail.
+const REPLAY_ANCHOR_EVENT_TYPES: ReadonlySet<TuiBridgeEvent['type']> = new Set([
+  'run.lifecycle',
+  'response.completed',
+  'response.committed',
+  'response.metadata',
+  'status.updated',
+  'trust.updated',
+  'preview.completed',
+  'preview.verified',
+  'preview.missing',
+  'generation.domain_truth',
+  'generation.route.selected',
+  'generation.domain_plan',
+  'generation.attempt.failed',
+  'generation.complete',
+  'generation.cancelled',
+  'generation.cognitive_receipt',
+  'verification.completed',
+  'session.turn',
+  'task.completed',
+  'video:render:complete',
+  'video:render:error',
+  'error',
+]);
+
+function isReplayAnchorEvent(event: TuiBridgeEvent): boolean {
+  return REPLAY_ANCHOR_EVENT_TYPES.has(event.type);
+}
+
 export class TuiEventStream {
   private events = new Map<string, StoredEvent[]>();
   private nextIds = new Map<string, number>();
@@ -31,7 +62,7 @@ export class TuiEventStream {
     this.nextIds.set(sessionId, nextId);
     const stored = { id: nextId, event };
     current.push(stored);
-    this.events.set(sessionId, current.slice(-this.maxStoredEventsPerSession));
+    this.events.set(sessionId, this.trimStoredEvents(current));
     for (const listener of this.listeners.get(sessionId) ?? []) {
       listener(event);
     }
@@ -97,5 +128,14 @@ export class TuiEventStream {
 
   subscribeWithId(sessionId: string, listener: (stored: StoredEvent) => void): () => void {
     return this.subscribeStored(sessionId, listener);
+  }
+
+  private trimStoredEvents(events: StoredEvent[]): StoredEvent[] {
+    if (events.length <= this.maxStoredEventsPerSession) {
+      return events;
+    }
+
+    const tailStart = Math.max(0, events.length - this.maxStoredEventsPerSession);
+    return events.filter((stored, index) => index >= tailStart || isReplayAnchorEvent(stored.event));
   }
 }

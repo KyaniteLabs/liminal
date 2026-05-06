@@ -148,6 +148,7 @@ Release risk: medium. These items prevent recurrence.
    - Findings: FQA-025, FQA-026
    - Action: prove real runtime-originated events and preserve lifecycle/provenance in replay.
    - Proof: real generation observability proof and long-stream replay test.
+   - Remediation status: FQA-026 verified. `TuiEventStream` now preserves replay anchors for run lifecycle, route/provenance, terminal status, and error events across long content streams while keeping non-critical events tail-bounded. FQA-025 remains open until the observability proof drives real runtime-originated generation events.
 
 3. Resolve non-material copy drift.
    - Findings: FQA-030, FQA-031, FQA-032

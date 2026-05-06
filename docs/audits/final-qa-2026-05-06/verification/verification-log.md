@@ -146,3 +146,15 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-028 code diff has no whitespace errors before doc append. | Exit 0. |
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-028 remediation. | Vite built 35 modules. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-028 final diff, including audit-doc updates, has no whitespace errors. | Exit 0. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/tui-bridge/TuiEventStream.test.ts --coverage=false --testNamePattern "replay-critical"` | fail, red-first | New long-stream replay regression caught lifecycle/provenance context being evicted behind content chunks. | Red failed because replay only contained the tail `response.delta` events plus terminal events and omitted `generation.route.selected` / `response.metadata`. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/tui-bridge/TuiEventStream.test.ts --coverage=false --testNamePattern "replay-critical"` | pass | Replay anchors now preserve run lifecycle, route/provenance, terminal status, and errors across long content streams. | 1 file passed; 1 test passed; 12 skipped by pattern. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/tui-bridge/TuiEventStream.test.ts --coverage=false` | pass | Full TUI event stream suite passes with anchor retention while generic non-critical replay remains tail-bounded. | 1 file passed; 13 tests passed. |
+| 2026-05-06 remediation | `pnpm vitest run test/unit/tui-bridge/TuiEventStream.test.ts test/tui-bridge/tui-bridge-operator-events.test.ts test/tui-bridge/tui-bridge-service.test.ts --coverage=false` | pass | Adjacent stream, HTTP SSE replay, and bridge service event suites pass with the new replay retention policy. | 3 files passed; 46 tests passed. |
+| 2026-05-06 remediation | `pnpm typecheck` | pass | Root TypeScript gate passes after FQA-026 replay retention. | Exit 0. |
+| 2026-05-06 remediation | `pnpm build` | pass | Root package builds after FQA-026 replay retention. | Exit 0. |
+| 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after FQA-026 replay retention. | Exit 0. |
+| 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the FQA-026 regression test. | 664 test files scanned; all checks passed. |
+| 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after FQA-026 replay retention. | Receipt: `.omx/proof/package-script-targets.json`. |
+| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-026 replay retention. | Exit 0. |
+| 2026-05-06 remediation | `git diff --check` | pass | FQA-026 final diff, including audit-doc updates, has no whitespace errors. | Exit 0. |
+| 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-026 replay retention. | Vite built 35 modules. |

@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "steveyegge",
+    "displayName": "Steve Yegge",
+    "profilePath": "../../steveyegge.md"
+  },
+  "status": "code_and_discourse",
+  "primaryUse": "Systems thinking, engineering culture, agent orchestration, codebase scale, and contrarian synthesis.",
+  "reusePolicy": {
+    "summary": "Use public essays and licensed repositories as source anchors.",
+    "codeReuse": "MIT-licensed repositories can be reused according to their licenses. No-license public repos are inspect-only.",
+    "transcripts": "Use public captions or transcripts for summary with attribution only."
+  },
+  "sources": [
+    {
+      "id": "steveyegge-blogspot",
+      "title": "Stevey's Blog Rants",
+      "url": "https://steve-yegge.blogspot.com/",
+      "kind": "blog",
+      "access": "public",
+      "license": "site/copyright; reference-only unless stated otherwise",
+      "confidence": "high",
+      "notes": "Public long-form engineering essays."
+    },
+    {
+      "id": "github-steveyegge",
+      "title": "Steve Yegge GitHub profile",
+      "url": "https://github.com/steveyegge",
+      "kind": "github_profile",
+      "access": "public",
+      "license": "per-repository",
+      "confidence": "high",
+      "notes": "Public code profile; inspect repository license before reuse."
+    },
+    {
+      "id": "repo-gastownhall-beads",
+      "title": "gastownhall/beads",
+      "url": "https://github.com/gastownhall/beads",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "high",
+      "notes": "Licensed public agent-memory system repository."
+    },
+    {
+      "id": "repo-gastownhall-gastown",
+      "title": "gastownhall/gastown",
+      "url": "https://github.com/gastownhall/gastown",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "high",
+      "notes": "Licensed public multi-agent workspace manager repository."
+    },
+    {
+      "id": "medium-steve-yegge",
+      "title": "Steve Yegge on Medium",
+      "url": "https://steve-yegge.medium.com/",
+      "kind": "blog",
+      "access": "public_and_member",
+      "license": "platform/copyright; reference-only",
+      "confidence": "medium",
+      "notes": "Public/member writing surface; use only accessible public material."
+    }
+  ],
+  "gaps": [
+    "Some personal GitHub repositories have no detected license; keep them inspect-only unless licenses are confirmed."
+  ]
+}

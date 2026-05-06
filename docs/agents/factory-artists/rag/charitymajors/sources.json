@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "charitymajors",
+    "displayName": "Charity Majors",
+    "profilePath": "../../charitymajors.md"
+  },
+  "status": "code_and_discourse",
+  "primaryUse": "Observability, production ownership, sociotechnical systems, deploy discipline, and debugging culture.",
+  "reusePolicy": {
+    "summary": "Use public writing and talks as reference anchors; code reuse must be license-checked per repository.",
+    "codeReuse": "Apache-2.0 personal repositories can be reused according to their licenses.",
+    "transcripts": "Use public captions or transcripts for summary with attribution only."
+  },
+  "sources": [
+    {
+      "id": "blog-charity-wtf",
+      "title": "charity.wtf",
+      "url": "https://charity.wtf/",
+      "kind": "blog",
+      "access": "public",
+      "license": "site/copyright; reference-only unless stated otherwise",
+      "confidence": "high",
+      "notes": "Primary personal writing surface for observability, teams, and engineering culture."
+    },
+    {
+      "id": "honeycomb-author-charity",
+      "title": "Honeycomb author page for Charity Majors",
+      "url": "https://www.honeycomb.io/author/charity",
+      "kind": "author_archive",
+      "access": "public",
+      "license": "site/copyright; reference-only",
+      "confidence": "high",
+      "notes": "Company blog archive for observability and production practice."
+    },
+    {
+      "id": "github-charity",
+      "title": "Charity Majors GitHub profile",
+      "url": "https://github.com/charity",
+      "kind": "github_profile",
+      "access": "public",
+      "license": "per-repository",
+      "confidence": "high",
+      "notes": "Entry point for personal public repositories."
+    },
+    {
+      "id": "repo-charity-thrift",
+      "title": "charity/thrift",
+      "url": "https://github.com/charity/thrift",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "Apache-2.0",
+      "confidence": "high",
+      "notes": "Licensed public code example; verify relevance before retrieval."
+    }
+  ],
+  "gaps": [
+    "Honeycomb organization repositories may be useful context but should not be attributed as her personal code without direct evidence.",
+    "Public talks should be added case by case with exact source URLs."
+  ]
+}

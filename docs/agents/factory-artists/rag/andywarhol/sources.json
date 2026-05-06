@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "andywarhol",
+    "displayName": "Andy Warhol",
+    "profilePath": "../../andywarhol.md"
+  },
+  "status": "archive_discourse",
+  "primaryUse": "Pop-art framing, fame loops, taste, repetition, surface, and cultural distribution.",
+  "reusePolicy": {
+    "summary": "Use public archive and museum sources as context anchors only.",
+    "codeReuse": "No code surface applies.",
+    "transcripts": "Archive interviews and media are reference-only; do not vendor full texts or images."
+  },
+  "sources": [
+    {
+      "id": "warhol-museum",
+      "title": "The Andy Warhol Museum",
+      "url": "https://www.warhol.org/",
+      "kind": "museum_archive",
+      "access": "public",
+      "license": "site/copyright; reference-only",
+      "confidence": "high",
+      "notes": "Primary public institution for biography, works, and archive orientation."
+    },
+    {
+      "id": "warhol-interview-magazine-search",
+      "title": "Interview Magazine public Warhol archive search",
+      "url": "https://www.interviewmagazine.com/?s=Andy%20Warhol",
+      "kind": "archive_search",
+      "access": "public",
+      "license": "site/copyright; reference-only",
+      "confidence": "medium",
+      "notes": "Useful search anchor for public interview-related material."
+    },
+    {
+      "id": "warhol-foundation",
+      "title": "The Andy Warhol Foundation for the Visual Arts",
+      "url": "https://warholfoundation.org/",
+      "kind": "foundation_archive",
+      "access": "public",
+      "license": "site/copyright; reference-only",
+      "confidence": "high",
+      "notes": "Use for institutional context, licensing awareness, and source boundaries."
+    }
+  ],
+  "gaps": [
+    "No official blog or code surface exists.",
+    "Image and interview rights require extra care before any derived asset use."
+  ]
+}

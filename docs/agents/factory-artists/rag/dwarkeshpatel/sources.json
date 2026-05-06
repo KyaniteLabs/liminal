@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "dwarkeshpatel",
+    "displayName": "Dwarkesh Patel",
+    "profilePath": "../../dwarkeshpatel.md"
+  },
+  "status": "code_and_discourse",
+  "primaryUse": "Long-form interview synthesis, AI forecasting, intellectual taste, and high-context research extraction.",
+  "reusePolicy": {
+    "summary": "Use public transcripts, essays, and licensed repositories as source anchors.",
+    "codeReuse": "MIT-licensed repositories can be reused according to their licenses.",
+    "transcripts": "Public transcripts are reference-only unless the page grants reuse rights; do not vendor full transcripts."
+  },
+  "sources": [
+    {
+      "id": "dwarkesh-site",
+      "title": "Dwarkesh Patel official site",
+      "url": "https://www.dwarkesh.com/",
+      "kind": "official_site",
+      "access": "public",
+      "license": "site/copyright; reference-only unless stated otherwise",
+      "confidence": "high",
+      "notes": "Primary archive for essays, podcasts, and transcript-style material."
+    },
+    {
+      "id": "youtube-dwarkesh",
+      "title": "Dwarkesh Patel YouTube channel",
+      "url": "https://www.youtube.com/@DwarkeshPatel",
+      "kind": "video_channel",
+      "access": "public",
+      "license": "platform/copyright; captions are reference-only when available",
+      "confidence": "high",
+      "notes": "Public video interviews and AI discussion corpus."
+    },
+    {
+      "id": "github-dwarkeshsp",
+      "title": "Dwarkesh Patel GitHub profile",
+      "url": "https://github.com/dwarkeshsp",
+      "kind": "github_profile",
+      "access": "public",
+      "license": "per-repository",
+      "confidence": "high",
+      "notes": "Public code surface."
+    },
+    {
+      "id": "repo-ai-coworker",
+      "title": "dwarkeshsp/ai_coworker",
+      "url": "https://github.com/dwarkeshsp/ai_coworker",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "high",
+      "notes": "Licensed public AI workflow code example."
+    }
+  ],
+  "gaps": [
+    "Add exact episode URLs only when a future retrieval task needs a specific interview."
+  ]
+}

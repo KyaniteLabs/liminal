@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "mattpocock",
+    "displayName": "Matt Pocock",
+    "profilePath": "../../mattpocock.md"
+  },
+  "status": "code_and_discourse",
+  "primaryUse": "TypeScript rigor, explanation-first pedagogy, exercise design, and type-system taste.",
+  "reusePolicy": {
+    "summary": "Use public articles and licensed open-source repos as source anchors. Paid course material is out of scope.",
+    "codeReuse": "MIT-licensed repositories can be reused according to their licenses.",
+    "transcripts": "Use public captions or transcripts for summary with attribution only."
+  },
+  "sources": [
+    {
+      "id": "total-typescript",
+      "title": "Total TypeScript",
+      "url": "https://www.totaltypescript.com/",
+      "kind": "official_site",
+      "access": "public_and_paid",
+      "license": "site/copyright; public pages reference-only; paid course material out of scope",
+      "confidence": "high",
+      "notes": "Primary public teaching surface; use public articles and free material only."
+    },
+    {
+      "id": "youtube-matt-pocock",
+      "title": "Matt Pocock YouTube channel",
+      "url": "https://www.youtube.com/@mattpocockuk",
+      "kind": "video_channel",
+      "access": "public",
+      "license": "platform/copyright; captions are reference-only when available",
+      "confidence": "high",
+      "notes": "Public TypeScript teaching videos."
+    },
+    {
+      "id": "github-mattpocock",
+      "title": "Matt Pocock GitHub profile",
+      "url": "https://github.com/mattpocock",
+      "kind": "github_profile",
+      "access": "public",
+      "license": "per-repository",
+      "confidence": "high",
+      "notes": "Primary public code surface."
+    },
+    {
+      "id": "repo-ts-reset",
+      "title": "mattpocock/ts-reset",
+      "url": "https://github.com/mattpocock/ts-reset",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "high",
+      "notes": "Licensed public TypeScript utility repository."
+    },
+    {
+      "id": "repo-skills",
+      "title": "mattpocock/skills",
+      "url": "https://github.com/mattpocock/skills",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "medium",
+      "notes": "Public skills repository; re-check license before reuse."
+    }
+  ],
+  "gaps": [
+    "Paid Total TypeScript course transcripts and exercises are not copied or ingested."
+  ]
+}

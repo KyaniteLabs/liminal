@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "donreinertsen",
+    "displayName": "Don Reinertsen",
+    "profilePath": "../../donreinertsen.md"
+  },
+  "status": "theory_discourse",
+  "primaryUse": "Flow economics, queueing, WIP control, cost of delay, batch size, and product development tradeoffs.",
+  "reusePolicy": {
+    "summary": "Use official and public talk material as reference anchors only.",
+    "codeReuse": "No verified open-source code surface found.",
+    "transcripts": "Use public captions or transcripts for summary with attribution only; books and paid training are out of scope."
+  },
+  "sources": [
+    {
+      "id": "reinertsen-associates",
+      "title": "Reinertsen & Associates",
+      "url": "https://reinertsenassociates.com/",
+      "kind": "official_site",
+      "access": "public",
+      "license": "site/copyright; reference-only",
+      "confidence": "high",
+      "notes": "Official public anchor for product development consulting and training."
+    },
+    {
+      "id": "goto-reinertsen-embracing-variability",
+      "title": "GOTO Copenhagen 2012: Embracing Variability slides",
+      "url": "https://gotocon.com/dl/goto-cph-2012/slides/2012GOTO%20Reinertsen%20Keynote.pdf",
+      "kind": "slides",
+      "access": "public",
+      "license": "conference/site copyright; reference-only",
+      "confidence": "medium",
+      "notes": "Public slide source for flow and variability concepts."
+    },
+    {
+      "id": "youtube-search-reinertsen",
+      "title": "Public YouTube search for Don Reinertsen product development flow talks",
+      "url": "https://www.youtube.com/results?search_query=Don+Reinertsen+Product+Development+Flow",
+      "kind": "search_anchor",
+      "access": "public",
+      "license": "platform/copyright; captions are reference-only when available",
+      "confidence": "medium",
+      "notes": "Use to locate public talk videos with captions; add exact talk URLs before ingestion."
+    }
+  ],
+  "gaps": [
+    "No verified open-source code surface found.",
+    "Core books and paid training are not copied or summarized beyond citation-level context."
+  ]
+}

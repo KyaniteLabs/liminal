@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "davidisler",
+    "displayName": "David Isler / IndyDevDan",
+    "profilePath": "../../davidisler.md"
+  },
+  "status": "code_and_discourse",
+  "primaryUse": "Agent demos, practical automation patterns, prompt/product iteration, and build-along AI workflows.",
+  "reusePolicy": {
+    "summary": "Use public code and videos as source anchors; separate licensed repos from no-license public examples.",
+    "codeReuse": "MIT-licensed repositories can be reused according to their licenses. No-license repositories are inspect-only.",
+    "transcripts": "Use public captions or transcripts for summary with attribution only."
+  },
+  "sources": [
+    {
+      "id": "github-disler",
+      "title": "David Isler GitHub profile",
+      "url": "https://github.com/disler",
+      "kind": "github_profile",
+      "access": "public",
+      "license": "per-repository",
+      "confidence": "high",
+      "notes": "Primary public code surface for agent and AI workflow demos."
+    },
+    {
+      "id": "repo-the-library",
+      "title": "disler/the-library",
+      "url": "https://github.com/disler/the-library",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "high",
+      "notes": "Licensed public code example for retrieval."
+    },
+    {
+      "id": "repo-multi-agent-postgres-data-analytics",
+      "title": "disler/multi-agent-postgres-data-analytics",
+      "url": "https://github.com/disler/multi-agent-postgres-data-analytics",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "medium",
+      "notes": "Public agent workflow example; re-check license before reuse."
+    },
+    {
+      "id": "youtube-indydevdan",
+      "title": "IndyDevDan YouTube channel",
+      "url": "https://www.youtube.com/@indydevdan",
+      "kind": "video_channel",
+      "access": "public",
+      "license": "platform/copyright; captions are reference-only when available",
+      "confidence": "high",
+      "notes": "Build-along video surface for agents, prompt engineering, and demos."
+    }
+  ],
+  "gaps": [
+    "Some popular public repositories in this surface may have no detected license; keep them inspect-only unless a license is added."
+  ]
+}

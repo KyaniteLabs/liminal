@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "generatedAt": "2026-05-06",
+  "description": "Public-source RAG seed index for the imported Factory artist guidance.",
+  "boundary": "Docs-only source pointers. No transcripts, no vendored articles, no runtime wiring, no audit procedure.",
+  "reusePolicy": {
+    "discourse": "Reference and summarize with attribution; do not copy full posts, captions, transcripts, podcasts, books, or course content.",
+    "code": "Reuse only repositories with a visible compatible license. Treat no-license public repositories as inspect-only.",
+    "ingestion": "A future ingestion job must fetch sources fresh, respect site terms, and store citations/metadata with any derived notes."
+  },
+  "people": [
+    {
+      "slug": "alexhormozi",
+      "displayName": "Alex Hormozi",
+      "profilePath": "../alexhormozi.md",
+      "ragPath": "alexhormozi/",
+      "status": "discourse_only",
+      "primaryUse": "Offer design, funnel pressure-testing, growth clarity, and blunt commercial prioritization.",
+      "sourceConfidence": "medium"
+    },
+    {
+      "slug": "andrejkarpathy",
+      "displayName": "Andrej Karpathy",
+      "profilePath": "../andrejkarpathy.md",
+      "ragPath": "andrejkarpathy/",
+      "status": "code_and_discourse",
+      "primaryUse": "AI engineering taste, minimal didactic code, model intuition, and clear technical explanations.",
+      "sourceConfidence": "high"
+    },
+    {
+      "slug": "andywarhol",
+      "displayName": "Andy Warhol",
+      "profilePath": "../andywarhol.md",
+      "ragPath": "andywarhol/",
+      "status": "archive_discourse",
+      "primaryUse": "Pop-art framing, fame loops, taste, repetition, surface, and cultural distribution.",
+      "sourceConfidence": "medium"
+    },
+    {
+      "slug": "charitymajors",
+      "displayName": "Charity Majors",
+      "profilePath": "../charitymajors.md",
+      "ragPath": "charitymajors/",
+      "status": "code_and_discourse",
+      "primaryUse": "Observability, production ownership, sociotechnical systems, deploy discipline, and debugging culture.",
+      "sourceConfidence": "high"
+    },
+    {
+      "slug": "davidisler",
+      "displayName": "David Isler / IndyDevDan",
+      "profilePath": "../davidisler.md",
+      "ragPath": "davidisler/",
+      "status": "code_and_discourse",
+      "primaryUse": "Agent demos, practical automation patterns, prompt/product iteration, and build-along AI workflows.",
+      "sourceConfidence": "high"
+    },
+    {
+      "slug": "donreinertsen",
+      "displayName": "Don Reinertsen",
+      "profilePath": "../donreinertsen.md",
+      "ragPath": "donreinertsen/",
+      "status": "theory_discourse",
+      "primaryUse": "Flow economics, queueing, WIP control, cost of delay, batch size, and product development tradeoffs.",
+      "sourceConfidence": "medium"
+    },
+    {
+      "slug": "dwarkeshpatel",
+      "displayName": "Dwarkesh Patel",
+      "profilePath": "../dwarkeshpatel.md",
+      "ragPath": "dwarkeshpatel/",
+      "status": "code_and_discourse",
+      "primaryUse": "Long-form interview synthesis, AI forecasting, intellectual taste, and high-context research extraction.",
+      "sourceConfidence": "high"
+    },
+    {
+      "slug": "lizthedeveloper",
+      "displayName": "Liz the Developer / Liz Howard",
+      "profilePath": "../lizthedeveloper.md",
+      "ragPath": "lizthedeveloper/",
+      "status": "code_and_discourse",
+      "primaryUse": "AI agents, developer education, practical open-source demos, and community-readable explanations.",
+      "sourceConfidence": "high"
+    },
+    {
+      "slug": "mattpocock",
+      "displayName": "Matt Pocock",
+      "profilePath": "../mattpocock.md",
+      "ragPath": "mattpocock/",
+      "status": "code_and_discourse",
+      "primaryUse": "TypeScript rigor, explanation-first pedagogy, exercise design, and type-system taste.",
+      "sourceConfidence": "high"
+    },
+    {
+      "slug": "natebjones",
+      "displayName": "Nate B. Jones",
+      "profilePath": "../natebjones.md",
+      "ragPath": "natebjones/",
+      "status": "product_discourse",
+      "primaryUse": "Product lens, AI strategy, executive communication, launch filtering, and market sensemaking.",
+      "sourceConfidence": "high"
+    },
+    {
+      "slug": "petersteinberger",
+      "displayName": "Peter Steinberger",
+      "profilePath": "../petersteinberger.md",
+      "ragPath": "petersteinberger/",
+      "status": "code_and_discourse",
+      "primaryUse": "Mac/iOS engineering, shipping taste, agent tooling, automation ergonomics, and pragmatic app craft.",
+      "sourceConfidence": "high"
+    },
+    {
+      "slug": "steveyegge",
+      "displayName": "Steve Yegge",
+      "profilePath": "../steveyegge.md",
+      "ragPath": "steveyegge/",
+      "status": "code_and_discourse",
+      "primaryUse": "Systems thinking, engineering culture, agent orchestration, codebase scale, and contrarian synthesis.",
+      "sourceConfidence": "high"
+    },
+    {
+      "slug": "theobrowne",
+      "displayName": "Theo Browne",
+      "profilePath": "../theobrowne.md",
+      "ragPath": "theobrowne/",
+      "status": "code_and_discourse",
+      "primaryUse": "Full-stack product engineering, React/TypeScript stack judgment, developer tooling, and startup pragmatism.",
+      "sourceConfidence": "high"
+    },
+    {
+      "slug": "yannlecun",
+      "displayName": "Yann LeCun",
+      "profilePath": "../yannlecun.md",
+      "ragPath": "yannlecun/",
+      "status": "code_and_research",
+      "primaryUse": "AI research judgment, self-supervised learning, world models, and long-horizon architecture critique.",
+      "sourceConfidence": "high"
+    }
+  ]
+}

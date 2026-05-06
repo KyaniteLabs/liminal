@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "yannlecun",
+    "displayName": "Yann LeCun",
+    "profilePath": "../../yannlecun.md"
+  },
+  "status": "code_and_research",
+  "primaryUse": "AI research judgment, self-supervised learning, world models, and long-horizon architecture critique.",
+  "reusePolicy": {
+    "summary": "Use public papers, lectures, official pages, and licensed repositories as source anchors.",
+    "codeReuse": "BSD/GPL repositories can be reused only according to each repository license.",
+    "transcripts": "Use public captions or transcripts for summary with attribution only."
+  },
+  "sources": [
+    {
+      "id": "lecun-official-site",
+      "title": "Yann LeCun official site",
+      "url": "http://yann.lecun.com/",
+      "kind": "official_site",
+      "access": "public",
+      "license": "site/copyright; papers and code have their own licenses",
+      "confidence": "high",
+      "notes": "Primary official archive for publications and background."
+    },
+    {
+      "id": "github-ylecun",
+      "title": "Yann LeCun GitHub profile",
+      "url": "https://github.com/ylecun",
+      "kind": "github_profile",
+      "access": "public",
+      "license": "per-repository",
+      "confidence": "high",
+      "notes": "Public code profile."
+    },
+    {
+      "id": "repo-deep-learning-course",
+      "title": "ylecun/deep-learning-course",
+      "url": "https://github.com/ylecun/deep-learning-course",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "BSD-3-Clause",
+      "confidence": "high",
+      "notes": "Licensed public course code and materials; respect repository license and third-party content notices."
+    },
+    {
+      "id": "meta-ai-yann-lecun-search",
+      "title": "Meta AI public search for Yann LeCun",
+      "url": "https://ai.meta.com/search/?q=Yann%20LeCun",
+      "kind": "search_anchor",
+      "access": "public",
+      "license": "site/copyright; reference-only",
+      "confidence": "medium",
+      "notes": "Use to locate current public Meta AI posts and research references."
+    }
+  ],
+  "gaps": [
+    "Paper copyright and code licenses vary by item; fetch exact source metadata before ingesting."
+  ]
+}

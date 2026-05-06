@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "natebjones",
+    "displayName": "Nate B. Jones",
+    "profilePath": "../../natebjones.md"
+  },
+  "status": "product_discourse",
+  "primaryUse": "Product lens, AI strategy, executive communication, launch filtering, and market sensemaking.",
+  "reusePolicy": {
+    "summary": "Use public newsletter, video, podcast, and personal site material as product-strategy anchors only.",
+    "codeReuse": "No useful verified open-source code surface found.",
+    "transcripts": "Use public captions, podcast transcripts, or Substack pages for summary with attribution only; do not vendor full transcripts or posts."
+  },
+  "sources": [
+    {
+      "id": "natebjones-site",
+      "title": "Nate Jones personal site",
+      "url": "https://natebjones.com/",
+      "kind": "official_site",
+      "access": "public",
+      "license": "site/copyright; reference-only unless stated otherwise",
+      "confidence": "high",
+      "notes": "Public hub for AI strategy work, writing, and listening links."
+    },
+    {
+      "id": "nate-substack",
+      "title": "Nate B. Jones Substack",
+      "url": "https://natesnewsletter.substack.com/",
+      "kind": "newsletter",
+      "access": "public_and_paid",
+      "license": "platform/site copyright; public pages reference-only; paid material out of scope",
+      "confidence": "high",
+      "notes": "Primary written source for AI strategy and product frameworks."
+    },
+    {
+      "id": "youtube-nate-b-jones",
+      "title": "AI News & Strategy Daily with Nate B Jones YouTube channel",
+      "url": "https://www.youtube.com/@NateBJones",
+      "kind": "video_channel",
+      "access": "public",
+      "license": "platform/copyright; captions are reference-only when available",
+      "confidence": "high",
+      "notes": "Daily public video corpus for AI product strategy."
+    },
+    {
+      "id": "apple-podcast-nate-b-jones",
+      "title": "AI News & Strategy Daily with Nate B. Jones on Apple Podcasts",
+      "url": "https://podcasts.apple.com/us/podcast/ai-news-strategy-daily-with-nate-b-jones/id1877109372",
+      "kind": "podcast_feed",
+      "access": "public",
+      "license": "platform/copyright; show notes and transcripts reference-only",
+      "confidence": "high",
+      "notes": "Podcast feed and episode descriptions useful for public topic indexing."
+    }
+  ],
+  "gaps": [
+    "No useful verified open-source code surface found.",
+    "Paid Substack material is out of scope unless the user supplies rights-cleared excerpts."
+  ]
+}

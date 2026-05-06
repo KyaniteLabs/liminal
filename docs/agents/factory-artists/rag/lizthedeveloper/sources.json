@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "lizthedeveloper",
+    "displayName": "Liz the Developer / Liz Howard",
+    "profilePath": "../../lizthedeveloper.md"
+  },
+  "status": "code_and_discourse",
+  "primaryUse": "AI agents, developer education, practical open-source demos, and community-readable explanations.",
+  "reusePolicy": {
+    "summary": "Use public code and public writing as source anchors.",
+    "codeReuse": "MIT/GPL repositories can be reused only according to each repository license.",
+    "transcripts": "Use public captions or transcripts for summary with attribution only."
+  },
+  "sources": [
+    {
+      "id": "lizthedev-site",
+      "title": "lizTheDeveloper site",
+      "url": "https://www.lizthe.dev/",
+      "kind": "official_site",
+      "access": "public",
+      "license": "site/copyright; reference-only unless stated otherwise",
+      "confidence": "high",
+      "notes": "Public writing and project index surface."
+    },
+    {
+      "id": "github-lizthedeveloper",
+      "title": "lizTheDeveloper GitHub profile",
+      "url": "https://github.com/lizTheDeveloper",
+      "kind": "github_profile",
+      "access": "public",
+      "license": "per-repository",
+      "confidence": "high",
+      "notes": "Primary public code surface."
+    },
+    {
+      "id": "repo-citation-checker",
+      "title": "lizTheDeveloper/citation-checker",
+      "url": "https://github.com/lizTheDeveloper/citation-checker",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "high",
+      "notes": "Licensed public code example."
+    },
+    {
+      "id": "repo-llm-distill",
+      "title": "lizTheDeveloper/llm-distill",
+      "url": "https://github.com/lizTheDeveloper/llm-distill",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "per-repository; verify before reuse",
+      "confidence": "medium",
+      "notes": "Useful AI tooling anchor; re-check license before reuse."
+    }
+  ],
+  "gaps": [
+    "Public video/transcript sources should be added with exact URLs when needed."
+  ]
+}

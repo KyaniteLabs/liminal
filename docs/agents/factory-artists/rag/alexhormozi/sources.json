@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "alexhormozi",
+    "displayName": "Alex Hormozi",
+    "profilePath": "../../alexhormozi.md"
+  },
+  "status": "discourse_only",
+  "primaryUse": "Offer design, funnel pressure-testing, growth clarity, and commercial prioritization.",
+  "reusePolicy": {
+    "summary": "Use public videos, articles, and show material as reference anchors only.",
+    "codeReuse": "No verified open-source code surface found.",
+    "transcripts": "Use platform captions or public transcripts only for attribution-backed summary; do not vendor full transcripts."
+  },
+  "sources": [
+    {
+      "id": "youtube-alex-hormozi",
+      "title": "Alex Hormozi YouTube channel",
+      "url": "https://www.youtube.com/@AlexHormozi",
+      "kind": "video_channel",
+      "access": "public",
+      "license": "platform/copyright; captions are reference-only when available",
+      "confidence": "high",
+      "notes": "Primary public video corpus for offers, sales, growth, and business operators."
+    },
+    {
+      "id": "acquisition-training",
+      "title": "Acquisition.com training and articles",
+      "url": "https://www.acquisition.com/training",
+      "kind": "articles",
+      "access": "public",
+      "license": "site/copyright; reference-only",
+      "confidence": "medium",
+      "notes": "Use as public written source material for offer and growth frameworks."
+    }
+  ],
+  "gaps": [
+    "No verified licensed public code examples found.",
+    "Books, paid courses, and private/community material are out of scope."
+  ]
+}

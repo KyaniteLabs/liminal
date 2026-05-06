@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "petersteinberger",
+    "displayName": "Peter Steinberger",
+    "profilePath": "../../petersteinberger.md"
+  },
+  "status": "code_and_discourse",
+  "primaryUse": "Mac/iOS engineering, shipping taste, agent tooling, automation ergonomics, and pragmatic app craft.",
+  "reusePolicy": {
+    "summary": "Use public writing and licensed open-source repos as source anchors.",
+    "codeReuse": "MIT-licensed repositories can be reused according to their licenses.",
+    "transcripts": "Use public captions or transcripts for summary with attribution only."
+  },
+  "sources": [
+    {
+      "id": "steipete-blog",
+      "title": "steipete.me",
+      "url": "https://steipete.me/",
+      "kind": "blog",
+      "access": "public",
+      "license": "site/copyright; reference-only unless stated otherwise",
+      "confidence": "high",
+      "notes": "Primary public writing surface."
+    },
+    {
+      "id": "github-steipete",
+      "title": "Peter Steinberger GitHub profile",
+      "url": "https://github.com/steipete",
+      "kind": "github_profile",
+      "access": "public",
+      "license": "per-repository",
+      "confidence": "high",
+      "notes": "Primary public code surface."
+    },
+    {
+      "id": "repo-codexbar",
+      "title": "steipete/CodexBar",
+      "url": "https://github.com/steipete/CodexBar",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "high",
+      "notes": "Licensed public Mac/Codex utility repository."
+    },
+    {
+      "id": "repo-aspects",
+      "title": "steipete/Aspects",
+      "url": "https://github.com/steipete/Aspects",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "medium",
+      "notes": "Classic licensed Objective-C library; re-check license before reuse."
+    }
+  ],
+  "gaps": [
+    "Add exact talks/interviews only when a future retrieval task needs them."
+  ]
+}

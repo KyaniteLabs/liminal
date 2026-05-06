@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "theobrowne",
+    "displayName": "Theo Browne",
+    "profilePath": "../../theobrowne.md"
+  },
+  "status": "code_and_discourse",
+  "primaryUse": "Full-stack product engineering, React/TypeScript stack judgment, developer tooling, and startup pragmatism.",
+  "reusePolicy": {
+    "summary": "Use public videos, posts, and licensed repositories as source anchors.",
+    "codeReuse": "MIT-licensed repositories can be reused according to their licenses.",
+    "transcripts": "Use public captions or transcripts for summary with attribution only."
+  },
+  "sources": [
+    {
+      "id": "t3-site",
+      "title": "t3.gg",
+      "url": "https://t3.gg/",
+      "kind": "official_site",
+      "access": "public",
+      "license": "site/copyright; reference-only unless stated otherwise",
+      "confidence": "high",
+      "notes": "Public hub for posts and projects."
+    },
+    {
+      "id": "youtube-t3dotgg",
+      "title": "Theo - t3.gg YouTube channel",
+      "url": "https://www.youtube.com/@t3dotgg",
+      "kind": "video_channel",
+      "access": "public",
+      "license": "platform/copyright; captions are reference-only when available",
+      "confidence": "high",
+      "notes": "Primary public video corpus for stack opinions, product builds, and engineering commentary."
+    },
+    {
+      "id": "github-t3dotgg",
+      "title": "Theo Browne GitHub profile",
+      "url": "https://github.com/t3dotgg",
+      "kind": "github_profile",
+      "access": "public",
+      "license": "per-repository",
+      "confidence": "high",
+      "notes": "Personal public code surface."
+    },
+    {
+      "id": "repo-create-t3-app",
+      "title": "t3-oss/create-t3-app",
+      "url": "https://github.com/t3-oss/create-t3-app",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "high",
+      "notes": "Licensed public T3 stack project generator."
+    },
+    {
+      "id": "repo-stripe-recommendations",
+      "title": "t3dotgg/stripe-recommendations",
+      "url": "https://github.com/t3dotgg/stripe-recommendations",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "medium",
+      "notes": "Licensed public repository; re-check current license before reuse."
+    }
+  ],
+  "gaps": [
+    "Treat live framework/version recommendations as time-sensitive and refresh from current sources before implementation."
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "person": {
+    "slug": "andrejkarpathy",
+    "displayName": "Andrej Karpathy",
+    "profilePath": "../../andrejkarpathy.md"
+  },
+  "status": "code_and_discourse",
+  "primaryUse": "AI engineering taste, minimal didactic code, model intuition, and clear technical explanations.",
+  "reusePolicy": {
+    "summary": "Prefer licensed repositories for code examples and public posts/videos for explanatory style.",
+    "codeReuse": "MIT-licensed repos can be reused according to their licenses.",
+    "transcripts": "Use public captions or transcripts for summary with attribution only."
+  },
+  "sources": [
+    {
+      "id": "github-karpathy",
+      "title": "Andrej Karpathy GitHub profile",
+      "url": "https://github.com/karpathy",
+      "kind": "github_profile",
+      "access": "public",
+      "license": "per-repository",
+      "confidence": "high",
+      "notes": "Entry point for open-source teaching and AI implementation repositories."
+    },
+    {
+      "id": "repo-nanogpt",
+      "title": "karpathy/nanoGPT",
+      "url": "https://github.com/karpathy/nanoGPT",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "high",
+      "notes": "Compact GPT training codebase useful for implementation-style retrieval."
+    },
+    {
+      "id": "repo-micrograd",
+      "title": "karpathy/micrograd",
+      "url": "https://github.com/karpathy/micrograd",
+      "kind": "code_repository",
+      "access": "public",
+      "license": "MIT",
+      "confidence": "high",
+      "notes": "Minimal autodiff engine and pedagogy anchor."
+    },
+    {
+      "id": "blog-karpathy",
+      "title": "Andrej Karpathy blog",
+      "url": "https://karpathy.github.io/",
+      "kind": "blog",
+      "access": "public",
+      "license": "site/copyright; reference-only unless stated otherwise",
+      "confidence": "high",
+      "notes": "Use for technical essays and explanation style."
+    },
+    {
+      "id": "youtube-andrej-karpathy",
+      "title": "Andrej Karpathy YouTube channel",
+      "url": "https://www.youtube.com/@AndrejKarpathy",
+      "kind": "video_channel",
+      "access": "public",
+      "license": "platform/copyright; captions are reference-only when available",
+      "confidence": "high",
+      "notes": "Long-form lectures and walkthroughs."
+    }
+  ],
+  "gaps": [
+    "Fetch current repository licenses before copying code into derived examples."
+  ]
+}

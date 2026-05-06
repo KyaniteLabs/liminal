@@ -5,7 +5,7 @@
  * - Constructor paths (LLMClient instance, partial config, no config)
  * - Lazy config resolution (resolveConfigIfNeeded)
  * - generateInternal error guards (no LLM, no PromptBuilder, not configured)
- * - Thinking extraction (code blocks, code-like lines, empty thinking)
+ * - Thinking-only outputs stay non-artifacts (code blocks, code-like lines, empty thinking)
  * - Code-too-short validation
  * - Domain validation failure + recovery round
  * - Recovery paths (null repair prompt, short recovery, revalidation fail)
@@ -446,21 +446,18 @@ describe('TierBasedGenerator (expanded)', () => {
     });
   });
 
-  // ── Thinking extraction ────────────────────────────────────────────
-  // NOTE: generateInternal creates LLMResponse with only {code, success, error}
-  // from toolResult — thinking is NOT copied. So response.thinking is always
-  // undefined, and the extraction branch (line 219) is never triggered.
-  // All empty-code cases go straight to the "empty code" throw on line 229.
-  describe('thinking extraction from empty code', () => {
-    it('recovers code from toolResult thinking when content is empty', async () => {
+  // ── Thinking-only outputs ──────────────────────────────────────────
+  // Thinking/reasoning is retained for diagnostics, not artifact recovery.
+  describe('thinking-only outputs from empty code', () => {
+    it('throws when toolResult thinking contains fenced code but content is empty', async () => {
       mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
         content: '',
         thinking: 'Let me think...\n```javascript\nfunction setup() { createCanvas(400, 400); }\n```',
       }));
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({ content: '' }));
 
       const gen = new TestGenerator('p5', mockLLM);
-      const result = await gen.generate('test');
-      expect(result).toContain('function setup()');
+      await expect(gen.generate('test')).rejects.toThrow('empty code');
     });
 
     it('throws when code is empty and toolResult has non-extractable thinking', async () => {
@@ -485,7 +482,7 @@ describe('TierBasedGenerator (expanded)', () => {
       await expect(gen.generate('test')).rejects.toThrow('empty code');
     });
 
-    it('recovers code-like thinking lines without fences', async () => {
+    it('throws when toolResult thinking contains code-like lines without fences', async () => {
       const thinkingLines = [
         'I will create a canvas',
         'function setup() {',
@@ -497,10 +494,10 @@ describe('TierBasedGenerator (expanded)', () => {
         content: '',
         thinking: thinkingLines,
       }));
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({ content: '' }));
 
       const gen = new TestGenerator('p5', mockLLM);
-      const result = await gen.generate('test');
-      expect(result).toContain('createCanvas(400, 400)');
+      await expect(gen.generate('test')).rejects.toThrow('empty code');
     });
 
     it('throws when toolResult thinking has empty code fences', async () => {

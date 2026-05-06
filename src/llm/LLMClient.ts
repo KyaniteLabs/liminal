@@ -1535,29 +1535,16 @@ export class LLMClient {
     // Prefer explicit thinking field (Ollama, Anthropic), fall back to extracted narrative
     const thinking = response.thinking?.text || extractedReasoning || undefined;
 
-    // If main content is empty but thinking/reasoning contains code, recover from it.
-    // This handles providers like MiniMax that may return code in reasoning_content
-    // or wrap the entire response in <think> tags.
-    let code = sanitized.code;
-    let recoveredFromThinking = false;
-    let isComplete = sanitized.isComplete;
-    if (!code && thinking) {
-      const recovered = sanitizeOutputWithReasoning(thinking);
-      if (recovered.sanitized.code) {
-        code = recovered.sanitized.code;
-        recoveredFromThinking = true;
-        isComplete = recovered.sanitized.isComplete;
-      }
-    }
+    const code = sanitized.code;
 
     return {
       code,
       explanation: response.content,
       reasoning: thinking,
       thinking,
-      recoveredFromThinking,
+      recoveredFromThinking: false,
       success: code.length > 0,
-      isComplete,
+      isComplete: sanitized.isComplete,
     };
   }
 }

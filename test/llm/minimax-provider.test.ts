@@ -5,7 +5,7 @@
  * - OpenAI-compatible and Anthropic-compatible endpoint handling
  * - Response parsing
  * - Empty response handling
- * - Fallback to reasoning_content when content is empty
+ * - Capture reasoning_content without treating it as final content
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -82,7 +82,7 @@ describe('MiniMaxProvider', () => {
       });
     });
 
-    it('should fallback to reasoning_content when content is empty', async () => {
+    it('should not treat reasoning_content as final content when content is empty', async () => {
       const mockResponse = {
         choices: [{
           message: {
@@ -108,8 +108,10 @@ describe('MiniMaxProvider', () => {
       });
 
       expect(result.isOk()).toBe(true);
-      expect(result.value.success).toBe(true);
-      expect(result.value.content).toBe('function setup() { createCanvas(400, 400); }');
+      expect(result.value.success).toBe(false);
+      expect(result.value.content).toBe('');
+      expect(result.value.thinking?.text).toBe('function setup() { createCanvas(400, 400); }');
+      expect(result.value.thinking?.source).toBe('reasoning_content');
     });
 
     it('should mark response as failed when content is empty and no reasoning_content', async () => {

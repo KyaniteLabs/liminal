@@ -218,12 +218,6 @@ export class MiniMaxProvider extends BaseProvider {
         finishReason = 'length';
       }
 
-      // Fallback: try to extract from reasoning_content if content is empty
-      if (!content && choice?.message?.reasoning_content) {
-        content = choice.message.reasoning_content;
-        Logger.debug('MiniMaxProvider', 'Using reasoning_content as fallback');
-      }
-
       // Check for content in alternative locations
       if (!content && data.output) {
         content = typeof data.output === 'string' ? data.output : data.output?.text || '';

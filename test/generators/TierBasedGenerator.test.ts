@@ -111,18 +111,17 @@ describe('TierBasedGenerator', () => {
       await expect(generator.generate('test prompt')).rejects.toThrow(/empty code/);
     });
 
-    it('should extract code from thinking when code block is present', async () => {
+    it('should not extract code from thinking when visible content is empty', async () => {
       const generator = new TestGenerator('p5', mockLLM);
       mockGenerateWithToolLoop.mockResolvedValueOnce({
         content: '',
         success: true,
         thinking: `Here's my thinking:\n\`\`\`javascript\nfunction setup() {\n  createCanvas(400, 400);\n}\n\`\`\``,
-        recoveredFromThinking: true,
+        recoveredFromThinking: false,
         toolCalls: [],
       });
 
-      const result = await generator.generate('test prompt');
-      expect(result).toContain('createCanvas');
+      await expect(generator.generate('test prompt')).rejects.toThrow(/empty code/);
     });
 
     it('should throw when LLM is not configured', async () => {

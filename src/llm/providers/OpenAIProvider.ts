@@ -18,7 +18,6 @@ import { TIMEOUT_DEFAULT_MS } from '../../constants/limits.js';
 import { normalizeThinking } from '../ThinkingNormalizer.js';
 import { parseOpenAIStream } from '../StreamParser.js';
 import { createLLMHttpError, LLMError } from '../errors.js';
-import { Logger } from '../../utils/Logger.js';
 
 function buildOpenAIUserContent(req: ProviderRequest): unknown {
   if (!req.imageInputs || req.imageInputs.length === 0) return req.userPrompt;
@@ -185,14 +184,7 @@ export class OpenAIProvider extends BaseProvider {
         finish_reason?: string;
       }> | undefined;
       const choice = choices?.[0];
-      let content = normalizeMessageContent(choice?.message?.content);
-
-      // Fallback: use reasoning_content as content when content is empty
-      // (e.g. Kimi K2-Plus returns all output in reasoning_content with content: null)
-      if (!content && choice?.message?.reasoning_content) {
-        content = choice.message.reasoning_content;
-        Logger.debug('OpenAIProvider', 'Using reasoning_content as fallback');
-      }
+      const content = normalizeMessageContent(choice?.message?.content);
 
       const usage = data.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
 
@@ -215,10 +207,8 @@ export class OpenAIProvider extends BaseProvider {
         finishReason = 'length';
       }
 
-      // Some providers (e.g. MiniMax) return code in reasoning_content with empty content
       const hasToolCalls = !!(toolCalls && toolCalls.length > 0);
-      const hasContent = content.length > 0 || (thinking.source !== 'none' && thinkingText.length > 0)
-        || hasToolCalls;
+      const hasContent = content.length > 0 || hasToolCalls;
 
       if (!hasContent) {
         return ok({

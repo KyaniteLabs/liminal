@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
  * - OllamaProvider (native /api/generate and OpenAI-compat)
  * - OpenRouterProvider (gateway with unified reasoning)
  * - GoogleProvider (Gemini generateContent)
- * - MiniMaxProvider (MiniMax with reasoning_content fallback)
+ * - MiniMaxProvider (MiniMax with reasoning_content captured as thinking only)
  *
  * Each test mocks global fetch and verifies:
  * - Request formatting (URL, headers, body)
@@ -43,7 +43,14 @@ vi.mock('../../../src/llm/CapabilityRegistry.js', () => ({
 }));
 
 vi.mock('../../../src/llm/ThinkingNormalizer.js', () => ({
-  normalizeThinking: () => ({ source: 'none', text: '' }),
+  normalizeThinking: (response: unknown) => {
+    const resp = response as {
+      choices?: Array<{ message?: { reasoning_content?: string } }>;
+      reasoning_content?: string;
+    };
+    const text = resp.choices?.[0]?.message?.reasoning_content ?? resp.reasoning_content ?? '';
+    return text ? { source: 'reasoning_content', text } : { source: 'none', text: '' };
+  },
   extractAnthropicThinking: () => ({ source: 'none', text: '' }),
   extractOpenRouterThinking: () => ({ source: 'none', text: '' }),
   stripThinkTags: (c: string) => ({ content: c, thinking: '' }),
@@ -157,6 +164,26 @@ describe('OpenAIProvider', () => {
     expect(result.value.model).toBe('gpt-4-0613');
     expect(result.value.usage?.inputTokens).toBe(50);
     expect(result.value.usage?.outputTokens).toBe(20);
+  });
+
+  it('does not treat reasoning_content as final content when message content is empty', async () => {
+    mockFetchResponse({
+      choices: [{
+        message: {
+          content: '',
+          reasoning_content: 'function setup() { createCanvas(400,400); }',
+        },
+      }],
+      model: 'gpt-4',
+    });
+
+    const result = await provider.generate(makeRequest());
+
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(false);
+    expect(result.value.content).toBe('');
+    expect(result.value.thinking?.text).toContain('createCanvas');
+    expect(result.value.error).toContain('no usable content');
   });
 
   it('returns error response on API failure', async () => {
@@ -909,7 +936,7 @@ describe('MiniMaxProvider', () => {
     expect(result.value.usage?.outputTokens).toBe(30);
   });
 
-  it('falls back to reasoning_content when content is empty', async () => {
+  it('does not treat reasoning_content as final content when content is empty', async () => {
     mockFetchResponse({
       choices: [{
         message: {
@@ -923,8 +950,9 @@ describe('MiniMaxProvider', () => {
     const result = await provider.generate(makeRequest());
 
     expect(result.isOk()).toBe(true);
-    expect(result.value.success).toBe(true);
-    expect(result.value.content).toContain('createCanvas');
+    expect(result.value.success).toBe(false);
+    expect(result.value.content).toBe('');
+    expect(result.value.thinking?.text).toContain('createCanvas');
   });
 
   it('falls back to data.output for alternative response structure', async () => {

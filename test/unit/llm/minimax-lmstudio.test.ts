@@ -100,7 +100,7 @@ describe('LLMClient environment configuration', () => {
 });
 
 describe('LLMClient MiniMax response recovery', () => {
-  it('recovers code from reasoning_content when content is empty', async () => {
+  it('does not recover artifact code from reasoning_content when content is empty', async () => {
     const { stub } = createFetchStub({
       choices: [
         {
@@ -120,15 +120,12 @@ describe('LLMClient MiniMax response recovery', () => {
       apiKey: 'test-key',
     });
 
-    const result = await client.generate('system', 'user');
-    expect(result.success).toBe(true);
-    expect(result.code).toContain('createCanvas');
-    // Provider-level reasoning_content fallback populates content directly,
-    // so LLMClient's thinking recovery path is not triggered
-    expect(result.recoveredFromThinking).toBe(false);
+    await expect(client.generate('system', 'user')).rejects.toThrow(
+      'Provider returned unsuccessful response'
+    );
   });
 
-  it('recovers code from think tags when content is empty', async () => {
+  it('does not recover artifact code from think tags when visible content is empty', async () => {
     const thinkContent = '<think' + '>\n```javascript\nfunction setup() { createCanvas(400, 400); }\nfunction draw() {}\n```\n</think' + '>';
     const { stub } = createFetchStub({
       choices: [
@@ -148,11 +145,10 @@ describe('LLMClient MiniMax response recovery', () => {
     });
 
     const result = await client.generate('system', 'user');
-    expect(result.success).toBe(true);
-    expect(result.code).toContain('createCanvas');
-    // Think tags in content → normalizeThinking extracts them →
-    // sanitized code is empty → LLMClient recovers from thinking
-    expect(result.recoveredFromThinking).toBe(true);
+    expect(result.success).toBe(false);
+    expect(result.code).toBe('');
+    expect(result.thinking).toContain('createCanvas');
+    expect(result.recoveredFromThinking).toBe(false);
   });
 });
 

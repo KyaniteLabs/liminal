@@ -236,30 +236,18 @@ export abstract class TierBasedGenerator {
       };
     }
 
-    // Try to extract code from thinking if code is empty but thinking has content
     if (!response.code || response.code.trim() === '') {
-      if (response.thinking) {
-        const extractedCode = this.extractCodeFromThinking(response.thinking);
-        if (extractedCode) {
-          response.code = extractedCode;
-          response.recoveredFromThinking = true;
-        }
-      }
-
-      // Still empty after extraction attempt
-      if (!response.code || response.code.trim() === '') {
-        const directResponse = await this.retryWithoutGeneratorTools(
-          prompt,
-          systemPrompt,
-          userPrompt,
-          options?.signal,
-          options?.maxTokens
-        );
-        if (directResponse) {
-          response = directResponse;
-        } else {
-          throw new GenerationError(`${this.constructor.name}: LLM returned empty code`, this.domain);
-        }
+      const directResponse = await this.retryWithoutGeneratorTools(
+        prompt,
+        systemPrompt,
+        userPrompt,
+        options?.signal,
+        options?.maxTokens
+      );
+      if (directResponse) {
+        response = directResponse;
+      } else {
+        throw new GenerationError(`${this.constructor.name}: LLM returned empty code`, this.domain);
       }
     }
 
@@ -543,59 +531,6 @@ export abstract class TierBasedGenerator {
    */
   protected validateOutput(_code: string): { valid: boolean; error?: string } {
     return { valid: true };
-  }
-
-  /**
-   * Extract code from thinking/reasoning text when LLM puts code in fences
-   * but not in the main response. Common with models like Qwen that output
-   * reasoning tags containing the actual code.
-   */
-  private extractCodeFromThinking(thinking: string): string | null {
-    if (!thinking || thinking.trim().length === 0) {
-      return null;
-    }
-    
-    // Look for code blocks in thinking
-    const codeBlockMatch = thinking.match(/```(?:\w+)?\n([\s\S]*?)```/);
-    if (codeBlockMatch && codeBlockMatch[1]) {
-      const extracted = codeBlockMatch[1].trim();
-      if (extracted.length > 0) {
-        return extracted;
-      }
-    }
-    
-    // Look for code-like content (lines with parentheses, semicolons, etc.)
-    const lines = thinking.split('\n');
-    const codeLines: string[] = [];
-    let inCodeSection = false;
-    
-    for (const line of lines) {
-      const trimmed = line.trim();
-      
-      // Skip markdown fences
-      if (trimmed.startsWith('```')) {
-        inCodeSection = !inCodeSection;
-        continue;
-      }
-      
-      // If we're inside a code block, keep the line
-      if (inCodeSection) {
-        codeLines.push(line);
-        continue;
-      }
-      
-      // Otherwise, look for lines that look like code
-      // Has code patterns: function calls, assignments, etc.
-      const hasCodePattern = /[(){};=]|\b(function|const|let|var|class|if|for|while|return)\b/.test(trimmed);
-      const isComment = trimmed.startsWith('//');
-      
-      if (hasCodePattern || isComment) {
-        codeLines.push(line);
-      }
-    }
-    
-    const result = codeLines.join('\n').trim();
-    return result.length > 0 ? result : null;
   }
 
   /**

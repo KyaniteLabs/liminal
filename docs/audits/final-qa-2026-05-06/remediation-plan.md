@@ -66,6 +66,7 @@ Release risk: high. These items turn failures into success or weak proof into re
    - Findings: FQA-029
    - Action: artifact extraction must use final user-visible content only unless a provider explicitly marks a content field safe for display.
    - Proof: reasoning-only provider fixture fails extraction.
+   - Remediation status: verified. OpenAI-compatible and MiniMax providers now keep `reasoning_content` as thinking diagnostics only, LLMClient no longer recovers artifacts from thinking or `<think>`-only output, and TierBasedGenerator no longer promotes tool-loop thinking into code.
 
 ## Batch 2: First-Run And Customer-Control UX
 

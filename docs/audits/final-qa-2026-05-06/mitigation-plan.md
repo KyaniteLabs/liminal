@@ -6,10 +6,10 @@ Mitigations are temporary. They do not make Liminal launch-ready while material 
 
 ## Immediate Launch Guardrails
 
-- Do not publish or tag a release while FQA-009, FQA-033, or FQA-034 remain open or fixed-but-unverified.
-- Treat integration/slow CI as red until FQA-033 is fixed, even when fast CI is green.
-- Treat live creative-domain readiness as limited to the five default live-proof domains until FQA-034 is fixed or the launch scope is narrowed.
-- Treat the browser/e2e PR job as unproved until FQA-009 has a real GitHub PR run under branch protection.
+- Do not publish or tag a release until the post-remediation saturation passes complete with no new material findings.
+- Treat integration/slow CI as red if any future FQA-033-class generator/integration proof regresses, even when fast CI is green.
+- Treat live creative-domain readiness as limited to the all-domain receipt that FQA-034 verifies; refresh that receipt before any release tag.
+- Treat the browser/e2e PR job as proved for PR #497 head `bfd6d963a62215caf335f70b8640c74165cd5cff`; rerun the check after any CI/workflow or browser-surface change.
 - Keep Factory personas and RAG folders explicitly docs-only in audit prompts until or unless they are installed as real runtime skills.
 
 ## Operator Guardrails

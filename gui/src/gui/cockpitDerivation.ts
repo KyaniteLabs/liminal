@@ -93,6 +93,13 @@ function hasFailureProvenance(event: BridgeEvent): boolean {
   return Boolean(event.provider || event.model || event.endpoint || event.statusCode || event.retryable !== undefined || event.responseBody);
 }
 
+function isCancelledLifecycle(event: BridgeEvent): boolean {
+  return event.type === 'run.lifecycle'
+    && Boolean(event.run)
+    && typeof event.run === 'object'
+    && event.run.outcome === 'cancelled';
+}
+
 export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   const planEvent = [...events].reverse().find((event) => event.type === 'generation.domain_plan');
   const plan = Array.isArray(planEvent?.domains) ? planEvent!.domains! : [];
@@ -246,6 +253,11 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       hasCancelled = true;
       phase = 'stopped';
       latestMessage = 'Generation stopped by operator.';
+    }
+    if (isCancelledLifecycle(event)) {
+      hasCancelled = true;
+      phase = 'stopped';
+      latestMessage = String(event.run?.error || 'Generation stopped by operator.');
     }
     if (event.type === 'stream.disconnected' && isDisconnected) {
       phase = 'disconnected';

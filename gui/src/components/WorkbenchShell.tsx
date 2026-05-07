@@ -24,6 +24,7 @@ interface WorkbenchShellProps {
   timelineSlot: React.ReactNode;
   leftSlot: React.ReactNode;
   recourseSlot?: React.ReactNode;
+  recourseState?: 'failed' | 'stopped';
   children?: React.ReactNode;
 }
 
@@ -50,6 +51,7 @@ export function WorkbenchShell({
   timelineSlot,
   leftSlot,
   recourseSlot,
+  recourseState,
   children,
 }: WorkbenchShellProps) {
   const primaryMode = modes.find((mode) => mode.id === 'generate') ?? modes[0];
@@ -61,11 +63,12 @@ export function WorkbenchShell({
   const [secondaryToolsOpen, setSecondaryToolsOpen] = React.useState(activeMode !== primaryMode.id);
   const userPrompt = prompt.trim();
   const showRecovery = Boolean(recourseSlot);
+  const showStopped = recourseState === 'stopped';
   const showGeneratePreviewReady = activeMode === 'generate' && artifactReady;
   const artifactHeading = stageBusy
     ? 'Liminal is generating…'
     : showRecovery
-      ? 'No preview was produced'
+      ? showStopped ? 'Generation stopped' : 'No preview was produced'
     : showGeneratePreviewReady
       ? 'Preview is ready'
     : userPrompt
@@ -74,7 +77,7 @@ export function WorkbenchShell({
   const artifactDetail = stageBusy
     ? 'Live output will appear in the side panel as soon as it is available.'
     : showRecovery
-      ? 'Use a recovery action, or edit the prompt and try again.'
+      ? showStopped ? 'The run was stopped. Edit the prompt or try again when ready.' : 'Use a recovery action, or edit the prompt and try again.'
     : showGeneratePreviewReady
       ? 'Use the message box to revise, make a variation, or polish this direction.'
     : userPrompt
@@ -240,7 +243,7 @@ export function WorkbenchShell({
           <details className="liminal-receipt-details" open={stageBusy || Boolean(recourseSlot)}>
             <summary>
               <span>Work log</span>
-              <strong>{stageBusy ? 'live' : showRecovery ? 'needs recovery' : 'collapsed'}</strong>
+              <strong>{stageBusy ? 'live' : showRecovery ? showStopped ? 'stopped' : 'needs recovery' : 'collapsed'}</strong>
             </summary>
             <section className="liminal-timeline" aria-label="Generation timeline" role="status" aria-live="polite">
               {timelineSlot}

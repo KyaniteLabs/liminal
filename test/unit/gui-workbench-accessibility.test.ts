@@ -104,6 +104,19 @@ describe('GUI workbench accessibility contract', () => {
     expect(css).toContain('overflow-wrap: anywhere');
   });
 
+  it('keeps operator-stopped runs visible with retry recourse instead of resetting to ready', () => {
+    expect(bridgeHook).toContain('cancelledRunEventFromStatus');
+    expect(bridgeHook).toContain("type: 'generation.cancelled'");
+    expect(bridgeHook).toContain("reason: 'operator-stop'");
+    expect(bridgeHook).toContain("await refreshStatus()");
+    expect(app).toContain('runStoppedBeforePreview');
+    expect(app).toContain("runReceipt?.outcome === 'stopped'");
+    expect(app).toContain('Generation stopped');
+    expect(app).toContain('Generation stopped by operator.');
+    expect(app).toContain("runReceipt?.outcome === 'stopped' ?");
+    expect(shell).toContain('Generation stopped');
+  });
+
   it('keeps reduced-motion and visible preview-status fallbacks in CSS', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     expect(css).toContain('animation: none');

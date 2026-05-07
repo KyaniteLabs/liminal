@@ -157,6 +157,10 @@ function lifecycleRun(event: WorkbenchBridgeEvent): LifecycleRunTruth | undefine
   return event.run as LifecycleRunTruth;
 }
 
+function isCancelledLifecycleEvent(event: WorkbenchBridgeEvent): boolean {
+  return lifecycleRun(event)?.outcome === 'cancelled';
+}
+
 function isFailureReceiptEvent(event: WorkbenchBridgeEvent): boolean {
   const run = lifecycleRun(event);
   return event.type === 'generation.attempt.failed'
@@ -180,7 +184,7 @@ function isTerminalReceiptEvent(event: WorkbenchBridgeEvent): boolean {
 function terminalOutcome(event: WorkbenchBridgeEvent): WorkbenchRunReceipt['outcome'] | undefined {
   const run = lifecycleRun(event);
   if (event.type === 'generation.complete' || run?.phase === 'completed') return 'completed';
-  if (event.type === 'generation.cancelled' || run?.outcome === 'cancelled') return 'stopped';
+  if (event.type === 'generation.cancelled' || isCancelledLifecycleEvent(event)) return 'stopped';
   if (isFailureReceiptEvent(event)) return 'failed';
   return undefined;
 }
@@ -262,10 +266,13 @@ function latestProviderModelTruth(
   const status = latestStatusTruth(events);
   const generatorRole = status?.roles?.generator || session?.roles?.generator;
   const providerEvent = [...events].reverse().find((event) => typeof event.provider === 'string' || typeof event.model === 'string');
+  const lifecycleTruth = [...events].reverse()
+    .map(lifecycleRun)
+    .find((run) => typeof run?.provider === 'string' || typeof run?.model === 'string');
   const completion = latestEvent(events, 'generation.complete');
   return {
-    provider: firstText(generatorRole?.provider, providerEvent?.provider, status?.provider, session?.provider),
-    model: firstText(generatorRole?.model, providerEvent?.model, completion?.model, status?.model, session?.model),
+    provider: firstText(generatorRole?.provider, providerEvent?.provider, lifecycleTruth?.provider, status?.provider, session?.provider),
+    model: firstText(generatorRole?.model, providerEvent?.model, lifecycleTruth?.model, completion?.model, status?.model, session?.model),
   };
 }
 
@@ -361,6 +368,14 @@ export function latestRunReceipt(
     : [];
   const prior = latestPriorReceipt(runEvents);
   const cancelledEvent = latestEvent(runEvents, 'generation.cancelled');
+  const cancelledLifecycle = [...runEvents].reverse().find(isCancelledLifecycleEvent);
+  const cancelledLifecycleRun = cancelledLifecycle ? lifecycleRun(cancelledLifecycle) : undefined;
+  const stoppedMessage = firstText(
+    cancelledEvent?.message,
+    cancelledEvent?.reason,
+    cancelledLifecycleRun?.error,
+    'Generation stopped',
+  );
   const details = [
     `phase: ${summary.phase}`,
     `outcome: ${outcome}`,
@@ -370,7 +385,7 @@ export function latestRunReceipt(
     previewType ? `preview: ${previewType}${inlinePreview ? ' inline' : ' pending'}${previewPath ? ` ${previewPath}` : ''}` : 'preview: waiting',
     failure ? `failure: ${failureDetailText(failure)}` : '',
     recoveredFailures.length > 0 ? `recovered failures: ${recoveredFailures.map(failureDetailText).join(' | ')}` : '',
-    cancelledEvent ? `stopped: ${String(cancelledEvent.message || cancelledEvent.reason || 'Generation stopped')}` : '',
+    outcome === 'stopped' ? `stopped: ${stoppedMessage}` : '',
     prior?.artifact ? `prior ${prior.revisionKind}: ${prior.artifact.label}${prior.artifact.path ? ` ${prior.artifact.path}` : ''}` : '',
     completionEvent?.reason ? `completion: ${String(completionEvent.reason)}` : '',
   ].filter(Boolean);
@@ -500,7 +515,7 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
   const hasVerifiedPreview = events.some((event) => event.type === 'preview.verified');
   const missingPreviewEvent = [...events].reverse().find((event) => event.type === 'preview.missing');
   const hasMissingPreview = Boolean(missingPreviewEvent);
-  const hasCancelled = events.some((event) => event.type === 'generation.cancelled');
+  const hasCancelled = events.some((event) => event.type === 'generation.cancelled' || isCancelledLifecycleEvent(event));
   const latestDisconnectedIndex = events.reduce((latest, event, index) => event.type === 'stream.disconnected' ? index : latest, -1);
   const hasDisconnected = events.length > 0 && latestDisconnectedIndex === events.length - 1;
   const hasComplete = events.some((event) => event.type === 'generation.complete');

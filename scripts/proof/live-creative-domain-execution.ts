@@ -49,6 +49,14 @@ const EXTENSIONS: Record<Domain, string> = {
   p5: 'js', svg: 'svg', strudel: 'js', tone: 'html', revideo: 'tsx', glsl: 'frag', three: 'js', hydra: 'js', hyperframes: 'html', ascii: 'txt', kinetic: 'html', textgen: 'txt',
 };
 
+const DOMAIN_TIMEOUT_FLOORS_MS: Partial<Record<Domain, number>> = {
+  // These domains ask for larger structured artifacts and can be slow on live
+  // coding providers; keep the launch proof bounded without misclassifying
+  // valid slow generations as failures.
+  tone: 180_000,
+  hyperframes: 240_000,
+};
+
 interface DomainResult {
   domain: Domain;
   prompt: string;
@@ -128,8 +136,9 @@ function createGenerator(domain: Domain, config: { baseUrl?: string; model?: str
 async function runDomain(domain: Domain, rootOutDir: string, timeoutMs: number, provider: string, model: string, config: Parameters<typeof createGenerator>[1]): Promise<DomainResult> {
   const prompt = PROMPTS[domain];
   const started = Date.now();
+  const domainTimeoutMs = Math.max(timeoutMs, DOMAIN_TIMEOUT_FLOORS_MS[domain] ?? timeoutMs);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  const timeout = setTimeout(() => controller.abort(), domainTimeoutMs);
   try {
     const generator = createGenerator(domain, config);
     const generateOptions = {

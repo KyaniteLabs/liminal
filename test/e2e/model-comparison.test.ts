@@ -1,281 +1,132 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+import type { LLMClient } from '../../src/llm/LLMClient.js';
+import type { ProviderType } from '../../src/harness/MultiProviderConfig.js';
+import {
+  backupProviderEnv,
+  createLiveProviderClient,
+  createLmStudioClient,
+  restoreProviderEnv,
+  selectLmStudioModel,
+} from './helpers/liveProviderTestEnv.js';
+
 /**
- * Model Comparison Test Suite
- * 
- * Tests models across identical prompts to compare:
- * - Success rate
- * - Quality scores
- * - Generation time
- * - Output cleanliness
+ * Provider comparison proof.
  *
- * Cloud models: MiniMax-M2.7, MiniMax-M2.7-highspeed, MiniMax-M2.5,
- *               GLM-5.1 (ZhipuAI), Kimi-k2p5 (Moonshot)
- * Local models: Qwen 3.5 9B, Qwen 3 Coder 40B
+ * This is a bounded launch gate, not a benchmark harness. It compares the
+ * currently configured providers on the same tiny code prompt and records the
+ * result. MiniMax highspeed stays in its own entitlement-gated test because the
+ * current token plan rejects that model with provider error 2061.
  */
 
-import { run } from '../../src/index.js';
-import { LLMClient } from '../../src/llm/LLMClient.js';
-import { CodeValidator } from '../../src/core/CodeValidator.js';
-import { formatError } from '../../src/utils/errors.js';
-import fs from 'fs/promises';
-import path from 'path';
+const RUN_MODEL_COMPARISON =
+  process.env.RUN_MODEL_COMPARISON === '1' || process.env.RUN_MODEL_COMPARISON === 'true';
+const REQUEST_TIMEOUT_MS = 90000;
+const TEST_TIMEOUT_MS = 240000;
+const CLOUD_PROVIDER_ORDER: ProviderType[] = ['glm', 'kimi', 'minimax'];
 
-interface ModelConfig {
+interface ComparisonCandidate {
   name: string;
-  baseUrl: string;
-  model: string;
-  apiKey?: string;
   type: 'local' | 'cloud';
+  model: string;
+  client: LLMClient;
 }
 
-interface TestResult {
+interface ComparisonResult {
+  name: string;
+  type: 'local' | 'cloud';
   model: string;
-  prompt: string;
-  domain: string;
   success: boolean;
-  score: number;
-  iterations: number;
-  duration: number;
+  durationMs: number;
   codeLength: number;
   hasThinkTags: boolean;
-  isValid: boolean;
-  errors: string[];
+  provenanceModel?: string;
 }
 
-// Model configurations
-const MODELS: ModelConfig[] = [
-  {
-    name: 'Qwen 3.5 9B',
-    baseUrl: 'http://localhost:1234/v1',
-    model: 'qwen3.5-9b',
-    type: 'local',
-  },
-  {
-    name: 'Qwen 3 Coder 40B',
-    baseUrl: 'http://localhost:1234/v1',
-    model: 'qwen3-coder-next-reap-40b-a3b-i1',
-    type: 'local',
-  },
-  {
-    name: 'MiniMax-M2.7',
-    baseUrl: 'https://api.minimaxi.com/v1',
-    model: 'MiniMax-M2.7',
-    apiKey: process.env.MINIMAX_API_KEY,
-    type: 'cloud',
-  },
-  {
-    name: 'MiniMax-M2.7-highspeed',
-    baseUrl: 'https://api.minimaxi.com/v1',
-    model: 'MiniMax-M2.7-highspeed',
-    apiKey: process.env.MINIMAX_API_KEY,
-    type: 'cloud',
-  },
-  {
-    name: 'MiniMax-M2.5',
-    baseUrl: 'https://api.minimaxi.com/v1',
-    model: 'MiniMax-M2.5',
-    apiKey: process.env.MINIMAX_API_KEY,
-    type: 'cloud',
-  },
-  {
-    name: 'GLM-5.1',
-    baseUrl: 'https://api.z.ai/api/anthropic',
-    model: 'glm-5.1',
-    apiKey: process.env.GLM_API_KEY,
-    type: 'cloud',
-  },
-  {
-    name: 'Kimi-k2p5',
-    baseUrl: 'https://api.kimi.com/coding/v1',
-    model: 'kimi-k2p5',
-    apiKey: process.env.KIMI_API_KEY,
-    type: 'cloud',
-  },
-];
+async function buildCandidates(): Promise<ComparisonCandidate[]> {
+  const candidates: ComparisonCandidate[] = [];
 
-// Test prompts by domain
-const TEST_PROMPTS = [
-  { domain: 'p5.js', prompt: 'simple blue circle with animation' },
-  { domain: 'shader', prompt: 'neon plasma effect with color cycling' },
-  { domain: 'strudel', prompt: 'techno beat at 130 BPM' },
-  { domain: 'hydra', prompt: 'geometric shapes with feedback trails' },
-];
+  const localModel = await selectLmStudioModel([/qwen3\.5/i, /qwen35/i, /qwen/i]).catch(() => null);
+  if (localModel) {
+    candidates.push({
+      name: 'lmstudio-local',
+      type: 'local',
+      model: localModel,
+      client: createLmStudioClient(localModel),
+    });
+  }
 
-const TEST_TIMEOUT = 300000; // 5 minutes per test
+  for (const provider of CLOUD_PROVIDER_ORDER) {
+    const live = createLiveProviderClient(provider);
+    if (!live) continue;
+    candidates.push({
+      name: provider,
+      type: 'cloud',
+      model: live.config.model,
+      client: live.client,
+    });
+  }
 
-const runModelComparison = process.env.RUN_MODEL_COMPARISON === 'true' && LLMClient.isConfigured();
-describe.skipIf(!runModelComparison)('Model Comparison Suite', () => {
-  const results: TestResult[] = [];
+  if (candidates.length < 2) {
+    throw new Error(
+      `RUN_MODEL_COMPARISON requires at least two configured candidates; found ${candidates.map(candidate => candidate.name).join(', ') || 'none'}.`,
+    );
+  }
+
+  return candidates;
+}
+
+describe.skipIf(process.env.CI || !RUN_MODEL_COMPARISON)('Provider comparison proof', () => {
+  const envBackup = backupProviderEnv(['RUN_MODEL_COMPARISON']);
   const outputDir = path.join(process.cwd(), 'test-results', 'model-comparison');
 
   beforeAll(async () => {
     await fs.mkdir(outputDir, { recursive: true });
   });
 
-  // Test each model with each prompt
-  for (const model of MODELS) {
-    describe(`Model: ${model.name}`, () => {
-      // Skip cloud models if no API key for that specific provider
-      const testFn = model.type === 'cloud' && !model.apiKey ? it.skip : it;
+  afterAll(() => {
+    restoreProviderEnv(envBackup);
+  });
 
-      for (const { domain, prompt } of TEST_PROMPTS) {
-        testFn(
-          `${domain}: "${prompt}"`,
-          async () => {
-            const startTime = Date.now();
-            const modelOutputDir = path.join(outputDir, model.name.replace(/\s+/g, '-').toLowerCase(), domain);
-            await fs.mkdir(modelOutputDir, { recursive: true });
+  it('compares configured providers on the same bounded code prompt', async () => {
+    const candidates = await buildCandidates();
+    const results: ComparisonResult[] = [];
 
-            try {
-              // Configure environment for this model
-              process.env.LIMINAL_LLM_BASE_URL = model.baseUrl;
-              process.env.LIMINAL_LLM_MODEL = model.model;
-              if (model.apiKey) {
-                process.env.LIMINAL_LLM_API_KEY = model.apiKey;
-              }
-
-              // Run generation
-              const result = await run(prompt, {
-                maxIterations: 3,
-                output: modelOutputDir,
-                project: `${domain}-test`,
-                tolerateErrors: true, // Don't fail on low scores, just record
-              });
-
-              const duration = Date.now() - startTime;
-
-              // Validate output
-              const validation = CodeValidator.validate(result.code);
-              const hasThinkTags = result.code.includes('<think');
-
-              const testResult: TestResult = {
-                model: model.name,
-                prompt,
-                domain,
-                success: result.finalScore >= 0.7,
-                score: result.finalScore,
-                iterations: result.iterations,
-                duration,
-                codeLength: result.code.length,
-                hasThinkTags,
-                isValid: validation.valid,
-                errors: validation.errors,
-              };
-
-              results.push(testResult);
-
-              // Assertions - record data, don't necessarily fail
-
-              expect(result.code?.length).toBeGreaterThan(0);
-              
-              // Key assertion: no contamination
-              expect(hasThinkTags).toBe(false);
-              
-              // Log results for analysis
-              console.log(`\n[${model.name}] ${domain}: score=${result.finalScore.toFixed(2)}, iters=${result.iterations}, time=${(duration/1000).toFixed(1)}s`);
-
-            } catch (error) {
-              const duration = Date.now() - startTime;
-              results.push({
-                model: model.name,
-                prompt,
-                domain,
-                success: false,
-                score: 0,
-                iterations: 0,
-                duration,
-                codeLength: 0,
-                hasThinkTags: false,
-                isValid: false,
-                errors: [formatError('ModelComparison', error)],
-              });
-              throw error;
-            }
-          },
-          TEST_TIMEOUT
-        );
-      }
-    });
-  }
-
-  // Summary report after all tests
-  describe('Summary Report', () => {
-    it('generates comparison report', async () => {
-      if (results.length === 0) {
-        console.log('No results to report');
-        return;
-      }
-
-      // Calculate statistics per model
-      const modelStats: Record<string, {
-        attempts: number;
-        successes: number;
-        avgScore: number;
-        avgTime: number;
-        totalIterations: number;
-        contaminationCount: number;
-      }> = {};
-
-      for (const result of results) {
-        if (!modelStats[result.model]) {
-          modelStats[result.model] = {
-            attempts: 0,
-            successes: 0,
-            avgScore: 0,
-            avgTime: 0,
-            totalIterations: 0,
-            contaminationCount: 0,
-          };
-        }
-
-        const stats = modelStats[result.model];
-        stats.attempts++;
-        if (result.success) stats.successes++;
-        stats.avgScore += result.score;
-        stats.avgTime += result.duration;
-        stats.totalIterations += result.iterations;
-        if (result.hasThinkTags) stats.contaminationCount++;
-      }
-
-      // Calculate averages
-      for (const model of Object.keys(modelStats)) {
-        const stats = modelStats[model];
-        stats.avgScore /= stats.attempts;
-        stats.avgTime /= stats.attempts;
-      }
-
-      // Print report
-      console.log('\n\n========== MODEL COMPARISON REPORT ==========\n');
-      console.log('Model                    | Success | Avg Score | Avg Time | Avg Iters | Contamination');
-      console.log('-------------------------|---------|-----------|----------|-----------|---------------');
-
-      for (const [model, stats] of Object.entries(modelStats)) {
-        const successRate = ((stats.successes / stats.attempts) * 100).toFixed(0);
-        const avgScore = stats.avgScore.toFixed(2);
-        const avgTime = (stats.avgTime / 1000).toFixed(1);
-        const avgIters = (stats.totalIterations / stats.attempts).toFixed(1);
-        const contam = stats.contaminationCount > 0 ? `⚠️ ${stats.contaminationCount}` : '✓ None';
-
-        console.log(
-          `${model.padEnd(24)} | ${successRate.padStart(3)}%   | ${avgScore.padStart(9)} | ${avgTime.padStart(8)}s | ${avgIters.padStart(9)} | ${contam}`
-        );
-      }
-
-      console.log('\n=============================================\n');
-
-      // Save detailed report
-      const reportPath = path.join(outputDir, 'comparison-report.json');
-      await fs.writeFile(
-        reportPath,
-        JSON.stringify({ results, stats: modelStats }, null, 2)
+    for (const candidate of candidates) {
+      const started = Date.now();
+      const response = await candidate.client.generate(
+        'Output final JavaScript only. Do not include reasoning text.',
+        'Return only this JavaScript line: function setup(){createCanvas(120,120);}',
+        AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       );
 
-      console.log(`Full report saved to: ${reportPath}`);
+      const hasThinkTags = response.code.includes('<think');
+      results.push({
+        name: candidate.name,
+        type: candidate.type,
+        model: candidate.model,
+        success: response.success,
+        durationMs: Date.now() - started,
+        codeLength: response.code.length,
+        hasThinkTags,
+        provenanceModel: response.provenance?.model,
+      });
 
-      // Key assertions
-      for (const [model, stats] of Object.entries(modelStats)) {
-        expect(stats.contaminationCount).toBe(0); // No model should have contamination
-      }
-    });
-  });
+      expect(response.success).toBe(true);
+      expect(response.code).toContain('createCanvas');
+      expect(hasThinkTags).toBe(false);
+      expect(response.provenance?.model).toBe(candidate.model);
+    }
+
+    await fs.writeFile(
+      path.join(outputDir, 'comparison-report.json'),
+      JSON.stringify({ generatedAt: new Date().toISOString(), results }, null, 2),
+    );
+
+    expect(results.length).toBeGreaterThanOrEqual(2);
+    expect(results.some(result => result.type === 'local')).toBe(true);
+    expect(results.some(result => result.type === 'cloud')).toBe(true);
+  }, TEST_TIMEOUT_MS);
 });

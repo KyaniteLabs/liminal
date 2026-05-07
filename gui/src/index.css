@@ -749,6 +749,11 @@ body::before {
   padding: 0 6px 6px;
 }
 
+.liminal-secondary-tools:not([open]) > .liminal-secondary-tools__body,
+.liminal-subnav--drawer:not([open]) > .liminal-subnav__body {
+  display: none;
+}
+
 .liminal-subnav {
   display: grid;
   gap: 4px;

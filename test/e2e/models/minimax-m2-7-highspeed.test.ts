@@ -1,12 +1,14 @@
 import { describe, it, expect } from 'vitest';
 /**
  * MiniMax-M2.7-highspeed Test Suite
- * Cloud model - same quality as M2.7 but faster (100 tps vs 60 tps)
+ * Entitlement-gated MiniMax fast-path proof. This suite must stay outside
+ * launch claims unless RUN_MINIMAX_HIGHSPEED_MODEL_TESTS passes with a token
+ * plan that can actually access MiniMax-M2.7-highspeed.
  */
 
 import { createLiveProviderClient } from '../helpers/liveProviderTestEnv.js';
 
-const TEST_TIMEOUT = 45000; // Faster model
+const TEST_TIMEOUT = 45000;
 
 describe.skipIf(!process.env.RUN_MINIMAX_HIGHSPEED_MODEL_TESTS)('MiniMax-M2.7-highspeed', () => {
   it('generates p5.js quickly', async () => {
@@ -22,6 +24,8 @@ describe.skipIf(!process.env.RUN_MINIMAX_HIGHSPEED_MODEL_TESTS)('MiniMax-M2.7-hi
     expect(response.success).toBe(true);
     expect(response.code).toContain('createCanvas');
     expect(response.code).not.toContain('<think');
-    expect(duration).toBeLessThan(30000); // Should be fast
+    // The speed assertion is meaningful only after the entitlement check above
+    // proves the provider accepts the highspeed model for this token plan.
+    expect(duration).toBeLessThan(30000);
   }, TEST_TIMEOUT);
 });

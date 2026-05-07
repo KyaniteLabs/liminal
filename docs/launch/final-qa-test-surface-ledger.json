@@ -1,6 +1,6 @@
 {
   "contract": "liminal-final-qa-test-surface-ledger-v1",
-  "updatedAt": "2026-05-06T23:51:58Z",
+  "updatedAt": "2026-05-07T00:35:00Z",
   "policy": "No test file may remain under test/pending for final QA. Every skipped/gated test file must have owner, launch risk, reason, action, and verification before final QA can be claimed.",
   "pendingTests": [],
   "skippedOrGatedTests": [
@@ -73,8 +73,8 @@
       "owner": "Provider runtime",
       "launchRisk": "unsupported-provider-entitlement",
       "reason": "The current MiniMax token plan rejects MiniMax-M2.7-highspeed with provider error 2061.",
-      "action": "Run only before claiming MiniMax highspeed entitlement or upgrade the token plan.",
-      "verification": "RUN_MINIMAX_HIGHSPEED_MODEL_TESTS=1 pnpm vitest run test/e2e/models/minimax-m2-7-highspeed.test.ts --coverage=false"
+      "action": "Do not claim MiniMax highspeed launch support unless the token plan is upgraded and the gated highspeed proof passes.",
+      "verification": "RUN_MINIMAX_HIGHSPEED_MODEL_TESTS=1 pnpm vitest run test/e2e/models/minimax-m2-7-highspeed.test.ts --coverage=false --reporter=dot --pool=forks"
     },
     {
       "path": "test/e2e/models/minimax-m2-7.test.ts",

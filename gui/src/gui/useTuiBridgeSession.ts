@@ -1,10 +1,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { latestBridgeCodePreview, latestBridgePreview, summarizeWorkbenchBridge, type WorkbenchBridgeEvent } from './workbenchTelemetry';
 
 export type BridgeSessionStatus = {
   sessionId: string;
   provider?: string;
   model?: string;
+  run?: {
+    runId?: string;
+    kind?: string;
+    phase?: string;
+    label?: string;
+    startedAt?: string;
+    updatedAt?: string;
+    failedAt?: string;
+    completedAt?: string;
+    outcome?: string;
+    error?: string;
+    executionMode?: 'draft' | 'prove';
+    provider?: string;
+    model?: string;
+  };
   roles?: Record<string, {
     role: string;
     provider: string;
@@ -25,6 +41,35 @@ export type BridgeSessionStatus = {
 const API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASEURL)
   ? import.meta.env.VITE_API_BASEURL
   : '/api';
+
+export function cancelledRunEventFromStatus(status: BridgeSessionStatus): WorkbenchBridgeEvent | null {
+  if (status.run?.outcome !== 'cancelled') return null;
+  // Stop can race the SSE stream; the refreshed run status is the fallback truth
+  // that keeps the visible workbench receipt from snapping back to "ready."
+  return {
+    type: 'generation.cancelled',
+    sessionId: status.sessionId,
+    reason: 'operator-stop',
+    cancelledAt: status.run.failedAt || status.run.updatedAt || new Date().toISOString(),
+    message: status.run.error || 'Generation stopped by operator.',
+    receivedAt: Date.now(),
+  };
+}
+
+function appendLocalEventOnce(
+  setEvents: Dispatch<SetStateAction<WorkbenchBridgeEvent[]>>,
+  event: WorkbenchBridgeEvent | null,
+): void {
+  if (!event) return;
+  setEvents((prev) => {
+    const alreadyRecorded = prev.some((item) => (
+      item.type === event.type
+      && item.sessionId === event.sessionId
+      && item.cancelledAt === event.cancelledAt
+    ));
+    return alreadyRecorded ? prev : [...prev.slice(-299), event];
+  });
+}
 
 export function useTuiBridgeSession() {
   const [session, setSession] = useState<BridgeSessionStatus | null>(null);
@@ -99,11 +144,14 @@ export function useTuiBridgeSession() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const refreshStatus = useCallback(async () => {
-    if (!session?.sessionId) return;
+  const refreshStatus = useCallback(async (): Promise<BridgeSessionStatus | null> => {
+    if (!session?.sessionId) return null;
     const res = await fetch(`${API}/tui/session/${session.sessionId}/status`);
     const data = await res.json().catch(() => ({}));
-    if (res.ok) setSession(data);
+    if (!res.ok) return null;
+    const status = data as BridgeSessionStatus;
+    setSession(status);
+    return status;
   }, [session?.sessionId]);
 
   async function submitPrompt(
@@ -160,10 +208,12 @@ export function useTuiBridgeSession() {
       const res = await fetch(`${API}/tui/session/${session.sessionId}/cancel`, { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) setError(data.error || res.statusText);
-      await refreshStatus();
+      const latestStatus = await refreshStatus();
+      appendLocalEventOnce(setEvents, cancelledRunEventFromStatus(latestStatus || session));
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
-      await refreshStatus().catch(() => undefined);
+      const latestStatus = await refreshStatus().catch(() => null);
+      appendLocalEventOnce(setEvents, cancelledRunEventFromStatus(latestStatus || session));
     }
   }
 

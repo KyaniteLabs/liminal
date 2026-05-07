@@ -349,6 +349,24 @@ export class TuiBridgeService {
     return status;
   }
 
+  private publishResolvedGeneratorModel(
+    sessionId: string,
+    provider: string,
+    baseUrl: string,
+    model: string,
+  ): void {
+    const status = this.sessions.get(sessionId);
+    if (!status) return;
+    const roles = status.roles ? { ...status.roles } : undefined;
+    if (roles?.generator) {
+      roles.generator = { ...roles.generator, provider, baseUrl, model };
+    }
+    if (roles?.harness) {
+      roles.harness = { ...roles.harness, provider, baseUrl, model };
+    }
+    this.updateStatus(sessionId, { provider, model, roles });
+  }
+
   private beginRun(
     sessionId: string,
     details: {
@@ -2130,11 +2148,30 @@ export class TuiBridgeService {
     const controller = new AbortController();
     this.activeStreams.set(sessionId, controller);
 
-    const config = llm.getConfig();
+    let config = llm.getConfig();
     const sessionStatus = this.sessions.get(sessionId);
+    let effectiveModel = sessionStatus?.roles?.generator?.model || config.model || 'unknown';
+    let resolvedEffectiveModel = false;
+    const resolver = (llm as LLMClient & { resolveEffectiveModel?: () => Promise<string> }).resolveEffectiveModel;
+    if (typeof resolver === 'function') {
+      try {
+        effectiveModel = await resolver.call(llm);
+        config = llm.getConfig();
+        resolvedEffectiveModel = true;
+      } catch (err) {
+        Logger.info('TuiBridgeService', `Effective model preflight failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
     const provider = config.baseUrl ? this.providerLabelFromBaseUrl(config.baseUrl) : sessionStatus?.provider || 'unknown';
-    const harnessModelName = sessionStatus?.roles?.harness?.model || config.model || 'unknown';
-    const generatorModelName = sessionStatus?.roles?.generator?.model || harnessModelName;
+    if (resolvedEffectiveModel) {
+      this.publishResolvedGeneratorModel(sessionId, provider, config.baseUrl, effectiveModel);
+    }
+    const harnessModelName = resolvedEffectiveModel
+      ? effectiveModel
+      : sessionStatus?.roles?.harness?.model || config.model || 'unknown';
+    const generatorModelName = resolvedEffectiveModel
+      ? effectiveModel
+      : sessionStatus?.roles?.generator?.model || harnessModelName;
     const timeoutMinutes = Math.min(3, Math.max(1, Number(options.timeoutMinutes) || 1));
     const candidateCount = 1;
     const generationStartedAt = Date.now();

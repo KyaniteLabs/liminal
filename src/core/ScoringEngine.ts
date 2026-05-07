@@ -635,19 +635,18 @@ function createTimeoutController(parent: AbortSignal | undefined, timeoutMs: num
 
   const controller = new AbortController();
   let cleaned = false;
-  let timer: NodeJS.Timeout;
+  const onParentAbort = () => {
+    controller.abort(parent?.reason ?? new Error('Scoring aborted'));
+  };
+  const timer = setTimeout(() => {
+    controller.abort(new Error(`LLM score boost timed out after ${timeoutMs}ms`));
+  }, timeoutMs);
   const cleanup = () => {
     if (cleaned) return;
     cleaned = true;
     clearTimeout(timer);
     parent?.removeEventListener('abort', onParentAbort);
   };
-  const onParentAbort = () => {
-    controller.abort(parent?.reason ?? new Error('Scoring aborted'));
-  };
-  timer = setTimeout(() => {
-    controller.abort(new Error(`LLM score boost timed out after ${timeoutMs}ms`));
-  }, timeoutMs);
 
   if (parent?.aborted) {
     onParentAbort();

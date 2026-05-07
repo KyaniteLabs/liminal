@@ -248,8 +248,54 @@ describe('workbenchTelemetry', () => {
     expect(latest?.detail).toContain('HTTP 429');
     expect(latest?.detail).toContain('retryable');
     expect(latest?.detail).toContain('body: {"error":"rate limited"}');
+    expect(summary.active).toBe(false);
     expect(summary.processSteps.find((step) => step.id === 'draft')).toMatchObject({ status: 'failed' });
+    expect(summary.processSteps.find((step) => step.id === 'ready')).toMatchObject({
+      status: 'failed',
+      detail: 'stopped before preview; use Try again, Polish safely, or Switch medium',
+    });
     expect(summary.humanReview.checks.find((check) => check.label === 'Machine blockers')?.detail).toContain('HTTP 429');
+  });
+
+  it('treats failed run lifecycle events as visible recovery receipts', () => {
+    const events = [
+      { type: 'generation.route.selected', domain: 'glsl', domains: ['glsl'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
+      { type: 'generation.attempt.started', domain: 'glsl', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      {
+        type: 'run.lifecycle',
+        run: {
+          runId: 'run-1',
+          kind: 'creative',
+          phase: 'failed',
+          label: 'Creative draft needs recovery',
+          startedAt: '2026-05-06T12:00:00.000Z',
+          updatedAt: '2026-05-06T12:01:00.000Z',
+          failedAt: '2026-05-06T12:01:00.000Z',
+          outcome: 'failed',
+          error: "GLSL validation failed: Undefined function 'utilities()'",
+          executionMode: 'draft',
+          provider: 'openai',
+          model: 'gpt-5.4-mini',
+        },
+      },
+    ];
+
+    const summary = summarizeWorkbenchBridge(events);
+    const receipt = latestRunReceipt(events);
+
+    expect(summary.processSteps.find((step) => step.id === 'draft')).toMatchObject({
+      status: 'failed',
+      detail: expect.stringContaining("Undefined function 'utilities()'"),
+    });
+    expect(receipt).toMatchObject({
+      outcome: 'failed',
+      creativeDomain: 'glsl',
+      failure: {
+        message: "GLSL validation failed: Undefined function 'utilities()'",
+        provider: 'openai',
+        model: 'gpt-5.4-mini',
+      },
+    });
   });
 
   it('does not imply a completed explicit p5 draft fell through to another generator', () => {
@@ -275,7 +321,7 @@ describe('workbenchTelemetry', () => {
   });
 
   it('keeps completed draft routing honest when a backup domain actually succeeds', () => {
-    const summary = summarizeWorkbenchBridge([
+    const events = [
       { type: 'generation.intent_brief', userRequest: 'fireflies', requirements: ['Primary request: fireflies'], missingDetails: [], questions: [], willClarify: false },
       { type: 'generation.route.selected', domain: 'p5', domains: ['p5', 'three'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
       { type: 'generation.domain_plan', domains: ['p5', 'three'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
@@ -285,7 +331,9 @@ describe('workbenchTelemetry', () => {
       { type: 'artifact.found', artifactLabel: 'three HTML preview', artifactPath: '.omx/proof/live-previews/three.html' },
       { type: 'preview.completed', previewType: 'image', content: 'ZmFrZQ==', imageUrl: '.omx/proof/live-previews/three.png' },
       { type: 'generation.complete', finalScore: 0, duration: 1200, model: 'GLM-4.5-air', reason: 'draft artifact ready', executionMode: 'draft' },
-    ]);
+    ];
+    const summary = summarizeWorkbenchBridge(events);
+    const receipt = latestRunReceipt(events);
 
     expect(summary.processSteps.find((step) => step.id === 'route')).toMatchObject({
       status: 'done',
@@ -295,6 +343,12 @@ describe('workbenchTelemetry', () => {
       status: 'done',
       detail: 'preview ready: selected three; backup used',
     });
+    expect(receipt).toMatchObject({
+      outcome: 'completed',
+      creativeDomain: 'three',
+    });
+    expect(receipt?.failure).toBeUndefined();
+    expect(receipt?.details.join(' ')).toContain('recovered failures: Generation produced no code');
   });
 
   it('does not report backup usage without a failed attempt event', () => {

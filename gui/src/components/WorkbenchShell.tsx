@@ -23,6 +23,7 @@ interface WorkbenchShellProps {
   inspectorSlot: React.ReactNode;
   timelineSlot: React.ReactNode;
   leftSlot: React.ReactNode;
+  recourseSlot?: React.ReactNode;
   children?: React.ReactNode;
 }
 
@@ -48,6 +49,7 @@ export function WorkbenchShell({
   inspectorSlot,
   timelineSlot,
   leftSlot,
+  recourseSlot,
   children,
 }: WorkbenchShellProps) {
   const primaryMode = modes.find((mode) => mode.id === 'generate') ?? modes[0];
@@ -58,9 +60,12 @@ export function WorkbenchShell({
   const activeSurfaceLabel = formatLegacyTab(activeTab);
   const [secondaryToolsOpen, setSecondaryToolsOpen] = React.useState(activeMode !== primaryMode.id);
   const userPrompt = prompt.trim();
+  const showRecovery = Boolean(recourseSlot);
   const showGeneratePreviewReady = activeMode === 'generate' && artifactReady;
   const artifactHeading = stageBusy
     ? 'Liminal is generating…'
+    : showRecovery
+      ? 'No preview was produced'
     : showGeneratePreviewReady
       ? 'Preview is ready'
     : userPrompt
@@ -68,6 +73,8 @@ export function WorkbenchShell({
       : 'Start with a prompt, then preview here';
   const artifactDetail = stageBusy
     ? 'Live output will appear in the side panel as soon as it is available.'
+    : showRecovery
+      ? 'Use a recovery action, or edit the prompt and try again.'
     : showGeneratePreviewReady
       ? 'Use the message box to revise, make a variation, or polish this direction.'
     : userPrompt
@@ -222,16 +229,18 @@ export function WorkbenchShell({
             <a href="#liminal-preview-panel">View preview</a>
           </article>
 
+          {recourseSlot}
+
           {children ? (
             <section className="liminal-legacy-panel" aria-label="Supplemental panel">
               {children}
             </section>
           ) : null}
 
-          <details className="liminal-receipt-details" open={stageBusy}>
+          <details className="liminal-receipt-details" open={stageBusy || Boolean(recourseSlot)}>
             <summary>
               <span>Work log</span>
-              <strong>{stageBusy ? 'live' : 'collapsed'}</strong>
+              <strong>{stageBusy ? 'live' : showRecovery ? 'needs recovery' : 'collapsed'}</strong>
             </summary>
             <section className="liminal-timeline" aria-label="Generation timeline" role="status" aria-live="polite">
               {timelineSlot}

@@ -303,7 +303,9 @@ export function apiKeyEnvNamesForProvider(provider: RuntimeProviderKey | Provide
     case 'glm': return ['GLM_API_KEY', 'ANTHROPIC_AUTH_TOKEN'];
     case 'openrouter': return ['OPENROUTER_API_KEY'];
     case 'kimi': return ['KIMI_API_KEY', 'MOONSHOT_API_KEY'];
-    case 'moonshot': return ['MOONSHOT_API_KEY'];
+    // Moonshot and Kimi have shared operator setups in the wild; keep
+    // KIMI_API_KEY as a compatibility fallback for renamed moonshot configs.
+    case 'moonshot': return ['MOONSHOT_API_KEY', 'KIMI_API_KEY'];
     case 'custom':
     case 'openai': return ['OPENAI_API_KEY'];
     default: return [];

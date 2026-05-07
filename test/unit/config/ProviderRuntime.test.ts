@@ -10,6 +10,7 @@ import {
   normalizeProviderBaseUrl,
   resolveProviderAlias,
   resolveProviderRuntime,
+  selectRuntimeApiKey,
 } from '../../../src/config/ProviderRuntime.js';
 
 describe('ProviderRuntime', () => {
@@ -39,10 +40,28 @@ describe('ProviderRuntime', () => {
 
   it('keeps API key env order provider-specific', () => {
     expect(apiKeyEnvNamesForProvider('glm')).toEqual(['GLM_API_KEY', 'ANTHROPIC_AUTH_TOKEN']);
+    expect(apiKeyEnvNamesForProvider('moonshot')).toEqual(['MOONSHOT_API_KEY', 'KIMI_API_KEY']);
     expect(apiKeyEnvNamesForProvider('custom')).toEqual(['OPENAI_API_KEY']);
     expect(apiKeyEnvNamesForProvider('lmstudio')).toEqual([]);
     expect(apiKeyEnvNamesForEndpoint('https://api.anthropic.com/v1', 'claude-sonnet')).toEqual(['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN']);
     expect(apiKeyEnvNamesForEndpoint('https://generativelanguage.googleapis.com/v1beta', 'gemini-2.5-flash')).toEqual(['GOOGLE_API_KEY', 'GEMINI_API_KEY']);
+  });
+
+  it('keeps KIMI_API_KEY as a Moonshot compatibility fallback', () => {
+    expect(selectRuntimeApiKey({
+      provider: 'moonshot',
+      baseUrl: 'https://api.moonshot.ai/v1',
+      env: { KIMI_API_KEY: 'sk-kimi-legacy' },
+    })).toBe('sk-kimi-legacy');
+
+    expect(selectRuntimeApiKey({
+      provider: 'moonshot',
+      baseUrl: 'https://api.moonshot.ai/v1',
+      env: {
+        MOONSHOT_API_KEY: 'sk-moonshot-primary',
+        KIMI_API_KEY: 'sk-kimi-legacy',
+      },
+    })).toBe('sk-moonshot-primary');
   });
 
   it('reports GLM 5V as vision-capable but ordinary GLM as text-only', () => {

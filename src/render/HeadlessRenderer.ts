@@ -12,7 +12,7 @@ import { Logger } from '../utils/Logger.js';
 import { RenderEvidence } from '../core/types/GenerationEvaluation.js';
 import { getLocalP5ScriptForUrl } from '../utils/browserAssetFallbacks.js';
 
-export type RenderDomain = 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'tone' | 'unknown';
+export type RenderDomain = 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'tone' | 'svg' | 'html' | 'ascii' | 'kinetic' | 'unknown';
 
 export interface RenderOptions {
   /** Canvas width in pixels */
@@ -219,6 +219,15 @@ export class HeadlessRenderer {
     if (code.includes('Tone.') || code.includes('Synth') || code.includes('synth')) {
       return 'tone';
     }
+    if (/^<svg\b/i.test(code.trim())) {
+      return 'svg';
+    }
+    if (/^<!DOCTYPE\s+html/i.test(code.trim()) || /<html\b/i.test(code)) {
+      return /\b@keyframes\b|\banimation\s*:/i.test(code) ? 'kinetic' : 'html';
+    }
+    if (/^[\s\S]*[/\\|_~^*#%+=.-][\s\S]*\n[\s\S]*[/\\|_~^*#%+=.-]/.test(code) && !/[{};=]/.test(code)) {
+      return 'ascii';
+    }
     return 'unknown';
   }
 
@@ -269,7 +278,11 @@ export class HeadlessRenderer {
 
       // Wrap code in HTML
       const html = HTMLWrapper.wrap(code, {
-        domain: domain === 'glsl' ? 'shader' : domain === 'unknown' ? undefined : domain
+        domain: domain === 'glsl'
+          ? 'shader'
+          : domain === 'kinetic'
+            ? 'html'
+            : domain === 'unknown' ? undefined : domain
       });
 
       // Load the HTML

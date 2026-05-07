@@ -20,7 +20,14 @@ function localP5ScriptKeyForUrl(rawUrl: string): LocalP5ScriptKey | null {
     const pathname = url.pathname.toLowerCase();
     if (!pathname.includes('/p5.js/')) return null;
 
-    if (pathname.endsWith('/addons/p5.sound.min.js') || pathname.endsWith('/addons/p5.sound.js')) {
+    // cdnjs has published p5.sound both at the version root and under
+    // /addons; keep both forms offline-safe for generated sketches.
+    if (
+      pathname.endsWith('/p5.sound.min.js')
+      || pathname.endsWith('/p5.sound.js')
+      || pathname.endsWith('/addons/p5.sound.min.js')
+      || pathname.endsWith('/addons/p5.sound.js')
+    ) {
       return 'p5Sound';
     }
     if (pathname.endsWith('/p5.min.js') || pathname.endsWith('/p5.js')) {

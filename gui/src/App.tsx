@@ -778,23 +778,24 @@ export default function App() {
   const bridgeImagePreview = bridgePreview?.type === 'image' && bridgePreview.src ? bridgePreview : null;
   const bridgeImagePreviewFailed = Boolean(bridgeImagePreview && failedPreviewSrc === bridgeImagePreview.src);
   const bridgeCodePreview = bridge.codePreview;
-  const stageBlocked = bridgeSummary.phase === 'preview missing' || bridgeSummary.phase === 'disconnected';
+  const runReceipt = activeMode.id === 'generate' ? latestRunReceipt(bridge.events, bridge.session) : null;
+  const runFailedBeforePreview = activeMode.id === 'generate' && runReceipt?.outcome === 'failed' && !bridgeSummary.active;
+  const stageBlocked = bridgeSummary.phase === 'preview missing' || bridgeSummary.phase === 'disconnected' || runFailedBeforePreview;
   const stageEmptyKicker = stageBlocked ? 'Preview' : bridgeSummary.active ? 'Working' : 'Preview';
   const stageEmptyHeading = stageBlocked
-    ? 'Preview unavailable'
+    ? runFailedBeforePreview ? 'No preview was produced' : 'Preview unavailable'
     : bridgeSummary.active
       ? bridgeSummary.stageTitle
       : runStatus === 'running'
         ? 'Generating'
         : 'No artifact yet';
   const stageEmptyDetail = stageBlocked
-    ? bridgeSummary.stageSubtitle
+    ? runFailedBeforePreview ? 'The run stopped before an artifact could be mounted. Use a recovery action or edit the prompt.' : bridgeSummary.stageSubtitle
     : bridgeSummary.active
       ? bridgeSummary.stageSubtitle
       : 'Send a creative prompt; live output will appear here.';
   const clarificationRequest = activeMode.id === 'generate' ? latestClarificationRequest(bridge.events) : null;
   const cognitiveReceipt = activeMode.id === 'generate' ? latestCognitiveReceipt(bridge.events) : null;
-  const runReceipt = activeMode.id === 'generate' ? latestRunReceipt(bridge.events, bridge.session) : null;
   const syncPreviewHtml = bridgeCodePreview?.code ? buildSyncPreviewHtml(bridgeCodePreview.code) : '';
   const hasDirectSyncTarget = Boolean(syncPreviewHtml);
   const hasSyncTarget = Boolean(previewUrl || bridgePreview || hasDirectSyncTarget);
@@ -855,6 +856,44 @@ export default function App() {
     });
   };
 
+  const failureRecoveryText = runReceipt?.failure?.message || 'The last generation stopped before a usable artifact appeared.';
+
+  const handleRetryFailedRun = () => {
+    const prompt = createPrompt.trim();
+    if (!prompt) return;
+    const retryMode = detectPromptCreateMode(prompt) ?? createMode;
+    setCreateExecutionMode('draft');
+    void bridge.submitPrompt(buildWorkbenchPrompt(retryMode, prompt), {
+      clientIntent: 'creative',
+      ...buildWorkbenchRunOptionsForMode('draft', createMaxIterations, retryMode),
+    });
+  };
+
+  const handleSafePolishFailedRun = () => {
+    submitDraftFollowup(
+      `Recover from the failed run and produce a complete, browser-safe artifact. Avoid undefined helper functions, incomplete wrappers, or placeholder code. Previous failure: ${failureRecoveryText}`,
+      'prove',
+      'polish',
+    );
+  };
+
+  const handleSwitchMediumAfterFailure = () => {
+    const baseIdea = (createPrompt.trim() || 'Create the same visual idea.')
+      .replace(/\bfragment\s+shader\b/gi, 'browser visual')
+      .replace(/\bglsl\s+shader\b/gi, 'browser visual')
+      .replace(/\bglsl\b/gi, 'browser visual')
+      .replace(/\bshader\b/gi, 'visual');
+    const fallbackPrompt = `Create a p5.js sketch that preserves this idea: ${baseIdea}\n\nUse p5.js for a reliable browser preview, keep the motion and mood, and use only p5 browser APIs.`;
+    const fallbackMode: CreateModeId = 'p5';
+    setCreatePrompt(fallbackPrompt);
+    setCreateMode(fallbackMode);
+    setCreateExecutionMode('draft');
+    void bridge.submitPrompt(buildWorkbenchPrompt(fallbackMode, fallbackPrompt), {
+      clientIntent: 'creative',
+      ...buildWorkbenchRunOptionsForMode('draft', createMaxIterations, fallbackMode),
+    });
+  };
+
   const handleDraftAdjustment = () => {
     const adjustment = draftAdjustment.trim();
     if (!adjustment) return;
@@ -864,6 +903,28 @@ export default function App() {
   const handleWorkbenchModeChange = (mode: WorkbenchMode) => {
     dispatchLive(switchToLiveOrganismView(mode.legacyTabs[0] as GuiTab));
   };
+
+  const runRecourseSlot = activeMode.id === 'generate' && runReceipt?.outcome === 'failed' && !bridgeSummary.active ? (
+    <section className="liminal-recourse-card" role="alert" aria-label="Generation recovery">
+      <div className="liminal-recourse-card__copy">
+        <span>Needs recovery</span>
+        <strong>That run did not finish.</strong>
+        <small>{runReceipt.failure?.message || failureRecoveryText}</small>
+        <small>Medium: {runReceipt.creativeDomain} · Model: {runReceipt.providerModel}</small>
+      </div>
+      <div className="liminal-recourse-card__actions" aria-label="Recovery actions">
+        <button type="button" onClick={handleRetryFailedRun} disabled={bridge.submitting || !createPrompt.trim()}>
+          Try again
+        </button>
+        <button type="button" onClick={handleSafePolishFailedRun} disabled={bridge.submitting}>
+          Polish safely
+        </button>
+        <button type="button" onClick={handleSwitchMediumAfterFailure} disabled={bridge.submitting}>
+          Switch medium
+        </button>
+      </div>
+    </section>
+  ) : null;
 
   const improveSlot = (
     <div className="liminal-improve-lane">
@@ -1279,6 +1340,7 @@ export default function App() {
       inspectorSlot={inspectorSlot}
       timelineSlot={timelineSlot}
       leftSlot={leftSlot}
+      recourseSlot={runRecourseSlot}
     >
       {shouldRenderLegacyPanel(activeTab) && (
       <Suspense fallback={<div className="atelier-panel">Loading Studio surface…</div>}>

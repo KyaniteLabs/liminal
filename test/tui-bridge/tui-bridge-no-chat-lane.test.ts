@@ -567,6 +567,8 @@ describe('Bubble Tea operator routing', () => {
       .find((event) => event.type === 'generation.attempt.failed'));
     const error = await waitFor(() => service.getEvents(session.sessionId)
       .find((event) => event.type === 'error'));
+    const recoveryActivity = await waitFor(() => service.getEvents(session.sessionId)
+      .find((event) => event.type === 'activity.updated' && String(event.message || '').includes('recovery choices are available')));
 
     expect(failed).toMatchObject({
       type: 'generation.attempt.failed',
@@ -583,6 +585,10 @@ describe('Bubble Tea operator routing', () => {
       model: 'gpt-5.4-mini',
       endpoint: 'https://api.openai.com/v1/chat/completions',
       statusCode: 429,
+    });
+    expect(recoveryActivity).toMatchObject({
+      type: 'activity.updated',
+      message: expect.stringContaining('No backup medium completed'),
     });
     const receipt = latestRunReceipt(service.getEvents(session.sessionId) as never, service.getStatus(session.sessionId) as never);
     expect(receipt).toMatchObject({
@@ -810,7 +816,7 @@ describe('Bubble Tea operator routing', () => {
     expect(service.getEvents(session.sessionId).some((event) => event.type === 'generation.complete')).toBe(false);
   });
 
-  it('aborts the underlying draft generation signal when a draft attempt times out', async () => {
+  it('keeps trying backup draft domains after one attempt times out', async () => {
     vi.useFakeTimers();
     try {
       const service = new TuiBridgeService();
@@ -825,13 +831,21 @@ describe('Bubble Tea operator routing', () => {
       draftGenerate.mockImplementationOnce((_prompt, _rawPrompt, _draft, signal) => {
         observedSignals.push(signal as AbortSignal);
         return pendingDraft.promise;
+      }).mockImplementationOnce((_prompt, _rawPrompt, _draft, signal) => {
+        observedSignals.push(signal as AbortSignal);
+        return Promise.resolve({
+          needsClarification: false,
+          code: 'function setup() { createCanvas(160, 160); background(12); }',
+          thinking: 'Recovered with a fast browser preview.',
+          model: 'qwen3.6-35b-a3b',
+        });
       });
 
       await service.submitInput(
         session.sessionId,
         {
           mode: 'chat',
-          text: 'slow timeout garden',
+          text: 'make a visual garden',
           clientIntent: 'creative',
           executionMode: 'draft',
           timeoutMinutes: 1,
@@ -844,16 +858,31 @@ describe('Bubble Tea operator routing', () => {
       expect(observedSignals[0].aborted).toBe(false);
 
       await vi.advanceTimersByTimeAsync(60_000);
-      await Promise.resolve();
-      await Promise.resolve();
+      await vi.advanceTimersByTimeAsync(0);
+      for (let i = 0; i < 12 && service.getStatus(session.sessionId).run?.phase !== 'completed'; i++) {
+        await Promise.resolve();
+      }
 
-      expect(observedSignals[0].aborted).toBe(true);
-      expect(service.getStatus(session.sessionId).run).toMatchObject({
+      expect(observedSignals).toHaveLength(2);
+      expect(observedSignals[0].aborted).toBe(false);
+      expect(observedSignals[1].aborted).toBe(false);
+      expect(service.getStatus(session.sessionId).run).not.toMatchObject({
         phase: 'failed',
         outcome: 'failed',
-        error: 'Generation timed out after 1 minute',
       });
-      expect(service.getEvents(session.sessionId).some((event) => event.type === 'generation.complete')).toBe(false);
+      expect(service.getEvents(session.sessionId)).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          type: 'generation.attempt.failed',
+          error: 'Generation timed out after 1 minute',
+        }),
+        expect.objectContaining({
+          type: 'activity.updated',
+          message: expect.stringContaining('Trying'),
+        }),
+        expect.objectContaining({
+          type: 'generation.complete',
+        }),
+      ]));
     } finally {
       vi.useRealTimers();
     }

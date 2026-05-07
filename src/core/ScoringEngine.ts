@@ -428,6 +428,7 @@ export class LLMScoringStrategy implements ScoringStrategy {
 export class ScoringEngine {
   private strategies = new Map<string, ScoringStrategy>();
   private defaultStrategyName: string;
+  private readonly reliableLlmBoostEnabled: boolean;
 
   constructor(defaultStrategy: string = 'comprehensive', llm?: LLMClient) {
     // Register built-in strategies
@@ -449,6 +450,12 @@ export class ScoringEngine {
     this.registerAlias('fast', 'keyword');
 
     this.defaultStrategyName = defaultStrategy;
+    // Reliable scoring runs inside interactive generation loops. Keep that path
+    // local by default so a missing or slow evaluator cannot silently stall the
+    // operator journey; callers can opt into the LLM boost explicitly.
+    this.reliableLlmBoostEnabled = Boolean(llm)
+      || defaultStrategy === 'llm'
+      || process.env.LIMINAL_SCORE_LLM_BOOST === 'true';
   }
 
   /** Register an alias name that maps to an existing strategy. */
@@ -568,7 +575,11 @@ export class ScoringEngine {
       return result; // Already sufficient coverage
     }
 
-    // Boost coverage via LLM strategy
+    if (!this.reliableLlmBoostEnabled) {
+      return result;
+    }
+
+    // Boost coverage via LLM strategy only when explicitly enabled.
     const llmStrategy = this.strategies.get('llm');
     if (!llmStrategy) {
       return result; // No LLM available, return as-is

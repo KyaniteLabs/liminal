@@ -699,7 +699,9 @@ export class LLMClient {
       if (models.length > 0) {
         // "auto" and the legacy LM Studio GUI placeholder both mean:
         // use a model the local server reports as actually loaded.
-        this.resolvedModel = models[0].id;
+        this.resolvedModel = this.config.model === LEGACY_LM_STUDIO_MODEL_PLACEHOLDER
+          ? this.selectBestLocalModel(models)
+          : models[0].id;
         Logger.info('LLMClient', `Auto-detected model: ${this.resolvedModel}`);
         return this.resolvedModel;
       }
@@ -724,6 +726,35 @@ export class LLMClient {
   private shouldAutoDetectLocalModel(baseUrl: string, model: string): boolean {
     if (model === SERVICE_DEFAULTS.DEFAULT_MODEL) return true;
     return model === LEGACY_LM_STUDIO_MODEL_PLACEHOLDER && detectProviderLabel(baseUrl, model) === 'lmstudio';
+  }
+
+  private selectBestLocalModel(models: Array<{ id: string }>): string {
+    const ranked = [...models].sort((a, b) => this.scoreLocalModel(b.id) - this.scoreLocalModel(a.id));
+    return ranked[0]?.id || models[0].id;
+  }
+
+  private scoreLocalModel(modelId: string): number {
+    const id = modelId.toLowerCase();
+    let score = 0;
+
+    // LM Studio may list old tiny helper models before the production model.
+    // Visible GUI runs using the legacy placeholder should prefer capable,
+    // code-oriented loaded models while avoiding embedding/test/draft entries.
+    const explicitBillions = id.match(/(?:^|[^a-z0-9])(\d+(?:\.\d+)?)\s*b(?:[^a-z0-9]|$)/i);
+    const compactQwenSize = id.match(/qwen\s*[-_ ]?(\d{2})(?![\d.])/i);
+    const size = explicitBillions?.[1]
+      ? Number(explicitBillions[1])
+      : compactQwenSize?.[1]
+        ? Number(compactQwenSize[1])
+        : 0;
+    score += size * 10;
+
+    if (/\b(code|coder|coding|repo|pipeline|prod|instruct|chat)\b/.test(id)) score += 30;
+    if (/\b(qwen|llama|mistral|gemma|glm|gpt)\b/.test(id)) score += 10;
+    if (/\b(embed|embedding|rerank|election|draft|test)\b/.test(id)) score -= 20;
+    if (/\b(0\.\d+|1|2)\s*b\b/.test(id)) score -= 10;
+
+    return score;
   }
 
   private async fetchLocalModels(baseUrl: string): Promise<Response> {

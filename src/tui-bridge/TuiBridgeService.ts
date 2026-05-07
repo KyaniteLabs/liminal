@@ -2296,14 +2296,21 @@ export class TuiBridgeService {
             new Gallery('gallery'),
             null,
           );
-          const generationPromise = orchestrator.generate(attemptPrompt, attemptPrompt, true, controller.signal);
+          const attemptController = new AbortController();
+          const unlinkAttemptAbort = this.linkDraftAttemptToRun(controller.signal, attemptController);
+          const generationPromise = orchestrator.generate(attemptPrompt, attemptPrompt, true, attemptController.signal);
           generationPromise.catch((err) => {
-            if (!controller.signal.aborted) {
+            if (!attemptController.signal.aborted) {
               const message = err instanceof Error ? err.message : String(err);
               logBridge('generation.draft.background_failed', { sessionId, generatorModel: generatorModelName, message });
             }
           });
-          let attemptResult = await this.awaitDraftAttempt(generationPromise, controller, timeoutMinutes);
+          let attemptResult: Awaited<ReturnType<GenerationOrchestrator['generate']>> | undefined;
+          try {
+            attemptResult = await this.awaitDraftAttempt(generationPromise, controller, attemptController, timeoutMinutes);
+          } finally {
+            unlinkAttemptAbort();
+          }
           if (!attemptResult) {
             this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
             return;
@@ -2340,14 +2347,21 @@ export class TuiBridgeService {
               provider,
             });
             const correctionPrompt = this.domainCorrectionPrompt(attemptPrompt, domain, mismatch);
-            const retryPromise = orchestrator.generate(correctionPrompt, correctionPrompt, true, controller.signal);
+            const retryController = new AbortController();
+            const unlinkRetryAbort = this.linkDraftAttemptToRun(controller.signal, retryController);
+            const retryPromise = orchestrator.generate(correctionPrompt, correctionPrompt, true, retryController.signal);
             retryPromise.catch((err) => {
-              if (!controller.signal.aborted) {
+              if (!retryController.signal.aborted) {
                 const message = err instanceof Error ? err.message : String(err);
                 logBridge('generation.draft.domain_retry_failed', { sessionId, generatorModel: generatorModelName, message });
               }
             });
-            const retryResult = await this.awaitDraftAttempt(retryPromise, controller, timeoutMinutes);
+            let retryResult: Awaited<ReturnType<GenerationOrchestrator['generate']>> | undefined;
+            try {
+              retryResult = await this.awaitDraftAttempt(retryPromise, controller, retryController, timeoutMinutes);
+            } finally {
+              unlinkRetryAbort();
+            }
             if (!retryResult) {
               this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
               return;
@@ -2511,23 +2525,26 @@ export class TuiBridgeService {
 
   private async awaitDraftAttempt<T>(
     generationPromise: Promise<T>,
-    controller: AbortController,
+    runController: AbortController,
+    attemptController: AbortController,
     timeoutMinutes: number,
   ): Promise<T | undefined> {
-    const { signal } = controller;
-    if (signal.aborted) return undefined;
+    const runSignal = runController.signal;
+    if (runSignal.aborted) return undefined;
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let removeAbortListener = () => {};
     const interruptPromise = new Promise<undefined>((resolve, reject) => {
       const onAbort = () => resolve(undefined);
-      signal.addEventListener('abort', onAbort, { once: true });
-      removeAbortListener = () => signal.removeEventListener('abort', onAbort);
+      runSignal.addEventListener('abort', onAbort, { once: true });
+      removeAbortListener = () => runSignal.removeEventListener('abort', onAbort);
       timeoutId = setTimeout(() => {
         const timeoutError = new Error(`Generation timed out after ${timeoutMinutes} minute${timeoutMinutes === 1 ? '' : 's'}`);
+        attemptController.abort(timeoutError);
         reject(timeoutError);
-        // Attempt timeouts should fail the current candidate without cancelling
-        // the whole run; the shared abort signal remains reserved for Stop.
+        // Attempt timeouts fail only this candidate. Stop still uses the run
+        // controller, while this abort prevents stale local model calls from
+        // occupying the provider after the UI has moved to recovery/fallback.
       }, timeoutMinutes * 60_000);
     });
 
@@ -2537,6 +2554,16 @@ export class TuiBridgeService {
       removeAbortListener();
       if (timeoutId) clearTimeout(timeoutId);
     }
+  }
+
+  private linkDraftAttemptToRun(runSignal: AbortSignal, attemptController: AbortController): () => void {
+    if (runSignal.aborted) {
+      attemptController.abort(runSignal.reason);
+      return () => {};
+    }
+    const onAbort = () => attemptController.abort(runSignal.reason);
+    runSignal.addEventListener('abort', onAbort, { once: true });
+    return () => runSignal.removeEventListener('abort', onAbort);
   }
 
   /**

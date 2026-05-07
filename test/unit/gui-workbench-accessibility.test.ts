@@ -104,6 +104,12 @@ describe('GUI workbench accessibility contract', () => {
     expect(css).toContain('overflow-wrap: anywhere');
   });
 
+  it('passes the visible loop timeout into every Studio Generate submission', () => {
+    expect(app.match(/buildWorkbenchRunOptionsForMode\([^)]*timeoutMinutes/g)?.length).toBe(6);
+    expect(app).not.toContain('buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode),');
+    expect(app).not.toContain("buildWorkbenchRunOptionsForMode('draft', createMaxIterations, retryMode),");
+  });
+
   it('keeps operator-stopped runs visible with retry recourse instead of resetting to ready', () => {
     expect(bridgeHook).toContain('cancelledRunEventFromStatus');
     expect(bridgeHook).toContain("type: 'generation.cancelled'");

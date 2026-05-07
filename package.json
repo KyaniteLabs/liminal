@@ -34,6 +34,11 @@
     "test:cloud": "RUN_CLOUD_MODEL_TESTS=1 vitest run test/e2e --coverage=false",
     "gui": "npm run build && node scripts/utils/start-studio.js",
     "gui:dev": "cd gui && npm run dev",
+    "desktop": "pnpm desktop:build && electron electron/main.cjs",
+    "desktop:dev": "pnpm build && electron electron/main.cjs --dev",
+    "desktop:build": "pnpm build && pnpm --dir gui build",
+    "desktop:smoke": "node scripts/proof/electron-smoke.mjs",
+    "desktop:package:mac": "pnpm desktop:build && node scripts/packaging/package-electron-mac.mjs",
     "studio": "npm run gui",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -101,6 +106,7 @@
     "@typescript-eslint/parser": "^7.18.0",
     "@vitest/coverage-v8": "^4.1.2",
     "concurrently": "^9.1.0",
+    "electron": "^41.5.0",
     "eslint": "^8.57.1",
     "jsdom": "^29.0.1",
     "playwright": "^1.59.1",
@@ -173,6 +179,7 @@
     "onlyBuiltDependencies": [
       "sharp",
       "esbuild",
+      "electron",
       "protobufjs",
       "puppeteer",
       "better-sqlite3"

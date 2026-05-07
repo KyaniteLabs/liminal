@@ -4,11 +4,16 @@
  * Backend-only usage: node gui/start.js
  * Env: PORT=5174 (default), LIMINAL_CONFIG_PATH optional.
  */
+import express from 'express';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createApp } from './server.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const staticDir = process.env.LIMINAL_STUDIO_STATIC_DIR
+  ? path.resolve(process.env.LIMINAL_STUDIO_STATIC_DIR)
+  : path.join(__dirname, 'dist');
 const PORT = Number(process.env.PORT) || 5174;
 
 const app = createApp(undefined, PORT);
@@ -17,6 +22,13 @@ const app = createApp(undefined, PORT);
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true });
 });
+
+if (fs.existsSync(path.join(staticDir, 'index.html'))) {
+  app.use(express.static(staticDir));
+  app.get(/^\/(?!api\/|preview\b).*/, (_req, res) => {
+    res.sendFile(path.join(staticDir, 'index.html'));
+  });
+}
 
 const server = app.listen(PORT, () => {
   console.log(`Liminal GUI backend: http://localhost:${PORT}`);
@@ -31,7 +43,11 @@ const server = app.listen(PORT, () => {
   console.log(`  GET  /preview?version=N`);
   console.log(`  GET  /api/health`);
   console.log(`\nFull Studio: pnpm gui`);
-  console.log(`Backend-only mode is active; run the frontend separately with: cd gui && npm run dev`);
+  if (fs.existsSync(path.join(staticDir, 'index.html'))) {
+    console.log(`Static Studio frontend: ${staticDir}`);
+  } else {
+    console.log(`Backend-only mode is active; run the frontend separately with: cd gui && npm run dev`);
+  }
 });
 
 // Keep server ref so process stays alive when backgrounded

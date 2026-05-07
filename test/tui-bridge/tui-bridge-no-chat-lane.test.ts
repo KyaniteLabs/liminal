@@ -816,7 +816,7 @@ describe('Bubble Tea operator routing', () => {
     expect(service.getEvents(session.sessionId).some((event) => event.type === 'generation.complete')).toBe(false);
   });
 
-  it('keeps trying backup draft domains after one attempt times out', async () => {
+  it('aborts timed-out draft attempts before trying backup domains', async () => {
     vi.useFakeTimers();
     try {
       const service = new TuiBridgeService();
@@ -864,7 +864,7 @@ describe('Bubble Tea operator routing', () => {
       }
 
       expect(observedSignals).toHaveLength(2);
-      expect(observedSignals[0].aborted).toBe(false);
+      expect(observedSignals[0].aborted).toBe(true);
       expect(observedSignals[1].aborted).toBe(false);
       expect(service.getStatus(session.sessionId).run).not.toMatchObject({
         phase: 'failed',
@@ -881,6 +881,64 @@ describe('Bubble Tea operator routing', () => {
         }),
         expect.objectContaining({
           type: 'generation.complete',
+        }),
+      ]));
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('aborts a single-domain draft timeout before showing recovery', async () => {
+    vi.useFakeTimers();
+    try {
+      const service = new TuiBridgeService();
+      const session = service.createSession();
+      const pendingDraft = deferred<{
+        needsClarification: false;
+        code: string;
+        thinking: string;
+        model: string;
+      }>();
+      let observedSignal: AbortSignal | undefined;
+      draftGenerate.mockImplementationOnce((_prompt, _rawPrompt, _draft, signal) => {
+        observedSignal = signal as AbortSignal;
+        return pendingDraft.promise;
+      });
+
+      await service.submitInput(
+        session.sessionId,
+        {
+          mode: 'chat',
+          text: 'Create a GLSL fragment shader of a luminous nebula tunnel',
+          clientIntent: 'creative',
+          executionMode: 'draft',
+          timeoutMinutes: 1,
+        },
+        fakeLlm() as never,
+      );
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(observedSignal?.aborted).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(60_000);
+      await vi.advanceTimersByTimeAsync(0);
+      await waitFor(() => service.getEvents(session.sessionId)
+        .find((event) => event.type === 'run.lifecycle' && (event as any).run.phase === 'failed'));
+
+      expect(observedSignal?.aborted).toBe(true);
+      expect(service.getStatus(session.sessionId).run).toMatchObject({
+        phase: 'failed',
+        outcome: 'failed',
+        error: 'Generation timed out after 1 minute',
+      });
+      expect(service.getEvents(session.sessionId)).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          type: 'generation.attempt.failed',
+          error: 'Generation timed out after 1 minute',
+        }),
+        expect.objectContaining({
+          type: 'activity.updated',
+          message: expect.stringContaining('recovery choices are available'),
         }),
       ]));
     } finally {

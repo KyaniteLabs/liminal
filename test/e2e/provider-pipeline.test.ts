@@ -224,6 +224,37 @@ describe('OpenAI provider pipeline', () => {
     expect(body.model).toBe('repo-pipeline-qwen35-q8-prod');
   });
 
+  it('selects the strongest advertised LM Studio model instead of the first tiny model', async () => {
+    mockFetch
+      .mockResolvedValueOnce(mockModelsResponse([
+        'Council Election #1 - qwen3.5-0.8b',
+        'Council Election #2 - qwen3.5-0.8b',
+        'repo-pipeline-qwen35-q8-prod',
+        'final-qa-lfm-2-5-1-2b',
+      ]))
+      .mockResolvedValueOnce(mockJsonResponse({
+        choices: [{
+          message: { content: 'function setup(){createCanvas(160,160);}' },
+          finish_reason: 'stop',
+        }],
+        model: 'repo-pipeline-qwen35-q8-prod',
+      }));
+
+    const client = new LLMClient({
+      baseUrl: 'http://localhost:1234/v1',
+      model: 'local-model',
+    });
+
+    const result = await client.generate('You are a coder.', 'Create a tiny p5 setup.');
+
+    expect(result.success).toBe(true);
+    expect(result.provenance?.model).toBe('repo-pipeline-qwen35-q8-prod');
+
+    const completionCall = mockFetch.mock.calls[1];
+    const body = JSON.parse(completionCall[1].body as string);
+    expect(body.model).toBe('repo-pipeline-qwen35-q8-prod');
+  });
+
   it('does not treat local-model as an auto placeholder for non-LM Studio local endpoints', async () => {
     mockFetch
       .mockResolvedValueOnce(mockModelsResponse(['llama3.2']))

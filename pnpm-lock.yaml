@@ -12,7 +12,8 @@ overrides:
   lodash: ^4.18.0
   cookie: 0.7.0
   path-to-regexp: 8.4.0
-  basic-ftp: ^5.3.0
+  basic-ftp: 5.3.1
+  hono: 4.12.16
   ip-address: 10.2.0
   protobufjs: ^7.5.5
   vite: 8.0.9
@@ -840,7 +841,7 @@ packages:
     resolution: {integrity: sha512-GwtvgtXxnWsucXvbQXkRgqksiH2Qed37H9xHZocE5sA3N8O8O8/8FA3uclQXxXVzc9XBZuEOMK7+r02FmSpHtw==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
-      hono: ^4
+      hono: 4.12.16
 
   '@huggingface/jinja@0.2.2':
     resolution: {integrity: sha512-/KPde26khDUIPkTGU82jdtTW9UAuvUTumCAbFs/7giR0SxsvZC4hru51PBvpijH6BVkHcROcvZM/lpy5h1jRRA==}
@@ -862,7 +863,7 @@ packages:
   '@hyperframes/core@0.4.32':
     resolution: {integrity: sha512-oVQyqZhBKllYLztUC8224VvDT+nUiSQk7Gmzdh9Z5i3JK4diT1SSQhZGuafXUZUyaAbilglyXfID0veItw9upw==}
     peerDependencies:
-      hono: ^4.0.0
+      hono: 4.12.16
     peerDependenciesMeta:
       hono:
         optional: true
@@ -1740,8 +1741,8 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  basic-ftp@5.3.0:
-    resolution: {integrity: sha512-5K9eNNn7ywHPsYnFwjKgYH8Hf8B5emh7JKcPaVjjrMJFQQwGpwowEnZNEtHs7DfR7hCZsmaK3VA4HUK0YarT+w==}
+  basic-ftp@5.3.1:
+    resolution: {integrity: sha512-bopVNp6ugyA150DDuZfPFdt1KZ5a94ZDiwX4hMgZDzF+GttD80lEy8kj98kbyhLXnPvhtIo93mdnLIjpCAeeOw==}
     engines: {node: '>=10.0.0'}
 
   better-sqlite3@12.8.0:
@@ -2549,8 +2550,8 @@ packages:
   hls.js@1.6.16:
     resolution: {integrity: sha512-VSIRpLfRwlAAdGL4wiTucx2ScRipo0ed1FBatWkyt832jC4CReKstga6yIhYVwGu9LOBjuX9wzmRMeQdBJtzEA==}
 
-  hono@4.12.15:
-    resolution: {integrity: sha512-qM0jDhFEaCBb4TxoW7f53Qrpv9RBiayUHo0S52JudprkhvpjIrGoU1mnnr29Fvd1U335ZFPZQY1wlkqgfGXyLg==}
+  hono@4.12.16:
+    resolution: {integrity: sha512-jN0ZewiNAWSe5khM3EyCmBb250+b40wWbwNILNfEvq84VREWwOIkuUsFONk/3i3nqkz7Oe1PcpM2mwQEK2L9Kg==}
     engines: {node: '>=16.9.0'}
 
   html-encoding-sniffer@6.0.0:
@@ -4631,9 +4632,9 @@ snapshots:
   '@fontsource/space-mono@5.2.9':
     optional: true
 
-  '@hono/node-server@1.19.14(hono@4.12.15)':
+  '@hono/node-server@1.19.14(hono@4.12.16)':
     dependencies:
-      hono: 4.12.15
+      hono: 4.12.16
     optional: true
 
   '@huggingface/jinja@0.2.2': {}
@@ -4650,13 +4651,13 @@ snapshots:
 
   '@humanwhocodes/object-schema@2.0.3': {}
 
-  '@hyperframes/core@0.4.32(hono@4.12.15)':
+  '@hyperframes/core@0.4.32(hono@4.12.16)':
     dependencies:
       '@chenglou/pretext': 0.0.5
       postcss: 8.5.10
     optionalDependencies:
       esbuild: 0.25.12
-      hono: 4.12.15
+      hono: 4.12.16
       linkedom: 0.18.12
     transitivePeerDependencies:
       - canvas
@@ -4664,9 +4665,9 @@ snapshots:
 
   '@hyperframes/engine@0.4.32(typescript@5.9.3)':
     dependencies:
-      '@hono/node-server': 1.19.14(hono@4.12.15)
-      '@hyperframes/core': 0.4.32(hono@4.12.15)
-      hono: 4.12.15
+      '@hono/node-server': 1.19.14(hono@4.12.16)
+      '@hyperframes/core': 0.4.32(hono@4.12.16)
+      hono: 4.12.16
       linkedom: 0.18.12
       puppeteer: 24.40.0(typescript@5.9.3)
       puppeteer-core: 24.40.0
@@ -4694,10 +4695,10 @@ snapshots:
       '@fontsource/oswald': 5.2.8
       '@fontsource/outfit': 5.2.8
       '@fontsource/space-mono': 5.2.9
-      '@hono/node-server': 1.19.14(hono@4.12.15)
-      '@hyperframes/core': 0.4.32(hono@4.12.15)
+      '@hono/node-server': 1.19.14(hono@4.12.16)
+      '@hyperframes/core': 0.4.32(hono@4.12.16)
       '@hyperframes/engine': 0.4.32(typescript@5.9.3)
-      hono: 4.12.15
+      hono: 4.12.16
       linkedom: 0.18.12
       postcss: 8.5.10
       puppeteer: 24.40.0(typescript@5.9.3)
@@ -5625,7 +5626,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  basic-ftp@5.3.0: {}
+  basic-ftp@5.3.1: {}
 
   better-sqlite3@12.8.0:
     dependencies:
@@ -6495,7 +6496,7 @@ snapshots:
 
   get-uri@6.0.5:
     dependencies:
-      basic-ftp: 5.3.0
+      basic-ftp: 5.3.1
       data-uri-to-buffer: 6.0.2
       debug: 4.4.3
     transitivePeerDependencies:
@@ -6570,7 +6571,7 @@ snapshots:
   hls.js@1.6.16:
     optional: true
 
-  hono@4.12.15:
+  hono@4.12.16:
     optional: true
 
   html-encoding-sniffer@6.0.0(@noble/hashes@1.8.0):

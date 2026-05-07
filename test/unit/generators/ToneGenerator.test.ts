@@ -239,7 +239,7 @@ document.getElementById('startBtn').addEventListener('click', function() {
     expect(mockComplete).toHaveBeenCalledTimes(2);
   });
 
-  it('returns an explicit recovery scaffold when provider paths return no Tone code', async () => {
+  it('rejects instead of returning a recovery scaffold when provider paths return no Tone code', async () => {
     mockComplete.mockResolvedValue({ text: '', success: false, error: 'timeout' });
     mockToolLoop.mockResolvedValue({
       content: '',
@@ -250,11 +250,7 @@ document.getElementById('startBtn').addEventListener('click', function() {
     });
 
     const gen = new ToneGenerator();
-    const result = await gen.generate('warm drone');
 
-    expect(result).toContain('<!DOCTYPE html>');
-    expect(result).toContain('Generated recovery Tone.js scaffold');
-    expect(result).toContain('Tone.Transport.bpm.value=84');
-    expect(result).toContain('provider timed out');
+    await expect(gen.generate('warm drone')).rejects.toThrow('provider paths failed before returning valid Tone.js output');
   });
 });

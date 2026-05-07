@@ -10,6 +10,7 @@ import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBased
 import { LLMClient } from '../../llm/LLMClient.js';
 import { HTMLValidator } from '../../core/validators/HTMLValidator.js';
 import { ToneValidator } from '../../core/validators/ToneValidator.js';
+import { GenerationError } from '../../errors/GenerationError.js';
 
 const TONE_CDN_SCRIPT = '<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>';
 
@@ -45,9 +46,13 @@ export class ToneGenerator extends TierBasedGenerator {
     try {
       const code = await super.generate(tonePrompt, { ...options, maxTokens: options?.maxTokens ?? 8192 });
       return this.normalizeToneArtifact(code);
-    } catch {
-      // Keep the artist-facing route audible while making recovery discoverable in the artifact.
-      return this.buildRecoveryToneArtifact(prompt);
+    } catch (error) {
+      throw new GenerationError(
+        `ToneGenerator: provider paths failed before returning valid Tone.js output: ${this.describeError(error)}`,
+        'tone',
+        { prompt },
+        error instanceof Error ? error : undefined,
+      );
     }
   }
 
@@ -215,56 +220,8 @@ export class ToneGenerator extends TierBasedGenerator {
     return this.llm;
   }
 
-  private buildRecoveryToneArtifact(prompt: string): string {
-    const title = this.escapeHtml((prompt || 'Ambient synth').replace(/\s+/g, ' ').trim().slice(0, 80));
-    return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Tone.js Recovery Patch</title>
-${TONE_CDN_SCRIPT}
-<style>
-body{margin:0;min-height:100vh;display:grid;place-items:center;background:#111827;color:#e5e7eb;font-family:system-ui,sans-serif}
-main{display:grid;gap:12px;text-align:center;max-width:520px;padding:24px}
-button{border:1px solid #67e8f9;background:#0f172a;color:#f8fafc;border-radius:8px;padding:12px 18px;font:inherit;cursor:pointer}
-small{color:#93c5fd}
-</style>
-</head>
-<body>
-<main>
-<h1>${title}</h1>
-<button id="start">Start audio</button>
-<small>Generated recovery Tone.js scaffold.</small>
-</main>
-<!-- Liminal recovery: provider timed out before returning Tone.js, so this prompt-derived scaffold preserves an audible operator path. -->
-<script>
-const notes=["C3","E3","G3","B3","D4","A3"];
-document.getElementById("start").addEventListener("click",async()=>{
-  await Tone.start();
-  Tone.Transport.stop();
-  Tone.Transport.cancel();
-  Tone.Transport.bpm.value=84;
-  const reverb=new Tone.Reverb({decay:3,wet:0.35}).toDestination();
-  const delay=new Tone.FeedbackDelay("8n",0.28).connect(reverb);
-  const synth=new Tone.PolySynth(Tone.Synth,{oscillator:{type:"sine"},envelope:{attack:0.08,decay:0.25,sustain:0.45,release:1.4}}).connect(delay);
-  new Tone.Loop((time)=>{
-    const offset=Math.floor(Tone.Transport.seconds)%notes.length;
-    synth.triggerAttackRelease([notes[offset],notes[(offset+2)%notes.length]],"2n",time);
-  },"1n").start(0);
-  Tone.Transport.start();
-});
-</script>
-</body>
-</html>`;
-  }
-
-  private escapeHtml(value: string): string {
-    return value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+  private describeError(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
   }
 
   private isUsableToneDraft(code: string): boolean {

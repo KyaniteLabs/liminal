@@ -99,6 +99,7 @@ describe('GUI workbench accessibility contract', () => {
     expect(app).toContain('Try again');
     expect(app).toContain('Polish safely');
     expect(app).toContain('Switch medium');
+    expect(app).toContain('browser visual(?:\\s+browser visual)+');
     expect(css).toContain('.liminal-recourse-card');
     expect(css).toContain('overflow-wrap: anywhere');
   });

@@ -48,6 +48,12 @@ describe('GUI workbench accessibility contract', () => {
     expect(shell).not.toContain('open={activeMode !== primaryMode.id}');
   });
 
+  it('keeps closed navigation drawers from overlapping visible rail controls', () => {
+    expect(css).toContain('.liminal-secondary-tools:not([open]) > .liminal-secondary-tools__body');
+    expect(css).toContain('.liminal-subnav--drawer:not([open]) > .liminal-subnav__body');
+    expect(css).toContain('display: none');
+  });
+
   it('keeps internal process receipts out of the default preview panel', () => {
     expect(app).not.toContain('liminal-stage-process');
     expect(app).not.toContain('liminal-human-review-strip');

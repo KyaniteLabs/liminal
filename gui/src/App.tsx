@@ -596,7 +596,7 @@ export default function App() {
     if (!usesOrganismApi(currentMode)) {
       await bridge.submitPrompt(buildWorkbenchPrompt(currentMode, prompt), {
         clientIntent: 'creative',
-        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, currentMode),
+        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, currentMode, timeoutMinutes),
       });
       return;
     }
@@ -819,7 +819,7 @@ export default function App() {
       }
       void bridge.submitPrompt(buildWorkbenchPrompt(effectiveCreateMode, createPrompt), {
         clientIntent: 'creative',
-        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode),
+        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode, timeoutMinutes),
       });
       return;
     }
@@ -836,7 +836,7 @@ export default function App() {
     const clarifiedMode = detectPromptCreateMode(clarifiedPrompt) ?? createMode;
     void bridge.submitPrompt(buildWorkbenchPrompt(clarifiedMode, clarifiedPrompt), {
       clientIntent: 'creative',
-      ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, clarifiedMode),
+      ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, clarifiedMode, timeoutMinutes),
     });
   };
 
@@ -852,7 +852,7 @@ export default function App() {
     setDraftAdjustment('');
     void bridge.submitPrompt(buildWorkbenchPrompt(followupMode, followupPrompt), {
       clientIntent: 'creative',
-      ...buildWorkbenchRunOptionsForMode(executionMode, createMaxIterations, followupMode),
+      ...buildWorkbenchRunOptionsForMode(executionMode, createMaxIterations, followupMode, timeoutMinutes),
       creativePreferences: runReceipt ? { priorRunReceipt: runReceipt, revisionKind } : undefined,
     });
   };
@@ -866,7 +866,7 @@ export default function App() {
     setCreateExecutionMode('draft');
     void bridge.submitPrompt(buildWorkbenchPrompt(retryMode, prompt), {
       clientIntent: 'creative',
-      ...buildWorkbenchRunOptionsForMode('draft', createMaxIterations, retryMode),
+      ...buildWorkbenchRunOptionsForMode('draft', createMaxIterations, retryMode, timeoutMinutes),
     });
   };
 
@@ -896,7 +896,7 @@ export default function App() {
     setCreateExecutionMode('draft');
     void bridge.submitPrompt(buildWorkbenchPrompt(fallbackMode, fallbackPrompt), {
       clientIntent: 'creative',
-      ...buildWorkbenchRunOptionsForMode('draft', createMaxIterations, fallbackMode),
+      ...buildWorkbenchRunOptionsForMode('draft', createMaxIterations, fallbackMode, timeoutMinutes),
     });
   };
 

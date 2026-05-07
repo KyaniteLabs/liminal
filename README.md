@@ -46,6 +46,10 @@ liminal chat
 pnpm gui
 # or: liminal studio
 
+# Desktop Studio — Electron shell around the same local Studio
+pnpm desktop
+# package a local macOS app: pnpm desktop:package:mac
+
 # Bubble Tea operator cockpit (requires Go >= 1.21)
 pnpm tui
 # or: liminal tui

@@ -237,17 +237,21 @@ export abstract class TierBasedGenerator {
     }
 
     if (!response.code || response.code.trim() === '') {
-      const directResponse = await this.retryWithoutGeneratorTools(
+      const directAttempt = await this.retryWithoutGeneratorTools(
         prompt,
         systemPrompt,
         userPrompt,
         options?.signal,
         options?.maxTokens
       );
-      if (directResponse) {
-        response = directResponse;
+      if (directAttempt.response) {
+        response = directAttempt.response;
       } else {
-        throw new GenerationError(`${this.constructor.name}: LLM returned empty code`, this.domain);
+        const upstreamError = this.describeEmptyGenerationFailure(response.error, directAttempt.error);
+        throw new GenerationError(`${this.constructor.name}: ${upstreamError}`, this.domain, {
+          toolLoopError: response.error,
+          directRetryError: directAttempt.error,
+        });
       }
     }
 
@@ -352,10 +356,10 @@ export abstract class TierBasedGenerator {
     userPrompt: string,
     signal?: AbortSignal,
     maxTokens?: number
-  ): Promise<LLMResponse | null> {
+  ): Promise<{ response: LLMResponse | null; error?: string }> {
     if (typeof this.llm.complete !== 'function') {
       Logger.warn('TierBasedGenerator', `${this.domain} LLM client does not support direct completion retry`);
-      return null;
+      return { response: null };
     }
 
     Logger.warn('TierBasedGenerator', `${this.domain} tool loop returned empty code; retrying once without tools`);
@@ -372,16 +376,57 @@ export abstract class TierBasedGenerator {
       maxTokens,
       signal,
     });
-    if (!directResult) return null;
+    if (!directResult) return { response: null };
     const code = this.normalizeGeneratedContent(directResult.text ?? '').trim();
-    if (!code) return null;
+    if (!code) return { response: null, error: directResult.error };
     return {
-      code,
-      explanation: directResult.text,
-      success: true,
+      response: {
+        code,
+        explanation: directResult.text,
+        success: true,
+        error: directResult.error,
+        isComplete: this.isStructurallyComplete(code),
+      },
       error: directResult.error,
-      isComplete: this.isStructurallyComplete(code),
     };
+  }
+
+  private describeEmptyGenerationFailure(...errors: Array<string | undefined>): string {
+    const upstreamError = errors.find((error) => typeof error === 'string' && error.trim().length > 0);
+    if (upstreamError) {
+      return `LLM failed before returning code: ${this.formatProviderErrorForOperator(upstreamError)}`;
+    }
+    return 'LLM returned empty code';
+  }
+
+  private formatProviderErrorForOperator(error: string): string {
+    const extracted = this.extractProviderErrorMessage(error);
+    const message = extracted || error;
+    if (/invalid model identifier/i.test(message)) {
+      const config = this.llm.getConfig();
+      const provider = this.providerNameForOperator(config.baseUrl);
+      const model = config.model || 'the configured model';
+      return `${provider} cannot use model "${model}": ${message} Open ${provider} and load that model, or choose a loaded model in Settings.`;
+    }
+    return message;
+  }
+
+  private extractProviderErrorMessage(error: string): string | undefined {
+    const jsonStart = error.indexOf('{');
+    if (jsonStart < 0) return undefined;
+    try {
+      const parsed = JSON.parse(error.slice(jsonStart)) as { error?: { message?: unknown } };
+      return typeof parsed.error?.message === 'string' ? parsed.error.message : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private providerNameForOperator(baseUrl?: string): string {
+    const lower = (baseUrl || '').toLowerCase();
+    if (lower.includes('localhost:1234') || lower.includes('127.0.0.1:1234')) return 'LM Studio';
+    if (lower.includes('localhost:11434') || lower.includes('127.0.0.1:11434')) return 'Ollama';
+    return 'the provider';
   }
 
   private extractToolThinking(toolResult: unknown): string | undefined {
@@ -474,7 +519,7 @@ export abstract class TierBasedGenerator {
     signal?: AbortSignal
   ): Promise<LLMResponse | null> {
     Logger.info('TierBasedGenerator', `Attempting direct validation recovery: ${errorMessage}`);
-    const directResult = await this.retryWithoutGeneratorTools(
+    const directAttempt = await this.retryWithoutGeneratorTools(
       originalPrompt,
       systemPrompt,
       [
@@ -490,6 +535,7 @@ export abstract class TierBasedGenerator {
       ].join('\n'),
       signal
     );
+    const directResult = directAttempt.response;
     if (!directResult) return null;
     const revalidated = this.validateOutput(directResult.code);
     if (!revalidated.valid) {

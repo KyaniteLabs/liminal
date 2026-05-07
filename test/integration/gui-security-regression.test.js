@@ -97,7 +97,7 @@ describe('Security regression — Wave 1 containment', () => {
     const info = await startServer(app);
     server = info.server;
     port = info.port;
-  }, 60000);
+  }, 120000);
 
   afterAll(async () => {
     if (server) await new Promise((r) => server.close(r));

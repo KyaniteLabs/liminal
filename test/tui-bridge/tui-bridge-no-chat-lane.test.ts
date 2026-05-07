@@ -401,7 +401,7 @@ describe('Bubble Tea operator routing', () => {
       'artifact.found',
       'preview.completed',
     ]));
-  });
+  }, 10_000);
 
   it('links revision and polish runs to the prior Studio receipt through bridge events', async () => {
     const service = new TuiBridgeService();

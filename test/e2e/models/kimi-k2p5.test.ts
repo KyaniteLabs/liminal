@@ -11,7 +11,7 @@ const TEST_TIMEOUT = 120000;
 describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('Kimi-k2p5', () => {
   async function generateCode(systemPrompt: string, prompt: string): Promise<string> {
     const live = createLiveProviderClient('kimi');
-    expect(live, 'KIMI_API_KEY or configured Kimi provider is required for Kimi proof').not.toBeNull();
+    expect(live?.config.provider, 'KIMI_API_KEY or configured Kimi provider is required for Kimi proof').toBe('kimi');
     const response = await live!.client.generate(systemPrompt, prompt);
     expect(response.success).toBe(true);
     return response.code;

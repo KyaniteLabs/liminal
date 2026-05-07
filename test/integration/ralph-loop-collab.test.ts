@@ -43,7 +43,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
       });
 
       expect(result.iterations).toBe(1);
-      expect(result.code).not.toBeNull();
+      expect(result.code).toEqual(expect.stringMatching(/\S/));
     });
 
     it('works with music domain', async () => {
@@ -65,7 +65,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
       });
 
       expect(result.iterations).toBe(1);
-      expect(result.code).not.toBeNull();
+      expect(result.code).toEqual(expect.stringMatching(/\S/));
     });
   });
 

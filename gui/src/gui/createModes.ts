@@ -77,12 +77,17 @@ export function requiresBridgeSession(mode: CreateModeId): boolean {
 }
 
 export function buildWorkbenchRunOptions(executionMode: WorkbenchExecutionMode, maxIterations: number) {
+  return buildWorkbenchRunOptionsForMode(executionMode, maxIterations, 'auto');
+}
+
+export function buildWorkbenchRunOptionsForMode(executionMode: WorkbenchExecutionMode, maxIterations: number, mode: CreateModeId) {
+  const slowerDraftModes: CreateModeId[] = ['hydra', 'strudel', 'tone', 'revideo', 'hyperframes'];
   if (executionMode === 'draft') {
     return {
       executionMode: 'draft' as const,
       maxIterations: 1,
       candidateCount: 1,
-      timeoutMinutes: 1,
+      timeoutMinutes: slowerDraftModes.includes(mode) ? 3 : 1,
     };
   }
 

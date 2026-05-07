@@ -75,6 +75,54 @@ function resolveCliProvider(value) {
   return CLI_PROVIDER_DEFAULTS[normalized] ? normalized : undefined;
 }
 
+function printProviderHelp() {
+  console.log('');
+  console.log('🔌 Liminal Provider Setup');
+  console.log('');
+  console.log('USAGE:');
+  console.log('  liminal provider help');
+  console.log('  liminal provider list');
+  console.log('  liminal provider status');
+  console.log('  liminal --configure --provider <name>');
+  console.log('');
+  console.log('PROVIDERS:');
+  for (const [name, provider] of Object.entries(CLI_PROVIDER_DEFAULTS)) {
+    const keyHint = provider.requiresKey && provider.apiKeyEnv
+      ? `requires ${provider.apiKeyEnv}`
+      : 'no API key required';
+    console.log(`  ${name.padEnd(10)} ${provider.label.padEnd(13)} model=${provider.model} (${keyHint})`);
+  }
+  console.log('');
+  console.log('EXAMPLES:');
+  console.log('  liminal --configure --provider lmstudio');
+  console.log('  GLM_API_KEY=... liminal --provider glm "make a p5 sketch"');
+  console.log('  liminal provider status');
+  console.log('');
+}
+
+function printProviderList() {
+  console.log('');
+  console.log('Available Liminal providers:');
+  for (const name of CLI_PROVIDER_NAMES) {
+    const provider = CLI_PROVIDER_DEFAULTS[name];
+    console.log(`  ${name.padEnd(10)} ${provider.label} (${provider.baseUrl})`);
+  }
+  console.log('');
+}
+
+function printProviderStatus() {
+  console.log('');
+  console.log('Liminal provider readiness:');
+  for (const [name, provider] of Object.entries(CLI_PROVIDER_DEFAULTS)) {
+    const configured = !provider.requiresKey || Boolean(process.env[provider.apiKeyEnv]);
+    const status = configured ? 'ready' : `missing ${provider.apiKeyEnv}`;
+    console.log(`  ${name.padEnd(10)} ${status}`);
+  }
+  console.log('');
+  console.log('Use `liminal --configure --provider <name>` to write ~/.liminal/config.json.');
+  console.log('');
+}
+
 // Parse flags
 const flags = {};
 let cmd = null;
@@ -229,6 +277,7 @@ function printHelp() {
   console.log('  tui                         Launch Bubble Tea operator cockpit');
   console.log('  bridge [port]               Start TUI bridge server (default: 3000)');
   console.log('  studio                     Launch GUI workbench (backend + browser app)');
+  console.log('  provider <help|list|status> Show provider setup and missing key diagnostics');
   console.log('  bubbletea [port]            Launch Bubble Tea operator cockpit with bridge');
   console.log('  operator [port]             Alias for Bubble Tea operator cockpit');
   console.log('  serve, s [port]             Start preview server (default: 3456)');
@@ -307,6 +356,26 @@ if (flags.help) {
 if (flags.version) {
   console.log(`Liminal v${packageJson.version}`);
   process.exit(0);
+}
+
+if (cmd === 'provider') {
+  const subCmd = cmdArgs[0] || 'help';
+  if (subCmd === 'help' || subCmd === '--help' || subCmd === '-h') {
+    printProviderHelp();
+    process.exit(0);
+  }
+  if (subCmd === 'list') {
+    printProviderList();
+    process.exit(0);
+  }
+  if (subCmd === 'status') {
+    printProviderStatus();
+    process.exit(0);
+  }
+
+  console.error(`Unknown provider subcommand: ${subCmd}`);
+  console.error('Usage: liminal provider <help|list|status>');
+  process.exit(1);
 }
 
 if (cmd === 'self-improve') {

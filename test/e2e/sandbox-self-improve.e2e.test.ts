@@ -80,7 +80,7 @@ describe('E2E sandbox self-improve', () => {
 
       const result = await requestImprovement(MINIMAL_P5);
 
-      expect(result).not.toBeNull();
+      expect(result).toMatchObject({ code: expect.any(String) });
       expect(result).toHaveProperty('code');
       expect(typeof result.code).toBe('string');
       expect(result.code.length).toBeGreaterThan(0);

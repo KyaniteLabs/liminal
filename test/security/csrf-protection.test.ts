@@ -82,6 +82,6 @@ describe('CSRF Protection', () => {
     const response = await fetch(`${baseUrl}/api/csrf-token`);
     expect(response.status).toBe(200);
     const data = await response.json();
-    expect(data.csrfToken).toBeTruthy();
+    expect(data.csrfToken).toEqual(expect.stringMatching(/\S/));
   });
 });

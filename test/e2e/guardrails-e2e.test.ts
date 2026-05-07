@@ -183,7 +183,7 @@ describe('E2E Guardrails with Real LLM', () => {
       // API calls violation has terminal action 'rate_limited', so it should block
       expect(result.passed).toBe(false);
       expect(result.blockingResults.some(r => r.guardrailId.includes('resource'))).toBe(true);
-    });
+    }, E2E_TIMEOUT_MS);
 
     it('should enforce tool permissions', async () => {
       const result = await system.registry.evaluate({
@@ -208,7 +208,7 @@ describe('E2E Guardrails with Real LLM', () => {
 
       expect(result.passed).toBe(false);
       expect(result.blockingResults.some(r => r.guardrailId.includes('tool-permission'))).toBe(true);
-    });
+    }, E2E_TIMEOUT_MS);
   });
 
   describe('Phase 2: Validation Layer', () => {
@@ -336,7 +336,7 @@ describe('E2E Guardrails with Real LLM', () => {
         failure.context
       );
 
-      expect(suggestion.suggestion).not.toBeNull();
+      expect(suggestion.suggestion).toEqual(expect.stringMatching(/\S/));
       expect(suggestion.confidence).toBeGreaterThan(0);
     });
 
@@ -370,7 +370,7 @@ describe('E2E Guardrails with Real LLM', () => {
       };
 
       const rule = await constitution.learnFromFailure(failure);
-      expect(rule).not.toBeNull();
+      expect(rule).toMatchObject({ id: expect.stringMatching(/\S/), confidence: expect.any(Number) });
       
       const initialConfidence = rule!.confidence;
       

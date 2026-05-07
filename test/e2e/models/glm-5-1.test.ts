@@ -11,7 +11,7 @@ const TEST_TIMEOUT = 120000;
 describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('GLM configured cloud model', () => {
   async function generateCode(systemPrompt: string, prompt: string): Promise<string> {
     const live = createLiveProviderClient('glm');
-    expect(live, 'configured GLM provider is required for GLM model proof').not.toBeNull();
+    expect(live?.config.provider, 'configured GLM provider is required for GLM model proof').toBe('glm');
     const response = await live!.client.generate(systemPrompt, prompt);
     expect(response.success).toBe(true);
     return response.code;

@@ -49,6 +49,14 @@ describe('CLI Integration Tests', () => {
       expect(result.stdout).toContain('Liminal');
     }, 10000);
 
+    test('should show provider setup help without starting generation', async () => {
+      const result = await runCLI(['provider', 'help']);
+      expect(result.exitCode).toBe(0);
+      expect(result.stdout).toContain('Liminal Provider Setup');
+      expect(result.stdout).toContain('GLM_API_KEY');
+      expect(result.stdout).not.toContain('Generating: provider help');
+    }, 10000);
+
     test('should generate with fast LM Studio model', async () => {
       // Skip if no LLM available
       if (!await isLLMAvailable()) {

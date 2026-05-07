@@ -9,7 +9,7 @@ import {
 import { WorkbenchShell } from './components/WorkbenchShell';
 import { useEventStream } from './components/activity/hooks';
 import {
-  buildWorkbenchRunOptions,
+  buildWorkbenchRunOptionsForMode,
   buildWorkbenchPrompt,
   CREATE_MODE_OPTIONS,
   detectPromptCreateMode,
@@ -596,7 +596,7 @@ export default function App() {
     if (!usesOrganismApi(currentMode)) {
       await bridge.submitPrompt(buildWorkbenchPrompt(currentMode, prompt), {
         clientIntent: 'creative',
-        ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
+        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, currentMode),
       });
       return;
     }
@@ -817,7 +817,7 @@ export default function App() {
       }
       void bridge.submitPrompt(buildWorkbenchPrompt(effectiveCreateMode, createPrompt), {
         clientIntent: 'creative',
-        ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
+        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode),
       });
       return;
     }
@@ -834,7 +834,7 @@ export default function App() {
     const clarifiedMode = detectPromptCreateMode(clarifiedPrompt) ?? createMode;
     void bridge.submitPrompt(buildWorkbenchPrompt(clarifiedMode, clarifiedPrompt), {
       clientIntent: 'creative',
-      ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
+      ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, clarifiedMode),
     });
   };
 
@@ -850,7 +850,7 @@ export default function App() {
     setDraftAdjustment('');
     void bridge.submitPrompt(buildWorkbenchPrompt(followupMode, followupPrompt), {
       clientIntent: 'creative',
-      ...buildWorkbenchRunOptions(executionMode, createMaxIterations),
+      ...buildWorkbenchRunOptionsForMode(executionMode, createMaxIterations, followupMode),
       creativePreferences: runReceipt ? { priorRunReceipt: runReceipt, revisionKind } : undefined,
     });
   };

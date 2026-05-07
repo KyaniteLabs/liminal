@@ -163,6 +163,7 @@ export class ShaderGenerator extends TierBasedGenerator {
 
   private injectCommonHelpers(code: string): string {
     code = this.repairCommonLocalModelIssues(code);
+    code = this.ensureMainEntrypoint(code);
     const usesFbm = /\bfbm\s*\(/.test(code);
     const definesFbm = /\b(?:float|vec[234])\s+fbm\s*\(/.test(code);
     if (!usesFbm || definesFbm) return code;
@@ -199,6 +200,45 @@ export class ShaderGenerator extends TierBasedGenerator {
       return `${code.slice(0, insertAt)}\n${helper}${code.slice(insertAt)}`;
     }
     return `${helper}${code}`;
+  }
+
+  private ensureMainEntrypoint(code: string): string {
+    if (/\bvoid\s+main\s*\(/.test(code)) return code;
+    if (/\bvoid\s+mainImage\s*\(/.test(code)) {
+      if (this.isGlsl300(code)) {
+        const declaredOutput = this.findDeclaredFragmentOutput(code);
+        const outputVariable = declaredOutput ?? 'liminalFragColor';
+        const shader = declaredOutput ? code.trim() : this.insertGlsl300FragmentOutput(code, outputVariable);
+        return `${shader}\nvoid main(){mainImage(${outputVariable},gl_FragCoord.xy);}`;
+      }
+      return `${code.trim()}\nvoid main(){mainImage(gl_FragColor,gl_FragCoord.xy);}`;
+    }
+    return code;
+  }
+
+  private isGlsl300(code: string): boolean {
+    return /^\s*#version\s+300\s+es\b/m.test(code);
+  }
+
+  private findDeclaredFragmentOutput(code: string): string | null {
+    const match = code.match(/^\s*(?:layout\s*\([^)]*\)\s*)?out\s+(?:(?:lowp|mediump|highp)\s+)?vec4\s+([A-Za-z_]\w*)\s*;/m);
+    return match?.[1] ?? null;
+  }
+
+  private insertGlsl300FragmentOutput(code: string, outputVariable: string): string {
+    const declaration = `out vec4 ${outputVariable};`;
+    const trimmed = code.trim();
+    const precisionMatch = trimmed.match(/^\s*precision\s+(?:lowp|mediump|highp)\s+float\s*;\s*/m);
+    if (precisionMatch?.index !== undefined) {
+      const insertAt = precisionMatch.index + precisionMatch[0].length;
+      return `${trimmed.slice(0, insertAt)}\n${declaration}\n${trimmed.slice(insertAt)}`;
+    }
+    const versionMatch = trimmed.match(/^\s*#version\s+300\s+es[^\n]*\n?/m);
+    if (versionMatch?.index !== undefined) {
+      const insertAt = versionMatch.index + versionMatch[0].length;
+      return `${trimmed.slice(0, insertAt)}${declaration}\n${trimmed.slice(insertAt)}`;
+    }
+    return `${declaration}\n${trimmed}`;
   }
 
   private repairCommonLocalModelIssues(code: string): string {

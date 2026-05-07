@@ -81,6 +81,34 @@ describe('ShaderGenerator', () => {
     expect(wrapped).toContain('void main(){mainImage(gl_FragColor,gl_FragCoord.xy);}');
   });
 
+  it('normalizes Shadertoy mainImage output before raw artifact validation', () => {
+    const gen = new ExposedShaderGenerator();
+    const sanitized = (gen as any).sanitizeShaderCode('precision mediump float;\nuniform vec2 u_resolution;\nuniform float u_time;\nfloat noise(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233))) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord) { vec2 uv = fragCoord / u_resolution; float n = noise(uv + u_time); fragColor = vec4(uv.x, n, sin(u_time) * 0.5 + 0.5, 1.0); }');
+
+    expect(sanitized).toContain('void main(){mainImage(gl_FragColor,gl_FragCoord.xy);}');
+    expect(gen.validate(sanitized).valid).toBe(true);
+  });
+
+  it('normalizes GLSL 300 mainImage output with an explicit fragment output variable', () => {
+    const gen = new ExposedShaderGenerator();
+    const sanitized = (gen as any).sanitizeShaderCode('#version 300 es\nprecision highp float;\nuniform vec2 u_resolution;\nuniform float u_time;\nfloat noise(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233))) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord) { vec2 uv = fragCoord / u_resolution; float n = noise(uv + u_time); fragColor = vec4(uv.x, n, sin(u_time) * 0.5 + 0.5, 1.0); }');
+
+    expect(sanitized).toContain('out vec4 liminalFragColor;');
+    expect(sanitized).toContain('void main(){mainImage(liminalFragColor,gl_FragCoord.xy);}');
+    expect(sanitized).not.toContain('mainImage(gl_FragColor');
+    expect(gen.validate(sanitized).valid).toBe(true);
+  });
+
+  it('uses the declared GLSL 300 fragment output variable when wrapping mainImage', () => {
+    const gen = new ExposedShaderGenerator();
+    const sanitized = (gen as any).sanitizeShaderCode('#version 300 es\nprecision highp float;\nout vec4 fragColor;\nuniform vec2 u_resolution;\nuniform float u_time;\nfloat noise(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233))) * 43758.5453); }\nvoid mainImage(out vec4 color, in vec2 fragCoord) { vec2 uv = fragCoord / u_resolution; float n = noise(uv + u_time); color = vec4(uv.x, n, sin(u_time) * 0.5 + 0.5, 1.0); }');
+
+    expect(sanitized).toContain('out vec4 fragColor;');
+    expect(sanitized).toContain('void main(){mainImage(fragColor,gl_FragCoord.xy);}');
+    expect(sanitized).not.toContain('mainImage(gl_FragColor');
+    expect(gen.validate(sanitized).valid).toBe(true);
+  });
+
   it('uses a matching GLSL 300 vertex shader for version 300 fragments', () => {
     const gen = new ShaderGenerator();
     const wrapped = gen.wrapForGallery('#version 300 es\nprecision highp float;\nin vec2 v_uv;out vec4 fragColor;void main(){fragColor=vec4(v_uv,0.0,1.0);}');

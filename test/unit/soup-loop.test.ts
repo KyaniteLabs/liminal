@@ -24,7 +24,7 @@ describe('SoupLoop (W1-S)', () => {
     expect(steps.length).toBeGreaterThanOrEqual(1);
     // Each step should attempt a merge (merged may be false if the merge scores lower)
     expect(steps.every((s) => s.populationSize === 3)).toBe(true);
-    expect(result.bestCode).not.toBeNull();
+    expect(result.bestCode).toEqual(expect.stringMatching(/\S/));
     expect(result.bestScore).toBeGreaterThanOrEqual(0);
   });
 });

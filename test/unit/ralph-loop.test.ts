@@ -779,8 +779,8 @@ describe('RalphLoop', () => {
         onMergeStep: (data) => mergeSteps.push(data),
       });
       expect(mergeSteps.length).toBe(2);
-      expect(mergeSteps[0].codeA).not.toBeNull();
-      expect(mergeSteps[0].codeB).not.toBeNull();
+      expect(mergeSteps[0].codeA).toEqual(expect.stringMatching(/\S/));
+      expect(mergeSteps[0].codeB).toEqual(expect.stringMatching(/\S/));
       // Smart merge extracts setup from A and draw from B — verify output is valid p5.js
       expect(mergeSteps[0].proposed).toMatch(/function\s+setup\s*\(/);
       expect(mergeSteps[0].proposed).toMatch(/function\s+draw\s*\(/);
@@ -814,7 +814,7 @@ describe('RalphLoop', () => {
         },
       });
       expect(result.iterations).toBe(1);
-      expect(result.code).not.toBeNull();
+      expect(result.code).toEqual(expect.stringMatching(/\S/));
     });
 
     it('loop accepts useCollab option without errors', async () => {
@@ -828,7 +828,7 @@ describe('RalphLoop', () => {
         },
       });
       expect(result.iterations).toBe(1);
-      expect(result.code).not.toBeNull();
+      expect(result.code).toEqual(expect.stringMatching(/\S/));
     });
 
     it('loop accepts collabDomain option', async () => {
@@ -840,7 +840,7 @@ describe('RalphLoop', () => {
         collabDomain: 'p5',
       });
       expect(result.iterations).toBe(1);
-      expect(result.code).not.toBeNull();
+      expect(result.code).toEqual(expect.stringMatching(/\S/));
     });
   });
 
@@ -905,7 +905,7 @@ describe('RalphLoop', () => {
       });
 
       // The callback should be accepted and not break the loop
-      expect(suggestions).not.toBeNull();
+      expect(suggestions).toEqual(expect.any(Array));
       expect(Array.isArray(suggestions)).toBe(true);
     });
 

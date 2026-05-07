@@ -269,7 +269,7 @@ describe('Anthropic provider pipeline', () => {
     expect(result.success).toBe(true);
     expect(result.code).toContain('console.log("result")');
     // Thinking should be captured via mapProviderResponse
-    expect(result.thinking).not.toBeNull();
+    expect(result.thinking).toEqual(expect.stringContaining('reason through this'));
     expect(result.thinking).toContain('reason through this');
 
     // Verify Anthropic-specific request format
@@ -364,7 +364,7 @@ describe('Ollama provider pipeline', () => {
     expect(result.success).toBe(true);
     expect(result.code).toContain('console.log("clean")');
     // thinking should be captured via ThinkingNormalizer
-    expect(result.thinking).not.toBeNull();
+    expect(result.thinking).toEqual(expect.stringContaining('simple hello'));
     expect(result.thinking).toContain('simple hello');
   });
 

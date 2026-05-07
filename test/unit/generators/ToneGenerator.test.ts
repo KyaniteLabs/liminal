@@ -134,6 +134,21 @@ document.getElementById('startBtn').addEventListener('click', function() {
     expect(result.error).toContain('truncated or orphaned HTML');
   });
 
+  it('injects the Tone.js CDN into complete HTML that uses Tone without loading it', async () => {
+    mockComplete.mockResolvedValueOnce({
+      text: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Tone.js Patch</title></head><body><button id="start">Start</button><script>document.getElementById("start").onclick=async()=>{await Tone.start();Tone.Transport.bpm.value=84;new Tone.Loop((time)=>new Tone.Synth().toDestination().triggerAttackRelease("C4","8n",time),"4n").start(0);Tone.Transport.start();};</script></body></html>',
+      success: true,
+    });
+
+    const gen = new ToneGenerator();
+    const result = await gen.generate('ambient synth');
+
+    expect(result).toContain('cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js');
+    expect(result).toContain('<title>Tone.js Patch</title><script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>');
+    expect(result).toContain('Tone.Transport.bpm.value=84');
+    expect(mockToolLoop).not.toHaveBeenCalled();
+  });
+
   it('requests a larger token budget for tool-assisted full Tone.js pages after direct retry fails', async () => {
     mockComplete.mockResolvedValue({ text: '', success: true });
     const gen = new ToneGenerator();
@@ -222,5 +237,24 @@ document.getElementById('startBtn').addEventListener('click', function() {
     expect(result).toContain('<head>');
     expect(result).toContain('Tone.Synth');
     expect(mockComplete).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns an explicit recovery scaffold when provider paths return no Tone code', async () => {
+    mockComplete.mockResolvedValue({ text: '', success: false, error: 'timeout' });
+    mockToolLoop.mockResolvedValue({
+      content: '',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: false,
+      error: 'timeout',
+    });
+
+    const gen = new ToneGenerator();
+    const result = await gen.generate('warm drone');
+
+    expect(result).toContain('<!DOCTYPE html>');
+    expect(result).toContain('Generated recovery Tone.js scaffold');
+    expect(result).toContain('Tone.Transport.bpm.value=84');
+    expect(result).toContain('provider timed out');
   });
 });

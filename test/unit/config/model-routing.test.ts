@@ -173,7 +173,7 @@ describe('getMinSizeForDomain', () => {
 describe('getModelRanking', () => {
   it('returns ranking with specific values for a known domain and model', () => {
     const ranking = getModelRanking('p5', 'minimax-m2.5');
-    expect(ranking).not.toBeUndefined();
+    expect(ranking?.id).toBe('minimax-m2.5');
     expect(ranking!.id).toBe('minimax-m2.5');
     expect(ranking!.quality).toBe(9);
     expect(ranking!.speed).toBe(10);
@@ -192,7 +192,7 @@ describe('getModelRanking', () => {
 
   it('returns correct low ranking for three.js qwen3.5-9b failure', () => {
     const ranking = getModelRanking('three', 'qwen3.5-9b');
-    expect(ranking).not.toBeUndefined();
+    expect(ranking?.id).toBe('qwen3.5-9b');
     expect(ranking!.quality).toBe(1);
     expect(ranking!.reliability).toBe(3);
     expect(ranking!.issues).toEqual(['FAILED - 66b empty output']);

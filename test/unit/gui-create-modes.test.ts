@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildWorkbenchPrompt,
   buildWorkbenchRunOptions,
+  buildWorkbenchRunOptionsForMode,
   CREATE_MODE_OPTIONS,
   detectPromptCreateMode,
   getCreateModeOption,
@@ -81,6 +82,21 @@ describe('createModes', () => {
       maxIterations: 7,
       candidateCount: 1,
       timeoutMinutes: 3,
+    });
+  });
+
+  it('gives slower draft domains enough time to return a visible preview', () => {
+    expect(buildWorkbenchRunOptionsForMode('draft', 7, 'strudel')).toMatchObject({
+      executionMode: 'draft',
+      timeoutMinutes: 3,
+    });
+    expect(buildWorkbenchRunOptionsForMode('draft', 7, 'hydra')).toMatchObject({
+      executionMode: 'draft',
+      timeoutMinutes: 3,
+    });
+    expect(buildWorkbenchRunOptionsForMode('draft', 7, 'p5')).toMatchObject({
+      executionMode: 'draft',
+      timeoutMinutes: 1,
     });
   });
 });

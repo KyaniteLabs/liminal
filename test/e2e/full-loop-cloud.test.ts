@@ -50,7 +50,10 @@ describe('E2E full loop (cloud LLM)', () => {
   test.skipIf(process.env.CI || !process.env.RUN_CLOUD_MODEL_TESTS)('run() full loop with configured cloud provider: result has code, iterations, output files', async () => {
     const repoRoot = process.cwd();
     const providerConfig = applyProviderEnv('glm');
-    expect(providerConfig, 'configured GLM provider is required for cloud full-loop proof').not.toBeNull();
+    expect(providerConfig, 'configured GLM provider is required for cloud full-loop proof').toMatchObject({
+      provider: 'glm',
+      model: expect.stringMatching(/\S/),
+    });
 
     const distPath = path.join(repoRoot, 'dist', 'index.js');
     if (!fs.existsSync(distPath)) {
@@ -73,8 +76,8 @@ describe('E2E full loop (cloud LLM)', () => {
         galleryDir: runRoot.galleryDir,
       });
 
-      expect(result).not.toBeNull();
-      expect(result.code).not.toBeNull();
+      expect(result).toMatchObject({ iterations: expect.any(Number), code: expect.any(String) });
+      expect(result.code.length).toBeGreaterThan(0);
       expect(typeof result.code).toBe('string');
 
       // Skip assertions if the LLM backend was unreachable (code contains error comment)
@@ -86,8 +89,8 @@ describe('E2E full loop (cloud LLM)', () => {
       expect(result.iterations).toBeGreaterThanOrEqual(1);
       expect(result.code).toMatch(/function\s+setup\s*\(/);
       expect(result.code).toMatch(/function\s+draw\s*\(/);
-      expect(result.htmlPath).not.toBeNull();
-      expect(result.jsPath).not.toBeNull();
+      expect(result.htmlPath).toEqual(expect.stringMatching(/\.html$/));
+      expect(result.jsPath).toEqual(expect.stringMatching(/\.js$/));
       expect(fs.existsSync(result.htmlPath!)).toBe(true);
       expect(fs.existsSync(result.jsPath!)).toBe(true);
     } catch (err) {

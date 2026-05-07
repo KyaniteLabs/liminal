@@ -21,7 +21,7 @@ describe('StyleBlender', () => {
       { profile: profileA, weight: 1 },
       { profile: profileB, weight: 1 },
     ]);
-    expect(result.name).toContain('+');
+    expect(result.name).toBe('Minimalist + Expressionist');
     expect(result.weights.complexity).toBeCloseTo(0.55, 3);
   });
 

@@ -14,7 +14,7 @@ describe.skipIf(!process.env.RUN_MINIMAX_HIGHSPEED_MODEL_TESTS)('MiniMax-M2.7-hi
   it('generates p5.js quickly', async () => {
     const startTime = Date.now();
     const live = createLiveProviderClient('minimax', 'MiniMax-M2.7-highspeed');
-    expect(live, 'MINIMAX_API_KEY with highspeed entitlement is required for MiniMax highspeed proof').not.toBeNull();
+    expect(live?.config.model, 'MINIMAX_API_KEY with highspeed entitlement is required for MiniMax highspeed proof').toBe('MiniMax-M2.7-highspeed');
     const response = await live!.client.generate(
       'You are a p5.js coder. Output raw JavaScript only.',
       'Create a p5.js sketch with setup(), draw(), createCanvas(), and a blue circle.',

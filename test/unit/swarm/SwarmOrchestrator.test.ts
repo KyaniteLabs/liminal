@@ -385,7 +385,7 @@ describe('SwarmOrchestrator', () => {
       orchestrator.setDNA(null);
       const result = await orchestrator.run('test prompt');
 
-      expect(result).toBeTruthy();
+      expect(result).toMatchObject({ rounds: expect.any(Array), converged: expect.any(Boolean) });
       expect(result.rounds).toHaveLength(1);
     });
   });
@@ -462,7 +462,7 @@ describe('SwarmOrchestrator', () => {
 
       // Should not throw
       const result = await orchestrator.run('create a sketch');
-      expect(result).toBeTruthy();
+      expect(result).toMatchObject({ rounds: expect.any(Array), converged: expect.any(Boolean) });
       expect(mockLoggerWarn).toHaveBeenCalledWith(
         'SwarmOrchestrator',
         expect.stringContaining('Failed to save')
@@ -643,7 +643,7 @@ describe('SwarmOrchestrator', () => {
       const errorOutput = [...outputs.values()].find(
         (o: any) => o.content.startsWith('[Generation error')
       );
-      expect(errorOutput).toBeTruthy();
+      expect(errorOutput?.content).toContain('[Generation error');
       expect(errorOutput!.content).toContain('API timeout');
     });
 
@@ -666,7 +666,7 @@ describe('SwarmOrchestrator', () => {
       const errorOutput = [...outputs.values()].find(
         (o: any) => o.content.startsWith('[Generation error')
       );
-      expect(errorOutput).toBeTruthy();
+      expect(errorOutput?.content).toContain('[Generation error');
     });
   });
 
@@ -755,7 +755,7 @@ describe('SwarmOrchestrator', () => {
       expect(result.seed).toBe('test seed');
       expect(result.constraint).toBe('test constraint');
       expect(result.outputs.size).toBe(2);
-      expect(result.winnerId).toBeTruthy();
+      expect(result.winnerId).toEqual(expect.stringMatching(/\S/));
     });
 
     it('uses provided personas instead of default', async () => {
@@ -874,7 +874,7 @@ describe('SwarmOrchestrator', () => {
       const orchestrator = new SwarmOrchestrator(undefined, {
         callOllama: createMockOllama(),
       });
-      expect(orchestrator.getRoutineChannel()).toBeTruthy();
+      expect(orchestrator.getRoutineChannel().constructor.name).toBe('RoutineChannel');
     });
 
     it('getRoundCompressedSummary returns undefined for empty round', () => {

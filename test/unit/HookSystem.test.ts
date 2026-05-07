@@ -5,7 +5,7 @@ describe('HookSystem', () => {
   it('registers and executes a hook', async () => {
     const hs = new HookSystem();
     const id = hs.register('preGeneration', async (ctx) => ({ ...ctx, prompt: ctx.prompt + '!' }));
-    expect(id).toBeTruthy();
+    expect(id).toMatch(/^hook-[a-z0-9]+-0$/);
     const result = await hs.execute('preGeneration', { prompt: 'hello', domain: 'p5' });
     expect(result.prompt).toBe('hello!');
   });

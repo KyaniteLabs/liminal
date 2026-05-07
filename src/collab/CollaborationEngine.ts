@@ -15,6 +15,7 @@ import { SwarmOrchestrator, type SwarmOrchestratorOptions } from '../swarm/Swarm
 import type { SwarmConfig, SwarmMode, SwarmResult } from '../swarm/types.js';
 import { Domain } from '../types/domains.js';
 import { ScoringEngine } from '../core/ScoringEngine.js';
+import { abortable, throwIfAborted } from '../utils/abort.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,6 +62,8 @@ export interface CollaborationEngineConfig {
   maxRounds?: number;
   /** LLM caller — shared across strategies. */
   callLLM: (prompt: string, systemPrompt?: string) => Promise<string>;
+  /** Optional cancellation signal for the collaboration run. */
+  signal?: AbortSignal;
   /** Swarm-specific config. */
   swarmConfig?: Partial<SwarmConfig>;
   /** Swarm-specific options. */
@@ -92,6 +95,7 @@ export class CollaborationEngine {
    * Run collaboration using the swarm orchestrator.
    */
   async run(prompt: string): Promise<CollaborationEngineResult> {
+    throwIfAborted(this.config.signal);
     const swarmMode = (this.config.swarmConfig?.mode ?? 'hybrid') as SwarmMode;
     const systemPrompt = this.config.systemPrompt ?? '';
     const swarmConfig = {
@@ -102,11 +106,18 @@ export class CollaborationEngine {
 
     const orchestrator = new SwarmOrchestrator(swarmConfig, {
       ...this.config.swarmOptions,
+      signal: this.config.signal,
       // CollaborationEngine owns the runtime LLM adapter; keep swarm from silently
       // falling back to its default Ollama path when callers inject another provider.
-      callOllama: (_model, personaSystemPrompt, userPrompt) =>
-        this.config.callLLM(userPrompt, [systemPrompt, personaSystemPrompt].filter(Boolean).join('\n\n')),
+      callOllama: (_model, personaSystemPrompt, userPrompt) => {
+        throwIfAborted(this.config.signal);
+        return abortable(
+          this.config.callLLM(userPrompt, [systemPrompt, personaSystemPrompt].filter(Boolean).join('\n\n')),
+          this.config.signal,
+        );
+      },
       onProgress: (data) => {
+        throwIfAborted(this.config.signal);
         this.config.onProgress?.({
           mode: 'swarm',
           phaseName: 'Round',
@@ -116,8 +127,10 @@ export class CollaborationEngine {
       },
     });
 
-    const result = await orchestrator.run(prompt, swarmMode);
+    const result = await abortable(orchestrator.run(prompt, swarmMode), this.config.signal);
+    throwIfAborted(this.config.signal);
     const score = await this.scoringEngine.quick(result.finalOutput);
+    throwIfAborted(this.config.signal);
 
     return {
       output: result.finalOutput,

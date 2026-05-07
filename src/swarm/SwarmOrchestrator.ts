@@ -15,6 +15,7 @@ import { eventBus, EventTypes } from '../core/EventBus.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { Logger } from '../utils/Logger.js';
+import { abortable, isAbortError, throwIfAborted } from '../utils/abort.js';
 
 /** Default config for SwarmOrchestrator — single source of truth for all defaults. */
 const DEFAULT_SWARM_CONFIG: SwarmConfig = {
@@ -32,6 +33,7 @@ const DEFAULT_SWARM_CONFIG: SwarmConfig = {
 
 export interface SwarmOrchestratorOptions {
   callOllama?: (model: string, systemPrompt: string, userPrompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
+  signal?: AbortSignal;
   onProgress?: (data: { round: number; totalRounds: number; winnerId: string | null; converged: boolean }) => void;
   onFragmentsMined?: (fragments: MinedFragment[]) => void;
 }
@@ -61,6 +63,7 @@ export class SwarmOrchestrator {
   private config: SwarmConfig;
   private personas: SwarmPersona[];
   private callOllama: (model: string, systemPrompt: string, userPrompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
+  private signal?: AbortSignal;
   private dna: ProjectDNA | null = null;
 
   /** Emergent creative vocabulary — discovers technique patterns across rounds. */
@@ -85,6 +88,7 @@ export class SwarmOrchestrator {
 
     // Default Ollama caller
     this.callOllama = options?.callOllama ?? this.defaultOllamaCaller.bind(this);
+    this.signal = options?.signal;
 
     // Set progress callback from options
     this._onProgress = options?.onProgress;
@@ -370,6 +374,7 @@ export class SwarmOrchestrator {
    * Uses learned routing to select relevant experts for the prompt.
    */
   async run(prompt: string, mode?: SwarmMode): Promise<SwarmResult> {
+    throwIfAborted(this.signal);
     const startTime = Date.now();
     const effectiveMode = mode ?? this.config.mode;
     let currentSeed = prompt;
@@ -401,6 +406,7 @@ export class SwarmOrchestrator {
     }
 
     for (let roundNum = 1; roundNum <= this.config.maxRounds; roundNum++) {
+      throwIfAborted(this.signal);
       // Pick a constraint for this round
       const constraint = this.config.refinementConstraints[
         (roundNum - 1) % this.config.refinementConstraints.length
@@ -423,6 +429,7 @@ export class SwarmOrchestrator {
         prevWinnerOutputs,
         routedPersonas
       );
+      throwIfAborted(this.signal);
       rounds.push(result);
 
       // ── Agora routine channel: inter-agent messaging ──
@@ -540,6 +547,7 @@ export class SwarmOrchestrator {
         winnerId: result.winnerId,
         converged,
       });
+      throwIfAborted(this.signal);
     }
 
     // Collect all outputs
@@ -563,7 +571,9 @@ export class SwarmOrchestrator {
     };
 
     // Save session
+    throwIfAborted(this.signal);
     await this.saveSession(result);
+    throwIfAborted(this.signal);
 
     // Auto-mine fragments from the session
     const fragments = MiningEngine.mineResult(result);
@@ -587,6 +597,7 @@ export class SwarmOrchestrator {
     prevWinnerOutputs: string[],
     personas?: SwarmPersona[]
   ): Promise<RoundResult> {
+    throwIfAborted(this.signal);
     const effectiveSeed = `${seed}\n\nConstraint: ${constraint}`;
     
     // Use provided personas (routed) or fall back to all personas
@@ -600,6 +611,7 @@ export class SwarmOrchestrator {
       // competitive, hybrid, mesh all use parallel generation
       outputs = await this.generateParallel(effectiveSeed, roundNum, activePersonas);
     }
+    throwIfAborted(this.signal);
 
     // Conduct voting: heuristic for early rounds, LLM for final round only
     let votingResult: { scores: Map<string, number>; winnerId: string; votes: Map<string, Vote> };
@@ -621,6 +633,7 @@ export class SwarmOrchestrator {
         prevWinnerOutputs
       );
     }
+    throwIfAborted(this.signal);
 
     const winnerOutput = outputs.get(votingResult.winnerId);
     if (!winnerOutput) {
@@ -652,18 +665,23 @@ export class SwarmOrchestrator {
     const promises = personas.map(async (persona) => {
       const startTime = Date.now();
       try {
+        throwIfAborted(this.signal);
         const userPrompt = `Prompt: ${seed}\n\n${persona.constraints.map(c => `Constraint: ${c}`).join('\n')}`;
 
-        const content = await this.callOllama(
-          persona.model,
-          persona.systemPrompt,
-          userPrompt,
-          {
-            // All personas use same temperature - differentiation from system prompts
-            temperature: 0.7,
-            num_predict: persona.maxTokens,
-          }
+        const content = await abortable(
+          this.callOllama(
+            persona.model,
+            persona.systemPrompt,
+            userPrompt,
+            {
+              // All personas use same temperature - differentiation from system prompts
+              temperature: 0.7,
+              num_predict: persona.maxTokens,
+            },
+          ),
+          this.signal,
         );
+        throwIfAborted(this.signal);
 
         const cleanContent = this.extractCodeFromResponse(content);
 
@@ -677,6 +695,7 @@ export class SwarmOrchestrator {
           roundNum,
         };
       } catch (error) {
+        if (isAbortError(error)) throw error;
         return {
           personaId: persona.id,
           personaName: persona.displayName,
@@ -690,6 +709,7 @@ export class SwarmOrchestrator {
     });
 
     const results = await Promise.all(promises);
+    throwIfAborted(this.signal);
     
     // Build Map from results after all promises complete (race-free)
     const outputs = new Map<string, SwarmOutput>();
@@ -713,19 +733,24 @@ export class SwarmOrchestrator {
     for (const persona of personas) {
       const startTime = Date.now();
       try {
+        throwIfAborted(this.signal);
         const chainContext = currentChain.length > TRUNCATE_MEDIUM ? currentChain.slice(-TRUNCATE_MEDIUM) : currentChain;
         const userPrompt = `Context from previous outputs:\n${chainContext}\n\n${persona.constraints.map(c => `Constraint: ${c}`).join('\n')}`;
 
-        const content = await this.callOllama(
-          persona.model,
-          persona.systemPrompt,
-          userPrompt,
-          {
-            // All personas use same temperature - differentiation from system prompts
-            temperature: 0.7,
-            num_predict: persona.maxTokens,
-          }
+        const content = await abortable(
+          this.callOllama(
+            persona.model,
+            persona.systemPrompt,
+            userPrompt,
+            {
+              // All personas use same temperature - differentiation from system prompts
+              temperature: 0.7,
+              num_predict: persona.maxTokens,
+            },
+          ),
+          this.signal,
         );
+        throwIfAborted(this.signal);
 
         const cleanContent = this.extractCodeFromResponse(content);
 
@@ -741,6 +766,7 @@ export class SwarmOrchestrator {
 
         currentChain += `\n\n${persona.displayName}: ${cleanContent}`;
       } catch (error) {
+        if (isAbortError(error)) throw error;
         outputs.set(persona.id, {
           personaId: persona.id,
           personaName: persona.displayName,

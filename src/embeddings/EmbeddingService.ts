@@ -4,7 +4,7 @@
  * with OpenAI text-embedding-ada-002 as fallback.
  */
 
-import { pipeline, type FeatureExtractionPipeline } from '@xenova/transformers';
+import type { FeatureExtractionPipeline } from '@xenova/transformers';
 import { Logger } from '../utils/Logger.js';
 
 /** Configuration for embedding service */
@@ -31,6 +31,17 @@ export interface EmbeddingResult {
   dimension: number;
   /** Whether the embedding was cached */
   cached: boolean;
+}
+
+type TransformersModule = typeof import('@xenova/transformers');
+
+let transformersModulePromise: Promise<TransformersModule> | null = null;
+
+async function loadTransformers(): Promise<TransformersModule> {
+  // @xenova/transformers loads native optional image dependencies on import.
+  // Keep that out of ordinary CLI startup unless local embeddings are used.
+  transformersModulePromise ??= import('@xenova/transformers');
+  return transformersModulePromise;
 }
 
 /**
@@ -87,6 +98,7 @@ export class EmbeddingService {
           'EmbeddingService',
           `Loading local model: ${this.config.localModel}`
         );
+        const { pipeline } = await loadTransformers();
         this.localPipeline = await pipeline(
           'feature-extraction',
           this.config.localModel,

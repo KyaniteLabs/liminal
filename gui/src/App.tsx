@@ -879,10 +879,15 @@ export default function App() {
 
   const handleSwitchMediumAfterFailure = () => {
     const baseIdea = (createPrompt.trim() || 'Create the same visual idea.')
+      .replace(/\bglsl\s+fragment\s+shader\b/gi, 'browser visual')
       .replace(/\bfragment\s+shader\b/gi, 'browser visual')
       .replace(/\bglsl\s+shader\b/gi, 'browser visual')
       .replace(/\bglsl\b/gi, 'browser visual')
-      .replace(/\bshader\b/gi, 'visual');
+      .replace(/\bshader\b/gi, 'visual')
+      .replace(/\bbrowser visual(?:\s+browser visual)+\b/gi, 'browser visual')
+      .replace(/\bvisual(?:\s+visual)+\b/gi, 'visual')
+      .replace(/\s+/g, ' ')
+      .trim();
     const fallbackPrompt = `Create a p5.js sketch that preserves this idea: ${baseIdea}\n\nUse p5.js for a reliable browser preview, keep the motion and mood, and use only p5 browser APIs.`;
     const fallbackMode: CreateModeId = 'p5';
     setCreatePrompt(fallbackPrompt);

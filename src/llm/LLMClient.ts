@@ -20,6 +20,7 @@ import { Logger } from '../utils/Logger.js';
 import { Provider } from '../types/providers.js';
 
 const LOCAL_MODEL_DETECT_TIMEOUT_MS = 2500;
+const LEGACY_LM_STUDIO_MODEL_PLACEHOLDER = 'local-model';
 
 // ── Provider system imports ──
 import { createProvider } from './ProviderFactory.js';
@@ -656,11 +657,23 @@ export class LLMClient {
     
     return this.resolveModelPromise;
   }
+
+  /**
+   * Resolve and apply the effective model before a visible run starts.
+   * Operator surfaces use this to avoid showing local placeholders after the
+   * client has enough evidence to name the loaded LM Studio model.
+   */
+  async resolveEffectiveModel(): Promise<string> {
+    const resolvedModel = await this.resolveModel();
+    this.syncResolvedModel(resolvedModel);
+    return resolvedModel;
+  }
   
   private async doResolveModel(): Promise<string> {
     // Only auto-detect for local endpoints (LM Studio, etc.)
     const baseUrl = this.config.baseUrl;
     const isLocal = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
+    const shouldAutoDetectLocalModel = this.shouldAutoDetectLocalModel(baseUrl, this.config.model);
 
     if (!isLocal) {
       this.resolvedModel = this.config.model;
@@ -674,7 +687,7 @@ export class LLMClient {
       const data = await response.json() as { data?: Array<{ id: string }> };
       const models = data.data || [];
 
-      if (this.config.model !== SERVICE_DEFAULTS.DEFAULT_MODEL) {
+      if (!shouldAutoDetectLocalModel) {
         const modelIds = new Set(models.map(model => model.id));
         if (models.length > 0 && !modelIds.has(this.config.model)) {
           Logger.info('LLMClient', `Configured local model not advertised by /models; preserving explicit model: ${this.config.model}`);
@@ -684,7 +697,8 @@ export class LLMClient {
       }
 
       if (models.length > 0) {
-        // Only the "auto" sentinel may choose the first loaded local model.
+        // "auto" and the legacy LM Studio GUI placeholder both mean:
+        // use a model the local server reports as actually loaded.
         this.resolvedModel = models[0].id;
         Logger.info('LLMClient', `Auto-detected model: ${this.resolvedModel}`);
         return this.resolvedModel;
@@ -693,7 +707,7 @@ export class LLMClient {
       Logger.info('LLMClient', `Auto-detect failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    if (this.config.model === SERVICE_DEFAULTS.DEFAULT_MODEL) {
+    if (shouldAutoDetectLocalModel) {
       throw new LLMError(
         `No local LLM model detected at ${baseUrl}/models. Start LM Studio/Ollama with a loaded model, run "liminal --configure", or set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.`,
         this.detectProvider(),
@@ -705,6 +719,11 @@ export class LLMClient {
     this.resolvedModel = this.config.model;
     Logger.info('LLMClient', `Using configured fallback model: ${this.resolvedModel}`);
     return this.resolvedModel;
+  }
+
+  private shouldAutoDetectLocalModel(baseUrl: string, model: string): boolean {
+    if (model === SERVICE_DEFAULTS.DEFAULT_MODEL) return true;
+    return model === LEGACY_LM_STUDIO_MODEL_PLACEHOLDER && detectProviderLabel(baseUrl, model) === 'lmstudio';
   }
 
   private async fetchLocalModels(baseUrl: string): Promise<Response> {

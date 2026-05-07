@@ -198,6 +198,56 @@ describe('OpenAI provider pipeline', () => {
     expect(body.model).toBe('repo-pipeline-qwen35-q8-prod');
   });
 
+  it('treats the legacy LM Studio local-model placeholder as auto when loaded models are advertised', async () => {
+    mockFetch
+      .mockResolvedValueOnce(mockModelsResponse(['repo-pipeline-qwen35-q8-prod']))
+      .mockResolvedValueOnce(mockJsonResponse({
+        choices: [{
+          message: { content: 'function setup(){createCanvas(160,160);}' },
+          finish_reason: 'stop',
+        }],
+        model: 'repo-pipeline-qwen35-q8-prod',
+      }));
+
+    const client = new LLMClient({
+      baseUrl: 'http://localhost:1234/v1',
+      model: 'local-model',
+    });
+
+    const result = await client.generate('You are a coder.', 'Create a tiny p5 setup.');
+
+    expect(result.success).toBe(true);
+    expect(result.provenance?.model).toBe('repo-pipeline-qwen35-q8-prod');
+
+    const completionCall = mockFetch.mock.calls[1];
+    const body = JSON.parse(completionCall[1].body as string);
+    expect(body.model).toBe('repo-pipeline-qwen35-q8-prod');
+  });
+
+  it('does not treat local-model as an auto placeholder for non-LM Studio local endpoints', async () => {
+    mockFetch
+      .mockResolvedValueOnce(mockModelsResponse(['llama3.2']))
+      .mockResolvedValueOnce(mockJsonResponse({
+        response: 'function setup(){createCanvas(120,120);}',
+        model: 'local-model',
+      }));
+
+    const client = new LLMClient({
+      baseUrl: 'http://localhost:11434',
+      model: 'local-model',
+    });
+
+    const result = await client.generate('You are a coder.', 'Create a tiny p5 setup.');
+
+    expect(result.success).toBe(true);
+    expect(result.provenance?.model).toBe('local-model');
+
+    const completionCall = mockFetch.mock.calls[1];
+    expect(completionCall[0]).toBe('http://localhost:11434/api/generate');
+    const body = JSON.parse(completionCall[1].body as string);
+    expect(body.model).toBe('local-model');
+  });
+
   it('handles code wrapped in markdown fences', async () => {
     mockFetch
       .mockResolvedValueOnce(mockModelsResponse(['gpt-4o']))

@@ -2172,7 +2172,8 @@ export class TuiBridgeService {
     const generatorModelName = resolvedEffectiveModel
       ? effectiveModel
       : sessionStatus?.roles?.generator?.model || harnessModelName;
-    const timeoutMinutes = Math.min(3, Math.max(1, Number(options.timeoutMinutes) || 1));
+    // Studio owns the operator-visible timeout; the bridge only bounds it so draft runs cannot hang forever.
+    const timeoutMinutes = Math.min(30, Math.max(1, Number(options.timeoutMinutes) || 1));
     const candidateCount = 1;
     const generationStartedAt = Date.now();
     const intentBrief = this.buildCreativeIntentBrief(userText);

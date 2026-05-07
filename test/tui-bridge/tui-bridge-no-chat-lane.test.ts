@@ -946,6 +946,39 @@ describe('Bubble Tea operator routing', () => {
     }
   });
 
+  it('honors Studio draft timeout telemetry instead of silently capping at three minutes', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'Create a GLSL fragment shader of a luminous nebula tunnel',
+        clientIntent: 'creative',
+        executionMode: 'draft',
+        timeoutMinutes: 10,
+      },
+      fakeLlm() as never,
+    );
+
+    const route = await waitFor(() => service.getEvents(session.sessionId)
+      .find((event) => event.type === 'generation.route.selected'));
+    const attempt = await waitFor(() => service.getEvents(session.sessionId)
+      .find((event) => event.type === 'generation.attempt.started'));
+
+    expect(route).toMatchObject({
+      executionMode: 'draft',
+      domain: 'glsl',
+      timeoutMinutes: 10,
+    });
+    expect(attempt).toMatchObject({
+      executionMode: 'draft',
+      domain: 'glsl',
+      timeoutMinutes: 10,
+    });
+  });
+
   it('labels creative telemetry with generator and evaluator role models, not the harness model', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession({

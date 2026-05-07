@@ -80,14 +80,27 @@ export function buildWorkbenchRunOptions(executionMode: WorkbenchExecutionMode, 
   return buildWorkbenchRunOptionsForMode(executionMode, maxIterations, 'auto');
 }
 
-export function buildWorkbenchRunOptionsForMode(executionMode: WorkbenchExecutionMode, maxIterations: number, mode: CreateModeId) {
+function normalizeDraftTimeout(timeoutMinutes: number | undefined, fallbackMinutes: number): number {
+  const parsed = Number(timeoutMinutes);
+  if (!Number.isFinite(parsed)) return fallbackMinutes;
+  return Math.min(30, Math.max(1, Math.round(parsed)));
+}
+
+export function buildWorkbenchRunOptionsForMode(
+  executionMode: WorkbenchExecutionMode,
+  maxIterations: number,
+  mode: CreateModeId,
+  configuredTimeoutMinutes?: number,
+) {
   const slowerDraftModes: CreateModeId[] = ['hydra', 'strudel', 'tone', 'revideo', 'hyperframes'];
   if (executionMode === 'draft') {
+    const fallbackTimeoutMinutes = slowerDraftModes.includes(mode) ? 3 : 1;
     return {
       executionMode: 'draft' as const,
       maxIterations: 1,
       candidateCount: 1,
-      timeoutMinutes: slowerDraftModes.includes(mode) ? 3 : 1,
+      // Generate should respect the visible Studio loop timeout; hidden one-minute caps make local models fail without recourse.
+      timeoutMinutes: normalizeDraftTimeout(configuredTimeoutMinutes, fallbackTimeoutMinutes),
     };
   }
 

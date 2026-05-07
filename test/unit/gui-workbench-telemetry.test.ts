@@ -404,6 +404,52 @@ describe('workbenchTelemetry', () => {
     });
   });
 
+  it('derives a visible stopped receipt when status refresh is the only terminal signal', () => {
+    const events = [
+      { type: 'generation.intent_brief', userRequest: 'fireflies', requirements: ['Primary request: fireflies'], missingDetails: [], questions: [], willClarify: false },
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5'], executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      {
+        type: 'run.lifecycle',
+        sessionId: 'studio-stop-1',
+        run: {
+          runId: 'run-stop-1',
+          kind: 'creative',
+          phase: 'failed',
+          label: 'Generation stopped',
+          startedAt: '2026-05-07T20:30:00.000Z',
+          updatedAt: '2026-05-07T20:30:02.000Z',
+          failedAt: '2026-05-07T20:30:02.000Z',
+          outcome: 'cancelled',
+          error: 'Generation stopped by operator.',
+          executionMode: 'draft',
+          provider: 'lmstudio',
+          model: 'repo-pipeline-qwen35-q8-prod',
+        },
+      },
+    ];
+
+    const summary = summarizeWorkbenchBridge(events);
+    const receipt = latestRunReceipt(events);
+
+    expect(summary.active).toBe(false);
+    expect(summary.phase).toBe('stopped');
+    expect(summary.processSteps.find((step) => step.id === 'ready')).toMatchObject({
+      status: 'failed',
+      detail: 'stopped by operator',
+    });
+    expect(receipt).toMatchObject({
+      phase: 'stopped',
+      outcome: 'stopped',
+      creativeDomain: 'p5',
+      provider: 'lmstudio',
+      model: 'repo-pipeline-qwen35-q8-prod',
+    });
+    expect(receipt?.details.join(' ')).toContain('stopped: Generation stopped by operator.');
+    expect(receipt?.artifact).toBeUndefined();
+    expect(receipt?.preview).toBeUndefined();
+  });
+
   it('surfaces missing previews and disconnected streams instead of pretending the stage is blank', () => {
     const summary = summarizeWorkbenchBridge([
       { type: 'generation.route.selected', domain: 'three', domains: ['three'], executionMode: 'draft' },

@@ -88,6 +88,21 @@ describe('GUI workbench accessibility contract', () => {
     expect(app).not.toContain("event.currentTarget.style.display = 'none'");
   });
 
+  it('shows visible recourse when a generation run fails before preview', () => {
+    expect(shell).toContain('recourseSlot');
+    expect(shell).toContain('open={stageBusy || Boolean(recourseSlot)}');
+    expect(shell).toContain('No preview was produced');
+    expect(shell).toContain('needs recovery');
+    expect(app).toContain('liminal-recourse-card');
+    expect(app).toContain('runFailedBeforePreview');
+    expect(app).toContain('That run did not finish.');
+    expect(app).toContain('Try again');
+    expect(app).toContain('Polish safely');
+    expect(app).toContain('Switch medium');
+    expect(css).toContain('.liminal-recourse-card');
+    expect(css).toContain('overflow-wrap: anywhere');
+  });
+
   it('keeps reduced-motion and visible preview-status fallbacks in CSS', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     expect(css).toContain('animation: none');

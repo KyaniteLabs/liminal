@@ -2350,6 +2350,7 @@ export class TuiBridgeService {
         } catch (err) {
           lastError = err;
           const message = err instanceof Error ? err.message : String(err);
+          const nextDomain = domainPlan[attempt + 1];
           this.emit(sessionId, {
             type: 'generation.attempt.failed',
             sessionId,
@@ -2360,8 +2361,15 @@ export class TuiBridgeService {
             duration: Date.now() - attemptStartedAt,
             ...this.failureProvenance(err, { provider, model: generatorModelName }),
           });
+          this.emit(sessionId, {
+            type: 'activity.updated',
+            sessionId,
+            message: nextDomain
+              ? `${domain} did not finish: ${message}. Trying ${nextDomain} next.`
+              : `${domain} did not finish: ${message}. No backup medium completed, so recovery choices are available.`,
+          });
           this.transitionRun(sessionId, 'repairing', {
-            label: `Repairing after ${domain} draft failure`,
+            label: nextDomain ? `Trying ${nextDomain} after ${domain} draft failure` : `Recovery needed after ${domain} draft failure`,
             model: generatorModelName,
             provider,
           });
@@ -2446,7 +2454,18 @@ export class TuiBridgeService {
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      this.failRun(sessionId, message);
+      const provenance = this.failureProvenance(err, { provider, model: generatorModelName, endpoint: config.baseUrl });
+      this.emit(sessionId, {
+        type: 'activity.updated',
+        sessionId,
+        message: `Generation stopped before a usable artifact: ${message}. Try again, polish safely, or switch medium.`,
+      });
+      this.failRun(sessionId, message, 'failed', {
+        label: 'Creative draft needs recovery',
+        model: generatorModelName,
+        provider,
+        ...(typeof provenance.retryable === 'boolean' ? { retryable: provenance.retryable } : {}),
+      });
       throw err;
     } finally {
       this.activeStreams.delete(sessionId);
@@ -2470,7 +2489,8 @@ export class TuiBridgeService {
       timeoutId = setTimeout(() => {
         const timeoutError = new Error(`Generation timed out after ${timeoutMinutes} minute${timeoutMinutes === 1 ? '' : 's'}`);
         reject(timeoutError);
-        controller.abort(timeoutError);
+        // Attempt timeouts should fail the current candidate without cancelling
+        // the whole run; the shared abort signal remains reserved for Stop.
       }, timeoutMinutes * 60_000);
     });
 

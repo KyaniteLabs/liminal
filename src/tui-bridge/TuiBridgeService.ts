@@ -349,6 +349,24 @@ export class TuiBridgeService {
     return status;
   }
 
+  private publishResolvedGeneratorModel(
+    sessionId: string,
+    provider: string,
+    baseUrl: string,
+    model: string,
+  ): void {
+    const status = this.sessions.get(sessionId);
+    if (!status) return;
+    const roles = status.roles ? { ...status.roles } : undefined;
+    if (roles?.generator) {
+      roles.generator = { ...roles.generator, provider, baseUrl, model };
+    }
+    if (roles?.harness) {
+      roles.harness = { ...roles.harness, provider, baseUrl, model };
+    }
+    this.updateStatus(sessionId, { provider, model, roles });
+  }
+
   private beginRun(
     sessionId: string,
     details: {
@@ -2130,12 +2148,32 @@ export class TuiBridgeService {
     const controller = new AbortController();
     this.activeStreams.set(sessionId, controller);
 
-    const config = llm.getConfig();
+    let config = llm.getConfig();
     const sessionStatus = this.sessions.get(sessionId);
+    let effectiveModel = sessionStatus?.roles?.generator?.model || config.model || 'unknown';
+    let resolvedEffectiveModel = false;
+    const resolver = (llm as LLMClient & { resolveEffectiveModel?: () => Promise<string> }).resolveEffectiveModel;
+    if (typeof resolver === 'function') {
+      try {
+        effectiveModel = await resolver.call(llm);
+        config = llm.getConfig();
+        resolvedEffectiveModel = true;
+      } catch (err) {
+        Logger.info('TuiBridgeService', `Effective model preflight failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
     const provider = config.baseUrl ? this.providerLabelFromBaseUrl(config.baseUrl) : sessionStatus?.provider || 'unknown';
-    const harnessModelName = sessionStatus?.roles?.harness?.model || config.model || 'unknown';
-    const generatorModelName = sessionStatus?.roles?.generator?.model || harnessModelName;
-    const timeoutMinutes = Math.min(3, Math.max(1, Number(options.timeoutMinutes) || 1));
+    if (resolvedEffectiveModel) {
+      this.publishResolvedGeneratorModel(sessionId, provider, config.baseUrl, effectiveModel);
+    }
+    const harnessModelName = resolvedEffectiveModel
+      ? effectiveModel
+      : sessionStatus?.roles?.harness?.model || config.model || 'unknown';
+    const generatorModelName = resolvedEffectiveModel
+      ? effectiveModel
+      : sessionStatus?.roles?.generator?.model || harnessModelName;
+    // Studio owns the operator-visible timeout; the bridge only bounds it so draft runs cannot hang forever.
+    const timeoutMinutes = Math.min(30, Math.max(1, Number(options.timeoutMinutes) || 1));
     const candidateCount = 1;
     const generationStartedAt = Date.now();
     const intentBrief = this.buildCreativeIntentBrief(userText);
@@ -2259,14 +2297,21 @@ export class TuiBridgeService {
             new Gallery('gallery'),
             null,
           );
-          const generationPromise = orchestrator.generate(attemptPrompt, attemptPrompt, true, controller.signal);
+          const attemptController = new AbortController();
+          const unlinkAttemptAbort = this.linkDraftAttemptToRun(controller.signal, attemptController);
+          const generationPromise = orchestrator.generate(attemptPrompt, attemptPrompt, true, attemptController.signal);
           generationPromise.catch((err) => {
-            if (!controller.signal.aborted) {
+            if (!attemptController.signal.aborted) {
               const message = err instanceof Error ? err.message : String(err);
               logBridge('generation.draft.background_failed', { sessionId, generatorModel: generatorModelName, message });
             }
           });
-          let attemptResult = await this.awaitDraftAttempt(generationPromise, controller, timeoutMinutes);
+          let attemptResult: Awaited<ReturnType<GenerationOrchestrator['generate']>> | undefined;
+          try {
+            attemptResult = await this.awaitDraftAttempt(generationPromise, controller, attemptController, timeoutMinutes);
+          } finally {
+            unlinkAttemptAbort();
+          }
           if (!attemptResult) {
             this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
             return;
@@ -2303,14 +2348,21 @@ export class TuiBridgeService {
               provider,
             });
             const correctionPrompt = this.domainCorrectionPrompt(attemptPrompt, domain, mismatch);
-            const retryPromise = orchestrator.generate(correctionPrompt, correctionPrompt, true, controller.signal);
+            const retryController = new AbortController();
+            const unlinkRetryAbort = this.linkDraftAttemptToRun(controller.signal, retryController);
+            const retryPromise = orchestrator.generate(correctionPrompt, correctionPrompt, true, retryController.signal);
             retryPromise.catch((err) => {
-              if (!controller.signal.aborted) {
+              if (!retryController.signal.aborted) {
                 const message = err instanceof Error ? err.message : String(err);
                 logBridge('generation.draft.domain_retry_failed', { sessionId, generatorModel: generatorModelName, message });
               }
             });
-            const retryResult = await this.awaitDraftAttempt(retryPromise, controller, timeoutMinutes);
+            let retryResult: Awaited<ReturnType<GenerationOrchestrator['generate']>> | undefined;
+            try {
+              retryResult = await this.awaitDraftAttempt(retryPromise, controller, retryController, timeoutMinutes);
+            } finally {
+              unlinkRetryAbort();
+            }
             if (!retryResult) {
               this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
               return;
@@ -2474,23 +2526,26 @@ export class TuiBridgeService {
 
   private async awaitDraftAttempt<T>(
     generationPromise: Promise<T>,
-    controller: AbortController,
+    runController: AbortController,
+    attemptController: AbortController,
     timeoutMinutes: number,
   ): Promise<T | undefined> {
-    const { signal } = controller;
-    if (signal.aborted) return undefined;
+    const runSignal = runController.signal;
+    if (runSignal.aborted) return undefined;
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let removeAbortListener = () => {};
     const interruptPromise = new Promise<undefined>((resolve, reject) => {
       const onAbort = () => resolve(undefined);
-      signal.addEventListener('abort', onAbort, { once: true });
-      removeAbortListener = () => signal.removeEventListener('abort', onAbort);
+      runSignal.addEventListener('abort', onAbort, { once: true });
+      removeAbortListener = () => runSignal.removeEventListener('abort', onAbort);
       timeoutId = setTimeout(() => {
         const timeoutError = new Error(`Generation timed out after ${timeoutMinutes} minute${timeoutMinutes === 1 ? '' : 's'}`);
+        attemptController.abort(timeoutError);
         reject(timeoutError);
-        // Attempt timeouts should fail the current candidate without cancelling
-        // the whole run; the shared abort signal remains reserved for Stop.
+        // Attempt timeouts fail only this candidate. Stop still uses the run
+        // controller, while this abort prevents stale local model calls from
+        // occupying the provider after the UI has moved to recovery/fallback.
       }, timeoutMinutes * 60_000);
     });
 
@@ -2500,6 +2555,16 @@ export class TuiBridgeService {
       removeAbortListener();
       if (timeoutId) clearTimeout(timeoutId);
     }
+  }
+
+  private linkDraftAttemptToRun(runSignal: AbortSignal, attemptController: AbortController): () => void {
+    if (runSignal.aborted) {
+      attemptController.abort(runSignal.reason);
+      return () => {};
+    }
+    const onAbort = () => attemptController.abort(runSignal.reason);
+    runSignal.addEventListener('abort', onAbort, { once: true });
+    return () => runSignal.removeEventListener('abort', onAbort);
   }
 
   /**

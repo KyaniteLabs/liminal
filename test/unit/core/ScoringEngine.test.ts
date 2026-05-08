@@ -841,7 +841,18 @@ describe('ScoringEngine', () => {
       expect(mockLLMClientInstance.generateWithToolLoop).not.toHaveBeenCalled();
     });
 
-    it('boosts with LLM when comprehensive has fewer than 6 dimensions', async () => {
+    it('keeps scoreReliable local by default when comprehensive has fewer than 6 dimensions', async () => {
+      mockCreativeEvaluatorAssess.mockReturnValue(CREATIVE_ASSESS_RESULT_MINIMAL);
+
+      const engine = new ScoringEngine();
+      const result = await engine.scoreReliable(DEFAULT_INPUT);
+
+      expect(result.strategy).toBe('comprehensive');
+      expect(result.score).toBe(0.5);
+      expect(mockLLMClientInstance.generateWithToolLoop).not.toHaveBeenCalled();
+    });
+
+    it('boosts with an explicit LLM when comprehensive has fewer than 6 dimensions', async () => {
       // Minimal result has only 2 dimensions (technical, creative)
       mockCreativeEvaluatorAssess.mockReturnValue(CREATIVE_ASSESS_RESULT_MINIMAL);
       mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
@@ -849,7 +860,7 @@ describe('ScoringEngine', () => {
         content: '{"score":0.6,"technical":0.7,"creative":0.5,"novelty":0.4}',
       });
 
-      const engine = new ScoringEngine();
+      const engine = new ScoringEngine('comprehensive', mockLLMClientInstance as any);
       const result = await engine.scoreReliable(DEFAULT_INPUT);
 
       expect(result.strategy).toBe('comprehensive+llm');
@@ -870,7 +881,7 @@ describe('ScoringEngine', () => {
         content: '{"score":0.6,"technical":0.5,"suggestions":["LLM suggestion"]}',
       });
 
-      const engine = new ScoringEngine();
+      const engine = new ScoringEngine('comprehensive', mockLLMClientInstance as any);
       const result = await engine.scoreReliable(DEFAULT_INPUT);
 
       expect(result.issues).toContain('issue from comprehensive');
@@ -891,7 +902,7 @@ describe('ScoringEngine', () => {
     it('returns comprehensive result if LLM boost throws', async () => {
       mockCreativeEvaluatorAssess.mockReturnValue(CREATIVE_ASSESS_RESULT_MINIMAL);
 
-      const engine = new ScoringEngine();
+      const engine = new ScoringEngine('llm');
       // Replace the LLM strategy with one that throws synchronously
       engine.register({
         name: 'llm',

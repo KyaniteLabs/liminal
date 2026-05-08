@@ -21,6 +21,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // ── Hoisted mocks ──────────────────────────────────────────────────────
 const {
   mockGenerateWithToolLoop,
+  mockComplete,
   mockGetConfig,
   mockIsConfigured,
   mockGetEffectiveConfig,
@@ -38,6 +39,7 @@ const {
   mockMetaHarnessOnGen,
 } = vi.hoisted(() => ({
   mockGenerateWithToolLoop: vi.fn(),
+  mockComplete: vi.fn(),
   mockGetConfig: vi.fn(() => ({ model: 'gpt-4o', baseUrl: 'http://test', role: 'generator' as const })),
   mockIsConfigured: vi.fn(() => true),
   mockGetEffectiveConfig: vi.fn(),
@@ -60,6 +62,7 @@ vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
     generateWithToolLoop = mockGenerateWithToolLoop;
     generate = vi.fn();
+    complete = mockComplete;
     getConfig = mockGetConfig;
     constructor(config?: any) {
       if (config && (config.model || config.baseUrl || config.apiKey)) {
@@ -159,7 +162,7 @@ class NoErrorGenerator extends TierBasedGenerator {
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────
-function makeToolResult(overrides: Partial<{ content: string; success: boolean; thinking: string; toolCalls: unknown[] }> = {}) {
+function makeToolResult(overrides: Partial<{ content: string; success: boolean; thinking: string; toolCalls: unknown[]; error: string }> = {}) {
   return {
     content: Object.prototype.hasOwnProperty.call(overrides, 'content')
       ? overrides.content
@@ -192,6 +195,7 @@ describe('TierBasedGenerator (expanded)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGenerateWithToolLoop.mockReset();
+    mockComplete.mockReset();
     mockGetConfig.mockReset();
     mockIsConfigured.mockReset();
     mockGetEffectiveConfig.mockReset();
@@ -216,6 +220,7 @@ describe('TierBasedGenerator (expanded)', () => {
     mockHarnessPrepare.mockReturnValue(defaultHarnessContext());
     mockMemoryGetSuccessful.mockReturnValue([]);
     mockMemoryGetRecent.mockReturnValue([]);
+    mockComplete.mockResolvedValue(undefined);
     mockLLM = makeLLM();
   });
 
@@ -480,6 +485,57 @@ describe('TierBasedGenerator (expanded)', () => {
 
       const gen = new TestGenerator('p5', mockLLM);
       await expect(gen.generate('test')).rejects.toThrow('empty code');
+    });
+
+    it('preserves provider errors when no code is produced', async () => {
+      const providerError = 'Invalid model identifier "local-model". No matching loaded model found.';
+      mockGetConfig.mockReturnValue({
+        model: 'local-model',
+        baseUrl: 'http://localhost:1234/v1',
+        role: 'generator' as const,
+      });
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
+        content: '',
+        success: false,
+        error: providerError,
+      }));
+      mockComplete.mockResolvedValueOnce({
+        text: '',
+        success: false,
+        error: providerError,
+        provider: 'lmstudio',
+        model: 'local-model',
+        endpoint: 'http://localhost:1234/v1/chat/completions',
+      });
+
+      const gen = new TestGenerator('glsl', mockLLM);
+      await expect(gen.generate('shader')).rejects.toThrow(
+        /LLM failed before returning code: LM Studio cannot use model "local-model": Invalid model identifier "local-model"/
+      );
+    });
+
+    it('extracts provider JSON into operator-readable model guidance', async () => {
+      const providerError = 'OpenAI API error 400: { "error": { "message": "Invalid model identifier \\"local-model\\". No matching loaded model found.", "code": "model_not_found" } }';
+      mockGetConfig.mockReturnValue({
+        model: 'local-model',
+        baseUrl: 'http://localhost:1234/v1',
+        role: 'generator' as const,
+      });
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
+        content: '',
+        success: false,
+        error: providerError,
+      }));
+      mockComplete.mockResolvedValueOnce({
+        text: '',
+        success: false,
+        error: providerError,
+      });
+
+      const gen = new TestGenerator('glsl', mockLLM);
+      await expect(gen.generate('shader')).rejects.toThrow(
+        /LM Studio cannot use model "local-model": Invalid model identifier "local-model".*choose a loaded model in Settings/
+      );
     });
 
     it('throws when toolResult thinking contains code-like lines without fences', async () => {

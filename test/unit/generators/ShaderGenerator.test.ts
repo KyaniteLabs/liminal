@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ShaderGenerator } from '../../../src/generators/glsl/ShaderGenerator.js';
+import { GLSLValidator } from '../../../src/core/validators/GLSLValidator.js';
+import { LLMClient } from '../../../src/llm/LLMClient.js';
 
 class ExposedShaderGenerator extends ShaderGenerator {
   validate(code: string) {
@@ -9,6 +11,10 @@ class ExposedShaderGenerator extends ShaderGenerator {
 }
 
 describe('ShaderGenerator', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('wraps void main shaders without adding a mainImage call', () => {
     const gen = new ShaderGenerator();
     const wrapped = gen.wrapForGallery('void main() { gl_FragColor = vec4(1.0); }');
@@ -172,5 +178,61 @@ describe('ShaderGenerator', () => {
     expect(sanitized).toContain('vec3 palette(vec2 p)');
     expect(sanitized).toContain('vec3 col = palette(p);');
     expect(gen.validate(sanitized).valid).toBe(true);
+  });
+
+  it('renders a visible local recovery shader when the provider returns no GLSL artifact', async () => {
+    vi.spyOn(LLMClient, 'isConfigured').mockReturnValue(true);
+    const llm = new LLMClient({
+      baseUrl: 'https://api.z.ai/api/anthropic',
+      model: 'GLM-5v-turbo',
+      apiKey: 'test-key',
+    });
+    vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValueOnce({
+      content: '',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: false,
+      error: 'OpenAI-compatible provider returned no usable content (choices=1, finish_reason=length, reasoning_present=yes)',
+    });
+    vi.spyOn(llm, 'complete').mockResolvedValueOnce({
+      text: '',
+      success: false,
+      error: 'OpenAI-compatible provider returned no usable content (choices=1, finish_reason=length, reasoning_present=yes)',
+    });
+
+    const gen = new ShaderGenerator(llm);
+    const code = await gen.generate('Create a GLSL violet nebula shader');
+    const validation = GLSLValidator.validate(code);
+
+    expect(code).toContain('Liminal provider recovery');
+    expect(code).toContain('gl_FragColor');
+    expect(code).toContain('u_time');
+    expect(validation.errors).toEqual([]);
+    expect(validation.valid).toBe(true);
+  });
+
+  it('surfaces provider configuration failures instead of rendering a recovery shader', async () => {
+    vi.spyOn(LLMClient, 'isConfigured').mockReturnValue(true);
+    const llm = new LLMClient({
+      baseUrl: 'http://localhost:1234/v1',
+      model: 'local-model',
+      apiKey: 'test-key',
+    });
+    vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValueOnce({
+      content: '',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: false,
+      error: 'Invalid model identifier "local-model"',
+    });
+    vi.spyOn(llm, 'complete').mockResolvedValueOnce({
+      text: '',
+      success: false,
+      error: 'Invalid model identifier "local-model"',
+    });
+
+    const gen = new ShaderGenerator(llm);
+
+    await expect(gen.generate('Create a GLSL violet nebula shader')).rejects.toThrow(/cannot use model "local-model"/);
   });
 });

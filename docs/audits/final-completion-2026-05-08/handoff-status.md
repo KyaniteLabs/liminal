@@ -4,21 +4,24 @@ Last updated: 2026-05-07
 
 ## Done
 
-- **PR #525** — Strict test-quality gate fixed. Replaced 4 weak `not.toBeNull()` / `not.toBeNull()` assertions with exact `toEqual` shapes and a type-narrowing guard. `pnpm final-qa:test-quality` passes. Awaiting merge.
-- **Audit folder created** — This folder (`docs/audits/final-completion-2026-05-08/`) with all 5 required docs.
+- **PR #525** — Strict test-quality gate fixed. 4 weak assertions replaced with exact shapes / type-narrowing guard. All CI green. Auto-merge enabled. Awaiting reviewer approval.
+- **PR #526** — This audit folder (5 docs). Auto-merge enabled. Awaiting reviewer approval.
+- **Partial gate pass** — `check:script-targets` ✅, `check:orphans` ✅, `check:doc-links` ✅, `typecheck` ✅, `build` ✅, `final-qa:test-quality` ✅ (on PR #525 branch).
+- **Static analysis** — Empty catches, skips, hardcoded commits, timeout/recovery paths, provider fallback: all inspected. No material FCQA findings.
 
 ## Not Done
 
-- **PR #525 not yet merged** — CI must pass and PR must be reviewed before merge.
-- **Task 2: Live proof refresh** — `.omx/proof/domain-gauntlet-live.json` is stale (receipt commit `c2c0eee3`, current main `366d1c50`). Requires provider credentials. Start from `origin/main` after PR #525 merges. Command: `pnpm proof:live-creative-domains -- --timeout-ms=180000`.
-- **Task 4: Final launch-blocker re-audit** — Static, gate, operator, bridge, and saturation passes not yet run.
-- **Task 5: FCQA findings** — Blocked on Task 4. No findings recorded yet.
+- **PR #525 and #526 not yet merged** — Need reviewer approval; auto-merge enabled.
+- **Task 2: Live proof refresh** — `.omx/proof/domain-gauntlet-live.json` stale (receipt commit `c2c0eee3`, HEAD `366d1c50`). Provider credentials not configured (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` all unset). Do not fake the receipt.
+- **Task 4: Operator, bridge, saturation passes** — Require Electron Studio to be running with a configured provider.
+- **Remaining gates** — `gui:build`, `bubbletea:test`, `verify:integration`, `test:e2e`, `test:ci:slow`, `final-qa:surface` (blocked on proof), `proof:live-creative-domains` (blocked on credentials).
+- **Task 5: FCQA findings** — Blocked on Task 4 operator pass. No findings recorded yet.
 - **Task 6: Final closure verification** — Blocked on all above.
 
 ## Remaining Blockers
 
-1. PR #525 needs CI + review + merge.
-2. Live proof requires provider credentials (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` for a live-capable provider).
+1. **Review approval** — PRs #525 and #526 need a reviewer to approve; auto-merge will handle the rest.
+2. **Provider credentials** — `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` must be configured before running `pnpm proof:live-creative-domains` or the operator journey pass.
 
 ## Exact Next Command for a New Agent
 

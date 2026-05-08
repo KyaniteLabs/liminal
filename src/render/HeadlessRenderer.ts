@@ -201,6 +201,8 @@ export class HeadlessRenderer {
    * Detect domain from code content
    */
   static detectDomain(code: string): RenderDomain {
+    const trimmed = code.trim();
+
     if (code.includes('function setup()') || code.includes('createCanvas') || code.includes('draw()')) {
       return 'p5';
     }
@@ -219,11 +221,13 @@ export class HeadlessRenderer {
     if (code.includes('Tone.') || code.includes('Synth') || code.includes('synth')) {
       return 'tone';
     }
-    if (/^<svg\b/i.test(code.trim())) {
+    if (/^<svg\b/i.test(trimmed)) {
       return 'svg';
     }
-    if (/^<!DOCTYPE\s+html/i.test(code.trim()) || /<html\b/i.test(code)) {
-      return /\b@keyframes\b|\banimation\s*:/i.test(code) ? 'kinetic' : 'html';
+    const isHtmlDocument = /^<!DOCTYPE\s+html/i.test(trimmed) || /<html\b/i.test(code);
+    const isHtmlFragment = /^<[a-z][\w:-]*(?:\s|>|\/>)/i.test(trimmed) && /<\/[a-z][\w:-]*>/i.test(code);
+    if (isHtmlDocument || isHtmlFragment) {
+      return /@keyframes\b|\banimation\s*:/i.test(code) ? 'kinetic' : 'html';
     }
     if (/^[\s\S]*[/\\|_~^*#%+=.-][\s\S]*\n[\s\S]*[/\\|_~^*#%+=.-]/.test(code) && !/[{};=]/.test(code)) {
       return 'ascii';

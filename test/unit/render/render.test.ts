@@ -362,6 +362,21 @@ describe('HeadlessRenderer', () => {
     expect(HeadlessRenderer.detectDomain('const synth = new Tone.Synth();')).toBe('tone');
   });
 
+  it('detects partial HTML fragments before ASCII art heuristics', () => {
+    expect(HeadlessRenderer.detectDomain([
+      '<div>',
+      '  <span>threshold</span>',
+      '</div>',
+    ].join('\n'))).toBe('html');
+  });
+
+  it('detects kinetic HTML fragments before ASCII art heuristics', () => {
+    expect(HeadlessRenderer.detectDomain([
+      '<style>@keyframes orbit { to { transform: rotate(360deg); } }</style>',
+      '<div class="letter">threshold</div>',
+    ].join('\n'))).toBe('kinetic');
+  });
+
   it('returns unknown for unrecognized code', () => {
     expect(HeadlessRenderer.detectDomain('console.log("hello")')).toBe('unknown');
   });

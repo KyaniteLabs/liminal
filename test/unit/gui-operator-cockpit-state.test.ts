@@ -14,6 +14,9 @@ describe('OperatorCockpit state derivation', () => {
     expect(state.phase).toBe('waiting on model');
     expect(state.elapsedLabel).toBe('1m 15s');
     expect(state.etaLabel).toBe('up to 13m 45s left');
+    expect(state.elapsedMs).toBe(75_000);
+    expect(state.timeoutLabel).toBe('5m 0s timeout budget');
+    expect(state.attemptLabel).toBe('Attempt 1 of 3');
     expect(state.progressPercent).toBeGreaterThan(0);
     expect(state.progressPercent).toBeLessThan(0.2);
     expect(state.activeWork).toContain('3 candidates');

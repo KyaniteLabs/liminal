@@ -1016,6 +1016,21 @@ export default function App() {
           <span>{stageEmptyKicker}</span>
           <strong>{stageEmptyHeading}</strong>
           <small>{stageEmptyDetail}</small>
+          {bridgeSummary.liveRun && (
+            <div
+              className={bridgeSummary.liveRun.showSlowNotice ? 'liminal-live-run liminal-live-run--slow' : 'liminal-live-run'}
+              aria-label="Live generation status"
+            >
+              <span>{bridgeSummary.liveRun.statusLabel}</span>
+              <strong>{bridgeSummary.liveRun.elapsedLabel} elapsed</strong>
+              <small>{bridgeSummary.liveRun.detail}</small>
+              <small>{bridgeSummary.liveRun.attemptLabel} · {bridgeSummary.liveRun.timeoutLabel} · {bridgeSummary.liveRun.etaLabel}</small>
+              <button type="button" className="liminal-live-run__stop" onClick={() => void bridge.cancelCurrent()}>
+                Stop
+              </button>
+              <em>{bridgeSummary.liveRun.reassurance}</em>
+            </div>
+          )}
         </div>
       )}
       {hasSyncTarget && !hasDirectSyncTarget && <canvas ref={syncCanvasRef} className="liminal-sync-overlay" aria-hidden="true" />}

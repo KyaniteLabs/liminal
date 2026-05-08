@@ -29,6 +29,43 @@ export function throwIfAborted(signal?: AbortSignal): void {
   }
 }
 
+export function combineAbortSignals(...signals: (AbortSignal | undefined)[]): AbortSignal | undefined {
+  const activeSignals = signals.filter((signal): signal is AbortSignal => Boolean(signal));
+  if (activeSignals.length === 0) return undefined;
+  if (activeSignals.length === 1) return activeSignals[0];
+
+  const abortSignal = AbortSignal as typeof AbortSignal & {
+    any?: (signals: AbortSignal[]) => AbortSignal;
+  };
+  if (typeof abortSignal.any === 'function') {
+    return abortSignal.any(activeSignals);
+  }
+
+  const controller = new AbortController();
+  const listeners = new Map<AbortSignal, () => void>();
+  const abortFrom = (signal: AbortSignal) => {
+    for (const [activeSignal, listener] of listeners) {
+      activeSignal.removeEventListener('abort', listener);
+    }
+    if (!controller.signal.aborted) {
+      controller.abort(signal.reason);
+    }
+  };
+
+  for (const signal of activeSignals) {
+    if (signal.aborted) {
+      abortFrom(signal);
+      break;
+    }
+
+    const listener = () => abortFrom(signal);
+    listeners.set(signal, listener);
+    signal.addEventListener('abort', listener, { once: true });
+  }
+
+  return controller.signal;
+}
+
 export async function abortable<T>(operation: Promise<T>, signal?: AbortSignal): Promise<T> {
   throwIfAborted(signal);
   if (!signal) return operation;

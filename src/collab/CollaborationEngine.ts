@@ -109,11 +109,12 @@ export class CollaborationEngine {
       signal: this.config.signal,
       // CollaborationEngine owns the runtime LLM adapter; keep swarm from silently
       // falling back to its default Ollama path when callers inject another provider.
-      callOllama: (_model, personaSystemPrompt, userPrompt) => {
-        throwIfAborted(this.config.signal);
+      callOllama: (_model, personaSystemPrompt, userPrompt, callOptions) => {
+        const signal = callOptions?.signal ?? this.config.signal;
+        throwIfAborted(signal);
         return abortable(
           this.config.callLLM(userPrompt, [systemPrompt, personaSystemPrompt].filter(Boolean).join('\n\n')),
-          this.config.signal,
+          signal,
         );
       },
       onProgress: (data) => {

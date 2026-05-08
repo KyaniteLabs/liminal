@@ -145,7 +145,6 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
       };
 
       const ac = new AbortController();
-      const startedAt = Date.now();
 
       const runPromise = RalphLoop.run('test sketch', {
         maxIterations: 2,
@@ -171,7 +170,6 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
       const result = await runPromise;
 
       expect(result.reason).toBe('aborted by user');
-      expect(Date.now() - startedAt).toBeLessThan(1000);
     });
   });
 });

@@ -1,4 +1,4 @@
-import type { SwarmConfig, SwarmMode, SwarmOutput, SwarmResult, RoundResult, SwarmPersona, Vote } from './types.js';
+import type { SwarmCallOptions, SwarmConfig, SwarmMode, SwarmOllamaCaller, SwarmOutput, SwarmResult, RoundResult, SwarmPersona, Vote } from './types.js';
 import type { ProjectDNA } from '../scavenger/types.js';
 import type { MinedFragment } from './types.js';
 import { DEFAULT_PERSONAS } from './personas.js';
@@ -15,7 +15,7 @@ import { eventBus, EventTypes } from '../core/EventBus.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { Logger } from '../utils/Logger.js';
-import { abortable, isAbortError, throwIfAborted } from '../utils/abort.js';
+import { abortable, combineAbortSignals, isAbortError, throwIfAborted } from '../utils/abort.js';
 
 /** Default config for SwarmOrchestrator — single source of truth for all defaults. */
 const DEFAULT_SWARM_CONFIG: SwarmConfig = {
@@ -32,7 +32,7 @@ const DEFAULT_SWARM_CONFIG: SwarmConfig = {
 };
 
 export interface SwarmOrchestratorOptions {
-  callOllama?: (model: string, systemPrompt: string, userPrompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
+  callOllama?: SwarmOllamaCaller;
   signal?: AbortSignal;
   onProgress?: (data: { round: number; totalRounds: number; winnerId: string | null; converged: boolean }) => void;
   onFragmentsMined?: (fragments: MinedFragment[]) => void;
@@ -62,7 +62,7 @@ export interface RoutingResult {
 export class SwarmOrchestrator {
   private config: SwarmConfig;
   private personas: SwarmPersona[];
-  private callOllama: (model: string, systemPrompt: string, userPrompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
+  private callOllama: SwarmOllamaCaller;
   private signal?: AbortSignal;
   private dna: ProjectDNA | null = null;
 
@@ -337,9 +337,14 @@ export class SwarmOrchestrator {
     model: string,
     systemPrompt: string,
     userPrompt: string,
-    options?: { temperature?: number; num_predict?: number }
+    options?: SwarmCallOptions
   ): Promise<string> {
     const url = `${this.config.ollamaHost}/api/chat`;
+    const signal = combineAbortSignals(
+      options?.signal,
+      AbortSignal.timeout(this.config.ollamaTimeout * 1000),
+    );
+
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -355,7 +360,7 @@ export class SwarmOrchestrator {
           num_predict: options?.num_predict ?? 100,
         },
       }),
-      signal: AbortSignal.timeout(this.config.ollamaTimeout * 1000),
+      signal,
     });
 
     if (!response.ok) {
@@ -624,6 +629,7 @@ export class SwarmOrchestrator {
         this.config,
         this.callOllama,
         seed,
+        this.signal,
       );
     } else {
       votingResult = HeuristicScorer.score(
@@ -677,6 +683,7 @@ export class SwarmOrchestrator {
               // All personas use same temperature - differentiation from system prompts
               temperature: 0.7,
               num_predict: persona.maxTokens,
+              signal: this.signal,
             },
           ),
           this.signal,
@@ -746,6 +753,7 @@ export class SwarmOrchestrator {
               // All personas use same temperature - differentiation from system prompts
               temperature: 0.7,
               num_predict: persona.maxTokens,
+              signal: this.signal,
             },
           ),
           this.signal,

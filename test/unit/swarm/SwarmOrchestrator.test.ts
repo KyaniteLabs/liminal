@@ -622,6 +622,51 @@ describe('SwarmOrchestrator', () => {
   // ─── Error Handling in Generation ────────────────────────────────────
 
   describe('run() — generation errors', () => {
+    it('aborts the default Ollama fetch when the operator aborts a swarm round', async () => {
+      const originalFetch = globalThis.fetch;
+      const observedSignals: AbortSignal[] = [];
+
+      globalThis.fetch = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+        const signal = init?.signal as AbortSignal | undefined;
+        if (!signal) {
+          throw new Error('Expected default Ollama fetch to receive an AbortSignal');
+        }
+
+        observedSignals.push(signal);
+        return new Promise<Response>((_resolve, reject) => {
+          signal.addEventListener('abort', () => {
+            reject(new DOMException('aborted', 'AbortError'));
+          });
+        });
+      }) as typeof fetch;
+
+      const controller = new AbortController();
+      const orchestrator = new SwarmOrchestrator(
+        { maxRounds: 1, streamDir: tempDir, skipRouting: true },
+        { signal: controller.signal },
+      );
+
+      const runPromise = orchestrator.run('test prompt');
+
+      try {
+        for (let attempt = 0; attempt < 100 && observedSignals.length === 0; attempt++) {
+          await new Promise(resolve => setTimeout(resolve, 5));
+        }
+
+        expect(observedSignals.length).toBeGreaterThan(0);
+        controller.abort();
+        await expect(runPromise).rejects.toMatchObject({ name: 'AbortError' });
+
+        // The assertion below is the user-facing contract: the transport itself
+        // has been canceled, so no abandoned persona fetch can continue running.
+        expect(observedSignals.every(signal => signal.aborted)).toBe(true);
+      } finally {
+        controller.abort();
+        await runPromise.catch(() => undefined);
+        globalThis.fetch = originalFetch;
+      }
+    });
+
     it('handles generation errors gracefully for parallel mode', async () => {
       let callIndex = 0;
       const mockOllama = vi.fn(async () => {

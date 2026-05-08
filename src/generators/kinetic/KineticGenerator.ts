@@ -9,6 +9,7 @@ import { CodeValidator } from '../../core/CodeValidator.js';
 import { KINETIC_SYSTEM_PROMPT, buildKineticPrompt } from './kineticPrompt.js';
 import { KineticWrapper } from './KineticWrapper.js';
 import { Logger } from '../../utils/Logger.js';
+import { GenerationError } from '../../errors/GenerationError.js';
 
 export interface KineticGeneratorOptions extends TierBasedGeneratorOptions {}
 
@@ -19,6 +20,11 @@ export class KineticGenerator extends TierBasedGenerator {
 
   async generate(prompt: string, options?: KineticGeneratorOptions): Promise<string> {
     const response = await this.generateFull(prompt, options);
+    if (!response.success || response.error) {
+      throw new GenerationError(`KineticGenerator: ${response.error ?? 'generation failed'}`, 'kinetic', {
+        generatedCode: response.code,
+      });
+    }
     return response.code;
   }
 
@@ -316,21 +322,6 @@ Regenerate a complete CSS-kinetic artwork:
         cleaned = cleaned.replace(/(<body\b[^>]*>)/i, `$1\n${injectedDivs}`);
         if (!cleaned.includes('position:') && !cleaned.includes('display:')) {
           cleaned = cleaned.replace('</style>', `
-body { margin: 0; overflow: hidden; background: #0d2031; width: 100vw; height: 100vh; position: relative; }
-body > div { position: absolute; }
-</style>`);
-        }
-      } else {
-        // No keyframes or animated classes found — inject a complete fallback scene
-        const fallback = `  <div class="scene" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
-    <div class="orb" style="width:40vmin;height:40vmin;border-radius:50%;background:radial-gradient(circle,#f39b9f,#5eebf3,#0d2031);animation:spin 6s linear infinite,pulse 3s ease-in-out infinite;"></div>
-  </div>`;
-        cleaned = cleaned.replace(/(<body\b[^>]*>)/i, `$1\n${fallback}`);
-        const hasKeyframes = /@keyframes\s+spin/.test(cleaned);
-        if (!hasKeyframes) {
-          cleaned = cleaned.replace('</style>', `
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-@keyframes pulse { 0%,100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.15); opacity: 1; } }
 body { margin: 0; overflow: hidden; background: #0d2031; width: 100vw; height: 100vh; position: relative; }
 body > div { position: absolute; }
 </style>`);

@@ -86,6 +86,8 @@ export interface ScoringInput {
   designConstraints?: DesignConstraints;
   /** Critic configuration for aesthetic evaluation. */
   criticConfig?: Partial<CriticConfig>;
+  /** Optional cancellation signal for LLM-backed scoring paths. */
+  signal?: AbortSignal;
 }
 
 /** Result from any scoring strategy. */
@@ -361,6 +363,7 @@ export class LLMScoringStrategy implements ScoringStrategy {
         tools: EVALUATOR_TOOLS,
         toolExecutor: createGeneratorToolExecutor(String(input.domain ?? 'general')),
         maxIterations: 2,
+        signal: input.signal,
       });
       const responseText = toolResult.content;
 
@@ -428,6 +431,7 @@ export class LLMScoringStrategy implements ScoringStrategy {
 export class ScoringEngine {
   private strategies = new Map<string, ScoringStrategy>();
   private defaultStrategyName: string;
+  private readonly reliableLlmBoostEnabled: boolean;
 
   constructor(defaultStrategy: string = 'comprehensive', llm?: LLMClient) {
     // Register built-in strategies
@@ -449,6 +453,12 @@ export class ScoringEngine {
     this.registerAlias('fast', 'keyword');
 
     this.defaultStrategyName = defaultStrategy;
+    // Reliable scoring runs inside interactive generation loops. Keep that path
+    // local by default so a missing or slow evaluator cannot silently stall the
+    // operator journey; callers can opt into the LLM boost explicitly.
+    this.reliableLlmBoostEnabled = Boolean(llm)
+      || defaultStrategy === 'llm'
+      || process.env.LIMINAL_SCORE_LLM_BOOST === 'true';
   }
 
   /** Register an alias name that maps to an existing strategy. */
@@ -568,15 +578,31 @@ export class ScoringEngine {
       return result; // Already sufficient coverage
     }
 
-    // Boost coverage via LLM strategy
+    if (!this.reliableLlmBoostEnabled) {
+      return result;
+    }
+
+    // Boost coverage via LLM strategy only when explicitly enabled.
     const llmStrategy = this.strategies.get('llm');
     if (!llmStrategy) {
       return result; // No LLM available, return as-is
     }
 
+    if (typeof LLMClient.isConfigured === 'function' && !LLMClient.isConfigured()) {
+      return result;
+    }
+
+    const boostTimeoutMs = reliableScoreBoostTimeoutMs();
+    const timeoutController = createTimeoutController(input.signal, boostTimeoutMs);
+
     try {
-      const llmResult = llmStrategy.score(input);
-      const resolved = llmResult instanceof Promise ? await llmResult : llmResult;
+      const boostInput = timeoutController.signal
+        ? { ...input, signal: timeoutController.signal }
+        : input;
+      const llmResult = llmStrategy.score(boostInput);
+      const resolved = llmResult instanceof Promise
+        ? await withScoringTimeout(llmResult, boostTimeoutMs)
+        : llmResult;
 
       return {
         ...resolved,
@@ -586,8 +612,64 @@ export class ScoringEngine {
       };
     } catch (err) {
       Logger.warn('ScoringEngine', 'LLM score boost failed, returning heuristic result:', err instanceof Error ? err.message : err);
-      return result;
+      return {
+        ...result,
+        issues: [...(result.issues ?? []), `LLM score boost unavailable: ${err instanceof Error ? err.message : String(err)}`],
+      };
+    } finally {
+      timeoutController.cleanup();
     }
+  }
+}
+
+function reliableScoreBoostTimeoutMs(): number {
+  const configured = Number.parseInt(process.env.LIMINAL_SCORING_LLM_BOOST_TIMEOUT_MS ?? '', 10);
+  if (Number.isFinite(configured) && configured > 0) return configured;
+  return process.env.NODE_ENV === 'test' ? 1_000 : 8_000;
+}
+
+function createTimeoutController(parent: AbortSignal | undefined, timeoutMs: number): { signal?: AbortSignal; cleanup: () => void } {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    return { signal: parent, cleanup: () => undefined };
+  }
+
+  const controller = new AbortController();
+  let cleaned = false;
+  const onParentAbort = () => {
+    controller.abort(parent?.reason ?? new Error('Scoring aborted'));
+  };
+  const timer = setTimeout(() => {
+    controller.abort(new Error(`LLM score boost timed out after ${timeoutMs}ms`));
+  }, timeoutMs);
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    clearTimeout(timer);
+    parent?.removeEventListener('abort', onParentAbort);
+  };
+
+  if (parent?.aborted) {
+    onParentAbort();
+  } else {
+    parent?.addEventListener('abort', onParentAbort, { once: true });
+  }
+
+  return { signal: controller.signal, cleanup };
+}
+
+async function withScoringTimeout<T>(operation: Promise<T>, timeoutMs: number): Promise<T> {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return operation;
+
+  let timeout: NodeJS.Timeout | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((_, reject) => {
+        timeout = setTimeout(() => reject(new Error(`LLM score boost timed out after ${timeoutMs}ms`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
   }
 }
 

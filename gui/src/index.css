@@ -408,6 +408,77 @@ body::before {
   font-weight: 700;
 }
 
+.liminal-recourse-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  max-width: min(760px, 92%);
+  padding: 14px;
+  border: 1px solid rgba(252, 165, 165, 0.52);
+  border-radius: 12px;
+  background: rgba(45, 20, 24, 0.88);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
+}
+
+.liminal-recourse-card__copy {
+  min-width: 0;
+}
+
+.liminal-recourse-card__copy span,
+.liminal-recourse-card__copy strong,
+.liminal-recourse-card__copy small {
+  display: block;
+}
+
+.liminal-recourse-card__copy span {
+  color: #fca5a5;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.liminal-recourse-card__copy strong {
+  margin-top: 4px;
+  color: #fee2e2;
+}
+
+.liminal-recourse-card__copy small {
+  margin-top: 5px;
+  color: #fecaca;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.liminal-recourse-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.liminal-recourse-card__actions button {
+  min-height: 36px;
+  border: 1px solid rgba(254, 226, 226, 0.36);
+  border-radius: 8px;
+  background: rgba(127, 29, 29, 0.42);
+  color: #fee2e2;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.liminal-recourse-card__actions button:first-child {
+  border-color: rgba(89, 225, 255, 0.62);
+  background: var(--liminal-cyan);
+  color: var(--liminal-bg-void);
+}
+
+.liminal-recourse-card__actions button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
 .liminal-receipt-details,
 .liminal-advanced-drawer {
   max-width: min(900px, 100%);
@@ -1910,6 +1981,7 @@ body::before {
 .atelier-textarea:focus-visible,
 .liminal-chat-composer textarea:focus-visible,
 .liminal-artifact-card a:focus-visible,
+.liminal-recourse-card__actions button:focus-visible,
 .liminal-receipt-details summary:focus-visible,
 .liminal-advanced-drawer summary:focus-visible,
 .liminal-run-button:focus-visible,
@@ -1994,6 +2066,18 @@ body::before {
   .liminal-human-review-strip {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .liminal-recourse-card {
+    grid-template-columns: 1fr;
+  }
+
+  .liminal-recourse-card__actions {
+    justify-content: stretch;
+  }
+
+  .liminal-recourse-card__actions button {
+    flex: 1 1 120px;
   }
 
   .liminal-rail-button {

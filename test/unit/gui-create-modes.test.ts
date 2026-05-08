@@ -99,4 +99,19 @@ describe('createModes', () => {
       timeoutMinutes: 1,
     });
   });
+
+  it('honors the visible loop timeout for Studio draft generation', () => {
+    expect(buildWorkbenchRunOptionsForMode('draft', 7, 'glsl', 30)).toMatchObject({
+      executionMode: 'draft',
+      maxIterations: 1,
+      candidateCount: 1,
+      timeoutMinutes: 30,
+    });
+    expect(buildWorkbenchRunOptionsForMode('draft', 7, 'p5', 10)).toMatchObject({
+      executionMode: 'draft',
+      maxIterations: 1,
+      candidateCount: 1,
+      timeoutMinutes: 10,
+    });
+  });
 });

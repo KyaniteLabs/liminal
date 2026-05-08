@@ -596,7 +596,7 @@ export default function App() {
     if (!usesOrganismApi(currentMode)) {
       await bridge.submitPrompt(buildWorkbenchPrompt(currentMode, prompt), {
         clientIntent: 'creative',
-        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, currentMode),
+        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, currentMode, timeoutMinutes),
       });
       return;
     }
@@ -778,23 +778,25 @@ export default function App() {
   const bridgeImagePreview = bridgePreview?.type === 'image' && bridgePreview.src ? bridgePreview : null;
   const bridgeImagePreviewFailed = Boolean(bridgeImagePreview && failedPreviewSrc === bridgeImagePreview.src);
   const bridgeCodePreview = bridge.codePreview;
-  const stageBlocked = bridgeSummary.phase === 'preview missing' || bridgeSummary.phase === 'disconnected';
+  const runReceipt = activeMode.id === 'generate' ? latestRunReceipt(bridge.events, bridge.session) : null;
+  const runFailedBeforePreview = activeMode.id === 'generate' && runReceipt?.outcome === 'failed' && !bridgeSummary.active;
+  const runStoppedBeforePreview = activeMode.id === 'generate' && runReceipt?.outcome === 'stopped' && !bridgeSummary.active;
+  const stageBlocked = bridgeSummary.phase === 'preview missing' || bridgeSummary.phase === 'disconnected' || runFailedBeforePreview || runStoppedBeforePreview;
   const stageEmptyKicker = stageBlocked ? 'Preview' : bridgeSummary.active ? 'Working' : 'Preview';
   const stageEmptyHeading = stageBlocked
-    ? 'Preview unavailable'
+    ? runStoppedBeforePreview ? 'Generation stopped' : runFailedBeforePreview ? 'No preview was produced' : 'Preview unavailable'
     : bridgeSummary.active
       ? bridgeSummary.stageTitle
       : runStatus === 'running'
         ? 'Generating'
         : 'No artifact yet';
   const stageEmptyDetail = stageBlocked
-    ? bridgeSummary.stageSubtitle
+    ? runStoppedBeforePreview ? 'Generation stopped by operator. Edit the prompt, try again, or switch medium when ready.' : runFailedBeforePreview ? 'The run stopped before an artifact could be mounted. Use a recovery action or edit the prompt.' : bridgeSummary.stageSubtitle
     : bridgeSummary.active
       ? bridgeSummary.stageSubtitle
       : 'Send a creative prompt; live output will appear here.';
   const clarificationRequest = activeMode.id === 'generate' ? latestClarificationRequest(bridge.events) : null;
   const cognitiveReceipt = activeMode.id === 'generate' ? latestCognitiveReceipt(bridge.events) : null;
-  const runReceipt = activeMode.id === 'generate' ? latestRunReceipt(bridge.events, bridge.session) : null;
   const syncPreviewHtml = bridgeCodePreview?.code ? buildSyncPreviewHtml(bridgeCodePreview.code) : '';
   const hasDirectSyncTarget = Boolean(syncPreviewHtml);
   const hasSyncTarget = Boolean(previewUrl || bridgePreview || hasDirectSyncTarget);
@@ -817,7 +819,7 @@ export default function App() {
       }
       void bridge.submitPrompt(buildWorkbenchPrompt(effectiveCreateMode, createPrompt), {
         clientIntent: 'creative',
-        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode),
+        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode, timeoutMinutes),
       });
       return;
     }
@@ -834,7 +836,7 @@ export default function App() {
     const clarifiedMode = detectPromptCreateMode(clarifiedPrompt) ?? createMode;
     void bridge.submitPrompt(buildWorkbenchPrompt(clarifiedMode, clarifiedPrompt), {
       clientIntent: 'creative',
-      ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, clarifiedMode),
+      ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, clarifiedMode, timeoutMinutes),
     });
   };
 
@@ -850,8 +852,51 @@ export default function App() {
     setDraftAdjustment('');
     void bridge.submitPrompt(buildWorkbenchPrompt(followupMode, followupPrompt), {
       clientIntent: 'creative',
-      ...buildWorkbenchRunOptionsForMode(executionMode, createMaxIterations, followupMode),
+      ...buildWorkbenchRunOptionsForMode(executionMode, createMaxIterations, followupMode, timeoutMinutes),
       creativePreferences: runReceipt ? { priorRunReceipt: runReceipt, revisionKind } : undefined,
+    });
+  };
+
+  const failureRecoveryText = runReceipt?.failure?.message || 'The last generation stopped before a usable artifact appeared.';
+
+  const handleRetryFailedRun = () => {
+    const prompt = createPrompt.trim();
+    if (!prompt) return;
+    const retryMode = detectPromptCreateMode(prompt) ?? createMode;
+    setCreateExecutionMode('draft');
+    void bridge.submitPrompt(buildWorkbenchPrompt(retryMode, prompt), {
+      clientIntent: 'creative',
+      ...buildWorkbenchRunOptionsForMode('draft', createMaxIterations, retryMode, timeoutMinutes),
+    });
+  };
+
+  const handleSafePolishFailedRun = () => {
+    submitDraftFollowup(
+      `Recover from the failed run and produce a complete, browser-safe artifact. Avoid undefined helper functions, incomplete wrappers, or placeholder code. Previous failure: ${failureRecoveryText}`,
+      'prove',
+      'polish',
+    );
+  };
+
+  const handleSwitchMediumAfterFailure = () => {
+    const baseIdea = (createPrompt.trim() || 'Create the same visual idea.')
+      .replace(/\bglsl\s+fragment\s+shader\b/gi, 'browser visual')
+      .replace(/\bfragment\s+shader\b/gi, 'browser visual')
+      .replace(/\bglsl\s+shader\b/gi, 'browser visual')
+      .replace(/\bglsl\b/gi, 'browser visual')
+      .replace(/\bshader\b/gi, 'visual')
+      .replace(/\bbrowser visual(?:\s+browser visual)+\b/gi, 'browser visual')
+      .replace(/\bvisual(?:\s+visual)+\b/gi, 'visual')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const fallbackPrompt = `Create a p5.js sketch that preserves this idea: ${baseIdea}\n\nUse p5.js for a reliable browser preview, keep the motion and mood, and use only p5 browser APIs.`;
+    const fallbackMode: CreateModeId = 'p5';
+    setCreatePrompt(fallbackPrompt);
+    setCreateMode(fallbackMode);
+    setCreateExecutionMode('draft');
+    void bridge.submitPrompt(buildWorkbenchPrompt(fallbackMode, fallbackPrompt), {
+      clientIntent: 'creative',
+      ...buildWorkbenchRunOptionsForMode('draft', createMaxIterations, fallbackMode, timeoutMinutes),
     });
   };
 
@@ -864,6 +909,30 @@ export default function App() {
   const handleWorkbenchModeChange = (mode: WorkbenchMode) => {
     dispatchLive(switchToLiveOrganismView(mode.legacyTabs[0] as GuiTab));
   };
+
+  const runRecourseSlot = activeMode.id === 'generate' && (runFailedBeforePreview || runStoppedBeforePreview) ? (
+    <section className="liminal-recourse-card" role="alert" aria-label={runReceipt?.outcome === 'stopped' ? 'Generation stopped' : 'Generation recovery'}>
+      <div className="liminal-recourse-card__copy">
+        <span>{runReceipt?.outcome === 'stopped' ? 'Stopped' : 'Needs recovery'}</span>
+        <strong>{runReceipt?.outcome === 'stopped' ? 'Generation stopped' : 'That run did not finish.'}</strong>
+        <small>{runReceipt?.outcome === 'stopped' ? 'Generation stopped by operator.' : runReceipt?.failure?.message || failureRecoveryText}</small>
+        <small>Medium: {runReceipt.creativeDomain} · Model: {runReceipt.providerModel}</small>
+      </div>
+      <div className="liminal-recourse-card__actions" aria-label={runReceipt?.outcome === 'stopped' ? 'Stopped run actions' : 'Recovery actions'}>
+        <button type="button" onClick={handleRetryFailedRun} disabled={bridge.submitting || !createPrompt.trim()}>
+          Try again
+        </button>
+        {runReceipt?.outcome !== 'stopped' && (
+          <button type="button" onClick={handleSafePolishFailedRun} disabled={bridge.submitting}>
+            Polish safely
+          </button>
+        )}
+        <button type="button" onClick={handleSwitchMediumAfterFailure} disabled={bridge.submitting}>
+          Switch medium
+        </button>
+      </div>
+    </section>
+  ) : null;
 
   const improveSlot = (
     <div className="liminal-improve-lane">
@@ -1279,6 +1348,8 @@ export default function App() {
       inspectorSlot={inspectorSlot}
       timelineSlot={timelineSlot}
       leftSlot={leftSlot}
+      recourseSlot={runRecourseSlot}
+      recourseState={runStoppedBeforePreview ? 'stopped' : runFailedBeforePreview ? 'failed' : undefined}
     >
       {shouldRenderLegacyPanel(activeTab) && (
       <Suspense fallback={<div className="atelier-panel">Loading Studio surface…</div>}>

@@ -172,4 +172,49 @@ No material FCQA findings from static pass.
 
 ---
 
-_Remaining: operator journey pass requires Electron Studio running with a configured provider._
+### Operator journey pass (2026-05-08, Electron Studio + computer-use)
+
+Provider: glm/GLM-5v-turbo (Studio restarted with updated `~/.liminal/config.json`).
+Initial run used lmstudio/repo-pipeline-qwen35-q8-prod (captured slow-gen and stop/cancel observations).
+
+```
+Date:    2026-05-08
+Command: Electron Studio — "a GLSL fragment shader: plasma waves with electric neon colors, animated over time"
+Exit:    0 (generation completed)
+Result:  Plasma shader rendered in ~18s (PLAN 3ms, GENERATE 13s, RENDER 3.9s). All 5 pipeline stages green.
+Links:   operator-journey-matrix.md
+```
+
+```
+Date:    2026-05-08
+Command: Electron Studio — Stop button during active lmstudio generation
+Exit:    0
+Result:  Generation stopped cleanly. "Generation stopped by operator." READY stage: "stopped by operator". Recourse shown.
+Links:   operator-journey-matrix.md
+```
+
+```
+Date:    2026-05-08
+Command: Electron Studio — "Try again" after stop; "Switch medium" (glsl→p5)
+Exit:    0
+Result:  Retry fired server-side (log: shader tool loop retried). Switch medium reformulated prompt. State preserved.
+Links:   operator-journey-matrix.md
+```
+
+```
+Date:    2026-05-08
+Command: node bin/liminal --help && node bin/liminal provider status
+Exit:    0
+Result:  CLI runs cleanly. Full TUI/bridge command set exposed. Config reads from ~/.liminal/config.json.
+Links:   operator-journey-matrix.md
+```
+
+```
+Date:    2026-05-08
+Command: pnpm bubbletea:test (re-run for journey evidence)
+Exit:    0
+Result:  ok internal/app (cached), ok internal/bridge (cached). No launch-affecting paths.
+Links:   operator-journey-matrix.md
+```
+
+**Operator journey result: 10 PASS, 1 NON-MATERIAL (Bubble Tea). Zero FCQA-* findings.**

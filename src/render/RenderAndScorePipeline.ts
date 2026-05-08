@@ -203,7 +203,7 @@ export class RenderAndScorePipeline {
    * Check if domain produces visual output
    */
   private isVisualDomain(domain: RenderDomain): boolean {
-    return ['p5', 'three', 'glsl', 'hydra'].includes(domain);
+    return ['p5', 'three', 'glsl', 'hydra', 'svg', 'html', 'ascii', 'kinetic'].includes(domain);
   }
 
   /**

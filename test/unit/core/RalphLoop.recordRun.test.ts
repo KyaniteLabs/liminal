@@ -31,7 +31,7 @@ describe('RalphLoop recordRun LiminalFS integration', () => {
     generatorRegistry.clear();
 
     generatorRegistry.register({
-      name: 'test-p5',
+      name: 'p5',
       canHandle: () => 1,
       generate: async () => ({
         code: 'function setup() { createCanvas(400, 400); noLoop(); frameRate(30); } function draw() { background(220); fill(255, 0, 0); circle(200, 200, 50); }',

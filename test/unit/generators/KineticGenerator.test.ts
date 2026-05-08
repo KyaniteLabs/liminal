@@ -131,13 +131,22 @@ describe('KineticGenerator', () => {
     expect(wrapped).toContain('kinetic-canvas');
   });
 
-  it('returns an explicit recovery scaffold if LLM returns empty code', async () => {
+  it('generateFull preserves the explicit recovery scaffold and failure reason if LLM returns empty code', async () => {
     mockComplete.mockResolvedValueOnce({ text: '', success: true });
     mockGenerate.mockResolvedValueOnce({ code: '', success: true });
     const gen = new KineticGenerator();
-    const result = await gen.generate('empty');
-    expect(result).toContain('<!DOCTYPE html>');
-    expect(result).toContain('Liminal recovery');
-    expect(result).toContain('@keyframes orbit');
+    const result = await gen.generateFull('empty');
+    expect(result.code).toContain('<!DOCTYPE html>');
+    expect(result.code).toContain('Liminal recovery');
+    expect(result.code).toContain('@keyframes orbit');
+    expect(result.error).toContain('Recovered with deterministic CSS kinetic scaffold');
+  });
+
+  it('generate rejects recovery scaffolds so callers can receipt the failed candidate', async () => {
+    mockComplete.mockResolvedValueOnce({ text: '', success: true });
+    mockGenerate.mockResolvedValueOnce({ code: '', success: true });
+    const gen = new KineticGenerator();
+
+    await expect(gen.generate('empty')).rejects.toThrow('Recovered with deterministic CSS kinetic scaffold');
   });
 });

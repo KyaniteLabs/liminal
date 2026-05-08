@@ -329,6 +329,22 @@ const p5Entry: GeneratorEntry = {
 
 let pluginsLoaded = false;
 
+const staticGeneratorEntries: GeneratorEntry[] = [
+  shaderEntry,
+  threeEntry,
+  revideoEntry,
+  hyperframesEntry,
+  svgEntry,
+  htmlEntry,
+  asciiEntry,
+  kineticEntry,
+  textgenEntry,
+  strudelEntry,
+  hydraEntry,
+  toneEntry,
+  p5Entry,
+];
+
 /**
  * Try to load plugins from plugins/ directory
  */
@@ -353,25 +369,20 @@ async function loadPlugins(): Promise<boolean> {
 }
 
 /**
- * Register static generators as fallback
+ * Register missing built-in generators without duplicating plugin-provided domains.
  */
-function registerStaticGenerators(): void {
-  // Domain-specific generators for non-p5 domains
-  generatorRegistry.register(shaderEntry);
-  generatorRegistry.register(threeEntry);
-  generatorRegistry.register(revideoEntry);
-  generatorRegistry.register(hyperframesEntry);
-  generatorRegistry.register(svgEntry);
-  generatorRegistry.register(htmlEntry);
-  generatorRegistry.register(asciiEntry);
-  generatorRegistry.register(kineticEntry);
-  generatorRegistry.register(textgenEntry);  // textgen before strudel for priority
-  generatorRegistry.register(strudelEntry);
-  generatorRegistry.register(hydraEntry);
-  generatorRegistry.register(toneEntry);
-  
-  // P5 generator with tier-based prompting (fallback for all p5 sketches)
-  generatorRegistry.register(p5Entry);
+function registerMissingStaticGenerators(): number {
+  const registeredNames = new Set(generatorRegistry.getAll().map((entry) => entry.name));
+  let registered = 0;
+
+  for (const entry of staticGeneratorEntries) {
+    if (registeredNames.has(entry.name)) continue;
+    generatorRegistry.register(entry);
+    registeredNames.add(entry.name);
+    registered += 1;
+  }
+
+  return registered;
 }
 
 /**
@@ -381,17 +392,22 @@ function registerStaticGenerators(): void {
  * First tries to load from plugins/, falls back to static registration.
  */
 export async function registerAllGenerators(): Promise<void> {
-  // Only register if not already registered (idempotent)
-  if (generatorRegistry.getAll().length > 0) return;
+  const alreadyRegistered = generatorRegistry.getAll().length > 0;
 
-  // Try to load plugins first
-  pluginsLoaded = await loadPlugins();
+  // Try to load plugins first on an empty registry.
+  if (!alreadyRegistered) {
+    pluginsLoaded = await loadPlugins();
+  }
+
+  const missingStaticCount = registerMissingStaticGenerators();
   
   if (!pluginsLoaded) {
-    Logger.info('registerGenerators', 'Falling back to static generator registration');
-    registerStaticGenerators();
+    Logger.info('registerGenerators', `Registered ${missingStaticCount} static generators`);
   } else {
-    Logger.info('registerGenerators', `Loaded ${pluginLoader.getAllPlugins().length} plugins`);
+    Logger.info(
+      'registerGenerators',
+      `Loaded ${pluginLoader.getAllPlugins().length} plugins and registered ${missingStaticCount} missing static generators`,
+    );
   }
 }
 

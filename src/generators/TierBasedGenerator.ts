@@ -364,16 +364,10 @@ export abstract class TierBasedGenerator {
 
     Logger.warn('TierBasedGenerator', `${this.domain} tool loop returned empty code; retrying once without tools`);
     const directResult = await this.llm.complete({
-      systemPrompt,
-      prompt: [
-        userPrompt,
-        '',
-        'The previous tool-assisted attempt returned no final code.',
-        `Generate the final ${this.domain} artifact for the original request now.`,
-        'Return only the runnable output. Do not include markdown fences, explanations, or tool calls.',
-        `Original request: ${originalPrompt}`,
-      ].join('\n'),
-      maxTokens,
+      systemPrompt: this.buildEmptyCodeRetrySystemPrompt(systemPrompt),
+      prompt: this.buildEmptyCodeRetryPrompt(originalPrompt, userPrompt),
+      maxTokens: this.maxTokensForDirectRetry(maxTokens),
+      temperature: this.temperatureForDirectRetry(),
       signal,
     });
     if (!directResult) return { response: null };
@@ -389,6 +383,29 @@ export abstract class TierBasedGenerator {
       },
       error: directResult.error,
     };
+  }
+
+  protected buildEmptyCodeRetrySystemPrompt(systemPrompt: string): string {
+    return systemPrompt;
+  }
+
+  protected buildEmptyCodeRetryPrompt(originalPrompt: string, userPrompt: string): string {
+    return [
+      userPrompt,
+      '',
+      'The previous model call returned no final artifact.',
+      `Generate the final ${this.domain} artifact for the original request now.`,
+      'Return only the runnable output. Do not include markdown fences, explanations, reasoning, or tool calls.',
+      `Original request: ${originalPrompt}`,
+    ].join('\n');
+  }
+
+  protected maxTokensForDirectRetry(maxTokens?: number): number | undefined {
+    return maxTokens ?? this.llm.getConfig().maxTokens;
+  }
+
+  protected temperatureForDirectRetry(): number | undefined {
+    return this.llm.getConfig().temperature;
   }
 
   private describeEmptyGenerationFailure(...errors: Array<string | undefined>): string {
@@ -543,33 +560,6 @@ export abstract class TierBasedGenerator {
       return null;
     }
     return directResult;
-  }
-
-  /**
-   * Extract code from thinking/reasoning text when LLM puts code in fences
-   * but not in the main response.
-    if (process.env.NODE_ENV !== 'test') {
-      await metaHarness.onGenerationComplete({
-        success: true,
-        model: this.llm.getConfig().model || 'unknown',
-        domain: this.domain,
-        prompt,
-        code: response.code,
-        duration: 0,
-        thinking: response.thinking,
-        recoveredFromThinking: response.recoveredFromThinking,
-      });
-    }
-
-    // 7. Record to memory
-    harnessMemory.recordEpisode({
-      type: 'generation',
-      domain: this.domain,
-      prompt,
-      code: response.code,
-    });
-
-    return response;
   }
 
   /**

@@ -1013,9 +1013,13 @@ body::before {
 
 .liminal-stage-empty {
   height: 100%;
+  box-sizing: border-box;
   display: grid;
-  place-content: center;
+  align-content: center;
+  justify-items: center;
   gap: 8px;
+  padding: 16px;
+  overflow: auto;
   text-align: center;
   color: var(--liminal-muted);
   background:
@@ -1055,6 +1059,74 @@ body::before {
 
 .liminal-stage-empty small {
   font-family: var(--font-mono);
+}
+
+.liminal-live-run {
+  width: min(560px, 100%);
+  box-sizing: border-box;
+  justify-self: center;
+  display: grid;
+  gap: 5px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-left: 3px solid rgba(89, 225, 255, 0.78);
+  background: rgba(5, 13, 22, 0.76);
+  text-align: left;
+  font-family: var(--font-mono);
+  box-shadow: inset 0 0 0 1px rgba(89, 225, 255, 0.16);
+}
+
+.liminal-live-run--slow {
+  border-left-color: rgba(250, 204, 21, 0.9);
+  box-shadow: inset 0 0 0 1px rgba(250, 204, 21, 0.2), 0 0 22px rgba(250, 204, 21, 0.08);
+}
+
+.liminal-live-run span,
+.liminal-live-run strong,
+.liminal-live-run small,
+.liminal-live-run em {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.liminal-live-run span {
+  color: var(--liminal-cyan);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.liminal-live-run--slow span {
+  color: #facc15;
+}
+
+.liminal-live-run strong {
+  color: var(--liminal-text);
+  font-size: 0.96rem;
+  line-height: 1.18;
+}
+
+.liminal-live-run small,
+.liminal-live-run em {
+  color: var(--liminal-muted);
+  font-size: 0.72rem;
+  font-style: normal;
+}
+
+.liminal-live-run__stop {
+  justify-self: start;
+  min-height: 30px;
+  margin-top: 3px;
+  border: 1px solid rgba(250, 204, 21, 0.5);
+  border-radius: 6px;
+  background: rgba(250, 204, 21, 0.12);
+  color: #fef3c7;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.liminal-live-run__stop:hover {
+  background: rgba(250, 204, 21, 0.2);
 }
 
 .liminal-stage-process {

@@ -25,6 +25,47 @@ describe('workbenchTelemetry', () => {
     ]);
   });
 
+  it('keeps long-running model calls visibly alive in the Studio summary', () => {
+    const now = Date.parse('2026-05-08T12:03:15.000Z');
+    const startedAt = '2026-05-08T12:00:00.000Z';
+
+    const summary = summarizeWorkbenchBridge([
+      {
+        type: 'status.updated',
+        status: {
+          sessionId: 'studio-long-run',
+          provider: 'lmstudio',
+          model: 'repo-pipeline-qwen35-q8-prod',
+          roles: {
+            generator: {
+              role: 'generator',
+              provider: 'lmstudio',
+              model: 'repo-pipeline-qwen35-q8-prod',
+              source: 'active-provider',
+              multimodal: 'unknown',
+              purpose: 'Writes the creative code candidates.',
+            },
+          },
+        },
+      },
+      { type: 'generation.domain_plan', domains: ['glsl'], startedAt, timeoutMinutes: 5, candidateCount: 1, executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'glsl', attempt: 1, attemptTotal: 1, startedAt, timeoutMinutes: 5, candidateCount: 1, executionMode: 'draft' },
+    ], now);
+
+    expect(summary.liveRun).toMatchObject({
+      statusLabel: 'Still working',
+      providerModel: 'lmstudio / repo-pipeline-qwen35-q8-prod',
+      activeDomain: 'glsl',
+      elapsedLabel: '3m 15s',
+      etaLabel: 'up to 1m 45s left',
+      attemptLabel: 'Attempt 1 of 1',
+      timeoutLabel: '5m 0s timeout budget',
+      showSlowNotice: true,
+    });
+    expect(summary.liveRun?.detail).toContain('generating glsl');
+    expect(summary.liveRun?.reassurance).toContain('Still connected');
+  });
+
   it('surfaces route selection and verified preview receipts in the workbench timeline', () => {
     const summary = summarizeWorkbenchBridge([
       { type: 'generation.intent_brief', userRequest: 'p5 fireflies', requirements: ['Primary request: p5 fireflies'], missingDetails: [], questions: [], willClarify: false },

@@ -14,6 +14,18 @@ export interface WorkbenchBridgeSummary {
   processSteps: WorkbenchProcessStep[];
   recentActivity: Array<{ label: string; detail: string; status?: string }>;
   stageTimings: Array<{ label: string; durationLabel: string }>;
+  liveRun: {
+    statusLabel: string;
+    providerModel: string;
+    activeDomain: string;
+    elapsedLabel: string;
+    etaLabel: string;
+    attemptLabel: string;
+    timeoutLabel: string;
+    detail: string;
+    reassurance: string;
+    showSlowNotice: boolean;
+  } | null;
   humanReview: {
     status: 'waiting' | 'ready' | 'blocked';
     heading: string;
@@ -118,6 +130,24 @@ export function summarizeWorkbenchBridge(
   const terminalBlocked = readyStep?.status === 'failed';
   const terminalPhases = ['idle', 'complete', 'previewed', 'verified preview', 'preview missing', 'stopped', 'disconnected'];
   const active = !readyDone && !terminalBlocked && !terminalPhases.includes(phase);
+  const providerModelTruth = latestProviderModelTruth(events, latestStatusTruth(events));
+  const providerModel = [providerModelTruth.provider, providerModelTruth.model].filter(Boolean).join(' / ') || 'provider/model pending';
+  const liveDomain = derived.activeDomain || derived.plan[0] || 'selected medium';
+  const showSlowNotice = active && derived.elapsedMs >= 30_000;
+  const liveRun = active ? {
+    statusLabel: showSlowNotice ? 'Still working' : 'Generation live',
+    providerModel,
+    activeDomain: liveDomain,
+    elapsedLabel: derived.elapsedLabel,
+    etaLabel: derived.etaLabel,
+    attemptLabel: derived.attemptLabel,
+    timeoutLabel: derived.timeoutLabel,
+    detail: `${providerModel} is generating ${liveDomain}.`,
+    reassurance: showSlowNotice
+      ? 'Still connected. Shader and 3D prompts can take several minutes.'
+      : 'Waiting on the model. Progress and preview evidence will appear as they arrive.',
+    showSlowNotice,
+  } : null;
 
   return {
     active,
@@ -131,6 +161,7 @@ export function summarizeWorkbenchBridge(
     processSteps,
     recentActivity: summarizeRecentActivity(events),
     stageTimings: derived.stageTimings ?? [],
+    liveRun,
     humanReview: derived.humanReview,
   };
 }

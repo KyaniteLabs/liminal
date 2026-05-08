@@ -1,5 +1,6 @@
-import type { SwarmPersona, SwarmOutput, SwarmConfig, Vote } from './types.js';
+import type { SwarmPersona, SwarmOutput, SwarmConfig, SwarmOllamaCaller, Vote } from './types.js';
 import { PromptLibrary } from '../prompts/index.js';
+import { isAbortError } from '../utils/abort.js';
 
 interface VotingResult {
   scores: Map<string, number>;
@@ -203,14 +204,16 @@ export class VotingEngine {
    * @param _config Swarm configuration
    * @param callOllama Optional Ollama caller
    * @param prompt Optional prompt for domain inference (used for calibration)
+   * @param signal Optional cancellation signal for in-flight voting calls
    */
   static async conductVoting(
     outputs: Map<string, SwarmOutput>,
     personas: SwarmPersona[],
     _roundNum: number,
     _config: SwarmConfig,
-    callOllama?: (model: string, systemPrompt: string, userPrompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>,
-    prompt?: string
+    callOllama?: SwarmOllamaCaller,
+    prompt?: string,
+    signal?: AbortSignal,
   ): Promise<VotingResult> {
     // Build candidate map (A, B, C...)
     const candidateMap = new Map<string, string>();
@@ -267,6 +270,7 @@ export class VotingEngine {
               // All voters use same temperature - differentiation from system prompts
               temperature: 0.7,
               num_predict: voter.maxTokens,
+              signal,
             }
           );
 
@@ -279,6 +283,7 @@ export class VotingEngine {
             reasoning: parsed.reasoning,
           }] as const;
         } catch (error) {
+          if (isAbortError(error)) throw error;
           return [voter.id, {
             voterId: voter.id,
             firstChoice: '',

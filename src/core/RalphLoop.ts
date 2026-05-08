@@ -76,6 +76,7 @@ import { AmbiguityDetector } from './AmbiguityDetector.js';
 import { env } from '../utils/env.js';
 import { Provider } from '../types/providers.js';
 import { LiminalError } from '../errors/index.js';
+import { isAbortError } from '../utils/abort.js';
 
 export type { LoopOptions, LoopResult, IterationContext, NormalizedLoopOptions };
 
@@ -1244,6 +1245,11 @@ export class RalphLoop {
           timestamp: iterationContext.timestamp,
         });
 
+        if (normalizedOptions.signal?.aborted) {
+          reason = 'aborted by user';
+          break;
+        }
+
         // Persist before any break gate below. High-quality first iterations can
         // stop immediately, but they still need gallery and run artifacts.
         previousCode = currentCode;
@@ -1488,6 +1494,12 @@ export class RalphLoop {
         }
 
       } catch (error) {
+        if (isAbortError(error) || normalizedOptions.signal?.aborted) {
+          completed = false;
+          reason = 'aborted by user';
+          break;
+        }
+
         // Report error to Meta-Harness (skip during tests to avoid log pollution)
         if (process.env.NODE_ENV !== 'test') {
           await metaHarness.onGenerationComplete({

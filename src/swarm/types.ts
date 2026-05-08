@@ -13,6 +13,19 @@ export interface SwarmPersona {
   votingPower: number;
 }
 
+export interface SwarmCallOptions {
+  temperature?: number;
+  num_predict?: number;
+  signal?: AbortSignal;
+}
+
+export type SwarmOllamaCaller = (
+  model: string,
+  systemPrompt: string,
+  userPrompt: string,
+  options?: SwarmCallOptions,
+) => Promise<string>;
+
 export enum SwarmMode {
   COMPETITIVE = 'competitive',
   HYBRID = 'hybrid',

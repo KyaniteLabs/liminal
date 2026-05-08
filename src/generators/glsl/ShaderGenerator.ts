@@ -285,7 +285,7 @@ export class ShaderGenerator extends TierBasedGenerator {
   private shouldUseProviderRecoveryShader(err: unknown, signal?: AbortSignal): boolean {
     if (signal?.aborted) return false;
     const message = err instanceof Error ? err.message : String(err);
-    return /(?:no usable content|LLM returned empty code|LLM failed before returning code|Generated code is too short \(0 chars\)|Code is empty after stripping)/i.test(message);
+    return /(?:no usable content|LLM returned empty code|Generated code is too short \(0 chars\)|Code is empty after stripping)/i.test(message);
   }
 
   private extractCreativeBrief(prompt: string): string {

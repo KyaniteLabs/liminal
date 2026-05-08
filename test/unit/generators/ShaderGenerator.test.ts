@@ -210,4 +210,29 @@ describe('ShaderGenerator', () => {
     expect(validation.errors).toEqual([]);
     expect(validation.valid).toBe(true);
   });
+
+  it('surfaces provider configuration failures instead of rendering a recovery shader', async () => {
+    vi.spyOn(LLMClient, 'isConfigured').mockReturnValue(true);
+    const llm = new LLMClient({
+      baseUrl: 'http://localhost:1234/v1',
+      model: 'local-model',
+      apiKey: 'test-key',
+    });
+    vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValueOnce({
+      content: '',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: false,
+      error: 'Invalid model identifier "local-model"',
+    });
+    vi.spyOn(llm, 'complete').mockResolvedValueOnce({
+      text: '',
+      success: false,
+      error: 'Invalid model identifier "local-model"',
+    });
+
+    const gen = new ShaderGenerator(llm);
+
+    await expect(gen.generate('Create a GLSL violet nebula shader')).rejects.toThrow(/cannot use model "local-model"/);
+  });
 });

@@ -2,16 +2,28 @@
 
 Real execution required — no static inspection substitutes for this table.
 
+Executed: 2026-05-08, operator: Claude (computer-use), provider: glm/GLM-5v-turbo (Studio), lmstudio/repo-pipeline-qwen35-q8-prod (initial run)
+
 | Journey | Command / Path | Expected User-Visible Behavior | Actual Result | Evidence | Status | Finding |
 |---|---|---|---|---|---|---|
-| Studio prompt → artifact | Launch Electron Studio, enter a creative prompt | Generation starts, progress visible, artifact shown | _not yet run_ | — | pending | — |
-| Shader prompt | Enter a GLSL shader prompt in Studio | Shader domain detected, artifact renders | _not yet run_ | — | pending | — |
-| Slow generation | Submit a prompt with a provider that is slow | Progress indicator visible throughout; no silent hang | _not yet run_ | — | pending | — |
-| Timeout visibility | Let a generation exceed the timeout | User sees timeout message with recourse (retry/cancel) | _not yet run_ | — | pending | — |
-| Retry / continue | After timeout or error, use retry action | Generation restarts; previous state not corrupted | _not yet run_ | — | pending | — |
-| Provider failure | Disconnect provider mid-generation | User sees actionable error (not blank screen or crash) | _not yet run_ | — | pending | — |
-| Stop / cancel | Click stop during active generation | Run stops cleanly; UI reflects stopped state | _not yet run_ | — | pending | — |
-| Preview visibility | Complete a generation | Artifact preview obvious and accessible | _not yet run_ | — | pending | — |
-| Proof receipt freshness | Check `.omx/proof/domain-gauntlet-live.json` | `gitCommit` matches current HEAD; all 12 domains pass | _blocked — credentials required_ | — | blocked | — |
-| TUI bridge (launch-relevant) | Run CLI / TUI with same provider config | Launch-relevant TUI paths behave as documented | _not yet run_ | — | pending | — |
-| Bubble Tea launch relevance | Identify any Bubble Tea paths affecting launch | Non-launch paths recorded as non-material with rationale | _not yet run_ | — | pending | — |
+| Studio prompt → artifact | Launch Electron Studio, enter a creative prompt | Generation starts, progress visible, artifact shown | Submitted "a GLSL fragment shader: plasma waves with electric neon colors, animated over time". Generation started immediately. Work log lit up all 5 stages (BRIEF→MEDIUM→GENERATE→PREVIEW→REFLECTION). Plasma shader rendered in right panel in ~18s (PLAN 3ms, GENERATE 13s, RENDER 3.9s). | Work log: all stages green. Right panel: live plasma shader visible. | PASS | — |
+| Shader prompt | Enter a GLSL shader prompt in Studio | Shader domain detected, artifact renders | MEDIUM stage shows "selected shader"; pipeline completed with PREVIEW VERIFIED. Full-color plasma waves rendered. | Work log MEDIUM: "selected shader; n…"; PREVIEW: "verified image pre…"; rendered artifact in right panel. | PASS | — |
+| Slow generation | Submit a prompt with a provider that is slow | Progress indicator visible throughout; no silent hang | With lmstudio/repo-pipeline-qwen35-q8-prod: STILL WORKING panel visible with "2m 12s elapsed", timeout countdown "up to 27m 48s left", and activity message throughout. No silent hang. | Screenshot: right panel shows "STILL WORKING 2m 12s elapsed" with stop button visible. | PASS | — |
+| Timeout visibility | Let a generation exceed the timeout | User sees timeout message with recourse (retry/cancel) | NOT VALIDATED. Evidence only proves timeout budget/countdown visibility before expiry ("up to 27m 48s left"), not the post-timeout error/recourse path. | Screenshot: STILL WORKING panel with explicit timeout budget and countdown. Missing: actual expiry event. | NOT VALIDATED | FCQA-001 |
+| Retry / continue | After timeout or error, use retry action | Generation restarts; previous state not corrupted | After stopping lmstudio run: "Try again" button fired server-side retries (log: `[TierBasedGenerator] shader tool loop returned empty code; retrying once without tools` ×2). "Switch medium" reformulated prompt glsl→p5 correctly. State was not corrupted. | Studio log entries confirming retry attempts. UI preserved prompt and pipeline state through stop→retry→switch medium cycle. | PASS | — |
+| Provider failure | Disconnect provider mid-generation | User sees actionable error (not blank screen or crash) | NOT VALIDATED. Evidence proves empty-code/model-output failure recourse, not transport/provider disconnect handling. | Screenshot: STOPPED card after empty-code response. Missing: real provider disconnect mid-generation. | NOT VALIDATED | FCQA-002 |
+| Stop / cancel | Click stop during active generation | Run stops cleanly; UI reflects stopped state | Clicked Stop during active lmstudio generation. UI immediately showed: "Generation stopped" notification, STOPPED card with "Generation stopped by operator", Work log status "stopped", READY stage "stopped by operator". No crash or hang. | Screenshot: chat shows "Generation stopped. The run was stopped. Edit the prompt or try again when ready." Work log: "stopped". | PASS | — |
+| Preview visibility | Complete a generation | Artifact preview obvious and accessible | After GLM generation completed: "ARTIFACT PREVIEW — Preview is ready. Use the message box to revise, make a variation, or polish this direction." + "View preview" button + live plasma shader thumbnail in right panel + "Adjust direction" bar with Revise/New variation/Polish actions. | Screenshot: preview panel shows rendered plasma shader. ARTIFACT PREVIEW card confirms ready state. | PASS | — |
+| Proof receipt freshness | Check `.omx/proof/domain-gauntlet-live.json` | `gitCommit` matches current HEAD; all 12 domains pass | Verified programmatically: `gitCommit: 5cf647c8353d3444fe95288e5957d9a021400021` matches HEAD at time of run. All 12 domains pass via glm/GLM-5v-turbo. `generatedAt: 2026-05-08T04:54:05.444Z`. | `.omx/proof/domain-gauntlet-live.json` + `pnpm final-qa:surface` exit 0 (verified 2026-05-08, commit 5cf647c8). | PASS | — |
+| TUI bridge (launch-relevant) | Run CLI / TUI with same provider config | Launch-relevant TUI paths behave as documented | `node bin/liminal --help` runs cleanly with GLM config active. Full command set exposed: `tui`, `bridge [port]`, `bubbletea [port]`, `operator [port]`. CLI reads from `~/.liminal/config.json`. `provider status` reports env-var presence (keys are in config.json, not env vars — expected). | CLI help output shows all TUI/bridge commands wired. No errors. | PASS | — |
+| Bubble Tea launch relevance | Identify any Bubble Tea paths affecting launch | Non-launch paths recorded as non-material with rationale | `pnpm bubbletea:test` passes: `internal/app` ✅ `internal/bridge` ✅. Bubble Tea paths are: (1) operator cockpit TUI (non-blocking, UI layer only), (2) HTTP bridge server between Go TUI and Node backend. Neither path affects generation pipeline, domain routing, or artifact rendering. Both are non-material for launch. | `pnpm bubbletea:test`: ok internal/app (cached), ok internal/bridge (cached). | NON-MATERIAL | — |
+
+## Summary
+
+- **11 journeys executed**
+- **8 PASS, 2 NOT VALIDATED, 1 NON-MATERIAL** (Bubble Tea — TUI paths confirmed non-blocking)
+- **2 FCQA-* findings**: FCQA-001 timeout expiry recourse, FCQA-002 provider disconnect handling
+- No blank screens, no crashes, no silent hangs, no missing recourse observed
+- Empty-code provider output gracefully handled with actionable UI (not blank screen); real provider disconnect still needs validation
+- Timeout budget surfaced continuously during slow generation; actual timeout expiry still needs validation
+- Stop/cancel cleans up immediately with clear operator messaging

@@ -153,7 +153,7 @@
   },
   "overrides": {
     "basic-ftp": "5.3.1",
-    "hono": "4.12.16",
+    "hono": "4.12.18",
     "ip-address": "10.2.0",
     "picomatch": "4.0.4",
     "protobufjs": "^7.5.5",
@@ -194,7 +194,7 @@
       "cookie": "0.7.0",
       "path-to-regexp": "8.4.0",
       "basic-ftp": "5.3.1",
-      "hono": "4.12.16",
+      "hono": "4.12.18",
       "ip-address": "10.2.0",
       "protobufjs": "^7.5.5",
       "vite": "8.0.9",

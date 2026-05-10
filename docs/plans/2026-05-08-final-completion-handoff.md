@@ -10,12 +10,12 @@
 
 ## Current Baseline
 
-- Canonical checkout: `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal`
+- Canonical checkout: derive with `git rev-parse --show-toplevel`; all paths below are repo-relative.
 - Branch: `main`
 - Current commit when this plan was written: `366d1c5062714cd321f9d42c5501c270b8bbc5e0`
 - Local state when this plan was written: clean, `main...origin/main`
 - Open PRs when checked: none
-- Prior final QA audit folder: `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/docs/audits/final-qa-2026-05-06/`
+- Prior final QA audit folder: `docs/audits/final-qa-2026-05-06/`
 - New final-completion audit folder: not created yet
 
 ## Explicitly Unfinished Work
@@ -23,21 +23,21 @@
 This is the important part. Nothing below may be reported as complete until it has been implemented, verified, committed, pushed, reviewed if required, merged, and rechecked on `main`.
 
 1. The final completion audit folder does not exist yet.
-   - Required path: `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/docs/audits/final-completion-2026-05-08/`
+   - Required path: `docs/audits/final-completion-2026-05-08/`
    - Required files: `README.md`, `findings-ledger.md`, `verification-log.md`, `operator-journey-matrix.md`, `handoff-status.md`
 
 2. `pnpm final-qa:test-quality` is failing.
    - Current failure: 4 new strict test-quality warnings.
    - Failing assertions:
-     - `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/test/unit/core/ScoringEngine.test.ts:997`
-     - `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/test/unit/core/ScoringEngine.test.ts:1149`
-     - `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/test/unit/core/ScoringEngine.test.ts:1167`
-     - `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/test/unit/generators/registerGenerators.test.ts:273`
+     - `test/unit/core/ScoringEngine.test.ts:997`
+     - `test/unit/core/ScoringEngine.test.ts:1149`
+     - `test/unit/core/ScoringEngine.test.ts:1167`
+     - `test/unit/generators/registerGenerators.test.ts:273`
    - Required fix: replace weak `not.toBeNull()` assertions with specific assertions that prove the expected value or shape.
 
 3. `pnpm final-qa:surface` is failing.
    - Current failure: stale live creative-domain receipt.
-   - Receipt path: `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.omx/proof/domain-gauntlet-live.json`
+   - Receipt path: `.omx/proof/domain-gauntlet-live.json`
    - Receipt commit: `c2c0eee3e92dc780a6965caa5b68692106c9eaa4`
    - Current commit: `366d1c5062714cd321f9d42c5501c270b8bbc5e0`
    - Required fix: rerun the live creative-domain proof on current `main` when provider credentials are configured.
@@ -56,13 +56,14 @@ This is the important part. Nothing below may be reported as complete until it h
 ## Task 1: Repair Strict Test-Quality Blockers
 
 **Files:**
-- Modify: `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/test/unit/core/ScoringEngine.test.ts`
-- Modify: `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/test/unit/generators/registerGenerators.test.ts`
+- Modify: `test/unit/core/ScoringEngine.test.ts`
+- Modify: `test/unit/generators/registerGenerators.test.ts`
 
 **Steps:**
 
-1. Create a branch from current `origin/main`.
-   - Suggested branch: `final-completion/test-quality-gate`
+1. Create an isolated worktree from current `origin/main` before editing.
+   - Example: `git fetch origin main && git worktree add ../liminal-test-quality-gate -b final-completion/test-quality-gate origin/main`
+   - Work inside that new worktree, not the shared checkout.
 
 2. Replace the three weak `repairAdvice` assertions in `ScoringEngine.test.ts`.
    - For fallback scorer cases, assert the exact fallback repair advice shape or exact stable fields.
@@ -88,13 +89,14 @@ This is the important part. Nothing below may be reported as complete until it h
 ## Task 2: Refresh Current-Commit Live Creative-Domain Proof
 
 **Files:**
-- Likely modified generated proof receipt: `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.omx/proof/domain-gauntlet-live.json`
+- Likely modified generated proof receipt: `.omx/proof/domain-gauntlet-live.json`
 - If the proof runner writes additional receipt files, include them only if they are repo-intended or required by the surface gate.
 
 **Steps:**
 
-1. Start from current `origin/main` after PR 1 merges.
-   - Suggested branch: `final-completion/live-domain-proof`
+1. Start from an isolated worktree based on current `origin/main` after PR 1 merges.
+   - Example: `git fetch origin main && git worktree add ../liminal-live-domain-proof -b final-completion/live-domain-proof origin/main`
+   - Work inside that new worktree, not the shared checkout.
 
 2. Check whether provider credentials are configured.
    - Do not print secrets.
@@ -120,7 +122,7 @@ This is the important part. Nothing below may be reported as complete until it h
 ## Task 3: Create Final Completion Audit Folder
 
 **Files:**
-- Create folder: `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/docs/audits/final-completion-2026-05-08/`
+- Create folder: `docs/audits/final-completion-2026-05-08/`
 - Create: `README.md`
 - Create: `findings-ledger.md`
 - Create: `verification-log.md`
@@ -205,7 +207,7 @@ Open PR 3 and merge only after checks/review requirements are satisfied.
 
 For each material finding:
 
-1. Create a focused branch from current `origin/main`.
+1. Create an isolated worktree with a focused branch from current `origin/main`.
 2. Write or update the regression proof first when practical.
 3. Implement the smallest product-level fix.
 4. Remove dead stubs, commented-out fake features, or misleading fallback behavior related to the finding.
@@ -220,8 +222,8 @@ If a fix teaches something transferable to `liminal-sites`, create a GitHub issu
 ## Task 6: Final Closure Verification
 
 **Files:**
-- Modify: `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/docs/audits/final-completion-2026-05-08/handoff-status.md`
-- Modify as needed: `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/docs/audits/final-completion-2026-05-08/verification-log.md`
+- Modify: `docs/audits/final-completion-2026-05-08/handoff-status.md`
+- Modify as needed: `docs/audits/final-completion-2026-05-08/verification-log.md`
 
 **Required final checks on current `main`:**
 

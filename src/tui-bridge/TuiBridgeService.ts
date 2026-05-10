@@ -349,6 +349,24 @@ export class TuiBridgeService {
     return status;
   }
 
+  private publishResolvedGeneratorModel(
+    sessionId: string,
+    provider: string,
+    baseUrl: string,
+    model: string,
+  ): void {
+    const status = this.sessions.get(sessionId);
+    if (!status) return;
+    const roles = status.roles ? { ...status.roles } : undefined;
+    if (roles?.generator) {
+      roles.generator = { ...roles.generator, provider, baseUrl, model };
+    }
+    if (roles?.harness) {
+      roles.harness = { ...roles.harness, provider, baseUrl, model };
+    }
+    this.updateStatus(sessionId, { provider, model, roles });
+  }
+
   private beginRun(
     sessionId: string,
     details: {
@@ -2130,12 +2148,32 @@ export class TuiBridgeService {
     const controller = new AbortController();
     this.activeStreams.set(sessionId, controller);
 
-    const config = llm.getConfig();
+    let config = llm.getConfig();
     const sessionStatus = this.sessions.get(sessionId);
+    let effectiveModel = sessionStatus?.roles?.generator?.model || config.model || 'unknown';
+    let resolvedEffectiveModel = false;
+    const resolver = (llm as LLMClient & { resolveEffectiveModel?: () => Promise<string> }).resolveEffectiveModel;
+    if (typeof resolver === 'function') {
+      try {
+        effectiveModel = await resolver.call(llm);
+        config = llm.getConfig();
+        resolvedEffectiveModel = true;
+      } catch (err) {
+        Logger.info('TuiBridgeService', `Effective model preflight failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
     const provider = config.baseUrl ? this.providerLabelFromBaseUrl(config.baseUrl) : sessionStatus?.provider || 'unknown';
-    const harnessModelName = sessionStatus?.roles?.harness?.model || config.model || 'unknown';
-    const generatorModelName = sessionStatus?.roles?.generator?.model || harnessModelName;
-    const timeoutMinutes = Math.min(3, Math.max(1, Number(options.timeoutMinutes) || 1));
+    if (resolvedEffectiveModel) {
+      this.publishResolvedGeneratorModel(sessionId, provider, config.baseUrl, effectiveModel);
+    }
+    const harnessModelName = resolvedEffectiveModel
+      ? effectiveModel
+      : sessionStatus?.roles?.harness?.model || config.model || 'unknown';
+    const generatorModelName = resolvedEffectiveModel
+      ? effectiveModel
+      : sessionStatus?.roles?.generator?.model || harnessModelName;
+    // Studio owns the operator-visible timeout; the bridge only bounds it so draft runs cannot hang forever.
+    const timeoutMinutes = Math.min(30, Math.max(1, Number(options.timeoutMinutes) || 1));
     const candidateCount = 1;
     const generationStartedAt = Date.now();
     const intentBrief = this.buildCreativeIntentBrief(userText);
@@ -2259,14 +2297,21 @@ export class TuiBridgeService {
             new Gallery('gallery'),
             null,
           );
-          const generationPromise = orchestrator.generate(attemptPrompt, attemptPrompt, true, controller.signal);
+          const attemptController = new AbortController();
+          const unlinkAttemptAbort = this.linkDraftAttemptToRun(controller.signal, attemptController);
+          const generationPromise = orchestrator.generate(attemptPrompt, attemptPrompt, true, attemptController.signal);
           generationPromise.catch((err) => {
-            if (!controller.signal.aborted) {
+            if (!attemptController.signal.aborted) {
               const message = err instanceof Error ? err.message : String(err);
               logBridge('generation.draft.background_failed', { sessionId, generatorModel: generatorModelName, message });
             }
           });
-          let attemptResult = await this.awaitDraftAttempt(generationPromise, controller, timeoutMinutes);
+          let attemptResult: Awaited<ReturnType<GenerationOrchestrator['generate']>> | undefined;
+          try {
+            attemptResult = await this.awaitDraftAttempt(generationPromise, controller, attemptController, timeoutMinutes);
+          } finally {
+            unlinkAttemptAbort();
+          }
           if (!attemptResult) {
             this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
             return;
@@ -2303,14 +2348,21 @@ export class TuiBridgeService {
               provider,
             });
             const correctionPrompt = this.domainCorrectionPrompt(attemptPrompt, domain, mismatch);
-            const retryPromise = orchestrator.generate(correctionPrompt, correctionPrompt, true, controller.signal);
+            const retryController = new AbortController();
+            const unlinkRetryAbort = this.linkDraftAttemptToRun(controller.signal, retryController);
+            const retryPromise = orchestrator.generate(correctionPrompt, correctionPrompt, true, retryController.signal);
             retryPromise.catch((err) => {
-              if (!controller.signal.aborted) {
+              if (!retryController.signal.aborted) {
                 const message = err instanceof Error ? err.message : String(err);
                 logBridge('generation.draft.domain_retry_failed', { sessionId, generatorModel: generatorModelName, message });
               }
             });
-            const retryResult = await this.awaitDraftAttempt(retryPromise, controller, timeoutMinutes);
+            let retryResult: Awaited<ReturnType<GenerationOrchestrator['generate']>> | undefined;
+            try {
+              retryResult = await this.awaitDraftAttempt(retryPromise, controller, retryController, timeoutMinutes);
+            } finally {
+              unlinkRetryAbort();
+            }
             if (!retryResult) {
               this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
               return;
@@ -2350,6 +2402,7 @@ export class TuiBridgeService {
         } catch (err) {
           lastError = err;
           const message = err instanceof Error ? err.message : String(err);
+          const nextDomain = domainPlan[attempt + 1];
           this.emit(sessionId, {
             type: 'generation.attempt.failed',
             sessionId,
@@ -2360,8 +2413,15 @@ export class TuiBridgeService {
             duration: Date.now() - attemptStartedAt,
             ...this.failureProvenance(err, { provider, model: generatorModelName }),
           });
+          this.emit(sessionId, {
+            type: 'activity.updated',
+            sessionId,
+            message: nextDomain
+              ? `${domain} did not finish: ${message}. Trying ${nextDomain} next.`
+              : `${domain} did not finish: ${message}. No backup medium completed, so recovery choices are available.`,
+          });
           this.transitionRun(sessionId, 'repairing', {
-            label: `Repairing after ${domain} draft failure`,
+            label: nextDomain ? `Trying ${nextDomain} after ${domain} draft failure` : `Recovery needed after ${domain} draft failure`,
             model: generatorModelName,
             provider,
           });
@@ -2446,7 +2506,18 @@ export class TuiBridgeService {
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      this.failRun(sessionId, message);
+      const provenance = this.failureProvenance(err, { provider, model: generatorModelName, endpoint: config.baseUrl });
+      this.emit(sessionId, {
+        type: 'activity.updated',
+        sessionId,
+        message: `Generation stopped before a usable artifact: ${message}. Try again, polish safely, or switch medium.`,
+      });
+      this.failRun(sessionId, message, 'failed', {
+        label: 'Creative draft needs recovery',
+        model: generatorModelName,
+        provider,
+        ...(typeof provenance.retryable === 'boolean' ? { retryable: provenance.retryable } : {}),
+      });
       throw err;
     } finally {
       this.activeStreams.delete(sessionId);
@@ -2455,22 +2526,26 @@ export class TuiBridgeService {
 
   private async awaitDraftAttempt<T>(
     generationPromise: Promise<T>,
-    controller: AbortController,
+    runController: AbortController,
+    attemptController: AbortController,
     timeoutMinutes: number,
   ): Promise<T | undefined> {
-    const { signal } = controller;
-    if (signal.aborted) return undefined;
+    const runSignal = runController.signal;
+    if (runSignal.aborted) return undefined;
 
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let removeAbortListener = () => {};
     const interruptPromise = new Promise<undefined>((resolve, reject) => {
       const onAbort = () => resolve(undefined);
-      signal.addEventListener('abort', onAbort, { once: true });
-      removeAbortListener = () => signal.removeEventListener('abort', onAbort);
+      runSignal.addEventListener('abort', onAbort, { once: true });
+      removeAbortListener = () => runSignal.removeEventListener('abort', onAbort);
       timeoutId = setTimeout(() => {
         const timeoutError = new Error(`Generation timed out after ${timeoutMinutes} minute${timeoutMinutes === 1 ? '' : 's'}`);
+        attemptController.abort(timeoutError);
         reject(timeoutError);
-        controller.abort(timeoutError);
+        // Attempt timeouts fail only this candidate. Stop still uses the run
+        // controller, while this abort prevents stale local model calls from
+        // occupying the provider after the UI has moved to recovery/fallback.
       }, timeoutMinutes * 60_000);
     });
 
@@ -2480,6 +2555,16 @@ export class TuiBridgeService {
       removeAbortListener();
       if (timeoutId) clearTimeout(timeoutId);
     }
+  }
+
+  private linkDraftAttemptToRun(runSignal: AbortSignal, attemptController: AbortController): () => void {
+    if (runSignal.aborted) {
+      attemptController.abort(runSignal.reason);
+      return () => {};
+    }
+    const onAbort = () => attemptController.abort(runSignal.reason);
+    runSignal.addEventListener('abort', onAbort, { once: true });
+    return () => runSignal.removeEventListener('abort', onAbort);
   }
 
   /**
@@ -2954,16 +3039,26 @@ export class TuiBridgeService {
       ? `Previous generation route failed. Retry the original request as ${domain}.`
       : `Target creative domain: ${domain}.`;
     const domainInstruction = domain === Domain.THREE
-      ? 'Return raw Three.js scene code only. Do not return SVG, p5, prose, or markdown. Expose an audio-reactive object by reading window.__liminalAudio each animation frame; map rms/energy to scale/brightness and centroid/brightness to hue/material intensity.'
+      ? 'Return raw Three.js scene code only. Do not return SVG, p5, prose, or markdown. Create beautiful, emotionally responsive visuals that feel alive. Read window.__liminalAudio each animation frame to make the scene react to the user\'s voice in real time. Map voice energy (rms) to scale, brightness, bloom intensity, and particle density. Map spectral brightness (centroid) to color hue, warmth, material emissiveness, and motion speed. Map pitch to vertical position or orbital radius. Trigger particle bursts on onset. The result should breathe and pulse organically with the singing — fluid, expressive, and deeply connected to the sound.'
       : domain === Domain.P5
-        ? 'Return raw p5.js sketch code only. Do not return any other framework, markup, prose, or markdown. Read window.__liminalAudio inside draw(); map rms/energy to scale/brightness and centroid/brightness to hue/motion.'
+        ? 'Return raw p5.js sketch code only. Do not return any other framework, markup, prose, or markdown. Create beautiful, flowing generative visuals that feel alive and emotionally responsive. Read window.__liminalAudio inside draw() to make the sketch react to the user\'s voice in real time. Map voice energy (rms) to scale, brightness, stroke weight, and particle density. Map spectral brightness (centroid) to color hue, warmth, and motion speed. Map pitch to vertical position or size. Trigger particle bursts or color flashes on onset. Use smooth easing so transitions feel organic. The result should breathe and pulse with the singing — fluid, expressive, and deeply connected to the sound.'
         : domain === Domain.GLSL || domain === Domain.SHADER || domain === Domain.WEBGL
-          ? 'Return raw GLSL fragment shader code only. Do not return SVG, p5, prose, or markdown.'
+          ? 'Return raw GLSL fragment shader code only. Do not return SVG, p5, prose, or markdown. Create beautiful, voice-reactive shader visuals. Read the injected audio uniforms: u_rms (voice energy 0-1), u_centroid (spectral brightness 0-1), u_pitch (frequency in Hz), u_onset (1.0 on note attacks). Map u_rms to glow intensity, distortion amount, or zoom. Map u_centroid to color temperature or hue shift. Map u_pitch to spatial frequency or pattern scale. Trigger flash effects or ripple distortions on u_onset. Use smooth mix() for organic transitions.'
           : domain === Domain.HYDRA
-            ? 'Return raw Hydra video-synth code only. Do not return SVG, p5, prose, or markdown.'
-            : domain === Domain.KINETIC
-              ? 'Return a complete raw HTML/CSS kinetic typography artifact only. Include visible animated text or letter elements and CSS @keyframes. Do not return p5, SVG-only output, prose, or markdown.'
-              : `Return raw ${domain} artifact code only. Do not return SVG unless the target domain is SVG.`;
+            ? 'Return raw Hydra video-synth code only. Do not return SVG, p5, prose, or markdown. Create beautiful, voice-reactive video synthesis. Read window.__liminalAudio to modulate Hydra parameters. Map rms/energy to kaleid() count, modulate() amount, or colorama() intensity. Map centroid/brightness to color shift or rotation speed. Map pitch to shape count or scroll speed. Trigger pattern switches or intensity spikes on onset. Use smooth easing via .smooth() for fluid transitions.'
+          : domain === Domain.KINETIC
+            ? 'Return a complete raw HTML/CSS kinetic typography artifact with embedded JavaScript. Include visible animated text or letter elements and CSS @keyframes. Read window.__liminalAudio inside a requestAnimationFrame loop to make the typography react to the user\'s voice in real time. Map voice energy (rms) to letter spacing, font weight, or scale transforms. Map spectral brightness (centroid) to color hue or text-shadow glow. Map pitch to vertical displacement or rotation. Trigger word explosions or letter scattering on onset. Do not return p5, SVG-only output, prose, or markdown.'
+          : domain === Domain.STRUDEL
+            ? 'Return raw Strudel live-coding music pattern code only. Create music that responds to the user\'s voice in real time. Read window.__liminalAudio to modulate pattern parameters. Map voice energy (rms) to pattern density, filter cutoff, or reverb amount. Map spectral brightness (centroid) to harmonic complexity or pitch shift. Map pitch to root note or scale selection. Trigger drum fills or pattern variations on onset. Use smooth parameter interpolation for organic feel.'
+          : domain === Domain.TONE
+            ? 'Return raw Tone.js Web Audio code only. Create beautiful audio that reacts to the user\'s voice in real time. Read window.__liminalAudio to modulate synth and effect parameters. Map voice energy (rms) to filter cutoff, distortion amount, or master gain. Map spectral brightness (centroid) to delay time, reverb decay, or modulation depth. Map pitch to synth detune or note selection. Trigger arpeggios or drum hits on onset. Use smooth ramps (rampTo) for organic transitions.'
+          : domain === Domain.HYPERFRAMES
+            ? 'Return raw HTML + GSAP asset composition code only. Create beautiful motion graphics that react to the user\'s voice in real time. Read window.__liminalAudio inside a requestAnimationFrame loop. Map voice energy (rms) to clip scale, opacity, or blur. Map spectral brightness (centroid) to color overlay intensity or rotation speed. Map pitch to clip position or timeline playback rate. Trigger clip transitions or scale bounces on onset. Register timelines via window.__timelines for preview compatibility.'
+          : domain === Domain.REVIEWD
+            ? 'Return raw Revideo composition code only. Create beautiful video compositions. If possible, read window.__liminalAudio to modulate animation parameters like position, scale, rotation, or opacity of scene elements. Map voice energy to element scale or glow intensity. Map spectral brightness to color shifts.'
+          : domain === Domain.ASCII
+            ? 'Return a complete raw HTML page with animated ASCII art and embedded JavaScript. Read window.__liminalAudio inside a requestAnimationFrame loop to make the ASCII art react to the user\'s voice in real time. Map voice energy (rms) to character density, dithering threshold, or glow intensity. Map spectral brightness (centroid) to color hue or character set cycling. Map pitch to pattern frequency or wave amplitude. Trigger character explosions or morphs on onset.'
+          : `Return raw ${domain} artifact code only. Do not return SVG unless the target domain is SVG. If this is a visual domain, read window.__liminalAudio to make the output react to the user's voice in real time. Map voice energy to scale, brightness, or motion. Map spectral brightness to color or hue.`;
     const briefLines = intentBrief
       ? [
           'Intent brief:',

@@ -12,7 +12,8 @@ export type CreateModeId =
   | 'ascii'
   | 'text'
   | 'revideo'
-  | 'organism';
+  | 'organism'
+  | 'sing';
 
 export type WorkbenchExecutionMode = 'draft' | 'prove';
 
@@ -38,6 +39,7 @@ export const CREATE_MODE_OPTIONS: CreateModeOption[] = [
   { id: 'text', label: 'Text art', stageLabel: 'Text generative art', promptHint: 'Create concrete poetry or text generative art.' },
   { id: 'revideo', label: 'Revideo', stageLabel: 'Revideo composition', promptHint: 'Create a Revideo composition.' },
   { id: 'organism', label: 'Organism (Strudel + Hydra)', stageLabel: 'Strudel + Hydra organism' },
+  { id: 'sing', label: 'Sing', stageLabel: 'Voice-reactive visuals', promptHint: 'Create beautiful, flowing generative visuals that respond to live voice and singing. Read window.__liminalAudio inside the animation loop. Map voice energy (rms) to scale, brightness, and density. Map spectral brightness (centroid) to color hue, warmth, and motion speed. The result should feel alive, emotionally responsive, and organic.' },
 ];
 
 export function getCreateModeOption(mode: string): CreateModeOption {
@@ -57,6 +59,7 @@ export function detectPromptCreateMode(prompt: string): CreateModeId | null {
   if (/\bsvg\b|\bvector\b/.test(lower)) return 'svg';
   if (/\bp5(?:\.js)?\b|\bcreative coding sketch\b/.test(lower)) return 'p5';
   if (/\bascii\b/.test(lower)) return 'ascii';
+  if (/\bsing\b|\bsinging\b|\bvoice\b|\bmic\b|\bmicrophone\b|\baudio[- ]?reactive\b|\breact to my voice\b/.test(lower)) return 'sing';
   return null;
 }
 
@@ -77,12 +80,30 @@ export function requiresBridgeSession(mode: CreateModeId): boolean {
 }
 
 export function buildWorkbenchRunOptions(executionMode: WorkbenchExecutionMode, maxIterations: number) {
+  return buildWorkbenchRunOptionsForMode(executionMode, maxIterations, 'auto');
+}
+
+function normalizeDraftTimeout(timeoutMinutes: number | undefined, fallbackMinutes: number): number {
+  const parsed = Number(timeoutMinutes);
+  if (!Number.isFinite(parsed)) return fallbackMinutes;
+  return Math.min(30, Math.max(1, Math.round(parsed)));
+}
+
+export function buildWorkbenchRunOptionsForMode(
+  executionMode: WorkbenchExecutionMode,
+  maxIterations: number,
+  mode: CreateModeId,
+  configuredTimeoutMinutes?: number,
+) {
+  const slowerDraftModes: CreateModeId[] = ['hydra', 'strudel', 'tone', 'revideo', 'hyperframes'];
   if (executionMode === 'draft') {
+    const fallbackTimeoutMinutes = slowerDraftModes.includes(mode) ? 3 : 1;
     return {
       executionMode: 'draft' as const,
       maxIterations: 1,
       candidateCount: 1,
-      timeoutMinutes: 1,
+      // Generate should respect the visible Studio loop timeout; hidden one-minute caps make local models fail without recourse.
+      timeoutMinutes: normalizeDraftTimeout(configuredTimeoutMinutes, fallbackTimeoutMinutes),
     };
   }
 

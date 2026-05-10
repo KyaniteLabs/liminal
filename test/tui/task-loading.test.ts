@@ -20,11 +20,11 @@ describe('TUI Task Loading', () => {
       const task = JSON.parse(fs.readFileSync(taskPath, 'utf-8'));
       
       expect(task.id).toBe(`M${i}`);
-      expect(task.title).not.toBeNull();
-      expect(task.targetFile).not.toBeNull();
-      expect(task.search).not.toBeNull();
-      expect(task.replace).not.toBeNull();
-      expect(task.verifyCommand).not.toBeNull();
+      expect(task.title).toEqual(expect.stringMatching(/\S/));
+      expect(task.targetFile).toEqual(expect.stringMatching(/\S/));
+      expect(task.search).toEqual(expect.stringMatching(/\S/));
+      expect(task.replace).toEqual(expect.stringMatching(/\S/));
+      expect(task.verifyCommand).toEqual(expect.stringMatching(/\S/));
     }
   });
   

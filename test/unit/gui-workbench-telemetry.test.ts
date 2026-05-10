@@ -25,6 +25,47 @@ describe('workbenchTelemetry', () => {
     ]);
   });
 
+  it('keeps long-running model calls visibly alive in the Studio summary', () => {
+    const now = Date.parse('2026-05-08T12:03:15.000Z');
+    const startedAt = '2026-05-08T12:00:00.000Z';
+
+    const summary = summarizeWorkbenchBridge([
+      {
+        type: 'status.updated',
+        status: {
+          sessionId: 'studio-long-run',
+          provider: 'lmstudio',
+          model: 'repo-pipeline-qwen35-q8-prod',
+          roles: {
+            generator: {
+              role: 'generator',
+              provider: 'lmstudio',
+              model: 'repo-pipeline-qwen35-q8-prod',
+              source: 'active-provider',
+              multimodal: 'unknown',
+              purpose: 'Writes the creative code candidates.',
+            },
+          },
+        },
+      },
+      { type: 'generation.domain_plan', domains: ['glsl'], startedAt, timeoutMinutes: 5, candidateCount: 1, executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'glsl', attempt: 1, attemptTotal: 1, startedAt, timeoutMinutes: 5, candidateCount: 1, executionMode: 'draft' },
+    ], now);
+
+    expect(summary.liveRun).toMatchObject({
+      statusLabel: 'Still working',
+      providerModel: 'lmstudio / repo-pipeline-qwen35-q8-prod',
+      activeDomain: 'glsl',
+      elapsedLabel: '3m 15s',
+      etaLabel: 'up to 1m 45s left',
+      attemptLabel: 'Attempt 1 of 1',
+      timeoutLabel: '5m 0s timeout budget',
+      showSlowNotice: true,
+    });
+    expect(summary.liveRun?.detail).toContain('generating glsl');
+    expect(summary.liveRun?.reassurance).toContain('Still connected');
+  });
+
   it('surfaces route selection and verified preview receipts in the workbench timeline', () => {
     const summary = summarizeWorkbenchBridge([
       { type: 'generation.intent_brief', userRequest: 'p5 fireflies', requirements: ['Primary request: p5 fireflies'], missingDetails: [], questions: [], willClarify: false },
@@ -248,8 +289,54 @@ describe('workbenchTelemetry', () => {
     expect(latest?.detail).toContain('HTTP 429');
     expect(latest?.detail).toContain('retryable');
     expect(latest?.detail).toContain('body: {"error":"rate limited"}');
+    expect(summary.active).toBe(false);
     expect(summary.processSteps.find((step) => step.id === 'draft')).toMatchObject({ status: 'failed' });
+    expect(summary.processSteps.find((step) => step.id === 'ready')).toMatchObject({
+      status: 'failed',
+      detail: 'stopped before preview; use Try again, Polish safely, or Switch medium',
+    });
     expect(summary.humanReview.checks.find((check) => check.label === 'Machine blockers')?.detail).toContain('HTTP 429');
+  });
+
+  it('treats failed run lifecycle events as visible recovery receipts', () => {
+    const events = [
+      { type: 'generation.route.selected', domain: 'glsl', domains: ['glsl'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
+      { type: 'generation.attempt.started', domain: 'glsl', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      {
+        type: 'run.lifecycle',
+        run: {
+          runId: 'run-1',
+          kind: 'creative',
+          phase: 'failed',
+          label: 'Creative draft needs recovery',
+          startedAt: '2026-05-06T12:00:00.000Z',
+          updatedAt: '2026-05-06T12:01:00.000Z',
+          failedAt: '2026-05-06T12:01:00.000Z',
+          outcome: 'failed',
+          error: "GLSL validation failed: Undefined function 'utilities()'",
+          executionMode: 'draft',
+          provider: 'openai',
+          model: 'gpt-5.4-mini',
+        },
+      },
+    ];
+
+    const summary = summarizeWorkbenchBridge(events);
+    const receipt = latestRunReceipt(events);
+
+    expect(summary.processSteps.find((step) => step.id === 'draft')).toMatchObject({
+      status: 'failed',
+      detail: expect.stringContaining("Undefined function 'utilities()'"),
+    });
+    expect(receipt).toMatchObject({
+      outcome: 'failed',
+      creativeDomain: 'glsl',
+      failure: {
+        message: "GLSL validation failed: Undefined function 'utilities()'",
+        provider: 'openai',
+        model: 'gpt-5.4-mini',
+      },
+    });
   });
 
   it('does not imply a completed explicit p5 draft fell through to another generator', () => {
@@ -275,7 +362,7 @@ describe('workbenchTelemetry', () => {
   });
 
   it('keeps completed draft routing honest when a backup domain actually succeeds', () => {
-    const summary = summarizeWorkbenchBridge([
+    const events = [
       { type: 'generation.intent_brief', userRequest: 'fireflies', requirements: ['Primary request: fireflies'], missingDetails: [], questions: [], willClarify: false },
       { type: 'generation.route.selected', domain: 'p5', domains: ['p5', 'three'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
       { type: 'generation.domain_plan', domains: ['p5', 'three'], executionMode: 'draft', candidateCount: 1, timeoutMinutes: 1 },
@@ -285,7 +372,9 @@ describe('workbenchTelemetry', () => {
       { type: 'artifact.found', artifactLabel: 'three HTML preview', artifactPath: '.omx/proof/live-previews/three.html' },
       { type: 'preview.completed', previewType: 'image', content: 'ZmFrZQ==', imageUrl: '.omx/proof/live-previews/three.png' },
       { type: 'generation.complete', finalScore: 0, duration: 1200, model: 'GLM-4.5-air', reason: 'draft artifact ready', executionMode: 'draft' },
-    ]);
+    ];
+    const summary = summarizeWorkbenchBridge(events);
+    const receipt = latestRunReceipt(events);
 
     expect(summary.processSteps.find((step) => step.id === 'route')).toMatchObject({
       status: 'done',
@@ -295,6 +384,12 @@ describe('workbenchTelemetry', () => {
       status: 'done',
       detail: 'preview ready: selected three; backup used',
     });
+    expect(receipt).toMatchObject({
+      outcome: 'completed',
+      creativeDomain: 'three',
+    });
+    expect(receipt?.failure).toBeUndefined();
+    expect(receipt?.details.join(' ')).toContain('recovered failures: Generation produced no code');
   });
 
   it('does not report backup usage without a failed attempt event', () => {
@@ -348,6 +443,52 @@ describe('workbenchTelemetry', () => {
       status: 'failed',
       detail: 'stopped by operator',
     });
+  });
+
+  it('derives a visible stopped receipt when status refresh is the only terminal signal', () => {
+    const events = [
+      { type: 'generation.intent_brief', userRequest: 'fireflies', requirements: ['Primary request: fireflies'], missingDetails: [], questions: [], willClarify: false },
+      { type: 'generation.route.selected', domain: 'p5', domains: ['p5'], executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'p5', attempt: 1, attemptTotal: 1, executionMode: 'draft' },
+      {
+        type: 'run.lifecycle',
+        sessionId: 'studio-stop-1',
+        run: {
+          runId: 'run-stop-1',
+          kind: 'creative',
+          phase: 'failed',
+          label: 'Generation stopped',
+          startedAt: '2026-05-07T20:30:00.000Z',
+          updatedAt: '2026-05-07T20:30:02.000Z',
+          failedAt: '2026-05-07T20:30:02.000Z',
+          outcome: 'cancelled',
+          error: 'Generation stopped by operator.',
+          executionMode: 'draft',
+          provider: 'lmstudio',
+          model: 'repo-pipeline-qwen35-q8-prod',
+        },
+      },
+    ];
+
+    const summary = summarizeWorkbenchBridge(events);
+    const receipt = latestRunReceipt(events);
+
+    expect(summary.active).toBe(false);
+    expect(summary.phase).toBe('stopped');
+    expect(summary.processSteps.find((step) => step.id === 'ready')).toMatchObject({
+      status: 'failed',
+      detail: 'stopped by operator',
+    });
+    expect(receipt).toMatchObject({
+      phase: 'stopped',
+      outcome: 'stopped',
+      creativeDomain: 'p5',
+      provider: 'lmstudio',
+      model: 'repo-pipeline-qwen35-q8-prod',
+    });
+    expect(receipt?.details.join(' ')).toContain('stopped: Generation stopped by operator.');
+    expect(receipt?.artifact).toBeUndefined();
+    expect(receipt?.preview).toBeUndefined();
   });
 
   it('surfaces missing previews and disconnected streams instead of pretending the stage is blank', () => {

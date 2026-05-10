@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -17,6 +17,10 @@ describe('documentation link checker', () => {
     const badDoc = path.join(tempRoot, 'bad.md');
     writeFileSync(badDoc, '[missing](./missing.md)\n');
 
-    expect(() => execFileSync(process.execPath, [scriptPath, '--file', path.relative(repoRoot, badDoc)], { cwd: repoRoot, encoding: 'utf8' })).toThrow();
+    try {
+      expect(() => execFileSync(process.execPath, [scriptPath, '--file', path.relative(repoRoot, badDoc)], { cwd: repoRoot, encoding: 'utf8' })).toThrow();
+    } finally {
+      rmSync(tempRoot, { recursive: true, force: true });
+    }
   });
 });

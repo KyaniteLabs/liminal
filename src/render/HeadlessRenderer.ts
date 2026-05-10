@@ -12,7 +12,7 @@ import { Logger } from '../utils/Logger.js';
 import { RenderEvidence } from '../core/types/GenerationEvaluation.js';
 import { getLocalP5ScriptForUrl } from '../utils/browserAssetFallbacks.js';
 
-export type RenderDomain = 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'tone' | 'unknown';
+export type RenderDomain = 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'tone' | 'svg' | 'html' | 'ascii' | 'kinetic' | 'unknown';
 
 export interface RenderOptions {
   /** Canvas width in pixels */
@@ -201,6 +201,8 @@ export class HeadlessRenderer {
    * Detect domain from code content
    */
   static detectDomain(code: string): RenderDomain {
+    const trimmed = code.trim();
+
     if (code.includes('function setup()') || code.includes('createCanvas') || code.includes('draw()')) {
       return 'p5';
     }
@@ -218,6 +220,17 @@ export class HeadlessRenderer {
     }
     if (code.includes('Tone.') || code.includes('Synth') || code.includes('synth')) {
       return 'tone';
+    }
+    if (/^<svg\b/i.test(trimmed)) {
+      return 'svg';
+    }
+    const isHtmlDocument = /^<!DOCTYPE\s+html/i.test(trimmed) || /<html\b/i.test(code);
+    const isHtmlFragment = /^<[a-z][\w:-]*(?:\s|>|\/>)/i.test(trimmed) && /<\/[a-z][\w:-]*>/i.test(code);
+    if (isHtmlDocument || isHtmlFragment) {
+      return /@keyframes\b|\banimation\s*:/i.test(code) ? 'kinetic' : 'html';
+    }
+    if (/^[\s\S]*[/\\|_~^*#%+=.-][\s\S]*\n[\s\S]*[/\\|_~^*#%+=.-]/.test(code) && !/[{};=]/.test(code)) {
+      return 'ascii';
     }
     return 'unknown';
   }
@@ -269,7 +282,11 @@ export class HeadlessRenderer {
 
       // Wrap code in HTML
       const html = HTMLWrapper.wrap(code, {
-        domain: domain === 'glsl' ? 'shader' : domain === 'unknown' ? undefined : domain
+        domain: domain === 'glsl'
+          ? 'shader'
+          : domain === 'kinetic'
+            ? 'html'
+            : domain === 'unknown' ? undefined : domain
       });
 
       // Load the HTML

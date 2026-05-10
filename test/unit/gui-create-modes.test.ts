@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildWorkbenchPrompt,
   buildWorkbenchRunOptions,
+  buildWorkbenchRunOptionsForMode,
   CREATE_MODE_OPTIONS,
   detectPromptCreateMode,
   getCreateModeOption,
@@ -27,6 +28,7 @@ describe('createModes', () => {
       'text',
       'revideo',
       'organism',
+      'sing',
     ]);
     expect(CREATE_MODE_OPTIONS.find((option) => option.id === 'hyperframes')?.label).toContain('HyperFrames');
     expect(CREATE_MODE_OPTIONS.map((option) => option.id)).not.toContain('html');
@@ -81,6 +83,36 @@ describe('createModes', () => {
       maxIterations: 7,
       candidateCount: 1,
       timeoutMinutes: 3,
+    });
+  });
+
+  it('gives slower draft domains enough time to return a visible preview', () => {
+    expect(buildWorkbenchRunOptionsForMode('draft', 7, 'strudel')).toMatchObject({
+      executionMode: 'draft',
+      timeoutMinutes: 3,
+    });
+    expect(buildWorkbenchRunOptionsForMode('draft', 7, 'hydra')).toMatchObject({
+      executionMode: 'draft',
+      timeoutMinutes: 3,
+    });
+    expect(buildWorkbenchRunOptionsForMode('draft', 7, 'p5')).toMatchObject({
+      executionMode: 'draft',
+      timeoutMinutes: 1,
+    });
+  });
+
+  it('honors the visible loop timeout for Studio draft generation', () => {
+    expect(buildWorkbenchRunOptionsForMode('draft', 7, 'glsl', 30)).toMatchObject({
+      executionMode: 'draft',
+      maxIterations: 1,
+      candidateCount: 1,
+      timeoutMinutes: 30,
+    });
+    expect(buildWorkbenchRunOptionsForMode('draft', 7, 'p5', 10)).toMatchObject({
+      executionMode: 'draft',
+      maxIterations: 1,
+      candidateCount: 1,
+      timeoutMinutes: 10,
     });
   });
 });

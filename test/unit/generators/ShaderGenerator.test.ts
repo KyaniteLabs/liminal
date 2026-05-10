@@ -1,6 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ShaderGenerator } from '../../../src/generators/glsl/ShaderGenerator.js';
+import { GLSLValidator } from '../../../src/core/validators/GLSLValidator.js';
+import { LLMClient } from '../../../src/llm/LLMClient.js';
 
 class ExposedShaderGenerator extends ShaderGenerator {
   validate(code: string) {
@@ -9,6 +11,10 @@ class ExposedShaderGenerator extends ShaderGenerator {
 }
 
 describe('ShaderGenerator', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('wraps void main shaders without adding a mainImage call', () => {
     const gen = new ShaderGenerator();
     const wrapped = gen.wrapForGallery('void main() { gl_FragColor = vec4(1.0); }');
@@ -81,6 +87,34 @@ describe('ShaderGenerator', () => {
     expect(wrapped).toContain('void main(){mainImage(gl_FragColor,gl_FragCoord.xy);}');
   });
 
+  it('normalizes Shadertoy mainImage output before raw artifact validation', () => {
+    const gen = new ExposedShaderGenerator();
+    const sanitized = (gen as any).sanitizeShaderCode('precision mediump float;\nuniform vec2 u_resolution;\nuniform float u_time;\nfloat noise(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233))) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord) { vec2 uv = fragCoord / u_resolution; float n = noise(uv + u_time); fragColor = vec4(uv.x, n, sin(u_time) * 0.5 + 0.5, 1.0); }');
+
+    expect(sanitized).toContain('void main(){mainImage(gl_FragColor,gl_FragCoord.xy);}');
+    expect(gen.validate(sanitized).valid).toBe(true);
+  });
+
+  it('normalizes GLSL 300 mainImage output with an explicit fragment output variable', () => {
+    const gen = new ExposedShaderGenerator();
+    const sanitized = (gen as any).sanitizeShaderCode('#version 300 es\nprecision highp float;\nuniform vec2 u_resolution;\nuniform float u_time;\nfloat noise(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233))) * 43758.5453); }\nvoid mainImage(out vec4 fragColor, in vec2 fragCoord) { vec2 uv = fragCoord / u_resolution; float n = noise(uv + u_time); fragColor = vec4(uv.x, n, sin(u_time) * 0.5 + 0.5, 1.0); }');
+
+    expect(sanitized).toContain('out vec4 liminalFragColor;');
+    expect(sanitized).toContain('void main(){mainImage(liminalFragColor,gl_FragCoord.xy);}');
+    expect(sanitized).not.toContain('mainImage(gl_FragColor');
+    expect(gen.validate(sanitized).valid).toBe(true);
+  });
+
+  it('uses the declared GLSL 300 fragment output variable when wrapping mainImage', () => {
+    const gen = new ExposedShaderGenerator();
+    const sanitized = (gen as any).sanitizeShaderCode('#version 300 es\nprecision highp float;\nout vec4 fragColor;\nuniform vec2 u_resolution;\nuniform float u_time;\nfloat noise(vec2 p){ return fract(sin(dot(p,vec2(12.9898,78.233))) * 43758.5453); }\nvoid mainImage(out vec4 color, in vec2 fragCoord) { vec2 uv = fragCoord / u_resolution; float n = noise(uv + u_time); color = vec4(uv.x, n, sin(u_time) * 0.5 + 0.5, 1.0); }');
+
+    expect(sanitized).toContain('out vec4 fragColor;');
+    expect(sanitized).toContain('void main(){mainImage(fragColor,gl_FragCoord.xy);}');
+    expect(sanitized).not.toContain('mainImage(gl_FragColor');
+    expect(gen.validate(sanitized).valid).toBe(true);
+  });
+
   it('uses a matching GLSL 300 vertex shader for version 300 fragments', () => {
     const gen = new ShaderGenerator();
     const wrapped = gen.wrapForGallery('#version 300 es\nprecision highp float;\nin vec2 v_uv;out vec4 fragColor;void main(){fragColor=vec4(v_uv,0.0,1.0);}');
@@ -144,5 +178,61 @@ describe('ShaderGenerator', () => {
     expect(sanitized).toContain('vec3 palette(vec2 p)');
     expect(sanitized).toContain('vec3 col = palette(p);');
     expect(gen.validate(sanitized).valid).toBe(true);
+  });
+
+  it('renders a visible local recovery shader when the provider returns no GLSL artifact', async () => {
+    vi.spyOn(LLMClient, 'isConfigured').mockReturnValue(true);
+    const llm = new LLMClient({
+      baseUrl: 'https://api.z.ai/api/anthropic',
+      model: 'GLM-5v-turbo',
+      apiKey: 'test-key',
+    });
+    vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValueOnce({
+      content: '',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: false,
+      error: 'OpenAI-compatible provider returned no usable content (choices=1, finish_reason=length, reasoning_present=yes)',
+    });
+    vi.spyOn(llm, 'complete').mockResolvedValueOnce({
+      text: '',
+      success: false,
+      error: 'OpenAI-compatible provider returned no usable content (choices=1, finish_reason=length, reasoning_present=yes)',
+    });
+
+    const gen = new ShaderGenerator(llm);
+    const code = await gen.generate('Create a GLSL violet nebula shader');
+    const validation = GLSLValidator.validate(code);
+
+    expect(code).toContain('Liminal provider recovery');
+    expect(code).toContain('gl_FragColor');
+    expect(code).toContain('u_time');
+    expect(validation.errors).toEqual([]);
+    expect(validation.valid).toBe(true);
+  });
+
+  it('surfaces provider configuration failures instead of rendering a recovery shader', async () => {
+    vi.spyOn(LLMClient, 'isConfigured').mockReturnValue(true);
+    const llm = new LLMClient({
+      baseUrl: 'http://localhost:1234/v1',
+      model: 'local-model',
+      apiKey: 'test-key',
+    });
+    vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValueOnce({
+      content: '',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: false,
+      error: 'Invalid model identifier "local-model"',
+    });
+    vi.spyOn(llm, 'complete').mockResolvedValueOnce({
+      text: '',
+      success: false,
+      error: 'Invalid model identifier "local-model"',
+    });
+
+    const gen = new ShaderGenerator(llm);
+
+    await expect(gen.generate('Create a GLSL violet nebula shader')).rejects.toThrow(/cannot use model "local-model"/);
   });
 });

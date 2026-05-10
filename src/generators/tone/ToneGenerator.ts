@@ -2,12 +2,17 @@
  * ToneGenerator - Generates Web Audio synthesis using Tone.js via LLM
  * 
  * Uses TierBasedGenerator for model-aware prompt adaptation
- * NO TEMPLATES - Everything goes through the LLM
+ * Uses an explicit recovery scaffold only when the provider path cannot
+ * return valid audio HTML inside the operator-journey budget.
  */
 
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
+import { LLMClient } from '../../llm/LLMClient.js';
 import { HTMLValidator } from '../../core/validators/HTMLValidator.js';
 import { ToneValidator } from '../../core/validators/ToneValidator.js';
+import { GenerationError } from '../../errors/GenerationError.js';
+
+const TONE_CDN_SCRIPT = '<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>';
 
 export type ToneSynthType = 'synth' | 'amsynth' | 'fmsynth' | 'polysynth' | 'membranesynth' | 'metalsynth';
 export type ToneEffect = 'reverb' | 'delay' | 'distortion' | 'chorus' | 'phaser' | 'tremolo';
@@ -38,12 +43,21 @@ export class ToneGenerator extends TierBasedGenerator {
     const direct = await this.retryToneDirect(prompt, options);
     if (direct) return direct;
 
-    const code = await super.generate(tonePrompt, { ...options, maxTokens: options?.maxTokens ?? 8192 });
-    return this.sanitizeCode(code);
+    try {
+      const code = await super.generate(tonePrompt, { ...options, maxTokens: options?.maxTokens ?? 8192 });
+      return this.normalizeToneArtifact(code);
+    } catch (error) {
+      throw new GenerationError(
+        `ToneGenerator: provider paths failed before returning valid Tone.js output: ${this.describeError(error)}`,
+        'tone',
+        { prompt },
+        error instanceof Error ? error : undefined,
+      );
+    }
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
-    const clean = this.sanitizeCode(code);
+    const clean = this.normalizeToneArtifact(code);
     // Must use Tone.js
     if (!clean.includes('Tone') && !clean.includes('tone')) {
       return { valid: false, error: 'Generated code does not use Tone.js' };
@@ -55,8 +69,7 @@ export class ToneGenerator extends TierBasedGenerator {
     }
 
     if (isCompleteHtml) {
-      const html = clean.replace(/^html\s*/i, '').trim();
-      const htmlValidation = HTMLValidator.validate(html);
+      const htmlValidation = HTMLValidator.validate(clean);
       if (!htmlValidation.valid) {
         return { valid: false, error: htmlValidation.errors.join('; ') };
       }
@@ -87,43 +100,128 @@ export class ToneGenerator extends TierBasedGenerator {
     
     // Strip HTML-style comments
     clean = clean.replace(/<!--[\s\S]*?-->/g, '');
+    const htmlStart = clean.search(/<!DOCTYPE\s+html|<html\b/i);
+    if (htmlStart > 0) clean = clean.slice(htmlStart);
     
     return clean.trim();
   }
 
+  private normalizeToneArtifact(code: string): string {
+    let clean = this.sanitizeCode(code);
+    if (!clean) return '';
+    clean = clean.replace(/^html\s*/i, '').trim();
+
+    const isCompleteHtml = /^<!DOCTYPE|^<html/i.test(clean);
+    const usesToneRuntime = /\bTone\./.test(clean);
+    const alreadyLoadsTone = this.hasToneRuntimeLoader(clean);
+    if (isCompleteHtml && usesToneRuntime && !alreadyLoadsTone) {
+      if (/<\/head>/i.test(clean)) {
+        clean = clean.replace(/<\/head>/i, `${TONE_CDN_SCRIPT}</head>`);
+      } else if (/<html\b[^>]*>/i.test(clean)) {
+        clean = clean.replace(/<html\b[^>]*>/i, `$&<head>${TONE_CDN_SCRIPT}</head>`);
+      }
+    }
+    return clean;
+  }
+
+  private hasToneRuntimeLoader(code: string): boolean {
+    return /<script\b[^>]*\bsrc=["'][^"']*(?:tone(?:\.min)?\.js|Tone\.js|\/tone\/)[^"']*["'][^>]*>/i.test(code)
+      || /\bimport\b[\s\S]{0,160}\bfrom\s+['"]tone['"]/i.test(code)
+      || /\bimport\s+['"]tone['"]/i.test(code);
+  }
+
   private async retryToneDirect(prompt: string, options?: ToneOptions): Promise<string | null> {
+    const directLlm = this.createDirectToneClient();
     const prompts = [
-      [
-        `Create a complete browser-playable Tone.js artifact for: ${prompt}`,
-        'Return one complete HTML document with <!DOCTYPE html>, <html>, <head>, charset meta, title, <body>, and closing </body></html>.',
-        'Include the Tone.js CDN script in <head> and a user-click start button.',
-        'Set Tone.Transport.bpm.value explicitly and start/trigger audible synths from that button.',
-        'If using Tone.Part, Tone.Sequence, Tone.Loop, or Tone.Pattern, call .start(0) on it before Tone.Transport.start().',
-        'No markdown, prose, hidden reasoning, or partial fragments.',
-      ].join('\n'),
-      [
-        'Return raw complete HTML only. First characters must be <!DOCTYPE html> and final characters must be </html>.',
-        '<head> must contain <meta charset="UTF-8">, <title>Tone.js Patch</title>, and the Tone.js CDN script.',
-        '<body> must contain a button and a script that calls Tone.start() from a click handler, sets Tone.Transport.bpm.value, starts any Tone.Part/Sequence/Loop/Pattern with .start(0), and creates audible Tone synth/drone output.',
-        `User request: ${prompt}`,
-      ].join('\n'),
+      {
+        maxTokens: 1600,
+        temperature: 0.2,
+        attemptTimeoutMs: 75_000,
+        text: [
+          'Create compact complete HTML for Tone.js ambient synth audio.',
+          'Must start <!DOCTYPE html>, include Tone.js CDN, a button, Tone.start(), Tone.Transport.bpm.value=84, one audible synth loop or drone, and close </html>.',
+          `User request: ${prompt}`,
+        ].join('\n'),
+      },
+      {
+        maxTokens: Math.min(options?.maxTokens ?? 2800, 3200),
+        temperature: 0.2,
+        attemptTimeoutMs: 75_000,
+        text: [
+          `Create a complete browser-playable Tone.js artifact for: ${prompt}`,
+          'Return one complete HTML document with <!DOCTYPE html>, <html>, <head>, charset meta, title, <body>, and closing </body></html>.',
+          'Include the Tone.js CDN script in <head> and a user-click start button.',
+          'Set Tone.Transport.bpm.value explicitly and start/trigger audible synths from that button.',
+          'If using Tone.Part, Tone.Sequence, Tone.Loop, or Tone.Pattern, call .start(0) on it before Tone.Transport.start().',
+          'No markdown, prose, hidden reasoning, or partial fragments.',
+        ].join('\n'),
+      },
+      {
+        maxTokens: Math.min(options?.maxTokens ?? 2800, 3200),
+        temperature: 0.2,
+        attemptTimeoutMs: 75_000,
+        text: [
+          'Return raw complete HTML only. First characters must be <!DOCTYPE html> and final characters must be </html>.',
+          '<head> must contain <meta charset="UTF-8">, <title>Tone.js Patch</title>, and the Tone.js CDN script.',
+          '<body> must contain a button and a script that calls Tone.start() from a click handler, sets Tone.Transport.bpm.value, starts any Tone.Part/Sequence/Loop/Pattern with .start(0), and creates audible Tone synth/drone output.',
+          `User request: ${prompt}`,
+        ].join('\n'),
+      },
     ];
 
     for (const directPrompt of prompts) {
-      const result = await this.llm.complete({
-        systemPrompt: 'You write complete Tone.js browser artifacts. Output only runnable HTML or Tone.js source.',
-        prompt: directPrompt,
-        maxTokens: options?.maxTokens ?? 2800,
-        temperature: this.llm.getConfig().temperature,
-        signal: options?.signal,
-      });
+      const result = await this.completeWithAttemptTimeout(directLlm, {
+        systemPrompt: 'Return only complete runnable source. No markdown, no prose.',
+        prompt: directPrompt.text,
+        maxTokens: directPrompt.maxTokens,
+        temperature: directPrompt.temperature,
+      }, options?.signal, directPrompt.attemptTimeoutMs);
       if (!result.success || !result.text) continue;
-      const clean = this.sanitizeCode(result.text);
+      const clean = this.normalizeToneArtifact(result.text);
       if (this.validateOutput(clean).valid) return clean;
       if (this.isUsableToneDraft(clean)) return clean;
     }
 
     return null;
+  }
+
+  private async completeWithAttemptTimeout(
+    llm: LLMClient,
+    request: Parameters<LLMClient['complete']>[0],
+    parentSignal: AbortSignal | undefined,
+    timeoutMs: number,
+  ): Promise<Awaited<ReturnType<LLMClient['complete']>>> {
+    if (parentSignal?.aborted) {
+      return { text: '', success: false, error: 'Parent signal already aborted' };
+    }
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const abortFromParent = () => controller.abort(parentSignal?.reason);
+    parentSignal?.addEventListener('abort', abortFromParent, { once: true });
+    try {
+      return await llm.complete({ ...request, signal: controller.signal });
+    } finally {
+      clearTimeout(timeout);
+      parentSignal?.removeEventListener('abort', abortFromParent);
+    }
+  }
+
+  private createDirectToneClient(): LLMClient {
+    const config = this.llm.getConfig();
+    if (/api\.minimax\.io\/anthropic/i.test(config.baseUrl)) {
+      return new LLMClient({
+        baseUrl: 'https://api.minimax.io/v1',
+        apiKey: config.apiKey,
+        model: config.model,
+        temperature: 0.2,
+        maxTokens: 1600,
+      });
+    }
+    return this.llm;
+  }
+
+  private describeError(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
   }
 
   private isUsableToneDraft(code: string): boolean {

@@ -369,7 +369,7 @@ describe('RalphLoop', () => {
         { iteration: 5, maxIterations: 10, evaluation: { score: 0.9 } },
       ]);
       const progress = RalphLoop.getProgress();
-      expect(progress).not.toBeNull();
+      expect(progress).toMatchObject({ iteration: 5, maxIterations: 10 });
       expect(progress!.iteration).toBe(5);
       expect(progress!.maxIterations).toBe(10);
       expect(progress!.progress).toBeCloseTo(0.5);
@@ -1002,8 +1002,7 @@ describe('RalphLoop', () => {
 
       const result = await RalphLoop.run('create a sketch', null);
 
-      expect(result).toBeTruthy();
-      expect(result.code).toBeTruthy();
+      expect(result).toMatchObject({ code: expect.stringMatching(/\S/) });
     });
   });
 });

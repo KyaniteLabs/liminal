@@ -1,3 +1,5 @@
+import { audioBootstrapScript } from './audioBootstrap.js';
+
 const P5_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js';
 const THREE_CDN = 'https://unpkg.com/three@0.160.0/build/three.module.js';
 
@@ -20,32 +22,6 @@ function sensorPolicyBootstrap(): string {
 `;
 }
 
-function audioBootstrap(): string {
-  return `
-window.__liminalAudio = window.__liminalAudio || {
-  rms: 0,
-  energy: 0,
-  centroid: 0,
-  brightness: 0,
-  peak: 0,
-  updatedAt: 0
-};
-window.addEventListener('message', (event) => {
-  const data = event.data || {};
-  if (data.type !== 'liminal-audio-frame') return;
-  const frame = data.frame || {};
-  window.__liminalAudio = {
-    rms: Number(frame.rms) || 0,
-    energy: Number(frame.rms) || 0,
-    centroid: Number(frame.centroid) || 0,
-    brightness: Number(frame.centroid) || 0,
-    peak: Number(frame.peak) || Number(frame.rms) || 0,
-    updatedAt: performance.now()
-  };
-});
-`;
-}
-
 function p5CanvasPlacementBootstrap(): string {
   return `
 (function liminalP5CanvasPlacement() {
@@ -62,7 +38,7 @@ function p5CanvasPlacementBootstrap(): string {
     canvas.style.setProperty('object-fit', 'contain', 'important');
   }
   function adoptP5Canvases() {
-    const stage = document.querySelector('[data-liminal-sync-preview="p5"]');
+    const stage = document.querySelector('[data-liminal-sing-preview="p5"]');
     if (!stage) return;
     document.querySelectorAll('body > canvas').forEach((canvas) => stage.appendChild(canvas));
     stage.querySelectorAll('canvas').forEach(fit);
@@ -92,10 +68,10 @@ function needsThreeCanvasBinding(code: string): boolean {
   return /\bcanvas\b/.test(code) && !declaresCanvas;
 }
 
-export function buildSyncPreviewHtml(code: string): string {
+export function buildSingPreviewHtml(code: string): string {
   const domain = inferStageDomain(code);
   if (domain === 'html') {
-    return code.replace(/<head([^>]*)>/i, `<head$1><script>${audioBootstrap()}</script>`);
+    return code.replace(/<head([^>]*)>/i, `<head$1><script>${audioBootstrapScript()}</script>`);
   }
 
   if (domain === 'three') {
@@ -108,9 +84,9 @@ export function buildSyncPreviewHtml(code: string): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Liminal Sync Stage</title>
+  <title>Liminal Sing Stage</title>
   <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}canvas{display:block}</style>
-  <script>${audioBootstrap()}</script>
+  <script>${audioBootstrapScript()}</script>
   <script type="importmap">{"imports":{"three":"${THREE_CDN}"}}</script>
 </head>
 <body>
@@ -125,14 +101,14 @@ export function buildSyncPreviewHtml(code: string): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Liminal Sync Stage</title>
+  <title>Liminal Sing Stage</title>
   <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070a}main{position:fixed;inset:0;display:grid;place-items:center}main > canvas,body > canvas{display:block;max-width:100vw;max-height:100vh;object-fit:contain}body > canvas{position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important}</style>
   <script>${sensorPolicyBootstrap()}</script>
-  <script>${audioBootstrap()}</script>
+  <script>${audioBootstrapScript()}</script>
   <script src="${P5_CDN}"></script>
 </head>
 <body>
-  <main data-liminal-sync-preview="p5"></main>
+  <main data-liminal-sing-preview="p5"></main>
   <script>${p5CanvasPlacementBootstrap()}</script>
   <script>${escapeScript(code)}</script>
 </body>

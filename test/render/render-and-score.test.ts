@@ -316,7 +316,7 @@ describe('RenderAndScorePipeline', () => {
     expect(result.score).toBeLessThanOrEqual(1);
     expect(result.domain).toBe('p5');
     expect(result.duration).toBeGreaterThan(0);
-    expect(result.visual).not.toBeNull();
+    expect(result.visual).toMatchObject({ score: expect.any(Number), metrics: expect.any(Object) });
   }, 30000);
 
   it('should detect domain automatically', async () => {
@@ -329,7 +329,7 @@ describe('RenderAndScorePipeline', () => {
     // Domain hint overrides detection
     expect(result.domain).toBe('three');
     // Note: three.js code with imports may timeout, that's expected
-    expect(result).not.toBeNull();
+    expect(result).toMatchObject({ domain: 'three', duration: expect.any(Number) });
   }, 60000);
 
   it('should handle invalid code gracefully', async () => {
@@ -339,7 +339,7 @@ describe('RenderAndScorePipeline', () => {
     const result = await pipeline.process(simpleInvalidCode);
 
     // Should not throw, but may not succeed
-    expect(result).not.toBeNull();
+    expect(result).toMatchObject({ duration: expect.any(Number) });
     expect(result.duration).toBeGreaterThanOrEqual(0);
   }, 30000);
 
@@ -354,7 +354,7 @@ describe('RenderAndScorePipeline', () => {
     expect(result.allResults.length).toBe(2);
     expect(result.bestIndex).toBeGreaterThanOrEqual(0);
     expect(result.bestIndex).toBeLessThan(2);
-    expect(result.bestResult).not.toBeNull();
+    expect(result.bestResult).toMatchObject({ score: expect.any(Number), domain: 'p5' });
   }, 60000);
 
   describe('score blending', () => {
@@ -401,7 +401,7 @@ describe('RenderAndScorePipeline', () => {
     const result = await visualPipeline.process(sampleP5Code, 'p5');
 
     expect(result.success).toBe(true);
-    expect(result.visual).not.toBeNull();
+    expect(result.visual).toMatchObject({ score: expect.any(Number), metrics: expect.any(Object) });
     expect(result.audio).toBeUndefined();
   }, 30000);
 

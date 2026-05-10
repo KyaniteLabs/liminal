@@ -43,7 +43,7 @@ Liminal Studio is a chat-first creative coding agent. Artists should start from 
 
 - `gui/server.js`
 - `gui/src/gui/createModes.ts`
-- `gui/src/gui/syncPreview.ts`
+- `gui/src/gui/singPreview.ts`
 - `scripts/proof/visual-output-preview-contract.ts`
 - `src/core/wrappers/GenericWrapper.ts`
 - `src/generators/registerGenerators.ts`

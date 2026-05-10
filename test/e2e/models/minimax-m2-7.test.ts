@@ -11,7 +11,7 @@ const TEST_TIMEOUT = 60000;
 describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('MiniMax-M2.7', () => {
   async function generateCode(systemPrompt: string, prompt: string): Promise<string> {
     const live = createLiveProviderClient('minimax', 'MiniMax-M2.7');
-    expect(live, 'MINIMAX_API_KEY is required for MiniMax proof').not.toBeNull();
+    expect(live?.config.model, 'MINIMAX_API_KEY is required for MiniMax proof').toBe('MiniMax-M2.7');
     const response = await live!.client.generate(systemPrompt, prompt);
     expect(response.success).toBe(true);
     return response.code;

@@ -12,7 +12,7 @@ describe('ColorExtractor', () => {
   it('extracts hex colors from code and returns harmony', () => {
     const result = extractColorsFromCode('background(#ff0000); fill(#00ff00); stroke(#0000ff);');
     expect(result.colors.length).toBeGreaterThanOrEqual(3);
-    expect(result.dominant.hex).toBeTruthy();
+    expect(result.dominant.hex).toMatch(/^#[0-9a-f]{6}$/i);
     expect(result.palette.length).toBeGreaterThanOrEqual(3);
     expect(typeof result.harmony).toBe('string');
   });

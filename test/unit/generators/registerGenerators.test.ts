@@ -39,6 +39,22 @@ import {
   p5Confidence,
 } from '../../../src/generators/registerGenerators.js';
 
+const staticGeneratorNames = [
+  'shader',
+  'three',
+  'revideo',
+  'hyperframes',
+  'svg',
+  'html',
+  'ascii',
+  'kinetic',
+  'textgen',
+  'strudel',
+  'hydra',
+  'tone',
+  'p5',
+];
+
 describe('registerGenerators', () => {
   beforeEach(() => {
     mockRegister.mockClear();
@@ -241,7 +257,7 @@ describe('registerGenerators', () => {
 
       // Should register all static generators
       expect(mockRegister).toHaveBeenCalledTimes(13);
-      expect(mockRegister.mock.calls.map(([entry]) => entry.name)).toContain('kinetic');
+      expect(mockRegister.mock.calls.map(([entry]) => entry.name)).toEqual(staticGeneratorNames);
     });
 
     it('registers p5 with explicit-signal routing instead of always-on fallback confidence', async () => {
@@ -259,8 +275,8 @@ describe('registerGenerators', () => {
       expect(p5Entry.canHandle('create a p5.js sketch with bouncing balls')).toBe(0.95);
     });
 
-    it('is idempotent - skips if generators already registered', async () => {
-      mockGetAll.mockReturnValueOnce([{ name: 'existing' }]);
+    it('is idempotent when the full built-in registry is already registered', async () => {
+      mockGetAll.mockReturnValue(staticGeneratorNames.map((name) => ({ name })));
 
       await registerAllGenerators();
 
@@ -276,7 +292,9 @@ describe('registerGenerators', () => {
       };
       mockLoadAll.mockResolvedValueOnce([{ success: true }]);
       mockGetAllPlugins.mockReturnValueOnce([mockPlugin]);
-      mockGetAll.mockReturnValueOnce([]).mockReturnValueOnce([]);
+      mockGetAll
+        .mockReturnValueOnce([])
+        .mockReturnValueOnce([{ name: 'test-plugin' }]);
 
       await registerAllGenerators();
 
@@ -288,6 +306,35 @@ describe('registerGenerators', () => {
           generate: expect.any(Function),
         })
       );
+      expect(mockRegister.mock.calls.map(([entry]) => entry.name)).toEqual([
+        'test-plugin',
+        ...staticGeneratorNames,
+      ]);
+    });
+
+    it('backfills site-compatible static generators that are not provided by loaded plugins', async () => {
+      const mockPlugin = {
+        manifest: { id: 'html' },
+        canHandle: () => 0.5,
+        generate: vi.fn(),
+      };
+      mockLoadAll.mockResolvedValueOnce([{ success: true }]);
+      mockGetAllPlugins.mockReturnValueOnce([mockPlugin]);
+      mockGetAll
+        .mockReturnValueOnce([])
+        .mockReturnValueOnce([{ name: 'html' }]);
+
+      await registerAllGenerators();
+
+      const registeredNames = mockRegister.mock.calls.map(([entry]) => entry.name);
+      expect(registeredNames.filter((name) => name === 'html')).toHaveLength(1);
+      expect(registeredNames).toEqual(expect.arrayContaining([
+        'svg',
+        'textgen',
+        'kinetic',
+        'revideo',
+        'hyperframes',
+      ]));
     });
   });
 });

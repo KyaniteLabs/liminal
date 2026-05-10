@@ -14,6 +14,18 @@ export interface WorkbenchBridgeSummary {
   processSteps: WorkbenchProcessStep[];
   recentActivity: Array<{ label: string; detail: string; status?: string }>;
   stageTimings: Array<{ label: string; durationLabel: string }>;
+  liveRun: {
+    statusLabel: string;
+    providerModel: string;
+    activeDomain: string;
+    elapsedLabel: string;
+    etaLabel: string;
+    attemptLabel: string;
+    timeoutLabel: string;
+    detail: string;
+    reassurance: string;
+    showSlowNotice: boolean;
+  } | null;
   humanReview: {
     status: 'waiting' | 'ready' | 'blocked';
     heading: string;
@@ -113,9 +125,29 @@ export function summarizeWorkbenchBridge(
   const derived = deriveCockpit(events, now);
   const phase = String(derived.phase || 'idle');
   const processSteps = summarizeProcessSteps(events, phase);
-  const readyDone = processSteps.some((step) => step.id === 'ready' && step.status === 'done');
+  const readyStep = processSteps.find((step) => step.id === 'ready');
+  const readyDone = readyStep?.status === 'done';
+  const terminalBlocked = readyStep?.status === 'failed';
   const terminalPhases = ['idle', 'complete', 'previewed', 'verified preview', 'preview missing', 'stopped', 'disconnected'];
-  const active = !readyDone && !terminalPhases.includes(phase);
+  const active = !readyDone && !terminalBlocked && !terminalPhases.includes(phase);
+  const providerModelTruth = latestProviderModelTruth(events, latestStatusTruth(events));
+  const providerModel = [providerModelTruth.provider, providerModelTruth.model].filter(Boolean).join(' / ') || 'provider/model pending';
+  const liveDomain = derived.activeDomain || derived.plan[0] || 'selected medium';
+  const showSlowNotice = active && derived.elapsedMs >= 30_000;
+  const liveRun = active ? {
+    statusLabel: showSlowNotice ? 'Still working' : 'Generation live',
+    providerModel,
+    activeDomain: liveDomain,
+    elapsedLabel: derived.elapsedLabel,
+    etaLabel: derived.etaLabel,
+    attemptLabel: derived.attemptLabel,
+    timeoutLabel: derived.timeoutLabel,
+    detail: `${providerModel} is generating ${liveDomain}.`,
+    reassurance: showSlowNotice
+      ? 'Still connected. Shader and 3D prompts can take several minutes.'
+      : 'Waiting on the model. Progress and preview evidence will appear as they arrive.',
+    showSlowNotice,
+  } : null;
 
   return {
     active,
@@ -129,6 +161,7 @@ export function summarizeWorkbenchBridge(
     processSteps,
     recentActivity: summarizeRecentActivity(events),
     stageTimings: derived.stageTimings ?? [],
+    liveRun,
     humanReview: derived.humanReview,
   };
 }
@@ -141,12 +174,60 @@ function latestEvent<T extends BridgeEventType>(
   return [...events].reverse().find((event): event is BridgeEventByType<T> => event.type === type);
 }
 
+type LifecycleRunTruth = {
+  phase?: string;
+  outcome?: string;
+  error?: string;
+  provider?: string;
+  model?: string;
+  retryable?: boolean;
+};
+
+function lifecycleRun(event: WorkbenchBridgeEvent): LifecycleRunTruth | undefined {
+  if (event.type !== 'run.lifecycle' || !event.run || typeof event.run !== 'object') return undefined;
+  return event.run as LifecycleRunTruth;
+}
+
+function isCancelledLifecycleEvent(event: WorkbenchBridgeEvent): boolean {
+  return lifecycleRun(event)?.outcome === 'cancelled';
+}
+
+function isFailureReceiptEvent(event: WorkbenchBridgeEvent): boolean {
+  const run = lifecycleRun(event);
+  return event.type === 'generation.attempt.failed'
+    || event.type === 'error'
+    || event.type === 'preview.missing'
+    || run?.phase === 'failed';
+}
+
+function isTerminalReceiptEvent(event: WorkbenchBridgeEvent): boolean {
+  const run = lifecycleRun(event);
+  return event.type === 'generation.complete'
+    || event.type === 'generation.cancelled'
+    || event.type === 'generation.attempt.failed'
+    || event.type === 'preview.missing'
+    || event.type === 'error'
+    || run?.phase === 'completed'
+    || run?.phase === 'failed'
+    || run?.outcome === 'cancelled';
+}
+
+function terminalOutcome(event: WorkbenchBridgeEvent): WorkbenchRunReceipt['outcome'] | undefined {
+  const run = lifecycleRun(event);
+  if (event.type === 'generation.complete' || run?.phase === 'completed') return 'completed';
+  if (event.type === 'generation.cancelled' || isCancelledLifecycleEvent(event)) return 'stopped';
+  if (isFailureReceiptEvent(event)) return 'failed';
+  return undefined;
+}
+
+function latestTerminalEvent(events: WorkbenchBridgeEvent[]): WorkbenchBridgeEvent | undefined {
+  return [...events].reverse().find(isTerminalReceiptEvent);
+}
 
 function latestReceiptRunEvents(events: WorkbenchBridgeEvent[]): WorkbenchBridgeEvent[] {
-  const terminalTypes = new Set(['generation.complete', 'generation.cancelled', 'generation.attempt.failed', 'preview.missing', 'error']);
   let latestTerminalIndex = -1;
   for (let index = events.length - 1; index >= 0; index--) {
-    if (terminalTypes.has(String(events[index].type))) {
+    if (isTerminalReceiptEvent(events[index])) {
       latestTerminalIndex = index;
       break;
     }
@@ -164,7 +245,7 @@ function latestReceiptRunEvents(events: WorkbenchBridgeEvent[]): WorkbenchBridge
   if (startIndex < 0 && latestTerminalIndex >= 0) startIndex = latestTerminalIndex;
   if (startIndex < 0) return events;
 
-  const previousTerminal = events.slice(0, startIndex).reduce((latest, event, index) => terminalTypes.has(String(event.type)) ? index : latest, -1);
+  const previousTerminal = events.slice(0, startIndex).reduce((latest, event, index) => isTerminalReceiptEvent(event) ? index : latest, -1);
   for (let index = startIndex - 1; index > previousTerminal; index--) {
     if (events[index].type === 'generation.receipt.linked') {
       startIndex = index;
@@ -216,36 +297,46 @@ function latestProviderModelTruth(
   const status = latestStatusTruth(events);
   const generatorRole = status?.roles?.generator || session?.roles?.generator;
   const providerEvent = [...events].reverse().find((event) => typeof event.provider === 'string' || typeof event.model === 'string');
+  const lifecycleTruth = [...events].reverse()
+    .map(lifecycleRun)
+    .find((run) => typeof run?.provider === 'string' || typeof run?.model === 'string');
   const completion = latestEvent(events, 'generation.complete');
   return {
-    provider: firstText(generatorRole?.provider, providerEvent?.provider, status?.provider, session?.provider),
-    model: firstText(generatorRole?.model, providerEvent?.model, completion?.model, status?.model, session?.model),
+    provider: firstText(generatorRole?.provider, providerEvent?.provider, lifecycleTruth?.provider, status?.provider, session?.provider),
+    model: firstText(generatorRole?.model, providerEvent?.model, lifecycleTruth?.model, completion?.model, status?.model, session?.model),
   };
 }
 
 
 function receiptOutcome(events: WorkbenchBridgeEvent[], phase: string): WorkbenchRunReceipt['outcome'] {
-  if (events.some((event) => event.type === 'generation.cancelled')) return 'stopped';
-  if (events.some((event) => event.type === 'generation.attempt.failed' || event.type === 'error' || event.type === 'preview.missing')) return 'failed';
-  if (events.some((event) => event.type === 'generation.complete')) return 'completed';
+  // Terminal order matters: a backup domain can recover after an earlier failed
+  // attempt, while a later preview/provider error must still block the run.
+  const latestTerminal = latestTerminalEvent(events);
+  const outcome = latestTerminal ? terminalOutcome(latestTerminal) : undefined;
+  if (outcome) return outcome;
   return phase === 'stopped' ? 'stopped' : phase === 'complete' ? 'completed' : 'running';
 }
 
-function latestFailureReceipt(events: WorkbenchBridgeEvent[]): WorkbenchRunReceipt['failure'] | undefined {
-  const event = [...events].reverse().find((item) => item.type === 'generation.attempt.failed' || item.type === 'error' || item.type === 'preview.missing');
-  if (!event) return undefined;
-  const message = String(event.error || event.message || event.reason || 'run failed');
+function failureReceiptFromEvent(event: WorkbenchBridgeEvent): WorkbenchRunReceipt['failure'] | undefined {
+  if (!isFailureReceiptEvent(event)) return undefined;
+  const run = lifecycleRun(event);
+  const message = String(event.error || event.message || event.reason || run?.error || 'run failed');
   const statusCode = typeof event.statusCode === 'number' ? event.statusCode : undefined;
-  const retryable = typeof event.retryable === 'boolean' ? event.retryable : undefined;
+  const retryable = typeof event.retryable === 'boolean' ? event.retryable : typeof run?.retryable === 'boolean' ? run.retryable : undefined;
   return {
     message,
-    provider: firstText(event.provider),
-    model: firstText(event.model),
+    provider: firstText(event.provider, run?.provider),
+    model: firstText(event.model, run?.model),
     endpoint: firstText(event.endpoint),
     statusCode,
     retryable,
     responseBody: firstText(event.responseBody),
   };
+}
+
+function latestFailureReceipt(events: WorkbenchBridgeEvent[]): WorkbenchRunReceipt['failure'] | undefined {
+  const event = [...events].reverse().find(isFailureReceiptEvent);
+  return event ? failureReceiptFromEvent(event) : undefined;
 }
 
 function latestPriorReceipt(events: WorkbenchBridgeEvent[]): WorkbenchRunReceipt['prior'] | undefined {
@@ -299,9 +390,23 @@ export function latestRunReceipt(
   const previewType = preview?.type || (typeof previewEvent?.previewType === 'string' ? previewEvent.previewType as WorkbenchPreview['type'] : undefined);
   const inlinePreview = Boolean(preview && (preview.src || preview.content || preview.code));
   const outcome = receiptOutcome(runEvents, summary.phase);
-  const failure = latestFailureReceipt(runEvents);
+  const failure = outcome === 'failed' ? latestFailureReceipt(runEvents) : undefined;
+  const recoveredFailures = outcome === 'completed'
+    ? runEvents
+      .filter(isFailureReceiptEvent)
+      .map(failureReceiptFromEvent)
+      .filter((item): item is NonNullable<WorkbenchRunReceipt['failure']> => Boolean(item))
+    : [];
   const prior = latestPriorReceipt(runEvents);
   const cancelledEvent = latestEvent(runEvents, 'generation.cancelled');
+  const cancelledLifecycle = [...runEvents].reverse().find(isCancelledLifecycleEvent);
+  const cancelledLifecycleRun = cancelledLifecycle ? lifecycleRun(cancelledLifecycle) : undefined;
+  const stoppedMessage = firstText(
+    cancelledEvent?.message,
+    cancelledEvent?.reason,
+    cancelledLifecycleRun?.error,
+    'Generation stopped',
+  );
   const details = [
     `phase: ${summary.phase}`,
     `outcome: ${outcome}`,
@@ -310,7 +415,8 @@ export function latestRunReceipt(
     artifactLabel ? `artifact: ${artifactLabel}${artifactPath ? ` ${artifactPath}` : ''}` : 'artifact: waiting',
     previewType ? `preview: ${previewType}${inlinePreview ? ' inline' : ' pending'}${previewPath ? ` ${previewPath}` : ''}` : 'preview: waiting',
     failure ? `failure: ${failureDetailText(failure)}` : '',
-    cancelledEvent ? `stopped: ${String(cancelledEvent.message || cancelledEvent.reason || 'Generation stopped')}` : '',
+    recoveredFailures.length > 0 ? `recovered failures: ${recoveredFailures.map(failureDetailText).join(' | ')}` : '',
+    outcome === 'stopped' ? `stopped: ${stoppedMessage}` : '',
     prior?.artifact ? `prior ${prior.revisionKind}: ${prior.artifact.label}${prior.artifact.path ? ` ${prior.artifact.path}` : ''}` : '',
     completionEvent?.reason ? `completion: ${String(completionEvent.reason)}` : '',
   ].filter(Boolean);
@@ -392,7 +498,8 @@ function formatFailureProvenance(event: WorkbenchBridgeEvent): string {
 }
 
 function formatFailureDetail(event: WorkbenchBridgeEvent, fallback: string): string {
-  const message = String(event.error || event.message || fallback);
+  const run = lifecycleRun(event);
+  const message = String(event.error || event.message || run?.error || fallback);
   const provenance = formatFailureProvenance(event);
   const body = event.responseBody ? ` · body: ${String(event.responseBody)}` : '';
   return provenance ? `${message} · ${provenance}${body}` : message;
@@ -439,13 +546,16 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
   const hasVerifiedPreview = events.some((event) => event.type === 'preview.verified');
   const missingPreviewEvent = [...events].reverse().find((event) => event.type === 'preview.missing');
   const hasMissingPreview = Boolean(missingPreviewEvent);
-  const hasCancelled = events.some((event) => event.type === 'generation.cancelled');
+  const hasCancelled = events.some((event) => event.type === 'generation.cancelled' || isCancelledLifecycleEvent(event));
   const latestDisconnectedIndex = events.reduce((latest, event, index) => event.type === 'stream.disconnected' ? index : latest, -1);
   const hasDisconnected = events.length > 0 && latestDisconnectedIndex === events.length - 1;
   const hasComplete = events.some((event) => event.type === 'generation.complete');
   const hasCognitiveReceipt = events.some((event) => event.type === 'generation.cognitive_receipt');
   const failedAttemptEvents = events.filter((event) => event.type === 'generation.attempt.failed');
-  const hasError = events.some((event) => event.type === 'error' || event.type === 'generation.attempt.failed');
+  const latestTerminal = latestTerminalEvent(events);
+  const terminalFailed = latestTerminal ? terminalOutcome(latestTerminal) === 'failed' : false;
+  const latestFailureEvent = [...events].reverse().find(isFailureReceiptEvent);
+  const hasError = terminalFailed;
   const routeEvent = [...events].reverse().find((event) => event.type === 'generation.route.selected');
   const planEvent = [...events].reverse().find((event) => event.type === 'generation.domain_plan');
   const attemptEvent = [...events].reverse().find((event) => event.type === 'generation.attempt.started');
@@ -459,11 +569,13 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
   const selectedDomain = String((artifactEvent?.artifactLabel || '').split(' ')[0] || attemptEvent?.domain || rawDomains[0] || 'unknown').toLowerCase();
   const failedDomains = failedAttemptEvents.map((event) => String(event.domain || 'unknown'));
   const backupWasUsed = failedAttemptEvents.length > 0;
-  const attemptLabel = completeEvent
-    ? completeEvent.executionMode === 'draft'
+  const attemptLabel = terminalFailed && latestFailureEvent
+    ? `stopped: ${formatFailureDetail(latestFailureEvent, 'run failed')}`
+    : completeEvent
+      ? completeEvent.executionMode === 'draft'
       ? completedDraftAttemptDetail(selectedDomain, backupWasUsed)
       : `complete: selected ${selectedDomain}`
-    : attemptEvent ? `attempt ${attemptEvent.attempt || 1}/${attemptEvent.attemptTotal || 1}` : 'waiting for model';
+      : attemptEvent ? `attempt ${attemptEvent.attempt || 1}/${attemptEvent.attemptTotal || 1}` : 'waiting for model';
   const cognitiveDetail = summarizeCognitiveReceipt(events);
 
   return [
@@ -483,7 +595,7 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
       id: 'draft',
       label: 'Generate',
       detail: hasAttempt ? attemptLabel : 'model not called yet',
-      status: (hasError && !hasComplete) || hasCancelled || hasDisconnected ? 'failed' : hasCandidate || hasPreview || hasComplete ? 'done' : hasAttempt ? 'active' : 'pending',
+      status: hasError || hasCancelled || hasDisconnected ? 'failed' : hasCandidate || hasPreview || hasComplete ? 'done' : hasAttempt ? 'active' : 'pending',
     },
     {
       id: 'preview',
@@ -504,8 +616,8 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
     {
       id: 'ready',
       label: 'Ready',
-      detail: hasCancelled ? 'stopped by operator' : hasDisconnected ? 'event stream disconnected' : hasComplete && completeEvent?.executionMode === 'draft' ? 'preview ready; waiting for your revise/new variation/polish choice' : hasComplete ? 'run completed' : 'not ready yet',
-      status: hasComplete ? 'done' : hasError || hasCancelled || hasDisconnected ? 'failed' : 'pending',
+      detail: hasCancelled ? 'stopped by operator' : hasDisconnected ? 'event stream disconnected' : terminalFailed ? 'stopped before preview; use Try again, Polish safely, or Switch medium' : hasComplete && completeEvent?.executionMode === 'draft' ? 'preview ready; waiting for your revise/new variation/polish choice' : hasComplete ? 'run completed' : 'not ready yet',
+      status: hasError || hasCancelled || hasDisconnected ? 'failed' : hasComplete ? 'done' : 'pending',
     },
   ];
 }

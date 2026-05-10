@@ -43,7 +43,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
       });
 
       expect(result.iterations).toBe(1);
-      expect(result.code).not.toBeNull();
+      expect(result.code).toEqual(expect.stringMatching(/\S/));
     });
 
     it('works with music domain', async () => {
@@ -65,7 +65,7 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
       });
 
       expect(result.iterations).toBe(1);
-      expect(result.code).not.toBeNull();
+      expect(result.code).toEqual(expect.stringMatching(/\S/));
     });
   });
 
@@ -135,6 +135,41 @@ describe('RalphLoop with Deep Collaboration Integration', () => {
       expect(result.reason).toBe('aborted by user');
       // With collaboration, we get more progress updates due to phase callbacks
       expect(progressCalls.length).toBeGreaterThan(0);
+    });
+
+    it('aborts promptly while collaboration LLM calls are in flight', async () => {
+      let callCount = 0;
+      const mockLLM = async (_prompt: string, _systemPrompt?: string): Promise<string> => {
+        callCount++;
+        return new Promise<string>(() => {});
+      };
+
+      const ac = new AbortController();
+
+      const runPromise = RalphLoop.run('test sketch', {
+        maxIterations: 2,
+        galleryDir: TEST_GALLERY_DIR,
+        project: 'collab-inflight-abort-test',
+        useDeepCollab: true,
+        collabConfig: {
+          callLLM: mockLLM,
+          maxPhases: 2,
+        },
+        collabDomain: 'p5',
+        evalMode: 'legacy',
+        signal: ac.signal,
+      });
+
+      for (let attempt = 0; attempt < 100 && callCount === 0; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 5));
+      }
+
+      expect(callCount).toBeGreaterThan(0);
+      ac.abort();
+
+      const result = await runPromise;
+
+      expect(result.reason).toBe('aborted by user');
     });
   });
 });

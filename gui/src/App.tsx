@@ -9,7 +9,7 @@ import {
 import { WorkbenchShell } from './components/WorkbenchShell';
 import { useEventStream } from './components/activity/hooks';
 import {
-  buildWorkbenchRunOptions,
+  buildWorkbenchRunOptionsForMode,
   buildWorkbenchPrompt,
   CREATE_MODE_OPTIONS,
   detectPromptCreateMode,
@@ -19,8 +19,8 @@ import {
   type CreateModeId,
   type WorkbenchExecutionMode,
 } from './gui/createModes';
-import { summarizeAudioSync, type AudioSyncFrame } from './gui/audioSync';
-import { buildSyncPreviewHtml } from './gui/syncPreview';
+import { analyzeSingFrame, summarizeAudioSing, freqToNote, type AudioSingFrame } from './gui/audioSing';
+import { buildSingPreviewHtml } from './gui/singPreview';
 import { formatMicCaptureError } from '../../src/shared/micPermission';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 import { latestClarificationRequest, latestCognitiveReceipt, latestRunReceipt } from './gui/workbenchTelemetry';
@@ -197,16 +197,17 @@ export default function App() {
   const hydraContainerRef = useRef<HTMLDivElement>(null);
   const [micStatus, setMicStatus] = useState<MicStatus>('idle');
   const [micError, setMicError] = useState<string | null>(null);
-  const micFramesRef = useRef<AudioSyncFrame[]>([]);
+  const micFramesRef = useRef<AudioSingFrame[]>([]);
   const micStartPendingRef = useRef<boolean>(false);
   const micActiveRef = useRef<boolean>(false);
   const micStreamRef = useRef<MediaStream | null>(null);
   const micContextRef = useRef<AudioContext | null>(null);
   const micAnalyserRef = useRef<AnalyserNode | null>(null);
+  const micWorkletRef = useRef<AudioWorkletNode | null>(null);
+  const micWorkletFrameRef = useRef<{ rms: number; onset: boolean; pitch: number; confidence: number; voiced: boolean } | null>(null);
   const micRafRef = useRef<number | null>(null);
   const micLastFrameAtRef = useRef<number>(0);
-  const syncCanvasRef = useRef<HTMLCanvasElement>(null);
-  const syncFrameRef = useRef<HTMLIFrameElement>(null);
+  const singFrameRef = useRef<HTMLIFrameElement>(null);
 
   // Form state: effective + loop + creative + galleryPath; on save we build userConfig
   const [provider, setProvider] = useState<string>('lmstudio');
@@ -337,69 +338,11 @@ export default function App() {
     stopMicCapture(false);
   }, []);
 
-  function frameRms(values: Uint8Array): number {
-    let sum = 0;
-    for (const value of values) {
-      const normalized = (value - 128) / 128;
-      sum += normalized * normalized;
-    }
-    return Math.sqrt(sum / values.length);
-  }
-
-  function frameCentroid(values: Uint8Array): number {
-    let total = 0;
-    let weighted = 0;
-    for (let index = 0; index < values.length; index++) {
-      total += values[index];
-      weighted += values[index] * index;
-    }
-    return total ? weighted / total / values.length : 0;
-  }
-
-  function drawSyncOverlay(rms: number, centroid: number, timestamp: number) {
-    const canvas = syncCanvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const scale = window.devicePixelRatio || 1;
-    const width = Math.max(1, Math.floor(rect.width * scale));
-    const height = Math.max(1, Math.floor(rect.height * scale));
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
-    }
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.clearRect(0, 0, width, height);
-    ctx.save();
-    ctx.scale(scale, scale);
-    ctx.globalCompositeOperation = 'screen';
-    const viewWidth = rect.width;
-    const viewHeight = rect.height;
-    const hue = Math.round(190 + centroid * 170) % 360;
-    const pulse = Math.max(0.03, Math.min(1, rms * 4));
-    const t = timestamp / 1000;
-
-    for (let index = 0; index < 5; index++) {
-      const radius = 40 + index * 58 + pulse * 150 + Math.sin(t * 2 + index) * 16;
-      ctx.beginPath();
-      ctx.strokeStyle = `hsla(${(hue + index * 24) % 360}, 95%, 68%, ${0.15 + pulse * 0.28})`;
-      ctx.lineWidth = 1 + pulse * 8;
-      ctx.ellipse(viewWidth / 2, viewHeight / 2, radius * 1.55, radius * 0.55, Math.sin(t + index) * 0.2, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-
-    for (let index = 0; index < 42; index++) {
-      const angle = index * 0.73 + t * (0.6 + pulse * 2.2);
-      const radius = 36 + (index % 14) * 22 + pulse * 120;
-      const x = viewWidth / 2 + Math.cos(angle) * radius;
-      const y = viewHeight / 2 + Math.sin(angle * 1.7) * radius * 0.45;
-      ctx.beginPath();
-      ctx.fillStyle = `hsla(${(hue + index * 11) % 360}, 100%, 72%, ${0.18 + pulse * 0.55})`;
-      ctx.arc(x, y, 2 + pulse * 12, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
+  function sendSingFrame(frame: AudioSingFrame) {
+    singFrameRef.current?.contentWindow?.postMessage({
+      type: 'liminal-audio-frame',
+      frame,
+    }, '*');
   }
 
   async function startMicCapture() {
@@ -409,9 +352,9 @@ export default function App() {
       return;
     }
     setMicError(null);
-    if (!hasSyncTarget) {
+    if (!hasDirectSingTarget) {
       setMicStatus('error');
-      setMicError('Design an artifact first, then sync voice to it.');
+      setMicError('Generate a visual artifact first, then sing into the microphone to bring it to life.');
       return;
     }
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -424,9 +367,26 @@ export default function App() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
       const audioContext = new AudioContextCtor();
+      const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 2048;
-      audioContext.createMediaStreamSource(stream).connect(analyser);
+      source.connect(analyser);
+
+      // Try AudioWorklet for low-latency time-domain analysis
+      let workletLoaded = false;
+      try {
+        await audioContext.audioWorklet.addModule('/audio-sing-worklet.js');
+        const workletNode = new AudioWorkletNode(audioContext, 'audio-sing-processor');
+        source.connect(workletNode);
+        workletNode.port.onmessage = (event) => {
+          micWorkletFrameRef.current = event.data;
+        };
+        micWorkletRef.current = workletNode;
+        workletLoaded = true;
+      } catch (workletErr) {
+        console.warn('AudioWorklet not available, falling back to AnalyserNode-only:', workletErr);
+      }
+
       micStreamRef.current = stream;
       micContextRef.current = audioContext;
       micAnalyserRef.current = analyser;
@@ -434,26 +394,48 @@ export default function App() {
       micLastFrameAtRef.current = 0;
       micActiveRef.current = true;
       setMicStatus('recording');
-      setMessage('Syncing voice to the current stage object. Click Stop Sync to freeze it.');
+      setMessage('Sing into the microphone and watch the visuals respond to your voice. Click Stop to freeze.');
 
-      const timeData = new Uint8Array(analyser.fftSize);
       const frequencyData = new Uint8Array(analyser.frequencyBinCount);
+      const sampleRate = audioContext.sampleRate;
+      let prevRms = 0;
       const tick = (timestamp: number) => {
         const currentAnalyser = micAnalyserRef.current;
         if (!currentAnalyser) return;
-        if (timestamp - micLastFrameAtRef.current >= 33) {
-          currentAnalyser.getByteTimeDomainData(timeData);
+        if (timestamp - micLastFrameAtRef.current >= 16) {
           currentAnalyser.getByteFrequencyData(frequencyData);
-          const frame = {
-            rms: frameRms(timeData),
-            centroid: frameCentroid(frequencyData),
-          };
+
+          // Centroid from AnalyserNode FFT
+          let total = 0;
+          let weighted = 0;
+          for (let i = 0; i < frequencyData.length; i++) {
+            total += frequencyData[i];
+            weighted += frequencyData[i] * i;
+          }
+          const centroid = total ? weighted / total / frequencyData.length : 0;
+
+          // Time-domain features from AudioWorklet or AnalyserNode fallback
+          let frame: AudioSingFrame;
+          const wf = micWorkletFrameRef.current;
+          if (wf && workletLoaded) {
+            frame = {
+              rms: wf.rms,
+              centroid,
+              pitch: wf.pitch,
+              note: wf.voiced ? freqToNote(wf.pitch) : '',
+              onset: wf.onset,
+              voiced: wf.voiced,
+              confidence: wf.confidence,
+            };
+          } else {
+            const timeData = new Uint8Array(currentAnalyser.fftSize);
+            currentAnalyser.getByteTimeDomainData(timeData);
+            frame = analyzeSingFrame(timeData, frequencyData, sampleRate, prevRms);
+            prevRms = frame.rms;
+          }
+
           micFramesRef.current.push(frame);
-          syncFrameRef.current?.contentWindow?.postMessage({
-            type: 'liminal-audio-frame',
-            frame,
-          }, '*');
-          drawSyncOverlay(frame.rms, frame.centroid, timestamp);
+          sendSingFrame(frame);
           micLastFrameAtRef.current = timestamp;
         }
         micRafRef.current = window.requestAnimationFrame(tick);
@@ -461,7 +443,7 @@ export default function App() {
       micRafRef.current = window.requestAnimationFrame(tick);
     } catch (err) {
       setMicStatus('error');
-      setMicError(formatMicCaptureError(err, 'try Sync again'));
+      setMicError(formatMicCaptureError(err, 'try Sing again'));
     } finally {
       micStartPendingRef.current = false;
     }
@@ -472,6 +454,10 @@ export default function App() {
     micActiveRef.current = false;
     if (micRafRef.current != null) window.cancelAnimationFrame(micRafRef.current);
     micRafRef.current = null;
+    micWorkletRef.current?.port.close();
+    micWorkletRef.current?.disconnect();
+    micWorkletRef.current = null;
+    micWorkletFrameRef.current = null;
     micStreamRef.current?.getTracks().forEach((track) => track.stop());
     micStreamRef.current = null;
     void micContextRef.current?.close?.();
@@ -485,10 +471,10 @@ export default function App() {
       setMicError('No microphone frames were captured.');
       return;
     }
-    const summary = summarizeAudioSync(frames);
+    const summary = summarizeAudioSing(frames);
     setMicStatus('ready');
     setMicError(null);
-    setMessage(`Voice sync applied to current stage: ${summary.label}.`);
+    setMessage(`Voice captured: ${summary.label}. The visuals are responding to your singing.`);
   }
 
   const handleRunInPreview = async () => {
@@ -596,7 +582,7 @@ export default function App() {
     if (!usesOrganismApi(currentMode)) {
       await bridge.submitPrompt(buildWorkbenchPrompt(currentMode, prompt), {
         clientIntent: 'creative',
-        ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
+        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, currentMode, timeoutMinutes),
       });
       return;
     }
@@ -778,26 +764,28 @@ export default function App() {
   const bridgeImagePreview = bridgePreview?.type === 'image' && bridgePreview.src ? bridgePreview : null;
   const bridgeImagePreviewFailed = Boolean(bridgeImagePreview && failedPreviewSrc === bridgeImagePreview.src);
   const bridgeCodePreview = bridge.codePreview;
-  const stageBlocked = bridgeSummary.phase === 'preview missing' || bridgeSummary.phase === 'disconnected';
+  const runReceipt = activeMode.id === 'generate' ? latestRunReceipt(bridge.events, bridge.session) : null;
+  const runFailedBeforePreview = activeMode.id === 'generate' && runReceipt?.outcome === 'failed' && !bridgeSummary.active;
+  const runStoppedBeforePreview = activeMode.id === 'generate' && runReceipt?.outcome === 'stopped' && !bridgeSummary.active;
+  const stageBlocked = bridgeSummary.phase === 'preview missing' || bridgeSummary.phase === 'disconnected' || runFailedBeforePreview || runStoppedBeforePreview;
   const stageEmptyKicker = stageBlocked ? 'Preview' : bridgeSummary.active ? 'Working' : 'Preview';
   const stageEmptyHeading = stageBlocked
-    ? 'Preview unavailable'
+    ? runStoppedBeforePreview ? 'Generation stopped' : runFailedBeforePreview ? 'No preview was produced' : 'Preview unavailable'
     : bridgeSummary.active
       ? bridgeSummary.stageTitle
       : runStatus === 'running'
         ? 'Generating'
         : 'No artifact yet';
   const stageEmptyDetail = stageBlocked
-    ? bridgeSummary.stageSubtitle
+    ? runStoppedBeforePreview ? 'Generation stopped by operator. Edit the prompt, try again, or switch medium when ready.' : runFailedBeforePreview ? 'The run stopped before an artifact could be mounted. Use a recovery action or edit the prompt.' : bridgeSummary.stageSubtitle
     : bridgeSummary.active
       ? bridgeSummary.stageSubtitle
       : 'Send a creative prompt; live output will appear here.';
   const clarificationRequest = activeMode.id === 'generate' ? latestClarificationRequest(bridge.events) : null;
   const cognitiveReceipt = activeMode.id === 'generate' ? latestCognitiveReceipt(bridge.events) : null;
-  const runReceipt = activeMode.id === 'generate' ? latestRunReceipt(bridge.events, bridge.session) : null;
-  const syncPreviewHtml = bridgeCodePreview?.code ? buildSyncPreviewHtml(bridgeCodePreview.code) : '';
-  const hasDirectSyncTarget = Boolean(syncPreviewHtml);
-  const hasSyncTarget = Boolean(previewUrl || bridgePreview || hasDirectSyncTarget);
+  const singPreviewHtml = bridgeCodePreview?.code ? buildSingPreviewHtml(bridgeCodePreview.code) : '';
+  const hasDirectSingTarget = Boolean(singPreviewHtml);
+  const hasSingTarget = Boolean(previewUrl || bridgePreview || hasDirectSingTarget);
   const promptCreateMode = detectPromptCreateMode(createPrompt);
   const effectiveCreateMode = promptCreateMode ?? createMode;
   const createModeOption = getCreateModeOption(effectiveCreateMode);
@@ -817,7 +805,7 @@ export default function App() {
       }
       void bridge.submitPrompt(buildWorkbenchPrompt(effectiveCreateMode, createPrompt), {
         clientIntent: 'creative',
-        ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
+        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode, timeoutMinutes),
       });
       return;
     }
@@ -834,7 +822,7 @@ export default function App() {
     const clarifiedMode = detectPromptCreateMode(clarifiedPrompt) ?? createMode;
     void bridge.submitPrompt(buildWorkbenchPrompt(clarifiedMode, clarifiedPrompt), {
       clientIntent: 'creative',
-      ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
+      ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, clarifiedMode, timeoutMinutes),
     });
   };
 
@@ -850,8 +838,51 @@ export default function App() {
     setDraftAdjustment('');
     void bridge.submitPrompt(buildWorkbenchPrompt(followupMode, followupPrompt), {
       clientIntent: 'creative',
-      ...buildWorkbenchRunOptions(executionMode, createMaxIterations),
+      ...buildWorkbenchRunOptionsForMode(executionMode, createMaxIterations, followupMode, timeoutMinutes),
       creativePreferences: runReceipt ? { priorRunReceipt: runReceipt, revisionKind } : undefined,
+    });
+  };
+
+  const failureRecoveryText = runReceipt?.failure?.message || 'The last generation stopped before a usable artifact appeared.';
+
+  const handleRetryFailedRun = () => {
+    const prompt = createPrompt.trim();
+    if (!prompt) return;
+    const retryMode = detectPromptCreateMode(prompt) ?? createMode;
+    setCreateExecutionMode('draft');
+    void bridge.submitPrompt(buildWorkbenchPrompt(retryMode, prompt), {
+      clientIntent: 'creative',
+      ...buildWorkbenchRunOptionsForMode('draft', createMaxIterations, retryMode, timeoutMinutes),
+    });
+  };
+
+  const handleSafePolishFailedRun = () => {
+    submitDraftFollowup(
+      `Recover from the failed run and produce a complete, browser-safe artifact. Avoid undefined helper functions, incomplete wrappers, or placeholder code. Previous failure: ${failureRecoveryText}`,
+      'prove',
+      'polish',
+    );
+  };
+
+  const handleSwitchMediumAfterFailure = () => {
+    const baseIdea = (createPrompt.trim() || 'Create the same visual idea.')
+      .replace(/\bglsl\s+fragment\s+shader\b/gi, 'browser visual')
+      .replace(/\bfragment\s+shader\b/gi, 'browser visual')
+      .replace(/\bglsl\s+shader\b/gi, 'browser visual')
+      .replace(/\bglsl\b/gi, 'browser visual')
+      .replace(/\bshader\b/gi, 'visual')
+      .replace(/\bbrowser visual(?:\s+browser visual)+\b/gi, 'browser visual')
+      .replace(/\bvisual(?:\s+visual)+\b/gi, 'visual')
+      .replace(/\s+/g, ' ')
+      .trim();
+    const fallbackPrompt = `Create a p5.js sketch that preserves this idea: ${baseIdea}\n\nUse p5.js for a reliable browser preview, keep the motion and mood, and use only p5 browser APIs.`;
+    const fallbackMode: CreateModeId = 'p5';
+    setCreatePrompt(fallbackPrompt);
+    setCreateMode(fallbackMode);
+    setCreateExecutionMode('draft');
+    void bridge.submitPrompt(buildWorkbenchPrompt(fallbackMode, fallbackPrompt), {
+      clientIntent: 'creative',
+      ...buildWorkbenchRunOptionsForMode('draft', createMaxIterations, fallbackMode, timeoutMinutes),
     });
   };
 
@@ -864,6 +895,30 @@ export default function App() {
   const handleWorkbenchModeChange = (mode: WorkbenchMode) => {
     dispatchLive(switchToLiveOrganismView(mode.legacyTabs[0] as GuiTab));
   };
+
+  const runRecourseSlot = activeMode.id === 'generate' && (runFailedBeforePreview || runStoppedBeforePreview) ? (
+    <section className="liminal-recourse-card" role="alert" aria-label={runReceipt?.outcome === 'stopped' ? 'Generation stopped' : 'Generation recovery'}>
+      <div className="liminal-recourse-card__copy">
+        <span>{runReceipt?.outcome === 'stopped' ? 'Stopped' : 'Needs recovery'}</span>
+        <strong>{runReceipt?.outcome === 'stopped' ? 'Generation stopped' : 'That run did not finish.'}</strong>
+        <small>{runReceipt?.outcome === 'stopped' ? 'Generation stopped by operator.' : runReceipt?.failure?.message || failureRecoveryText}</small>
+        <small>Medium: {runReceipt.creativeDomain} · Model: {runReceipt.providerModel}</small>
+      </div>
+      <div className="liminal-recourse-card__actions" aria-label={runReceipt?.outcome === 'stopped' ? 'Stopped run actions' : 'Recovery actions'}>
+        <button type="button" onClick={handleRetryFailedRun} disabled={bridge.submitting || !createPrompt.trim()}>
+          Try again
+        </button>
+        {runReceipt?.outcome !== 'stopped' && (
+          <button type="button" onClick={handleSafePolishFailedRun} disabled={bridge.submitting}>
+            Polish safely
+          </button>
+        )}
+        <button type="button" onClick={handleSwitchMediumAfterFailure} disabled={bridge.submitting}>
+          Switch medium
+        </button>
+      </div>
+    </section>
+  ) : null;
 
   const improveSlot = (
     <div className="liminal-improve-lane">
@@ -898,11 +953,11 @@ export default function App() {
     <div className="liminal-stage-frame">
       {previewUrl ? (
         <iframe title="Live preview" src={previewUrl} allow={SENSOR_PERMISSION_POLICY} sandbox="allow-scripts" />
-      ) : syncPreviewHtml ? (
+      ) : singPreviewHtml ? (
         <iframe
-          ref={syncFrameRef}
-          title="Syncable generated stage"
-          srcDoc={syncPreviewHtml}
+          ref={singFrameRef}
+          title="Voice-reactive stage"
+          srcDoc={singPreviewHtml}
           allow={SENSOR_PERMISSION_POLICY}
           sandbox="allow-scripts"
         />
@@ -947,9 +1002,24 @@ export default function App() {
           <span>{stageEmptyKicker}</span>
           <strong>{stageEmptyHeading}</strong>
           <small>{stageEmptyDetail}</small>
+          {bridgeSummary.liveRun && (
+            <div
+              className={bridgeSummary.liveRun.showSlowNotice ? 'liminal-live-run liminal-live-run--slow' : 'liminal-live-run'}
+              aria-label="Live generation status"
+            >
+              <span>{bridgeSummary.liveRun.statusLabel}</span>
+              <strong>{bridgeSummary.liveRun.elapsedLabel} elapsed</strong>
+              <small>{bridgeSummary.liveRun.detail}</small>
+              <small>{bridgeSummary.liveRun.attemptLabel} · {bridgeSummary.liveRun.timeoutLabel} · {bridgeSummary.liveRun.etaLabel}</small>
+              <button type="button" className="liminal-live-run__stop" onClick={() => void bridge.cancelCurrent()}>
+                Stop
+              </button>
+              <em>{bridgeSummary.liveRun.reassurance}</em>
+            </div>
+          )}
         </div>
       )}
-      {hasSyncTarget && !hasDirectSyncTarget && <canvas ref={syncCanvasRef} className="liminal-sync-overlay" aria-hidden="true" />}
+
     </div>
   );
 
@@ -1239,12 +1309,12 @@ export default function App() {
       <button
         type="button"
         className={micStatus === 'recording' ? 'liminal-audio-button liminal-audio-button--recording' : 'liminal-audio-button'}
-        disabled={!hasSyncTarget && micStatus !== 'recording'}
+        disabled={!hasDirectSingTarget && micStatus !== 'recording'}
         onClick={() => void startMicCapture()}
       >
-        {micStatus === 'recording' ? 'Stop Sync' : 'Sync'}
+        {micStatus === 'recording' ? 'Stop Singing' : 'Sing'}
       </button>
-      <small>{micError || (micStatus === 'recording' ? (hasDirectSyncTarget ? 'voice driving object' : 'voice driving overlay') : micStatus === 'ready' ? 'voice sync applied' : hasSyncTarget ? (hasDirectSyncTarget ? 'direct object sync' : 'overlay sync') : 'design first')}</small>
+      <small>{micError || (micStatus === 'recording' ? 'your voice is driving the visuals' : micStatus === 'ready' ? 'voice capture complete' : hasDirectSingTarget ? 'sing to bring it to life' : 'generate a visual first')}</small>
     </div>
   );
 
@@ -1269,7 +1339,7 @@ export default function App() {
       onCancelRun={bridgeSummary.active ? () => void bridge.cancelCurrent() : undefined}
       runDisabled={activeMode.id === 'improve' ? improveLoading : bridge.submitting || runStatus === 'running' || !createPrompt.trim() || (runNeedsBridgeSession && !bridge.session)}
       stageBusy={bridgeSummary.active || runStatus === 'running'}
-      artifactReady={activeMode.id === 'generate' && hasSyncTarget}
+      artifactReady={activeMode.id === 'generate' && hasSingTarget}
       runLabel={bridge.submitting ? 'Sending' : bridge.session?.pendingAction ? 'Review' : runLabel}
       audioSlot={audioSlot}
       providerLabel={providerLabel}
@@ -1279,6 +1349,8 @@ export default function App() {
       inspectorSlot={inspectorSlot}
       timelineSlot={timelineSlot}
       leftSlot={leftSlot}
+      recourseSlot={runRecourseSlot}
+      recourseState={runStoppedBeforePreview ? 'stopped' : runFailedBeforePreview ? 'failed' : undefined}
     >
       {shouldRenderLegacyPanel(activeTab) && (
       <Suspense fallback={<div className="atelier-panel">Loading Studio surface…</div>}>

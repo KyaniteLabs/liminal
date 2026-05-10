@@ -70,6 +70,21 @@ export class HTMLWrapper {
     return sanitized.replace('</head>', `    ${headers}\n</head>`);
   }
 
+  private static readonly AUDIO_BOOTSTRAP_SCRIPT = `<script>(function(){window.__liminalAudio=window.__liminalAudio||{rms:0,energy:0,centroid:0,brightness:0,peak:0,pitch:0,note:'',onset:false,voiced:false,confidence:0,updatedAt:0};window.addEventListener('message',function(e){var d=e.data||{};if(d.type!=='liminal-audio-frame')return;var f=d.frame||{};window.__liminalAudio={rms:Number(f.rms)||0,energy:Number(f.rms)||0,centroid:Number(f.centroid)||0,brightness:Number(f.centroid)||0,peak:Number(f.peak)||Number(f.rms)||0,pitch:Number(f.pitch)||0,note:String(f.note||''),onset:Boolean(f.onset),voiced:Boolean(f.voiced),confidence:Number(f.confidence)||0,updatedAt:performance.now()};});})();</script>`;
+
+  private static injectAudioBootstrap(html: string): string {
+    if (html.includes('window.__liminalAudio')) return html;
+    const headMatch = html.match(/<head[^>]*>/i);
+    if (headMatch) {
+      return html.replace(headMatch[0], `${headMatch[0]}\n    ${this.AUDIO_BOOTSTRAP_SCRIPT}`);
+    }
+    const bodyMatch = html.match(/<body[^>]*>/i);
+    if (bodyMatch) {
+      return html.replace(bodyMatch[0], `${this.AUDIO_BOOTSTRAP_SCRIPT}\n${bodyMatch[0]}`);
+    }
+    return html;
+  }
+
   private static stripInvalidMetaHeaders(html: string): string {
     return html
       .replace(/^\s*<meta\s+http-equiv=["']X-Frame-Options["'][^>]*>\s*$/gim, '')
@@ -237,8 +252,9 @@ export class HTMLWrapper {
         break;
     }
 
-    // Inject security headers at a single central point for all wrapped outputs
-    return this.injectSecurityHeaders(wrapped, detectedDomain);
+    // Inject security headers and audio bootstrap at a single central point for all wrapped outputs
+    const withSecurity = this.injectSecurityHeaders(wrapped, detectedDomain);
+    return this.injectAudioBootstrap(withSecurity);
   }
 
   private static wrapSVG(code: string, title: string): string {
@@ -250,6 +266,12 @@ export class HTMLWrapper {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${this.escapeHTML(title)}</title>
     <style>
+        :root {
+          --sing-rms: 0;
+          --sing-centroid: 0;
+          --sing-pitch: 0;
+          --sing-onset: 0;
+        }
         body {
             margin: 0;
             min-height: 100vh;
@@ -281,6 +303,16 @@ export class HTMLWrapper {
     <main aria-label="Generated SVG">
         ${svg}
     </main>
+    <script>
+      (function updateSingProps(){
+        const a = window.__liminalAudio || {};
+        document.documentElement.style.setProperty('--sing-rms', a.rms || 0);
+        document.documentElement.style.setProperty('--sing-centroid', a.centroid || 0);
+        document.documentElement.style.setProperty('--sing-pitch', (a.pitch || 0) / 1000);
+        document.documentElement.style.setProperty('--sing-onset', a.onset ? 1 : 0);
+        requestAnimationFrame(updateSingProps);
+      })();
+    </script>
 </body>
 </html>`;
   }

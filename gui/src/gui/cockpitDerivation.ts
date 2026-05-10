@@ -93,6 +93,13 @@ function hasFailureProvenance(event: BridgeEvent): boolean {
   return Boolean(event.provider || event.model || event.endpoint || event.statusCode || event.retryable !== undefined || event.responseBody);
 }
 
+function isCancelledLifecycle(event: BridgeEvent): boolean {
+  return event.type === 'run.lifecycle'
+    && Boolean(event.run)
+    && typeof event.run === 'object'
+    && event.run.outcome === 'cancelled';
+}
+
 export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   const planEvent = [...events].reverse().find((event) => event.type === 'generation.domain_plan');
   const plan = Array.isArray(planEvent?.domains) ? planEvent!.domains! : [];
@@ -247,6 +254,11 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       phase = 'stopped';
       latestMessage = 'Generation stopped by operator.';
     }
+    if (isCancelledLifecycle(event)) {
+      hasCancelled = true;
+      phase = 'stopped';
+      latestMessage = String(event.run?.error || 'Generation stopped by operator.');
+    }
     if (event.type === 'stream.disconnected' && isDisconnected) {
       phase = 'disconnected';
       latestMessage = String(event.message || 'Workbench event stream disconnected.');
@@ -359,8 +371,19 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
     activeDomain,
     phase,
     latestMessage,
+    elapsedMs,
     elapsedLabel: elapsedMs ? formatDuration(elapsedMs) : '0s',
+    remainingMs,
     etaLabel: isTerminal ? 'done' : `up to ${formatDuration(remainingMs)} left`,
+    timeoutMinutes,
+    timeoutLabel: `${formatDuration(timeoutMs)} timeout budget`,
+    currentAttempt,
+    attemptTotal: attemptTotal || plan.length || 1,
+    attemptLabel: currentAttempt > 0
+      ? `Attempt ${currentAttempt} of ${attemptTotal || plan.length || 1}`
+      : 'Attempt pending',
+    candidateCount,
+    executionMode,
     progressPercent,
     activeWork,
     selectedDomain,

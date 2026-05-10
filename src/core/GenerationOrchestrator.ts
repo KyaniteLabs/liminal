@@ -26,6 +26,7 @@ import { getEffectiveConfig } from '../config/ConfigLoader.js';
 import { Logger } from '../utils/Logger.js';
 import { AmbiguityDetector } from './AmbiguityDetector.js';
 import type { ClarifyResult, GenerationSuccess } from './clarify.js';
+import { abortable, throwIfAborted } from '../utils/abort.js';
 
 type DispatchResult = { entry: GeneratorEntry; confidence: number } | null;
 
@@ -46,12 +47,6 @@ function dispatchForRequestedDomain(domain?: Domain | string): DispatchResult {
   if (!entryName || typeof generatorRegistry.getAll !== 'function') return null;
   const entry = generatorRegistry.getAll().find((candidate) => candidate.name === entryName);
   return entry ? { entry, confidence: 1 } : null;
-}
-
-function throwIfAborted(signal?: AbortSignal): void {
-  if (signal?.aborted) {
-    throw new Error('Generation aborted');
-  }
 }
 
 /**
@@ -142,14 +137,14 @@ export class GenerationOrchestrator {
     const dispatched = dispatchForRequestedDomain(this.options.collabDomain) ?? generatorRegistry.dispatch(usedPrompt);
 
     if (this.options.useSwarm) {
-      const result = await this.generateWithSwarm(usedPrompt);
+      const result = await this.generateWithSwarm(usedPrompt, signal);
       throwIfAborted(signal);
       return result;
     }
 
     // Consolidated collaboration path - all collaboration goes through CollaborationEngine
     if (this.options.useDeepCollab || this.options.useCollab) {
-      const result = await this.generateWithCollaboration(usedPrompt, dispatched);
+      const result = await this.generateWithCollaboration(usedPrompt, dispatched, signal);
       throwIfAborted(signal);
       return result;
     }
@@ -193,9 +188,11 @@ export class GenerationOrchestrator {
     return normalizeGeneratorResult(result);
   }
 
-  private async generateWithSwarm(prompt: string): Promise<GenerationResult> {
+  private async generateWithSwarm(prompt: string, signal?: AbortSignal): Promise<GenerationResult> {
     const orchestrator = new SwarmOrchestrator(this.options.swarmConfig, {
+      signal,
       onProgress: (data) => {
+        throwIfAborted(signal);
         this.options.onProgress?.({
           iteration: data.round,
           score: 0,
@@ -206,7 +203,8 @@ export class GenerationOrchestrator {
       },
     });
 
-    const swarmResult = await orchestrator.run(prompt, this.options.swarmMode);
+    const swarmResult = await abortable(orchestrator.run(prompt, this.options.swarmMode), signal);
+    throwIfAborted(signal);
     const warnings: string[] = [];
 
     if (this.options.project) {
@@ -244,10 +242,13 @@ export class GenerationOrchestrator {
    */
   private async generateWithCollaboration(
     usedPrompt: string,
-    dispatched: DispatchResult
+    dispatched: DispatchResult,
+    signal?: AbortSignal,
   ): Promise<GenerationResult> {
-    const llmCaller = (prompt: string, _systemPrompt?: string) =>
-      collabLLMCaller(prompt, _systemPrompt, this.options, dispatched);
+    const llmCaller = async (prompt: string, _systemPrompt?: string) => {
+      throwIfAborted(signal);
+      return abortable(collabLLMCaller(prompt, _systemPrompt, this.options, dispatched), signal);
+    };
 
     // All collaboration now goes through the consolidated CollaborationEngine
     // which routes to SwarmOrchestrator
@@ -255,6 +256,7 @@ export class GenerationOrchestrator {
       domain: this.options.collabDomain || Domain.P5,
       systemPrompt: '',
       callLLM: llmCaller,
+      signal,
       convergenceThreshold: this.options.collabConfig?.convergenceThreshold,
       maxRounds: this.options.collabConfig?.maxRounds ?? this.options.collabConfig?.maxPhases,
       swarmConfig: {
@@ -263,6 +265,7 @@ export class GenerationOrchestrator {
         ...this.options.swarmConfig,
       },
       onProgress: (update: PhaseUpdate & { mode: string }) => {
+        throwIfAborted(signal);
         this.options.onProgress?.({
           iteration: 0,
           score: update.quality || 0,
@@ -273,7 +276,8 @@ export class GenerationOrchestrator {
       },
     });
 
-    const collabResult = await engine.run(usedPrompt);
+    const collabResult = await abortable(engine.run(usedPrompt), signal);
+    throwIfAborted(signal);
     return { needsClarification: false, code: collabResult.output };
   }
 }

@@ -26,7 +26,7 @@ describe('ProgressiveDesignTiers', () => {
 
   it('returns the next tier for valid levels', () => {
     const next = getNextTierGoal(0);
-    expect(next).not.toBeNull();
+    expect(next).toMatchObject({ level: 1, name: 'emerging' });
     expect(next!.level).toBe(1);
   });
 });

@@ -11,7 +11,7 @@ const TEST_TIMEOUT = 60000;
 describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('MiniMax-M2.5', () => {
   it('generates p5.js sketch', async () => {
     const live = createLiveProviderClient('minimax', 'MiniMax-M2.5');
-    expect(live, 'MINIMAX_API_KEY is required for MiniMax proof').not.toBeNull();
+    expect(live?.config.model, 'MINIMAX_API_KEY is required for MiniMax proof').toBe('MiniMax-M2.5');
     const response = await live!.client.generate(
       'You are a p5.js coder. Output raw JavaScript only.',
       'Create a p5.js sketch with setup(), draw(), createCanvas(), and a blue circle.',

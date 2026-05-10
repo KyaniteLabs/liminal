@@ -351,6 +351,30 @@ ${safeCommentCode}
             const go = () => {};
             const o = typeof o0 !== 'undefined' ? o0 : undefined;
             
+            window.a = window.a || {
+              fft: [0,0,0,0,0,0,0,0,0,0],
+              setBins: function() {},
+              setSmooth: function() {},
+              setCutoff: function() {},
+              show: function() {}
+            };
+            function updateHydraAudio() {
+              const audio = window.__liminalAudio || { rms: 0, centroid: 0, pitch: 0, onset: false };
+              const fft = window.a.fft;
+              fft[0] = audio.rms || 0;
+              fft[1] = (audio.centroid || 0) * 0.5;
+              fft[2] = (audio.centroid || 0) * 0.3;
+              fft[3] = (audio.pitch || 0) / 1000;
+              fft[4] = audio.onset ? 1.0 : 0.0;
+              fft[5] = (audio.rms || 0) * 0.7;
+              fft[6] = (audio.centroid || 0) * 0.2;
+              fft[7] = (audio.pitch || 0) / 2000;
+              fft[8] = audio.voiced ? 0.8 : 0.1;
+              fft[9] = audio.confidence || 0;
+              requestAnimationFrame(updateHydraAudio);
+            }
+            updateHydraAudio();
+            
             ${safeCode}
             
         } catch (err) {
@@ -439,6 +463,10 @@ ${safeCommentCode}
                 const uResolution = gl.getUniformLocation(shaderProgram, 'u_resolution');
                 const uTime = gl.getUniformLocation(shaderProgram, 'u_time');
                 const uMouse = gl.getUniformLocation(shaderProgram, 'u_mouse');
+                const uRms = gl.getUniformLocation(shaderProgram, 'u_rms');
+                const uCentroid = gl.getUniformLocation(shaderProgram, 'u_centroid');
+                const uPitch = gl.getUniformLocation(shaderProgram, 'u_pitch');
+                const uOnset = gl.getUniformLocation(shaderProgram, 'u_onset');
 
                 let mouseX = 0, mouseY = 0;
                 canvas.addEventListener('mousemove', (e) => {
@@ -449,10 +477,15 @@ ${safeCommentCode}
                 let startTime = Date.now();
                 function render() {
                     const time = (Date.now() - startTime) / 1000;
+                    const audio = window.__liminalAudio || { rms: 0, centroid: 0, pitch: 0, onset: false };
                     gl.useProgram(shaderProgram);
                     gl.uniform2f(uResolution, canvas.width, canvas.height);
                     gl.uniform1f(uTime, time);
                     gl.uniform2f(uMouse, mouseX, mouseY);
+                    gl.uniform1f(uRms, audio.rms || 0);
+                    gl.uniform1f(uCentroid, audio.centroid || 0);
+                    gl.uniform1f(uPitch, audio.pitch || 0);
+                    gl.uniform1f(uOnset, audio.onset ? 1.0 : 0.0);
                     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
                     requestAnimationFrame(render);
                 }
@@ -722,6 +755,7 @@ ${safeCommentCode}
     ${SECURITY_HEADERS.trim()}
     <title>ASCII Art</title>
     <style>
+        :root { --sing-rms: 0; --sing-centroid: 0; --sing-pitch: 0; --sing-onset: 0; }
         body {
             margin: 0;
             background: radial-gradient(circle at 18% 16%, rgba(34, 197, 94, 0.18), transparent 30%), #0a0a0f;
@@ -736,6 +770,7 @@ ${safeCommentCode}
         .container {
             text-align: center;
             width: min(980px, 96vw);
+            transition: transform 0.1s ease-out;
         }
         pre { 
             font-size: clamp(18px, 2.2vw, 34px);
@@ -749,6 +784,7 @@ ${safeCommentCode}
             min-height: min(360px, 62vh);
             text-shadow: 0 0 12px rgba(134, 239, 172, 0.6);
             box-shadow: 0 28px 90px rgba(0,0,0,.42);
+            transition: text-shadow 0.1s ease-out, border-color 0.1s ease-out, transform 0.1s ease-out;
         }
         .label {
             color: #bbf7d0;
@@ -763,8 +799,25 @@ ${safeCommentCode}
 <body>
     <div class="container" data-ascii-preview-shell>
         <div class="label">ASCII Art</div>
-        <pre>${escaped}</pre>
+        <pre id="ascii-art">${escaped}</pre>
     </div>
+    <script>
+      (function updateAsciiSing(){
+        const a = window.__liminalAudio || {};
+        const rms = a.rms || 0;
+        const onset = a.onset || false;
+        const pre = document.getElementById('ascii-art');
+        if (pre) {
+          const scale = 1 + rms * 0.15;
+          const glow = 12 + rms * 60;
+          const hue = 100 + (a.centroid || 0) * 120;
+          pre.style.transform = 'scale(' + scale + ')';
+          pre.style.textShadow = '0 0 ' + glow + 'px hsl(' + hue + ', 80%, 60%)';
+          pre.style.borderColor = onset ? 'rgba(250,204,21,0.6)' : 'rgba(134,239,172,0.26)';
+        }
+        requestAnimationFrame(updateAsciiSing);
+      })();
+    </script>
 </body>
 </html>`;
   }

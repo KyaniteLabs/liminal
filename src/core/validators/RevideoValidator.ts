@@ -14,10 +14,15 @@ export interface RevideoValidationResult {
 }
 
 export class RevideoValidator {
-  private static readonly VALID_REVIDEO_IMPORTS = new Set([
+  private static readonly VALID_REVIDEO_CORE_IMPORTS = new Set([
     'makeScene', 'useTime', 'createSignal', 'createRef', 'waitFor',
-    'interpolate', 'spring', 'Easing', 'Audio', 'Img', 'Video',
+    'interpolate', 'spring', 'Easing',
     'OffthreadVideo', 'staticFile'
+  ]);
+
+  private static readonly VALID_REVIDEO_2D_IMPORTS = new Set([
+    'makeScene2D', 'Circle', 'Img', 'Layout', 'Line', 'Node', 'Path',
+    'Ray', 'Rect', 'Spline', 'Txt', 'Video'
   ]);
 
   static validate(code: string): RevideoValidationResult {
@@ -81,20 +86,35 @@ export class RevideoValidator {
     if (/\bcreateCanvas\b|function\s+setup\s*\(|function\s+draw\s*\(|\bp5\b|p5\.js/i.test(code)) {
       errors.push('Revideo code must not use p5.js APIs such as createCanvas, setup(), or draw()');
     }
-    const importMatches = code.matchAll(/import\s+.*?\s+from\s+['"]@revideo\/core['"]/g);
-    for (const match of importMatches) {
-      const namedImports = match[0].match(/\{([^}]+)\}/);
-      if (namedImports) {
-        const imports = namedImports[1].split(',').map(s => s.trim().split(/\s+as\s+/)[0].trim());
-        for (const imp of imports) {
-          if (!this.VALID_REVIDEO_IMPORTS.has(imp)) {
-            errors.push(`Unknown Revideo import: ${imp}`);
-          }
-        }
-      }
-    }
+    errors.push(
+      ...this.validateNamedImports(
+        code,
+        /import\s+\{([^}]+)\}\s+from\s+['"]@revideo\/core['"]/g,
+        this.VALID_REVIDEO_CORE_IMPORTS
+      )
+    );
+    errors.push(
+      ...this.validateNamedImports(
+        code,
+        /import\s+\{([^}]+)\}\s+from\s+['"]@revideo\/2d['"]/g,
+        this.VALID_REVIDEO_2D_IMPORTS
+      )
+    );
     if (!/@revideo\/2d/.test(code)) {
       errors.push('Revideo scene should import visual components such as Txt/Rect from @revideo/2d');
+    }
+    return errors;
+  }
+
+  private static validateNamedImports(code: string, pattern: RegExp, allowed: Set<string>): string[] {
+    const errors: string[] = [];
+    for (const match of code.matchAll(pattern)) {
+      const imports = match[1].split(',').map(s => s.trim().split(/\s+as\s+/)[0].trim());
+      for (const imp of imports) {
+        if (imp && !allowed.has(imp)) {
+          errors.push(`Unknown Revideo import: ${imp}`);
+        }
+      }
     }
     return errors;
   }

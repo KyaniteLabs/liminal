@@ -73,8 +73,7 @@ describe('TextGenerativeGenerator', () => {
     });
     const gen = new TextGenerativeGenerator();
     const result = await gen.generate('dripping water');
-    expect(result).toContain('d');
-    expect(result).toContain('g');
+    expect(result).toBe(SAMPLE_TEXT);
     expect(result.split('\n').length).toBeGreaterThanOrEqual(2);
   });
 

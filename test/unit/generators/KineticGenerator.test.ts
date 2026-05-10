@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockGenerate, mockGetConfig } = vi.hoisted(() => ({
+const { mockComplete, mockGenerate, mockGetConfig } = vi.hoisted(() => ({
+  mockComplete: vi.fn().mockResolvedValue({
+    text: '<!DOCTYPE html><html><head><style>@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .word { animation: spin 2s infinite; }</style></head><body><div class="word">hello</div></body></html>',
+    success: true,
+  }),
   mockGenerate: vi.fn().mockResolvedValue({
     code: '<!DOCTYPE html><html><head><style>@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style></head><body><div style="animation: spin 2s infinite">hello</div></body></html>',
     success: true,
@@ -10,6 +14,7 @@ const { mockGenerate, mockGetConfig } = vi.hoisted(() => ({
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
+    complete = mockComplete;
     generate = mockGenerate;
     generateWithToolLoop = vi.fn().mockResolvedValue({
       content: '<!DOCTYPE html><html><head><style>@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style></head><body><div style="animation: spin 2s infinite">hello</div></body></html>',
@@ -74,6 +79,11 @@ import { KineticGenerator } from '../../../src/generators/kinetic/KineticGenerat
 
 describe('KineticGenerator', () => {
   beforeEach(() => {
+    mockComplete.mockReset();
+    mockComplete.mockResolvedValue({
+      text: '<!DOCTYPE html><html><head><style>@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .word { animation: spin 2s infinite; }</style></head><body><div class="word">hello</div></body></html>',
+      success: true,
+    });
     mockGenerate.mockClear();
   });
 
@@ -83,11 +93,28 @@ describe('KineticGenerator', () => {
     expect(info.domain).toBe('kinetic');
   });
 
-  it('generate calls llm.generate with kinetic system prompt', async () => {
+  it('generate uses compact direct HTML when it validates', async () => {
     const gen = new KineticGenerator();
     const code = await gen.generate('spinning shapes');
     expect(code).toContain('@keyframes');
     expect(code).toContain('<!DOCTYPE html>');
+    expect(mockComplete).toHaveBeenCalledOnce();
+    expect(mockGenerate).not.toHaveBeenCalled();
+  });
+
+  it('falls back to llm.generate when compact direct output has no HTML', async () => {
+    mockComplete.mockResolvedValueOnce({ text: 'I would animate the words first.', success: true });
+
+    const gen = new KineticGenerator();
+    const code = await gen.generate('spinning shapes');
+    expect(code).toContain('@keyframes');
+    expect(code).toContain('<!DOCTYPE html>');
+    expect(mockGenerate).toHaveBeenCalledWith(
+      'You are a CSS-kinetic artist.',
+      'SPEC: spinning shapes',
+      undefined,
+      undefined,
+    );
   });
 
   it('generateFull returns LLMResponse with code', async () => {
@@ -104,9 +131,22 @@ describe('KineticGenerator', () => {
     expect(wrapped).toContain('kinetic-canvas');
   });
 
-  it('throws if LLM returns empty code', async () => {
+  it('generateFull preserves the explicit recovery scaffold and failure reason if LLM returns empty code', async () => {
+    mockComplete.mockResolvedValueOnce({ text: '', success: true });
     mockGenerate.mockResolvedValueOnce({ code: '', success: true });
     const gen = new KineticGenerator();
-    await expect(gen.generate('empty')).rejects.toThrow('empty code');
+    const result = await gen.generateFull('empty');
+    expect(result.code).toContain('<!DOCTYPE html>');
+    expect(result.code).toContain('Liminal recovery');
+    expect(result.code).toContain('@keyframes orbit');
+    expect(result.error).toContain('Recovered with deterministic CSS kinetic scaffold');
+  });
+
+  it('generate rejects recovery scaffolds so callers can receipt the failed candidate', async () => {
+    mockComplete.mockResolvedValueOnce({ text: '', success: true });
+    mockGenerate.mockResolvedValueOnce({ code: '', success: true });
+    const gen = new KineticGenerator();
+
+    await expect(gen.generate('empty')).rejects.toThrow('Recovered with deterministic CSS kinetic scaffold');
   });
 });

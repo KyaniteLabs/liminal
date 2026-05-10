@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium, type Page } from 'playwright';
-import { buildSyncPreviewHtml } from '../../gui/src/gui/syncPreview';
+import { buildSingPreviewHtml } from '../../gui/src/gui/singPreview';
 import { GenericWrapper } from '../../src/core/wrappers/GenericWrapper';
 import { HTMLWrapper } from '../../src/utils/htmlWrapper';
 
@@ -132,8 +132,8 @@ function hyperframesFixture(): string {
 
 function fixtureItems(): RenderItem[] {
   return [
-    { domain: 'p5', sourceLabel: 'fixture p5', html: buildSyncPreviewHtml('function setup(){createCanvas(480,320)} function draw(){background(5,8,16); fill(80,220,255); circle(width/2+sin(frameCount*.05)*80,height/2,38)}') },
-    { domain: 'three', sourceLabel: 'fixture three', html: buildSyncPreviewHtml('const renderer = new THREE.WebGLRenderer({ canvas }); renderer.setSize(window.innerWidth, window.innerHeight); const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, .1, 100); camera.position.z = 3; const cube = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color:0x44ddff})); scene.add(cube); function animate(){ cube.rotation.y += .02; renderer.render(scene,camera); requestAnimationFrame(animate); } animate();') },
+    { domain: 'p5', sourceLabel: 'fixture p5', html: buildSingPreviewHtml('function setup(){createCanvas(480,320)} function draw(){background(5,8,16); fill(80,220,255); circle(width/2+sin(frameCount*.05)*80,height/2,38)}') },
+    { domain: 'three', sourceLabel: 'fixture three', html: buildSingPreviewHtml('const renderer = new THREE.WebGLRenderer({ canvas }); renderer.setSize(window.innerWidth, window.innerHeight); const scene = new THREE.Scene(); const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, .1, 100); camera.position.z = 3; const cube = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial({color:0x44ddff})); scene.add(cube); function animate(){ cube.rotation.y += .02; renderer.render(scene,camera); requestAnimationFrame(animate); } animate();') },
     { domain: 'svg', sourceLabel: 'fixture svg', html: svgPreview('<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="46" fill="#dff7ff"/><path d="M38 62l15 15 31-35" fill="none" stroke="#0f172a" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/></svg>') },
     { domain: 'glsl', sourceLabel: 'fixture glsl', html: GenericWrapper.wrap('precision highp float; uniform vec2 u_resolution; uniform float u_time; void main(){ vec2 uv=gl_FragCoord.xy/u_resolution.xy; gl_FragColor=vec4(uv,abs(sin(u_time)),1.0); }', { domain: 'shader' }) },
     { domain: 'hydra', sourceLabel: 'fixture hydra', html: GenericWrapper.wrap('osc(8, 0.1, 1.2).kaleid(4).out()', { domain: 'hydra' }) },
@@ -149,7 +149,7 @@ function fixtureItems(): RenderItem[] {
 
 function domainHtml(domain: string, filePath: string): string {
   const code = fs.readFileSync(filePath, 'utf8');
-  if (domain === 'p5' || domain === 'three') return buildSyncPreviewHtml(code);
+  if (domain === 'p5' || domain === 'three') return buildSingPreviewHtml(code);
   if (domain === 'svg') return svgPreview(code);
   if (domain === 'glsl') return GenericWrapper.wrap(code, { domain: 'shader' });
   if (domain === 'hydra') return GenericWrapper.wrap(code, { domain: 'hydra' });

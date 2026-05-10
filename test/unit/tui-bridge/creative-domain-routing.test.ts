@@ -35,6 +35,13 @@ describe('TuiBridgeService creative domain routing', () => {
     expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.THREE]);
   });
 
+  it('keeps explicit GLSL prompts locked to shader even when forbidding Three.js', () => {
+    const prompt = 'Create a GLSL fragment shader with uv coordinates and animated plasma colors. Do not use p5 or Three.js.';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.GLSL);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.GLSL]);
+  });
+
   it('preserves visual fallback options for implicit visual prompts', () => {
     const prompt = 'Create luminous blue-green particles orbiting a dark center with visible motion.';
 

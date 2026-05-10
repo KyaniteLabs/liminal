@@ -12,8 +12,41 @@ export class ShaderGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: TierBasedGeneratorOptions): Promise<string> {
-    const code = await super.generate(prompt, options);
-    return this.sanitizeShaderCode(code);
+    try {
+      const code = await super.generate(prompt, options);
+      return this.sanitizeShaderCode(code);
+    } catch (err) {
+      if (!this.shouldUseProviderRecoveryShader(err, options?.signal)) throw err;
+      Logger.warn('ShaderGenerator', 'Provider returned no GLSL artifact; rendering local recovery shader');
+      const recovered = this.providerRecoveryShader();
+      const validation = this.validateOutput(recovered);
+      if (!validation.valid) throw err;
+      return recovered;
+    }
+  }
+
+  protected buildEmptyCodeRetrySystemPrompt(): string {
+    return 'You write final GLSL fragment shader source code only. Start with GLSL code immediately; never include prose, markdown, hidden reasoning, or tool calls.';
+  }
+
+  protected buildEmptyCodeRetryPrompt(originalPrompt: string): string {
+    return [
+      'Write one complete GLSL fragment shader now.',
+      'Output raw GLSL only. No markdown, prose, hidden reasoning, or comments about your plan.',
+      'Required tokens: precision mediump float; uniform vec2 u_resolution; uniform float u_time; void main(); gl_FragColor.',
+      'Use gl_FragCoord / u_resolution for uv coordinates and u_time for animation.',
+      'Include either hash/noise/fbm or multiple vec3 color palettes so the shader is not a flat gradient.',
+      `Creative brief: ${this.extractCreativeBrief(originalPrompt)}`,
+    ].join('\n');
+  }
+
+  protected maxTokensForDirectRetry(maxTokens?: number): number | undefined {
+    const configured = this.llm.getConfig().maxTokens;
+    return Math.max(maxTokens ?? 0, configured ?? 0, 4096);
+  }
+
+  protected temperatureForDirectRetry(): number | undefined {
+    return 0.2;
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
@@ -163,6 +196,7 @@ export class ShaderGenerator extends TierBasedGenerator {
 
   private injectCommonHelpers(code: string): string {
     code = this.repairCommonLocalModelIssues(code);
+    code = this.ensureMainEntrypoint(code);
     const usesFbm = /\bfbm\s*\(/.test(code);
     const definesFbm = /\b(?:float|vec[234])\s+fbm\s*\(/.test(code);
     if (!usesFbm || definesFbm) return code;
@@ -201,11 +235,116 @@ export class ShaderGenerator extends TierBasedGenerator {
     return `${helper}${code}`;
   }
 
+  private ensureMainEntrypoint(code: string): string {
+    if (/\bvoid\s+main\s*\(/.test(code)) return code;
+    if (/\bvoid\s+mainImage\s*\(/.test(code)) {
+      if (this.isGlsl300(code)) {
+        const declaredOutput = this.findDeclaredFragmentOutput(code);
+        const outputVariable = declaredOutput ?? 'liminalFragColor';
+        const shader = declaredOutput ? code.trim() : this.insertGlsl300FragmentOutput(code, outputVariable);
+        return `${shader}\nvoid main(){mainImage(${outputVariable},gl_FragCoord.xy);}`;
+      }
+      return `${code.trim()}\nvoid main(){mainImage(gl_FragColor,gl_FragCoord.xy);}`;
+    }
+    return code;
+  }
+
+  private isGlsl300(code: string): boolean {
+    return /^\s*#version\s+300\s+es\b/m.test(code);
+  }
+
+  private findDeclaredFragmentOutput(code: string): string | null {
+    const match = code.match(/^\s*(?:layout\s*\([^)]*\)\s*)?out\s+(?:(?:lowp|mediump|highp)\s+)?vec4\s+([A-Za-z_]\w*)\s*;/m);
+    return match?.[1] ?? null;
+  }
+
+  private insertGlsl300FragmentOutput(code: string, outputVariable: string): string {
+    const declaration = `out vec4 ${outputVariable};`;
+    const trimmed = code.trim();
+    const precisionMatch = trimmed.match(/^\s*precision\s+(?:lowp|mediump|highp)\s+float\s*;\s*/m);
+    if (precisionMatch?.index !== undefined) {
+      const insertAt = precisionMatch.index + precisionMatch[0].length;
+      return `${trimmed.slice(0, insertAt)}\n${declaration}\n${trimmed.slice(insertAt)}`;
+    }
+    const versionMatch = trimmed.match(/^\s*#version\s+300\s+es[^\n]*\n?/m);
+    if (versionMatch?.index !== undefined) {
+      const insertAt = versionMatch.index + versionMatch[0].length;
+      return `${trimmed.slice(0, insertAt)}${declaration}\n${trimmed.slice(insertAt)}`;
+    }
+    return `${declaration}\n${trimmed}`;
+  }
+
   private repairCommonLocalModelIssues(code: string): string {
     const hasPaletteVec2Call = /\bpalette\s*\(\s*p\s*\)/.test(code);
     const paletteBodyUsesP = /\bvec3\s+palette\s*\(\s*float\s+\w+\s*\)\s*\{[\s\S]*?\bp\b[\s\S]*?\}/.test(code);
     if (!hasPaletteVec2Call || !paletteBodyUsesP) return code;
 
     return code.replace(/\bvec3\s+palette\s*\(\s*float\s+\w+\s*\)/, 'vec3 palette(vec2 p)');
+  }
+
+  private shouldUseProviderRecoveryShader(err: unknown, signal?: AbortSignal): boolean {
+    if (signal?.aborted) return false;
+    const message = err instanceof Error ? err.message : String(err);
+    return /(?:no usable content|LLM returned empty code|Generated code is too short \(0 chars\)|Code is empty after stripping)/i.test(message);
+  }
+
+  private extractCreativeBrief(prompt: string): string {
+    const match = prompt.match(/(?:Primary request:|User request:|Original request:)\s*([^\n]+)/i);
+    const brief = (match?.[1] ?? prompt).replace(/\s+/g, ' ').trim();
+    return brief.slice(0, 500);
+  }
+
+  private providerRecoveryShader(): string {
+    return [
+      '/* Liminal provider recovery: local GLSL safety shader rendered after the model returned no artifact. */',
+      'precision mediump float;',
+      'uniform vec2 u_resolution;',
+      'uniform float u_time;',
+      '',
+      'float hash(vec2 p) {',
+      '  p = fract(p * vec2(127.1, 311.7));',
+      '  p += dot(p, p + 34.17);',
+      '  return fract(p.x * p.y);',
+      '}',
+      '',
+      'float noise(vec2 p) {',
+      '  vec2 i = floor(p);',
+      '  vec2 f = fract(p);',
+      '  vec2 u = f * f * (3.0 - 2.0 * f);',
+      '  return mix(mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),',
+      '             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);',
+      '}',
+      '',
+      'float fbm(vec2 p) {',
+      '  float value = 0.0;',
+      '  float amplitude = 0.5;',
+      '  for (int i = 0; i < 5; i++) {',
+      '    value += amplitude * noise(p);',
+      '    p *= 2.05;',
+      '    amplitude *= 0.52;',
+      '  }',
+      '  return value;',
+      '}',
+      '',
+      'void main() {',
+      '  vec2 safeResolution = max(u_resolution, vec2(1.0));',
+      '  vec2 uv = gl_FragCoord.xy / safeResolution;',
+      '  vec2 p = (uv - 0.5) * vec2(safeResolution.x / safeResolution.y, 1.0);',
+      '  float t = u_time * 0.18;',
+      '  float field = fbm(p * 3.0 + vec2(t, -t));',
+      '  float cloud = fbm(p * 6.0 - vec2(t * 0.7, t * 0.4));',
+      '  float radial = length(p);',
+      '  float pulse = 0.5 + 0.5 * sin(radial * 18.0 - u_time * 2.0);',
+      '  vec3 shadow = vec3(0.035, 0.015, 0.085);',
+      '  vec3 violet = vec3(0.44, 0.12, 0.84);',
+      '  vec3 orchid = vec3(0.80, 0.35, 1.00);',
+      '  vec3 cyan = vec3(0.16, 0.70, 0.95);',
+      '  vec3 color = mix(shadow, violet, smoothstep(0.18, 0.86, field));',
+      '  color = mix(color, orchid, smoothstep(0.45, 0.95, cloud) * 0.55);',
+      '  color += cyan * pow(pulse, 3.0) * smoothstep(0.65, 0.05, radial) * 0.35;',
+      '  color += vec3(0.95, 0.82, 1.0) * smoothstep(0.82, 1.0, field) * 0.22;',
+      '  gl_FragColor = vec4(color, 1.0);',
+      '}',
+    ].join('\n');
   }
 }

@@ -4,7 +4,7 @@ This repo-local copy makes the doctrine visible to Codex, Claude Code, Kimi Code
 
 Canonical installation source on this machine: `/Users/simongonzalezdecruz/Downloads/2026-05-04-empower-orchestrator-recipe.md`.
 
-Repository: `simongonzalezdc/liminal`.
+Repository: `KyaniteLabs/liminal`.
 
 ---
 

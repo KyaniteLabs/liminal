@@ -1,14 +1,14 @@
-        # Factory intake for issue #30: [Analysis] Feature Viability Analysis — Liminal as Commercial Product
+# Factory intake for issue #30: [Analysis] Feature Viability Analysis — Liminal as Commercial Product
 
-        Repository: `KyaniteLabs/liminal`
-        Category: `llm_fix`
-        Source issue: `#30`
+Repository: `KyaniteLabs/liminal`
+Category: `llm_fix`
+Source issue: `#30`
 
-        ## User request
+## User request
 
-        ## Summary
+## Summary
 
-Comprehensive viability analysis for Liminal as a **proprietary commercial product**. Full document: [`docs/feature-viability-analysis.md`](docs/feature-viability-analysis.md)
+Comprehensive viability analysis for Liminal as a **proprietary commercial product**. Full document: [`docs/feature-viability-analysis.md`](../../feature-viability-analysis.md)
 
 **Updated 2026-04-21:** Analysis refreshed to reflect Phases 11-16 completion (StudioAgent, LiminalCortex, Emergence, Taste Learning, Autonomous Gardener). PR #322.
 
@@ -52,22 +52,22 @@ The **Autonomous Gardener** (TasteModelTrainer + DreamPlanner + EmergenceCritic 
 
 *Generated from deep codebase exploration + market research. Updated 2026-04-21 to reflect current codebase state.*
 
-        ## Factory interpretation
+## Factory interpretation
 
-        This issue was picked up by `issue-closer`, but no safe code edit was
-        produced by the configured agent providers. The Factory is therefore
-        converting the issue into an implementation contract instead of silently
-        skipping it.
+This issue was picked up by `issue-closer`, but no safe code edit was
+produced by the configured agent providers. The Factory is therefore
+converting the issue into an implementation contract instead of silently
+skipping it.
 
-        ## Acceptance contract
+## Acceptance contract
 
-        - Confirm the desired behavior from the issue title and body.
-        - Identify the smallest implementation slice that can ship independently.
-        - Add or update tests/proofs for that slice before merging implementation.
-        - Keep credentials, local machine paths, and deployment secrets out of the repo.
-        - Close or update the source issue when the implementation PR lands.
+- Confirm the desired behavior from the issue title and body.
+- Identify the smallest implementation slice that can ship independently.
+- Add or update tests/proofs for that slice before merging implementation.
+- Keep credentials, local machine paths, and deployment secrets out of the repo.
+- Close or update the source issue when the implementation PR lands.
 
-        ## Next Factory action
+## Next Factory action
 
-        Dispatch a repo worker against this contract. If the request is too broad,
-        split it into smaller `agent-ready` issues with concrete acceptance checks.
+Dispatch a repo worker against this contract. If the request is too broad,
+split it into smaller `agent-ready` issues with concrete acceptance checks.

@@ -217,4 +217,4 @@ Result:  ok internal/app (cached), ok internal/bridge (cached). No launch-affect
 Links:   operator-journey-matrix.md
 ```
 
-**Operator journey result: 10 PASS, 1 NON-MATERIAL (Bubble Tea). Zero FCQA-* findings.**
+**Operator journey result: 8 PASS, 2 NOT VALIDATED, 1 NON-MATERIAL (Bubble Tea). FCQA-001 tracks actual timeout-expiry recourse; FCQA-002 tracks real provider disconnect handling.**

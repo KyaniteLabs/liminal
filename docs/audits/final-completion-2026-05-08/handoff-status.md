@@ -18,16 +18,20 @@ Last updated: 2026-05-10
   - `test:e2e` ✅ `test:ci:slow` ✅
   - `proof:live-creative-domains` ✅ `qa:creative-domains:static` ✅
 - **Static analysis** — No material FCQA findings from catches, skips, timeouts, recovery paths, or provider fallback inspection.
-- **Operator journey pass** — Electron Studio + computer-use pass executed 2026-05-08 with glm/GLM-5v-turbo: 10 PASS, 1 NON-MATERIAL (Bubble Tea), 0 FCQA findings.
+- **Operator journey pass** — Electron Studio + computer-use pass executed 2026-05-08 with glm/GLM-5v-turbo: 8 PASS, 2 NOT VALIDATED, 1 NON-MATERIAL (Bubble Tea).
 
 ## Not Done
 
-- **Task 6: Final closure verification** — After this PR merges, recheck current `main`, confirm no blocking PRs remain for this completion program, and mark this file complete if gates still pass.
+- **FCQA-001 timeout expiry recourse** — Needs an actual timeout-expiry run, not only countdown visibility.
+- **FCQA-002 provider disconnect handling** — Needs a real provider transport/disconnect test, not only empty-code model output.
+- **Task 6: Final closure verification** — After FCQA-001 and FCQA-002 are resolved, recheck current `main`, confirm no blocking PRs remain for this completion program, and mark this file complete if gates still pass.
 
 ## Remaining Blockers
 
 1. **Merge this PR (#531)** — It records the final operator journey evidence.
-2. **Final closure sweep on `main`** — Pull latest main after merge and rerun the required final gates.
+2. **FCQA-001** — Re-run a generation through actual timeout expiry and record recourse behavior.
+3. **FCQA-002** — Disconnect or kill the provider mid-generation and record the user-visible error/recourse path.
+4. **Final closure sweep on `main`** — Pull latest main after those fixes and rerun the required final gates.
 
 ## Operator Journey Results (2026-05-08)
 
@@ -36,9 +40,9 @@ Last updated: 2026-05-10
 | Studio prompt → artifact | PASS | Plasma shader generated in ~18s via glm/GLM-5v-turbo |
 | Shader prompt | PASS | GLSL domain detected; shader rendered |
 | Slow generation | PASS | Progress indicator visible throughout (lmstudio run: 2m 12s elapsed shown) |
-| Timeout visibility | PASS | Timeout budget surfaced: "30m 0s budget · up to 27m 48s left" |
+| Timeout visibility | NOT VALIDATED | Countdown surfaced, but actual timeout expiry was not reached; track as FCQA-001 |
 | Retry / continue | PASS | "Try again" fired server-side retries; "Switch medium" reformulated prompt |
-| Provider failure | PASS | lmstudio empty-code case: "Generation stopped" with recourse buttons, not blank |
+| Provider failure | NOT VALIDATED | Empty-code model output handled, but real provider disconnect not tested; track as FCQA-002 |
 | Stop / cancel | PASS | Stop cleaned up immediately; UI showed "stopped by operator" + recourse |
 | Preview visibility | PASS | "Preview is ready" + "View preview" + live shader in right panel |
 | Proof receipt freshness | PASS | gitCommit 5cf647c8 matched the proof-refresh branch HEAD; 12/12 domains via GLM |
@@ -69,5 +73,7 @@ gh pr list --state open
 - [ ] PR #531 merged
 - [ ] `pnpm final-qa:test-quality` passes on merged main
 - [ ] `pnpm final-qa:surface` passes on merged main
+- [ ] FCQA-001 actual timeout expiry recourse validated
+- [ ] FCQA-002 provider disconnect handling validated
 - [ ] `gh pr list --state open` has no blocking completion-program PRs
 - [ ] This file updated to COMPLETE

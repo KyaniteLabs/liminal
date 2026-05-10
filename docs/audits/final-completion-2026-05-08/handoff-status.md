@@ -1,13 +1,15 @@
 # Handoff Status
 
-Last updated: 2026-05-08
+Last updated: 2026-05-10
 
 ## Done
 
-- **PR #525** — Strict test-quality gate fixed. All CI green. Auto-merge enabled. Awaiting reviewer approval.
+- **PR #525** — Strict test-quality gate fixed and merged.
 - **PR #526** — Audit folder (`docs/audits/final-completion-2026-05-08/`) merged to main.
-- **PR #528** — Updated verification log and handoff status. Auto-merge enabled.
-- **PR #529** — Live creative-domain proof refreshed. 12/12 domains pass via glm/GLM-5v-turbo. Auto-merge enabled.
+- **PR #528** — Closed as superseded by the final gate/documentation updates.
+- **PR #529** — Live creative-domain proof refreshed. 12/12 domains pass via glm/GLM-5v-turbo. Merged.
+- **PR #530** — Full gate pass + audit docs update merged.
+- **PR #531** — Operator journey evidence recorded in this PR.
 - **All programmatic gate commands pass:**
   - `check:script-targets` ✅ `check:orphans` ✅ `check:doc-links` ✅
   - `final-qa:test-quality` ✅ `final-qa:surface` ✅
@@ -15,38 +17,63 @@ Last updated: 2026-05-08
   - `bubbletea:test` ✅ `verify:integration` ✅
   - `test:e2e` ✅ `test:ci:slow` ✅
   - `proof:live-creative-domains` ✅ `qa:creative-domains:static` ✅
-- **Static analysis** — No material FCQA findings (catches, skips, timeouts, recovery paths, provider fallback all inspected).
+- **Static analysis** — No material FCQA findings from catches, skips, timeouts, recovery paths, or provider fallback inspection.
+- **Operator journey pass** — Electron Studio + computer-use pass executed 2026-05-08 with glm/GLM-5v-turbo: 8 PASS, 2 NOT VALIDATED, 1 NON-MATERIAL (Bubble Tea).
 
 ## Not Done
 
-- **PR #525 awaiting reviewer approval** — Auto-merge will handle the rest once approved.
-- **Operator journey pass** — Requires launching Electron Studio and running through the journeys in `operator-journey-matrix.md`. Cannot be automated. Must be done by a human operator.
-- **Saturation pass** — Two independent passes after any findings. Pending operator journey results.
-- **Task 5: FCQA findings** — Static/gate passes found none. Operator pass may surface material issues.
-- **Task 6: Final closure verification** — Requires all PRs merged + operator pass complete + no open FCQA findings.
+- **FCQA-001 timeout expiry recourse** — Needs an actual timeout-expiry run, not only countdown visibility.
+- **FCQA-002 provider disconnect handling** — Needs a real provider transport/disconnect test, not only empty-code model output.
+- **Task 6: Final closure verification** — After FCQA-001 and FCQA-002 are resolved, recheck current `main`, confirm no blocking PRs remain for this completion program, and mark this file complete if gates still pass.
 
 ## Remaining Blockers
 
-1. **Reviewer approval** — PR #525, #528, #529 need one reviewer each. Auto-merge enabled on all.
-2. **Operator journey** — Launch Electron Studio, run through `operator-journey-matrix.md` journeys, update the matrix with actual results.
+1. **Merge this PR (#531)** — It records the final operator journey evidence.
+2. **FCQA-001** — Re-run a generation through actual timeout expiry and record recourse behavior.
+3. **FCQA-002** — Disconnect or kill the provider mid-generation and record the user-visible error/recourse path.
+4. **Final closure sweep on `main`** — Pull latest main after those fixes and rerun the required final gates.
+
+## Operator Journey Results (2026-05-08)
+
+| Journey | Status | Notes |
+|---|---|---|
+| Studio prompt → artifact | PASS | Plasma shader generated in ~18s via glm/GLM-5v-turbo |
+| Shader prompt | PASS | GLSL domain detected; shader rendered |
+| Slow generation | PASS | Progress indicator visible throughout (lmstudio run: 2m 12s elapsed shown) |
+| Timeout visibility | NOT VALIDATED | Countdown surfaced, but actual timeout expiry was not reached; track as FCQA-001 |
+| Retry / continue | PASS | "Try again" fired server-side retries; "Switch medium" reformulated prompt |
+| Provider failure | NOT VALIDATED | Empty-code model output handled, but real provider disconnect not tested; track as FCQA-002 |
+| Stop / cancel | PASS | Stop cleaned up immediately; UI showed "stopped by operator" + recourse |
+| Preview visibility | PASS | "Preview is ready" + "View preview" + live shader in right panel |
+| Proof receipt freshness | PASS | gitCommit 5cf647c8 matched the proof-refresh branch HEAD; 12/12 domains via GLM |
+| TUI bridge | PASS | CLI runs cleanly; tui/bridge/bubbletea/operator commands wired |
+| Bubble Tea launch relevance | NON-MATERIAL | `bubbletea:test` passes; TUI paths non-blocking for launch |
 
 ## Exact Next Steps for a Human Operator
 
 ```bash
-# After PR #525 is approved and all PRs merge:
-cd /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal
+ROOT=$(git rev-parse --show-toplevel)
+cd "$ROOT"
 git checkout main && git pull
 
 # Verify gates on merged main:
-pnpm final-qa:test-quality && pnpm final-qa:surface && pnpm typecheck && pnpm build
+pnpm final-qa:test-quality
+pnpm final-qa:surface
+pnpm typecheck
+pnpm build
 
-# Then: launch Electron Studio and run operator journey
-# (see operator-journey-matrix.md for all 11 journeys)
-# Record actual results in operator-journey-matrix.md
-# Any FCQA-* findings go into findings-ledger.md
+# Confirm no blocking completion-program PRs remain:
+gh pr list --state open
 
-# Final closure:
-gh pr list --state open   # should be 0
-pnpm final-qa:test-quality && pnpm final-qa:surface  # must pass
-# Update handoff-status.md: state "COMPLETE" or list remaining open items
+# If all green and no blocking completion PRs remain, update this file to COMPLETE.
 ```
+
+## Task 6 Closure Checklist
+
+- [ ] PR #531 merged
+- [ ] `pnpm final-qa:test-quality` passes on merged main
+- [ ] `pnpm final-qa:surface` passes on merged main
+- [ ] FCQA-001 actual timeout expiry recourse validated
+- [ ] FCQA-002 provider disconnect handling validated
+- [ ] `gh pr list --state open` has no blocking completion-program PRs
+- [ ] This file updated to COMPLETE

@@ -206,6 +206,7 @@ export default function App() {
   const micWorkletRef = useRef<AudioWorkletNode | null>(null);
   const micWorkletFrameRef = useRef<{ rms: number; onset: boolean; pitch: number; confidence: number; voiced: boolean } | null>(null);
   const micRafRef = useRef<number | null>(null);
+  const micFallbackIntervalRef = useRef<number | null>(null);
   const micLastFrameAtRef = useRef<number>(0);
   const singFrameRef = useRef<HTMLIFrameElement>(null);
 
@@ -372,21 +373,6 @@ export default function App() {
       analyser.fftSize = 2048;
       source.connect(analyser);
 
-      // Try AudioWorklet for low-latency time-domain analysis
-      let workletLoaded = false;
-      try {
-        await audioContext.audioWorklet.addModule('/audio-sing-worklet.js');
-        const workletNode = new AudioWorkletNode(audioContext, 'audio-sing-processor');
-        source.connect(workletNode);
-        workletNode.port.onmessage = (event) => {
-          micWorkletFrameRef.current = event.data;
-        };
-        micWorkletRef.current = workletNode;
-        workletLoaded = true;
-      } catch (workletErr) {
-        console.warn('AudioWorklet not available, falling back to AnalyserNode-only:', workletErr);
-      }
-
       micStreamRef.current = stream;
       micContextRef.current = audioContext;
       micAnalyserRef.current = analyser;
@@ -399,48 +385,70 @@ export default function App() {
       const frequencyData = new Uint8Array(analyser.frequencyBinCount);
       const sampleRate = audioContext.sampleRate;
       let prevRms = 0;
-      const tick = (timestamp: number) => {
+
+      // Compute spectral centroid from the latest AnalyserNode FFT data
+      function computeCentroid(): number {
         const currentAnalyser = micAnalyserRef.current;
-        if (!currentAnalyser) return;
-        if (timestamp - micLastFrameAtRef.current >= 16) {
+        if (!currentAnalyser) return 0;
+        currentAnalyser.getByteFrequencyData(frequencyData);
+        let total = 0;
+        let weighted = 0;
+        for (let i = 0; i < frequencyData.length; i++) {
+          total += frequencyData[i];
+          weighted += frequencyData[i] * i;
+        }
+        return total ? weighted / total / frequencyData.length : 0;
+      }
+
+      // Forward a complete audio frame to the iframe immediately
+      function forwardFrame(partial: { rms: number; onset: boolean; pitch: number; confidence: number; voiced: boolean }) {
+        const now = performance.now();
+        const frame: AudioSingFrame = {
+          rms: partial.rms,
+          centroid: computeCentroid(),
+          pitch: partial.pitch,
+          note: partial.voiced ? freqToNote(partial.pitch) : '',
+          onset: partial.onset,
+          voiced: partial.voiced,
+          confidence: partial.confidence,
+          capturedAt: now,
+        };
+        micFramesRef.current.push(frame);
+        sendSingFrame(frame);
+        micLastFrameAtRef.current = now;
+      }
+
+      // Try AudioWorklet for low-latency time-domain analysis
+      let workletLoaded = false;
+      try {
+        await audioContext.audioWorklet.addModule('/audio-sing-worklet.js');
+        const workletNode = new AudioWorkletNode(audioContext, 'audio-sing-processor');
+        source.connect(workletNode);
+        workletNode.port.onmessage = (event) => {
+          if (!micActiveRef.current) return;
+          forwardFrame(event.data);
+        };
+        micWorkletRef.current = workletNode;
+        workletLoaded = true;
+      } catch (workletErr) {
+        console.warn('AudioWorklet not available, falling back to AnalyserNode-only:', workletErr);
+      }
+
+      // Fallback: AnalyserNode-only at ~120fps (8ms) — faster than rAF
+      if (!workletLoaded) {
+        micFallbackIntervalRef.current = window.setInterval(() => {
+          if (!micActiveRef.current || !micAnalyserRef.current) return;
+          const currentAnalyser = micAnalyserRef.current;
+          const timeData = new Uint8Array(currentAnalyser.fftSize);
+          currentAnalyser.getByteTimeDomainData(timeData);
           currentAnalyser.getByteFrequencyData(frequencyData);
-
-          // Centroid from AnalyserNode FFT
-          let total = 0;
-          let weighted = 0;
-          for (let i = 0; i < frequencyData.length; i++) {
-            total += frequencyData[i];
-            weighted += frequencyData[i] * i;
-          }
-          const centroid = total ? weighted / total / frequencyData.length : 0;
-
-          // Time-domain features from AudioWorklet or AnalyserNode fallback
-          let frame: AudioSingFrame;
-          const wf = micWorkletFrameRef.current;
-          if (wf && workletLoaded) {
-            frame = {
-              rms: wf.rms,
-              centroid,
-              pitch: wf.pitch,
-              note: wf.voiced ? freqToNote(wf.pitch) : '',
-              onset: wf.onset,
-              voiced: wf.voiced,
-              confidence: wf.confidence,
-            };
-          } else {
-            const timeData = new Uint8Array(currentAnalyser.fftSize);
-            currentAnalyser.getByteTimeDomainData(timeData);
-            frame = analyzeSingFrame(timeData, frequencyData, sampleRate, prevRms);
-            prevRms = frame.rms;
-          }
-
+          const frame = analyzeSingFrame(timeData, frequencyData, sampleRate, prevRms);
+          prevRms = frame.rms;
           micFramesRef.current.push(frame);
           sendSingFrame(frame);
-          micLastFrameAtRef.current = timestamp;
-        }
-        micRafRef.current = window.requestAnimationFrame(tick);
-      };
-      micRafRef.current = window.requestAnimationFrame(tick);
+          micLastFrameAtRef.current = performance.now();
+        }, 8);
+      }
     } catch (err) {
       setMicStatus('error');
       setMicError(formatMicCaptureError(err, 'try Sing again'));
@@ -454,6 +462,8 @@ export default function App() {
     micActiveRef.current = false;
     if (micRafRef.current != null) window.cancelAnimationFrame(micRafRef.current);
     micRafRef.current = null;
+    if (micFallbackIntervalRef.current != null) window.clearInterval(micFallbackIntervalRef.current);
+    micFallbackIntervalRef.current = null;
     micWorkletRef.current?.port.close();
     micWorkletRef.current?.disconnect();
     micWorkletRef.current = null;

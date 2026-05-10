@@ -6,6 +6,8 @@ export interface AudioSingFrame {
   onset: boolean;
   voiced: boolean;
   confidence: number;
+  /** Timestamp (performance.now()) when this frame was captured */
+  capturedAt: number;
 }
 
 export interface AudioSingSummary {
@@ -147,6 +149,7 @@ export function analyzeSingFrame(
     onset,
     voiced,
     confidence,
+    capturedAt: performance.now(),
   };
 }
 

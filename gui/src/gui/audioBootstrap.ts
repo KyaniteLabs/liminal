@@ -11,6 +11,7 @@ export function audioBootstrapScript(): string {
     onset: false,
     voiced: false,
     confidence: 0,
+    capturedAt: 0,
     updatedAt: 0
   };
   window.addEventListener('message', (event) => {
@@ -28,6 +29,7 @@ export function audioBootstrapScript(): string {
       onset: Boolean(frame.onset),
       voiced: Boolean(frame.voiced),
       confidence: Number(frame.confidence) || 0,
+      capturedAt: Number(frame.capturedAt) || 0,
       updatedAt: performance.now()
     };
   });

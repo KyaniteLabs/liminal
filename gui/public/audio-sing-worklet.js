@@ -1,7 +1,8 @@
 /**
  * AudioWorklet processor for low-latency voice analysis.
- * Sends time-domain features (RMS, onset, pitch) to the main thread
- * at ~60fps while processing audio at the native sample rate.
+ * Processes audio at the native sample rate and posts a complete
+ * analysis frame to the main thread as soon as the buffer fills
+ * (~42ms at 48kHz), with no artificial throttle.
  */
 class AudioSingProcessor extends AudioWorkletProcessor {
   constructor() {
@@ -10,8 +11,7 @@ class AudioSingProcessor extends AudioWorkletProcessor {
     this.buffer = new Float32Array(this.frameSize);
     this.writeIndex = 0;
     this.lastRms = 0;
-    this.lastSendTime = 0;
-    this.minSendInterval = 1 / 60; // ~16.7ms = 60fps
+    this.samplesSinceAnalyze = 0;
   }
 
   process(inputs, _outputs, _parameters) {
@@ -22,10 +22,11 @@ class AudioSingProcessor extends AudioWorkletProcessor {
     for (let i = 0; i < channel.length; i++) {
       this.buffer[this.writeIndex] = channel[i];
       this.writeIndex = (this.writeIndex + 1) % this.frameSize;
+      this.samplesSinceAnalyze++;
     }
 
-    if (currentTime - this.lastSendTime >= this.minSendInterval) {
-      this.lastSendTime = currentTime;
+    if (this.samplesSinceAnalyze >= this.frameSize) {
+      this.samplesSinceAnalyze = 0;
       const frame = this.analyzeFrame();
       this.port.postMessage(frame);
     }

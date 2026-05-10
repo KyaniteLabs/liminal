@@ -1,0 +1,462 @@
+{
+  "contract": "liminal-live-creative-domain-execution-v1",
+  "generatedAt": "2026-05-08T04:54:05.444Z",
+  "status": "pass",
+  "ready": true,
+  "mode": "live-execution",
+  "gitCommit": "5cf647c8353d3444fe95288e5957d9a021400021",
+  "provider": "glm",
+  "model": "GLM-5v-turbo",
+  "launchDomains": [
+    "p5",
+    "svg",
+    "glsl",
+    "three",
+    "hydra",
+    "strudel",
+    "tone",
+    "revideo",
+    "hyperframes",
+    "ascii",
+    "kinetic",
+    "textgen"
+  ],
+  "domains": [
+    {
+      "domain": "p5",
+      "prompt": "create a concise p5 generative sketch with blue green particles and visible motion",
+      "status": "pass",
+      "durationMs": 8044,
+      "artifactPath": ".omx/proof/live-creative-domains/p5.js",
+      "codeBytes": 1312,
+      "provider": "glm",
+      "model": "GLM-5v-turbo",
+      "artifactValidation": {
+        "status": "pass",
+        "checks": [
+          {
+            "name": "expected-extension",
+            "passed": true
+          },
+          {
+            "name": "non-empty",
+            "passed": true
+          },
+          {
+            "name": "p5-setup",
+            "passed": true
+          },
+          {
+            "name": "p5-canvas",
+            "passed": true
+          },
+          {
+            "name": "p5-draw",
+            "passed": true
+          }
+        ],
+        "errors": []
+      }
+    },
+    {
+      "domain": "svg",
+      "prompt": "create an SVG vector logo for Liminal with a transparent background",
+      "status": "pass",
+      "durationMs": 5946,
+      "artifactPath": ".omx/proof/live-creative-domains/svg.svg",
+      "codeBytes": 1301,
+      "provider": "glm",
+      "model": "GLM-5v-turbo",
+      "artifactValidation": {
+        "status": "pass",
+        "checks": [
+          {
+            "name": "expected-extension",
+            "passed": true
+          },
+          {
+            "name": "non-empty",
+            "passed": true
+          },
+          {
+            "name": "svg-root",
+            "passed": true
+          },
+          {
+            "name": "svg-close",
+            "passed": true
+          },
+          {
+            "name": "svg-visible-shape",
+            "passed": true
+          }
+        ],
+        "errors": []
+      }
+    },
+    {
+      "domain": "glsl",
+      "prompt": "create a GLSL fragment shader with animated plasma colors",
+      "status": "pass",
+      "durationMs": 7629,
+      "artifactPath": ".omx/proof/live-creative-domains/glsl.frag",
+      "codeBytes": 615,
+      "provider": "glm",
+      "model": "GLM-5v-turbo",
+      "artifactValidation": {
+        "status": "pass",
+        "checks": [
+          {
+            "name": "expected-extension",
+            "passed": true
+          },
+          {
+            "name": "non-empty",
+            "passed": true
+          },
+          {
+            "name": "glsl-main",
+            "passed": true
+          },
+          {
+            "name": "glsl-output",
+            "passed": true
+          },
+          {
+            "name": "glsl-coordinate",
+            "passed": true
+          }
+        ],
+        "errors": []
+      }
+    },
+    {
+      "domain": "three",
+      "prompt": "create a Three.js scene with a rotating cube and visible lighting",
+      "status": "pass",
+      "durationMs": 8839,
+      "artifactPath": ".omx/proof/live-creative-domains/three.js",
+      "codeBytes": 2587,
+      "provider": "glm",
+      "model": "GLM-5v-turbo",
+      "artifactValidation": {
+        "status": "pass",
+        "checks": [
+          {
+            "name": "expected-extension",
+            "passed": true
+          },
+          {
+            "name": "non-empty",
+            "passed": true
+          },
+          {
+            "name": "three-scene",
+            "passed": true
+          },
+          {
+            "name": "three-renderer",
+            "passed": true
+          },
+          {
+            "name": "three-render-call",
+            "passed": true
+          },
+          {
+            "name": "three-camera",
+            "passed": true
+          }
+        ],
+        "errors": []
+      }
+    },
+    {
+      "domain": "hydra",
+      "prompt": "create a Hydra video synth patch with oscillator and kaleidoscope modulation",
+      "status": "pass",
+      "durationMs": 16463,
+      "artifactPath": ".omx/proof/live-creative-domains/hydra.js",
+      "codeBytes": 203,
+      "provider": "glm",
+      "model": "GLM-5v-turbo",
+      "artifactValidation": {
+        "status": "pass",
+        "checks": [
+          {
+            "name": "expected-extension",
+            "passed": true
+          },
+          {
+            "name": "non-empty",
+            "passed": true
+          },
+          {
+            "name": "hydra-source",
+            "passed": true
+          },
+          {
+            "name": "hydra-output",
+            "passed": true
+          }
+        ],
+        "errors": []
+      }
+    },
+    {
+      "domain": "strudel",
+      "prompt": "create a Strudel live coding rhythm with kick snare hats and bass pattern",
+      "status": "pass",
+      "durationMs": 3227,
+      "artifactPath": ".omx/proof/live-creative-domains/strudel.js",
+      "codeBytes": 154,
+      "provider": "glm",
+      "model": "GLM-5v-turbo",
+      "artifactValidation": {
+        "status": "pass",
+        "checks": [
+          {
+            "name": "expected-extension",
+            "passed": true
+          },
+          {
+            "name": "non-empty",
+            "passed": true
+          },
+          {
+            "name": "strudel-pattern",
+            "passed": true
+          },
+          {
+            "name": "strudel-rhythm",
+            "passed": true
+          }
+        ],
+        "errors": []
+      }
+    },
+    {
+      "domain": "tone",
+      "prompt": "create a Tone.js ambient synth sequence with reverb and a clear start affordance",
+      "status": "pass",
+      "durationMs": 9182,
+      "artifactPath": ".omx/proof/live-creative-domains/tone.html",
+      "codeBytes": 2376,
+      "provider": "glm",
+      "model": "GLM-5v-turbo",
+      "artifactValidation": {
+        "status": "pass",
+        "checks": [
+          {
+            "name": "expected-extension",
+            "passed": true
+          },
+          {
+            "name": "non-empty",
+            "passed": true
+          },
+          {
+            "name": "tone-html",
+            "passed": true
+          },
+          {
+            "name": "tone-library",
+            "passed": true
+          },
+          {
+            "name": "tone-control",
+            "passed": true
+          }
+        ],
+        "errors": []
+      }
+    },
+    {
+      "domain": "revideo",
+      "prompt": "create a Revideo timeline composition with animated title text and subtitle fade",
+      "status": "pass",
+      "durationMs": 15190,
+      "artifactPath": ".omx/proof/live-creative-domains/revideo.tsx",
+      "codeBytes": 875,
+      "provider": "glm",
+      "model": "GLM-5v-turbo",
+      "artifactValidation": {
+        "status": "pass",
+        "checks": [
+          {
+            "name": "expected-extension",
+            "passed": true
+          },
+          {
+            "name": "non-empty",
+            "passed": true
+          },
+          {
+            "name": "revideo-scene",
+            "passed": true
+          },
+          {
+            "name": "revideo-visual",
+            "passed": true
+          },
+          {
+            "name": "revideo-timing",
+            "passed": true
+          }
+        ],
+        "errors": []
+      }
+    },
+    {
+      "domain": "hyperframes",
+      "prompt": "create a HyperFrames promo composition with GSAP timeline, staged image-like clips, title card, data-composition-id, clip timing attributes, and window.__timelines registration",
+      "status": "pass",
+      "durationMs": 98752,
+      "artifactPath": ".omx/proof/live-creative-domains/hyperframes.html",
+      "codeBytes": 13072,
+      "provider": "glm",
+      "model": "GLM-5v-turbo",
+      "artifactValidation": {
+        "status": "pass",
+        "checks": [
+          {
+            "name": "expected-extension",
+            "passed": true
+          },
+          {
+            "name": "non-empty",
+            "passed": true
+          },
+          {
+            "name": "hyperframes-html",
+            "passed": true
+          },
+          {
+            "name": "hyperframes-stage",
+            "passed": true
+          },
+          {
+            "name": "hyperframes-clips",
+            "passed": true
+          },
+          {
+            "name": "hyperframes-timeline",
+            "passed": true
+          }
+        ],
+        "errors": []
+      }
+    },
+    {
+      "domain": "ascii",
+      "prompt": "create ASCII art of a moonlit mountain landscape",
+      "status": "pass",
+      "durationMs": 6759,
+      "artifactPath": ".omx/proof/live-creative-domains/ascii.txt",
+      "codeBytes": 520,
+      "provider": "glm",
+      "model": "GLM-5v-turbo",
+      "artifactValidation": {
+        "status": "pass",
+        "checks": [
+          {
+            "name": "expected-extension",
+            "passed": true
+          },
+          {
+            "name": "non-empty",
+            "passed": true
+          },
+          {
+            "name": "ascii-lines",
+            "passed": true
+          },
+          {
+            "name": "ascii-art-glyphs",
+            "passed": true
+          },
+          {
+            "name": "ascii-not-html",
+            "passed": true
+          }
+        ],
+        "errors": []
+      }
+    },
+    {
+      "domain": "kinetic",
+      "prompt": "create kinetic typography with animated words orbiting a luminous threshold",
+      "status": "pass",
+      "durationMs": 24438,
+      "artifactPath": ".omx/proof/live-creative-domains/kinetic.html",
+      "codeBytes": 6281,
+      "provider": "glm",
+      "model": "GLM-5v-turbo",
+      "artifactValidation": {
+        "status": "pass",
+        "checks": [
+          {
+            "name": "expected-extension",
+            "passed": true
+          },
+          {
+            "name": "non-empty",
+            "passed": true
+          },
+          {
+            "name": "kinetic-html",
+            "passed": true
+          },
+          {
+            "name": "kinetic-animation",
+            "passed": true
+          },
+          {
+            "name": "kinetic-text",
+            "passed": true
+          }
+        ],
+        "errors": []
+      }
+    },
+    {
+      "domain": "textgen",
+      "prompt": "create concrete poetry word art about a machine dreaming in loops",
+      "status": "pass",
+      "durationMs": 29197,
+      "artifactPath": ".omx/proof/live-creative-domains/textgen.txt",
+      "codeBytes": 658,
+      "provider": "glm",
+      "model": "GLM-5v-turbo",
+      "artifactValidation": {
+        "status": "pass",
+        "checks": [
+          {
+            "name": "expected-extension",
+            "passed": true
+          },
+          {
+            "name": "non-empty",
+            "passed": true
+          },
+          {
+            "name": "textgen-lines",
+            "passed": true
+          },
+          {
+            "name": "textgen-length",
+            "passed": true
+          },
+          {
+            "name": "textgen-not-html",
+            "passed": true
+          }
+        ],
+        "errors": []
+      }
+    }
+  ],
+  "passed": 12,
+  "failed": 0,
+  "missingDomains": [],
+  "blockers": []
+}

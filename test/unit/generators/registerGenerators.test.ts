@@ -270,7 +270,8 @@ describe('registerGenerators', () => {
         .map(([entry]) => entry)
         .find((entry) => entry.name === 'p5');
 
-      expect(p5Entry).not.toBeNull();
+      if (p5Entry === undefined) throw new Error('p5 generator entry not registered');
+      expect(p5Entry.name).toBe('p5');
       expect(p5Entry.canHandle('make it cooler')).toBe(0);
       expect(p5Entry.canHandle('create a p5.js sketch with bouncing balls')).toBe(0.95);
     });

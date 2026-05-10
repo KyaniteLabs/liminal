@@ -1,14 +1,15 @@
 # Handoff Status
 
-Last updated: 2026-05-08
+Last updated: 2026-05-10
 
 ## Done
 
-- **PR #525** — Strict test-quality gate fixed. All CI green. Auto-merge enabled. Awaiting reviewer approval.
+- **PR #525** — Strict test-quality gate fixed and merged.
 - **PR #526** — Audit folder (`docs/audits/final-completion-2026-05-08/`) merged to main.
-- **PR #528** — Closed (superseded by PR #530).
+- **PR #528** — Closed as superseded by the final gate/documentation updates.
 - **PR #529** — Live creative-domain proof refreshed. 12/12 domains pass via glm/GLM-5v-turbo. Merged.
-- **PR #530** — Full gate pass + audit docs update. Auto-merge enabled.
+- **PR #530** — Full gate pass + audit docs update merged.
+- **PR #531** — Operator journey evidence recorded in this PR.
 - **All programmatic gate commands pass:**
   - `check:script-targets` ✅ `check:orphans` ✅ `check:doc-links` ✅
   - `final-qa:test-quality` ✅ `final-qa:surface` ✅
@@ -16,18 +17,17 @@ Last updated: 2026-05-08
   - `bubbletea:test` ✅ `verify:integration` ✅
   - `test:e2e` ✅ `test:ci:slow` ✅
   - `proof:live-creative-domains` ✅ `qa:creative-domains:static` ✅
-- **Static analysis** — No material FCQA findings (catches, skips, timeouts, recovery paths, provider fallback all inspected).
-- **Task 5: FCQA findings** — **COMPLETE. Zero findings.** Operator journey pass executed 2026-05-08 with Electron Studio + computer-use (glm/GLM-5v-turbo). 10 PASS, 1 NON-MATERIAL (Bubble Tea). No blank screens, no crashes, no silent hangs. Full results in `operator-journey-matrix.md`.
+- **Static analysis** — No material FCQA findings from catches, skips, timeouts, recovery paths, or provider fallback inspection.
+- **Operator journey pass** — Electron Studio + computer-use pass executed 2026-05-08 with glm/GLM-5v-turbo: 10 PASS, 1 NON-MATERIAL (Bubble Tea), 0 FCQA findings.
 
 ## Not Done
 
-- **PR #525 awaiting reviewer approval** — Auto-merge will handle the rest once approved.
-- **Task 6: Final closure verification** — Requires PR #525 + PR #530 merged, then run final gate suite on main.
+- **Task 6: Final closure verification** — After this PR merges, recheck current `main`, confirm no blocking PRs remain for this completion program, and mark this file complete if gates still pass.
 
 ## Remaining Blockers
 
-1. **Reviewer approval** — PR #525 needs one reviewer. Auto-merge enabled.
-2. **PR #530** — Auto-merge enabled, CI running. Will merge automatically once checks pass.
+1. **Merge this PR (#531)** — It records the final operator journey evidence.
+2. **Final closure sweep on `main`** — Pull latest main after merge and rerun the required final gates.
 
 ## Operator Journey Results (2026-05-08)
 
@@ -41,31 +41,33 @@ Last updated: 2026-05-08
 | Provider failure | PASS | lmstudio empty-code case: "Generation stopped" with recourse buttons, not blank |
 | Stop / cancel | PASS | Stop cleaned up immediately; UI showed "stopped by operator" + recourse |
 | Preview visibility | PASS | "Preview is ready" + "View preview" + live shader in right panel |
-| Proof receipt freshness | PASS | gitCommit 5cf647c8 matches HEAD; 12/12 domains via GLM |
+| Proof receipt freshness | PASS | gitCommit 5cf647c8 matched the proof-refresh branch HEAD; 12/12 domains via GLM |
 | TUI bridge | PASS | CLI runs cleanly; tui/bridge/bubbletea/operator commands wired |
-| Bubble Tea launch relevance | NON-MATERIAL | bubbletea:test passes; TUI paths non-blocking for launch |
+| Bubble Tea launch relevance | NON-MATERIAL | `bubbletea:test` passes; TUI paths non-blocking for launch |
 
 ## Exact Next Steps for a Human Operator
 
 ```bash
-# After PR #525 and PR #530 merge:
-cd /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal
+ROOT=$(git rev-parse --show-toplevel)
+cd "$ROOT"
 git checkout main && git pull
 
 # Verify gates on merged main:
-pnpm final-qa:test-quality && pnpm final-qa:surface && pnpm typecheck && pnpm build
+pnpm final-qa:test-quality
+pnpm final-qa:surface
+pnpm typecheck
+pnpm build
 
-# Confirm no open PRs:
-gh pr list --state open   # should be 0 (or only non-blocking PRs)
+# Confirm no blocking completion-program PRs remain:
+gh pr list --state open
 
-# If all green: update this file to state COMPLETE
+# If all green and no blocking completion PRs remain, update this file to COMPLETE.
 ```
 
 ## Task 6 Closure Checklist
 
-- [ ] PR #525 merged (awaiting reviewer)
-- [ ] PR #530 merged (auto-merge pending CI)
+- [ ] PR #531 merged
 - [ ] `pnpm final-qa:test-quality` passes on merged main
 - [ ] `pnpm final-qa:surface` passes on merged main
-- [ ] `gh pr list --state open` returns 0 blocking PRs
+- [ ] `gh pr list --state open` has no blocking completion-program PRs
 - [ ] This file updated to COMPLETE

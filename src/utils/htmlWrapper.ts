@@ -70,7 +70,9 @@ export class HTMLWrapper {
     return sanitized.replace('</head>', `    ${headers}\n</head>`);
   }
 
-  private static readonly AUDIO_BOOTSTRAP_SCRIPT = `<script>(function(){window.__liminalAudio=window.__liminalAudio||{rms:0,energy:0,centroid:0,brightness:0,peak:0,pitch:0,note:'',onset:false,voiced:false,confidence:0,capturedAt:0,updatedAt:0};window.addEventListener('message',function(e){var d=e.data||{};if(d.type!=='liminal-audio-frame')return;var f=d.frame||{};window.__liminalAudio={rms:Number(f.rms)||0,energy:Number(f.rms)||0,centroid:Number(f.centroid)||0,brightness:Number(f.centroid)||0,peak:Number(f.peak)||Number(f.rms)||0,pitch:Number(f.pitch)||0,note:String(f.note||''),onset:Boolean(f.onset),voiced:Boolean(f.voiced),confidence:Number(f.confidence)||0,capturedAt:Number(f.capturedAt)||0,updatedAt:performance.now()};});})();</script>`;
+  private static readonly AUDIO_BOOTSTRAP_SCRIPT = `<script>(function(){window.__liminalAudio=window.__liminalAudio||{rms:0,energy:0,centroid:0,brightness:0,peak:0,pitch:0,note:'',onset:false,voiced:false,confidence:0,capturedAt:0,updatedAt:0};window.addEventListener('message',function(e){if(e.origin!==window.location.origin)return;var d=e.data||{};if(d.type!=='liminal-audio-frame')return;var f=d.frame||{};window.__liminalAudio={rms:Number(f.rms)||0,energy:Number(f.rms)||0,centroid:Number(f.centroid)||0,brightness:Number(f.centroid)||0,peak:Number(f.peak)||Number(f.rms)||0,pitch:Number(f.pitch)||0,note:String(f.note||''),onset:Boolean(f.onset),voiced:Boolean(f.voiced),confidence:Number(f.confidence)||0,capturedAt:Number(f.capturedAt)||0,updatedAt:performance.now()};});})();</script>`;
+
+  private static readonly READY_BEACON_SCRIPT = `<script>window.addEventListener('load',function(){try{parent.postMessage({type:'liminal-preview-ready'},location.origin)}catch(e){}});</script>`;
 
   private static injectAudioBootstrap(html: string): string {
     if (html.includes('window.__liminalAudio')) return html;
@@ -83,6 +85,11 @@ export class HTMLWrapper {
       return html.replace(bodyMatch[0], `${this.AUDIO_BOOTSTRAP_SCRIPT}\n${bodyMatch[0]}`);
     }
     return html;
+  }
+
+  private static injectReadyBeacon(html: string): string {
+    if (html.includes('liminal-preview-ready')) return html;
+    return html.replace('</body>', `    ${this.READY_BEACON_SCRIPT}\n</body>`);
   }
 
   private static stripInvalidMetaHeaders(html: string): string {
@@ -254,7 +261,8 @@ export class HTMLWrapper {
 
     // Inject security headers and audio bootstrap at a single central point for all wrapped outputs
     const withSecurity = this.injectSecurityHeaders(wrapped, detectedDomain);
-    return this.injectAudioBootstrap(withSecurity);
+    const withAudio = this.injectAudioBootstrap(withSecurity);
+    return this.injectReadyBeacon(withAudio);
   }
 
   private static wrapSVG(code: string, title: string): string {

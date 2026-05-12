@@ -172,7 +172,7 @@ Failures:   0 critical
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │ USER INTERFACE LAYER                                                 │    │
 │  │  ├── NaturalInterface (no prefixes, intent routing)                 │    │
-│  │  ├── HarnessTUI (terminal UI)                                       │    │
+│  │  ├── TUI Bridge (HTTP/SSE for Studio and external clients)          │    │
 │  │  └── Web Preview Server                                             │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                    ↓                                         │
@@ -623,7 +623,6 @@ Current runtime truth: the Meta-Harness is in manual-memory mode. It logs failur
 **Components:**
 | Component | File | Purpose |
 |-----------|------|---------|
-| HarnessTUI | `HarnessTUI.tsx` | Main TUI application |
 | NaturalInterface | `NaturalInterface.ts` | No-prefix command parsing |
 | IntentRouter | `IntentRouter.ts` | Routes natural language to commands |
 | Commands | `commands.ts` | /run, /status, /tasks, etc. |
@@ -643,7 +642,7 @@ Current runtime truth: the Meta-Harness is in manual-memory mode. It logs failur
 - CWD-based prompt loading removed from PromptBuilder
 - Terminal/debug sanitization added (`sanitizeTerminalText.ts`)
 - Preview/audio path hardening added (`previewSafety.ts`)
-- No new strategic feature work in Ink — Bubble Tea is the permanent direction
+- No new strategic feature work in Ink — Studio GUI is the primary interface
 
 ---
 
@@ -651,13 +650,13 @@ Current runtime truth: the Meta-Harness is in manual-memory mode. It logs failur
 
 **Location:** `src/tui-bridge/`
 
-**Purpose:** Shared HTTP + SSE bridge between TS backend and Bubble Tea (Go) TUI.
+**Purpose:** Shared HTTP + SSE bridge between TS backend and Studio GUI / external clients.
 
 **Components:**
 | Component | File | Purpose |
 |-----------|------|---------|
 | TuiBridgeService | `TuiBridgeService.ts` | Session CRUD, input, confirm/cancel |
-| BridgeLauncherConfig | `tui-bridge/BridgeLauncherConfig.ts` | Resolves the active provider for Bubble Tea bridge startup instead of assuming GLM |
+| BridgeLauncherConfig | `tui-bridge/BridgeLauncherConfig.ts` | Resolves the active provider for bridge startup |
 | TuiBridgeService | `TuiBridgeService.ts` | Session CRUD, input, confirm/cancel, and approved bridge action execution |
 | TuiSessionStore | `TuiSessionStore.ts` | In-memory session state |
 | TuiEventStream | `TuiEventStream.ts` | Pub/sub SSE event stream |
@@ -675,38 +674,28 @@ Current runtime truth: the Meta-Harness is in manual-memory mode. It logs failur
 
 ---
 
-### 16c. Bubble Tea TUI (Go)
+### 16c. TUI Bridge (HTTP/SSE)
 
-**Location:** `bubbletea/`
+**Location:** `src/tui-bridge/`
 
-**Purpose:** Operator-grade terminal UI with pane-first architecture, explicit modes, and confirmation-first mutation UX.
+**Purpose:** HTTP/SSE bridge for Studio and external clients, providing session management, streaming events, and confirmation-first mutation UX.
 
 **Architecture:**
-- Pane-first layout: chat history on the left, operator surface on the right
-- Explicit modes: Chat, Inspect, Action, Confirm
-- Multiline operator composer: textarea input with Liminal-themed prompt/placeholder styling, `Enter` to send, and `Alt+Enter` to insert a newline
-- Active-response pane: streaming responses don't touch committed history
-- Confirmation-first: no state mutation without operator approval
+- HTTP/SSE transport: local HTTP for control plane, SSE for event streaming
+- Session management: create, status, input, confirm/cancel
+- Active-response streaming: real-time generation and evaluation events
+- Confirmation-first: no state mutation without explicit approval
 - Trust/provenance labels: provider, model, trust-level badges
-- Operator surface cards: task/phase card with progress bar, generation progress card, tool timeline, Bubbles-based changed-files / verification tables, artifacts, help drawer
-- Operator shortcuts: Ctrl+T timeline toggle, Ctrl+A artifacts toggle, Ctrl+Y copy last assistant response, `?` help drawer
-- Compact operator mode: `Ctrl+E` collapses the right column into status + approval hints without losing agent state
-- Meta-Harness bridge routing: self-improvement prompts route through the TS bridge into the tool-using harness agent rather than the creative-generation loop
-- Copy + transcript affordances: `Ctrl+Y` copies the last assistant response and the bridge/transcript artifacts are stored under `.omx/logs/`
-- Generated code: untrusted by default
 
-**Go Components:**
-| Component | Package | Purpose |
-|-----------|---------|---------|
-| Model | `internal/app/model.go` | UI state, event application, confirm/cancel |
-| Update | `internal/app/update.go` | Bubble Tea Update loop with bridge wiring |
-| View | `internal/app/view.go` | 55/45 chat + operator layout with header/footer shortcuts |
-| Theme | `internal/ui/theme.go` | Operator-surface style tokens, badges, panel chrome |
-| Bridge Client | `internal/bridge/client.go` | HTTP + SSE client for TS bridge |
-| Layout | `internal/app/layout.go` | Task card, generation progress card, timeline, changed files, verification, artifacts, help rendering |
-| Event Types | `internal/bridge/events.go` | Event, SessionStatus, PendingAction structs |
+**Components:**
+| Component | File | Purpose |
+|-----------|------|---------|
+| TuiBridgeService | `TuiBridgeService.ts` | Session CRUD, input, confirm/cancel |
+| TuiBridgeServer | `TuiBridgeServer.ts` | HTTP server mounting bridge endpoints |
+| TuiSessionStore | `TuiSessionStore.ts` | In-memory session state |
+| TuiEventStream | `TuiEventStream.ts` | Pub/sub SSE event stream |
 
-**Test Coverage:** Bubble Tea Go tests cover bridge client, bootstrap, event handling, action modes, operator surface rendering, shortcut behavior, and visible progress instrumentation. Vitest coverage now includes typed operator-event publication plus real SSE delivery through the TS bridge server.
+**Test Coverage:** Bridge tests cover session lifecycle, event streaming, action confirmation, and SSE delivery through the TS bridge server.
 
 ---
 
@@ -881,7 +870,7 @@ LIMINAL_LOG_LEVEL=info
 
 ## Ink Retirement / Parity Checklist
 
-Bubble Tea replaces Ink when ALL of the following are true. No new strategic feature work in Ink.
+**Resolved (2026-05-12):** Bubble Tea Go TUI removed. TUI Bridge (HTTP/SSE) now serves as the programmatic interface. The parity items below were all achieved before removal.
 
 | # | Item | Status |
 |---|------|--------|
@@ -1003,7 +992,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 ### Remaining Work
 4. 🔄 Dogfood pass rate: 30.4% → target 70%+ (ongoing)
 5. 🔄 Cloud provider testing (requires API keys)
-6. 🔄 Bubble Tea operator-surface rollout and broader operator-event emission coverage
+6. 🔄 TUI Bridge event emission coverage for external clients
 7. 🔄 Community plugins (future)
 8. 🔄 Expand harness skill compatibility beyond the practical subset if the first pass proves stable
 

@@ -9,7 +9,7 @@
 
 ## A. Executive Summary
 
-Liminal is a creative coding engine that combines iterative LLM generation, multi-domain code output (p5.js, Three.js, GLSL, Hydra, Strudel, Tone.js, Revideo, HTML, ASCII, Kinetic Typography, generative text — 11 domains total), quality scoring, evolutionary optimization, and cross-domain composition into a single system. Three interfaces: CLI, Studio (chat-first TUI agent), and Bubble Tea TUI.
+Liminal is a creative coding engine that combines iterative LLM generation, multi-domain code output (p5.js, Three.js, GLSL, Hydra, Strudel, Tone.js, Revideo, HTML, ASCII, Kinetic Typography, generative text — 11 domains total), quality scoring, evolutionary optimization, and cross-domain composition into a single system. Three interfaces: CLI, Studio GUI, and TUI Bridge (HTTP/SSE).
 
 ### Top 3 Opportunities
 
@@ -58,7 +58,7 @@ Liminal's strongest asset is **integration breadth** — 11 creative domains wor
 | Quality scoring is regex heuristics, not validated | High — users will notice bad outputs passing gates | Partially addressed: CreativeBoard multi-perspective evaluation, EmergenceCritic measures novelty |
 | Meta-harness is open-loop (logs but doesn't auto-adapt) | High — missing the most valuable feedback mechanism | **Closed:** Thinking-Trace Feedback Loop, MetaHarnessIntegration, ModelBehaviorPatterns |
 | No RLHF or preference learning pipeline | High — no data flywheel from user feedback | **Closed:** TasteModelTrainer with margin-based SGD, PreferenceDatasetBuilder, ReplayBiasPolicy |
-| No web UI (CLI only) | Critical — most users won't install a CLI tool | Partially addressed: StudioAgent (chat-first TUI), Bubble Tea Go TUI. Full web UI still needed for SaaS. |
+| No web UI (CLI only) | Critical — most users won't install a CLI tool | Partially addressed: Studio GUI (Electron + React), TUI Bridge (HTTP/SSE). Full web UI still needed for SaaS. |
 | No auth, rate limiting, or multi-tenancy | Critical — can't serve multiple users | Open — still needed for SaaS |
 | Evolutionary algorithms are placeholder-grade | Medium — IGA is not a real GA, MetaMode is simulated | Partially addressed: DreamPlanner + RecombinationEngine + CrossModalTransfer |
 | Cross-domain crossover is hand-coded, not learned | Medium — brittle mappings, doesn't generalize | **Closed:** CrossModalTransfer maps techniques between domains |

@@ -48,9 +48,8 @@ The default Studio surface should explain a run in human language:
 ## Canonical launch commands
 
 - Studio GUI: `pnpm gui` launches the backend and browser workbench together.
-- Operator TUI: `pnpm tui` launches the Bubble Tea operator cockpit with its bridge.
+- Operator TUI: `liminal bridge [port]` starts the HTTP/SSE bridge for external clients and diagnostics.
 - Backend-only GUI API remains `node gui/start.js` for tests and focused debugging.
-- Legacy Ink TUI is compatibility-only; use `pnpm run tui:ink` only with `LIMINAL_ENABLE_LEGACY_INK_TUI=1` for comparison or migration debugging.
 
 ## Current launch-candidate proof
 

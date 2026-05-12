@@ -5,7 +5,7 @@
 
 ## Context
 
-Liminal resolves LLM runtime details in several paths: user/project config loading, role config, model config, the meta-harness provider registry, the Bubble Tea bridge, and endpoint API-key selection. Before this decision, provider aliases, default endpoints, default models, key environment-variable order, key-required checks, status labels, adapter detection, and `apiStyle` inference were duplicated across those paths. That made provider truth drift easy: a provider could appear configured in one surface, use a different default endpoint in another, or report a misleading runtime label to the operator.
+Liminal resolves LLM runtime details in several paths: user/project config loading, role config, model config, the meta-harness provider registry, the TUI bridge, and endpoint API-key selection. Before this decision, provider aliases, default endpoints, default models, key environment-variable order, key-required checks, status labels, adapter detection, and `apiStyle` inference were duplicated across those paths. That made provider truth drift easy: a provider could appear configured in one surface, use a different default endpoint in another, or report a misleading runtime label to the operator.
 
 ## Decision
 

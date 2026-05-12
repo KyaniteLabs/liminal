@@ -19,7 +19,7 @@ Self-improvement: Taste Learning → Dream Recombination → Emergence Evaluatio
 | 4 | Full Pipeline | COMPLETE | CLI, compost, TUI — physical output deferred |
 | 5-8 | Infrastructure | COMPLETE | CI/CD, security, TUI migration, harness |
 | 9 | Self-Hosting Ledger | COMPLETE | `src/ledger/` (TaskLedger, TaskRunner, TaskVerifier) |
-| 10 | StudioAgent | COMPLETE | `src/agent/`, `src/tui-bridge/`, Bubble Tea Go TUI |
+| 10 | StudioAgent | COMPLETE | `src/agent/`, `src/tui-bridge/`, Studio GUI |
 | 11 | LiminalCortex | COMPLETE | `src/cortex/` (PerceptionBus, GoalStore, PriorityAllocator) |
 | 12 | Emergence Evaluation | COMPLETE | `src/emergence/` (NoveltyIndex, PerturbationProbe, EmergenceCritic) |
 | 13 | Taste + Dreaming | COMPLETE | `src/learning/`, `src/dreaming/`, `src/compost/` (Rehydrator) |
@@ -135,7 +135,7 @@ Current: 11 domains (p5, GLSL, Three, Strudel, Hydra, Tone.js, Revideo, HTML, AS
 ## Phase 4: Full Pipeline (COMPLETE — physical output deferred to future feature)
 
 ### Components
-- **Interface**: GUI/CLI for the RalphLoop ✅ (CLI + Studio + Bubble Tea TUI)
+- **Interface**: GUI/CLI for the RalphLoop ✅ (CLI + Studio + TUI Bridge)
 - **Curation Tools**: Select, fork, evolve favorites ✅ (gallery, compost, archive)
 - **Multi-domain Fusion**: Single prompt → interacting domains (partial — cross-domain crossover exists)
 - **Networked Sessions**: Collaborative creative (future)
@@ -172,7 +172,7 @@ const brief = await seedIdeator.ideate("Kid A vibes");
 | 2026-03-31 | SeedIdeator approved | Intent extraction critical for user experience |
 | 2026-03-31 | Expand domain types | 11 domains for full creative coverage |
 | 2026-03-31 | Creative Genome permanent | Lineage tracking is core differentiator |
-| 2026-04-07 | Bubble Tea replaces Ink | Go-based TUI for better performance and UX |
+| 2026-04-07 | Bubble Tea replaces Ink (later removed 2026-05-12) | Go-based TUI replaced Ink, then removed in favor of TUI Bridge |
 | 2026-04-07 | Studio = chat-first | User-first interface, not autonomy-first |
 | 2026-04-16 | User-first architecture | Previous roadmap deferred user interaction; corrected |
 | 2026-04-16 | Taste without ML framework | Margin-based SGD is sufficient, avoids heavy deps |
@@ -217,7 +217,7 @@ See phase status summary above. All 14 phases are complete. Future work:
 - **ResponseComposer** (`src/agent/ResponseComposer.ts`) — Response formatting with provenance metadata
 - **SessionGraph** (`src/agent/SessionGraph.ts`) — LiminalFS persistence for session resume
 - **TuiBridgeService** (`src/tui-bridge/TuiBridgeService.ts`) — HTTP/SSE bridge with direct chat streaming
-- **Bubble Tea Go TUI** (`bubbletea/`) — 50+ event handlers, streaming rendering, Ctrl+X Cortex panel
+- **TUI Bridge** (`src/tui-bridge/`) — HTTP/SSE bridge for programmatic control and external clients
 
 ### Architecture
 ```

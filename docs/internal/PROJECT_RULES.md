@@ -142,7 +142,7 @@ Home | Features | Architecture | CLI | SOUL | Dashboard
 src/
 ├── core/           # RalphLoop, GenerationOrchestrator
 ├── harness/        # Meta-Harness, Agents, Tools
-├── tui/            # NaturalInterface, HarnessTUI
+├── tui/            # NaturalInterface, intent routing
 ├── llm/            # LLMClient, providers
 ├── generators/     # p5, Three.js, GLSL, etc.
 └── prompts/        # System prompts, templates

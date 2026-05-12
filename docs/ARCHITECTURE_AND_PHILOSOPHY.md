@@ -18,7 +18,7 @@ Liminal has three primary interfaces:
 
 1. **CLI** (`liminal -p "..."`, `liminal chat`, `liminal fix`, etc.) — the original interface for generation, compost, ledger, and utilities.
 2. **Studio** (`liminal studio`) — the GUI-first workbench. It starts the GUI backend plus browser app, uses the HTTP/SSE bridge for streamed generation and preview events, and exposes an Improve lane for repair, hardening, and optimization proposals.
-3. **Bubble Tea TUI** (`liminal bubbletea`) — the Go-based terminal operator cockpit with 50+ event handlers, streaming responses, and Ctrl+X Cortex panel.
+3. **TUI Bridge** (`liminal bridge`) — the HTTP/SSE bridge for programmatic control, external clients, and diagnostics.
 
 CLI and programmatic API remain available for automation and integration.
 
@@ -161,7 +161,7 @@ Key architectural decisions:
 - **Direct chat streaming**: `streamDirectChat()` uses `LLMClient.generate()` and chunks the response at 50 characters with 10ms delay to simulate streaming over SSE — no native streaming API needed.
 - **Autonomy modes**: `AutonomyController` manages three levels: `assist` (user approves every action), `co-create` (agent proposes, user approves significant changes), and `autopilot` (agent acts independently with review gates).
 - **Session persistence**: `SessionGraph` records every turn to `LiminalFS` (the filesystem-based session store), enabling session resume and audit trails.
-- **Bridge-only mode**: The HTTP/SSE bridge runs without the Go Bubble Tea binary, accepting connections from any HTTP client. Signal handlers use `process.once` with try/catch guards for clean shutdown.
+- **Bridge server**: The HTTP/SSE bridge accepts connections from Studio and external HTTP clients. Signal handlers use `process.once` with try/catch guards for clean shutdown.
 
 ## LiminalCortex — background executive (Phase 13, added 2026-04-16)
 
@@ -172,7 +172,7 @@ Key architectural decisions:
 - **Priority allocator**: `PriorityAllocator` ranks goals by urgency, impact, and cost. Goals compete for a shared budget tracked by `BudgetTracker`.
 - **Action proposer**: The cortex proposes actions (improvements, optimizations, explorations) but does not execute them directly — they flow through the autonomy system for user approval.
 - **Supervisor + StuckDetector**: `CortexSupervisor` monitors the cortex loop for livelocks and dead ends, while `StuckDetector` identifies when the system is cycling without progress.
-- **TUI integration**: Ctrl+X toggles the Cortex panel in the Bubble Tea TUI. `/cortex start|stop` controls the loop. `/cortex` shows the dashboard.
+- **Studio integration**: Cortex controls are accessible through the Studio GUI. `/cortex start|stop` controls the loop. `/cortex` shows the dashboard.
 
 ## Emergence evaluation (Phase 14, added 2026-04-16)
 

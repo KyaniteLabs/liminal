@@ -1,6 +1,6 @@
 # AGENTS.md — Liminal Agent Instructions
 
-**Last Updated:** 2026-04-15
+**Last Updated:** 2026-05-12
 
 **Cross-agent rules:** See `~/.agents/rules/UNIVERSAL.md` for the 12 golden principles shared across all agents.
 
@@ -71,12 +71,12 @@ Liminal is a creative coding agent with a **Meta-Harness** — an outer-loop obs
 
 ## Quick Start
 
-### Run the Bubble Tea TUI
+### Run the Studio GUI
 
 ```bash
-pnpm run tui
+pnpm gui
 # or directly:
-liminal bubbletea
+liminal studio
 ```
 
 ### Generate from CLI
@@ -86,18 +86,7 @@ liminal -p "Create a calming blue particle system"
 liminal chat                    # Conversational session
 liminal compost status          # Check compost pipeline
 liminal ledger list             # List self-hosting tasks
-```
-
-### TUI Commands (inside Bubble Tea)
-
-```
-/help                Show available commands
-/status              Check harness status and providers
-/tasks               List pending tasks
-/run <task-id>       Execute a task
-/preview <file>      Preview file
-/clear               Clear screen
-/exit                Exit TUI
+liminal bridge 3000             # Start TUI bridge server
 ```
 
 ---
@@ -267,7 +256,7 @@ src/
 ├── collab/         Multi-agent board, swarm
 ├── config/         Configuration, role-based models
 ├── tui/            Terminal UI
-├── tui-bridge/     HTTP/SSE bridge for Bubble Tea
+├── tui-bridge/     HTTP/SSE bridge for Studio and external clients
 ├── render/         Rendering pipeline
 ├── security/       SSRF protection, rate limiting
 └── plugins/        Plugin system
@@ -320,7 +309,7 @@ The data stored in `~/.epoch/` (estimates.jsonl + feedback.jsonl) is the project
 
 ---
 
-**Last Updated:** 2026-04-15
+**Last Updated:** 2026-05-12
 
 <!-- EMPOWER_ORCHESTRATOR:START -->
 ## Empower the Orchestrator

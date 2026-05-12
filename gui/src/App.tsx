@@ -7,6 +7,7 @@ import {
   type GuiTab,
 } from './gui/liveOrganismState';
 import { WorkbenchShell } from './components/WorkbenchShell';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { useEventStream } from './components/activity/hooks';
 import {
   buildWorkbenchRunOptionsForMode,
@@ -159,6 +160,8 @@ export default function App() {
   const [saving, setSaving] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [previewStuck, setPreviewStuck] = useState(false);
+  const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Live organism: gallery selection
   const [projects, setProjects] = useState<string[]>([]);
@@ -197,6 +200,7 @@ export default function App() {
   const hydraContainerRef = useRef<HTMLDivElement>(null);
   const [micStatus, setMicStatus] = useState<MicStatus>('idle');
   const [micError, setMicError] = useState<string | null>(null);
+  const MIC_MAX_FRAMES = 1800; // ~30s at 60fps
   const micFramesRef = useRef<AudioSingFrame[]>([]);
   const micStartPendingRef = useRef<boolean>(false);
   const micActiveRef = useRef<boolean>(false);
@@ -223,6 +227,29 @@ export default function App() {
   const [timeoutMinutes, setTimeoutMinutes] = useState<number>(30);
   const [minQualityScore, setMinQualityScore] = useState<number>(0.7);
   const [galleryPath, setGalleryPath] = useState<string>('gallery');
+
+  // Preview watchdog: detect stuck iframes (infinite loops in generated code)
+  useEffect(() => {
+    if (!previewUrl) { setPreviewStuck(false); return; }
+    setPreviewStuck(false);
+    if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
+    const onMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'liminal-preview-ready') {
+        if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
+        previewTimeoutRef.current = null;
+        window.removeEventListener('message', onMessage);
+      }
+    };
+    window.addEventListener('message', onMessage);
+    previewTimeoutRef.current = setTimeout(() => {
+      setPreviewStuck(true);
+      window.removeEventListener('message', onMessage);
+    }, 10_000);
+    return () => {
+      if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
+      window.removeEventListener('message', onMessage);
+    };
+  }, [previewUrl]);
 
   useEffect(() => {
     let cancelled = false;
@@ -340,10 +367,13 @@ export default function App() {
   }, []);
 
   function sendSingFrame(frame: AudioSingFrame) {
-    singFrameRef.current?.contentWindow?.postMessage({
-      type: 'liminal-audio-frame',
-      frame,
-    }, '*');
+    const target = singFrameRef.current?.contentWindow;
+    if (target) {
+      const origin = singFrameRef.current.src
+        ? new URL(singFrameRef.current.src, window.location.href).origin
+        : window.location.origin;
+      target.postMessage({ type: 'liminal-audio-frame', frame }, origin);
+    }
   }
 
   async function startMicCapture() {
@@ -414,6 +444,9 @@ export default function App() {
           capturedAt: now,
         };
         micFramesRef.current.push(frame);
+        if (micFramesRef.current.length > MIC_MAX_FRAMES) {
+          micFramesRef.current = micFramesRef.current.slice(-MIC_MAX_FRAMES);
+        }
         sendSingFrame(frame);
         micLastFrameAtRef.current = now;
       }
@@ -445,6 +478,9 @@ export default function App() {
           const frame = analyzeSingFrame(timeData, frequencyData, sampleRate, prevRms);
           prevRms = frame.rms;
           micFramesRef.current.push(frame);
+          if (micFramesRef.current.length > MIC_MAX_FRAMES) {
+            micFramesRef.current = micFramesRef.current.slice(-MIC_MAX_FRAMES);
+          }
           sendSingFrame(frame);
           micLastFrameAtRef.current = performance.now();
         }, 8);
@@ -960,7 +996,17 @@ export default function App() {
   );
 
   const stageSlot = activeMode.id === 'improve' ? improveSlot : (
+    <ErrorBoundary name="Stage">
     <div className="liminal-stage-frame">
+      {previewStuck && (
+        <div role="alert" style={{ position: 'absolute', inset: 0, zIndex: 10, display: 'grid', placeItems: 'center', background: 'rgba(0,0,0,0.85)', color: '#ff6b6b', textAlign: 'center', padding: '2rem' }}>
+          <div>
+            <strong style={{ fontSize: 16 }}>Preview may be stuck</strong>
+            <p style={{ color: '#aaa', fontSize: 13, marginTop: 8 }}>The generated script didn't respond within 10 seconds. It may contain an infinite loop.</p>
+            <button type="button" className="atelier-btn atelier-btn--secondary" style={{ marginTop: 12 }} onClick={() => setPreviewStuck(false)}>Dismiss</button>
+          </div>
+        </div>
+      )}
       {previewUrl ? (
         <iframe title="Live preview" src={previewUrl} allow={SENSOR_PERMISSION_POLICY} sandbox="allow-scripts" />
       ) : singPreviewHtml ? (
@@ -1031,9 +1077,11 @@ export default function App() {
       )}
 
     </div>
+    </ErrorBoundary>
   );
 
   const inspectorSlot = (
+    <ErrorBoundary name="Inspector">
     <div className="liminal-inspector-grid">
       <div>
         <span>Generator</span>
@@ -1185,9 +1233,11 @@ export default function App() {
         Settings
       </button>
     </div>
+    </ErrorBoundary>
   );
 
   const timelineSlot = (
+    <ErrorBoundary name="Timeline">
     <div>
       <div className="liminal-timeline-row">
         <span>{activeMode.id === 'improve' ? (improveLoading ? 'scanning' : improveReport?.runType || 'ready') : bridgeSummary.active ? bridgeSummary.timelineStatus : runStatus || 'idle'}</span>
@@ -1292,9 +1342,11 @@ export default function App() {
         </div>
       )}
     </div>
+    </ErrorBoundary>
   );
 
   const leftSlot = (
+    <ErrorBoundary name="Panel">
     <div className="liminal-rail-meta">
       {activeMode.id === 'improve' ? (
         <>
@@ -1312,9 +1364,11 @@ export default function App() {
         </>
       )}
     </div>
+    </ErrorBoundary>
   );
 
   const audioSlot = (
+    <ErrorBoundary name="Audio">
     <div className="liminal-audio-input">
       <button
         type="button"
@@ -1326,6 +1380,7 @@ export default function App() {
       </button>
       <small>{micError || (micStatus === 'recording' ? 'your voice is driving the visuals' : micStatus === 'ready' ? 'voice capture complete' : hasDirectSingTarget ? 'sing to bring it to life' : 'generate a visual first')}</small>
     </div>
+    </ErrorBoundary>
   );
 
   if (loading) {
@@ -1363,6 +1418,7 @@ export default function App() {
       recourseState={runStoppedBeforePreview ? 'stopped' : runFailedBeforePreview ? 'failed' : undefined}
     >
       {shouldRenderLegacyPanel(activeTab) && (
+      <ErrorBoundary name="Legacy Panel">
       <Suspense fallback={<div className="atelier-panel">Loading Studio surface…</div>}>
       <>
       {activeTab === 'config' && (
@@ -1803,6 +1859,7 @@ export default function App() {
       )}
       </>
       </Suspense>
+      </ErrorBoundary>
       )}
     </WorkbenchShell>
   );

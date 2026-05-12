@@ -89,7 +89,7 @@ See [Architecture & Philosophy](./docs/ARCHITECTURE_AND_PHILOSOPHY.md) for the s
 | `src/collab/` | Multi-agent board, swarm, deep collaboration |
 | `src/config/` | Configuration loading, role-based model selection |
 | `src/tui/` | Terminal UI |
-| `src/tui-bridge/` | HTTP/SSE bridge for Bubble Tea runtime |
+| `src/tui-bridge/` | HTTP/SSE bridge for Studio and external clients |
 | `src/security/` | SSRF protection, rate limiting, sandbox |
 | `src/render/` | Rendering pipeline |
 | `src/plugins/` | Plugin system |

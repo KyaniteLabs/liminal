@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added — Beta Reliability Hardening (PR #12)
+- React ErrorBoundaries around all major Studio GUI sections (stage, inspector, timeline, audio)
+- Preview watchdog: detects stuck iframe scripts after 10s, shows dismiss overlay
+- postMessage origin lock: all cross-frame messages target specific origin (security fix)
+- micFramesRef cap at 1800 frames (~30s) to prevent unbounded memory growth
+- Ready-beacon injection into all wrapped HTML for iframe timeout detection
+- Origin check on audio bootstrap postMessage listener
+
+### Removed
+- Bubble Tea Go binary (`bubbletea/`) — Go build requirement eliminated
+- React TUI components (`src/tui/components/`) — IterationTimeline, PlayerPiano, TransparencyPanel, XRayPanel
+- TUI entry points (`src/tui/HarnessTUI.tsx`, `TuiDebugger.ts`, `index.tsx`)
+- CLI commands: `tui`, `bubbletea`, `operator` and package scripts: `tui`, `tui:bridge`, `tui:ink`, `bubbletea:test`
+- ~10,000 lines removed. Preserves `src/tui/` routing logic and `src/tui-bridge/`
+
 ### Added — Dual Video Frameworks (PR #391)
 - **RevideoRenderer**: Rewritten to use in-process `renderVideo()` from `@revideo/renderer` (replaces broken CLI shell-out). Proper project scaffolding with npm install, try-catch cleanup, duration parsing from `yield* waitFor(N)`.
 - **HyperFramesRenderer**: New renderer for HTML+GSAP asset compositing via `createRenderJob`/`executeRenderJob` from `@hyperframes/producer`. Asset injection with `file://` URL conversion for headless browsers.
@@ -50,7 +65,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 - Structured logger replaces console.log throughout harness and core modules
 - CI pipeline optimized: removed setup-node, enabled caches, switched to thread pool
-- Bubble Tea TUI is now the primary interactive interface
+- Studio GUI is the primary interactive interface (Bubble Tea TUI removed in v2.1.1)
 - Coverage ratchet targeting 70% across all metrics (currently ~68.6% statements)
 
 ### Fixed

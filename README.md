@@ -9,7 +9,7 @@
 
 Liminal is a model-agnostic creative coding system. You describe what you want — "a quiet moonlit garden with blue-green fireflies" or "glitch techno beats with feedback loops" — and Liminal helps choose a medium, generates the artifact, shows an inline/side-panel preview, and keeps the conversation open for revision. It works with any OpenAI-compatible API, Ollama, LM Studio, Anthropic-style providers, and GLM.
 
-Liminal Studio is the artist-facing workbench: clean chat on the left, live preview on the right, and advanced receipts hidden until you ask for them. Bubble Tea remains the keyboard-first operator cockpit for deeper diagnostics and review actions.
+Liminal Studio is the artist-facing workbench: clean chat on the left, live preview on the right, and advanced receipts hidden until you ask for them. The TUI bridge provides an HTTP/SSE interface for programmatic control and diagnostics.
 
 ---
 
@@ -50,9 +50,8 @@ pnpm gui
 pnpm desktop
 # package a local macOS app: pnpm desktop:package:mac
 
-# Bubble Tea operator cockpit (requires Go >= 1.21)
-pnpm tui
-# or: liminal tui
+# TUI bridge server (HTTP/SSE interface for programmatic control)
+liminal bridge 3000
 
 # Read-only self-healing opportunity scan
 liminal improve scan
@@ -150,7 +149,7 @@ liminal -p "ambient glitch set" --mode live-music  # Live AV mode
 # Interactive
 pnpm gui                                            # GUI workbench
 liminal chat                                        # Conversational creative session
-pnpm tui                                            # Bubble Tea operator cockpit
+liminal bridge 3000                                 # TUI bridge server (HTTP/SSE)
 liminal improve scan                                # Read-only repair/hardening/optimization proposals
 liminal improve run <proposal-id>                   # Run one proposal from an isolated worktree
 
@@ -215,7 +214,7 @@ LLM_MODEL=MiniMax-M2.7
 LLM_BASE_URL=https://api.minimax.io/anthropic
 
 # Or swap models on the fly
-LIMINAL_LLM_MODEL='google/gemini-3.1-pro-preview' liminal bubbletea
+LIMINAL_LLM_MODEL='google/gemini-3.1-pro-preview' liminal -p "ambient pads"
 ```
 
 ---
@@ -247,7 +246,7 @@ src/
 ├── autonomy/       Autonomous Gardener — garden health, stagnation detection, policies
 ├── evaluation/     Evaluation fabric — hybrid judges, holdout critics, scoring engines
 ├── tui/            Terminal UI utilities, text sanitization, preview safety
-├── tui-bridge/     HTTP/SSE bridge for Bubble Tea runtime
+├── tui-bridge/     HTTP/SSE bridge for Studio and external clients
 ├── render/         Rendering pipeline
 ├── security/       SSRF protection, rate limiting, sandbox
 ├── sandbox/        Sandboxed code execution

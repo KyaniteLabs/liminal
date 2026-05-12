@@ -10,7 +10,7 @@ function readRepoFile(relativePath: string): string {
   return readFileSync(resolve(repoRoot, relativePath), 'utf8');
 }
 
-describe('Bubble Tea docs consistency', () => {
+describe('Docs consistency', () => {
   it('tracks current branch and guardrail state in THE_BIBLE', () => {
     const bible = readRepoFile('docs/THE_BIBLE.md');
 
@@ -22,10 +22,10 @@ describe('Bubble Tea docs consistency', () => {
     expect(bible).not.toContain('M12-M18 planned');
     expect(bible).not.toContain('M12-M18: ⚪ Planned/Future');
     expect(bible).not.toContain('Not yet implemented (M1-M11 complete)');
-    expect(bible).toContain('generation progress card');
+    expect(bible).toContain('TUI Bridge');
   });
 
-  it('keeps the visual bible aligned with Bubble Tea operator-surface docs', () => {
+  it('keeps the visual bible aligned with operator-surface docs', () => {
     const visualBible = readRepoFile('docs/archive/html/visual-bible.html');
 
     expect(visualBible).toContain('28 Documented Systems');

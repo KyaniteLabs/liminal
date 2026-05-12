@@ -129,7 +129,7 @@ export const EventTypes = {
   LLM_REQUEST: 'llm:request',
   LLM_RESPONSE: 'llm:response',
   COMPOST_STAGE: 'compost:stage',
-  COMPOST_COLLISION: 'compost:collision',   // TuiDebugger handles — no emitter wired yet
+  COMPOST_COLLISION: 'compost:collision',   // no emitter wired yet
   COMPOST_SCORE: 'compost:score',
   COMPOST_SEED: 'compost:seed',
   LOOP_ITERATION: 'loop:iteration',
@@ -311,8 +311,8 @@ class Bus extends EventEmitter {
     // Test mode should stay quiet by default.
     if (process.env.VITEST || process.env.NODE_ENV === 'test') return;
 
-    // In TUI mode, suppress stdout writes entirely — Ink owns the terminal.
-    // TuiDebugger captures events to file for tail -f inspection.
+    // In TUI mode, suppress stdout writes entirely.
+    // Events can be captured to file for tail -f inspection.
     if (Bus.isTuiMode()) return;
 
     const ts = event.timestamp.split('T')[1]?.slice(0, 12) ?? event.timestamp;

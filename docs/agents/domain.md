@@ -22,7 +22,7 @@ If any of these files do not exist or are irrelevant to the task, proceed withou
 
 ## Use Liminal's vocabulary
 
-When output names a domain concept, prefer Liminal's established terms: Meta-Harness, generator, evaluator, creative domain, Bubble Tea TUI, workbench, RalphLoop, thinking trace, ledger, compost, and provider/runtime truth. Avoid replacing artist-facing language with internal proof or harness jargon unless the task is explicitly about internals.
+When output names a domain concept, prefer Liminal's established terms: Meta-Harness, generator, evaluator, creative domain, TUI Bridge, workbench, RalphLoop, thinking trace, ledger, compost, and provider/runtime truth. Avoid replacing artist-facing language with internal proof or harness jargon unless the task is explicitly about internals.
 
 If the concept you need is not in the docs yet, note the vocabulary gap for `grill-with-docs` instead of inventing a new taxonomy.
 

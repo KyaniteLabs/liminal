@@ -5,7 +5,7 @@ This quick reference is the lightweight map for people trying to understand Limi
 ## User Surfaces
 
 - Studio GUI: the artist-facing workbench for prompt-to-art generation, preview, polish, receipts, and visible failure states.
-- Bubble Tea TUI: the operator surface for provider setup, bridge sessions, controls, and run visibility.
+- TUI Bridge: HTTP/SSE interface for programmatic control, external clients, and diagnostics.
 - CLI: the scriptable front door for generation, market status, proof commands, and release gates.
 
 ## Runtime Spine

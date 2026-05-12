@@ -20,7 +20,7 @@
 | Linting | ✅ PASS | 0 errors, 1 warning (non-blocking) |
 | CLI Entrypoint | ✅ PASS | All commands parse correctly |
 | GUI Backend | ✅ PASS | Express server, health endpoint, all routes present |
-| TUI | ✅ PASS | Bubble Tea operator cockpit through shared bridge |
+| TUI | ✅ PASS | TUI Bridge (HTTP/SSE) for external clients |
 | Config System | ✅ PASS | Defaults to LM Studio at localhost:1234 |
 | Env Requirements | ⚠️ ACTION NEEDED | LLM backend must be running before use |
 
@@ -88,7 +88,7 @@ Minor: an async method that doesn't actually await anything. No user-visible imp
 |---------|-------------|
 | `liminal --prompt "..."` | Generate p5.js art |
 | `liminal generate/gen/g` | Same as --prompt |
-| `liminal tui` | Launch Bubble Tea operator cockpit |
+| `liminal bridge [port]` | Start TUI Bridge (HTTP/SSE) for external clients |
 | `liminal serve [port]` | Start preview server (default: 3456) |
 | `liminal list` | Show saved sketches |
 | `liminal chat` | Conversational creative coding mode |
@@ -131,7 +131,7 @@ GUI frontend is launched by `pnpm gui`; static builds are produced with `pnpm --
 
 ## 5. TUI Readiness
 
-`liminal tui` launches the Bubble Tea operator cockpit through the shared bridge:
+`liminal bridge [port]` starts the TUI Bridge for programmatic control:
 
 - **Agent mode** — triggered by action phrases ("Fix the validation")
 - **Command mode** — triggered by questions ("What's the status?")

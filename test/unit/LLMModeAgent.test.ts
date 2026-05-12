@@ -1006,7 +1006,7 @@ describe('LLMModeAgent', () => {
 
   it('does not classify parse failure after concrete inspection as bounded-no-change success', async () => {
     queuePlans(
-      '{"tool":"readFile","params":{"path":"bubbletea/internal/app/view.go"},"thought":"inspect view"}',
+      '{"tool":"readFile","params":{"path":"src/core/EventBus.ts"},"thought":"inspect event bus"}',
       '{"tool":"search","params":{"pattern":"completionPolicy"},"thought":"inspect symbol usage"}',
       'done inspecting; no safe change warranted',
     );
@@ -1048,7 +1048,7 @@ describe('LLMModeAgent', () => {
   });
 
   it('still classifies meaningful successful inspection with no safe mutation as bounded-no-change success', async () => {
-    queuePlans('{"tool":"readFile","params":{"path":"bubbletea/internal/app/view.go"},"thought":"inspect view"}');
+    queuePlans('{"tool":"readFile","params":{"path":"src/core/EventBus.ts"},"thought":"inspect event bus"}');
 
     const agent = new LLMModeAgent(mockLLM as any);
     const session = await agent.executeTask({

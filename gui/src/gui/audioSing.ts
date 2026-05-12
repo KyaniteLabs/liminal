@@ -16,6 +16,7 @@ export interface AudioSingSummary {
   avgCentroid: number;
   durationSeconds: number;
   avgPitch: number;
+  onsetCount: number;
   label: string;
 }
 
@@ -157,6 +158,7 @@ export function summarizeAudioSing(frames: AudioSingFrame[], sampleRateFps = 30)
   const rmsValues = frames.map((frame) => frame.rms);
   const centroidValues = frames.map((frame) => frame.centroid);
   const pitchValues = frames.filter((f) => f.pitch > 0).map((f) => f.pitch);
+  const onsetCount = frames.filter((f) => f.onset).length;
   const avgRms = average(rmsValues);
   const peakRms = rmsValues.length ? Math.max(...rmsValues) : 0;
   const avgCentroid = average(centroidValues);
@@ -169,6 +171,7 @@ export function summarizeAudioSing(frames: AudioSingFrame[], sampleRateFps = 30)
     avgCentroid,
     durationSeconds,
     avgPitch,
-    label: `${energyLabel(peakRms)} · ${durationSeconds.toFixed(1)}s${avgPitch > 0 ? ' · pitch detected' : ''}`,
+    onsetCount,
+    label: `${energyLabel(peakRms)} · ${durationSeconds.toFixed(1)}s${avgPitch > 0 ? ' · pitch detected' : ''}${onsetCount > 0 ? ` · ${onsetCount} onsets` : ''}`,
   };
 }

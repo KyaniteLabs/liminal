@@ -21,7 +21,7 @@ import {
   type WorkbenchExecutionMode,
 } from './gui/createModes';
 import { analyzeSingFrame, summarizeAudioSing, freqToNote, type AudioSingFrame } from './gui/audioSing';
-import { buildSingPreviewHtml, buildDefaultSingPreviewHtml } from './gui/singPreview';
+import { buildSingPreviewHtml, buildDefaultSingPreviewHtml, buildLayeredSingHtml, deriveVoiceVisualProfile, profileToPrompt, type VoiceVisualProfile } from './gui/singPreview';
 import { formatMicCaptureError } from '../../src/shared/micPermission';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 import { latestClarificationRequest, latestCognitiveReceipt, latestRunReceipt } from './gui/workbenchTelemetry';
@@ -213,6 +213,10 @@ export default function App() {
   const micFallbackIntervalRef = useRef<number | null>(null);
   const micLastFrameAtRef = useRef<number>(0);
   const singFrameRef = useRef<HTMLIFrameElement>(null);
+  const singLayersRef = useRef<Array<{ code: string; blendMode: string; opacity: number }>>([]);
+  const [singLayerCount, setSingLayerCount] = useState(0);
+  const singVoiceProfileRef = useRef<VoiceVisualProfile | null>(null);
+  const [singArchiveBase, setSingArchiveBase] = useState<string | null>(null);
 
   // Form state: effective + loop + creative + galleryPath; on save we build userConfig
   const [provider, setProvider] = useState<string>('lmstudio');
@@ -366,6 +370,55 @@ export default function App() {
     stopMicCapture(false);
   }, []);
 
+  useEffect(() => {
+    if (createMode !== 'sing') return;
+    let cancelled = false;
+    const domains = ['p5', 'glsl', 'three', 'hydra'];
+    async function fetchArchive() {
+      for (const domain of domains) {
+        try {
+          const res = await fetch(`/api/archive/${domain}?limit=1&minQuality=0.6`);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data.entries?.length && !cancelled) {
+            setSingArchiveBase(data.entries[0].output);
+            return;
+          }
+        } catch { continue; }
+      }
+    }
+    fetchArchive();
+    return () => { cancelled = true; };
+  }, [createMode]);
+
+  useEffect(() => {
+    if (!bridgeCodePreview?.code) return;
+    if (createMode !== 'sing' && !singVoiceProfileRef.current) return;
+    const code = bridgeCodePreview.code;
+    if (singLayersRef.current.some((l) => l.code === code)) return;
+    const profile = singVoiceProfileRef.current;
+    const layer = {
+      code,
+      blendMode: profile?.blendMode || 'screen',
+      opacity: profile?.layerOpacity || 0.7,
+    };
+    singLayersRef.current = [...singLayersRef.current, layer];
+    setSingLayerCount(singLayersRef.current.length);
+    singVoiceProfileRef.current = null;
+  }, [bridgeCodePreview?.code, createMode]);
+
+  function singAddLayer(code: string, blendMode?: string, opacity?: number) {
+    const layer = { code, blendMode: blendMode || 'screen', opacity: opacity ?? 0.7 };
+    singLayersRef.current = [...singLayersRef.current, layer];
+    setSingLayerCount(singLayersRef.current.length);
+  }
+
+  function singClearLayers() {
+    singLayersRef.current = [];
+    setSingLayerCount(0);
+    singVoiceProfileRef.current = null;
+  }
+
   function sendSingFrame(frame: AudioSingFrame) {
     const el = singFrameRef.current;
     const target = el?.contentWindow;
@@ -491,44 +544,9 @@ export default function App() {
   }
 
   function voiceSummaryToPrompt(summary: ReturnType<typeof summarizeAudioSing>): string {
-    const note = summary.avgPitch > 0 ? freqToNote(summary.avgPitch) : 'C4';
-    const pitchHz = Math.round(summary.avgPitch || 440);
-    const power = summary.peakRms > 0.22 ? 'intense' : summary.peakRms > 0.09 ? 'dynamic' : 'gentle';
-    const brightness = summary.avgCentroid > 0.5 ? 'bright' : summary.avgCentroid > 0.2 ? 'balanced' : 'deep';
-    const dur = summary.durationSeconds.toFixed(1);
-
-    const palettes: Record<string, string[]> = {
-      'intense-bright': ['crimson red, electric gold, white-hot highlights', 'molten metal, solar flares, ember sparks'],
-      'intense-balanced': ['coral, teal, amber — tropical storm energy', 'fire opal, deep magenta, burnt sienna'],
-      'intense-deep': ['obsidian black with emerald green veins and silver sparks', 'midnight blue, forest green, copper highlights'],
-      'dynamic-bright': ['warm amber, peach, cream — sunrise over water', 'turquoise, goldenrod, soft white — sunlit ocean'],
-      'dynamic-balanced': ['terracotta, sage green, warm sand — earth tones with vibrancy', 'rose gold, slate blue, ivory — modern warmth'],
-      'dynamic-deep': ['deep teal, burgundy, brass — luxurious and moody', 'indigo, chestnut, cream — candlelit study'],
-      'gentle-bright': ['pastel peach, lavender mist, soft gold — morning light', 'pearl white, pale rose, champagne'],
-      'gentle-balanced': ['dusty rose, sage, warm grey — watercolor softness', 'muted coral, seafoam, oat — quiet beach'],
-      'gentle-deep': ['charcoal, deep burgundy, muted gold — velvet night', 'forest canopy, loam, soft moss green'],
-    };
-
-    const movements: Record<string, string> = {
-      'intense': 'explosive bursts, rapid pulsing, dramatic scaling, sharp directional shifts that mirror power',
-      'dynamic': 'flowing ribbons, organic spirals, smooth waves that breathe and undulate with expressiveness',
-      'gentle': 'slow drifting, soft breathing, delicate floating particles that barely move, meditative calm',
-    };
-
-    const key = `${power}-${brightness}`;
-    const [primary, fallback] = palettes[key] || palettes['dynamic-balanced'];
-    const paletteChoice = Math.random() > 0.5 ? primary : fallback;
-    const movementDesc = movements[power];
-
-    return [
-      `Create a stunning voice-reactive generative visualization in p5.js.`,
-      `The voice was ${power} and ${brightness}, centered around ${note} (${pitchHz} Hz), lasting ${dur} seconds.`,
-      `Color palette: ${paletteChoice}. DO NOT use generic purple/blue gradients.`,
-      `Movement: ${movementDesc}.`,
-      `Map window.__liminalAudio.rms to size/speed/intensity. Map .centroid to hue shifts. Map .pitch to spatial patterns. Map .onset to sudden visual events.`,
-      `Make it feel synesthetic — like seeing sound come alive. The visualization should be beautiful and mesmerizing even when silent, but transform dramatically when the voice is active.`,
-      `Use a dark background. Full viewport canvas. Smooth 60fps animation.`,
-    ].join(' ');
+    const profile = deriveVoiceVisualProfile(summary);
+    singVoiceProfileRef.current = profile;
+    return profileToPrompt(profile);
   }
 
   function stopMicCapture(commitPrompt = true) {
@@ -558,18 +576,21 @@ export default function App() {
     const summary = summarizeAudioSing(frames);
     setMicStatus('ready');
     setMicError(null);
-    setMessage(`Voice captured: ${summary.label}. Generating visuals from your voice...`);
+    const profile = singVoiceProfileRef.current || deriveVoiceVisualProfile(summary);
+    singVoiceProfileRef.current = profile;
+    setMessage(`Voice captured: ${summary.label}. Generating ${profile.recommendedDomain} layer from your voice...`);
 
-    if (!hasDirectSingTarget) {
-      const voicePrompt = voiceSummaryToPrompt(summary);
-      setCreateMode('sing');
-      setCreatePrompt(voicePrompt);
-      const singHint = getCreateModeOption('sing').promptHint;
-      void bridge.submitPrompt(`${singHint}\n\nUser prompt: ${voicePrompt}`, {
-        clientIntent: 'creative',
-        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, 'sing', timeoutMinutes),
-      });
-    }
+    const voicePrompt = voiceSummaryToPrompt(summary);
+    const domainMode = profile.recommendedDomain as CreateModeId;
+    setCreateMode('sing');
+    setCreatePrompt(voicePrompt);
+    const singHint = getCreateModeOption('sing').promptHint;
+    const domainHint = getCreateModeOption(domainMode).promptHint;
+    const combinedHint = [singHint, domainHint].filter(Boolean).join('\n');
+    void bridge.submitPrompt(`${combinedHint}\n\nUser prompt: ${voicePrompt}`, {
+      clientIntent: 'creative',
+      ...buildWorkbenchRunOptionsForMode('prove', 3, domainMode, timeoutMinutes),
+    });
   }
 
   const handleRunInPreview = async () => {
@@ -879,9 +900,13 @@ export default function App() {
   const clarificationRequest = activeMode.id === 'generate' ? latestClarificationRequest(bridge.events) : null;
   const cognitiveReceipt = activeMode.id === 'generate' ? latestCognitiveReceipt(bridge.events) : null;
   const singPreviewHtml = bridgeCodePreview?.code ? buildSingPreviewHtml(bridgeCodePreview.code) : '';
-  const defaultSingPreview = micStatus === 'recording' && !singPreviewHtml ? buildDefaultSingPreviewHtml() : '';
-  const activeSingPreview = singPreviewHtml || defaultSingPreview;
-  const hasDirectSingTarget = Boolean(singPreviewHtml);
+  const defaultSingPreview = buildDefaultSingPreviewHtml();
+  const archiveBaseHtml = singArchiveBase ? buildSingPreviewHtml(singArchiveBase) : '';
+  const baseSingHtml = archiveBaseHtml || defaultSingPreview;
+  const activeSingPreview = singLayersRef.current.length > 0
+    ? buildLayeredSingHtml(baseSingHtml, singLayersRef.current)
+    : (micStatus === 'recording' || singLayerCount > 0) ? baseSingHtml : '';
+  const hasDirectSingTarget = singLayerCount > 0;
   const hasSingTarget = Boolean(previewUrl || bridgePreview || hasDirectSingTarget);
   const promptCreateMode = detectPromptCreateMode(createPrompt);
   const effectiveCreateMode = promptCreateMode ?? createMode;
@@ -1442,7 +1467,7 @@ export default function App() {
       >
         {micStatus === 'recording' ? 'Stop Singing' : 'Sing'}
       </button>
-      <small>{micError || (micStatus === 'recording' ? 'your voice is driving the visuals' : micStatus === 'ready' ? 'voice captured — visuals generated' : hasDirectSingTarget ? 'sing to bring it to life' : 'sing to generate voice-reactive visuals')}</small>
+      <small>{micError || (micStatus === 'recording' ? 'your voice is driving the visuals' : micStatus === 'ready' ? 'layer generated — sing again to add more' : hasDirectSingTarget ? `${singLayerCount} layer${singLayerCount !== 1 ? 's' : ''} — sing to add more` : 'sing to generate voice-reactive visuals')}</small>
     </div>
     </ErrorBoundary>
   );

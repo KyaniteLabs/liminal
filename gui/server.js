@@ -985,6 +985,22 @@ export function createApp(configPath, port = 5174) {
     }
   });
 
+  // Quality archive: return recent high-quality outputs for a domain
+  app.get('/api/archive/:domain', async (req, res) => {
+    try {
+      const { QualityArchive } = await import('../dist/learning/QualityArchive.js');
+      const archive = new QualityArchive();
+      await archive.load();
+      const domain = req.params.domain;
+      const limit = Math.min(Number(req.query.limit) || 5, 20);
+      const minQuality = Number(req.query.minQuality) || 0.6;
+      const entries = archive.query(domain, { limit, minQuality, sortBy: 'recent' });
+      res.json({ entries, total: entries.length });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Compost status: heap/seed/soup overview
   app.get('/api/compost/status', async (_req, res) => {
     try {

@@ -10,6 +10,7 @@ interface WorkbenchShellProps {
   prompt: string;
   onPromptChange: (value: string) => void;
   onRun: () => void;
+  onRunPrompt?: (prompt: string) => void;
   onCancelRun?: () => void;
   runDisabled: boolean;
   stageBusy: boolean;
@@ -37,6 +38,7 @@ export function WorkbenchShell({
   prompt,
   onPromptChange,
   onRun,
+  onRunPrompt,
   onCancelRun,
   runDisabled,
   stageBusy,
@@ -86,6 +88,24 @@ export function WorkbenchShell({
         ? 'Preview ready'
         : 'Idle';
 
+  const starters = [
+    { label: 'Neon city at midnight', prompt: 'A neon-lit cyberpunk city at midnight with rain reflections, p5.js canvas animation' },
+    { label: 'Ocean waves', prompt: 'Generative ocean waves with a dark sky, soothing blue and teal palette, p5.js animation' },
+    { label: 'Particle galaxy', prompt: 'A spiral galaxy made of particles that slowly rotate, WebGL Three.js, deep purple and gold' },
+    { label: 'Sound reactive', prompt: 'A minimal audio-reactive visualization using p5.js that responds to microphone input with flowing shapes' },
+  ];
+
+  const handleStarter = (starterPrompt: string) => {
+    onPromptChange(starterPrompt);
+    if (onRunPrompt) {
+      onRunPrompt(starterPrompt);
+    } else {
+      onRun();
+    }
+  };
+
+  const showStarters = !artifactReady && !stageBusy && !showRecovery && !userPrompt;
+
   return (
     <div className="liminal-canvas">
       <a className="liminal-skip-link" href="#main-content">Skip to main content</a>
@@ -95,9 +115,25 @@ export function WorkbenchShell({
         {stageSlot}
       </main>
 
+      {/* Starter prompts — shown when canvas is empty */}
+      {showStarters && (
+        <div className="liminal-canvas__starters" aria-label="Quick start suggestions">
+          {starters.map((s) => (
+            <button
+              key={s.label}
+              type="button"
+              className="liminal-canvas__starter-chip"
+              onClick={() => handleStarter(s.prompt)}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Top bar: minimal floating strip */}
       <header className="liminal-canvas__topbar">
-        <div className="liminal-canvas__brand">
+        <div className="liminal-canvas__brand" title="Liminal — creative coding studio">
           <span className="liminal-canvas__brand-mark">L</span>
         </div>
 
@@ -106,12 +142,13 @@ export function WorkbenchShell({
             type="button"
             className={`liminal-canvas__mode-btn ${primaryMode.id === activeMode ? 'liminal-canvas__mode-btn--active' : ''}`}
             aria-current={primaryMode.id === activeMode ? 'page' : undefined}
+            title={`Create from a text prompt (currently ${primaryMode.id === activeMode ? 'active' : 'inactive'})`}
             onClick={() => onModeChange(primaryMode)}
           >
             {primaryMode.label}
           </button>
           {generateTabs.length > 1 && (
-            <details className="liminal-canvas__dropdown">
+            <details className="liminal-canvas__dropdown" title="Switch between creative tools">
               <summary>Tools</summary>
               <div className="liminal-canvas__dropdown-body">
                 {generateTabs.map((tab) => (
@@ -119,6 +156,7 @@ export function WorkbenchShell({
                     key={tab}
                     type="button"
                     className={`liminal-canvas__dropdown-item ${tab === activeTab ? 'liminal-canvas__dropdown-item--active' : ''}`}
+                    title={`Switch to ${formatLegacyTab(tab)}`}
                     onClick={() => {
                       if (activeMode !== primaryMode.id) onModeChange(primaryMode);
                       onTabChange(tab);
@@ -135,6 +173,7 @@ export function WorkbenchShell({
               className="liminal-canvas__dropdown"
               open={secondaryToolsOpen}
               onToggle={(e) => setSecondaryToolsOpen(e.currentTarget.open)}
+              title="Additional workbench modes"
             >
               <summary>More</summary>
               <div className="liminal-canvas__dropdown-body">
@@ -143,6 +182,7 @@ export function WorkbenchShell({
                     key={mode.id}
                     type="button"
                     className={`liminal-canvas__dropdown-item ${mode.id === activeMode ? 'liminal-canvas__dropdown-item--active' : ''}`}
+                    title={`Switch to ${mode.label} mode`}
                     onClick={() => onModeChange(mode)}
                   >
                     {mode.label}
@@ -154,6 +194,7 @@ export function WorkbenchShell({
                       key={tab}
                       type="button"
                       className={`liminal-canvas__dropdown-item ${tab === activeTab ? 'liminal-canvas__dropdown-item--active' : ''}`}
+                      title={`Switch to ${formatLegacyTab(tab)}`}
                       onClick={() => onTabChange(tab)}
                     >
                       {formatLegacyTab(tab)}
@@ -166,13 +207,13 @@ export function WorkbenchShell({
         </nav>
 
         {/* Status indicator */}
-        <div className={`liminal-canvas__status ${stageBusy ? 'liminal-canvas__status--active' : ''} ${showRecovery ? 'liminal-canvas__status--alert' : ''}`}>
+        <div className={`liminal-canvas__status ${stageBusy ? 'liminal-canvas__status--active' : ''} ${showRecovery ? 'liminal-canvas__status--alert' : ''}`} title={`Status: ${statusLabel}`}>
           <span className="liminal-canvas__status-dot" />
           <span>{statusLabel}</span>
         </div>
 
         {/* Model pill */}
-        <details className="liminal-canvas__model">
+        <details className="liminal-canvas__model" title="View AI model details">
           <summary>
             <span>Model</span>
             <strong>{providerLabel}</strong>
@@ -192,6 +233,7 @@ export function WorkbenchShell({
             onClick={() => setTimelineOpen(!timelineOpen)}
             aria-label="Toggle work log"
             aria-pressed={timelineOpen}
+            title="Show or hide the generation work log"
           >
             Log
           </button>
@@ -201,6 +243,7 @@ export function WorkbenchShell({
             onClick={() => setDetailsOpen(!detailsOpen)}
             aria-label="Toggle details"
             aria-pressed={detailsOpen}
+            title="Show model details and session info"
           >
             Info
           </button>
@@ -211,6 +254,7 @@ export function WorkbenchShell({
               onClick={() => setLegacyOpen(!legacyOpen)}
               aria-label="Toggle panels"
               aria-pressed={legacyOpen}
+              title="Show advanced control panels"
             >
               Panels
             </button>
@@ -291,14 +335,17 @@ export function WorkbenchShell({
           <div className="liminal-canvas__promptbar-actions">
             {audioSlot}
             {stageBusy && onCancelRun ? (
-              <button className="liminal-stop-button" type="button" onClick={onCancelRun} aria-label="Stop generation">
+              <button className="liminal-stop-button" type="button" onClick={onCancelRun} aria-label="Stop generation" title="Cancel the current generation">
                 Stop
               </button>
             ) : null}
-            <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled} aria-busy={stageBusy}>
+            <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled} aria-busy={stageBusy} title={runDisabled ? 'Type a prompt first' : `Run ${runLabel} (Enter)`}>
               {runLabel}
             </button>
           </div>
+        </div>
+        <div className="liminal-canvas__promptbar-hint">
+          <kbd>Enter</kbd> to run · <kbd>Shift+Enter</kbd> for new line
         </div>
         <p id="workbench-run-status" className="sr-only" aria-live="polite">
           {stageBusy ? `${runLabel} in progress` : runDisabled ? 'Describe an artifact to enable generation' : `${runLabel} ready`}

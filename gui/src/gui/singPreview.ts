@@ -68,6 +68,75 @@ function needsThreeCanvasBinding(code: string): boolean {
   return /\bcanvas\b/.test(code) && !declaresCanvas;
 }
 
+export function buildDefaultSingPreviewHtml(): string {
+  return `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Liminal Live Audio</title>
+  <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070a}canvas{display:block;position:fixed;inset:0}</style>
+  <script>${audioBootstrapScript()}</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(function(){
+  var c=document.getElementById('c'),ctx=c.getContext('2d'),dpr=window.devicePixelRatio||1;
+  function resize(){c.width=window.innerWidth*dpr;c.height=window.innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
+  resize();window.addEventListener('resize',resize);
+  var particles=[];
+  for(var i=0;i<120;i++){particles.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-0.5)*0.3,vy:(Math.random()-0.5)*0.3,r:Math.random()*2+0.5,phase:Math.random()*Math.PI*2})}
+  var t=0;
+  function draw(){
+    requestAnimationFrame(draw);
+    var w=window.innerWidth,h=window.innerHeight,a=window.__liminalAudio||{rms:0,centroid:0.5,pitch:440,onset:false,voiced:false};
+    t+=0.016;
+    ctx.fillStyle='rgba(5,7,10,0.15)';
+    ctx.fillRect(0,0,w,h);
+    var energy=a.rms||0,bright=a.centroid||0.5,pitch=a.pitch||440;
+    var hue=200+bright*120;
+    for(var i=0;i<particles.length;i++){
+      var p=particles[i];
+      var boost=energy*4;
+      p.x+=p.vx+Math.sin(t+p.phase)*boost*0.5;
+      p.y+=p.vy+Math.cos(t*0.7+p.phase)*boost*0.5;
+      if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;
+      var size=p.r*(1+energy*3);
+      var alpha=0.3+energy*0.7;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,size,0,Math.PI*2);
+      ctx.fillStyle='hsla('+hue+',80%,'+(55+energy*30)+'%,'+alpha+')';
+      ctx.fill();
+    }
+    if(a.voiced){
+      ctx.beginPath();
+      ctx.strokeStyle='hsla('+(hue+40)+',70%,60%,'+(0.1+energy*0.3)+')';
+      ctx.lineWidth=1+energy*4;
+      var cx=w/2,cy=h/2,radius=Math.max(1,50+energy*200);
+      for(var i=0;i<=64;i++){
+        var angle=(i/64)*Math.PI*2;
+        var offset=Math.sin(angle*pitch/100+t*3)*energy*40;
+        var px=cx+Math.cos(angle)*(radius+offset);
+        var py=cy+Math.sin(angle)*(radius+offset);
+        i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+      }
+      ctx.closePath();ctx.stroke();
+    }
+    if(energy>0.01){
+      ctx.beginPath();
+      ctx.arc(w/2,h/2,Math.max(1,20+energy*60),0,Math.PI*2);
+      ctx.fillStyle='hsla('+hue+',90%,70%,'+(energy*0.25)+')';
+      ctx.fill();
+    }
+  }
+  draw();
+})();
+</script>
+</body>
+</html>`;
+}
+
 export function buildSingPreviewHtml(code: string): string {
   const domain = inferStageDomain(code);
   if (domain === 'html') {

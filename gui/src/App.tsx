@@ -21,7 +21,7 @@ import {
   type WorkbenchExecutionMode,
 } from './gui/createModes';
 import { analyzeSingFrame, summarizeAudioSing, freqToNote, type AudioSingFrame } from './gui/audioSing';
-import { buildSingPreviewHtml } from './gui/singPreview';
+import { buildSingPreviewHtml, buildDefaultSingPreviewHtml } from './gui/singPreview';
 import { formatMicCaptureError } from '../../src/shared/micPermission';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 import { latestClarificationRequest, latestCognitiveReceipt, latestRunReceipt } from './gui/workbenchTelemetry';
@@ -854,10 +854,12 @@ export default function App() {
     ? runStoppedBeforePreview ? 'Generation stopped by operator. Edit the prompt, try again, or switch medium when ready.' : runFailedBeforePreview ? 'The run stopped before an artifact could be mounted. Use a recovery action or edit the prompt.' : bridgeSummary.stageSubtitle
     : bridgeSummary.active
       ? bridgeSummary.stageSubtitle
-      : 'Send a creative prompt; live output will appear here.';
+      : 'Type a prompt below or click a suggestion to get started.';
   const clarificationRequest = activeMode.id === 'generate' ? latestClarificationRequest(bridge.events) : null;
   const cognitiveReceipt = activeMode.id === 'generate' ? latestCognitiveReceipt(bridge.events) : null;
   const singPreviewHtml = bridgeCodePreview?.code ? buildSingPreviewHtml(bridgeCodePreview.code) : '';
+  const defaultSingPreview = micStatus === 'recording' && !singPreviewHtml ? buildDefaultSingPreviewHtml() : '';
+  const activeSingPreview = singPreviewHtml || defaultSingPreview;
   const hasDirectSingTarget = Boolean(singPreviewHtml);
   const hasSingTarget = Boolean(previewUrl || bridgePreview || hasDirectSingTarget);
   const promptCreateMode = detectPromptCreateMode(createPrompt);
@@ -880,6 +882,19 @@ export default function App() {
       void bridge.submitPrompt(buildWorkbenchPrompt(effectiveCreateMode, createPrompt), {
         clientIntent: 'creative',
         ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode, timeoutMinutes),
+      });
+      return;
+    }
+    void handleCreateRun();
+  };
+
+  const handleWorkbenchRunPrompt = (promptText: string) => {
+    setCreatePrompt(promptText);
+    if (activeMode.id === 'generate') {
+      const mode = detectPromptCreateMode(promptText) ?? createMode;
+      void bridge.submitPrompt(buildWorkbenchPrompt(mode, promptText), {
+        clientIntent: 'creative',
+        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, mode, timeoutMinutes),
       });
       return;
     }
@@ -1037,11 +1052,11 @@ export default function App() {
       )}
       {previewUrl ? (
         <iframe title="Live preview" src={previewUrl} allow={SENSOR_PERMISSION_POLICY} sandbox="allow-scripts" />
-      ) : singPreviewHtml ? (
+      ) : activeSingPreview ? (
         <iframe
           ref={singFrameRef}
           title="Voice-reactive stage"
-          srcDoc={singPreviewHtml}
+          srcDoc={activeSingPreview}
           allow={SENSOR_PERMISSION_POLICY}
           sandbox="allow-scripts"
         />
@@ -1429,6 +1444,7 @@ export default function App() {
       prompt={createPrompt}
       onPromptChange={setCreatePrompt}
       onRun={handleWorkbenchRun}
+      onRunPrompt={handleWorkbenchRunPrompt}
       onCancelRun={bridgeSummary.active ? () => void bridge.cancelCurrent() : undefined}
       runDisabled={activeMode.id === 'improve' ? improveLoading : bridge.submitting || runStatus === 'running' || !createPrompt.trim() || (runNeedsBridgeSession && !bridge.session)}
       stageBusy={bridgeSummary.active || runStatus === 'running'}

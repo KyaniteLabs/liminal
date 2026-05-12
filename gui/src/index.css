@@ -568,6 +568,65 @@ body {
   flex: 0 0 auto;
 }
 
+/* Starter prompt chips */
+.liminal-canvas__starters {
+  position: fixed;
+  bottom: 82px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 95;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: min(560px, calc(100vw - 40px));
+  pointer-events: auto;
+}
+
+.liminal-canvas__starter-chip {
+  padding: 7px 14px;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--liminal-muted);
+  font: inherit;
+  font-size: 0.76rem;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.liminal-canvas__starter-chip:hover {
+  color: var(--liminal-text);
+  border-color: var(--liminal-cyan);
+  background: rgba(89, 225, 255, 0.08);
+}
+
+.liminal-canvas__starter-chip:active {
+  transform: scale(0.97);
+}
+
+/* Keyboard hint below prompt */
+.liminal-canvas__promptbar-hint {
+  text-align: center;
+  margin-top: 5px;
+  color: var(--liminal-dim);
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+}
+
+.liminal-canvas__promptbar-hint kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid rgba(145, 161, 190, 0.15);
+  border-radius: 3px;
+  background: rgba(25, 31, 43, 0.5);
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--liminal-muted);
+}
+
 /* ── Buttons (refined) ───────────────────────────────────── */
 
 .liminal-run-button {

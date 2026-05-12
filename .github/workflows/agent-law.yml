@@ -11,7 +11,7 @@ permissions:
 jobs:
   agent-law:
     name: agent-law
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4

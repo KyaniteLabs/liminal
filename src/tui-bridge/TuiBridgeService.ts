@@ -3125,6 +3125,7 @@ export class TuiBridgeService {
   private inlinePreviewType(previewDomain: import('../utils/htmlWrapper.js').Domain): 'html' | 'music' | null {
     if (previewDomain === 'tone' || previewDomain === 'strudel') return 'music';
     if (previewDomain === 'hydra' || previewDomain === 'html') return 'html';
+    if (['p5', 'three', 'glsl', 'shader', 'sing'].includes(previewDomain)) return 'html';
     return null;
   }
 

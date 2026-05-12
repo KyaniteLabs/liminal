@@ -383,11 +383,6 @@ export default function App() {
       return;
     }
     setMicError(null);
-    if (!hasDirectSingTarget) {
-      setMicStatus('error');
-      setMicError('Generate a visual artifact first, then sing into the microphone to bring it to life.');
-      return;
-    }
     if (!navigator.mediaDevices?.getUserMedia) {
       setMicStatus('error');
       setMicError('Browser microphone input is unavailable.');
@@ -493,6 +488,28 @@ export default function App() {
     }
   }
 
+  function voiceSummaryToPrompt(summary: ReturnType<typeof summarizeAudioSing>): string {
+    const parts: string[] = ['Create voice-reactive generative visuals.'];
+
+    if (summary.avgPitch > 0) {
+      const note = freqToNote(summary.avgPitch);
+      parts.push(`The voice centered around ${note} (${Math.round(summary.avgPitch)} Hz).`);
+    }
+
+    if (summary.peakRms > 0.22) parts.push('The voice was powerful and intense — use bold, dramatic motion.');
+    else if (summary.peakRms > 0.09) parts.push('The voice was expressive and dynamic — use flowing, organic movement.');
+    else parts.push('The voice was soft and gentle — use subtle, delicate animations.');
+
+    if (summary.avgCentroid > 0.5) parts.push('The tone was bright — lean into warm golds, oranges, and high-energy colors.');
+    else if (summary.avgCentroid > 0.2) parts.push('The tone was balanced — use a rich, varied color palette.');
+    else parts.push('The tone was deep — use cool blues, purples, and deep hues.');
+
+    parts.push(`Duration of vocal input: ${summary.durationSeconds.toFixed(1)} seconds.`);
+    parts.push('Use window.__liminalAudio inside the animation loop. Map rms to scale and density. Map centroid to color and speed. The result should feel synesthetic — seeing sound.');
+
+    return parts.join(' ');
+  }
+
   function stopMicCapture(commitPrompt = true) {
     micStartPendingRef.current = false;
     micActiveRef.current = false;
@@ -520,7 +537,18 @@ export default function App() {
     const summary = summarizeAudioSing(frames);
     setMicStatus('ready');
     setMicError(null);
-    setMessage(`Voice captured: ${summary.label}. The visuals are responding to your singing.`);
+    setMessage(`Voice captured: ${summary.label}. Generating visuals from your voice...`);
+
+    if (!hasDirectSingTarget) {
+      const voicePrompt = voiceSummaryToPrompt(summary);
+      setCreateMode('sing');
+      setCreatePrompt(voicePrompt);
+      const singHint = getCreateModeOption('sing').promptHint;
+      void bridge.submitPrompt(`${singHint}\n\nUser prompt: ${voicePrompt}`, {
+        clientIntent: 'creative',
+        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, 'sing', timeoutMinutes),
+      });
+    }
   }
 
   const handleRunInPreview = async () => {
@@ -1373,12 +1401,12 @@ export default function App() {
       <button
         type="button"
         className={micStatus === 'recording' ? 'liminal-audio-button liminal-audio-button--recording' : 'liminal-audio-button'}
-        disabled={!hasDirectSingTarget && micStatus !== 'recording'}
+        disabled={micStatus === 'recording' ? false : bridge.submitting}
         onClick={() => void startMicCapture()}
       >
         {micStatus === 'recording' ? 'Stop Singing' : 'Sing'}
       </button>
-      <small>{micError || (micStatus === 'recording' ? 'your voice is driving the visuals' : micStatus === 'ready' ? 'voice capture complete' : hasDirectSingTarget ? 'sing to bring it to life' : 'generate a visual first')}</small>
+      <small>{micError || (micStatus === 'recording' ? 'your voice is driving the visuals' : micStatus === 'ready' ? 'voice captured — visuals generated' : hasDirectSingTarget ? 'sing to bring it to life' : 'sing to generate voice-reactive visuals')}</small>
     </div>
     </ErrorBoundary>
   );

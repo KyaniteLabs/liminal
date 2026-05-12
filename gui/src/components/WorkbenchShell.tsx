@@ -321,9 +321,14 @@ export function WorkbenchShell({
           <textarea
             id="workbench-prompt"
             value={prompt}
-            onChange={(event) => onPromptChange(event.target.value)}
+            onChange={(event) => {
+              onPromptChange(event.target.value);
+              const el = event.target;
+              el.style.height = 'auto';
+              el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+            }}
             rows={1}
-            placeholder="Describe what to create..."
+            placeholder="Describe what to create... (e.g. 'a neon city with rain reflections, p5.js')"
             aria-describedby="workbench-run-status"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && !runDisabled) {

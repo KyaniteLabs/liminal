@@ -367,11 +367,13 @@ export default function App() {
   }, []);
 
   function sendSingFrame(frame: AudioSingFrame) {
-    const target = singFrameRef.current?.contentWindow;
+    const el = singFrameRef.current;
+    const target = el?.contentWindow;
     if (target) {
-      const origin = singFrameRef.current.src
-        ? new URL(singFrameRef.current.src, window.location.href).origin
-        : window.location.origin;
+      const hasSrc = el.getAttribute('src');
+      const origin = hasSrc
+        ? new URL(hasSrc, window.location.href).origin
+        : '*';
       target.postMessage({ type: 'liminal-audio-frame', frame }, origin);
     }
   }
@@ -489,25 +491,44 @@ export default function App() {
   }
 
   function voiceSummaryToPrompt(summary: ReturnType<typeof summarizeAudioSing>): string {
-    const parts: string[] = ['Create voice-reactive generative visuals.'];
+    const note = summary.avgPitch > 0 ? freqToNote(summary.avgPitch) : 'C4';
+    const pitchHz = Math.round(summary.avgPitch || 440);
+    const power = summary.peakRms > 0.22 ? 'intense' : summary.peakRms > 0.09 ? 'dynamic' : 'gentle';
+    const brightness = summary.avgCentroid > 0.5 ? 'bright' : summary.avgCentroid > 0.2 ? 'balanced' : 'deep';
+    const dur = summary.durationSeconds.toFixed(1);
 
-    if (summary.avgPitch > 0) {
-      const note = freqToNote(summary.avgPitch);
-      parts.push(`The voice centered around ${note} (${Math.round(summary.avgPitch)} Hz).`);
-    }
+    const palettes: Record<string, string[]> = {
+      'intense-bright': ['crimson red, electric gold, white-hot highlights', 'molten metal, solar flares, ember sparks'],
+      'intense-balanced': ['coral, teal, amber — tropical storm energy', 'fire opal, deep magenta, burnt sienna'],
+      'intense-deep': ['obsidian black with emerald green veins and silver sparks', 'midnight blue, forest green, copper highlights'],
+      'dynamic-bright': ['warm amber, peach, cream — sunrise over water', 'turquoise, goldenrod, soft white — sunlit ocean'],
+      'dynamic-balanced': ['terracotta, sage green, warm sand — earth tones with vibrancy', 'rose gold, slate blue, ivory — modern warmth'],
+      'dynamic-deep': ['deep teal, burgundy, brass — luxurious and moody', 'indigo, chestnut, cream — candlelit study'],
+      'gentle-bright': ['pastel peach, lavender mist, soft gold — morning light', 'pearl white, pale rose, champagne'],
+      'gentle-balanced': ['dusty rose, sage, warm grey — watercolor softness', 'muted coral, seafoam, oat — quiet beach'],
+      'gentle-deep': ['charcoal, deep burgundy, muted gold — velvet night', 'forest canopy, loam, soft moss green'],
+    };
 
-    if (summary.peakRms > 0.22) parts.push('The voice was powerful and intense — use bold, dramatic motion.');
-    else if (summary.peakRms > 0.09) parts.push('The voice was expressive and dynamic — use flowing, organic movement.');
-    else parts.push('The voice was soft and gentle — use subtle, delicate animations.');
+    const movements: Record<string, string> = {
+      'intense': 'explosive bursts, rapid pulsing, dramatic scaling, sharp directional shifts that mirror power',
+      'dynamic': 'flowing ribbons, organic spirals, smooth waves that breathe and undulate with expressiveness',
+      'gentle': 'slow drifting, soft breathing, delicate floating particles that barely move, meditative calm',
+    };
 
-    if (summary.avgCentroid > 0.5) parts.push('The tone was bright — lean into warm golds, oranges, and high-energy colors.');
-    else if (summary.avgCentroid > 0.2) parts.push('The tone was balanced — use a rich, varied color palette.');
-    else parts.push('The tone was deep — use cool blues, purples, and deep hues.');
+    const key = `${power}-${brightness}`;
+    const [primary, fallback] = palettes[key] || palettes['dynamic-balanced'];
+    const paletteChoice = Math.random() > 0.5 ? primary : fallback;
+    const movementDesc = movements[power];
 
-    parts.push(`Duration of vocal input: ${summary.durationSeconds.toFixed(1)} seconds.`);
-    parts.push('Use window.__liminalAudio inside the animation loop. Map rms to scale and density. Map centroid to color and speed. The result should feel synesthetic — seeing sound.');
-
-    return parts.join(' ');
+    return [
+      `Create a stunning voice-reactive generative visualization in p5.js.`,
+      `The voice was ${power} and ${brightness}, centered around ${note} (${pitchHz} Hz), lasting ${dur} seconds.`,
+      `Color palette: ${paletteChoice}. DO NOT use generic purple/blue gradients.`,
+      `Movement: ${movementDesc}.`,
+      `Map window.__liminalAudio.rms to size/speed/intensity. Map .centroid to hue shifts. Map .pitch to spatial patterns. Map .onset to sudden visual events.`,
+      `Make it feel synesthetic — like seeing sound come alive. The visualization should be beautiful and mesmerizing even when silent, but transform dramatically when the voice is active.`,
+      `Use a dark background. Full viewport canvas. Smooth 60fps animation.`,
+    ].join(' ');
   }
 
   function stopMicCapture(commitPrompt = true) {

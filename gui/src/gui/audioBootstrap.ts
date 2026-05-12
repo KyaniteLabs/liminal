@@ -15,7 +15,8 @@ export function audioBootstrapScript(): string {
     updatedAt: 0
   };
   window.addEventListener('message', (event) => {
-    if (event.origin !== window.location.origin) return;
+    var isSandboxed = window.location.origin === 'null';
+    if (!isSandboxed && event.origin !== window.location.origin) return;
     const data = event.data || {};
     if (data.type !== 'liminal-audio-frame') return;
     const frame = data.frame || {};

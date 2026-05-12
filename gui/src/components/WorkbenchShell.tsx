@@ -61,33 +61,12 @@ export function WorkbenchShell({
   const activeModeLabel = activeModeObject.label;
   const activeSurfaceLabel = formatLegacyTab(activeTab);
   const [secondaryToolsOpen, setSecondaryToolsOpen] = React.useState(activeMode !== primaryMode.id);
+  const [timelineOpen, setTimelineOpen] = React.useState(false);
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
+  const [legacyOpen, setLegacyOpen] = React.useState(false);
   const userPrompt = prompt.trim();
   const showRecovery = Boolean(recourseSlot);
   const showStopped = recourseState === 'stopped';
-  const showGeneratePreviewReady = activeMode === 'generate' && artifactReady;
-  const artifactHeading = stageBusy
-    ? 'Liminal is generating…'
-    : showRecovery
-      ? showStopped ? 'Generation stopped' : 'No preview was produced'
-    : showGeneratePreviewReady
-      ? 'Preview is ready'
-    : userPrompt
-      ? 'Ready to generate your preview'
-      : 'Start with a prompt, then preview here';
-  const artifactDetail = stageBusy
-    ? 'Live output will appear in the side panel as soon as it is available.'
-    : showRecovery
-      ? showStopped ? 'The run was stopped. Edit the prompt or try again when ready.' : 'Use a recovery action, or edit the prompt and try again.'
-    : showGeneratePreviewReady
-      ? 'Use the message box to revise, make a variation, or polish this direction.'
-    : userPrompt
-      ? 'Click Generate and I’ll keep the conversation focused while the artifact opens on the right.'
-      : 'The preview panel stays quiet until there is something visual or playable to inspect.';
-  const runStatusText = stageBusy
-    ? `${runLabel} in progress`
-    : runDisabled
-      ? 'Describe an artifact to enable generation'
-      : `${runLabel} ready`;
 
   React.useEffect(() => {
     if (activeMode !== primaryMode.id) {
@@ -95,96 +74,55 @@ export function WorkbenchShell({
     }
   }, [activeMode, primaryMode.id]);
 
-  return (
-    <div className="liminal-workbench liminal-workbench--chat-first">
-      <a className="liminal-skip-link" href="#main-content">Skip to main content</a>
-      <header className="liminal-commandbar">
-        <div className="liminal-brand">
-          <span className="liminal-brand__mark">L</span>
-          <div>
-            <h1>Liminal Studio</h1>
-            <p>Codex for creative coding</p>
-          </div>
-        </div>
-        <details className="liminal-runtime-details">
-          <summary aria-label="Runtime details">
-            <span>Model</span>
-            <strong>{providerLabel}</strong>
-          </summary>
-          <div className="liminal-runtime-details__body" aria-label="Runtime status">
-            <span><b>Agent</b>{providerLabel}</span>
-            <span><b>Judge</b>{evaluatorLabel}</span>
-            <span><b>Details</b>{inspectorLabel}</span>
-          </div>
-        </details>
-      </header>
+  React.useEffect(() => {
+    if (stageBusy) setTimelineOpen(true);
+  }, [stageBusy]);
 
-      <aside className="liminal-left-rail">
-        <nav aria-label="Workbench modes">
-          <div className="liminal-rail-group">
-            <button
-              type="button"
-              className={primaryMode.id === activeMode ? 'liminal-primary-mode liminal-rail-button liminal-rail-button--active' : 'liminal-primary-mode liminal-rail-button'}
-              aria-current={primaryMode.id === activeMode ? 'page' : undefined}
-              onClick={() => onModeChange(primaryMode)}
-            >
-              {primaryMode.label}
-            </button>
-            {generateTabs.length > 1 && (
-              <details className="liminal-subnav liminal-subnav--drawer">
-                <summary aria-label="More Generate tools">Create tools</summary>
-                <div className="liminal-subnav__body">
-                  {generateTabs.map((tab) => (
-                    <button
-                      key={tab}
-                      type="button"
-                      className={tab === activeTab ? 'liminal-subnav-button liminal-subnav-button--active' : 'liminal-subnav-button'}
-                      aria-current={tab === activeTab ? 'page' : undefined}
-                      onClick={() => {
-                        if (activeMode !== primaryMode.id) onModeChange(primaryMode);
-                        onTabChange(tab);
-                      }}
-                    >
-                      {formatLegacyTab(tab)}
-                    </button>
-                  ))}
-                </div>
-              </details>
-            )}
-          </div>
-          {secondaryModes.length > 0 && (
-            <details
-              className="liminal-secondary-tools"
-              open={secondaryToolsOpen}
-              onToggle={(event) => setSecondaryToolsOpen(event.currentTarget.open)}
-            >
-              <summary aria-label="More tools">More</summary>
-              <div className="liminal-secondary-tools__body">
-                {secondaryModes.map((mode) => (
-                  <button
-                    key={mode.id}
-                    type="button"
-                    className={mode.id === activeMode ? 'liminal-rail-button liminal-rail-button--active' : 'liminal-rail-button'}
-                    aria-current={mode.id === activeMode ? 'page' : undefined}
-                    onClick={() => onModeChange(mode)}
-                  >
-                    {mode.label}
-                  </button>
-                ))}
-              </div>
-            </details>
-          )}
-          {activeModeObject.id !== primaryMode.id && activeModeObject.legacyTabs.length > 1 && (
-            <details className="liminal-subnav liminal-subnav--drawer" open>
-              <summary>{activeModeLabel} views</summary>
-              <div className="liminal-subnav__body">
-                {activeModeObject.legacyTabs.map((tab) => (
+  const statusLabel = stageBusy
+    ? 'Generating'
+    : showRecovery
+      ? showStopped ? 'Stopped' : 'Failed'
+      : artifactReady
+        ? 'Preview ready'
+        : 'Idle';
+
+  return (
+    <div className="liminal-canvas">
+      <a className="liminal-skip-link" href="#main-content">Skip to main content</a>
+
+      {/* Stage: full viewport — the art lives here */}
+      <main id="main-content" className="liminal-canvas__stage" aria-label="Live preview canvas" aria-busy={stageBusy}>
+        {stageSlot}
+      </main>
+
+      {/* Top bar: minimal floating strip */}
+      <header className="liminal-canvas__topbar">
+        <div className="liminal-canvas__brand">
+          <span className="liminal-canvas__brand-mark">L</span>
+        </div>
+
+        <nav className="liminal-canvas__modes" aria-label="Workbench modes">
+          <button
+            type="button"
+            className={`liminal-canvas__mode-btn ${primaryMode.id === activeMode ? 'liminal-canvas__mode-btn--active' : ''}`}
+            aria-current={primaryMode.id === activeMode ? 'page' : undefined}
+            onClick={() => onModeChange(primaryMode)}
+          >
+            {primaryMode.label}
+          </button>
+          {generateTabs.length > 1 && (
+            <details className="liminal-canvas__dropdown">
+              <summary>Tools</summary>
+              <div className="liminal-canvas__dropdown-body">
+                {generateTabs.map((tab) => (
                   <button
                     key={tab}
                     type="button"
-                    className={tab === activeTab ? 'liminal-subnav-button liminal-subnav-button--active' : 'liminal-subnav-button'}
-                    aria-current={tab === activeTab ? 'page' : undefined}
-                    onClick={() => onTabChange(tab)}
+                    className={`liminal-canvas__dropdown-item ${tab === activeTab ? 'liminal-canvas__dropdown-item--active' : ''}`}
+                    onClick={() => {
+                      if (activeMode !== primaryMode.id) onModeChange(primaryMode);
+                      onTabChange(tab);
+                    }}
                   >
                     {formatLegacyTab(tab)}
                   </button>
@@ -192,122 +130,180 @@ export function WorkbenchShell({
               </div>
             </details>
           )}
-        </nav>
-        <details className="liminal-left-rail__content liminal-rail-meta-details">
-          <summary>Session</summary>
-          {leftSlot}
-        </details>
-      </aside>
-
-      <main id="main-content" className="liminal-chat-surface" aria-label="Creative coding conversation">
-        <div className="liminal-chat-timeline" aria-live="polite">
-          <article className="liminal-chat-message liminal-chat-message--assistant">
-            <span className="liminal-chat-kicker">AI creative coding agent</span>
-            <h2>What should we make?</h2>
-            <p>
-              Describe a sketch, scene, shader, sound, or visual system. I’ll ask for missing details
-              when useful, generate the artifact, then help you revise or polish it.
-            </p>
-            <div className="liminal-chat-chips" aria-label="Preserved capabilities">
-              <span>Generate</span>
-              <span>Preview</span>
-              <span>Revise</span>
-              <span>Polish</span>
-            </div>
-          </article>
-
-          {userPrompt ? (
-            <article className="liminal-chat-message liminal-chat-message--user" aria-label="Current prompt draft">
-              <span>You</span>
-              <p>{userPrompt}</p>
-            </article>
-          ) : null}
-
-          <article className="liminal-artifact-card" aria-label="Artifact preview card">
-            <div>
-              <span>{stageBusy ? 'Working artifact' : 'Artifact preview'}</span>
-              <strong>{artifactHeading}</strong>
-              <small>{artifactDetail}</small>
-            </div>
-            <a href="#liminal-preview-panel">View preview</a>
-          </article>
-
-          {recourseSlot}
-
-          {children ? (
-            <section className="liminal-legacy-panel" aria-label="Supplemental panel">
-              {children}
-            </section>
-          ) : null}
-
-          <details className="liminal-receipt-details" open={stageBusy || Boolean(recourseSlot)}>
-            <summary>
-              <span>Work log</span>
-              <strong>{stageBusy ? 'live' : showRecovery ? showStopped ? 'stopped' : 'needs recovery' : 'collapsed'}</strong>
-            </summary>
-            <section className="liminal-timeline" aria-label="Generation timeline" role="status" aria-live="polite">
-              {timelineSlot}
-            </section>
-          </details>
-
-          <details className="liminal-advanced-drawer">
-            <summary>
-              <span>Details</span>
-              <strong>{activeModeLabel} · {activeSurfaceLabel}</strong>
-            </summary>
-            <aside className="liminal-inspector" aria-label="Details">
-              <div className="liminal-inspector__header">
-                <span>Behind the scenes</span>
-                <small>{inspectorLabel}</small>
+          {secondaryModes.length > 0 && (
+            <details
+              className="liminal-canvas__dropdown"
+              open={secondaryToolsOpen}
+              onToggle={(e) => setSecondaryToolsOpen(e.currentTarget.open)}
+            >
+              <summary>More</summary>
+              <div className="liminal-canvas__dropdown-body">
+                {secondaryModes.map((mode) => (
+                  <button
+                    key={mode.id}
+                    type="button"
+                    className={`liminal-canvas__dropdown-item ${mode.id === activeMode ? 'liminal-canvas__dropdown-item--active' : ''}`}
+                    onClick={() => onModeChange(mode)}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+                {activeModeObject.id !== primaryMode.id && activeModeObject.legacyTabs.length > 1 && (
+                  activeModeObject.legacyTabs.map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      className={`liminal-canvas__dropdown-item ${tab === activeTab ? 'liminal-canvas__dropdown-item--active' : ''}`}
+                      onClick={() => onTabChange(tab)}
+                    >
+                      {formatLegacyTab(tab)}
+                    </button>
+                  ))
+                )}
               </div>
-              {inspectorSlot}
-            </aside>
-          </details>
+            </details>
+          )}
+        </nav>
+
+        {/* Status indicator */}
+        <div className={`liminal-canvas__status ${stageBusy ? 'liminal-canvas__status--active' : ''} ${showRecovery ? 'liminal-canvas__status--alert' : ''}`}>
+          <span className="liminal-canvas__status-dot" />
+          <span>{statusLabel}</span>
         </div>
 
-        <section className="liminal-chat-composer" aria-label="Message composer">
-          <div className="liminal-composer-head">
-            <label className="liminal-composer-label" htmlFor="workbench-prompt">Message Liminal</label>
-            <span>{stageBusy ? 'Working' : 'Ready'}</span>
+        {/* Model pill */}
+        <details className="liminal-canvas__model">
+          <summary>
+            <span>Model</span>
+            <strong>{providerLabel}</strong>
+          </summary>
+          <div className="liminal-canvas__model-body">
+            <span><b>Agent</b>{providerLabel}</span>
+            <span><b>Judge</b>{evaluatorLabel}</span>
+            <span><b>Details</b>{inspectorLabel}</span>
           </div>
+        </details>
+
+        {/* Panel toggles */}
+        <div className="liminal-canvas__toggles">
+          <button
+            type="button"
+            className={`liminal-canvas__toggle ${timelineOpen ? 'liminal-canvas__toggle--active' : ''}`}
+            onClick={() => setTimelineOpen(!timelineOpen)}
+            aria-label="Toggle work log"
+            aria-pressed={timelineOpen}
+          >
+            Log
+          </button>
+          <button
+            type="button"
+            className={`liminal-canvas__toggle ${detailsOpen ? 'liminal-canvas__toggle--active' : ''}`}
+            onClick={() => setDetailsOpen(!detailsOpen)}
+            aria-label="Toggle details"
+            aria-pressed={detailsOpen}
+          >
+            Info
+          </button>
+          {children && (
+            <button
+              type="button"
+              className={`liminal-canvas__toggle ${legacyOpen ? 'liminal-canvas__toggle--active' : ''}`}
+              onClick={() => setLegacyOpen(!legacyOpen)}
+              aria-label="Toggle panels"
+              aria-pressed={legacyOpen}
+            >
+              Panels
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Timeline overlay panel */}
+      {timelineOpen && (
+        <aside className="liminal-canvas__overlay liminal-canvas__overlay--left" aria-label="Work log">
+          <div className="liminal-canvas__overlay-header">
+            <span>Work log</span>
+            <strong>{stageBusy ? 'live' : showRecovery ? showStopped ? 'stopped' : 'needs recovery' : 'collapsed'}</strong>
+            <button type="button" className="liminal-canvas__overlay-close" onClick={() => setTimelineOpen(false)} aria-label="Close panel">&times;</button>
+          </div>
+          <section className="liminal-timeline" role="status" aria-live="polite">
+            {timelineSlot}
+          </section>
+        </aside>
+      )}
+
+      {/* Details overlay panel */}
+      {detailsOpen && (
+        <aside className="liminal-canvas__overlay liminal-canvas__overlay--right" aria-label="Details">
+          <div className="liminal-canvas__overlay-header">
+            <span>Details</span>
+            <strong>{activeModeLabel} · {activeSurfaceLabel}</strong>
+            <button type="button" className="liminal-canvas__overlay-close" onClick={() => setDetailsOpen(false)} aria-label="Close panel">&times;</button>
+          </div>
+          <div className="liminal-inspector">
+            <div className="liminal-inspector__header">
+              <span>Behind the scenes</span>
+              <small>{inspectorLabel}</small>
+            </div>
+            {inspectorSlot}
+          </div>
+          <details className="liminal-rail-meta-details" open>
+            <summary>Session</summary>
+            {leftSlot}
+          </details>
+        </aside>
+      )}
+
+      {/* Legacy panels overlay */}
+      {legacyOpen && children && (
+        <aside className="liminal-canvas__overlay liminal-canvas__overlay--full" aria-label="Legacy panels">
+          <div className="liminal-canvas__overlay-header">
+            <span>{activeModeLabel}</span>
+            <strong>{activeSurfaceLabel}</strong>
+            <button type="button" className="liminal-canvas__overlay-close" onClick={() => setLegacyOpen(false)} aria-label="Close panel">&times;</button>
+          </div>
+          <section className="liminal-legacy-panel">
+            {children}
+          </section>
+        </aside>
+      )}
+
+      {/* Recourse floating card */}
+      {recourseSlot}
+
+      {/* Bottom prompt bar */}
+      <footer className="liminal-canvas__promptbar">
+        <div className="liminal-canvas__promptbar-inner">
           <textarea
             id="workbench-prompt"
             value={prompt}
             onChange={(event) => onPromptChange(event.target.value)}
-            rows={4}
-            placeholder="Create a p5.js sketch of luminous blue-green particles orbiting a dark center…"
+            rows={1}
+            placeholder="Describe what to create..."
             aria-describedby="workbench-run-status"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey && !runDisabled) {
+                e.preventDefault();
+                onRun();
+              }
+            }}
           />
-          <div className="liminal-composer-actions">
-            {audioSlot ? (
-              <details className="liminal-composer-options">
-                <summary>Options</summary>
-                <div>{audioSlot}</div>
-              </details>
-            ) : null}
+          <div className="liminal-canvas__promptbar-actions">
+            {audioSlot}
             {stageBusy && onCancelRun ? (
-              <button className="liminal-stop-button" type="button" onClick={onCancelRun} aria-label="Stop active generation">
+              <button className="liminal-stop-button" type="button" onClick={onCancelRun} aria-label="Stop generation">
                 Stop
               </button>
             ) : null}
             <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled} aria-busy={stageBusy}>
               {runLabel}
             </button>
-            <p id="workbench-run-status" className="sr-only" aria-live="polite">{runStatusText}</p>
           </div>
-        </section>
-      </main>
-
-      <aside id="liminal-preview-panel" className="liminal-preview-panel" aria-label="Live preview and artifact panel" aria-busy={stageBusy}>
-        <div className="liminal-preview-panel__header">
-          <span>Preview</span>
-          <strong>Your artifact</strong>
-          <small>Generated sketches, shaders, images, motion, and playable sound open here.</small>
         </div>
-        <div className="liminal-preview-panel__stage liminal-stage">
-          {stageSlot}
-        </div>
-      </aside>
+        <p id="workbench-run-status" className="sr-only" aria-live="polite">
+          {stageBusy ? `${runLabel} in progress` : runDisabled ? 'Describe an artifact to enable generation' : `${runLabel} ready`}
+        </p>
+      </footer>
     </div>
   );
 }

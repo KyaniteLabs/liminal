@@ -460,6 +460,14 @@ export function deriveVoiceVisualProfile(summary: {
     'dynamic': { 'bright': 'p5', 'balanced': 'p5', 'deep': 'hydra' },
     'gentle': { 'bright': 'p5', 'balanced': 'hydra', 'deep': 'p5' },
   };
+  const rhythmOverrides: Record<string, string> = {
+    'intense-chaotic': 'kinetic',
+    'dynamic-pulsing': 'hyperframes',
+    'gentle-smooth': 'hydra',
+  };
+  const rhythmKey = `${power}-${rhythm}`;
+  const baseDomain = domainRouting[power]?.[brightness] || 'p5';
+  const recommendedDomain = rhythmOverrides[rhythmKey] || baseDomain;
 
   const blendModes: Record<string, string> = {
     'intense': 'lighten',
@@ -480,7 +488,7 @@ export function deriveVoiceVisualProfile(summary: {
     durationSeconds,
     palette,
     movement: movements[power],
-    recommendedDomain: domainRouting[power]?.[brightness] || 'p5',
+    recommendedDomain,
     blendMode: blendModes[power] || 'screen',
     layerOpacity: power === 'intense' ? 0.85 : power === 'dynamic' ? 0.7 : 0.55,
   };
@@ -495,16 +503,18 @@ function freqToNoteSync(freq: number): string {
   return `${name}${octave}`;
 }
 
-export function profileToPrompt(profile: VoiceVisualProfile): string {
-  const domainInstruction = profile.recommendedDomain === 'glsl'
-    ? 'Create a GLSL fragment shader that produces stunning generative visuals. Use uniforms: u_time, u_resolution, and read __liminalAudio for voice data via a uniform struct.'
-    : profile.recommendedDomain === 'three'
-    ? 'Create a Three.js 3D scene with generative geometry and particles. Read window.__liminalAudio in the animation loop.'
-    : profile.recommendedDomain === 'hydra'
-    ? 'Create a Hydra video synth patch (using osc, noise, shape, solid, etc. chained with .out()). Read window.__liminalAudio for voice-reactive modulation.'
-    : 'Create a p5.js generative sketch with setup() and draw(). Read window.__liminalAudio in draw().';
+export function profileToPrompt(profile: VoiceVisualProfile, tasteHint?: string): string {
+  const domainInstructions: Record<string, string> = {
+    'glsl': 'Create a GLSL fragment shader that produces stunning generative visuals. Use uniforms: u_time, u_resolution, and read __liminalAudio for voice data via a uniform struct.',
+    'three': 'Create a Three.js 3D scene with generative geometry and particles. Read window.__liminalAudio in the animation loop.',
+    'hydra': 'Create a Hydra video synth patch (using osc, noise, shape, solid, etc. chained with .out()). Read window.__liminalAudio for voice-reactive modulation.',
+    'kinetic': 'Create CSS kinetic typography as a complete animated HTML artifact. Words and letters should fly, pulse, scatter, and reform in response to voice. Read window.__liminalAudio to drive animation timing.',
+    'hyperframes': 'Create a HyperFrames composition with HTML, CSS, GSAP timeline clips, data-composition-id, and window.__timelines registration. Make it voice-reactive by reading window.__liminalAudio in the animation loop.',
+    'p5': 'Create a p5.js generative sketch with setup() and draw(). Read window.__liminalAudio in draw().',
+  };
+  const domainInstruction = domainInstructions[profile.recommendedDomain] || domainInstructions['p5'];
 
-  return [
+  const parts = [
     domainInstruction,
     `The voice was ${profile.power} and ${profile.brightness}, ${profile.rhythm} rhythm, centered around ${profile.noteName} (${profile.avgPitch} Hz), lasting ${profile.durationSeconds.toFixed(1)} seconds.`,
     `Color palette: ${profile.palette}. DO NOT use generic purple/blue gradients.`,
@@ -513,5 +523,11 @@ export function profileToPrompt(profile: VoiceVisualProfile): string {
     `The visualization MUST be beautiful and mesmerizing even when silent, but transform dramatically when voice is active.`,
     `Use a TRANSPARENT background (no solid background fill) so this layer composites cleanly over other layers.`,
     `Full viewport canvas. Smooth 60fps animation.`
-  ].join(' ');
+  ];
+
+  if (tasteHint) {
+    parts.push(`The user's preferred style from past creations: ${tasteHint}. Lean into this aesthetic.`);
+  }
+
+  return parts.join(' ');
 }

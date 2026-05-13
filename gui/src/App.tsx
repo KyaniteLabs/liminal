@@ -217,6 +217,27 @@ export default function App() {
   const [singLayerCount, setSingLayerCount] = useState(0);
   const singVoiceProfileRef = useRef<VoiceVisualProfile | null>(null);
   const [singArchiveBase, setSingArchiveBase] = useState<string | null>(null);
+  const singTasteRef = useRef<string | null>(null);
+  const [seedCanvas, setSeedCanvas] = useState<string | null>(null);
+
+  // Tier 1: fetch best archive canvas on mount so user always sees something beautiful
+  useEffect(() => {
+    let cancelled = false;
+    async function fetchSeed() {
+      try {
+        const res = await fetch('/api/garden/seed-canvas');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.hasCanvas && !cancelled) {
+          setSeedCanvas(data.output);
+          setSingArchiveBase(data.output);
+          singTasteRef.current = data.prompt;
+        }
+      } catch { /* archive not available yet — default canvas handles it */ }
+    }
+    fetchSeed();
+    return () => { cancelled = true; };
+  }, []);
 
   // Form state: effective + loop + creative + galleryPath; on save we build userConfig
   const [provider, setProvider] = useState<string>('lmstudio');
@@ -370,31 +391,30 @@ export default function App() {
     stopMicCapture(false);
   }, []);
 
+  // Refresh archive on sing mode entry (in case new outputs archived since mount)
   useEffect(() => {
     if (createMode !== 'sing') return;
     let cancelled = false;
-    const domains = ['p5', 'glsl', 'three', 'hydra'];
-    async function fetchArchive() {
-      for (const domain of domains) {
-        try {
-          const res = await fetch(`/api/archive/${domain}?limit=1&minQuality=0.6`);
-          if (!res.ok) continue;
-          const data = await res.json();
-          if (data.entries?.length && !cancelled) {
-            setSingArchiveBase(data.entries[0].output);
-            return;
-          }
-        } catch { continue; }
-      }
+    async function refreshArchive() {
+      try {
+        const res = await fetch('/api/garden/seed-canvas');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.hasCanvas && !cancelled) {
+          setSingArchiveBase(data.output);
+          singTasteRef.current = data.prompt;
+        }
+      } catch { /* ignore */ }
     }
-    fetchArchive();
+    refreshArchive();
     return () => { cancelled = true; };
   }, [createMode]);
 
   useEffect(() => {
-    if (!bridgeCodePreview?.code) return;
+    const preview = bridge.codePreview;
+    if (!preview?.code) return;
     if (createMode !== 'sing' && !singVoiceProfileRef.current) return;
-    const code = bridgeCodePreview.code;
+    const code = preview.code;
     if (singLayersRef.current.some((l) => l.code === code)) return;
     const profile = singVoiceProfileRef.current;
     const layer = {
@@ -405,7 +425,7 @@ export default function App() {
     singLayersRef.current = [...singLayersRef.current, layer];
     setSingLayerCount(singLayersRef.current.length);
     singVoiceProfileRef.current = null;
-  }, [bridgeCodePreview?.code, createMode]);
+  }, [bridge.codePreview?.code, createMode]);
 
   function singAddLayer(code: string, blendMode?: string, opacity?: number) {
     const layer = { code, blendMode: blendMode || 'screen', opacity: opacity ?? 0.7 };
@@ -546,7 +566,7 @@ export default function App() {
   function voiceSummaryToPrompt(summary: ReturnType<typeof summarizeAudioSing>): string {
     const profile = deriveVoiceVisualProfile(summary);
     singVoiceProfileRef.current = profile;
-    return profileToPrompt(profile);
+    return profileToPrompt(profile, singTasteRef.current ?? undefined);
   }
 
   function stopMicCapture(commitPrompt = true) {

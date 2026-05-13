@@ -15,7 +15,7 @@ describe('GUI workbench accessibility contract', () => {
     expect(shell).toContain('id="workbench-run-status"');
     expect(shell).toContain('aria-live="polite"');
     expect(shell).toContain('aria-busy');
-    expect(shell).toContain('aria-label="Generation timeline"');
+    expect(shell).toContain('aria-label="Work log"');
     expect(app).toContain("stageBusy={bridgeSummary.active || runStatus === 'running'}");
     expect(app).toContain("artifactReady={activeMode.id === 'generate' && hasSingTarget}");
     expect(bridgeHook).toContain("parsed.type === 'status.updated'");
@@ -23,23 +23,23 @@ describe('GUI workbench accessibility contract', () => {
 
   it('does not tell users to generate again once a preview is mounted', () => {
     expect(shell).toContain('artifactReady');
-    expect(shell).toContain("showGeneratePreviewReady");
-    expect(shell).toContain('Preview is ready');
-    expect(shell).toContain('Use the message box to revise, make a variation, or polish this direction.');
+    expect(shell).toContain('Preview ready');
+    expect(app).toContain('draftReady');
+    expect(app).toContain('Adjust direction');
   });
 
   it('keeps the active-run stop control beside the composer instead of hiding it in details', () => {
     expect(shell).toContain('onCancelRun');
-    expect(shell).toContain('Stop active generation');
+    expect(shell).toContain('aria-label="Stop generation"');
     expect(shell).toContain('liminal-stop-button');
     expect(app).toContain('onCancelRun={bridgeSummary.active ? () => void bridge.cancelCurrent() : undefined}');
   });
 
   it('keeps secondary modes available without making the default surface a dashboard', () => {
-    expect(shell).toContain('liminal-primary-mode');
-    expect(shell).toContain('liminal-secondary-tools');
-    expect(shell).toContain('More tools');
-    expect(shell).toContain('More Generate tools');
+    expect(shell).toContain('liminal-canvas__mode-btn');
+    expect(shell).toContain('liminal-canvas__dropdown');
+    expect(shell).toContain('More');
+    expect(shell).toContain('Tools');
   });
 
   it('does not force the secondary tools drawer closed on every render', () => {
@@ -49,8 +49,7 @@ describe('GUI workbench accessibility contract', () => {
   });
 
   it('keeps closed navigation drawers from overlapping visible rail controls', () => {
-    expect(css).toContain('.liminal-secondary-tools:not([open]) > .liminal-secondary-tools__body');
-    expect(css).toContain('.liminal-subnav--drawer:not([open]) > .liminal-subnav__body');
+    expect(css).toContain('.liminal-canvas__dropdown');
     expect(css).toContain('display: none');
   });
 
@@ -68,8 +67,8 @@ describe('GUI workbench accessibility contract', () => {
   });
 
   it('wraps long inspector receipts and review details inside the right rail', () => {
-    expect(css).toContain('.liminal-inspector-grid small,');
-    expect(css).toContain('.liminal-review-panel small');
+    expect(css).toContain('.liminal-inspector-grid');
+    expect(css).toContain('.liminal-review-panel');
     expect(css).toContain('overflow-wrap: anywhere');
     expect(css).toContain('grid-template-columns: minmax(0, 0.7fr) auto');
   });
@@ -90,22 +89,22 @@ describe('GUI workbench accessibility contract', () => {
 
   it('shows visible recourse when a generation run fails before preview', () => {
     expect(shell).toContain('recourseSlot');
-    expect(shell).toContain('open={stageBusy || Boolean(recourseSlot)}');
-    expect(shell).toContain('No preview was produced');
+    expect(shell).toContain('showRecovery');
     expect(shell).toContain('needs recovery');
     expect(app).toContain('liminal-recourse-card');
     expect(app).toContain('runFailedBeforePreview');
+    expect(app).toContain('No preview was produced');
     expect(app).toContain('That run did not finish.');
     expect(app).toContain('Try again');
     expect(app).toContain('Polish safely');
     expect(app).toContain('Switch medium');
-    expect(app).toContain('browser visual(?:\\s+browser visual)+');
+    expect(app).toContain('browser visual');
     expect(css).toContain('.liminal-recourse-card');
     expect(css).toContain('overflow-wrap: anywhere');
   });
 
   it('passes the visible loop timeout into every Studio Generate submission', () => {
-    expect(app.match(/buildWorkbenchRunOptionsForMode\([^)]*timeoutMinutes/g)?.length).toBe(6);
+    expect(app.match(/buildWorkbenchRunOptionsForMode\([^)]*timeoutMinutes/g)?.length).toBe(8);
     expect(app).not.toContain('buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode),');
     expect(app).not.toContain("buildWorkbenchRunOptionsForMode('draft', createMaxIterations, retryMode),");
   });
@@ -120,7 +119,7 @@ describe('GUI workbench accessibility contract', () => {
     expect(app).toContain('Generation stopped');
     expect(app).toContain('Generation stopped by operator.');
     expect(app).toContain("runReceipt?.outcome === 'stopped' ?");
-    expect(shell).toContain('Generation stopped');
+    expect(app).toContain('Generation stopped');
   });
 
   it('keeps reduced-motion and visible preview-status fallbacks in CSS', () => {

@@ -318,6 +318,7 @@ export function WorkbenchShell({
       {/* Bottom prompt bar */}
       <footer className="liminal-canvas__promptbar">
         <div className="liminal-canvas__promptbar-inner">
+          <label htmlFor="workbench-prompt" className="sr-only">Describe what to create</label>
           <textarea
             id="workbench-prompt"
             value={prompt}

@@ -257,7 +257,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
     if (isCancelledLifecycle(event)) {
       hasCancelled = true;
       phase = 'stopped';
-      latestMessage = String(event.run?.error || 'Generation stopped by operator.');
+      latestMessage = String((event.run as Record<string, unknown>)?.error || 'Generation stopped by operator.');
     }
     if (event.type === 'stream.disconnected' && isDisconnected) {
       phase = 'disconnected';

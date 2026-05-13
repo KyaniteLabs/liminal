@@ -1001,6 +1001,32 @@ export function createApp(configPath, port = 5174) {
     }
   });
 
+  // Garden seed canvas: best archive entry across all domains for Tier 1 autonomous canvas
+  app.get('/api/garden/seed-canvas', async (_req, res) => {
+    try {
+      const { QualityArchive } = await import('../dist/learning/QualityArchive.js');
+      const archive = new QualityArchive();
+      await archive.load();
+      const domains = ['p5', 'glsl', 'three', 'hydra', 'kinetic', 'hyperframes', 'svg', 'ascii', 'html'];
+      let bestEntry = null;
+      for (const domain of domains) {
+        const entries = archive.query(domain, { limit: 3, minQuality: 0.6, sortBy: 'quality' });
+        for (const entry of entries) {
+          if (!bestEntry || entry.qualityScore > bestEntry.qualityScore) {
+            bestEntry = entry;
+          }
+        }
+      }
+      if (bestEntry) {
+        res.json({ hasCanvas: true, output: bestEntry.output, prompt: bestEntry.prompt, qualityScore: bestEntry.qualityScore, domain: bestEntry.domain });
+      } else {
+        res.json({ hasCanvas: false });
+      }
+    } catch (err) {
+      res.json({ hasCanvas: false, error: err.message });
+    }
+  });
+
   // Compost status: heap/seed/soup overview
   app.get('/api/compost/status', async (_req, res) => {
     try {

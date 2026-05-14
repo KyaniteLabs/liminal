@@ -17,6 +17,7 @@ import { ArchivePlacement } from './ArchivePlacement.js';
 import { EmergenceCritic } from './EmergenceCritic.js';
 import { ArchiveEntriesFSAdapter } from '../fs/adapters/ArchiveEntries.js';
 import type { LiminalFS } from '../fs/LiminalFS.js';
+import { join } from 'path';
 import type {
   BehaviorDescriptor,
   LineageRecord,
@@ -68,7 +69,9 @@ export class EmergenceHooks {
     },
   ) {
     this.extractor = new BehaviorDescriptorExtractor();
-    this.lineageTracker = new LineageTracker();
+    this.lineageTracker = new LineageTracker({
+      lineageDir: join(liminalFs.getProjectRoot(), '.liminal', 'lineage'),
+    });
     this.archive = new ArchivePlacement({
       binsPerAxis: archiveConfig?.binsPerAxis,
       nearEliteCapacity: archiveConfig?.nearEliteCapacity,

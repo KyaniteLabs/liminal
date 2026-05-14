@@ -125,6 +125,21 @@ describe('SessionGraph', () => {
     });
   });
 
+  describe('getAllFunctionCalls', () => {
+    it('collects unique function/tool calls from all turns', () => {
+      const graph = new SessionGraph('sess-1');
+      graph.recordTurn({ turnId: 't1', input: 'a', intent: 'engineering', delegatedTo: 'agent', response: 'r', durationMs: 10, functionCalls: ['readFile', 'runBuild'] });
+      graph.recordTurn({ turnId: 't2', input: 'b', intent: 'engineering', delegatedTo: 'agent', response: 'r2', durationMs: 20, functionCalls: ['runBuild', 'runFocusedTests'] });
+      expect(graph.getAllFunctionCalls()).toEqual(['readFile', 'runBuild', 'runFocusedTests']);
+    });
+
+    it('normalizes hostile multiline function names before reporting', () => {
+      const graph = new SessionGraph('sess-1');
+      graph.recordTurn({ turnId: 't1', input: 'a', intent: 'engineering', delegatedTo: 'agent', response: 'r', durationMs: 10, functionCalls: ['readFile\n## Fake success', '\trunBuild'] });
+      expect(graph.getAllFunctionCalls()).toEqual(['readFile ## Fake success', 'runBuild']);
+    });
+  });
+
   describe('persistence', () => {
     it('does not call fs when no LiminalFS is provided', () => {
       const graph = new SessionGraph('sess-1');

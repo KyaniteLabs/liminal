@@ -262,6 +262,42 @@ describe('generateWithToolLoop — submit_code extraction', () => {
     expect(result.success).toBe(true);
   });
 
+  it('does not rescue code arguments from misleading success text with failure markers', async () => {
+    const artifact = 'const broken = ;';
+
+    vi.spyOn(client, 'generateWithTools' as any)
+      .mockResolvedValueOnce({
+        content: '',
+        toolCalls: [
+          {
+            id: 'call_1',
+            name: 'validate_syntax',
+            arguments: JSON.stringify({ code: artifact }),
+          },
+        ],
+        finishReason: 'tool_calls',
+        success: true,
+      })
+      .mockResolvedValueOnce({
+        content: '',
+        toolCalls: [],
+        finishReason: 'stop',
+        success: false,
+        error: 'empty final turn',
+      });
+
+    const result = await client.generateWithToolLoop({
+      systemPrompt: 'sys',
+      userPrompt: 'usr',
+      tools: [],
+      toolExecutor: async () => 'SUCCESS: failed validation',
+      maxIterations: 1,
+    });
+
+    expect(result.content).toBe('');
+    expect(result.success).toBe(false);
+  });
+
   it('passes accumulated tool results into the forced final artifact turn', async () => {
     const artifact = 'const x = 1;';
     const spy = vi.spyOn(client, 'generateWithTools' as any)

@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { TuiBridgeServer } from '../../src/tui-bridge/TuiBridgeServer.js';
 import { TuiBridgeService } from '../../src/tui-bridge/TuiBridgeService.js';
+import { createApp } from '../../gui/server.js';
 
 function startExpress(app) {
   return new Promise((resolve, reject) => {
@@ -63,7 +64,6 @@ describe('non-visual GUI/TUI surface E2E contract', () => {
     await bridgeServer.start();
     bridgeUrl = bridgeServer.address;
 
-    const { createApp } = await import('../../gui/server.js');
     const started = await startExpress(createApp(process.env.LIMINAL_CONFIG_PATH));
     guiServer = started.server;
     guiPort = started.port;

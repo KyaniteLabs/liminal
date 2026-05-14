@@ -21,6 +21,7 @@ export interface SessionReport {
   topIntents: Array<{ intent: string; count: number }>;
   artifactRefs: string[];
   taskRefs: string[];
+  functionCalls: string[];
   avgDurationMs: number;
   totalDurationMs: number;
   format: 'markdown' | 'json';
@@ -39,6 +40,7 @@ export class ReportGenerator {
     const topIntents = this.computeTopIntents(turns);
     const artifactRefs = graph.getAllArtifactRefs();
     const taskRefs = graph.getAllTaskRefs();
+    const functionCalls = graph.getAllFunctionCalls();
     const { avgDurationMs, totalDurationMs } = this.computeTiming(turns);
 
     const baseReport = {
@@ -47,6 +49,7 @@ export class ReportGenerator {
       topIntents,
       artifactRefs,
       taskRefs,
+      functionCalls,
       avgDurationMs,
       totalDurationMs,
     };
@@ -122,6 +125,13 @@ export class ReportGenerator {
       lines.push('', '## Tasks', '');
       for (const ref of report.taskRefs) {
         lines.push(`- ${ref}`);
+      }
+    }
+
+    if (report.functionCalls.length > 0) {
+      lines.push('', '## Functions / Tools', '');
+      for (const name of report.functionCalls) {
+        lines.push(`- ${name}`);
       }
     }
 

@@ -348,6 +348,34 @@ describe('TuiBridgeService', () => {
       expect(content).toContain('- runFocusedTests');
     });
 
+    it('keeps hostile tool names and thoughts on one report line', () => {
+      const service = new TuiBridgeService();
+      const content = service['formatAgentSession'](makeSession({
+        messages: [
+          {
+            role: 'assistant',
+            content: '{}',
+            toolCall: {
+              thought: 'Inspect formatter\n## Fake success',
+              tool: 'readFile\n## Forged section',
+              params: {},
+              expectedResult: 'No forged sections',
+            },
+          },
+          {
+            role: 'tool',
+            content: '{}',
+            toolResult: { success: true },
+          },
+        ],
+      }));
+
+      expect(content).toContain('- Tools used: readFile ## Forged section');
+      expect(content).toContain('- readFile ## Forged section: Inspect formatter ## Fake success (ok)');
+      expect(content).not.toContain('\n## Forged section');
+      expect(content).not.toContain('\n## Fake success');
+    });
+
     it('preserves rolled_back as a distinct status', () => {
       const service = new TuiBridgeService();
       const content = service['formatAgentSession'](makeSession({ status: 'rolled_back' }));
@@ -537,6 +565,66 @@ describe('TuiBridgeService', () => {
           intent: 'direct',
           delegatedTo: 'llm-chat',
         });
+      });
+
+      it('records approved engineering function calls in session reports', async () => {
+        const service = new TuiBridgeService();
+        const session = service.createSession();
+        const llm = mockLlm();
+        const streamEngineeringTask = vi.spyOn(service as any, 'streamEngineeringTask').mockResolvedValue({
+          content: 'Status: success\nEvidence:\n- Tools used: readFile, runBuild',
+          taskId: 'studio-eng-1',
+          functionCalls: ['readFile', 'runBuild'],
+        });
+
+        await service.submitInput(session.sessionId, {
+          mode: 'chat',
+          text: 'fix the bot wrapper reporting',
+          clientIntent: 'chat',
+        }, llm as never);
+
+        const pending = service.getStatus(session.sessionId).pendingAction;
+        expect(pending).toBeDefined();
+        await service.confirmAction(session.sessionId, pending!.id, llm as never);
+
+        await vi.waitFor(() => {
+          expect(streamEngineeringTask).toHaveBeenCalled();
+          const turn = service.getEvents(session.sessionId)
+            .find(e => e.type === 'session.turn' && e.delegatedTo === 'engineering-agent');
+          expect(turn).toMatchObject({ functionCalls: ['readFile', 'runBuild'] });
+        }, { timeout: 2000, interval: 50 });
+
+        await service.submitInput(session.sessionId, { mode: 'chat', text: '/report' });
+        const committed = service.getEvents(session.sessionId)
+          .filter(e => e.type === 'response.committed')
+          .at(-1);
+        expect(committed).toMatchObject({
+          content: expect.stringContaining('## Functions / Tools'),
+        });
+        expect((committed as any).content).toContain('- readFile');
+        expect((committed as any).content).toContain('- runBuild');
+      });
+
+      it('does not report cancelled engineering action function calls', async () => {
+        const service = new TuiBridgeService();
+        const session = service.createSession();
+        const llm = mockLlm();
+
+        await service.submitInput(session.sessionId, {
+          mode: 'chat',
+          text: 'fix and then stop before execution',
+          clientIntent: 'chat',
+        }, llm as never);
+
+        const pending = service.getStatus(session.sessionId).pendingAction;
+        expect(pending).toBeDefined();
+        service.cancelAction(session.sessionId, pending!.id);
+
+        await service.submitInput(session.sessionId, { mode: 'chat', text: '/report' });
+        const committed = service.getEvents(session.sessionId)
+          .filter(e => e.type === 'response.committed')
+          .at(-1);
+        expect((committed as any).content).not.toContain('## Functions / Tools');
       });
 
       it('includes conversation history in LLM prompt for multi-turn context', async () => {

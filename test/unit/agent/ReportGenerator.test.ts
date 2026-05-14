@@ -17,6 +17,7 @@ describe('ReportGenerator', () => {
     expect(report.topIntents).toEqual([]);
     expect(report.artifactRefs).toEqual([]);
     expect(report.taskRefs).toEqual([]);
+    expect(report.functionCalls).toEqual([]);
     expect(report.content).toContain('test-session-1');
     expect(report.content).toContain('Session Report');
   });
@@ -94,7 +95,7 @@ describe('ReportGenerator', () => {
     expect(report.avgDurationMs).toBe(150);
   });
 
-  it('includes artifacts and task refs', () => {
+  it('includes artifacts, task refs, and function calls', () => {
     const graph = new SessionGraph('refs-session');
     graph.recordTurn({
       turnId: 't1',
@@ -105,6 +106,7 @@ describe('ReportGenerator', () => {
       durationMs: 50,
       artifactRefs: ['output/sketch.html'],
       taskRefs: ['TASK-001'],
+      functionCalls: ['readFile', 'runBuild', 'readFile'],
     });
 
     const gen = new ReportGenerator();
@@ -112,5 +114,9 @@ describe('ReportGenerator', () => {
 
     expect(report.artifactRefs).toContain('output/sketch.html');
     expect(report.taskRefs).toContain('TASK-001');
+    expect(report.functionCalls).toEqual(['readFile', 'runBuild']);
+    expect(report.content).toContain('## Functions / Tools');
+    expect(report.content).toContain('- readFile');
+    expect(report.content).toContain('- runBuild');
   });
 });

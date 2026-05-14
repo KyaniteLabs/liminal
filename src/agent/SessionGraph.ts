@@ -24,6 +24,7 @@ export interface SessionTurnRecord {
   durationMs: number;
   artifactRefs?: string[];
   taskRefs?: string[];
+  functionCalls?: string[];
   model?: string;
   timestamp: string;
 }
@@ -117,6 +118,22 @@ export class SessionGraph {
   /** Get all task references across all turns */
   getAllTaskRefs(): string[] {
     return this.turns.flatMap(t => t.taskRefs ?? []);
+  }
+
+  /** Get unique function/tool call names across all turns */
+  getAllFunctionCalls(): string[] {
+    return Array.from(new Set(
+      this.turns
+        .flatMap(t => t.functionCalls ?? [])
+        .filter((name): name is string => typeof name === 'string')
+        .map(name => this.normalizeFunctionCallName(name))
+        .filter(Boolean),
+    ));
+  }
+
+  private normalizeFunctionCallName(name: string): string {
+    const normalized = name.replace(/\s+/g, ' ').trim();
+    return normalized.length > 120 ? `${normalized.slice(0, 117)}...` : normalized;
   }
 
   // ── Persistence ──

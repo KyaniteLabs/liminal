@@ -206,7 +206,7 @@ export type TuiBridgeEvent =
   | { type: 'artifact.found'; sessionId: string; artifactLabel: string; artifactPath: string }
   | ({ type: 'swarm.round'; sessionId: string } & SwarmRoundEvent)
   // Session turn: recorded after every agent routing decision
-  | { type: 'session.turn'; sessionId: string; turnId: string; intent: string; delegatedTo: string; durationMs: number; executor?: TuiRunExecutor; artifactRefs?: string[]; taskRefs?: string[] }
+  | { type: 'session.turn'; sessionId: string; turnId: string; intent: string; delegatedTo: string; durationMs: number; executor?: TuiRunExecutor; artifactRefs?: string[]; taskRefs?: string[]; functionCalls?: string[] }
   // Task lifecycle: engineering delegation events
   | { type: 'task.queued'; sessionId: string; taskId: string; description: string }
   | { type: 'task.started'; sessionId: string; taskId: string }

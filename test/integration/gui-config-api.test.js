@@ -14,6 +14,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import http from 'http';
+import { createApp } from '../../gui/server.js';
 
 const TEST_DIR = path.join(os.tmpdir(), `atelier-gui-config-${Date.now()}`);
 const TEST_CONFIG_PATH = path.join(TEST_DIR, 'config.json');
@@ -32,7 +33,6 @@ describe('GUI config API', () => {
     delete process.env.ATELIER_LLM_MODEL;
     delete process.env.ATELIER_LLM_BASE_URL;
     delete process.env.ATELIER_LLM_API_KEY;
-    const { createApp } = await import('../../gui/server.js');
     const app = createApp(TEST_CONFIG_PATH);
     server = http.createServer(app);
     await new Promise((resolve) => server.listen(0, () => resolve()));

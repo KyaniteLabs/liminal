@@ -82,6 +82,19 @@ Operating rules:
 - Prefer root cause, exact files, verification steps, and small patches.
 - Generated code is untrusted until verified.`;
 
+type SessionTurnExtras = {
+  executor?: TuiRunExecutor;
+  artifactRefs?: string[];
+  taskRefs?: string[];
+  functionCalls?: string[];
+};
+
+type EngineeringTaskRunSummary = {
+  content: string;
+  taskId: string;
+  functionCalls: string[];
+};
+
 /** Keywords that indicate a generation request */
 const GENERATION_KEYWORDS = [
   'generate', 'create', 'make', 'sketch', 'draw', 'code',
@@ -348,6 +361,41 @@ export class TuiBridgeService {
       roles: patch.roles,
       evaluation: patch.evaluation,
       trust: { level: 'untrusted', label: 'Generated code is untrusted by default' },
+    });
+  }
+
+  private emitAndRecordSessionTurn(
+    sessionId: string,
+    turn: {
+      input: string;
+      intent: string;
+      delegatedTo: string;
+      durationMs: number;
+      responseContent?: string;
+      extras?: SessionTurnExtras;
+    },
+  ): void {
+    const turnId = `turn-${Date.now()}`;
+    this.emit(sessionId, {
+      type: 'session.turn',
+      sessionId,
+      turnId,
+      intent: turn.intent,
+      delegatedTo: turn.delegatedTo,
+      durationMs: turn.durationMs,
+      ...turn.extras,
+    });
+
+    this.sessionGraphs.get(sessionId)?.recordTurn({
+      turnId,
+      input: turn.input,
+      intent: turn.intent,
+      delegatedTo: turn.delegatedTo,
+      response: turn.responseContent ?? '',
+      durationMs: turn.durationMs,
+      artifactRefs: turn.extras?.artifactRefs,
+      taskRefs: turn.extras?.taskRefs,
+      functionCalls: turn.extras?.functionCalls,
     });
   }
 
@@ -709,33 +757,15 @@ export class TuiBridgeService {
       }));
     };
 
-    const emitSessionTurn = (delegatedTo: string, responseContent?: string, extras?: { executor?: TuiRunExecutor; artifactRefs?: string[]; taskRefs?: string[] }) => {
-      const turnId = `turn-${Date.now()}`;
-      const durationMs = Date.now() - routeStart;
-      this.emit(sessionId, {
-        type: 'session.turn',
-        sessionId,
-        turnId,
+    const emitSessionTurn = (delegatedTo: string, responseContent?: string, extras?: SessionTurnExtras) => {
+      this.emitAndRecordSessionTurn(sessionId, {
+        input: input.text,
         intent: classification.intent,
         delegatedTo,
-        durationMs,
-        ...extras,
+        responseContent,
+        durationMs: Date.now() - routeStart,
+        extras,
       });
-
-      // Record turn in session graph
-      const graph = this.sessionGraphs.get(sessionId);
-      if (graph) {
-        graph.recordTurn({
-          turnId,
-          input: input.text,
-          intent: classification.intent,
-          delegatedTo,
-          response: responseContent ?? '',
-          durationMs,
-          artifactRefs: extras?.artifactRefs,
-          taskRefs: extras?.taskRefs,
-        });
-      }
     };
 
     if (!llm) {
@@ -840,7 +870,11 @@ export class TuiBridgeService {
         }
         logBridge('input.routed', { sessionId, route: 'studio.engineering', confidence: classification.confidence });
         this.streamEngineeringTask(sessionId, input.text, conversation, llm)
-          .then(() => emitSessionTurn('engineering-agent', undefined, { executor: 'llm-mode-agent' }))
+          .then((result) => emitSessionTurn('engineering-agent', result.content, {
+            executor: 'llm-mode-agent',
+            taskRefs: [result.taskId],
+            functionCalls: result.functionCalls,
+          }))
           .catch(handleError);
         break;
       }
@@ -916,24 +950,26 @@ export class TuiBridgeService {
 
     this.emit(sessionId, { type: 'response.started', sessionId });
     const routeStart = Date.now();
+    const recordApprovedTurn = (result?: EngineeringTaskRunSummary) => this.emitAndRecordSessionTurn(sessionId, {
+      input: approvedText,
+      intent: route === 'creative' ? 'creative' : route === 'hybrid' ? 'hybrid' : 'engineering',
+      delegatedTo: route === 'creative' || route === 'hybrid' ? 'ralph-loop' : 'engineering-agent',
+      responseContent: result?.content,
+      durationMs: Date.now() - routeStart,
+      extras: {
+        executor: route === 'creative' || route === 'hybrid' ? 'ralph-loop' : 'llm-mode-agent',
+        taskRefs: result ? [result.taskId] : undefined,
+        functionCalls: result?.functionCalls,
+      },
+    });
+
     const runApproved = route === 'creative'
-      ? this.streamRalphGeneration(sessionId, approvedText, conversation, llm)
+      ? this.streamRalphGeneration(sessionId, approvedText, conversation, llm).then(() => recordApprovedTurn())
       : route === 'hybrid'
-        ? this.streamHybridTask(sessionId, approvedText, conversation, llm)
-        : this.streamEngineeringTask(sessionId, approvedText, conversation, llm);
+        ? this.streamHybridTask(sessionId, approvedText, conversation, llm).then(() => recordApprovedTurn())
+        : this.streamEngineeringTask(sessionId, approvedText, conversation, llm).then(recordApprovedTurn);
 
     runApproved
-      .then(() => {
-        this.emit(sessionId, {
-          type: 'session.turn',
-          sessionId,
-          turnId: `turn-${Date.now()}`,
-          intent: route === 'creative' ? 'creative' : route === 'hybrid' ? 'hybrid' : 'engineering',
-          delegatedTo: route === 'creative' || route === 'hybrid' ? 'ralph-loop' : 'engineering-agent',
-          executor: route === 'creative' || route === 'hybrid' ? 'ralph-loop' : 'llm-mode-agent',
-          durationMs: Date.now() - routeStart,
-        });
-      })
       .catch((err: unknown) => {
         const message = err instanceof Error ? err.message : String(err);
         this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Task failed: ${message}` });
@@ -2688,7 +2724,7 @@ export class TuiBridgeService {
     userText: string,
     conversation: ConversationManager,
     llm: LLMClient,
-  ): Promise<void> {
+  ): Promise<EngineeringTaskRunSummary> {
     const controller = new AbortController();
     this.activeStreams.set(sessionId, controller);
 
@@ -2819,13 +2855,15 @@ export class TuiBridgeService {
         );
       }
 
+      const functionCalls = this.agentToolsUsed(session);
       logBridge('engineering.completed', {
         sessionId,
         taskId,
         status: session.status,
         steps: session.stepCount,
-        tools: this.agentToolsUsed(session),
+        tools: functionCalls,
       });
+      return { content: fullContent, taskId, functionCalls };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.failRun(sessionId, message);
@@ -3627,7 +3665,9 @@ export class TuiBridgeService {
         const result = mIndex >= 0
           ? session.messages.slice(mIndex + 1).find((candidate) => candidate.role === 'tool' && candidate.toolResult)
           : undefined;
-        return `- ${m.toolCall?.tool}: ${m.toolCall?.thought}${result?.toolResult ? ` (${result.toolResult.success ? 'ok' : 'failed'})` : ''}`;
+        const toolName = this.normalizeFunctionCallName(m.toolCall?.tool || 'unknown');
+        const thought = this.oneLineReportText(m.toolCall?.thought || 'No thought provided');
+        return `- ${toolName}: ${thought}${result?.toolResult ? ` (${result.toolResult.success ? 'ok' : 'failed'})` : ''}`;
       })
       .slice(-12);
     const touchedFiles = Array.from(session.mutatedFiles);
@@ -3693,7 +3733,19 @@ export class TuiBridgeService {
       session.messages
         .map((m) => m.toolCall?.tool)
         .filter((tool): tool is string => Boolean(tool))
+        .map((tool) => this.normalizeFunctionCallName(tool))
+        .filter(Boolean)
     ));
+  }
+
+  private normalizeFunctionCallName(name: string): string {
+    const normalized = name.replace(/\s+/g, ' ').trim();
+    return normalized.length > 120 ? `${normalized.slice(0, 117)}...` : normalized;
+  }
+
+  private oneLineReportText(text: string): string {
+    const normalized = text.replace(/\s+/g, ' ').trim();
+    return normalized.length > 240 ? `${normalized.slice(0, 237)}...` : normalized;
   }
 
   /** Split string into chunks for streaming effect */

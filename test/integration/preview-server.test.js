@@ -20,6 +20,23 @@ describe('PreviewServer Integration Tests', () => {
     return result;
   };
 
+  const getClosedUnusedPort = async () => {
+    const server = http.createServer();
+    await new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    const address = server.address();
+    if (!address || typeof address === 'string') {
+      throw new Error('Unable to allocate an unused test port');
+    }
+    const port = address.port;
+    await new Promise((resolve, reject) => {
+      server.close((error) => error ? reject(error) : resolve());
+    });
+    return port;
+  };
+
   beforeEach(() => {
     previewServer = new PreviewServer();
     TEST_PORT = null;
@@ -364,9 +381,10 @@ describe('PreviewServer Integration Tests', () => {
   describe('error handling', () => {
     it('should handle network errors gracefully', async () => {
       await startPreviewServer();
+      const unusedPort = await getClosedUnusedPort();
 
-      // Try to connect to wrong port
-      await expect(fetch('http://localhost:9999/')).rejects.toThrow();
+      // Try to connect to a port this test just proved was closed.
+      await expect(fetch(`http://127.0.0.1:${unusedPort}/`)).rejects.toThrow();
 
       await previewServer.stop();
     });

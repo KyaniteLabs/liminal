@@ -53,13 +53,13 @@ export function detectPromptCreateMode(prompt: string): CreateModeId | null {
   if (/\btone(?:\.js)?\b|\bweb audio\b|\bsynth\b/.test(lower)) return 'tone';
   if (/\bstrudel\b|\blive coding\b/.test(lower)) return 'strudel';
   if (/\bthree(?:\.js)?\b|\b3d\b|\bwebgl scene\b/.test(lower)) return 'three';
+  if (/\bp5(?:\.js)?\b|\bcreative coding sketch\b/.test(lower)) return 'p5';
+  if (/\bsing\b|\bsinging\b|\bvoice\b|\bmic\b|\bmicrophone\b|\baudio[- ]?reactive\b|\breact to my voice\b/.test(lower)) return 'sing';
   if (/\bglsl\b|\bfragment shader\b|\bshader\b/.test(lower)) return 'glsl';
   if (/\bkinetic\b|\bkinetic typography\b|\bmoving typography\b|\banimated text\b/.test(lower)) return 'kinetic';
   if (/\bhyperframes?\b|\b(promo|trailer|slideshow|title\s*card|subtitle|caption|social\s*media)\b|\bhtml\b|\bcss\b/.test(lower)) return 'hyperframes';
   if (/\bsvg\b|\bvector\b/.test(lower)) return 'svg';
-  if (/\bp5(?:\.js)?\b|\bcreative coding sketch\b/.test(lower)) return 'p5';
   if (/\bascii\b/.test(lower)) return 'ascii';
-  if (/\bsing\b|\bsinging\b|\bvoice\b|\bmic\b|\bmicrophone\b|\baudio[- ]?reactive\b|\breact to my voice\b/.test(lower)) return 'sing';
   return null;
 }
 

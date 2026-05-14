@@ -54,6 +54,15 @@ describe('createModes', () => {
     expect(detectPromptCreateMode('make an HTML landing page')).toBe('hyperframes');
   });
 
+  it('routes voice-reactive shader prompts to Sing instead of generic GLSL', () => {
+    expect(detectPromptCreateMode('make a voice reactive shader I can sing on')).toBe('sing');
+    const prompt = buildWorkbenchPrompt('sing', 'make a voice-reactive shader with aurora ribbons');
+
+    expect(prompt).toContain('portable Sing preset');
+    expect(prompt).toContain('voice features');
+    expect(prompt).not.toContain('Create a GLSL fragment shader.');
+  });
+
   it('routes common video and timeline language to Revideo', () => {
     expect(detectPromptCreateMode('make a product video with timeline cuts')).toBe('revideo');
     expect(detectPromptCreateMode('render an mp4 motion graphics piece')).toBe('revideo');

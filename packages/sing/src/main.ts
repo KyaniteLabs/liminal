@@ -1,6 +1,6 @@
-import { createSingPreset, validateSingPreset, type SingPresetArtifact } from '@liminal/audio-core/PresetSchema.js';
+import { validateSingPreset, type SingPresetArtifact } from '@liminal/audio-core/PresetSchema.js';
 import type { VoiceFeatureFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
-import { DEFAULT_FRAGMENT_SHADER, createSingRenderer, type SingRenderer } from './render/pipeline';
+import { createSingRenderer, stabilizeSingFrame, type SingRenderer, type SingUniformFrame } from './render/pipeline';
 import { SessionRecorder } from './recording/SessionRecorder';
 import './style.css';
 
@@ -16,13 +16,20 @@ let workletNode: AudioWorkletNode | null = null;
 let sharedFrame: Float32Array | null = null;
 let animationId: number | null = null;
 let latestFrame: VoiceFeatureFrame | null = null;
+let stableFrame: SingUniformFrame | null = null;
 let sessionRecorder: SessionRecorder | null = null;
 let recording = false;
 
 const preset = await loadPreset();
-renderer = createSingRenderer(canvas, preset);
-renderIdle();
-setStatus(`${preset.name} ready`);
+if (preset) {
+  renderer = createSingRenderer(canvas, preset);
+  renderIdle();
+  setStatus(`${preset.name} ready`);
+} else {
+  startButton.disabled = true;
+  recordButton.disabled = true;
+  setStatus('Open a generated Sing preset from Studio');
+}
 
 startButton.addEventListener('click', () => {
   if (stream) {
@@ -46,9 +53,9 @@ window.addEventListener('pagehide', () => {
   void stopInstrument();
 });
 
-async function loadPreset(): Promise<SingPresetArtifact> {
+async function loadPreset(): Promise<SingPresetArtifact | null> {
   const presetUrl = new URLSearchParams(window.location.search).get('preset');
-  if (!presetUrl) return defaultPreset();
+  if (!presetUrl) return null;
 
   const response = await fetch(presetUrl);
   if (!response.ok) throw new Error(`Unable to load Sing preset: ${response.status}`);
@@ -57,24 +64,11 @@ async function loadPreset(): Promise<SingPresetArtifact> {
   return validation.preset;
 }
 
-function defaultPreset(): SingPresetArtifact {
-  return createSingPreset({
-    id: 'voice-bloom',
-    name: 'Voice Bloom',
-    shader: DEFAULT_FRAGMENT_SHADER,
-    mappings: [
-      { feature: 'rms', target: 'u_rms', curve: 'easeOut', min: 0, max: 1 },
-      { feature: 'pitchHz', target: 'u_pitch', curve: 'linear', min: 80, max: 900 },
-      { feature: 'centroid', target: 'u_centroid', curve: 'linear', min: 0, max: 1 },
-      { feature: 'spectralFlux', target: 'u_flux', curve: 'easeIn', min: 0, max: 1 },
-      { feature: 'onset', target: 'u_onset', curve: 'step', min: 0, max: 1 },
-      { feature: 'voiced', target: 'u_voiced', curve: 'step', min: 0, max: 1 },
-    ],
-    metadata: { origin: 'sing-default' },
-  });
-}
-
 async function startInstrument(): Promise<void> {
+  if (!preset || !renderer) {
+    setStatus('Open a generated Sing preset from Studio');
+    return;
+  }
   if (!crossOriginIsolated || typeof SharedArrayBuffer === 'undefined') {
     setStatus('Serve Sing with COOP/COEP headers to enable live mic analysis');
     return;
@@ -127,10 +121,11 @@ async function stopInstrument(): Promise<void> {
   audioContext = null;
   sharedFrame = null;
   latestFrame = null;
+  stableFrame = null;
   startButton.textContent = 'Start mic';
   recordButton.disabled = true;
-  setStatus(`${preset.name} ready`);
-  renderIdle();
+  setStatus(preset ? `${preset.name} ready` : 'Open a generated Sing preset from Studio');
+  if (preset) renderIdle();
 }
 
 function renderIdle(): void {
@@ -154,7 +149,7 @@ function renderIdle(): void {
 function renderLive(): void {
   const loop = () => {
     if (!sharedFrame) return;
-    renderer?.render({
+    const rawFrame: SingUniformFrame = {
       rms: sharedFrame[0] ?? 0,
       pitchHz: sharedFrame[1] ?? 0,
       centroid: sharedFrame[2] ?? 0,
@@ -163,7 +158,9 @@ function renderLive(): void {
       voiced: sharedFrame[5] ?? 0,
       confidence: sharedFrame[6] ?? 0,
       elapsedSeconds: audioContext?.currentTime ?? performance.now() / 1000,
-    });
+    };
+    stableFrame = stabilizeSingFrame(rawFrame, stableFrame);
+    renderer?.render(stableFrame);
     if (latestFrame) {
       const pitch = Math.round(latestFrame.pitchHz);
       setStatus(`${latestFrame.voiced ? 'voiced' : 'listening'} · rms ${latestFrame.rms.toFixed(2)} · ${pitch || '--'} Hz`);

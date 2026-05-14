@@ -23,6 +23,7 @@ import {
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 import { latestClarificationRequest, latestCognitiveReceipt, latestRunReceipt } from './gui/workbenchTelemetry';
 import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
+import { buildSingInstrumentUrl, buildStudioSingPreset, selectCurrentSingShader } from './gui/singPreset';
 
 const CuratorMode = React.lazy(() => import('./components/CuratorMode').then((module) => ({ default: module.CuratorMode })));
 const ActivityDashboard = React.lazy(() => import('./components/ActivityDashboard').then((module) => ({ default: module.ActivityDashboard })));
@@ -193,27 +194,7 @@ export default function App() {
   const [visualsCode, setVisualsCode] = useState<string>('');
   const [liveMusicLoading, setLiveMusicLoading] = useState<LiveMusicLoading>({ music: false, visuals: false });
   const hydraContainerRef = useRef<HTMLDivElement>(null);
-  const [singArchiveBase, setSingArchiveBase] = useState<string | null>(null);
   const [singExportError, setSingExportError] = useState<string | null>(null);
-  const [seedCanvas, setSeedCanvas] = useState<string | null>(null);
-
-  // Tier 1: fetch best archive canvas on mount so user always sees something beautiful
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchSeed() {
-      try {
-        const res = await fetch('/api/garden/seed-preset');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.hasCanvas && !cancelled) {
-          setSeedCanvas(data.output);
-          setSingArchiveBase(data.output);
-        }
-      } catch { /* archive not available yet — default canvas handles it */ }
-    }
-    fetchSeed();
-    return () => { cancelled = true; };
-  }, []);
 
   // Form state: effective + loop + creative + galleryPath; on save we build userConfig
   const [provider, setProvider] = useState<string>('lmstudio');
@@ -363,53 +344,18 @@ export default function App() {
     return () => { while (el.firstChild) el.removeChild(el.firstChild); };
   }, [visualsCode, activeTab]);
 
-  // Refresh archive on sing mode entry (in case new outputs archived since mount)
-  useEffect(() => {
-    if (createMode !== 'sing') return;
-    let cancelled = false;
-    async function refreshArchive() {
-      try {
-        const res = await fetch('/api/garden/seed-preset');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.hasCanvas && !cancelled) {
-          setSingArchiveBase(data.output);
-        }
-      } catch { /* ignore */ }
+  function buildCurrentSingPreset() {
+    const source = selectCurrentSingShader({ currentCode: bridge.codePreview?.code });
+    if (!source) {
+      setSingExportError('Generate a Sing preset first, then open it in the standalone instrument.');
+      return null;
     }
-    refreshArchive();
-    return () => { cancelled = true; };
-  }, [createMode]);
+    return buildStudioSingPreset({ source, prompt: createPrompt });
+  }
 
   function exportCurrentSingPreset() {
-    const source = bridge.codePreview?.code || singArchiveBase || seedCanvas;
-    if (!source) {
-      setSingExportError('No Sing shader is ready to export yet.');
-      return;
-    }
-    const preset = {
-      schemaVersion: 1,
-      instrument: 'sing',
-      id: `studio-${Date.now()}`,
-      name: createPrompt.trim() || 'Studio Sing Preset',
-      createdAt: new Date().toISOString(),
-      shader: {
-        language: 'glsl-fragment',
-        source,
-      },
-      mappings: [
-        { feature: 'rms', target: 'u_rms', curve: 'easeOut', min: 0, max: 1 },
-        { feature: 'pitchHz', target: 'u_pitch', curve: 'linear', min: 80, max: 900 },
-        { feature: 'centroid', target: 'u_centroid', curve: 'linear', min: 0, max: 1 },
-        { feature: 'spectralFlux', target: 'u_flux', curve: 'easeIn', min: 0, max: 1 },
-        { feature: 'onset', target: 'u_onset', curve: 'step', min: 0, max: 1 },
-        { feature: 'voiced', target: 'u_voiced', curve: 'step', min: 0, max: 1 },
-      ],
-      metadata: {
-        origin: 'liminal-studio',
-        prompt: createPrompt,
-      },
-    };
+    const preset = buildCurrentSingPreset();
+    if (!preset) return;
     const blob = new Blob([JSON.stringify(preset, null, 2)], { type: 'application/json' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
@@ -422,8 +368,10 @@ export default function App() {
   }
 
   function openSingInstrument() {
-    window.open('http://localhost:5176', '_blank', 'noopener,noreferrer');
-    setMessage('Opening the standalone Sing instrument on localhost:5176.');
+    const preset = buildCurrentSingPreset();
+    if (!preset) return;
+    window.open(buildSingInstrumentUrl(preset), '_blank', 'noopener,noreferrer');
+    setMessage('Opening the generated Sing preset in the standalone Sing instrument.');
   }
 
   const handleRunInPreview = async () => {

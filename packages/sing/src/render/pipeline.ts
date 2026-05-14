@@ -27,6 +27,15 @@ const DEFAULT_UNIFORM_VALUES = {
   u_confidence: (frame: SingUniformFrame) => frame.confidence,
 } as const;
 
+const DEFAULT_MAPPING_SMOOTHING: Record<SingVoiceFeature, number> = {
+  rms: 0.72,
+  pitchHz: 0.84,
+  centroid: 0.8,
+  spectralFlux: 0.88,
+  onset: 0.45,
+  voiced: 0.65,
+};
+
 const VERTEX_SHADER = `
 attribute vec2 a_position;
 void main() {
@@ -34,42 +43,38 @@ void main() {
 }
 `;
 
-export const DEFAULT_FRAGMENT_SHADER = `
-precision mediump float;
-uniform vec2 u_resolution;
-uniform float u_time;
-uniform float u_rms;
-uniform float u_pitch;
-uniform float u_centroid;
-uniform float u_flux;
-uniform float u_onset;
-uniform float u_voiced;
+export function stabilizeSingFrame(frame: SingUniformFrame, previous?: SingUniformFrame | null): SingUniformFrame {
+  const rms = smoothValue(normalizeRange(frame.rms, 0.015, 0.16), previous?.rms, 0.68);
+  const centroid = smoothValue(clamp01(frame.centroid), previous?.centroid, 0.72);
+  const spectralFlux = smoothValue(normalizeRange(frame.spectralFlux, 0.001, 0.025), previous?.spectralFlux, 0.78);
+  const voiced = clamp01(frame.voiced);
+  const confidence = clamp01(frame.confidence);
+  const pitchTarget = frame.pitchHz > 0 && (voiced > 0.2 || confidence > 0.08)
+    ? frame.pitchHz
+    : previous?.pitchHz ?? 0;
+  const pitchHz = pitchTarget > 0 && previous?.pitchHz
+    ? smoothValue(pitchTarget, previous.pitchHz, 0.82)
+    : pitchTarget;
+  const onset = frame.onset > 0.5 ? 1 : Math.max(0, (previous?.onset ?? 0) * 0.82);
 
-void main() {
-  vec2 uv = (gl_FragCoord.xy * 2.0 - u_resolution.xy) / min(u_resolution.x, u_resolution.y);
-  float radius = length(uv);
-  float angle = atan(uv.y, uv.x);
-  float pitch = clamp((u_pitch - 80.0) / 900.0, 0.0, 1.0);
-  float voice = smoothstep(0.0, 0.35, u_rms);
-  float wave = sin(angle * (4.0 + pitch * 12.0) + u_time * (1.2 + u_centroid * 5.0));
-  float ring = smoothstep(0.04 + voice * 0.2, 0.0, abs(radius - 0.35 - wave * 0.08));
-  float bloom = exp(-radius * (2.4 - voice));
-  vec3 low = vec3(0.03, 0.06, 0.09);
-  vec3 warm = vec3(1.0, 0.38 + u_centroid * 0.35, 0.14);
-  vec3 cool = vec3(0.1, 0.55, 1.0);
-  vec3 color = mix(low, mix(warm, cool, pitch), ring + bloom * 0.2);
-  color += vec3(1.0, 0.8, 0.35) * u_onset * exp(-radius * 3.0);
-  color *= 0.45 + voice * 1.4 + u_voiced * 0.3;
-  gl_FragColor = vec4(color, 1.0);
+  return {
+    ...frame,
+    rms,
+    pitchHz,
+    centroid,
+    spectralFlux,
+    onset,
+    voiced,
+    confidence,
+  };
 }
-`;
 
 export function createSingRenderer(canvas: HTMLCanvasElement, preset: SingPresetArtifact): SingRenderer {
   const context = canvas.getContext('webgl', { antialias: false, alpha: false });
   if (!context) throw new Error('WebGL is required for Sing');
   const gl: WebGLRenderingContext = context;
 
-  const program = createProgram(gl, VERTEX_SHADER, preset.shader.source || DEFAULT_FRAGMENT_SHADER);
+  const program = createProgram(gl, VERTEX_SHADER, preset.shader.source);
   const positionLocation = gl.getAttribLocation(program, 'a_position');
   const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
   const timeLocation = gl.getUniformLocation(program, 'u_time');
@@ -134,7 +139,7 @@ export function mapSingPresetUniforms(
   for (const mapping of preset.mappings) {
     const mapped = applyMappingCurve(featureValue(frame, mapping.feature), mapping);
     const previous = previousValues.get(mapping.target);
-    values.set(mapping.target, smoothUniformValue(mapped, previous, mapping.smoothing));
+    values.set(mapping.target, smoothUniformValue(mapped, previous, mapping.smoothing ?? DEFAULT_MAPPING_SMOOTHING[mapping.feature]));
   }
   return values;
 }
@@ -185,8 +190,18 @@ function smoothUniformValue(value: number, previous: number | undefined, smoothi
   return previous * amount + value * (1 - amount);
 }
 
+function smoothValue(value: number, previous: number | undefined, smoothing: number): number {
+  return smoothUniformValue(value, previous, smoothing);
+}
+
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
+}
+
+function normalizeRange(value: number, min: number, max: number): number {
+  const span = max - min;
+  if (span <= 0) return 0;
+  return clamp01((value - min) / span);
 }
 
 function createProgram(gl: WebGLRenderingContext, vertexSource: string, fragmentSource: string): WebGLProgram {

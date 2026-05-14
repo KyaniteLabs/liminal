@@ -105,9 +105,11 @@ A directory under `~/.liminal/sing-presets/<id>/` containing:
 ### 2. Session Log (Sing → Liminal)
 
 A directory under `~/.liminal/sing-sessions/<timestamp>/`:
-- `audio.wav` — raw voice recording
+- `audio.webm` — raw voice recording (WebM/Opus container, MediaRecorder native output; canonical on-disk format for sessions)
 - `telemetry.jsonl` — timestamped voice features + parameter values + preset transitions (one row per frame, ~60Hz)
 - `meta.json` — preset ids used, duration, performer-marked highlights
+
+The Session Ingester decodes WebM/Opus on read when feeding downstream pipelines (Archive embeddings, offline render). MediaRecorder writes Opus bytes straight to disk with no additional transcode step — note this is *not* lossless, since Opus is a lossy encoder; the contract is "one encode, never re-encoded." If a session requires archival-quality audio for later analysis, capture a parallel WAV via `AudioWorklet` PCM dump alongside the WebM (out of scope for v1).
 
 ```jsonc
 // telemetry.jsonl example row
@@ -139,7 +141,7 @@ Create the package with a minimal vertical slice:
 - Uniforms updated per frame via SharedArrayBuffer
 - Single full-screen canvas, no UI yet
 
-**Verification:** Open `packages/sing/index.html` in browser, sing into mic, see the canvas react. Measure audio→pixel latency with a clap test (<50ms target).
+**Verification:** Run `pnpm --filter sing dev` and open the served URL. The dev server must be configured to emit `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` so `SharedArrayBuffer` is available (vanilla Vite does *not* set these — use `vite-plugin-cross-origin-isolation` or equivalent middleware; this is the matching half of the COOP/COEP risk listed below). Opening `index.html` via `file://` won't satisfy cross-origin isolation and the worklet→render path will silently fall back. Once served, sing into the mic, see the canvas react, measure audio→pixel latency with a clap test (<50ms target).
 
 ### Phase 3 — Preset loader
 

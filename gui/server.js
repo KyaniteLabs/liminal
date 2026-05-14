@@ -1001,8 +1001,8 @@ export function createApp(configPath, port = 5174) {
     }
   });
 
-  // Garden seed canvas: best archive entry across all domains for Tier 1 autonomous canvas
-  app.get('/api/garden/seed-canvas', async (_req, res) => {
+  // Garden seed preset: best archive entry across all domains for Sing authoring.
+  async function sendGardenSeedPreset(_req, res) {
     try {
       const { QualityArchive } = await import('../dist/learning/QualityArchive.js');
       const archive = new QualityArchive();
@@ -1025,7 +1025,10 @@ export function createApp(configPath, port = 5174) {
     } catch (err) {
       res.json({ hasCanvas: false, error: err.message });
     }
-  });
+  }
+
+  app.get('/api/garden/seed-preset', sendGardenSeedPreset);
+  app.get('/api/garden/seed-canvas', sendGardenSeedPreset);
 
   // Compost status: heap/seed/soup overview
   app.get('/api/compost/status', async (_req, res) => {

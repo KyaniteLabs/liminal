@@ -39,7 +39,7 @@ export const CREATE_MODE_OPTIONS: CreateModeOption[] = [
   { id: 'text', label: 'Text art', stageLabel: 'Text generative art', promptHint: 'Create concrete poetry or text generative art.' },
   { id: 'revideo', label: 'Revideo', stageLabel: 'Revideo composition', promptHint: 'Create a Revideo composition.' },
   { id: 'organism', label: 'Organism (Strudel + Hydra)', stageLabel: 'Strudel + Hydra organism' },
-  { id: 'sing', label: 'Sing', stageLabel: 'Voice-reactive visuals', promptHint: 'Create beautiful, flowing generative visuals that respond to live voice and singing. Read window.__liminalAudio inside the animation loop. Map voice energy (rms) to scale, brightness, and density. Map spectral brightness (centroid) to color hue, warmth, and motion speed. The result should feel alive, emotionally responsive, and organic.' },
+  { id: 'sing', label: 'Sing preset', stageLabel: 'Sing preset artifact', promptHint: 'Create a portable Sing preset for the standalone vocal instrument. Return a GLSL fragment shader and explicit mappings from voice features (rms, pitchHz, centroid, spectralFlux, onset, voiced) to shader uniforms. Do not depend on Studio microphone state or window.__liminalAudio.' },
 ];
 
 export function getCreateModeOption(mode: string): CreateModeOption {

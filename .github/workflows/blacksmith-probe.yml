@@ -10,6 +10,11 @@ permissions:
 
 jobs:
   probe:
-    uses: KyaniteLabs/.github/.github/workflows/blacksmith-probe.yml@main
-    with:
-      probe_label: complementary-runner-probe
+    runs-on: [self-hosted, macOS, ARM64]
+    steps:
+      - name: Self-hosted runner probe
+        run: |
+          echo "Self-hosted runner probe"
+          echo "Runner: $RUNNER_NAME"
+          echo "OS: $RUNNER_OS"
+          echo "Arch: $RUNNER_ARCH"

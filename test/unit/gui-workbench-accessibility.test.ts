@@ -104,9 +104,10 @@ describe('GUI workbench accessibility contract', () => {
   });
 
   it('passes the visible loop timeout into every Studio Generate submission', () => {
-    expect(app.match(/buildWorkbenchRunOptionsForMode\([^)]*timeoutMinutes/g)?.length).toBe(8);
+    expect(app.match(/buildWorkbenchRunOptionsForMode\([^)]*timeoutMinutes/g)?.length).toBe(7);
     expect(app).not.toContain('buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode),');
     expect(app).not.toContain("buildWorkbenchRunOptionsForMode('draft', createMaxIterations, retryMode),");
+    expect(app).not.toContain('audio-sing-worklet');
   });
 
   it('keeps operator-stopped runs visible with retry recourse instead of resetting to ready', () => {

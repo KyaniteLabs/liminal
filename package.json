@@ -27,8 +27,9 @@
   "scripts": {
     "postinstall": "node scripts/packaging/postinstall.mjs",
     "prepack": "npm run build",
+    "prebuild": "pnpm --filter @liminal/audio-core build",
     "build": "tsc --incremental false",
-    "test": "vitest run",
+    "test": "pnpm --filter @liminal/audio-core build && vitest run",
     "test:integration": "vitest run test/integration --coverage=false",
     "verify:integration": "npm run build && vitest run test/integration --coverage=false",
     "test:e2e": "vitest run test/e2e --coverage=false",
@@ -51,6 +52,7 @@
     "final-qa:test-quality": "pnpm test:quality:strict",
     "final-qa:surface": "node scripts/ci/final-qa-surface-gate.mjs",
     "gui:build": "pnpm --dir gui build",
+    "pretypecheck": "pnpm --filter @liminal/audio-core build && pnpm --filter sing typecheck",
     "typecheck": "tsc --noEmit",
     "docs": "typedoc --out docs src/",
     "dogfood:report": "npx tsx scripts/generate-dogfood-report.ts",
@@ -111,6 +113,7 @@
     "vitest": "^4.1.2"
   },
   "dependencies": {
+    "@liminal/audio-core": "workspace:*",
     "@babel/parser": "^7.29.2",
     "@babel/traverse": "^7.29.0",
     "@babel/types": "^7.29.0",
@@ -149,10 +152,11 @@
   },
   "overrides": {
     "basic-ftp": "5.3.1",
-    "hono": "4.12.16",
+    "hono": "4.12.18",
     "ip-address": "10.2.0",
     "picomatch": "4.0.4",
-    "protobufjs": "^7.5.5",
+    "@protobufjs/utf8": "1.1.1",
+    "protobufjs": "^7.5.6",
     "vite": "8.0.9"
   },
   "bin": {
@@ -190,9 +194,10 @@
       "cookie": "0.7.0",
       "path-to-regexp": "8.4.0",
       "basic-ftp": "5.3.1",
-      "hono": "4.12.16",
+      "hono": "4.12.18",
       "ip-address": "10.2.0",
-      "protobufjs": "^7.5.5",
+      "@protobufjs/utf8": "1.1.1",
+      "protobufjs": "^7.5.6",
       "vite": "8.0.9",
       "uuid": "^14.0.0"
     }

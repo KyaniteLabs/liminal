@@ -180,6 +180,29 @@ describe('ShaderGenerator', () => {
     expect(gen.validate(sanitized).valid).toBe(true);
   });
 
+  it('repairs dynamic loop bounds without duplicating the loop block brace', () => {
+    const gen = new ExposedShaderGenerator();
+    const code = [
+      'precision highp float;',
+      'uniform int steps;',
+      'uniform float u_time;',
+      'float noise(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233))) * 43758.5453); }',
+      'void main(){',
+      '  float acc = 0.0;',
+      '  for (int i = 0; i < steps; i++) {',
+      '    acc += noise(vec2(float(i), u_time)) * 0.01;',
+      '  }',
+      '  gl_FragColor = vec4(acc, sin(u_time) * 0.5 + 0.5, 1.0 - acc, 1.0);',
+      '}',
+    ].join('\n');
+
+    const sanitized = (gen as any).sanitizeShaderCode(code);
+
+    expect(sanitized).toContain('for (int i = 0; i < 256; i++) { if (i >= int(steps)) break;');
+    expect(sanitized).not.toContain('break; {');
+    expect(gen.validate(sanitized).valid).toBe(true);
+  });
+
   it('renders a visible local recovery shader when the provider returns no GLSL artifact', async () => {
     vi.spyOn(LLMClient, 'isConfigured').mockReturnValue(true);
     const llm = new LLMClient({

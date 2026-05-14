@@ -479,7 +479,10 @@ describe('TuiBridgeService', () => {
         }, llm as never);
 
         // Wait for async streamDirectChat to complete
-        await new Promise(r => setTimeout(r, 100));
+        await vi.waitFor(() => {
+          const evts = service.getEvents(session.sessionId);
+          expect(evts.some(e => e.type === 'response.completed')).toBe(true);
+        }, { timeout: 2000, interval: 50 });
 
         const events = service.getEvents(session.sessionId);
         const types = events.map(e => e.type);

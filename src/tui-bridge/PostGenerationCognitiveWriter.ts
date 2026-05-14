@@ -3,6 +3,7 @@ import path from 'node:path';
 import { Logger } from '../utils/Logger.js';
 import { harnessMemory } from '../harness/HarnessMemory.js';
 import { DreamQueue, type DreamStrategy } from '../dreaming/DreamQueue.js';
+import { QualityArchive } from '../learning/QualityArchive.js';
 
 export interface CognitiveOrganReceipt {
   organ: string;
@@ -37,6 +38,7 @@ export interface PostGenerationCognitiveWriterOptions {
   memory?: MemoryStore;
   compost?: CompostSink;
   dreamQueue?: DreamSink;
+  qualityArchive?: QualityArchive;
   artifactRoot?: string;
 }
 
@@ -73,11 +75,13 @@ export class PostGenerationCognitiveWriter {
   private readonly dreamQueue: DreamSink;
   private readonly artifactRoot: string;
   private compost?: CompostSink;
+  private qualityArchive?: QualityArchive;
 
   constructor(options: PostGenerationCognitiveWriterOptions = {}) {
     this.memory = options.memory ?? harnessMemory;
     this.dreamQueue = options.dreamQueue ?? new DreamQueue();
     this.compost = options.compost;
+    this.qualityArchive = options.qualityArchive;
     this.artifactRoot = options.artifactRoot ?? path.join(process.cwd(), '.omx', 'proof', 'live-cognition');
   }
 
@@ -145,6 +149,22 @@ export class PostGenerationCognitiveWriter {
       receipts.push({ organ: 'dreaming', status: 'unavailable', detail: `Dream enqueue failed: ${this.errorMessage(error)}` });
     }
 
+    try {
+      const archive = await this.getQualityArchive();
+      await archive.add({
+        id: episodeId ?? `gen-${Date.now()}`,
+        domain: context.domain,
+        prompt: context.userText,
+        output: context.code,
+        qualityScore: context.finalScore,
+        metadata: { model: context.model, iterations: context.iterations, reason: context.reason, executionMode: context.executionMode },
+        createdAt: new Date().toISOString(),
+      });
+      receipts.push({ organ: 'archive', status: 'observed', detail: `Archived ${context.domain} output (score ${context.finalScore.toFixed(2)}) for taste learning.` });
+    } catch (error) {
+      receipts.push({ organ: 'archive', status: 'unavailable', detail: `Quality archive write failed: ${this.errorMessage(error)}` });
+    }
+
     return { artifactPath, episodeId, receipts };
   }
 
@@ -171,6 +191,18 @@ export class PostGenerationCognitiveWriter {
       });
     }
     return this.compost;
+  }
+
+  setQualityArchive(archive: QualityArchive): void {
+    this.qualityArchive = archive;
+  }
+
+  private async getQualityArchive(): Promise<QualityArchive> {
+    if (!this.qualityArchive) {
+      this.qualityArchive = new QualityArchive();
+      await this.qualityArchive.load();
+    }
+    return this.qualityArchive;
   }
 
   private async writeArtifact(context: CompletedGenerationContext): Promise<string> {

@@ -275,11 +275,38 @@ export class ShaderGenerator extends TierBasedGenerator {
   }
 
   private repairCommonLocalModelIssues(code: string): string {
+    // Fix palette vec2 signature mismatch
     const hasPaletteVec2Call = /\bpalette\s*\(\s*p\s*\)/.test(code);
     const paletteBodyUsesP = /\bvec3\s+palette\s*\(\s*float\s+\w+\s*\)\s*\{[\s\S]*?\bp\b[\s\S]*?\}/.test(code);
-    if (!hasPaletteVec2Call || !paletteBodyUsesP) return code;
+    if (hasPaletteVec2Call && paletteBodyUsesP) {
+      code = code.replace(/\bvec3\s+palette\s*\(\s*float\s+\w+\s*\)/, 'vec3 palette(vec2 p)');
+    }
 
-    return code.replace(/\bvec3\s+palette\s*\(\s*float\s+\w+\s*\)/, 'vec3 palette(vec2 p)');
+    // Fix non-constant for-loop bounds (GLSL ES 1.0 restriction)
+    code = this.repairDynamicLoopBounds(code);
+
+    return code;
+  }
+
+  /**
+   * Rewrite `for (int i = 0; i < <expr>; i++)` where <expr> is not a constant literal.
+   * WebGL 1 GLSL ES requires constant loop bounds. Replace with a capped loop + early break.
+   */
+  private repairDynamicLoopBounds(code: string): string {
+    // Don't repair GLSL 300 es — it supports dynamic bounds natively
+    if (/^\s*#version\s+300\s+es/m.test(code)) return code;
+
+    return code.replace(
+      /\bfor\s*\(\s*int\s+(\w+)\s*=\s*(\d+)\s*;\s*\1\s*<\s*([^;]+?)\s*;\s*\1\s*\+\+\s*\)\s*(\{?)/g,
+      (_match, varName: string, init: string, bound: string, openBrace: string) => {
+        const trimmedBound = bound.trim();
+        // Already a literal constant — no repair needed
+        if (/^\d+$/.test(trimmedBound)) return _match;
+        if (openBrace !== '{') return _match;
+        const safeCap = 256;
+        return `for (int ${varName} = ${init}; ${varName} < ${safeCap}; ${varName}++) { if (${varName} >= int(${trimmedBound})) break;`;
+      },
+    );
   }
 
   private shouldUseProviderRecoveryShader(err: unknown, signal?: AbortSignal): boolean {

@@ -373,6 +373,18 @@ export class QualityArchive {
   }
 
   /**
+   * Get all entries across all domains.
+   * @returns All entries in the archive
+   */
+  getAllEntries(): ArchiveEntry[] {
+    const result: ArchiveEntry[] = [];
+    for (const entries of this.cache.values()) {
+      result.push(...entries);
+    }
+    return result;
+  }
+
+  /**
    * Get an entry by ID.
    * @param itemId - ID of the entry
    * @returns The entry if found, undefined otherwise

@@ -20,9 +20,6 @@ import {
   type CreateModeId,
   type WorkbenchExecutionMode,
 } from './gui/createModes';
-import { analyzeSingFrame, summarizeAudioSing, freqToNote, type AudioSingFrame } from './gui/audioSing';
-import { buildSingPreviewHtml, buildDefaultSingPreviewHtml, buildLayeredSingHtml, deriveVoiceVisualProfile, profileToPrompt, type VoiceVisualProfile } from './gui/singPreview';
-import { formatMicCaptureError } from '../../src/shared/micPermission';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 import { latestClarificationRequest, latestCognitiveReceipt, latestRunReceipt } from './gui/workbenchTelemetry';
 import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
@@ -71,8 +68,6 @@ interface GuiIteration {
   id?: number;
   timestamp?: number;
 }
-
-type MicStatus = 'idle' | 'recording' | 'ready' | 'error';
 
 interface ConfigResponse {
   effective?: {
@@ -198,26 +193,8 @@ export default function App() {
   const [visualsCode, setVisualsCode] = useState<string>('');
   const [liveMusicLoading, setLiveMusicLoading] = useState<LiveMusicLoading>({ music: false, visuals: false });
   const hydraContainerRef = useRef<HTMLDivElement>(null);
-  const [micStatus, setMicStatus] = useState<MicStatus>('idle');
-  const [micError, setMicError] = useState<string | null>(null);
-  const MIC_MAX_FRAMES = 1800; // ~30s at 60fps
-  const micFramesRef = useRef<AudioSingFrame[]>([]);
-  const micStartPendingRef = useRef<boolean>(false);
-  const micActiveRef = useRef<boolean>(false);
-  const micStreamRef = useRef<MediaStream | null>(null);
-  const micContextRef = useRef<AudioContext | null>(null);
-  const micAnalyserRef = useRef<AnalyserNode | null>(null);
-  const micWorkletRef = useRef<AudioWorkletNode | null>(null);
-  const micWorkletFrameRef = useRef<{ rms: number; onset: boolean; pitch: number; confidence: number; voiced: boolean } | null>(null);
-  const micRafRef = useRef<number | null>(null);
-  const micFallbackIntervalRef = useRef<number | null>(null);
-  const micLastFrameAtRef = useRef<number>(0);
-  const singFrameRef = useRef<HTMLIFrameElement>(null);
-  const singLayersRef = useRef<Array<{ code: string; blendMode: string; opacity: number }>>([]);
-  const [singLayerCount, setSingLayerCount] = useState(0);
-  const singVoiceProfileRef = useRef<VoiceVisualProfile | null>(null);
   const [singArchiveBase, setSingArchiveBase] = useState<string | null>(null);
-  const singTasteRef = useRef<string | null>(null);
+  const [singExportError, setSingExportError] = useState<string | null>(null);
   const [seedCanvas, setSeedCanvas] = useState<string | null>(null);
 
   // Tier 1: fetch best archive canvas on mount so user always sees something beautiful
@@ -225,13 +202,12 @@ export default function App() {
     let cancelled = false;
     async function fetchSeed() {
       try {
-        const res = await fetch('/api/garden/seed-canvas');
+        const res = await fetch('/api/garden/seed-preset');
         if (!res.ok) return;
         const data = await res.json();
         if (data.hasCanvas && !cancelled) {
           setSeedCanvas(data.output);
           setSingArchiveBase(data.output);
-          singTasteRef.current = data.prompt;
         }
       } catch { /* archive not available yet — default canvas handles it */ }
     }
@@ -387,22 +363,17 @@ export default function App() {
     return () => { while (el.firstChild) el.removeChild(el.firstChild); };
   }, [visualsCode, activeTab]);
 
-  useEffect(() => () => {
-    stopMicCapture(false);
-  }, []);
-
   // Refresh archive on sing mode entry (in case new outputs archived since mount)
   useEffect(() => {
     if (createMode !== 'sing') return;
     let cancelled = false;
     async function refreshArchive() {
       try {
-        const res = await fetch('/api/garden/seed-canvas');
+        const res = await fetch('/api/garden/seed-preset');
         if (!res.ok) return;
         const data = await res.json();
         if (data.hasCanvas && !cancelled) {
           setSingArchiveBase(data.output);
-          singTasteRef.current = data.prompt;
         }
       } catch { /* ignore */ }
     }
@@ -410,207 +381,49 @@ export default function App() {
     return () => { cancelled = true; };
   }, [createMode]);
 
-  useEffect(() => {
-    const preview = bridge.codePreview;
-    if (!preview?.code) return;
-    if (createMode !== 'sing' && !singVoiceProfileRef.current) return;
-    const code = preview.code;
-    if (singLayersRef.current.some((l) => l.code === code)) return;
-    const profile = singVoiceProfileRef.current;
-    const layer = {
-      code,
-      blendMode: profile?.blendMode || 'screen',
-      opacity: profile?.layerOpacity || 0.7,
+  function exportCurrentSingPreset() {
+    const source = bridge.codePreview?.code || singArchiveBase || seedCanvas;
+    if (!source) {
+      setSingExportError('No Sing shader is ready to export yet.');
+      return;
+    }
+    const preset = {
+      schemaVersion: 1,
+      instrument: 'sing',
+      id: `studio-${Date.now()}`,
+      name: createPrompt.trim() || 'Studio Sing Preset',
+      createdAt: new Date().toISOString(),
+      shader: {
+        language: 'glsl-fragment',
+        source,
+      },
+      mappings: [
+        { feature: 'rms', target: 'u_rms', curve: 'easeOut', min: 0, max: 1 },
+        { feature: 'pitchHz', target: 'u_pitch', curve: 'linear', min: 80, max: 900 },
+        { feature: 'centroid', target: 'u_centroid', curve: 'linear', min: 0, max: 1 },
+        { feature: 'spectralFlux', target: 'u_flux', curve: 'easeIn', min: 0, max: 1 },
+        { feature: 'onset', target: 'u_onset', curve: 'step', min: 0, max: 1 },
+        { feature: 'voiced', target: 'u_voiced', curve: 'step', min: 0, max: 1 },
+      ],
+      metadata: {
+        origin: 'liminal-studio',
+        prompt: createPrompt,
+      },
     };
-    singLayersRef.current = [...singLayersRef.current, layer];
-    setSingLayerCount(singLayersRef.current.length);
-    singVoiceProfileRef.current = null;
-  }, [bridge.codePreview?.code, createMode]);
-
-  function singAddLayer(code: string, blendMode?: string, opacity?: number) {
-    const layer = { code, blendMode: blendMode || 'screen', opacity: opacity ?? 0.7 };
-    singLayersRef.current = [...singLayersRef.current, layer];
-    setSingLayerCount(singLayersRef.current.length);
+    const blob = new Blob([JSON.stringify(preset, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = `${preset.id}.sing-preset.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setSingExportError(null);
+    setMessage('Sing preset exported for the standalone instrument.');
   }
 
-  function singClearLayers() {
-    singLayersRef.current = [];
-    setSingLayerCount(0);
-    singVoiceProfileRef.current = null;
-  }
-
-  function sendSingFrame(frame: AudioSingFrame) {
-    const el = singFrameRef.current;
-    const target = el?.contentWindow;
-    if (target) {
-      const hasSrc = el.getAttribute('src');
-      const origin = hasSrc
-        ? new URL(hasSrc, window.location.href).origin
-        : '*';
-      target.postMessage({ type: 'liminal-audio-frame', frame }, origin);
-    }
-  }
-
-  async function startMicCapture() {
-    if (micStartPendingRef.current) return;
-    if (micStatus === 'recording' || micActiveRef.current) {
-      stopMicCapture(true);
-      return;
-    }
-    setMicError(null);
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setMicStatus('error');
-      setMicError('Browser microphone input is unavailable.');
-      return;
-    }
-    micStartPendingRef.current = true;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
-      const audioContext = new AudioContextCtor();
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 2048;
-      source.connect(analyser);
-
-      micStreamRef.current = stream;
-      micContextRef.current = audioContext;
-      micAnalyserRef.current = analyser;
-      micFramesRef.current = [];
-      micLastFrameAtRef.current = 0;
-      micActiveRef.current = true;
-      setMicStatus('recording');
-      setMessage('Sing into the microphone and watch the visuals respond to your voice. Click Stop to freeze.');
-
-      const frequencyData = new Uint8Array(analyser.frequencyBinCount);
-      const sampleRate = audioContext.sampleRate;
-      let prevRms = 0;
-
-      // Compute spectral centroid from the latest AnalyserNode FFT data
-      function computeCentroid(): number {
-        const currentAnalyser = micAnalyserRef.current;
-        if (!currentAnalyser) return 0;
-        currentAnalyser.getByteFrequencyData(frequencyData);
-        let total = 0;
-        let weighted = 0;
-        for (let i = 0; i < frequencyData.length; i++) {
-          total += frequencyData[i];
-          weighted += frequencyData[i] * i;
-        }
-        return total ? weighted / total / frequencyData.length : 0;
-      }
-
-      // Forward a complete audio frame to the iframe immediately
-      function forwardFrame(partial: { rms: number; onset: boolean; pitch: number; confidence: number; voiced: boolean }) {
-        const now = performance.now();
-        const frame: AudioSingFrame = {
-          rms: partial.rms,
-          centroid: computeCentroid(),
-          pitch: partial.pitch,
-          note: partial.voiced ? freqToNote(partial.pitch) : '',
-          onset: partial.onset,
-          voiced: partial.voiced,
-          confidence: partial.confidence,
-          capturedAt: now,
-        };
-        micFramesRef.current.push(frame);
-        if (micFramesRef.current.length > MIC_MAX_FRAMES) {
-          micFramesRef.current = micFramesRef.current.slice(-MIC_MAX_FRAMES);
-        }
-        sendSingFrame(frame);
-        micLastFrameAtRef.current = now;
-      }
-
-      // Try AudioWorklet for low-latency time-domain analysis
-      let workletLoaded = false;
-      try {
-        await audioContext.audioWorklet.addModule('/audio-sing-worklet.js');
-        const workletNode = new AudioWorkletNode(audioContext, 'audio-sing-processor');
-        source.connect(workletNode);
-        workletNode.port.onmessage = (event) => {
-          if (!micActiveRef.current) return;
-          forwardFrame(event.data);
-        };
-        micWorkletRef.current = workletNode;
-        workletLoaded = true;
-      } catch (workletErr) {
-        console.warn('AudioWorklet not available, falling back to AnalyserNode-only:', workletErr);
-      }
-
-      // Fallback: AnalyserNode-only at ~120fps (8ms) — faster than rAF
-      if (!workletLoaded) {
-        micFallbackIntervalRef.current = window.setInterval(() => {
-          if (!micActiveRef.current || !micAnalyserRef.current) return;
-          const currentAnalyser = micAnalyserRef.current;
-          const timeData = new Uint8Array(currentAnalyser.fftSize);
-          currentAnalyser.getByteTimeDomainData(timeData);
-          currentAnalyser.getByteFrequencyData(frequencyData);
-          const frame = analyzeSingFrame(timeData, frequencyData, sampleRate, prevRms);
-          prevRms = frame.rms;
-          micFramesRef.current.push(frame);
-          if (micFramesRef.current.length > MIC_MAX_FRAMES) {
-            micFramesRef.current = micFramesRef.current.slice(-MIC_MAX_FRAMES);
-          }
-          sendSingFrame(frame);
-          micLastFrameAtRef.current = performance.now();
-        }, 8);
-      }
-    } catch (err) {
-      setMicStatus('error');
-      setMicError(formatMicCaptureError(err, 'try Sing again'));
-    } finally {
-      micStartPendingRef.current = false;
-    }
-  }
-
-  function voiceSummaryToPrompt(summary: ReturnType<typeof summarizeAudioSing>): string {
-    const profile = deriveVoiceVisualProfile(summary);
-    singVoiceProfileRef.current = profile;
-    return profileToPrompt(profile, singTasteRef.current ?? undefined);
-  }
-
-  function stopMicCapture(commitPrompt = true) {
-    micStartPendingRef.current = false;
-    micActiveRef.current = false;
-    if (micRafRef.current != null) window.cancelAnimationFrame(micRafRef.current);
-    micRafRef.current = null;
-    if (micFallbackIntervalRef.current != null) window.clearInterval(micFallbackIntervalRef.current);
-    micFallbackIntervalRef.current = null;
-    micWorkletRef.current?.port.close();
-    micWorkletRef.current?.disconnect();
-    micWorkletRef.current = null;
-    micWorkletFrameRef.current = null;
-    micStreamRef.current?.getTracks().forEach((track) => track.stop());
-    micStreamRef.current = null;
-    void micContextRef.current?.close?.();
-    micContextRef.current = null;
-    micAnalyserRef.current = null;
-
-    if (!commitPrompt) return;
-    const frames = micFramesRef.current;
-    if (frames.length === 0) {
-      setMicStatus('error');
-      setMicError('No microphone frames were captured.');
-      return;
-    }
-    const summary = summarizeAudioSing(frames);
-    setMicStatus('ready');
-    setMicError(null);
-    const profile = singVoiceProfileRef.current || deriveVoiceVisualProfile(summary);
-    singVoiceProfileRef.current = profile;
-    setMessage(`Voice captured: ${summary.label}. Generating ${profile.recommendedDomain} layer from your voice...`);
-
-    const voicePrompt = voiceSummaryToPrompt(summary);
-    const domainMode = profile.recommendedDomain as CreateModeId;
-    setCreateMode('sing');
-    setCreatePrompt(voicePrompt);
-    const singHint = getCreateModeOption('sing').promptHint;
-    const domainHint = getCreateModeOption(domainMode).promptHint;
-    const combinedHint = [singHint, domainHint].filter(Boolean).join('\n');
-    void bridge.submitPrompt(`${combinedHint}\n\nUser prompt: ${voicePrompt}`, {
-      clientIntent: 'creative',
-      ...buildWorkbenchRunOptionsForMode('prove', 3, domainMode, timeoutMinutes),
-    });
+  function openSingInstrument() {
+    window.open('http://localhost:5176', '_blank', 'noopener,noreferrer');
+    setMessage('Opening the standalone Sing instrument on localhost:5176.');
   }
 
   const handleRunInPreview = async () => {
@@ -919,14 +732,8 @@ export default function App() {
       : 'Type a prompt below or click a suggestion to get started.';
   const clarificationRequest = activeMode.id === 'generate' ? latestClarificationRequest(bridge.events) : null;
   const cognitiveReceipt = activeMode.id === 'generate' ? latestCognitiveReceipt(bridge.events) : null;
-  const singPreviewHtml = bridgeCodePreview?.code ? buildSingPreviewHtml(bridgeCodePreview.code) : '';
-  const defaultSingPreview = buildDefaultSingPreviewHtml();
-  const archiveBaseHtml = singArchiveBase ? buildSingPreviewHtml(singArchiveBase) : '';
-  const baseSingHtml = archiveBaseHtml || defaultSingPreview;
-  const activeSingPreview = singLayersRef.current.length > 0
-    ? buildLayeredSingHtml(baseSingHtml, singLayersRef.current)
-    : (micStatus === 'recording' || singLayerCount > 0) ? baseSingHtml : '';
-  const hasDirectSingTarget = singLayerCount > 0;
+  const activeSingPreview = '';
+  const hasDirectSingTarget = false;
   const hasSingTarget = Boolean(previewUrl || bridgePreview || hasDirectSingTarget);
   const promptCreateMode = detectPromptCreateMode(createPrompt);
   const effectiveCreateMode = promptCreateMode ?? createMode;
@@ -1120,7 +927,6 @@ export default function App() {
         <iframe title="Live preview" src={previewUrl} allow={SENSOR_PERMISSION_POLICY} sandbox="allow-scripts" />
       ) : activeSingPreview ? (
         <iframe
-          ref={singFrameRef}
           title="Voice-reactive stage"
           srcDoc={activeSingPreview}
           allow={SENSOR_PERMISSION_POLICY}
@@ -1481,13 +1287,20 @@ export default function App() {
     <div className="liminal-audio-input">
       <button
         type="button"
-        className={micStatus === 'recording' ? 'liminal-audio-button liminal-audio-button--recording' : 'liminal-audio-button'}
-        disabled={micStatus === 'recording' ? false : bridge.submitting}
-        onClick={() => void startMicCapture()}
+        className="liminal-audio-button"
+        disabled={bridge.submitting}
+        onClick={() => exportCurrentSingPreset()}
       >
-        {micStatus === 'recording' ? 'Stop Singing' : 'Sing'}
+        Export Preset
       </button>
-      <small>{micError || (micStatus === 'recording' ? 'your voice is driving the visuals' : micStatus === 'ready' ? 'layer generated — sing again to add more' : hasDirectSingTarget ? `${singLayerCount} layer${singLayerCount !== 1 ? 's' : ''} — sing to add more` : 'sing to generate voice-reactive visuals')}</small>
+      <button
+        type="button"
+        className="liminal-audio-button liminal-audio-button--secondary"
+        onClick={() => openSingInstrument()}
+      >
+        Open Sing
+      </button>
+      <small>{singExportError || 'Studio authors presets; Sing performs and records them.'}</small>
     </div>
     </ErrorBoundary>
   );

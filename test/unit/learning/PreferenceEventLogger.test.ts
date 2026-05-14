@@ -4,7 +4,8 @@
  * Tests preference event logging with filesystem persistence.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { promises as fs } from 'fs';
 import { mkdir, rm } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -101,5 +102,16 @@ describe('PreferenceEventLogger', () => {
     const events = await logger2.getEvents();
     expect(events).toHaveLength(1);
     expect(events[0].artifactId).toBe('art-1');
+  });
+
+  it('surfaces unexpected load failures instead of returning empty preferences', async () => {
+    const readdir = vi.spyOn(fs, 'readdir').mockRejectedValueOnce(new Error('permission denied'));
+    const logger2 = new PreferenceEventLogger({ prefDir });
+
+    try {
+      await expect(logger2.getEvents()).rejects.toThrow('permission denied');
+    } finally {
+      readdir.mockRestore();
+    }
   });
 });

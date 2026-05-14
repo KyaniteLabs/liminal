@@ -1,5 +1,7 @@
 import { Logger } from '../utils/Logger.js';
 import fs from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { TuiEventStream, type TuiRunEventReplay } from './TuiEventStream.js';
 import { TuiSessionStore } from './TuiSessionStore.js';
@@ -32,6 +34,10 @@ import { LiminalCortex } from '../cortex/LiminalCortex.js';
 import { CortexExplainer } from '../cortex/CortexExplainer.js';
 import type { CortexConfig } from '../cortex/types.js';
 import { AutonomousGardener, type GardenerCycleResult } from '../autonomy/AutonomousGardener.js';
+import { QualityArchive } from '../learning/QualityArchive.js';
+import { TasteModelRuntime } from '../learning/TasteModelRuntime.js';
+import type { TasteModelWeights } from '../learning/TasteModelTrainer.js';
+import type { ArchiveCell, DescriptorAxis, DescriptorValue, BehaviorDescriptor } from '../emergence/types.js';
 import { LiminalFS } from '../fs/LiminalFS.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
@@ -49,6 +55,7 @@ import { normalizeOptions } from '../core/LoopConfig.js';
 import { GenerationOrchestrator } from '../core/GenerationOrchestrator.js';
 import { Gallery } from '../gallery/Gallery.js';
 import { PostGenerationCognitiveWriter } from './PostGenerationCognitiveWriter.js';
+import { DreamQueue } from '../dreaming/DreamQueue.js';
 import { detectProviderLabel } from '../config/ProviderRuntime.js';
 import { compactLLMErrorProvenance, extractLLMErrorProvenance } from '../llm/ErrorProvenance.js';
 import {
@@ -183,6 +190,14 @@ export class TuiBridgeService {
   private gardener: AutonomousGardener | null = null;
   // Cognitive write-back: memory, compost, and dreaming receipts for Studio generation
   private cognitiveWriter: PostGenerationCognitiveWriter;
+  // Cached SOUL.md creative personality context for draft generation
+  private soulMdCache: string | null = null;
+  // Quality archive for taste learning — shared with PostGenerationCognitiveWriter
+  private qualityArchive: QualityArchive | null = null;
+  // Shared DreamQueue — generation writes, gardener consumes
+  private readonly dreamQueue = new DreamQueue();
+  // Taste model runtime — scores archive entries by learned user preferences
+  private tasteRuntime = new TasteModelRuntime();
   /** Default Gardener configuration */
   private static readonly GARDENER_CONFIG = {
     mode: 'co-create' as const,
@@ -209,7 +224,7 @@ export class TuiBridgeService {
   private cortexBroadcastTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(options: { cognitiveWriter?: PostGenerationCognitiveWriter } = {}) {
-    this.cognitiveWriter = options.cognitiveWriter ?? new PostGenerationCognitiveWriter();
+    this.cognitiveWriter = options.cognitiveWriter ?? new PostGenerationCognitiveWriter({ dreamQueue: this.dreamQueue });
     // Start the Cortex perception bus
     this.cortexBus.start();
     // Broadcast cortex snapshots to all active sessions periodically
@@ -246,28 +261,35 @@ export class TuiBridgeService {
     this.cortexLoop.start();
 
     // Start the Autonomous Gardener — coordinates taste learning, dream
-    // recombination, and emergence evaluation in the background. Uses empty
-    // archive getters initially; the gardener handles empty state gracefully.
+    // recombination, and emergence evaluation in the background.
+    // Reads from QualityArchive (populated by PostGenerationCognitiveWriter).
     this.gardener = new AutonomousGardener(TuiBridgeService.GARDENER_CONFIG);
-    void this.gardener.start(
-      () => [],   // Archive cells — populated by emergence pipeline at runtime
-      () => [],   // Descriptor axes — populated by emergence pipeline at runtime
-      (result: GardenerCycleResult) => {
-        for (const sid of this.sessions.list()) {
-          this.stream.publishEphemeral(sid, {
-            type: 'gardener.cycle',
-            sessionId: sid,
-            cycle: result.cycle,
-            mode: result.mode,
-            actions: result.actions,
-            budgetRemaining: result.budgetRemaining,
-            taskBreakdown: result.taskBreakdown,
-            health: result.health,
-          });
-        }
-      },
-    ).catch((err) => {
-      Logger.warn('TuiBridgeService', 'Gardener background cycle failed:', err);
+    this.gardener.setDreamQueue(this.dreamQueue);
+    void this.getQualityArchive().then((archive) => {
+      this.cognitiveWriter.setQualityArchive(archive);
+      this.tryLoadTasteWeights();
+      void this.tryTrainAndSaveTasteModel();
+      if (!this.gardener) return;
+      void this.gardener.start(
+        () => this.buildArchiveCellsFromQualityArchive(),
+        () => TuiBridgeService.DESCRIPTOR_AXES,
+        (result: GardenerCycleResult) => {
+          for (const sid of this.sessions.list()) {
+            this.stream.publishEphemeral(sid, {
+              type: 'gardener.cycle',
+              sessionId: sid,
+              cycle: result.cycle,
+              mode: result.mode,
+              actions: result.actions,
+              budgetRemaining: result.budgetRemaining,
+              taskBreakdown: result.taskBreakdown,
+              health: result.health,
+            });
+          }
+        },
+      ).catch((err) => {
+        Logger.warn('TuiBridgeService', 'Gardener background cycle failed:', err);
+      });
     });
 
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
@@ -2255,6 +2277,18 @@ export class TuiBridgeService {
             { organ: 'evaluation', status: 'pending', detail: 'Quality scoring is deferred until the artist asks to polish.' },
           ],
         });
+      }).catch((error) => {
+        this.emit(sessionId, {
+          type: 'generation.cognitive_receipt',
+          sessionId,
+          loop: 'creative',
+          receipts: [
+            { organ: 'perception', status: 'observed', detail: `Captured ${intentBrief.requirements.length} requirement(s) from the prompt.` },
+            { organ: 'intuition', status: 'observed', detail: `Generation route selected ${domainPlan.join(' -> ')}.` },
+            { organ: 'memory', status: 'unavailable', detail: `Memory retrieval failed: ${error instanceof Error ? error.message : String(error)}` },
+            { organ: 'evaluation', status: 'pending', detail: 'Quality scoring is deferred until the artist asks to polish.' },
+          ],
+        });
       });
 
       let result: Awaited<ReturnType<GenerationOrchestrator['generate']>> | undefined;
@@ -3028,6 +3062,172 @@ export class TuiBridgeService {
     });
   }
 
+  private loadSoulCreativeContext(): string {
+    if (this.soulMdCache !== null) return this.soulMdCache;
+    try {
+      const soulPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../SOUL.md');
+      const content = readFileSync(soulPath, 'utf-8');
+      const domainPrefs = content.match(/## Domain Preferences\s*\n([\s\S]*?)(?=\n## |\n---\n|$)/)?.[1]?.trim() ?? '';
+      const collabStyle = content.match(/## Collaboration Style\s*\n([\s\S]*?)(?=\n## |\n---\n|$)/)?.[1]?.trim() ?? '';
+      const traits = content.match(/### Core\s*\n([\s\S]*?)(?=\n### |\n---\n|$)/)?.[1]?.trim() ?? '';
+      const sections = [
+        traits ? `Creative personality:\n${traits}` : '',
+        domainPrefs ? `Domain expertise:\n${domainPrefs}` : '',
+        collabStyle ? `Collaboration approach:\n${collabStyle}` : '',
+      ].filter(Boolean).join('\n\n');
+      this.soulMdCache = sections || '';
+      return this.soulMdCache;
+    } catch {
+      this.soulMdCache = '';
+      return '';
+    }
+  }
+
+  private async getQualityArchive(): Promise<QualityArchive> {
+    if (!this.qualityArchive) {
+      this.qualityArchive = new QualityArchive();
+      await this.qualityArchive.load();
+    }
+    return this.qualityArchive;
+  }
+
+  private buildArchiveCellsFromQualityArchive(): ArchiveCell[] {
+    if (!this.qualityArchive) return [];
+    const archive = this.qualityArchive;
+    const allEntries = archive.getAllEntries();
+    if (allEntries.length === 0) return [];
+    const cells: ArchiveCell[] = [];
+    for (const entry of allEntries) {
+      const descriptor = this.heuristicDescriptor(entry.output, entry.qualityScore);
+      const cellId = descriptor.values.map(v => `${v.axis}:${v.value.toFixed(1)}`).join('|');
+      const existing = cells.find(c => c.cellId === cellId);
+      const archiveEntry: import('../emergence/types.js').ArchiveEntry = {
+        id: entry.id,
+        artifactRef: { uri: `quality-archive:${entry.id}`, kind: 'archive-entry' as const, path: '' },
+        descriptor,
+        lineage: { artifactId: entry.id, parentIds: [], provenance: 'fresh-generation', createdAt: entry.createdAt },
+        qualityScore: entry.qualityScore,
+        signals: { novelty: 0.5, structure: 0.5, temporalRichness: 0.5, perturbationResilience: 0.5, fertility: 0.5, aesthetic: 0.5 },
+        archivedAt: entry.createdAt,
+      };
+      if (existing) {
+        existing.nearElites.push(archiveEntry);
+      } else {
+        cells.push({ cellId, coordinates: descriptor.values, elite: archiveEntry, nearElites: [], capacity: 5 });
+      }
+    }
+    return cells;
+  }
+
+  private heuristicDescriptor(code: string, quality: number): BehaviorDescriptor {
+    const len = code.length;
+    const lower = code.toLowerCase();
+    const values: DescriptorValue[] = [
+      { axis: 'order-chaos', value: /\b(random|noise|stochastic|shuffle|chaos)\b/.test(lower) ? 0.7 : 0.3 },
+      { axis: 'sparse-dense', value: Math.min(1, len / 8000) },
+      { axis: 'symmetry-asymmetry', value: /\b(mirror|symmetry|reflect|balance)\b/.test(lower) ? 0.2 : 0.6 },
+      { axis: 'smooth-bursty', value: /\b(onset|burst|explode|trigger|impulse)\b/.test(lower) ? 0.8 : 0.3 },
+      { axis: 'static-evolving', value: /\b(animate|draw|loop|frameloop|requestAnimationFrame|u_time|iTime)\b/.test(lower) ? 0.9 : 0.2 },
+      { axis: 'harmonic-dissonant', value: quality > 0.7 ? 0.3 : 0.6 },
+    ];
+    return { values, source: 'heuristic-v1', extractedAt: new Date().toISOString() };
+  }
+
+  private static readonly DESCRIPTOR_AXES: DescriptorAxis[] = [
+    'order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant',
+  ];
+
+  private buildLearnedTasteContext(): string {
+    if (!this.tasteRuntime.isLoaded() || !this.qualityArchive) return '';
+    const allEntries = this.qualityArchive.getAllEntries();
+    if (allEntries.length === 0) return '';
+
+    const candidates: Array<import('../emergence/types.js').ArchiveEntry> = allEntries.map(entry => ({
+      id: entry.id,
+      artifactRef: { uri: `quality-archive:${entry.id}`, kind: 'archive-entry' as const, path: '' },
+      descriptor: this.heuristicDescriptor(entry.output, entry.qualityScore),
+      lineage: { artifactId: entry.id, parentIds: [], provenance: 'fresh-generation' as const, createdAt: entry.createdAt },
+      qualityScore: entry.qualityScore,
+      signals: { novelty: 0.5, structure: 0.5, temporalRichness: 0.5, perturbationResilience: 0.5, fertility: 0.5, aesthetic: 0.5 },
+      archivedAt: entry.createdAt,
+    }));
+
+    const top = this.tasteRuntime.topN(candidates, 3);
+    if (top.length === 0) return '';
+
+    const lines = top.map((ranked, i) => {
+      const entry = allEntries.find(e => e.id === ranked.entry.id);
+      const prompt = entry?.prompt?.slice(0, 80) ?? 'unknown prompt';
+      return `${i + 1}. ${ranked.entry.id.slice(0, 12)} (${entry?.domain ?? 'unknown'}, score ${(ranked.tasteScore * 100).toFixed(0)}%): "${prompt}"`;
+    });
+
+    return `Learned taste preferences (from your past work):\n${lines.join('\n')}`;
+  }
+
+  private static readonly TASTE_WEIGHTS_PATH = path.join(
+    process.env.HOME ?? '~', '.liminal', 'taste', 'taste-weights.json',
+  );
+
+  private tryLoadTasteWeights(): void {
+    try {
+      const data = readFileSync(TuiBridgeService.TASTE_WEIGHTS_PATH, 'utf-8');
+      const weights = JSON.parse(data) as TasteModelWeights;
+      if (!weights.axisWeights || weights.axisWeights.length === 0) return;
+      this.tasteRuntime.load(weights);
+      if (this.gardener) this.gardener.loadTasteModel(weights);
+      Logger.info('TuiBridgeService', `Loaded taste model weights (${weights.pairCount} pairs, agreement ${weights.trainingAgreement.toFixed(2)})`);
+    } catch {
+      // No weights file yet — will be trained when enough data accumulates
+    }
+  }
+
+  private async tryTrainAndSaveTasteModel(): Promise<void> {
+    if (!this.qualityArchive) return;
+    const allEntries = this.qualityArchive.getAllEntries();
+    if (allEntries.length < 10) return;
+
+    try {
+      const { TasteModelTrainer } = await import('../learning/TasteModelTrainer.js');
+      const { PreferenceDatasetBuilder } = await import('../learning/PreferenceDatasetBuilder.js');
+
+      const builder = new PreferenceDatasetBuilder();
+      const archiveEntries: Array<import('../emergence/types.js').ArchiveEntry> = allEntries.map(entry => ({
+        id: entry.id,
+        artifactRef: { uri: `quality-archive:${entry.id}`, kind: 'archive-entry' as const, path: '' },
+        descriptor: this.heuristicDescriptor(entry.output, entry.qualityScore),
+        lineage: { artifactId: entry.id, parentIds: [], provenance: 'fresh-generation' as const, createdAt: entry.createdAt },
+        qualityScore: entry.qualityScore,
+        signals: { novelty: 0.5, structure: 0.5, temporalRichness: 0.5, perturbationResilience: 0.5, fertility: 0.5, aesthetic: 0.5 },
+        archivedAt: entry.createdAt,
+      }));
+
+      const pairs: Array<import('../learning/PreferenceDatasetBuilder.js').PreferencePair> = [];
+      const sorted = [...archiveEntries].sort((a, b) => b.qualityScore - a.qualityScore);
+      const topHalf = sorted.slice(0, Math.ceil(sorted.length / 2));
+      const bottomHalf = sorted.slice(Math.ceil(sorted.length / 2));
+      for (const winner of topHalf) {
+        for (const loser of bottomHalf.slice(0, 3)) {
+          pairs.push(builder.addSyntheticPair(winner, loser, 0.7));
+        }
+      }
+
+      if (pairs.length < 5) return;
+
+      const trainer = new TasteModelTrainer();
+      const weights = trainer.train(pairs);
+
+      this.tasteRuntime.load(weights);
+      if (this.gardener) this.gardener.loadTasteModel(weights);
+
+      const dir = path.dirname(TuiBridgeService.TASTE_WEIGHTS_PATH);
+      await fs.mkdir(dir, { recursive: true });
+      await fs.writeFile(TuiBridgeService.TASTE_WEIGHTS_PATH, JSON.stringify(weights, null, 2), 'utf-8');
+      Logger.info('TuiBridgeService', `Trained and saved taste model (${weights.pairCount} pairs, agreement ${weights.trainingAgreement.toFixed(2)})`);
+    } catch (error) {
+      Logger.warn('TuiBridgeService', `Taste model training failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
   private promptForCreativeDomain(
     userText: string,
     domain: Domain,
@@ -3070,7 +3270,11 @@ export class TuiBridgeService {
         ]
       : [];
     const preferenceHints = this.buildCreativePreferenceLines(userText, domain, options);
-    return [userText, '', ...briefLines, ...preferenceHints, '', prefix, domainInstruction].join('\n');
+    const soulContext = this.loadSoulCreativeContext();
+    const soulBlock = soulContext ? `\n${soulContext}\n` : '';
+    const tasteContext = this.buildLearnedTasteContext();
+    const tasteBlock = tasteContext ? `\n${tasteContext}\n` : '';
+    return [userText, '', ...briefLines, ...preferenceHints, soulBlock, tasteBlock, prefix, domainInstruction].join('\n');
   }
 
   private buildCreativePreferenceLines(
@@ -3269,6 +3473,8 @@ export class TuiBridgeService {
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
     let page: Awaited<ReturnType<typeof browser.newPage>> | null = null;
+    let renderError: unknown;
+    let cleanupError: Error | null = null;
     try {
       page = await browser.newPage();
       const pageErrors: string[] = [];
@@ -3285,10 +3491,29 @@ export class TuiBridgeService {
         throw new Error(`Preview runtime error: ${pageErrors.join(' | ')}`);
       }
       await page.screenshot({ path: pngPath, type: 'png' });
+    } catch (error) {
+      renderError = error;
     } finally {
-      if (page) await page.close().catch(() => undefined);
-      await browser.close().catch(() => undefined);
+      const cleanupErrors: string[] = [];
+      if (page) {
+        await page.close().catch((error: unknown) => {
+          cleanupErrors.push(`page close failed: ${error instanceof Error ? error.message : String(error)}`);
+        });
+      }
+      await browser.close().catch((error: unknown) => {
+        cleanupErrors.push(`browser close failed: ${error instanceof Error ? error.message : String(error)}`);
+      });
+
+      if (cleanupErrors.length > 0) {
+        const message = cleanupErrors.join('; ');
+        Logger.warn('TuiBridgeService', `Preview browser cleanup failed: ${message}`);
+        if (!renderError) {
+          cleanupError = new Error(`Preview browser cleanup failed: ${message}`);
+        }
+      }
     }
+    if (renderError) throw renderError;
+    if (cleanupError) throw cleanupError;
   }
 
   private emitOperatorProgress(sessionId: string, event: BusEvent): void {

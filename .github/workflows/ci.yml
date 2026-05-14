@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build-and-test:
-    runs-on: blacksmith-2vcpu-ubuntu-2404
+    runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -111,7 +111,7 @@ jobs:
           retention-days: 7
 
   browser-and-e2e-smoke:
-    runs-on: blacksmith-2vcpu-ubuntu-2404
+    runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -133,7 +133,7 @@ jobs:
 
   slow-browser-and-e2e:
     if: github.event_name != 'pull_request'
-    runs-on: blacksmith-2vcpu-ubuntu-2404
+    runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4

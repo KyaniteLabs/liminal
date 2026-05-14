@@ -226,26 +226,36 @@ export class PreferenceEventLogger {
 
   private async ensureLoaded(): Promise<void> {
     if (this.loaded) return;
-    this.loaded = true;
 
     try {
-      const files = await fs.readdir(this.prefDir).catch(() => [] as string[]);
+      const files = await fs.readdir(this.prefDir);
       for (const file of files) {
         if (!file.endsWith('.json')) continue;
         try {
           const data = await fs.readFile(join(this.prefDir, file), 'utf-8');
           const record: PreferenceRecord = JSON.parse(data);
           this.events.push(record);
-        } catch {
-          // Skip corrupted files
+        } catch (error) {
+          Logger.warn('PreferenceEventLogger', `Skipping unreadable preference event ${file}: ${PreferenceEventLogger.describeError(error)}`);
         }
       }
       // Sort by timestamp
       this.events.sort((a, b) => new Date(a.capturedAt).getTime() - new Date(b.capturedAt).getTime());
+      this.loaded = true;
       Logger.info('PreferenceEventLogger', `Loaded ${this.events.length} preference events`);
-    } catch {
-      // Directory doesn't exist yet
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        this.loaded = true;
+        Logger.info('PreferenceEventLogger', 'Preference directory not found, starting fresh');
+        return;
+      }
+      Logger.warn('PreferenceEventLogger', `Failed to load preference events: ${PreferenceEventLogger.describeError(error)}`);
+      throw error;
     }
+  }
+
+  private static describeError(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
   }
 
   private async persist(record: PreferenceRecord): Promise<void> {

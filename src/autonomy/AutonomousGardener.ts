@@ -18,6 +18,7 @@ import { ReplayBudgetPolicy } from './ReplayBudgetPolicy.js';
 import { ReplayBiasPolicy } from '../learning/ReplayBiasPolicy.js';
 import type { TasteModelWeights } from '../learning/TasteModelTrainer.js';
 import { DreamPlanner } from '../dreaming/DreamPlanner.js';
+import { DreamQueue, type DreamTask } from '../dreaming/DreamQueue.js';
 import { RecombinationEngine, type RecombinationResult } from '../dreaming/RecombinationEngine.js';
 
 export interface GardenerCycleResult {
@@ -71,6 +72,7 @@ export class AutonomousGardener {
   private readonly replayBiasPolicy: ReplayBiasPolicy;
   private readonly dreamPlanner: DreamPlanner;
   private readonly recombinationEngine: RecombinationEngine;
+  private dreamQueue?: DreamQueue;
   private readonly mode: GardenMode;
   private budgetRemaining: number;
   private cycleCount = 0;
@@ -162,15 +164,37 @@ export class AutonomousGardener {
         freshCount++;
       } else if (nextType === 'dream-recombination') {
         dreamCount++;
-        // Dream tasks: use DreamPlanner + RecombinationEngine
-        const dreamPlan = this.dreamPlanner.plan(cells, axes);
-        for (const dt of dreamPlan.tasks) {
-          if (dt.sources.length >= 2) {
-            const result = this.recombinationEngine.recombine(
-              { id: dt.sources[0].id, descriptor: dt.sources[0].descriptor },
-              { id: dt.sources[1].id, descriptor: dt.sources[1].descriptor },
-            );
-            dreamResults.push(result);
+        // Drain queued generation-time dreams first, then fall back to DreamPlanner
+        let consumedQueued = false;
+        if (this.dreamQueue) {
+          let task: DreamTask | undefined;
+          while ((task = this.dreamQueue.dequeue()) !== undefined) {
+            consumedQueued = true;
+            if (task.sources.length >= 2) {
+              const result = this.recombinationEngine.recombine(
+                { id: task.sources[0].id, descriptor: task.sources[0].descriptor },
+                { id: task.sources[1].id, descriptor: task.sources[1].descriptor },
+              );
+              dreamResults.push(result);
+              this.dreamQueue.complete(task.id, {
+                candidateDescriptor: result.descriptor,
+                parentIds: result.parentIds,
+              });
+            } else {
+              this.dreamQueue.fail(task.id);
+            }
+          }
+        }
+        if (!consumedQueued) {
+          const dreamPlan = this.dreamPlanner.plan(cells, axes);
+          for (const dt of dreamPlan.tasks) {
+            if (dt.sources.length >= 2) {
+              const result = this.recombinationEngine.recombine(
+                { id: dt.sources[0].id, descriptor: dt.sources[0].descriptor },
+                { id: dt.sources[1].id, descriptor: dt.sources[1].descriptor },
+              );
+              dreamResults.push(result);
+            }
           }
         }
       } else {
@@ -303,5 +327,13 @@ export class AutonomousGardener {
    */
   isTasteModelLoaded(): boolean {
     return this.replayBiasPolicy.isModelLoaded();
+  }
+
+  /**
+   * Attach a DreamQueue so queued generation-time dreams are consumed
+   * during garden cycles instead of accumulating without a consumer.
+   */
+  setDreamQueue(queue: DreamQueue): void {
+    this.dreamQueue = queue;
   }
 }

@@ -1,5 +1,6 @@
 import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
 import type { GenerationEvaluation } from '../core/types/GenerationEvaluation.js';
+import { Logger } from '../utils/Logger.js';
 
 /**
  * GeneratorHarnessTools - Thin domain-contract harness helpers
@@ -555,8 +556,9 @@ export class GeneratorHarnessTools {
       if (this.successMemory.length > GeneratorHarnessTools.MAX_MEMORY) {
         this.successMemory = this.successMemory.slice(-GeneratorHarnessTools.MAX_MEMORY);
       }
-    } catch {
-      // Swallow: memory recording must never block generation
+    } catch (error) {
+      // Memory recording must never block generation, but log for debuggability
+      Logger.warn('GeneratorHarnessTools', `Success memory recording failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 

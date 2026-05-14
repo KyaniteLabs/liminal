@@ -5,6 +5,7 @@ import { ActionProposer } from './ActionProposer.js';
 import { CortexSupervisor } from './CortexSupervisor.js';
 import { StuckDetector } from './StuckDetector.js';
 import type { ActionProposal } from './ActionProposer.js';
+import { Logger } from '../utils/Logger.js';
 
 export interface CortexEvent {
   type:
@@ -55,7 +56,9 @@ export class LiminalCortex {
     if (this.running) return;
     this.running = true;
     this.abortController = new AbortController();
-    this.loop(this.abortController.signal).catch(() => {});
+    this.loop(this.abortController.signal).catch((error) => {
+      Logger.error('LiminalCortex', `Executive loop crashed: ${error instanceof Error ? error.message : String(error)}`);
+    });
   }
 
   stop(): void {
@@ -170,13 +173,15 @@ export class LiminalCortex {
         }
 
         this.consecutiveFailures = 0;
-      } catch {
+      } catch (error) {
         this.consecutiveFailures++;
+        Logger.warn('LiminalCortex', `Loop tick ${this.tickNumber} failed: ${error instanceof Error ? error.message : String(error)}`);
         if (this.consecutiveFailures >= this.deps.config.maxConsecutiveFailures) {
           this.emit('cortex.loop_tick', {
             tickNumber: this.tickNumber,
             circuitBreakerTripped: true,
             consecutiveFailures: this.consecutiveFailures,
+            lastError: error instanceof Error ? error.message : String(error),
           });
           this.running = false;
           return;

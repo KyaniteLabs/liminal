@@ -79,12 +79,12 @@ Every test file written or modified MUST meet these standards. No exceptions.
 
 | Metric | Current | Target | Gap |
 |--------|---------|--------|-----|
-| Statements | 67.4% | 70% | -2.6pp |
-| Branches | 57.3% | 70% | -12.7pp |
-| Functions | 68.2% | 70% | -1.8pp |
-| Lines | 68.2% | 70% | -1.8pp |
+| Statements | 82.9% | 70% | +12.9pp |
+| Branches | 73.1% | 70% | +3.1pp |
+| Functions | 86.1% | 70% | +16.1pp |
+| Lines | 83.9% | 70% | +13.9pp |
 
-*(Current values auto-update via the ratchet. This table reflects the gap at ratchet start.)*
+*(Current values are from the latest full `pnpm test` coverage output. The enforced ratchet floors live in `vitest.config.ts`; never lower them.)*
 
 **Rules:**
 1. Every new `src/` file MUST include a corresponding test file. Zero-coverage files are CI failures.
@@ -92,7 +92,7 @@ Every test file written or modified MUST meet these standards. No exceptions.
 3. When writing tests, target the 70% threshold — not the current ratchet floor. Write tests that move the needle.
 4. Priority modules for coverage investment: `src/music/`, `src/plugins/`, `src/config/`, `src/generators/` — these have the largest gaps.
 5. `toBeDefined()` usage MUST stay below 5% of total assertions per file. Use `toBe(expectedValue)` or `toEqual(expectedShape)` instead.
-6. The ratchet (`autoUpdate` in `vitest.config.ts`) is the enforcement mechanism. **Never manually lower thresholds.** They only go UP.
+6. The ratchet thresholds in `vitest.config.ts` are the enforcement mechanism. **Never manually lower thresholds.** They only go UP.
 
 **Quality checker** (`pnpm test:quality`) enforces: vi.hoisted compliance, no weak assertions, no padding tests.
 **CI pipeline** (`.github/workflows/ci.yml`) enforces: coverage ratchet, quality checker, coverage gap detection.
@@ -101,8 +101,8 @@ Every test file written or modified MUST meet these standards. No exceptions.
 ### Enforcement
 
 - **ESLint custom rules** in `eslint-rules/` catch `vi.hoisted` violations and weak assertions at lint time
-- **Vitest coverage ratchet** (`autoUpdate: true` in `vitest.config.ts`) ensures coverage only goes UP
-- **Pre-commit hook** (`.githooks/pre-commit`) runs `vitest --related` for staged source files
+- **Vitest coverage ratchet** (`vitest.config.ts`) ensures coverage only goes UP
+- **Pre-commit hook** (`.githooks/pre-commit`) runs changed-file Vitest checks for staged source files
 - **Quality checker** (`scripts/testing/test-quality-check.mjs`) enforces assertion quality standards
 - **CI coverage gate** (`scripts/ci/check-coverage-gaps.ts`) blocks on zero-coverage files
 

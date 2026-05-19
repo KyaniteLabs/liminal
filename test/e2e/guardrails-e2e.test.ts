@@ -488,11 +488,12 @@ Output only the code, no explanation.`;
       // Run in sandbox if code looks valid
       if (generatedCode.includes('createCanvas')) {
         const sandboxResult = await runInSandbox(generatedCode, { timeoutMs: 15000 });
+        const errorMsg = sandboxResult.isErr() ? sandboxResult.error.message : undefined;
         
         // Skip sandbox assertions if Chrome is unavailable
-        if (!isChromeUnavailableError(sandboxResult.error)) {
-          expect(sandboxResult.completed).toBe(true);
-          expect(sandboxResult.error).toBeUndefined();
+        if (!isChromeUnavailableError(errorMsg)) {
+          expect(sandboxResult.isOk()).toBe(true);
+          expect(sandboxResult._unsafeUnwrap().completed).toBe(true);
         }
       }
     }, E2E_TIMEOUT_MS);

@@ -994,7 +994,11 @@ describe('ScoringEngine', () => {
       expect(result.score).toBe(0.5);
       expect(result.confidence).toBe(0);
       expect(result.failureClass).toBe('scorer');
-      expect(result.repairAdvice).not.toBeNull();
+      expect(result.repairAdvice).toEqual({
+        issue: 'Evaluator LLM scoring failed during execution',
+        fix: 'Check network connectivity and evaluator credentials, or fall back to legacy evaluation mode',
+        constraint: 'Evaluator LLM must complete successfully for rendered-evidence scoring',
+      });
     });
 
     it('returns render failure when runtime perception evidence is not human-perceivable', async () => {
@@ -1146,7 +1150,11 @@ describe('ScoringEngine', () => {
       expect(result.score).toBe(0.5);
       expect(result.confidence).toBe(0);
       expect(result.failureClass).toBe('scorer');
-      expect(result.repairAdvice).not.toBeNull();
+      expect(result.repairAdvice).toEqual({
+        issue: 'Evaluator LLM response could not be parsed',
+        fix: 'Retry the evaluation or verify the evaluator model returns valid JSON',
+        constraint: 'Evaluator must return a parseable JSON object',
+      });
     });
 
     it('returns fallback evaluation when JSON.parse throws', async () => {
@@ -1164,7 +1172,11 @@ describe('ScoringEngine', () => {
       expect(result.score).toBe(0.5);
       expect(result.confidence).toBe(0);
       expect(result.failureClass).toBe('scorer');
-      expect(result.repairAdvice).not.toBeNull();
+      expect(result.repairAdvice).toEqual({
+        issue: 'Evaluator LLM scoring failed during execution',
+        fix: 'Check network connectivity and evaluator credentials, or fall back to legacy evaluation mode',
+        constraint: 'Evaluator LLM must complete successfully for rendered-evidence scoring',
+      });
       expect(mockLoggerWarn).toHaveBeenCalledWith(
         'ScoringEngine',
         'Rendered evidence LLM scoring failed:',

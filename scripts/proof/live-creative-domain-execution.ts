@@ -184,8 +184,9 @@ async function runDomain(domain: Domain, rootOutDir: string, timeoutMs: number, 
 async function main(): Promise<void> {
   const { outDir, domains, timeoutMs, provider: explicitProvider } = parseArgs(process.argv.slice(2));
   const provider = selectLiveSmokeProvider(listConfiguredProviders(), explicitProvider);
-  const config = getProviderConfig(provider);
-  if (!config) throw new Error(`Provider ${provider} is not configured`);
+  const fullConfig = getProviderConfig(provider);
+  if (!fullConfig) throw new Error(`Provider ${provider} is not configured`);
+  const { provider: _, name: _name, description: _description, ...config } = fullConfig;
   await mkdir(outDir, { recursive: true });
   const results: DomainResult[] = [];
   for (const domain of domains) {

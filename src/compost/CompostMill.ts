@@ -24,6 +24,8 @@ import type { ProjectDNA } from '../scavenger/types.js';
 import { RetryManager } from '../llm/RetryManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import type { LLMClientLike } from './SemanticExtractor.js';
+import { Result, ok, err } from 'neverthrow';
+import { CompostDigestError } from '../errors/index.js';
 import { ModelRouter } from './ModelRouter.js';
 import { CompostParser } from '../core/parsing/CompostParser.js';
 import type { LIRToken } from '../core/lir/types.js';
@@ -149,229 +151,234 @@ export class CompostMill {
   }
 
   /** Run the full digestion pipeline. */
-  async digest(): Promise<DigestResult> {
-    const startTime = Date.now();
+  async digest(): Promise<Result<DigestResult, CompostDigestError>> {
+    try {
+      const startTime = Date.now();
 
-    eventBus.emit(EventTypes.PROCESS_START, 'CompostMill', { process: 'compost-digest' });
+      eventBus.emit(EventTypes.PROCESS_START, 'CompostMill', { process: 'compost-digest' });
 
-    // Get all heap files
-    const heapFiles = await this.heap.listFiles();
-    if (heapFiles.length === 0) {
-      const emptyStats: DigestStats = {
-        filesProcessed: 0,
-        totalBytes: 0,
-        domains: [],
-        fragmentCount: 0,
-        collisionCount: 0,
-        seedsPromoted: 0,
-        soupCycles: 0,
-        durationMs: 0,
-      };
-      return { stats: emptyStats, seeds: [], digestPath: '' };
-    }
-
-    // Record digest_start event
-    const fullPaths = heapFiles.map(f => path.join(this.config.heapDir, f));
-    this.projectStore?.recordDigestStart(fullPaths);
-
-    // Stage 2: Extract
-    eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'extract', message: `Extracting ${fullPaths.length} files...` });
-    Logger.info('CompostMill', `Extracting ${fullPaths.length} files...`);
-    const extractionResults = await this.extractAll(fullPaths);
-    eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'extract-done', message: `Extracted ${extractionResults.length}/${fullPaths.length} files` });
-    Logger.info('CompostMill', `Extracted ${extractionResults.length}/${fullPaths.length} files`);
-
-    // Stage 3: Shred
-    // Build LIR lookup map (filePath → LIRToken[]) for seed attachment
-    const lirMap = new Map<string, LIRToken[]>();
-    for (const result of extractionResults) {
-      if (result.lir && result.lir.length > 0) {
-        lirMap.set(result.filePath, result.lir);
-      }
-    }
-    const allFragments = CompostShredder.shredAll(extractionResults);
-    eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'shred', message: `Shredded into ${allFragments.length} fragments` });
-    Logger.info('CompostMill', `Shredded into ${allFragments.length} fragments`);
-
-    // Stage 4: Mix (Collisions)
-    eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'collide', message: 'Running collisions...' });
-    Logger.info('CompostMill', 'Running collisions...');
-    const collisionResults = await this.collisionEngine.runAll(allFragments);
-    eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'collide-done', message: `${collisionResults.length} collisions merged` });
-    Logger.info('CompostMill', `${collisionResults.length} collisions merged`);
-
-    // Stage 5: Mine (Score + Promote) — parallel with concurrency limit
-    eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'score', message: `Scoring ${allFragments.length} fragments...` });
-    Logger.info('CompostMill', `Scoring ${allFragments.length} fragments...`);
-    const promotedSeeds: Seed[] = [];
-    const scored = await RetryManager.mapSettled(
-      allFragments,
-      async (frag) => {
-        const scoreResult = await this.fragmentScorer.score(frag);
-        const fragWithScore = { ...frag, score: scoreResult.total };
-        const promote = await this.fragmentScorer.shouldPromote(fragWithScore);
-        return promote ? fragWithScore : null;
-      },
-      8, // scoring concurrency (local LLM)
-    );
-    for (const entry of scored) {
-      if (entry.status === 'fulfilled' && entry.value) {
-        const frag = entry.value as CompostFragment;
-        promotedSeeds.push({
-          id: frag.id,
-          content: frag.content,
-          score: frag.score ?? 0,
-          source: {
-            fragments: [frag.id],
-            collisionType: 'heuristic',
-            domains: [frag.domain],
-          },
-          promotedAt: new Date().toISOString(),
-          usedBy: [],
-          useCount: 0,
-          lir: lirMap.get(frag.source)?.[0],
-        });
-      }
-    }
-    eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'promote', message: `Promoted ${promotedSeeds.length} seeds from scoring` });
-    Logger.info('CompostMill', `Promoted ${promotedSeeds.length} seeds from scoring`);
-
-    // Phase 15: Motif indexing and rehydration
-    const scoredFragments = allFragments.map(f => ({ ...f, score: f.score ?? 0 }));
-    this.lastMotifIndex = this.motifIndexer.index(scoredFragments);
-    Logger.info('CompostMill', `Indexed ${this.lastMotifIndex.uniqueCount} motifs (top: ${this.lastMotifIndex.topPattern ?? 'none'})`);
-
-    const rehydratable = this.rehydrator.findRehydratable(scoredFragments);
-    if (rehydratable.length > 0) {
-      this.lastRehydratedCandidates = this.rehydrator.rehydrate(rehydratable);
-      Logger.info('CompostMill', `Rehydrated ${this.lastRehydratedCandidates.length} candidates from ${rehydratable.length} fragments`);
-    } else {
-      this.lastRehydratedCandidates = [];
-    }
-
-    // Promote collision results too (score them first)
-    const collisionFragments: CompostFragment[] = collisionResults.map(collision => ({
-      id: `collision-${collision.fragmentA.id}-${collision.fragmentB.id}`,
-      source: `collision:${collision.fragmentA.id}+${collision.fragmentB.id}`,
-      domain: 'cross-domain',
-      layer: 'semantic' as const,
-      content: collision.mergedContent,
-      score: 0,
-      metadata: {
-        fileType: 'collision',
-        timestamp: new Date().toISOString(),
-        hash: '',
-        size: collision.mergedContent.length,
-        extractedAt: new Date().toISOString(),
-      },
-      tags: [collision.fragmentA.domain, collision.fragmentB.domain, `collision:${collision.strategy}`],
-    }));
-
-    const scoredCollisions = await RetryManager.mapSettled(
-      collisionFragments,
-      async (frag) => {
-        const scoreResult = await this.fragmentScorer.score(frag);
-        const fragWithScore = { ...frag, score: scoreResult.total };
-        const promote = await this.fragmentScorer.shouldPromote(fragWithScore);
-        return promote ? fragWithScore : null;
-      },
-      5, // collision scoring concurrency (primary LLM, longer creative prompts)
-    );
-    for (const entry of scoredCollisions) {
-      if (entry.status === 'fulfilled' && entry.value) {
-        const frag = entry.value as CompostFragment;
-        const collision = collisionResults.find(
-          c => `collision-${c.fragmentA.id}-${c.fragmentB.id}` === frag.id
-        );
-        promotedSeeds.push({
-          id: frag.id,
-          content: frag.content,
-          score: frag.score ?? 0,
-          source: {
-            fragments: collision ? [collision.fragmentA.id, collision.fragmentB.id] : [],
-            collisionType: collision?.strategy ?? 'unknown',
-            domains: collision ? [collision.fragmentA.domain, collision.fragmentB.domain] : ['unknown'],
-          },
-          promotedAt: new Date().toISOString(),
-          usedBy: [],
-          useCount: 0,
-        });
-      }
-    }
-
-    // Save promoted seeds
-    for (const seed of promotedSeeds) {
-      await this.seedBank.add(seed);
-      this.projectStore?.recordSeedPromotion(seed);
-    }
-
-    // Feed seed domains into GeneratorRegistry as DNA for improved routing
-    for (const seed of promotedSeeds) {
-      if (seed.source.domains.length > 0 && !generatorRegistry.getDNA(seed.source.domains[0])) {
-        const seedDescription = formatSeedForPrompt(seed, 500);
-        const dna: ProjectDNA = {
-          name: `compost-seed-${seed.id}`,
-          domain: seed.source.domains[0],
-          coreLogic: seedDescription,
-          constraints: [],
-          patterns: seed.source.domains,
-          prompts: [formatSeedForPrompt(seed, 200)],
-          extractedAt: seed.promotedAt,
-          sourcePath: 'compost',
+      // Get all heap files
+      const heapFiles = await this.heap.listFiles();
+      if (heapFiles.length === 0) {
+        const emptyStats: DigestStats = {
+          filesProcessed: 0,
+          totalBytes: 0,
+          domains: [],
+          fragmentCount: 0,
+          collisionCount: 0,
+          seedsPromoted: 0,
+          soupCycles: 0,
+          durationMs: 0,
         };
-        generatorRegistry.registerDNA(dna);
+        return ok({ stats: emptyStats, seeds: [], digestPath: '' });
       }
-    }
 
-    // Collect stats
-    const domains = [...new Set(allFragments.map(f => f.domain))];
-    const stats: DigestStats = {
-      filesProcessed: fullPaths.length,
-      totalBytes: extractionResults.reduce((sum, r) => sum + r.rawBytes.size, 0),
-      domains,
-      fragmentCount: allFragments.length,
-      collisionCount: collisionResults.length,
-      seedsPromoted: promotedSeeds.length,
-      soupCycles: 0,
-      durationMs: Date.now() - startTime,
-    };
+      // Record digest_start event
+      const fullPaths = heapFiles.map(f => path.join(this.config.heapDir, f));
+      this.projectStore?.recordDigestStart(fullPaths);
 
-    // Stage 6: Digest
-    const soupHighlights = collisionResults
-      .slice(0, 5)
-      .map(c => `[${c.strategy}] ${c.fragmentA.domain} + ${c.fragmentB.domain}: ${c.mergedContent.slice(0, 80)}...`);
+      // Stage 2: Extract
+      eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'extract', message: `Extracting ${fullPaths.length} files...` });
+      Logger.info('CompostMill', `Extracting ${fullPaths.length} files...`);
+      const extractionResults = await this.extractAll(fullPaths);
+      eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'extract-done', message: `Extracted ${extractionResults.length}/${fullPaths.length} files` });
+      Logger.info('CompostMill', `Extracted ${extractionResults.length}/${fullPaths.length} files`);
 
-    const digestPath = await this.digestGenerator.save(stats, promotedSeeds, soupHighlights);
+      // Stage 3: Shred
+      // Build LIR lookup map (filePath → LIRToken[]) for seed attachment
+      const lirMap = new Map<string, LIRToken[]>();
+      for (const result of extractionResults) {
+        if (result.lir && result.lir.length > 0) {
+          lirMap.set(result.filePath, result.lir);
+        }
+      }
+      const allFragments = CompostShredder.shredAll(extractionResults);
+      eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'shred', message: `Shredded into ${allFragments.length} fragments` });
+      Logger.info('CompostMill', `Shredded into ${allFragments.length} fragments`);
 
-    // Stage 7: Prune (clear heap)
-    const seedsBeforePrune = await this.seedBank.count();
-    await this.heap.purge();
-    await this.seedBank.pruneOld();
-    const seedsAfterPrune = await this.seedBank.count();
-    if (seedsBeforePrune > seedsAfterPrune) {
-      this.projectStore?.recordSeedPrune(seedsBeforePrune - seedsAfterPrune, this.config.nuggetRetentionDays);
-    }
+      // Stage 4: Mix (Collisions)
+      eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'collide', message: 'Running collisions...' });
+      Logger.info('CompostMill', 'Running collisions...');
+      const collisionResults = await this.collisionEngine.runAll(allFragments);
+      eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'collide-done', message: `${collisionResults.length} collisions merged` });
+      Logger.info('CompostMill', `${collisionResults.length} collisions merged`);
 
-    // Record digest_end event
-    this.projectStore?.recordDigestEnd(stats, promotedSeeds);
+      // Stage 5: Mine (Score + Promote) — parallel with concurrency limit
+      eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'score', message: `Scoring ${allFragments.length} fragments...` });
+      Logger.info('CompostMill', `Scoring ${allFragments.length} fragments...`);
+      const promotedSeeds: Seed[] = [];
+      const scored = await RetryManager.mapSettled(
+        allFragments,
+        async (frag) => {
+          const scoreResult = await this.fragmentScorer.score(frag);
+          const fragWithScore = { ...frag, score: scoreResult.total };
+          const promote = await this.fragmentScorer.shouldPromote(fragWithScore);
+          return promote ? fragWithScore : null;
+        },
+        8, // scoring concurrency (local LLM)
+      );
+      for (const entry of scored) {
+        if (entry.status === 'fulfilled' && entry.value) {
+          const frag = entry.value as CompostFragment;
+          promotedSeeds.push({
+            id: frag.id,
+            content: frag.content,
+            score: frag.score ?? 0,
+            source: {
+              fragments: [frag.id],
+              collisionType: 'heuristic',
+              domains: [frag.domain],
+            },
+            promotedAt: new Date().toISOString(),
+            usedBy: [],
+            useCount: 0,
+            lir: lirMap.get(frag.source)?.[0],
+          });
+        }
+      }
+      eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'promote', message: `Promoted ${promotedSeeds.length} seeds from scoring` });
+      Logger.info('CompostMill', `Promoted ${promotedSeeds.length} seeds from scoring`);
 
-    // Harvest entropy from this digest cycle
-    if (this.entropy) {
-      const entropyResult = await this.entropy.harvest();
-      if (entropyResult.source === 'fallback') {
-        this.projectStore?.recordEntropyFallback?.(entropyResult);
+      // Phase 15: Motif indexing and rehydration
+      const scoredFragments = allFragments.map(f => ({ ...f, score: f.score ?? 0 }));
+      this.lastMotifIndex = this.motifIndexer.index(scoredFragments);
+      Logger.info('CompostMill', `Indexed ${this.lastMotifIndex.uniqueCount} motifs (top: ${this.lastMotifIndex.topPattern ?? 'none'})`);
+
+      const rehydratable = this.rehydrator.findRehydratable(scoredFragments);
+      if (rehydratable.length > 0) {
+        this.lastRehydratedCandidates = this.rehydrator.rehydrate(rehydratable);
+        Logger.info('CompostMill', `Rehydrated ${this.lastRehydratedCandidates.length} candidates from ${rehydratable.length} fragments`);
       } else {
-        this.projectStore?.recordEntropyHarvest?.(entropyResult);
+        this.lastRehydratedCandidates = [];
       }
+
+      // Promote collision results too (score them first)
+      const collisionFragments: CompostFragment[] = collisionResults.map(collision => ({
+        id: `collision-${collision.fragmentA.id}-${collision.fragmentB.id}`,
+        source: `collision:${collision.fragmentA.id}+${collision.fragmentB.id}`,
+        domain: 'cross-domain',
+        layer: 'semantic' as const,
+        content: collision.mergedContent,
+        score: 0,
+        metadata: {
+          fileType: 'collision',
+          timestamp: new Date().toISOString(),
+          hash: '',
+          size: collision.mergedContent.length,
+          extractedAt: new Date().toISOString(),
+        },
+        tags: [collision.fragmentA.domain, collision.fragmentB.domain, `collision:${collision.strategy}`],
+      }));
+
+      const scoredCollisions = await RetryManager.mapSettled(
+        collisionFragments,
+        async (frag) => {
+          const scoreResult = await this.fragmentScorer.score(frag);
+          const fragWithScore = { ...frag, score: scoreResult.total };
+          const promote = await this.fragmentScorer.shouldPromote(fragWithScore);
+          return promote ? fragWithScore : null;
+        },
+        5, // collision scoring concurrency (primary LLM, longer creative prompts)
+      );
+      for (const entry of scoredCollisions) {
+        if (entry.status === 'fulfilled' && entry.value) {
+          const frag = entry.value as CompostFragment;
+          const collision = collisionResults.find(
+            c => `collision-${c.fragmentA.id}-${c.fragmentB.id}` === frag.id
+          );
+          promotedSeeds.push({
+            id: frag.id,
+            content: frag.content,
+            score: frag.score ?? 0,
+            source: {
+              fragments: collision ? [collision.fragmentA.id, collision.fragmentB.id] : [],
+              collisionType: collision?.strategy ?? 'unknown',
+              domains: collision ? [collision.fragmentA.domain, collision.fragmentB.domain] : ['unknown'],
+            },
+            promotedAt: new Date().toISOString(),
+            usedBy: [],
+            useCount: 0,
+          });
+        }
+      }
+
+      // Save promoted seeds
+      for (const seed of promotedSeeds) {
+        await this.seedBank.add(seed);
+        this.projectStore?.recordSeedPromotion(seed);
+      }
+
+      // Feed seed domains into GeneratorRegistry as DNA for improved routing
+      for (const seed of promotedSeeds) {
+        if (seed.source.domains.length > 0 && !generatorRegistry.getDNA(seed.source.domains[0])) {
+          const seedDescription = formatSeedForPrompt(seed, 500);
+          const dna: ProjectDNA = {
+            name: `compost-seed-${seed.id}`,
+            domain: seed.source.domains[0],
+            coreLogic: seedDescription,
+            constraints: [],
+            patterns: seed.source.domains,
+            prompts: [formatSeedForPrompt(seed, 200)],
+            extractedAt: seed.promotedAt,
+            sourcePath: 'compost',
+          };
+          generatorRegistry.registerDNA(dna);
+        }
+      }
+
+      // Collect stats
+      const domains = [...new Set(allFragments.map(f => f.domain))];
+      const stats: DigestStats = {
+        filesProcessed: fullPaths.length,
+        totalBytes: extractionResults.reduce((sum, r) => sum + r.rawBytes.size, 0),
+        domains,
+        fragmentCount: allFragments.length,
+        collisionCount: collisionResults.length,
+        seedsPromoted: promotedSeeds.length,
+        soupCycles: 0,
+        durationMs: Date.now() - startTime,
+      };
+
+      // Stage 6: Digest
+      const soupHighlights = collisionResults
+        .slice(0, 5)
+        .map(c => `[${c.strategy}] ${c.fragmentA.domain} + ${c.fragmentB.domain}: ${c.mergedContent.slice(0, 80)}...`);
+
+      const digestPath = await this.digestGenerator.save(stats, promotedSeeds, soupHighlights);
+
+      // Stage 7: Prune (clear heap)
+      const seedsBeforePrune = await this.seedBank.count();
+      await this.heap.purge();
+      await this.seedBank.pruneOld();
+      const seedsAfterPrune = await this.seedBank.count();
+      if (seedsBeforePrune > seedsAfterPrune) {
+        this.projectStore?.recordSeedPrune(seedsBeforePrune - seedsAfterPrune, this.config.nuggetRetentionDays);
+      }
+
+      // Record digest_end event
+      this.projectStore?.recordDigestEnd(stats, promotedSeeds);
+
+      // Harvest entropy from this digest cycle
+      if (this.entropy) {
+        const entropyResult = await this.entropy.harvest();
+        if (entropyResult.source === 'fallback') {
+          this.projectStore?.recordEntropyFallback?.(entropyResult);
+        } else {
+          this.projectStore?.recordEntropyHarvest?.(entropyResult);
+        }
+      }
+
+      // Save a snapshot of the current state
+      const allSeeds = await this.seedBank.getAll();
+      this.projectStore?.saveSnapshot(allSeeds, 0);
+
+      eventBus.emit(EventTypes.PROCESS_END, 'CompostMill', { process: 'compost-digest', success: true, durationMs: Date.now() - startTime, filesProcessed: stats.filesProcessed, fragmentCount: stats.fragmentCount, seedsPromoted: stats.seedsPromoted });
+
+      return ok({ stats, seeds: promotedSeeds, digestPath });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return err(new CompostDigestError(message, { cause: error instanceof Error ? error : undefined }));
     }
-
-    // Save a snapshot of the current state
-    const allSeeds = await this.seedBank.getAll();
-    this.projectStore?.saveSnapshot(allSeeds, 0);
-
-    eventBus.emit(EventTypes.PROCESS_END, 'CompostMill', { process: 'compost-digest', success: true, durationMs: Date.now() - startTime, filesProcessed: stats.filesProcessed, fragmentCount: stats.fragmentCount, seedsPromoted: stats.seedsPromoted });
-
-    return { stats, seeds: promotedSeeds, digestPath };
   }
 
   /** Extract all files through the three layers, throttled to avoid rate limits. */

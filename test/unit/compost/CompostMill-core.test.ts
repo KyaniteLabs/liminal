@@ -380,14 +380,16 @@ describe('CompostMill', () => {
       mockHeapInstance.listFiles.mockResolvedValue([]);
 
       const result = await mill.digest();
+      expect(result.isOk()).toBe(true);
+      const data = result._unsafeUnwrap();
 
-      expect(result.stats.filesProcessed).toBe(0);
-      expect(result.stats.fragmentCount).toBe(0);
-      expect(result.stats.collisionCount).toBe(0);
-      expect(result.stats.seedsPromoted).toBe(0);
-      expect(result.stats.totalBytes).toBe(0);
-      expect(result.seeds).toEqual([]);
-      expect(result.digestPath).toBe('');
+      expect(data.stats.filesProcessed).toBe(0);
+      expect(data.stats.fragmentCount).toBe(0);
+      expect(data.stats.collisionCount).toBe(0);
+      expect(data.stats.seedsPromoted).toBe(0);
+      expect(data.stats.totalBytes).toBe(0);
+      expect(data.seeds).toEqual([]);
+      expect(data.digestPath).toBe('');
     });
   });
 
@@ -410,11 +412,13 @@ describe('CompostMill', () => {
       mockFragmentScorerInstance.shouldPromote.mockResolvedValue(true);
 
       const result = await mill.digest();
-      expect(result.stats.filesProcessed).toBe(1);
-      expect(result.stats.fragmentCount).toBe(2);
-      expect(result.seeds.length).toBe(2);
-      expect(result.stats.seedsPromoted).toBe(2);
-      expect(result.stats.durationMs).toBeGreaterThanOrEqual(0);
+      expect(result.isOk()).toBe(true);
+      const data = result._unsafeUnwrap();
+      expect(data.stats.filesProcessed).toBe(1);
+      expect(data.stats.fragmentCount).toBe(2);
+      expect(data.seeds.length).toBe(2);
+      expect(data.stats.seedsPromoted).toBe(2);
+      expect(data.stats.durationMs).toBeGreaterThanOrEqual(0);
 
       expect(mockHeapInstance.purge).toHaveBeenCalled();
       expect(mockSeedBankInstance.pruneOld).toHaveBeenCalled();
@@ -432,8 +436,10 @@ describe('CompostMill', () => {
       vi.mocked(RetryManager.mapSettled).mockResolvedValue([]);
 
       const result = await mill.digest();
-      expect(result.stats.domains).toEqual(expect.arrayContaining(['code', 'music']));
-      expect(result.stats.domains).toHaveLength(2);
+      expect(result.isOk()).toBe(true);
+      const data = result._unsafeUnwrap();
+      expect(data.stats.domains).toEqual(expect.arrayContaining(['code', 'music']));
+      expect(data.stats.domains).toHaveLength(2);
     });
 
     it('promotes collision results alongside scored fragments', async () => {
@@ -457,8 +463,10 @@ describe('CompostMill', () => {
       mockFragmentScorerInstance.shouldPromote.mockResolvedValue(true);
 
       const result = await mill.digest();
+      expect(result.isOk()).toBe(true);
+      const data = result._unsafeUnwrap();
 
-      const collisionSeed = result.seeds.find(s => s.id.startsWith('collision-'));
+      const collisionSeed = data.seeds.find(s => s.id.startsWith('collision-'));
 
       expect(collisionSeed!.source.collisionType).toBe('semantic-bridge');
       expect(collisionSeed!.source.domains).toEqual(['code', 'music']);
@@ -629,8 +637,10 @@ describe('CompostMill', () => {
       vi.mocked(CompostShredder.shredAll).mockReturnValue(fragments);
       mockFragmentScorerInstance.shouldPromote.mockResolvedValue(false);
       const result = await mill.digest();
-      expect(result.stats.seedsPromoted).toBe(0);
-      expect(result.seeds).toEqual([]);
+      expect(result.isOk()).toBe(true);
+      const data = result._unsafeUnwrap();
+      expect(data.stats.seedsPromoted).toBe(0);
+      expect(data.seeds).toEqual([]);
     });
   });
 
@@ -671,8 +681,10 @@ describe('CompostMill', () => {
       });
 
       const result = await mill.digest();
-      expect(result.stats.fragmentCount).toBe(2);
-      expect(result.stats.seedsPromoted).toBe(1);
+      expect(result.isOk()).toBe(true);
+      const data = result._unsafeUnwrap();
+      expect(data.stats.fragmentCount).toBe(2);
+      expect(data.stats.seedsPromoted).toBe(1);
     });
   });
 });

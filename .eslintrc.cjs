@@ -25,10 +25,10 @@ module.exports = {
     'prefer-promise-reject-errors': 'error',
     'require-atomic-updates': 'error',
     '@typescript-eslint/no-floating-promises': 'error',
-    '@typescript-eslint/require-await': 'warn',
+    '@typescript-eslint/require-await': 'error',
     '@typescript-eslint/await-thenable': 'error',
     '@typescript-eslint/no-misused-promises': 'error',
-    'no-console': 'warn',
+    'no-console': 'error',
   },
   overrides: [
     {

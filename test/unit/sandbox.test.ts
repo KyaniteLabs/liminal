@@ -27,14 +27,15 @@ describe('Sandbox runInSandbox', () => {
     it('completes with completed: true and no host escape', async () => {
       const result = await runInSandbox(VALID_P5_CODE);
 
-      expect(result.completed).toBe(true);
-      expect(result.error).toBeUndefined();
+      expect(result.isOk()).toBe(true);
+      expect(result._unsafeUnwrap().completed).toBe(true);
       // No require/process in browser; sketch runs in isolated page
     }, 45000);
 
     it('accepts custom timeoutMs', async () => {
       const result = await runInSandbox(VALID_P5_CODE, { timeoutMs: 20000 });
-      expect(result.completed).toBe(true);
+      expect(result.isOk()).toBe(true);
+      expect(result._unsafeUnwrap().completed).toBe(true);
     }, 25000);
   });
 
@@ -42,14 +43,16 @@ describe('Sandbox runInSandbox', () => {
     it('code containing require("fs") does not escape sandbox', async () => {
       const code = `function setup(){ try { require('fs'); } catch(e) {} createCanvas(100,100); noLoop(); } function draw(){}`;
       const result = await runInSandbox(code, { timeoutMs: 10000 });
-      expect(result).toHaveProperty('completed');
+      expect(result.isOk()).toBe(true);
+      expect(result._unsafeUnwrap()).toHaveProperty('completed');
       // In browser require is undefined; host process must still be running
     }, 15000);
 
     it('code containing process.exit does not kill host', async () => {
       const code = `function setup(){ if (typeof process !== 'undefined') process.exit(1); createCanvas(100,100); noLoop(); } function draw(){}`;
       const result = await runInSandbox(code, { timeoutMs: 10000 });
-      expect(result).toHaveProperty('completed');
+      expect(result.isOk()).toBe(true);
+      expect(result._unsafeUnwrap()).toHaveProperty('completed');
       // process is undefined in browser; host must still be running (test completes)
     }, 15000);
   });
@@ -58,9 +61,8 @@ describe('Sandbox runInSandbox', () => {
     it('infinite loop times out and returns completed: false', async () => {
       const result = await runInSandbox('while(true){}', { timeoutMs: 5000 });
 
-      expect(result.completed).toBe(false);
-      expect(String(result.error)).toMatch(/timeout|Timeout|exceeded/i);
-      expect(String(result.error)).toMatch(/timeout|Timeout|exceeded/i);
+      expect(result.isErr()).toBe(true);
+      expect(result._unsafeUnwrapErr().message).toMatch(/timeout|Timeout|exceeded/i);
     }, 20000);
   });
 });

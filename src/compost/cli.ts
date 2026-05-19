@@ -115,13 +115,18 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
     case 'digest': {
       Logger.info('CompostCLI', 'Starting digestion...');
       const result = await mill.digest();
+      if (result.isErr()) {
+        Logger.error('CompostCLI', 'Digestion failed: ' + result.error.message);
+        break;
+      }
+      const data = result.value;
       Logger.info('CompostCLI', 'Digestion complete.');
-      Logger.info('CompostCLI', '  Files processed: ' + result.stats.filesProcessed);
-      Logger.info('CompostCLI', '  Fragments: ' + result.stats.fragmentCount);
-      Logger.info('CompostCLI', '  Collisions: ' + result.stats.collisionCount);
-      Logger.info('CompostCLI', '  Seeds promoted: ' + result.stats.seedsPromoted);
-      if (result.digestPath) {
-        Logger.info('CompostCLI', '  Digest saved to: ' + result.digestPath);
+      Logger.info('CompostCLI', '  Files processed: ' + data.stats.filesProcessed);
+      Logger.info('CompostCLI', '  Fragments: ' + data.stats.fragmentCount);
+      Logger.info('CompostCLI', '  Collisions: ' + data.stats.collisionCount);
+      Logger.info('CompostCLI', '  Seeds promoted: ' + data.stats.seedsPromoted);
+      if (data.digestPath) {
+        Logger.info('CompostCLI', '  Digest saved to: ' + data.digestPath);
       }
       break;
     }

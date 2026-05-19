@@ -10,12 +10,13 @@ import { generateHTML } from '../utils/generateHTML.js';
 import { getChromeArgs } from '../security/SandboxConfig.js';
 import { Logger } from '../utils/Logger.js';
 import { getLocalP5ScriptForUrl } from '../utils/browserAssetFallbacks.js';
+import { Result, ok, err } from 'neverthrow';
+import { SandboxError } from '../errors/index.js';
 
 
 export interface SandboxResult {
   stdout?: string;
-  error?: string;
-  completed: boolean;
+  completed: true;
 }
 
 export interface SandboxOptions {
@@ -67,7 +68,7 @@ function forceKillBrowser(browser: Browser): void {
 export async function runInSandbox(
   code: string,
   options?: SandboxOptions
-): Promise<SandboxResult> {
+): Promise<Result<SandboxResult, SandboxError>> {
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const disableSandbox = options?.disableSandbox ?? false;
   let browser: Browser | null = null;
@@ -130,10 +131,10 @@ export async function runInSandbox(
     await page.waitForSelector('canvas', { timeout: Math.min(10000, timeoutMs) });
     await new Promise((r) => setTimeout(r, 300));
 
-    return { completed: true };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return { completed: false, error: message };
+    return ok({ completed: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return err(new SandboxError(message, undefined, { cause: error instanceof Error ? error : undefined }));
   } finally {
     if (browser) {
       forceKillBrowser(browser);

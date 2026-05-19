@@ -53,7 +53,9 @@ describe('Pipeline Integration', () => {
     expect(filesBefore.length).toBe(1);
 
     // Digest
-    const result = await mill.digest();
+    const digestResult = await mill.digest();
+    expect(digestResult.isOk()).toBe(true);
+    const result = digestResult._unsafeUnwrap();
     expect(result.stats.filesProcessed).toBe(1);
     expect(result.stats.fragmentCount).toBeGreaterThan(0);
     expect(result.digestPath).toBeTruthy();
@@ -84,7 +86,9 @@ describe('Pipeline Integration', () => {
     const files = await mill.getHeapFiles();
     expect(files.length).toBe(3);
 
-    const result = await mill.digest();
+    const digestResult = await mill.digest();
+    expect(digestResult.isOk()).toBe(true);
+    const result = digestResult._unsafeUnwrap();
     expect(result.stats.filesProcessed).toBe(3);
   }, 10000);
 });

@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
  * Tests for CLI commands — liminal compost subcommand parsing.
  */
 
+import { ok, err } from 'neverthrow';
 import { parseArgs, execute } from '../../src/compost/cli.js';
 
 describe('CLI parseArgs', () => {
@@ -70,13 +71,12 @@ describe('CLI execute', () => {
   });
 
   it('dispatches digest to mill.digest()', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const digestFn: any = vi.fn();
-    digestFn.mockResolvedValue({
+    digestFn.mockResolvedValue(ok({
       stats: { filesProcessed: 1, fragmentCount: 5, collisionCount: 2, seedsPromoted: 1, soupCycles: 10, durationMs: 1000, totalBytes: 500, domains: ['a'] },
       seeds: [],
       digestPath: '/tmp/digest.md',
-    });
+    }));
 
     const mockMill = {
       digest: digestFn,
@@ -91,6 +91,22 @@ describe('CLI execute', () => {
 
     await execute({ command: 'digest' }, mockMill as any);
     expect(mockMill.digest).toHaveBeenCalled();
+  });
+  
+  it('propagates error when digestion fails', async () => {
+    const digestFn: any = vi.fn();
+    digestFn.mockResolvedValue(err(new Error('Test digestion error')));
+
+    const mockMill = {
+      digest: digestFn,
+      add: vi.fn(),
+      status: vi.fn(),
+      stopSoup: vi.fn(),
+      startSoup: vi.fn(),
+      shouldAutoDigest: vi.fn(),
+    };
+
+    await expect(execute({ command: 'digest' }, mockMill as any)).rejects.toThrow('Test digestion error');
   });
 
   it('dispatches status to mill.statusAsync()', async () => {

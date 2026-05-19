@@ -117,7 +117,7 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
       const result = await mill.digest();
       if (result.isErr()) {
         Logger.error('CompostCLI', 'Digestion failed: ' + result.error.message);
-        break;
+        throw result.error;
       }
       const data = result.value;
       Logger.info('CompostCLI', 'Digestion complete.');

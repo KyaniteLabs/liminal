@@ -4,7 +4,7 @@
   "status": "pass",
   "ready": true,
   "mode": "live-execution",
-  "gitCommit": "4fea9d8608136a993e4c0807719933390600e695",
+  "gitCommit": "614c38d591e8b3f0f2844ea7fd19ad3291fbd651",
   "provider": "glm",
   "model": "GLM-5v-turbo",
   "launchDomains": [

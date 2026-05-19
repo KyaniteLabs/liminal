@@ -225,7 +225,6 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
 
     case 'log': {
       const store = requireProjectStore(mill);
-      if (!store) break;
 
       const timeline = store.getTimeline({ limit: action.limit ?? 20 });
       if (timeline.entries.length === 0) {
@@ -247,22 +246,16 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
 
     case 'undo': {
       const store = requireProjectStore(mill);
-      if (!store) break;
 
-      try {
-        const result = store.undo();
-        Logger.info('CompostCLI', 'Undone: ' + describeEventType(result.undoneEvent.type));
-        Logger.info('CompostCLI', '  Event #' + result.undoneEvent.id + ' at ' + result.undoneEvent.timestamp);
-        Logger.info('CompostCLI', '  Remaining events on branch: ' + result.remainingEvents);
-      } catch (err) {
-        Logger.warn('CompostCLI', err instanceof Error ? err.message : 'Undo failed');
-      }
+      const result = store.undo();
+      Logger.info('CompostCLI', 'Undone: ' + describeEventType(result.undoneEvent.type));
+      Logger.info('CompostCLI', '  Event #' + result.undoneEvent.id + ' at ' + result.undoneEvent.timestamp);
+      Logger.info('CompostCLI', '  Remaining events on branch: ' + result.remainingEvents);
       break;
     }
 
     case 'branch': {
       const store = requireProjectStore(mill);
-      if (!store) break;
 
       if (action.subcommand === 'list') {
         const branches = store.listBranches();
@@ -282,43 +275,30 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
           Logger.info('CompostCLI', 'Usage: liminal compost branch create <name> [--description "desc"]');
           break;
         }
-        try {
-          const branch = store.createBranch(name, action.description);
-          Logger.info('CompostCLI', `Created branch "${branch.name}" at event #${branch.eventId}`);
-        } catch (err) {
-          Logger.warn('CompostCLI', err instanceof Error ? err.message : 'Branch creation failed');
-        }
+        const branch = store.createBranch(name, action.description);
+        Logger.info('CompostCLI', `Created branch "${branch.name}" at event #${branch.eventId}`);
       } else if (action.subcommand === 'switch') {
         const name = action.args?.[0];
         if (!name) {
           Logger.info('CompostCLI', 'Usage: liminal compost branch switch <name>');
           break;
         }
-        try {
-          store.switchBranch(name);
-          Logger.info('CompostCLI', `Switched to branch "${name}"`);
-        } catch (err) {
-          Logger.warn('CompostCLI', err instanceof Error ? err.message : 'Branch switch failed');
-        }
+        store.switchBranch(name);
+        Logger.info('CompostCLI', `Switched to branch "${name}"`);
       } else if (action.subcommand === 'delete') {
         const name = action.args?.[0];
         if (!name) {
           Logger.info('CompostCLI', 'Usage: liminal compost branch delete <name>');
           break;
         }
-        try {
-          store.deleteBranch(name);
-          Logger.info('CompostCLI', `Deleted branch "${name}"`);
-        } catch (err) {
-          Logger.warn('CompostCLI', err instanceof Error ? err.message : 'Branch delete failed');
-        }
+        store.deleteBranch(name);
+        Logger.info('CompostCLI', `Deleted branch "${name}"`);
       }
       break;
     }
 
     case 'history': {
       const store = requireProjectStore(mill);
-      if (!store) break;
 
       Logger.info('CompostCLI', store.getStatusSummary());
       break;
@@ -352,15 +332,15 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
 
 // ─── Helper Functions ────────────────────────────────────────────────────────
 
-/** Get the ProjectStore from the mill, or print an error and return undefined. */
-function requireProjectStore(mill: CompostMill): ProjectStore | undefined {
+/** Get the ProjectStore from the mill, or throw an error. */
+function requireProjectStore(mill: CompostMill): ProjectStore {
   const store = mill.getProjectStore();
   if (!store) {
-    Logger.warn('CompostCLI', 'Project history is not enabled. Initialize a ProjectStore to enable timeline features.');
-    Logger.info('CompostCLI', 'Hint: const store = new ProjectStore({ projectRoot: cwd }); store.init();');
+    throw new Error('Project history is not enabled. Initialize a ProjectStore to enable timeline features. Hint: const store = new ProjectStore({ projectRoot: cwd }); store.init();');
   }
   return store;
 }
+
 
 /** Format an ISO timestamp for display: "Apr 4, 14:32". */
 function formatTimestamp(iso: string): string {

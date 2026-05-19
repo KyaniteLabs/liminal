@@ -131,4 +131,53 @@ describe('CLI execute', () => {
     await execute({ command: 'status' }, mockMill as any);
     expect(mockMill.statusAsync).toHaveBeenCalled();
   });
+
+  it('throws error when project history is disabled for timeline commands', async () => {
+    const mockMill = {
+      digest: vi.fn(),
+      add: vi.fn(),
+      statusAsync: vi.fn(),
+      stopSoup: vi.fn(),
+      startSoup: vi.fn(),
+      shouldAutoDigest: vi.fn(),
+      getProjectStore: vi.fn().mockReturnValue(null),
+    };
+
+    await expect(execute({ command: 'log' }, mockMill as any)).rejects.toThrow('Project history is not enabled');
+    await expect(execute({ command: 'undo' }, mockMill as any)).rejects.toThrow('Project history is not enabled');
+    await expect(execute({ command: 'branch', subcommand: 'list' }, mockMill as any)).rejects.toThrow('Project history is not enabled');
+    await expect(execute({ command: 'history' }, mockMill as any)).rejects.toThrow('Project history is not enabled');
+  });
+
+  it('propagates internal event store errors for history commands', async () => {
+    const mockStore = {
+      undo: vi.fn().mockImplementation(() => {
+        throw new Error('No events to undo');
+      }),
+      createBranch: vi.fn().mockImplementation(() => {
+        throw new Error('Branch already exists');
+      }),
+      switchBranch: vi.fn().mockImplementation(() => {
+        throw new Error('Branch not found');
+      }),
+      deleteBranch: vi.fn().mockImplementation(() => {
+        throw new Error('Cannot delete active branch');
+      }),
+    };
+
+    const mockMill = {
+      digest: vi.fn(),
+      add: vi.fn(),
+      statusAsync: vi.fn(),
+      stopSoup: vi.fn(),
+      startSoup: vi.fn(),
+      shouldAutoDigest: vi.fn(),
+      getProjectStore: vi.fn().mockReturnValue(mockStore),
+    };
+
+    await expect(execute({ command: 'undo' }, mockMill as any)).rejects.toThrow('No events to undo');
+    await expect(execute({ command: 'branch', subcommand: 'create', args: ['feat'] }, mockMill as any)).rejects.toThrow('Branch already exists');
+    await expect(execute({ command: 'branch', subcommand: 'switch', args: ['feat'] }, mockMill as any)).rejects.toThrow('Branch not found');
+    await expect(execute({ command: 'branch', subcommand: 'delete', args: ['feat'] }, mockMill as any)).rejects.toThrow('Cannot delete active branch');
+  });
 });

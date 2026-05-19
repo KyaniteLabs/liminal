@@ -102,7 +102,9 @@ describe('CompostMill LIR integration', () => {
     const mill = new CompostMill(mockLLM, config);
     mill.setParser(parser);
 
-    const result = await mill.digest();
+    const digestResult = await mill.digest();
+    expect(digestResult.isOk()).toBe(true);
+    const result = digestResult._unsafeUnwrap();
 
     // At least one seed should have been promoted
     expect(result.seeds.length).toBeGreaterThanOrEqual(1);
@@ -124,7 +126,9 @@ describe('CompostMill LIR integration', () => {
     const mill = new CompostMill(mockLLM, config);
     mill.setParser(parser);
 
-    const result = await mill.digest();
+    const digestResult = await mill.digest();
+    expect(digestResult.isOk()).toBe(true);
+    const result = digestResult._unsafeUnwrap();
 
     // Find seeds with code LIR tokens
     const codeSeeds = result.seeds.filter(
@@ -152,7 +156,9 @@ describe('CompostMill LIR integration', () => {
     const mill = new CompostMill(mockLLM, config);
     mill.setParser(parser);
 
-    const result = await mill.digest();
+    const digestResult = await mill.digest();
+    expect(digestResult.isOk()).toBe(true);
+    const result = digestResult._unsafeUnwrap();
 
     // Find seeds with doc LIR tokens
     const docSeeds = result.seeds.filter(
@@ -178,7 +184,9 @@ describe('CompostMill LIR integration', () => {
     const mill = new CompostMill(mockLLM, config);
     mill.setParser(parser);
 
-    const result = await mill.digest();
+    const digestResult = await mill.digest();
+    expect(digestResult.isOk()).toBe(true);
+    const result = digestResult._unsafeUnwrap();
 
     // Find seeds with text LIR tokens
     const textSeeds = result.seeds.filter(
@@ -201,7 +209,9 @@ describe('CompostMill LIR integration', () => {
     config.fastLLM = mockLLM;
 
     const mill = new CompostMill(mockLLM, config);
-    const result = await mill.digest();
+    const digestResult = await mill.digest();
+    expect(digestResult.isOk()).toBe(true);
+    const result = digestResult._unsafeUnwrap();
 
     // No seeds should have LIR tokens
     for (const seed of result.seeds) {
@@ -222,7 +232,9 @@ describe('CompostMill LIR integration', () => {
     const mill = new CompostMill(mockLLM, config);
     mill.setParser(parser);
 
-    const result = await mill.digest();
+    const digestResult = await mill.digest();
+    expect(digestResult.isOk()).toBe(true);
+    const result = digestResult._unsafeUnwrap();
 
     // Collision seeds have 'cross-domain' in their source.domains
     const collisionSeeds = result.seeds.filter(

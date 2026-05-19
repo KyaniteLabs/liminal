@@ -25,11 +25,14 @@ export class HeapMonitor {
           const shouldDigest = await mill.shouldAutoDigest();
           if (shouldDigest) {
             this.digesting = true;
-            await mill.digest();
+            const result = await mill.digest();
+            if (result.isErr()) {
+              Logger.warn('HeapMonitor', 'auto-digest failed:', result.error.message);
+            }
             this.digesting = false;
           }
         } catch (err) {
-          Logger.warn('HeapMonitor', 'auto-digest failed:', err);
+          Logger.warn('HeapMonitor', 'auto-digest failed (exceptional):', err);
           this.digesting = false;
         }
       })();

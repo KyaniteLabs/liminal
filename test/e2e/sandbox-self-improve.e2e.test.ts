@@ -36,33 +36,32 @@ describe('E2E sandbox self-improve', () => {
   describe('SandboxRunner.runInSandbox', () => {
     it('runs minimal p5 sketch: no timeout, no crash, result indicates success', async () => {
       const result = await runInSandbox(MINIMAL_P5, { timeoutMs: 20000 });
+      const errorMsg = result.isErr() ? result.error.message : undefined;
 
-      if (!result.completed && isChromeUnavailableError(result.error)) {
+      if (result.isErr() && isChromeUnavailableError(errorMsg)) {
         console.warn(
           'Skipping E2E sandbox test: Puppeteer/Chrome unavailable. Install Chrome or set PUPPETEER_EXECUTABLE_PATH.'
         );
         return;
       }
 
-      expect(result?.completed).toBe(true);
-      expect(result.error).toBeUndefined();
+      expect(result.isOk()).toBe(true);
+      expect(result._unsafeUnwrap().completed).toBe(true);
     }, E2E_SANDBOX_TIMEOUT_MS);
 
     it('returns a result object with completed flag', async () => {
       const result = await runInSandbox(MINIMAL_P5, { timeoutMs: 15000 });
+      const errorMsg = result.isErr() ? result.error.message : undefined;
 
-      if (!result.completed && isChromeUnavailableError(result.error)) {
+      if (result.isErr() && isChromeUnavailableError(errorMsg)) {
         console.warn(
           'Skipping E2E sandbox test: Puppeteer/Chrome unavailable.'
         );
         return;
       }
 
-      expect(result).toHaveProperty('completed');
-      expect(result.completed === true || result.completed === false).toBe(true);
-      if (result.completed) {
-        expect(result.error).toBeUndefined();
-      }
+      expect(result.isOk()).toBe(true);
+      expect(result._unsafeUnwrap().completed).toBe(true);
     }, E2E_SANDBOX_TIMEOUT_MS);
   });
 

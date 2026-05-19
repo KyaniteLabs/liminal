@@ -141,10 +141,12 @@ describe('CompostMill Promise Characterization', () => {
       expect(resultPromise).toBeInstanceOf(Promise);
 
       const result = await resultPromise;
-      expect(result).toHaveProperty('stats');
-      expect(result).toHaveProperty('seeds');
-      expect(result).toHaveProperty('digestPath');
-      expect(Array.isArray(result.seeds)).toBe(true);
+      expect(result.isOk()).toBe(true);
+      const data = result._unsafeUnwrap();
+      expect(data).toHaveProperty('stats');
+      expect(data).toHaveProperty('seeds');
+      expect(data).toHaveProperty('digestPath');
+      expect(Array.isArray(data.seeds)).toBe(true);
     });
   });
 });

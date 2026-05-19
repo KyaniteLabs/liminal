@@ -17,3 +17,4 @@ export { FileDiscoveryError } from './FileDiscoveryError.js';
 export { ExportError, SecurityError } from './ExportError.js';
 export { ServerError } from './ServerError.js';
 export { ProcessorError } from './ProcessorError.js';
+export { SandboxError } from './SandboxError.js';

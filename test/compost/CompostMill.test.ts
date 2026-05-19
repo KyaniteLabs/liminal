@@ -69,9 +69,11 @@ describe('CompostMill', () => {
       await mill.add([file]);
 
       const result = await mill.digest();
-      expect(result.stats.filesProcessed).toBe(1);
-      expect(result.stats.fragmentCount).toBeGreaterThan(0);
-      expect(result.digestPath).toBeTruthy();
+      expect(result.isOk()).toBe(true);
+      const data = result._unsafeUnwrap();
+      expect(data.stats.filesProcessed).toBe(1);
+      expect(data.stats.fragmentCount).toBeGreaterThan(0);
+      expect(data.digestPath).toBeTruthy();
     });
 
     it('clears heap after successful digestion', async () => {
@@ -90,7 +92,9 @@ describe('CompostMill', () => {
       await mill.add([file]);
 
       const result = await mill.digest();
-      const exists = await fs.access(result.digestPath).then(() => true).catch(() => false);
+      expect(result.isOk()).toBe(true);
+      const data = result._unsafeUnwrap();
+      const exists = await fs.access(data.digestPath).then(() => true).catch(() => false);
       expect(exists).toBe(true);
     });
   });

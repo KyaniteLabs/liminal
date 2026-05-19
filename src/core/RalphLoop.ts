@@ -361,10 +361,14 @@ export class RalphLoop {
       try {
         const compostConfig = mergeCompostConfig();
         const mill = new CompostMill(new LLMClient({ role: 'generator' }), { ...compostConfig, projectStore });
-        await mill.digest();
-        compostMaterials = await mill.getGenerationMaterials(normalizedOptions.collabDomain || 'p5');
+        const result = await mill.digest();
+        if (result.isErr()) {
+          Logger.warn('RalphLoop', 'Compost digest for generation failed:', result.error.message);
+        } else {
+          compostMaterials = await mill.getGenerationMaterials(normalizedOptions.collabDomain || 'p5');
+        }
       } catch (err) {
-        Logger.warn('RalphLoop', 'Compost digest for generation failed:', err);
+        Logger.warn('RalphLoop', 'Compost digest for generation failed (exceptional):', err);
       }
     }
 
@@ -1331,12 +1335,16 @@ export class RalphLoop {
             });
             if (await heap.isOverCapacity()) {
               const mill = new CompostMill(new LLMClient({ role: 'generator' }), { ...compostConfig, projectStore });
-              await mill.digest();
-              compostMaterials = await mill.getGenerationMaterials(normalizedOptions.collabDomain || 'p5');
-              eventBus.emit(EventTypes.COMPOST_STAGE, 'RalphLoop', {
-                stage: 'auto-digest',
-                message: 'Heap at capacity — triggered auto-digest',
-              });
+              const result = await mill.digest();
+              if (result.isErr()) {
+                Logger.warn('RalphLoop', 'Auto-digest failed:', result.error.message);
+              } else {
+                compostMaterials = await mill.getGenerationMaterials(normalizedOptions.collabDomain || 'p5');
+                eventBus.emit(EventTypes.COMPOST_STAGE, 'RalphLoop', {
+                  stage: 'auto-digest',
+                  message: 'Heap at capacity — triggered auto-digest',
+                });
+              }
             }
           } catch (err) {
             Logger.warn('RalphLoop', 'Auto-compost failed:', err);

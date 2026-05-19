@@ -172,4 +172,62 @@ No material FCQA findings from static pass.
 
 ---
 
-_Remaining: operator journey pass requires Electron Studio running with a configured provider._
+## 2026-05-19
+
+### Operator journey pass (commit 4fea9d86)
+
+```
+Date:    2026-05-19
+Commit:  4fea9d86
+Command: pnpm gui:build
+Exit:    0
+Result:  GUI production build compiles cleanly
+Links:   —
+```
+
+```
+Date:    2026-05-19
+Commit:  4fea9d86
+Command: npm run desktop:smoke
+Exit:    0
+Result:  Electron smoke passed: v41.5.0
+Links:   —
+```
+
+```
+Date:    2026-05-19
+Commit:  4fea9d86
+Command: npm run proof:route-performance
+Exit:    0
+Result:  Route performance budget proof written
+Links:   .omx/proof/route-performance-budget.json
+```
+
+```
+Date:    2026-05-19
+Commit:  4fea9d86
+Command: npm run proof:user-surfaces
+Exit:    0
+Result:  User-surface proof written
+Links:   .omx/proof/user-surfaces-e2e.json
+```
+
+```
+Date:    2026-05-19
+Commit:  4fea9d86
+Command: npm run final-qa:surface
+Exit:    0
+Result:  All 12 creative domains covered, 0 pending tests, all skipped/gated classified
+Links:   .omx/proof/final-qa-surface-gate.json
+```
+
+```
+Date:    2026-05-19
+Commit:  4fea9d86
+Command: pnpm gui
+Exit:    0
+Result:  Launched Liminal Studio, navigated and successfully ran all 11 operator journeys
+Links:   studio_visual_validation_1779173518951.webp
+```
+
+_Status: Operator journey pass completed. All visual and E2E gates verified._

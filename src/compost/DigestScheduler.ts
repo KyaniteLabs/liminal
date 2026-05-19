@@ -20,8 +20,17 @@ export class DigestScheduler {
 
     const run = async () => {
       try {
-        await mill.digest();
-        consecutiveFailures = 0;
+        const result = await mill.digest();
+        if (result && typeof result === 'object' && 'isErr' in result && result.isErr()) {
+          consecutiveFailures++;
+          Logger.warn('DigestScheduler', 'scheduled digest failed:', result.error);
+          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+            Logger.error('DigestScheduler', `${MAX_CONSECUTIVE_FAILURES} consecutive digest failures, stopping scheduler`);
+            return;
+          }
+        } else {
+          consecutiveFailures = 0;
+        }
       } catch (err) {
         consecutiveFailures++;
         Logger.warn('DigestScheduler', 'scheduled digest failed:', err);

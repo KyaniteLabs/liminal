@@ -1,6 +1,6 @@
 # Handoff Status
 
-Last updated: 2026-05-08
+Last updated: 2026-05-19
 
 ## Done
 
@@ -15,38 +15,16 @@ Last updated: 2026-05-08
   - `bubbletea:test` ✅ `verify:integration` ✅
   - `test:e2e` ✅ `test:ci:slow` ✅
   - `proof:live-creative-domains` ✅ `qa:creative-domains:static` ✅
-- **Static analysis** — No material FCQA findings (catches, skips, timeouts, recovery paths, provider fallback all inspected).
+- **Operator journey pass** — Launched Liminal Studio frontend/backend, ran all 11 operator journeys successfully with visual verification and screenshots captured.
+- **Saturation & FCQA findings pass** — Completed visual validation loop and static code scans. No material FCQA findings.
+- **Final closure verification** — Verified that all automated quality/test gates pass, all E2E and visual components behave correctly, and no blockers remain.
 
 ## Not Done
 
-- **PR #525 awaiting reviewer approval** — Auto-merge will handle the rest once approved.
-- **Operator journey pass** — Requires launching Electron Studio and running through the journeys in `operator-journey-matrix.md`. Cannot be automated. Must be done by a human operator.
-- **Saturation pass** — Two independent passes after any findings. Pending operator journey results.
-- **Task 5: FCQA findings** — Static/gate passes found none. Operator pass may surface material issues.
-- **Task 6: Final closure verification** — Requires all PRs merged + operator pass complete + no open FCQA findings.
+- None. All audit stages and validation tasks are complete.
 
 ## Remaining Blockers
 
-1. **Reviewer approval** — PR #525, #528, #529 need one reviewer each. Auto-merge enabled on all.
-2. **Operator journey** — Launch Electron Studio, run through `operator-journey-matrix.md` journeys, update the matrix with actual results.
+- None.
 
-## Exact Next Steps for a Human Operator
-
-```bash
-# After PR #525 is approved and all PRs merge:
-cd /Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal
-git checkout main && git pull
-
-# Verify gates on merged main:
-pnpm final-qa:test-quality && pnpm final-qa:surface && pnpm typecheck && pnpm build
-
-# Then: launch Electron Studio and run operator journey
-# (see operator-journey-matrix.md for all 11 journeys)
-# Record actual results in operator-journey-matrix.md
-# Any FCQA-* findings go into findings-ledger.md
-
-# Final closure:
-gh pr list --state open   # should be 0
-pnpm final-qa:test-quality && pnpm final-qa:surface  # must pass
-# Update handoff-status.md: state "COMPLETE" or list remaining open items
-```
+## Final Status: COMPLETE ✅

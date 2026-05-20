@@ -1,3 +1,7 @@
+> [!NOTE]
+> **Classification: Stale-But-Useful Context**
+> This file contains valuable historical context or design records but may not match current production configurations. Treat as a design hypothesis, not current truth.
+
 # Loose Ends Audit - Liminal Repository
 
 **Generated:** 2026-04-02  

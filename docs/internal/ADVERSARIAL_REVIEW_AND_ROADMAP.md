@@ -1,3 +1,7 @@
+> [!NOTE]
+> **Classification: Stale-But-Useful Context**
+> This file contains valuable historical context or design records but may not match current production configurations. Treat as a design hypothesis, not current truth.
+
 # Adversarial Review & Improvement Roadmap
 
 **Source:** 6-agent adversarial analysis against 1,703 commits, 1,148 messages, 58 sessions, full source code

@@ -1,3 +1,7 @@
+> [!NOTE]
+> **Classification: Stale-But-Useful Context**
+> This file contains valuable historical context or design records but may not match current production configurations. Treat as a design hypothesis, not current truth.
+
 # Orphaned Module Catalog
 
 > These modules exist in `src/` with zero imports from other runtime modules.

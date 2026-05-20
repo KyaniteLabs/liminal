@@ -1,3 +1,7 @@
+> [!WARNING]
+> **Classification: Outdated / Historical Only**
+> This is a historical snapshot or obsolete record. Do not reference as current system state.
+
 # Architecture Quick Reference
 
 This quick reference is the lightweight map for people trying to understand Liminal without reading the full philosophy document first.

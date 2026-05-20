@@ -66,7 +66,7 @@ describe('Entropy + CompostMill integration', () => {
     await fs.writeFile(file, 'Creative writing about music and ceramics.');
 
     await mill.add([file]);
-    const result = await mill.digest();
+    const result = (await mill.digest())._unsafeUnwrap();
 
     expect(result.stats.filesProcessed).toBe(1);
     expect(result.stats.fragmentCount).toBeGreaterThan(0);
@@ -80,7 +80,7 @@ describe('Entropy + CompostMill integration', () => {
     await fs.writeFile(file, 'A novel idea combining code and visual art.');
 
     await mill.add([file]);
-    const result = await mill.digest();
+    const result = (await mill.digest())._unsafeUnwrap();
 
     // Seeds should have been promoted
     expect(result.seeds.length).toBeGreaterThanOrEqual(0);

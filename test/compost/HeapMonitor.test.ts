@@ -92,6 +92,6 @@ describe('HeapMonitor', () => {
     await new Promise(resolve => setTimeout(resolve, 80));
     monitor.stop();
 
-    expect(Logger.warn).toHaveBeenCalledWith('HeapMonitor', 'auto-digest failed:', expect.any(Error));
+    expect(Logger.warn).toHaveBeenCalledWith('HeapMonitor', 'auto-digest failed (exceptional):', expect.any(Error));
   });
 });

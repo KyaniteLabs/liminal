@@ -1,7 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 
 export const DEFAULT_RECEIPT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_SOURCE_FINGERPRINT_EXCLUDES = ['.omx/proof/'];
 
 export interface ProofReceiptValidationOptions {
   requiredMode?: string;
@@ -15,6 +18,7 @@ export interface ProofReceiptValidationResult {
   ok: boolean;
   failures: string[];
   gitCommit: string | null;
+  sourceFingerprint: string | null;
 }
 
 interface ReceiptLike {
@@ -23,6 +27,7 @@ interface ReceiptLike {
   mode?: unknown;
   generatedAt?: unknown;
   gitCommit?: unknown;
+  sourceFingerprint?: unknown;
   provider?: unknown;
   model?: unknown;
   artifactPath?: unknown;
@@ -60,6 +65,60 @@ export function readCurrentGitCommit(repoRoot: string): string | null {
   return packed && /^[0-9a-f]{40}$/i.test(packed) ? packed : null;
 }
 
+export function computeProofSourceFingerprint(
+  repoRoot: string,
+  excludedPathPrefixes: string[] = DEFAULT_SOURCE_FINGERPRINT_EXCLUDES,
+): string | null {
+  const files = listGitSourceFiles(repoRoot)
+    ?.map(normalizeRepoPath)
+    .filter(file => file.length > 0 && !isExcludedProofPath(file, excludedPathPrefixes))
+    .sort();
+  if (!files) return null;
+
+  const hash = createHash('sha256');
+  for (const file of files) {
+    const fullPath = path.join(repoRoot, file);
+    let stat: fs.Stats;
+    try {
+      stat = fs.statSync(fullPath);
+    } catch {
+      continue;
+    }
+    if (!stat.isFile()) continue;
+    hash.update('path\0');
+    hash.update(file);
+    hash.update('\0content\0');
+    hash.update(fs.readFileSync(fullPath));
+    hash.update('\0');
+  }
+  return `sha256:${hash.digest('hex')}`;
+}
+
+export function readProofSubjectGitCommit(
+  repoRoot: string,
+  excludedPathPrefixes: string[] = DEFAULT_SOURCE_FINGERPRINT_EXCLUDES,
+): string | null {
+  const head = readCurrentGitCommit(repoRoot);
+  if (!head) return null;
+
+  let commit = head;
+  for (let depth = 0; depth < 200; depth += 1) {
+    const parents = gitOutput(repoRoot, ['show', '-s', '--format=%P', commit])?.trim().split(/\s+/).filter(Boolean) ?? [];
+    const firstParent = parents[0];
+    if (!firstParent) return commit;
+
+    const changedPaths = gitOutput(repoRoot, ['diff', '--name-only', firstParent, commit])
+      ?.split('\n')
+      .map(normalizeRepoPath)
+      .filter(Boolean);
+    if (!changedPaths) return head;
+    if (changedPaths.some(file => !isExcludedProofPath(file, excludedPathPrefixes))) return commit;
+    commit = firstParent;
+  }
+
+  return head;
+}
+
 export function validateProofReceipt(
   repoRoot: string,
   receipt: ReceiptLike,
@@ -67,6 +126,8 @@ export function validateProofReceipt(
 ): ProofReceiptValidationResult {
   const failures: string[] = [];
   const gitCommit = readCurrentGitCommit(repoRoot);
+  const proofSubjectCommit = readProofSubjectGitCommit(repoRoot);
+  const sourceFingerprint = computeProofSourceFingerprint(repoRoot);
   const maxAgeMs = options.maxAgeMs ?? DEFAULT_RECEIPT_MAX_AGE_MS;
 
   if (!(receipt.status === 'pass' || receipt.ready === true)) {
@@ -90,12 +151,18 @@ export function validateProofReceipt(
     }
   }
 
-  if (!gitCommit) {
-    failures.push('current git commit unavailable');
+  if (typeof receipt.sourceFingerprint === 'string' && receipt.sourceFingerprint.length > 0) {
+    if (!sourceFingerprint) {
+      failures.push('current source fingerprint unavailable');
+    } else if (receipt.sourceFingerprint !== sourceFingerprint) {
+      failures.push(`sourceFingerprint ${receipt.sourceFingerprint} does not match current ${sourceFingerprint}`);
+    }
+  } else if (!proofSubjectCommit) {
+    failures.push('current proof subject git commit unavailable');
   } else if (typeof receipt.gitCommit !== 'string' || receipt.gitCommit.length === 0) {
     failures.push('missing gitCommit');
-  } else if (receipt.gitCommit !== gitCommit) {
-    failures.push(`gitCommit ${receipt.gitCommit} does not match current ${gitCommit}`);
+  } else if (receipt.gitCommit !== proofSubjectCommit) {
+    failures.push(`gitCommit ${receipt.gitCommit} does not match current proof subject ${proofSubjectCommit}`);
   }
 
   if (options.requireProviderModel) {
@@ -127,7 +194,29 @@ export function validateProofReceipt(
     }
   }
 
-  return { ok: failures.length === 0, failures, gitCommit };
+  return { ok: failures.length === 0, failures, gitCommit, sourceFingerprint };
+}
+
+function listGitSourceFiles(repoRoot: string): string[] | null {
+  return gitOutput(repoRoot, ['ls-files', '--cached', '--others', '--exclude-standard'])
+    ?.split('\n')
+    .filter(Boolean) ?? null;
+}
+
+function gitOutput(repoRoot: string, args: string[]): string | null {
+  try {
+    return execFileSync('git', args, { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return null;
+  }
+}
+
+function normalizeRepoPath(filePath: string): string {
+  return filePath.trim().replaceAll(path.sep, '/');
+}
+
+function isExcludedProofPath(filePath: string, excludedPathPrefixes: string[]): boolean {
+  return excludedPathPrefixes.some(prefix => filePath === prefix.replace(/\/$/, '') || filePath.startsWith(prefix));
 }
 
 function collectArtifactPaths(receipt: ReceiptLike): string[] {

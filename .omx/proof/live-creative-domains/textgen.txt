@@ -1,22 +1,40 @@
 loop
-           /    \
-         while   for
-        /          \
-      dream      sleep
-     /    \      /    \
-  repeat  each  until  next
-    |      |      |      |
-  memory  data  cache  stack
-    \      |      |      /
-     \_____|_____|_____/
-          |||
-       machine
-          |
-      _______
-     /       \
-    |  DREAM  |
-     \_______/
-        |||
-    recursion
-    recursion
-    recursion
+           ┌──────┐
+        ┌──┤ dream ├──┐
+        │  └──────┘  │
+        ▼             ▼
+    ┌─────────┐   ┌────────┐
+    │ machine │──▶│ dreams │
+    └─────────┘   └────────┘
+        ▲             │
+        │             ▼
+        │        ┌─────────┐
+        │        │  loops  │
+        │        │  again  │
+        │        └────┬────┘
+        │             │
+        └─────────────┘
+      the machine sleeps
+      and in its sleep it counts
+          one     loop
+            two   loops
+              three loops
+                four loops
+                  five loops
+      each iteration a breath
+      each recursion a sigh
+         ┌──dreaming──┐
+         │  of itself │
+         │   dreaming │
+         │   looping  │
+         │   back to  │
+         │   the start│
+         └─────┬──────┘
+               │
+               ▼
+         l o o p
+        o       o
+       o   in   o
+      p   sleep  p
+       o         o
+        o       o

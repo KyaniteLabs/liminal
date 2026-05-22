@@ -175,6 +175,14 @@ describe('SVGGenerator', () => {
     expect(prompt).toContain('Do not use filters');
   });
 
+  it('adds explicit transparent-background guidance when requested', () => {
+    const gen = new TestableSVGGenerator();
+    const prompt = (gen as any).buildSVGPrompt('make a logo with a transparent background', { mode: 'logo' });
+
+    expect(prompt).toContain('Transparent background requested');
+    expect(prompt).toContain('do not draw a full-canvas background rect');
+  });
+
   it('bypasses the generic code tool loop for raw SVG generation', async () => {
     process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
     const llm = new LLMClient({ baseUrl: 'http://localhost:1234/v1', model: 'svg-test-model' });

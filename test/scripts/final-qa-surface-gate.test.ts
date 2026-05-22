@@ -49,8 +49,17 @@ const artifactSource: Record<string, string> = {
           machine breathing in lines of language`,
 };
 
-function currentGitCommit(): string {
-  return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).trim();
+function currentProofSubjectCommit(): string {
+  let commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: repoRoot, encoding: 'utf8' }).trim();
+  for (let depth = 0; depth < 200; depth += 1) {
+    const parents = execFileSync('git', ['show', '-s', '--format=%P', commit], { cwd: repoRoot, encoding: 'utf8' }).trim().split(/\s+/).filter(Boolean);
+    const firstParent = parents[0];
+    if (!firstParent) return commit;
+    const changedPaths = execFileSync('git', ['diff', '--name-only', firstParent, commit], { cwd: repoRoot, encoding: 'utf8' }).trim().split('\n').filter(Boolean);
+    if (changedPaths.some(file => !file.startsWith('.omx/proof/'))) return commit;
+    commit = firstParent;
+  }
+  return commit;
 }
 
 function makeReceipt(tempRoot: string, domains = launchDomains, overrides: Record<string, unknown> = {}): string {
@@ -63,7 +72,7 @@ function makeReceipt(tempRoot: string, domains = launchDomains, overrides: Recor
     ready: domains.length === launchDomains.length,
     mode: 'live-execution',
     generatedAt: new Date().toISOString(),
-    gitCommit: currentGitCommit(),
+    gitCommit: currentProofSubjectCommit(),
     provider: 'test-provider',
     model: 'test-model',
     domains: domains.map((domain) => {
@@ -189,7 +198,7 @@ describe('final QA surface gate', () => {
 
       expect(result.status).toBe(1);
       expect(output).toContain('Live creative-domain receipt gitCommit');
-      expect(output).toContain('does not match current');
+      expect(output).toContain('does not match current proof subject');
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
     }
@@ -242,7 +251,7 @@ describe('final QA surface gate', () => {
         ready: true,
         mode: 'live-execution',
         generatedAt: new Date().toISOString(),
-        gitCommit: currentGitCommit(),
+        gitCommit: currentProofSubjectCommit(),
         provider: 'test-provider',
         model: 'test-model',
         domains,

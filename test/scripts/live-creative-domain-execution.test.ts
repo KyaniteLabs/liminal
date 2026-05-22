@@ -12,7 +12,9 @@ describe('live creative-domain execution matrix', () => {
     }
     expect(script).toMatch(/let domains: Domain\[\] = \[\.\.\.LAUNCH_CREATIVE_DOMAINS\]/);
     expect(script).toContain('readCurrentGitCommit');
+    expect(script).toContain('computeProofSourceFingerprint');
     expect(script).toMatch(/gitCommit:\s*readCurrentGitCommit\(process\.cwd\(\)\)/);
+    expect(script).toMatch(/sourceFingerprint:\s*computeProofSourceFingerprint\(process\.cwd\(\)\)/);
     expect(script).toContain('validateCreativeDomainArtifact');
     expect(script).toContain('artifactValidation');
   });

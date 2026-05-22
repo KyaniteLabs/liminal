@@ -11,52 +11,43 @@
 </head>
 <body>
 <script>
-const particles = [];
-const NUM = 200;
+let particles = [];
+const NUM = 120;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   colorMode(HSB, 360, 100, 100, 1);
-  noStroke();
   for (let i = 0; i < NUM; i++) {
     particles.push(new Particle());
   }
 }
 
 function draw() {
-  background(210, 40, 6, 0.15);
+  background(210, 40, 6, 0.18);
   for (let p of particles) {
     p.update();
     p.show();
   }
 }
 
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-}
-
 class Particle {
   constructor() {
     this.reset(true);
   }
-
-  reset(initial = false) {
-    this.x = initial ? random(width) : random(-50, width + 50);
-    this.y = initial ? random(height) : random(-50, height + 50);
+  reset(init) {
+    this.x = init ? random(width) : random(-50, width + 50);
+    this.y = init ? random(height) : random(-50, height + 50);
     this.vx = random(-1.2, 1.2);
     this.vy = random(-1.2, 1.2);
-    this.size = random(3, 12);
-    this.hue = random(160, 220); // blue-green range
+    this.size = random(3, 10);
+    this.hue = random(160, 220);
     this.sat = random(60, 95);
     this.bri = random(70, 100);
     this.alpha = random(0.4, 0.9);
-    this.noiseOffX = random(1000);
-    this.noiseOffY = random(2000);
-    this.noiseSpeed = random(0.003, 0.01);
+    this.noiseOff = random(1000);
   }
-
   update() {
-    let n = noise(this.noiseOffX, this.noiseOffY);
+    let n = noise(this.x * 0.004, this.y * 0.004, this.noiseOff + frameCount * 0.008);
     let angle = n * TWO_PI * 2;
     this.vx += cos(angle) * 0.08;
     this.vy += sin(angle) * 0.08;
@@ -64,22 +55,23 @@ class Particle {
     this.vy *= 0.97;
     this.x += this.vx;
     this.y += this.vy;
-    this.noiseOffX += this.noiseSpeed;
-    this.noiseOffY += this.noiseSpeed;
-
     if (this.x < -60 || this.x > width + 60 || this.y < -60 || this.y > height + 60) {
-      this.reset();
+      this.reset(false);
     }
   }
-
   show() {
+    noStroke();
     fill(this.hue, this.sat, this.bri, this.alpha);
-    circle(this.x, this.y, this.size);
-
+    ellipse(this.x, this.y, this.size);
     // motion trail
-    fill(this.hue, this.sat * 0.7, this.bri, this.alpha * 0.25);
-    circle(this.x - this.vx * 4, this.y - this.vy * 4, this.size * 0.7);
+    stroke(this.hue, this.sat * 0.7, this.bri, this.alpha * 0.35);
+    strokeWeight(this.size * 0.4);
+    line(this.x, this.y, this.x - this.vx * 6, this.y - this.vy * 6);
   }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
 }
 </script>
 </body>

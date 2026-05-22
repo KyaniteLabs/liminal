@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,6 +12,7 @@ const DEFAULT_RECEIPT = path.join(ROOT, '.omx/proof/domain-gauntlet-live.json');
 const DEFAULT_LEDGER = path.join(ROOT, 'docs/launch/final-qa-test-surface-ledger.json');
 const DEFAULT_PROOF_OUT = path.join(ROOT, '.omx/proof/final-qa-surface-gate.json');
 const DEFAULT_RECEIPT_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const DEFAULT_SOURCE_FINGERPRINT_EXCLUDES = ['.omx/proof/'];
 
 const REQUIRED_PACKAGE_SCRIPTS = {
   'typecheck': 'tsc --noEmit',
@@ -125,6 +128,54 @@ function readCurrentGitCommit(repoRoot) {
   return packed && /^[0-9a-f]{40}$/i.test(packed) ? packed : null;
 }
 
+function computeProofSourceFingerprint(repoRoot, excludedPathPrefixes = DEFAULT_SOURCE_FINGERPRINT_EXCLUDES) {
+  const files = listGitSourceFiles(repoRoot)
+    ?.map(normalizeRepoPath)
+    .filter(file => file.length > 0 && !isExcludedProofPath(file, excludedPathPrefixes))
+    .sort();
+  if (!files) return null;
+
+  const hash = createHash('sha256');
+  for (const file of files) {
+    const fullPath = path.join(repoRoot, file);
+    let stat;
+    try {
+      stat = fs.statSync(fullPath);
+    } catch {
+      continue;
+    }
+    if (!stat.isFile()) continue;
+    hash.update('path\0');
+    hash.update(file);
+    hash.update('\0content\0');
+    hash.update(fs.readFileSync(fullPath));
+    hash.update('\0');
+  }
+  return `sha256:${hash.digest('hex')}`;
+}
+
+function readProofSubjectGitCommit(repoRoot, excludedPathPrefixes = DEFAULT_SOURCE_FINGERPRINT_EXCLUDES) {
+  const head = readCurrentGitCommit(repoRoot);
+  if (!head) return null;
+
+  let commit = head;
+  for (let depth = 0; depth < 200; depth += 1) {
+    const parents = gitOutput(repoRoot, ['show', '-s', '--format=%P', commit])?.trim().split(/\s+/).filter(Boolean) ?? [];
+    const firstParent = parents[0];
+    if (!firstParent) return commit;
+
+    const changedPaths = gitOutput(repoRoot, ['diff', '--name-only', firstParent, commit])
+      ?.split('\n')
+      .map(normalizeRepoPath)
+      .filter(Boolean);
+    if (!changedPaths) return head;
+    if (changedPaths.some(file => !isExcludedProofPath(file, excludedPathPrefixes))) return commit;
+    commit = firstParent;
+  }
+
+  return head;
+}
+
 function resolveGitDir(repoRoot) {
   const dotGit = path.join(repoRoot, '.git');
   if (!fs.existsSync(dotGit)) return null;
@@ -135,6 +186,28 @@ function resolveGitDir(repoRoot) {
   if (!content?.startsWith(prefix)) return null;
   const gitDir = content.slice(prefix.length).trim();
   return path.resolve(repoRoot, gitDir);
+}
+
+function listGitSourceFiles(repoRoot) {
+  return gitOutput(repoRoot, ['ls-files', '--cached', '--others', '--exclude-standard'])
+    ?.split('\n')
+    .filter(Boolean) ?? null;
+}
+
+function gitOutput(repoRoot, args) {
+  try {
+    return execFileSync('git', args, { cwd: repoRoot, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+  } catch {
+    return null;
+  }
+}
+
+function normalizeRepoPath(filePath) {
+  return filePath.trim().replaceAll(path.sep, '/');
+}
+
+function isExcludedProofPath(filePath, excludedPathPrefixes) {
+  return excludedPathPrefixes.some(prefix => filePath === prefix.replace(/\/$/, '') || filePath.startsWith(prefix));
 }
 
 function resolveCommonGitDir(gitDir) {
@@ -320,13 +393,20 @@ function validateReceiptIntegrity(receipt, errors) {
     }
   }
 
-  const gitCommit = readCurrentGitCommit(ROOT);
-  if (!gitCommit) {
-    errors.push('Current git commit unavailable for live creative-domain receipt validation');
+  const sourceFingerprint = computeProofSourceFingerprint(ROOT);
+  const proofSubjectCommit = readProofSubjectGitCommit(ROOT);
+  if (typeof receipt?.sourceFingerprint === 'string' && receipt.sourceFingerprint.length > 0) {
+    if (!sourceFingerprint) {
+      errors.push('Current source fingerprint unavailable for live creative-domain receipt validation');
+    } else if (receipt.sourceFingerprint !== sourceFingerprint) {
+      errors.push(`Live creative-domain receipt sourceFingerprint ${receipt.sourceFingerprint} does not match current ${sourceFingerprint}`);
+    }
+  } else if (!proofSubjectCommit) {
+    errors.push('Current proof subject git commit unavailable for live creative-domain receipt validation');
   } else if (typeof receipt?.gitCommit !== 'string' || receipt.gitCommit.length === 0) {
     errors.push('Live creative-domain receipt missing gitCommit');
-  } else if (receipt.gitCommit !== gitCommit) {
-    errors.push(`Live creative-domain receipt gitCommit ${receipt.gitCommit} does not match current ${gitCommit}`);
+  } else if (receipt.gitCommit !== proofSubjectCommit) {
+    errors.push(`Live creative-domain receipt gitCommit ${receipt.gitCommit} does not match current proof subject ${proofSubjectCommit}`);
   }
 
   if (typeof receipt?.provider !== 'string' || receipt.provider.trim().length === 0) {

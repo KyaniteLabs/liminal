@@ -73,8 +73,14 @@ pnpm proof:live-creative-domains -- --timeout-ms=180000
 pnpm qa:creative-domains:static
 
 # Confirm no blocking audit/completion-program PRs remain.
-# Filter by audit/completion branch, title, or label; unrelated open PRs do not block this audit closure.
-gh pr list --state open
+# Unrelated open PRs do not block this audit closure.
+gh pr list --state open --json number,title,headRefName,labels --jq '
+  map(select(
+    (.headRefName | test("audit|completion|final-completion"; "i")) or
+    (.title | test("audit|completion|final-completion"; "i")) or
+    ([.labels[].name] | any(test("audit|completion|final-completion"; "i")))
+  ))
+'
 
 # If all gates are green and no blocking audit PRs remain, update this file to COMPLETE.
 ```

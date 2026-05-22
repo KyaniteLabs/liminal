@@ -2,188 +2,168 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Kinetic Orbit</title>
+    <title>Kinetic Typography</title>
     <style>
         :root {
             --bg: #050508;
             --glow: #00f3ff;
             --accent: #ff0055;
-            --text: #e0e0e0;
+            --text: #ffffff;
         }
 
         body {
             margin: 0;
             height: 100vh;
-            background: var(--bg);
+            background-color: var(--bg);
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .scene {
             position: relative;
-            width: 100vmin;
-            height: 100vmin;
+            width: 500px;
+            height: 500px;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        /* Luminous Threshold Core */
+        /* The Luminous Threshold */
         .threshold {
             position: absolute;
-            width: 120px;
-            height: 120px;
+            width: 200px;
+            height: 200px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,1) 0%, var(--glow) 40%, transparent 70%);
-            box-shadow: 0 0 60px var(--glow), 0 0 100px var(--glow), inset 0 0 20px white;
-            animation: pulse-core 4s infinite alternate ease-in-out;
-            z-index: 10;
+            border: 2px solid rgba(0, 243, 255, 0.2);
+            box-shadow:
+                0 0 20px var(--glow),
+                0 0 40px var(--glow),
+                inset 0 0 20px var(--glow);
+            animation: pulseThreshold 4s infinite alternate ease-in-out;
+            z-index: 1;
         }
 
-        .ring {
-            position: absolute;
-            border: 1px solid rgba(0, 243, 255, 0.2);
-            border-radius: 50%;
-            animation: spin-ring 20s linear infinite;
+        @keyframes pulseThreshold {
+            0% { transform: scale(1); opacity: 0.6; box-shadow: 0 0 20px var(--glow); }
+            100% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 50px var(--glow), 0 0 80px var(--accent); }
         }
 
-        /* Kinetic Typography Orbits */
+        /* Orbiting Words Base */
         .orbit {
             position: absolute;
             top: 50%;
             left: 50%;
             transform-origin: center;
-            animation-timing-function: linear;
-            animation-iteration-count: infinite;
+            pointer-events: none;
         }
 
+        /* Word Styling */
         .word {
             position: absolute;
+            white-space: nowrap;
             font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 4px;
-            white-space: nowrap;
-            color: var(--text);
-            /* Base glow for all words */
+            letter-spacing: 2px;
+            color: transparent;
+            -webkit-text-stroke: 1px var(--text);
             filter: drop-shadow(0 0 5px currentColor);
         }
 
-        /* Orbit 1: Outer Fast */
-        .orbit-1 {
-            width: 80vmin;
-            height: 80vmin;
-            margin-left: -40vmin;
-            margin-top: -40vmin;
-            animation-name: orbit-spin-cw;
-            animation-duration: 15s;
+        /* Orbit 1 */
+        .o1 {
+            width: 300px;
+            height: 300px;
+            margin-left: -150px;
+            margin-top: -150px;
+            animation: spin 12s linear infinite;
         }
-
-        .orbit-1 .word {
-            font-size: 1.5rem;
+        .w1 {
+            top: -10px; left: 50%; margin-left: -30px;
+            font-size: 18px;
+            animation: flicker 3s infinite alternate;
             color: var(--glow);
-            animation: flicker-text 3s infinite alternate;
         }
 
-        /* Orbit 2: Mid Counter-Clockwise */
-        .orbit-2 {
-            width: 55vmin;
-            height: 55vmin;
-            margin-left: -27.5vmin;
-            margin-top: -27.5vmin;
-            animation-name: orbit-spin-ccw;
-            animation-duration: 22s;
+        /* Orbit 2 */
+        .o2 {
+            width: 420px;
+            height: 420px;
+            margin-left: -210px;
+            margin-top: -210px;
+            animation: spin 18s linear infinite reverse;
         }
-
-        .orbit-2 .word {
-            font-size: 1.2rem;
+        .w2 {
+            bottom: 10px; left: 50%; margin-left: -45px;
+            font-size: 24px;
             color: var(--accent);
-            animation: pulse-text 4s infinite ease-in-out;
+            animation: pulseText 4s infinite ease-in-out;
         }
 
-        /* Orbit 3: Inner Tilted */
-        .orbit-3 {
-            width: 35vmin;
-            height: 35vmin;
-            margin-left: -17.5vmin;
-            margin-top: -17.5vmin;
-            animation-name: orbit-spin-cw;
-            animation-duration: 10s;
-            transform: rotateX(60deg); /* 3D Tilt */
+        /* Orbit 3 (Diagonal) */
+        .o3 {
+            width: 380px;
+            height: 180px;
+            margin-left: -190px;
+            margin-top: -90px;
+            transform: rotate(-30deg);
+            animation: spin 9s linear infinite;
         }
-
-        .orbit-3 .word {
-            font-size: 1rem;
+        .w3 {
+            right: -20px; top: 50%; margin-top: -10px;
+            font-size: 14px;
+            letter-spacing: 6px;
             color: #fff;
-            animation: glitch 2s infinite steps(2);
+            animation: glitch 2s steps(2) infinite;
         }
 
-        /* Word Positioning (Placed at top of container, rotation handles the rest) */
-        .w1 { left: 50%; top: 0; transform: translateX(-50%); }
-        .w2 { left: 50%; top: 0; transform: translateX(-50%); }
-        .w3 { left: 50%; bottom: 0; transform: translateX(-50%) rotate(180deg); }
-        .w4 { left: 50%; top: 0; transform: translateX(-50%); }
-        .w5 { right: 0; top: 50%; transform: translateY(-50%) rotate(90deg); }
-        .w6 { left: 50%; top: 0; transform: translateX(-50%); }
-
-        /* Keyframes */
-
-        @keyframes pulse-core {
-            0% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 30px var(--glow); }
-            100% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 80px var(--glow), 0 0 150px var(--accent); }
+        /* Orbit 4 (Vertical) */
+        .o4 {
+            width: 120px;
+            height: 450px;
+            margin-left: -60px;
+            margin-top: -225px;
+            transform: rotate(15deg);
+            animation: spin 22s linear infinite reverse;
+        }
+        .w4 {
+            bottom: 0; left: 0;
+            font-size: 16px;
+            writing-mode: vertical-rl;
+            color: var(--glow);
+            text-shadow: 0 0 10px var(--glow);
         }
 
-        @keyframes spin-ring {
+        @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
 
-        @keyframes orbit-spin-cw {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                text-shadow: 0 0 7px var(--glow), 0 0 10px var(--glow);
+                opacity: 1;
+            }
+            20%, 24%, 55% {
+                text-shadow: none;
+                opacity: 0.4;
+            }
         }
 
-        @keyframes orbit-spin-ccw {
-            from { transform: rotate(360deg); }
-            to { transform: rotate(0deg); }
-        }
-
-        /* Counter-rotation for text to keep it upright or create effects */
-        .orbit-1 { animation: orbit-spin-cw 15s linear infinite; }
-        .orbit-1 .word { animation: counter-cw-1 15s linear infinite, flicker-text 3s infinite alternate; }
-
-        .orbit-2 { animation: orbit-spin-ccw 22s linear infinite; }
-        .orbit-2 .word { animation: counter-ccw-2 22s linear infinite, pulse-text 4s infinite ease-in-out; }
-
-        .orbit-3 { animation: orbit-spin-cw 10s linear infinite; transform: rotateX(60deg); }
-        .orbit-3 .word { animation: counter-cw-3 10s linear infinite, glitch 2s infinite steps(2); }
-
-
-        @keyframes counter-cw-1 { from { transform: translateX(-50%) rotate(0deg); } to { transform: translateX(-50%) rotate(-360deg); } }
-        @keyframes counter-ccw-2 { from { transform: translateX(-50%) rotate(0deg); } to { transform: translateX(-50%) rotate(360deg); } }
-        @keyframes counter-cw-3 { from { transform: translateX(-50%) rotate(0deg); } to { transform: translateX(-50%) rotate(-360deg); } }
-
-        @keyframes flicker-text {
-            0% { opacity: 1; text-shadow: 0 0 10px var(--glow); }
-            20% { opacity: 0.8; text-shadow: 0 0 5px var(--glow); }
-            50% { opacity: 1; text-shadow: 0 0 25px var(--glow); }
-            80% { opacity: 0.6; text-shadow: none; }
-            100% { opacity: 1; text-shadow: 0 0 15px var(--glow); }
-        }
-
-        @keyframes pulse-text {
-            0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.8; }
-            50% { transform: translateX(-50%) scale(1.2); opacity: 1; text-shadow: 0 0 20px var(--accent); }
+        @keyframes pulseText {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; text-shadow: 0 0 20px var(--accent); }
+            100% { transform: scale(1); opacity: 0.8; }
         }
 
         @keyframes glitch {
-            0% { transform: translateX(-50%) skew(0deg); opacity: 1; }
-            25% { transform: translateX(-50%) skew(20deg); opacity: 0.8; text-shadow: -2px 0 red; }
-            50% { transform: translateX(-50%) skew(-20deg); opacity: 1; text-shadow: 2px 0 blue; }
-            75% { transform: translateX(-50%) skew(0deg); opacity: 0.9; }
-            100% { transform: translateX(-50%) skew(0deg); opacity: 1; }
+            0% { transform: translate(0); filter: hue-rotate(0deg); }
+            25% { transform: translate(-2px, 2px); filter: hue-rotate(90deg); }
+            50% { transform: translate(2px, -2px); filter: hue-rotate(180deg); }
+            75% { transform: translate(-2px, -2px); filter: hue-rotate(270deg); }
+            100% { transform: translate(0); filter: hue-rotate(360deg); }
         }
 
     </style>
@@ -191,30 +171,25 @@
 <body>
 
     <div class="scene">
-        <!-- Background Rings -->
-        <div class="ring" style="width:90vmin;height:90vmin;margin:-45vmin 0 0 -45vmin;"></div>
-        <div class="ring" style="width:60vmin;height:60vmin;margin:-30vmin 0 0 -30vmin;border-color:rgba(255,0,85,0.2);"></div>
-
-        <!-- Center Threshold -->
+        <!-- Central Luminous Core -->
         <div class="threshold"></div>
 
-        <!-- Orbit 1 -->
-        <div class="orbit orbit-1">
-            <span class="word w1">Kinetic</span>
-            <span class="word w3">Velocity</span>
+        <!-- Orbital Paths & Text -->
+        <div class="orbit o1">
+            <span class="word w1">Velocity</span>
         </div>
 
-        <!-- Orbit 2 -->
-        <div class="orbit orbit-2">
+        <div class="orbit o2">
             <span class="word w2">Threshold</span>
-            <span class="word w5">Luminous</span>
         </div>
 
-        <!-- Orbit 3 -->
-        <div class="orbit orbit-3">
-            <span class="word w6">System</span>
+        <div class="orbit o3">
+            <span class="word w3">KINETIC</span>
         </div>
 
+        <div class="orbit o4">
+            <span class="word w4">LUMINOUS</span>
+        </div>
     </div>
 
 

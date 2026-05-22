@@ -58,6 +58,7 @@ export class SVGGenerator extends TierBasedGenerator {
       'Include xmlns="http://www.w3.org/2000/svg" and a valid viewBox.',
       'Do not return markdown fences, prose, HTML wrappers, scripts, event handlers, foreignObject, external images, external fonts, or remote hrefs.',
       'Use self-contained vector geometry only.',
+      this.transparentBackgroundGuidance(prompt),
       ...profile.promptGuidance,
       profile.allowGradients ? 'Gradients may be used only when they remain self-contained and safe.' : 'Do not use gradients, masks, patterns, or paint-server URLs.',
       profile.allowFilters ? 'Filters may be used only when they remain self-contained and safe.' : 'Do not use filters.',
@@ -76,6 +77,7 @@ export class SVGGenerator extends TierBasedGenerator {
         `Mode: ${mode} (${profile.label})`,
         'Include xmlns and viewBox.',
         'Use only self-contained vector shapes. No script, event handlers, foreignObject, external hrefs, markdown, prose, or HTML.',
+        this.transparentBackgroundGuidance(prompt),
         profile.allowGradients ? 'Self-contained gradients are allowed.' : 'Do not use gradients or paint-server URLs.',
         profile.allowFilters ? 'Self-contained filters are allowed.' : 'Do not use filters.',
         profile.allowText ? 'Text is allowed when useful.' : 'Do not use text.',
@@ -85,6 +87,7 @@ export class SVGGenerator extends TierBasedGenerator {
         'Return raw SVG only. The first character must be "<" and the final characters must be "</svg>".',
         'Use this structure, adapted to the user request: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">...</svg>',
         'Draw a clear liminal doorway logo with safe vector primitives such as rect, path, circle, polygon, defs, and linearGradient.',
+        this.transparentBackgroundGuidance(prompt),
         'No commentary, markdown, HTML, scripts, event handlers, foreignObject, external links, or remote assets.',
         `User request: ${prompt}`,
       ].join('\n'), maxTokens: options?.maxTokens ?? 2200, temperature: 0.2 },
@@ -111,6 +114,12 @@ export class SVGGenerator extends TierBasedGenerator {
     }
 
     return this.recoverSVGFromMemory(prompt, mode);
+  }
+
+  private transparentBackgroundGuidance(prompt: string): string {
+    return /\btransparent\b|\bno background\b|\bwithout background\b/i.test(prompt)
+      ? 'Transparent background requested: do not draw a full-canvas background rect, backdrop, or opaque root-sized shape; keep only foreground logo/vector elements.'
+      : '';
   }
 
   private recoverSVGFromMemory(prompt: string, mode: SVGMode): string | null {

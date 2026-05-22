@@ -2,530 +2,157 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orbital Threshold</title>
+    <title>Kinetic Typography</title>
     <style>
         :root {
             --bg: #050508;
-            --glow-core: #00f0ff;
-            --glow-mid: #7b2dff;
-            --glow-edge: #ff0055;
-            --text-color: rgba(255, 255, 255, 0.85);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            --glow: #00f3ff;
+            --accent: #ff0055;
+            --text: #ffffff;
         }
 
         body {
-            width: 100vw;
+            margin: 0;
             height: 100vh;
             background: var(--bg);
             display: flex;
             justify-content: center;
             align-items: center;
             overflow: hidden;
-            font-family: 'Courier New', Courier, monospace;
+            font-family: 'Segoe UI', system-ui, sans-serif;
         }
 
         .scene {
             position: relative;
-            width: 800px;
-            height: 600px;
-            max-width: 100%;
-            max-height: 100%;
+            width: 100vmin;
+            height: 100vmin;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* Luminous Threshold Core */
+        /* The Luminous Threshold */
         .threshold {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
+            width: 200px;
+            height: 200px;
             border-radius: 50%;
-            background: radial-gradient(circle,
-                rgba(255, 255, 255, 1) 0%,
-                var(--glow-core) 20%,
-                transparent 70%
-            );
-            filter: blur(1px);
-            animation: pulseCore 3s ease-in-out infinite;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow:
+                0 0 60px var(--glow),
+                inset 0 0 40px var(--glow),
+                0 0 120px rgba(0, 243, 255, 0.4);
+            animation: pulse-threshold 4s ease-in-out infinite alternate;
+            z-index: 1;
         }
 
-        .threshold::before {
-            content: '';
-            position: absolute;
-            inset: -40px;
-            border-radius: 50%;
-            background: radial-gradient(circle,
-                var(--glow-mid) 0%,
-                transparent 60%
-            );
-            opacity: 0.6;
-            animation: pulseOuter 4s ease-in-out infinite reverse;
+        @keyframes pulse-threshold {
+            0% { transform: scale(1); opacity: 0.6; filter: blur(1px); }
+            100% { transform: scale(1.15); opacity: 1; filter: blur(2px); }
         }
 
-        .threshold::after {
-            content: '';
-            position: absolute;
-            inset: -80px;
-            border-radius: 50%;
-            background: conic-gradient(
-                from 0deg,
-                transparent,
-                var(--glow-edge),
-                transparent,
-                var(--glow-core),
-                transparent
-            );
-            animation: rotateThreshold 10s linear infinite;
-            opacity: 0.5;
-        }
-
-        /* Orbital Rings */
+        /* Orbiting Words Base */
         .orbit {
             position: absolute;
             top: 50%;
             left: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 50%;
-            transform-origin: center center;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            z-index: 10;
         }
 
-        .orbit-1 {
-            width: 280px;
-            height: 280px;
-            margin-left: -140px;
-            margin-top: -140px;
-            animation: orbitWobble 12s ease-in-out infinite;
+        /* Individual Orbits */
+        .o1 {
+            width: 300px; height: 300px; margin-left: -150px; margin-top: -150px;
+            animation-name: spin; animation-duration: 12s;
+        }
+        .o2 {
+            width: 450px; height: 450px; margin-left: -225px; margin-top: -225px;
+            animation-name: spin-reverse; animation-duration: 18s;
+        }
+        .o3 {
+            width: 600px; height: 600px; margin-left: -300px; margin-top: -300px;
+            animation-name: spin; animation-duration: 25s;
+        }
+        .o4 {
+            width: 750px; height: 750px; margin-left: -375px; margin-top: -375px;
+            animation-name: spin-reverse; animation-duration: 35s;
         }
 
-        .orbit-2 {
-            width: 420px;
-            height: 420px;
-            margin-left: -210px;
-            margin-top: -210px;
-            animation: orbitWobble 15s ease-in-out infinite reverse;
-            border-style: dashed;
-        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
 
-        .orbit-3 {
-            width: 560px;
-            height: 560px;
-            margin-left: -280px;
-            margin-top: -280px;
-            animation: orbitWobble 18s ease-in-out infinite;
-            border-width: 2px;
-            border-color: rgba(123, 45, 255, 0.15);
-        }
-
-        /* Word Containers */
-        .word-container {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform-origin: center center;
-        }
-
-        /* Orbit 1 Words */
-        .wc-1a {
-            animation: orbit1 8s linear infinite;
-        }
-        .wc-1b {
-            animation: orbit1 8s linear infinite;
-            animation-delay: -2s;
-        }
-        .wc-1c {
-            animation: orbit1 8s linear infinite;
-            animation-delay: -4s;
-        }
-        .wc-1d {
-            animation: orbit1 8s linear infinite;
-            animation-delay: -6s;
-        }
-
-        /* Orbit 2 Words */
-        .wc-2a {
-            animation: orbit2 14s linear infinite reverse;
-        }
-        .wc-2b {
-            animation: orbit2 14s linear infinite reverse;
-            animation-delay: -3.5s;
-        }
-        .wc-2c {
-            animation: orbit2 14s linear infinite reverse;
-            animation-delay: -7s;
-        }
-        .wc-2d {
-            animation: orbit2 14s linear infinite reverse;
-            animation-delay: -10.5s;
-        }
-
-        /* Orbit 3 Words */
-        .wc-3a {
-            animation: orbit3 22s linear infinite;
-        }
-        .wc-3b {
-            animation: orbit3 22s linear infinite;
-            animation-delay: -5.5s;
-        }
-        .wc-3c {
-            animation: orbit3 22s linear infinite;
-            animation-delay: -11s;
-        }
-        .wc-3d {
-            animation: orbit3 22s linear infinite;
-            animation-delay: -16.5s;
-        }
-
-        /* Word Styling */
+        /* Word Styling & Kinetic Effects */
         .word {
-            font-size: 18px;
-            font-weight: bold;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            color: var(--text-color);
-            white-space: nowrap;
-            text-shadow: 0 0 20px currentColor;
-            animation: wordGlow 2s ease-in-out infinite alternate;
-            user-select: none;
-        }
-
-        .orbit-1 .word {
-            color: var(--glow-core);
-            font-size: 16px;
-        }
-        .orbit-2 .word {
-            color: var(--glow-mid);
-            font-size: 14px;
-        }
-        .orbit-3 .word {
-            color: var(--glow-edge);
-            font-size: 13px;
-            letter-spacing: 4px;
-        }
-
-        /* Position words at radius */
-        .wc-1a .word { transform: translate(140px, 0); }
-        .wc-1b .word { transform: translate(-140px, 0); }
-        .wc-1c .word { transform: translate(0, 140px); }
-        .wc-1d .word { transform: translate(0, -140px); }
-
-        .wc-2a .word { transform: translate(210px, 0); }
-        .wc-2b .word { transform: translate(-210px, 0); }
-        .wc-2c .word { transform: translate(0, 210px); }
-        .wc-2d .word { transform: translate(0, -210px); }
-
-        .wc-3a .word { transform: translate(280px, 0); }
-        .wc-3b .word { transform: translate(-280px, 0); }
-        .wc-3c .word { transform: translate(0, 280px); }
-        .wc-3d .word { transform: translate(0, -280px); }
-
-        /* Counter-rotation to keep words upright */
-        .orbit-1 .word { animation: counterRotate1 8s linear infinite; }
-        .orbit-2 .word { animation: counterRotate2 14s linear infinite reverse; }
-        .orbit-3 .word { animation: counterRotate3 22s linear infinite; }
-
-        .wc-1b .word { animation-delay: -2s; }
-        .wc-1c .word { animation-delay: -4s; }
-        .wc-1d .word { animation-delay: -6s; }
-
-        .wc-2b .word { animation-delay: -3.5s; }
-        .wc-2c .word { animation-delay: -7s; }
-        .wc-2d .word { animation-delay: -10.5s; }
-
-        .wc-3b .word { animation-delay: -5.5s; }
-        .wc-3c .word { animation-delay: -11s; }
-        .wc-3d .word { animation-delay: -16.5s; }
-
-        /* SVG Background Elements */
-        .svg-bg {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: -1;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            white-space: nowrap;
+            color: transparent;
+            -webkit-text-stroke: 1px var(--text);
+            filter: drop-shadow(0 0 5px currentColor);
+            animation: word-fx 6s ease-in-out infinite alternate;
         }
 
-        .particle {
-            fill: white;
-            opacity: 0;
-            animation: particleFloat 6s ease-in-out infinite;
+        .w-glow { color: var(--glow); -webkit-text-stroke: 0; text-shadow: 0 0 20px var(--glow), 0 0 40px var(--glow); }
+        .w-accent { color: var(--accent); -webkit-text-stroke: 0; text-shadow: 0 0 20px var(--accent), 0 0 40px var(--accent); }
+
+        @keyframes word-fx {
+            0% { transform: scale(0.9) translateY(0); opacity: 0.7; }
+            100% { transform: scale(1.2) translateY(-5px); opacity: 1; filter: brightness(1.5) drop-shadow(0 0 15px white); }
         }
 
-        .particle:nth-child(odd) {
-            animation-direction: reverse;
-            animation-duration: 8s;
-        }
+        /* Positioning words on the orbit edge */
+        .t1 { top: 0; left: 50%; transform-origin: 0 150px; font-size: 24px; animation-delay: 0s; }
+        .t2 { top: 50%; right: 0; transform-origin: -112.5px 0; font-size: 32px; animation-delay: -1s; }
+        .t3 { bottom: 0; left: 50%; transform-origin: 0 -150px; font-size: 28px; animation-delay: -2s; }
+        .t4 { top: 50%; left: 0; transform-origin: 187.5px 0; font-size: 22px; animation-delay: -3s; }
 
-        .particle:nth-child(3n) {
-            fill: var(--glow-core);
-            animation-duration: 5s;
-        }
+        .t5 { top: 0; left: 50%; transform-origin: 0 225px; font-size: 36px; animation-delay: -0.5s; }
+        .t6 { bottom: 0; left: 50%; transform-origin: 0 -225px; font-size: 26px; animation-delay: -2.5s; }
 
-        /* Keyframes */
-        @keyframes pulseCore {
-            0%, 100% {
-                transform: translate(-50%, -50%) scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: translate(-50%, -50%) scale(1.3);
-                opacity: 0.9;
-            }
-        }
+        .t7 { top: 0; left: 50%; transform-origin: 0 300px; font-size: 42px; animation-delay: -1.5s; }
+        .t8 { bottom: 0; left: 50%; transform-origin: 0 -300px; font-size: 30px; animation-delay: -3.5s; }
 
-        @keyframes pulseOuter {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 0.6;
-            }
-            50% {
-                transform: scale(1.2);
-                opacity: 0.3;
-            }
-        }
+        .t9 { top: 0; left: 50%; transform-origin: 0 375px; font-size: 48px; animation-delay: -0.2s; }
+        .t10 { bottom: 0; left: 50%; transform-origin: 0 -375px; font-size: 34px; animation-delay: -4.2s; }
 
-        @keyframes rotateThreshold {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes orbitWobble {
-            0%, 100% {
-                border-radius: 50%;
-                transform: rotate(0deg) scale(1);
-            }
-            25% {
-                border-radius: 48% 52% 50% 50%;
-            }
-            50% {
-                border-radius: 52% 48% 48% 52%;
-                transform: rotate(180deg) scale(1.02);
-            }
-            75% {
-                border-radius: 50% 50% 52% 48%;
-            }
-        }
-
-        @keyframes orbit1 {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes orbit2 {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes orbit3 {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes counterRotate1 {
-            from { transform: translate(140px, 0) rotate(0deg); }
-            to { transform: translate(140px, 0) rotate(-360deg); }
-        }
-        @keyframes counterRotate1b {
-            from { transform: translate(-140px, 0) rotate(0deg); }
-            to { transform: translate(-140px, 0) rotate(-360deg); }
-        }
-        @keyframes counterRotate1c {
-            from { transform: translate(0, 140px) rotate(0deg); }
-            to { transform: translate(0, 140px) rotate(-360deg); }
-        }
-        @keyframes counterRotate1d {
-            from { transform: translate(0, -140px) rotate(0deg); }
-            to { transform: translate(0, -140px) rotate(-360deg); }
-        }
-
-        @keyframes counterRotate2 {
-            from { transform: translate(210px, 0) rotate(0deg); }
-            to { transform: translate(210px, 0) rotate(360deg); }
-        }
-        @keyframes counterRotate2b {
-            from { transform: translate(-210px, 0) rotate(0deg); }
-            to { transform: translate(-210px, 0) rotate(360deg); }
-        }
-        @keyframes counterRotate2c {
-            from { transform: translate(0, 210px) rotate(0deg); }
-            to { transform: translate(0, 210px) rotate(360deg); }
-        }
-        @keyframes counterRotate2d {
-            from { transform: translate(0, -210px) rotate(0deg); }
-            to { transform: translate(0, -210px) rotate(360deg); }
-        }
-
-        @keyframes counterRotate3 {
-            from { transform: translate(280px, 0) rotate(0deg); }
-            to { transform: translate(280px, 0) rotate(-360deg); }
-        }
-        @keyframes counterRotate3b {
-            from { transform: translate(-280px, 0) rotate(0deg); }
-            to { transform: translate(-280px, 0) rotate(-360deg); }
-        }
-        @keyframes counterRotate3c {
-            from { transform: translate(0, 280px) rotate(0deg); }
-            to { transform: translate(0, 280px) rotate(-360deg); }
-        }
-        @keyframes counterRotate3d {
-            from { transform: translate(0, -280px) rotate(0deg); }
-            to { transform: translate(0, -280px) rotate(-360deg); }
-        }
-
-        @keyframes wordGlow {
-            0% {
-                text-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
-                opacity: 0.7;
-            }
-            100% {
-                text-shadow: 0 0 20px currentColor, 0 0 40px currentColor, 0 0 60px currentColor;
-                opacity: 1;
-            }
-        }
-
-        @keyframes particleFloat {
-            0% {
-                opacity: 0;
-                transform: translateY(0) scale(0.5);
-            }
-            20% {
-                opacity: 0.8;
-            }
-            80% {
-                opacity: 0.6;
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-200px) scale(1.5);
-            }
-        }
-
-        /* Specific word animations for variety */
-        .wc-1a .word { animation-name: counterRotate1, wordGlow; }
-        .wc-1b .word { animation-name: counterRotate1b, wordGlow; animation-duration: 8s, 2.3s; }
-        .wc-1c .word { animation-name: counterRotate1c, wordGlow; animation-duration: 8s, 1.8s; }
-        .wc-1d .word { animation-name: counterRotate1d, wordGlow; animation-duration: 8s, 2.7s; }
-
-        .wc-2a .word { animation-name: counterRotate2, wordGlow; }
-        .wc-2b .word { animation-name: counterRotate2b, wordGlow; animation-duration: 14s, 2.1s; }
-        .wc-2c .word { animation-name: counterRotate2c, wordGlow; animation-duration: 14s, 2.5s; }
-        .wc-2d .word { animation-name: counterRotate2d, wordGlow; animation-duration: 14s, 1.9s; }
-
-        .wc-3a .word { animation-name: counterRotate3, wordGlow; }
-        .wc-3b .word { animation-name: counterRotate3b, wordGlow; animation-duration: 22s, 2.4s; }
-        .wc-3c .word { animation-name: counterRotate3c, wordGlow; animation-duration: 22s, 2.0s; }
-        .wc-3d .word { animation-name: counterRotate3d, wordGlow; animation-duration: 22s, 2.8s; }
-
-        /* Reduced motion */
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-            }
-        }
     </style>
 </head>
 <body>
+
     <div class="scene">
-        <!-- SVG Particle Background -->
-        <svg class="svg-bg" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice">
-            <defs>
-                <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
-                    <stop offset="0%" stop-color="#0a0a14"/>
-                    <stop offset="100%" stop-color="#050508"/>
-                </radialGradient>
-                <filter id="glow">
-                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                    <feMerge>
-                        <feMergeNode in="coloredBlur"/>
-                        <feMergeNode in="SourceGraphic"/>
-                    </feMerge>
-                </filter>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#bgGrad)"/>
-
-            <!-- Floating Particles -->
-            <circle class="particle" cx="150" cy="450" r="2" style="animation-delay: 0s"/>
-            <circle class="particle" cx="250" cy="500" r="1.5" style="animation-delay: -1s"/>
-            <circle class="particle" cx="350" cy="400" r="2.5" style="animation-delay: -2s"/>
-            <circle class="particle" cx="450" cy="480" r="1" style="animation-delay: -3s"/>
-            <circle class="particle" cx="550" cy="420" r="2" style="animation-delay: -4s"/>
-            <circle class="particle" cx="650" cy="500" r="1.5" style="animation-delay: -5s"/>
-            <circle class="particle" cx="200" cy="150" r="2" style="animation-delay: -0.5s"/>
-            <circle class="particle" cx="300" cy="100" r="1" style="animation-delay: -1.5s"/>
-            <circle class="particle" cx="500" cy="130" r="2" style="animation-delay: -2.5s"/>
-            <circle class="particle" cx="600" cy="180" r="1.5" style="animation-delay: -3.5s"/>
-            <circle class="particle" cx="700" cy="120" r="2" style="animation-delay: -4.5s"/>
-            <circle class="particle" cx="100" cy="300" r="1" style="animation-delay: -0.8s"/>
-            <circle class="particle" cx="720" cy="350" r="2" style="animation-delay: -1.8s"/>
-
-            <!-- Subtle grid lines -->
-            <g stroke="rgba(255,255,255,0.02)" stroke-width="1">
-                <line x1="400" y1="0" x2="400" y2="600"/>
-                <line x1="0" y1="300" x2="800" y2="300"/>
-                <circle cx="400" cy="300" r="200" fill="none"/>
-                <circle cx="400" cy="300" r="300" fill="none"/>
-            </g>
-        </svg>
-
-        <!-- Luminous Threshold -->
+        <!-- Luminous Core -->
         <div class="threshold"></div>
 
-        <!-- Orbital Rings -->
-        <div class="orbit orbit-1"></div>
-        <div class="orbit orbit-2"></div>
-        <div class="orbit orbit-3"></div>
-
-        <!-- Orbit 1 Words (Inner) -->
-        <div class="word-container wc-1a">
-            <span class="word">LUMINOUS</span>
-        </div>
-        <div class="word-container wc-1b">
-            <span class="word">THRESHOLD</span>
-        </div>
-        <div class="word-container wc-1c">
-            <span class="word">KINETIC</span>
-        </div>
-        <div class="word-container wc-1d">
-            <span class="word">PULSE</span>
+        <!-- Orbit 1 (Inner) -->
+        <div class="orbit o1">
+            <div class="word t1 w-glow">Kinetic</div>
+            <div class="word t3 w-accent">Type</div>
         </div>
 
-        <!-- Orbit 2 Words (Middle) -->
-        <div class="word-container wc-2a">
-            <span class="word">VELOCITY</span>
-        </div>
-        <div class="word-container wc-2b">
-            <span class="word">FREQUENCY</span>
-        </div>
-        <div class="word-container wc-2c">
-            <span class="word">AMPLITUDE</span>
-        </div>
-        <div class="word-container wc-2d">
-            <span class="word">RESONANCE</span>
+        <!-- Orbit 2 -->
+        <div class="orbit o2">
+            <div class="word t2 w-glow">Orbiting</div>
+            <div class="word t6 w-accent">Motion</div>
         </div>
 
-        <!-- Orbit 3 Words (Outer) -->
-        <div class="word-container wc-3a">
-            <span class="word">INFINITE</span>
+        <!-- Orbit 3 -->
+        <div class="orbit o3">
+            <div class="word t7 w-accent">Luminous</div>
+            <div class="word t8 w-glow">Threshold</div>
         </div>
-        <div class="word-container wc-3b">
-            <span class="word">ETERNAL</span>
-        </div>
-        <div class="word-container wc-3c">
-            <span class="word">BEYOND</span>
-        </div>
-        <div class="word-container wc-3d">
-            <span class="word">VOID</span>
+
+        <!-- Orbit 4 (Outer) -->
+        <div class="orbit o4">
+            <div class="word t9 w-glow">Velocity</div>
+            <div class="word t10 w-accent">Design</div>
         </div>
     </div>
+
+
+
 
 
 </body>

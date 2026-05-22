@@ -10,7 +10,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { getProviderConfig, listConfiguredProviders, type ProviderType } from '../../src/harness/MultiProviderConfig.js';
 import { selectLiveSmokeProvider } from '../../src/market/LiveProviderSmokeReceipt.js';
-import { readCurrentGitCommit } from '../../src/runtime-core/ProofReceiptValidator.js';
+import { computeProofSourceFingerprint, readCurrentGitCommit } from '../../src/runtime-core/ProofReceiptValidator.js';
 import { validateCreativeDomainArtifact } from '../lib/creative-domain-artifact-validation.mjs';
 import { P5GeneratorV2 } from '../../src/generators/p5/P5GeneratorV2.js';
 import { SVGGenerator } from '../../src/generators/svg/SVGGenerator.js';
@@ -77,6 +77,7 @@ interface LiveCreativeDomainReceipt {
   ready: boolean;
   mode: 'live-execution';
   gitCommit: string | null;
+  sourceFingerprint: string | null;
   provider: string;
   model: string;
   launchDomains: Domain[];
@@ -202,6 +203,7 @@ async function main(): Promise<void> {
     ready: failed.length === 0 && missingDomains.length === 0,
     mode: 'live-execution',
     gitCommit: readCurrentGitCommit(process.cwd()),
+    sourceFingerprint: computeProofSourceFingerprint(process.cwd()),
     provider,
     model: config.model,
     launchDomains: [...LAUNCH_CREATIVE_DOMAINS],

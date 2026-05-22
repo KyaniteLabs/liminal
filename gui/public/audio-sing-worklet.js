@@ -1,17 +1,20 @@
 /**
  * AudioWorklet processor for low-latency voice analysis.
  * Processes audio at the native sample rate and posts a complete
- * analysis frame to the main thread as soon as the buffer fills
- * (~42ms at 48kHz), with no artificial throttle.
+ * analysis frame after the 2048-sample window is warm, then on an
+ * overlapping hop (~16ms at 48kHz) so short vocal transients are not
+ * delayed by a full-window cadence.
  */
 class AudioSingProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
     this.frameSize = 2048;
+    this.hopSize = 768;
     this.buffer = new Float32Array(this.frameSize);
     this.writeIndex = 0;
     this.lastRms = 0;
     this.samplesSinceAnalyze = 0;
+    this.totalSamplesWritten = 0;
   }
 
   process(inputs, _outputs, _parameters) {
@@ -23,10 +26,15 @@ class AudioSingProcessor extends AudioWorkletProcessor {
       this.buffer[this.writeIndex] = channel[i];
       this.writeIndex = (this.writeIndex + 1) % this.frameSize;
       this.samplesSinceAnalyze++;
+      this.totalSamplesWritten++;
     }
 
-    if (this.samplesSinceAnalyze >= this.frameSize) {
+    if (this.totalSamplesWritten === this.frameSize) {
       this.samplesSinceAnalyze = 0;
+      const frame = this.analyzeFrame();
+      this.port.postMessage(frame);
+    } else if (this.totalSamplesWritten > this.frameSize && this.samplesSinceAnalyze >= this.hopSize) {
+      this.samplesSinceAnalyze %= this.hopSize;
       const frame = this.analyzeFrame();
       this.port.postMessage(frame);
     }

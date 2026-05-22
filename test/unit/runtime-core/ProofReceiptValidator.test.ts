@@ -72,4 +72,17 @@ describe('ProofReceiptValidator', () => {
       rmSync(repoRoot, { recursive: true, force: true });
     }
   });
+
+  it('does not absorb untracked local scratch files into committed receipt fingerprints', () => {
+    const repoRoot = createRepo();
+    try {
+      const cleanFingerprint = computeProofSourceFingerprint(repoRoot);
+
+      writeFileSync(join(repoRoot, 'scratch-never-committed.txt'), 'local operator note\n');
+
+      expect(computeProofSourceFingerprint(repoRoot)).toBe(cleanFingerprint);
+    } finally {
+      rmSync(repoRoot, { recursive: true, force: true });
+    }
+  });
 });

@@ -1,5 +1,5 @@
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1a2e);
+scene.background = new THREE.Color(0x111122);
 
 const width = window.innerWidth;
 const height = window.innerHeight;
@@ -12,42 +12,55 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 document.body.appendChild(renderer.domElement);
 
 // Lights
-const ambientLight = new THREE.AmbientLight(0x404060, 0.5);
+const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
 scene.add(ambientLight);
 
-const pointLight1 = new THREE.PointLight(0xff6b6b, 1.5, 20);
-pointLight1.position.set(3, 3, 4);
-scene.add(pointLight1);
+const pointLight = new THREE.PointLight(0xffffff, 1.2);
+pointLight.position.set(4, 4, 4);
+scene.add(pointLight);
 
-const pointLight2 = new THREE.PointLight(0x4ecdc4, 1.2, 20);
+const pointLight2 = new THREE.PointLight(0xff6688, 0.9);
 pointLight2.position.set(-3, -2, 3);
 scene.add(pointLight2);
 
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-dirLight.position.set(2, 4, 6);
-scene.add(dirLight);
-
-// Cube with standard material for lighting response
-const geometry = new THREE.BoxGeometry(1.8, 1.8, 1.8);
-const material = new THREE.MeshStandardMaterial({
-  color: 0xe056fd,
-  metalness: 0.3,
-  roughness: 0.4
+// Rotating cube
+const cubeGeo = new THREE.BoxGeometry(1.8, 1.8, 1.8);
+const cubeMat = new THREE.MeshStandardMaterial({
+  color: 0x22aaff,
+  metalness: 0.35,
+  roughness: 0.45
 });
-const cube = new THREE.Mesh(geometry, material);
+const cube = new THREE.Mesh(cubeGeo, cubeMat);
 scene.add(cube);
 
-// Floor plane to show light interaction
-const floorGeo = new THREE.PlaneGeometry(12, 12);
-const floorMat = new THREE.MeshStandardMaterial({
-  color: 0x16213e,
-  metalness: 0.1,
-  roughness: 0.85
+// Secondary sphere for lighting contrast
+const sphereGeo = new THREE.SphereGeometry(0.55, 32, 32);
+const sphereMat = new THREE.MeshStandardMaterial({
+  color: 0xff8844,
+  metalness: 0.7,
+  roughness: 0.25
 });
-const floor = new THREE.Mesh(floorGeo, floorMat);
-floor.rotation.x = -Math.PI / 2;
-floor.position.y = -2;
-scene.add(floor);
+const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+sphere.position.set(-2.2, 1.2, -0.5);
+scene.add(sphere);
+
+// Ground plane to catch shadows
+const planeGeo = new THREE.PlaneGeometry(12, 12);
+const planeMat = new THREE.MeshStandardMaterial({
+  color: 0x222233,
+  roughness: 0.85,
+  metalness: 0.05
+});
+const plane = new THREE.Mesh(planeGeo, planeMat);
+plane.rotation.x = -Math.PI / 2;
+plane.position.y = -1.8;
+scene.add(plane);
+
+renderer.shadowMap.enabled = true;
+cube.castShadow = true;
+sphere.castShadow = true;
+plane.receiveShadow = true;
+pointLight.castShadow = true;
 
 let time = 0;
 
@@ -55,21 +68,21 @@ function animate() {
   requestAnimationFrame(animate);
   time += 0.01;
 
-  // Rotate cube
+  // Rotate the cube
   cube.rotation.x += 0.008;
   cube.rotation.y += 0.012;
 
-  // Animate lights in orbits
-  pointLight1.position.x = Math.sin(time * 0.7) * 4;
-  pointLight1.position.z = Math.cos(time * 0.7) * 4 + 2;
-
-  pointLight2.position.x = Math.cos(time * 0.5) * 3.5;
-  pointLight2.position.y = Math.sin(time * 0.9) * 2 - 1;
-
-  // Gentle camera sway
-  camera.position.x = Math.sin(time * 0.15) * 0.6;
-  camera.position.y = Math.cos(time * 0.12) * 0.4;
+  // Orbit camera with sin/cos
+  const camRadius = 5.5 + Math.sin(time * 0.4) * 1.2;
+  camera.position.x = Math.sin(time * 0.3) * camRadius;
+  camera.position.y = Math.cos(time * 0.22) * 2.0 + 1.5;
+  camera.position.z = Math.cos(time * 0.3) * camRadius;
   camera.lookAt(0, 0, 0);
+
+  // Animate lights
+  pointLight.position.x = Math.sin(time * 0.7) * 5;
+  pointLight.position.z = Math.cos(time * 0.7) * 5;
+  pointLight2.position.y = Math.sin(time * 0.5) * 3;
 
   renderer.render(scene, camera);
 }

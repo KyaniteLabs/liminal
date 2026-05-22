@@ -1,62 +1,77 @@
 <!DOCTYPE html>
+html
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Ambient Synth</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0a0a12;font-family:system-ui,sans-serif}
-#start{padding:1.2rem 3rem;font-size:1.1rem;border:none;border-radius:50px;background:linear-gradient(135deg,#1a1a2e,#16213e);color:#e8e8e8;cursor:pointer;letter-spacing:.15em;text-transform:uppercase;transition:all .4s cubic-bezier(.4,0,.2,1);box-shadow:0 4px 30px rgba(100,200,255,.1),inset 0 1px 0 rgba(255,255,255,.05)}
-#start:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 8px 40px rgba(100,200,255,.2),inset 0 1px 0 rgba(255,255,255,.1)}
-#start:active{transform:translateY(0) scale(.98)}
-#start.playing{background:linear-gradient(135deg,#0f3460,#16213e);color:#64b5f6;pointer-events:none}
-body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at 30% 20%,rgba(20,60,100,.15) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(60,20,80,.1) 0%,transparent 50%);pointer-events:none;z-index:-1}
+  body { margin: 0; background: #0a0a0f; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: sans-serif; color: #fff; }
+  #btn { padding: 20px 40px; border: none; border-radius: 50px; background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; font-size: 18px; cursor: pointer; box-shadow: 0 0 30px rgba(42,82,152,0.4); transition: all 0.3s ease; }
+  #btn:hover { transform: scale(1.05); box-shadow: 0 0 50px rgba(42,82,152,0.7); }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
 <body>
-<button id="start">Begin Ambient</button>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<button id="btn">Start Ambient Loop</button>
 <script>
-const btn=document.getElementById('start');
-let started=false;
-btn.addEventListener('click',async()=>{
-if(started)return;
-await Tone.start();
-started=true;
-btn.classList.add('playing');
-btn.textContent='Playing';
-Tone.Transport.bpm.value=84;
-const reverb=new Tone.Reverb({decay:8,wet:0.7}).toDestination();
-const delay=new Tone.FeedbackDelay({delayTime:'8n',feedback:0.3,wet:0.25}).connect(reverb);
-const drone=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'fatsine',count:3,spread:20},envelope:{attack:2,decay:0.5,sustain:0.7,release:4}}).connect(delay);
-drone.volume.value=-14;
-const pad=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'triangle'},envelope:{attack:3,decay:1,sustain:0.5,release:5}}).connect(reverb);
-pad.volume.value=-18;
-const notes=['C3','G3','Eb3','F3','Ab3','Bb3','C4','G4'];
-const chordProg=[['C3','Eb3','G3','Bb3'],['Ab2','C3','Eb3','G3'],['Bb2','D3','F3','Ab3'],['G2','Bb2','D3','F3']];
-let cIdx=0;
-new Tone.Loop(t=>{
-drone.triggerAttackRelease(chordProg[cIdx],'2m');
-cIdx=(cIdx+1)%chordProg.length;
-},'4m').start(0);
-new Tone.Loop(t=>{
-const n=notes[Math.floor(Math.random()*notes.length)];
-pad.triggerAttackRelease(n,'1m');
-},'2m').start('8n');
-Tone.Transport.start();
+const btn = document.getElementById('btn');
+let started = false;
+
+btn.addEventListener('click', async () => {
+  if (started) return;
+  await Tone.start();
+  started = true;
+
+  Tone.Transport.bpm.value = 84;
+
+  const reverb = new Tone.Reverb({ decay: 10, wet: 0.6 }).toDestination();
+  const delay = new Tone.FeedbackDelay({ delayTime: '8n.', feedback: 0.3, wet: 0.3 }).connect(reverb);
+
+  // Pad Synth
+  const padSynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'fatsine', count: 3, spread: 20 },
+    envelope: { attack: 2, decay: 0.5, sustain: 0.9, release: 4 }
+  }).connect(delay);
+
+  // Drone
+  const drone = new Tone.Oscillator({
+    type: 'sawtooth',
+    frequency: 'C2',
+    volume: -15
+  }).connect(reverb);
+
+  const droneFilter = new Tone.Filter({ frequency: 400, Q: 1, type: 'lowpass' });
+  drone.connect(droneFilter);
+  droneFilter.connect(delay);
+
+  // Arp
+  const arpSynth = new Tone.FMSynth({
+    harmonicity: 3,
+    modulationIndex: 10,
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.01, decay: 0.4, sustain: 0.1, release: 1 }
+  }).connect(reverb);
+
+  // Sequences
+  const chordLoop = new Tone.Loop(time => {
+    const chords = ['C4', 'G4', 'E4', 'B4'];
+    padSynth.triggerAttackRelease(chords, '1m', time);
+  }, '2m').start(0);
+
+  const arpLoop = new Tone.Loop(time => {
+    const notes = ['C5', 'E5', 'G5', 'B5', 'D5', 'F5', 'A5', 'C6'];
+    const note = notes[Math.floor(Math.random() * notes.length)];
+    arpSynth.triggerAttackRelease(note, '16n', time, Math.random() * 0.5 + 0.5);
+  }, '16n').start(0);
+
+  // Start Audio
+  drone.start();
+  Tone.Transport.start();
+
+  btn.innerText = 'Ambient Active';
+  btn.style.background = '#222';
 });
 </script>
 </body>
 </html>
-这会创建一个氛围合成器序列，具有以下特点：
-
-**音频特性：**
-- **Drone（长音）**：使用 FatSine 振荡器产生厚实的持续和弦，每4小节切换一次和弦进行（Cm → Ab → Bbm → Gm）
-- **Pad（铺底）**：三角波合成器随机演奏音符，营造漂浮感
-- **效果链**：混响（8秒衰减）+ 反馈延迟，创造深邃的空间感
-
-**交互设计：**
-- 清晰的启动按钮，点击后状态变为"Playing"
-- 悬停时有微妙的上浮和光晕效果
-- 背景有微妙的径向渐变增加深度

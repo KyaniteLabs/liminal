@@ -1,456 +1,619 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HyperFrames Promo Composition</title>
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HyperFrames Promo Composition</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            background: #0a0a0f;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            overflow: hidden;
-        }
+    body {
+      background: #0a0a12;
+      overflow: hidden;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
 
-        #stage {
-            position: relative;
-            width: 1280px;
-            height: 720px;
-            background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
-            overflow: hidden;
-            box-shadow: 0 50px 150px rgba(0, 0, 0, 0.8),
-                        0 0 200px rgba(99, 102, 241, 0.1);
-        }
+    #stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%);
+      overflow: hidden;
+    }
 
-        .clip {
-            position: absolute;
-            will-change: transform, opacity;
-        }
+    /* Background Grid Pattern */
+    .bg-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
 
-        /* Background Grid Pattern */
-        .bg-grid {
-            width: 100%;
-            height: 100%;
-            opacity: 0.08;
-            background-image:
-                linear-gradient(rgba(99, 102, 241, 0.5) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(99, 102, 241, 0.5) 1px, transparent 1px);
-            background-size: 60px 60px;
-        }
+    /* Ambient Glow Orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+      pointer-events: none;
+    }
 
-        /* Floating Orbs */
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-        }
+    .orb-1 {
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.6) 0%, transparent 70%);
+      top: -150px;
+      right: -100px;
+    }
 
-        .orb-1 {
-            width: 500px;
-            height: 500px;
-            top: -150px;
-            right: -100px;
-            background: radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, transparent 70%);
-        }
+    .orb-2 {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.5) 0%, transparent 70%);
+      bottom: -100px;
+      left: -80px;
+    }
 
-        .orb-2 {
-            width: 400px;
-            height: 400px;
-            bottom: -100px;
-            left: -100px;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.35) 0%, transparent 70%);
-        }
+    .orb-3 {
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(34, 211, 238, 0.4) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
 
-        .orb-3 {
-            width: 300px;
-            height: 300px;
-            top: 40%;
-            left: 30%;
-            background: radial-gradient(circle, rgba(236, 72, 153, 0.25) 0%, transparent 70%);
-        }
+    /* Clip Base Styles */
+    .clip {
+      position: absolute;
+      will-change: transform, opacity;
+    }
 
-        /* Title Card */
-        #title-card {
-            top: 70px;
-            left: 80px;
-            z-index: 10;
-        }
+    /* Title Card Styles */
+    #title-card {
+      top: 8%;
+      left: 5%;
+      z-index: 10;
+    }
 
-        #title-card h1 {
-            font-size: 68px;
-            font-weight: 800;
-            letter-spacing: -2px;
-            color: transparent;
-            background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 50%, #818cf8 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            line-height: 1.1;
-        }
+    #title-card h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 800;
+      letter-spacing: -2px;
+      color: #ffffff;
+      line-height: 1.05;
+      text-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
+    }
 
-        #title-card .subtitle {
-            margin-top: 16px;
-            font-size: 20px;
-            color: rgba(148, 163, 184, 0.9);
-            letter-spacing: 6px;
-            text-transform: uppercase;
-            font-weight: 500;
-        }
+    #title-card h1 span {
+      display: inline-block;
+    }
 
-        /* Feature Card 1 */
-        #feature-1 {
-            top: 280px;
-            left: 80px;
-            width: 340px;
-            padding: 32px;
-            background: linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 24px;
-            backdrop-filter: blur(20px);
-        }
+    #title-card .accent {
+      background: linear-gradient(135deg, #6366f1 0%, #ec4899 50%, #22d3ee 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-        #feature-1 .icon-box {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
+    #title-card p {
+      margin-top: 16px;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: rgba(255, 255, 255, 0.55);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
 
-        #feature-1 .icon-box svg {
-            width: 28px;
-            height: 28px;
-            fill: white;
-        }
+    /* Hero Visual / Abstract Shape */
+    #hero-visual {
+      right: 5%;
+      top: 50%;
+      transform: translateY(-50%);
+      width: min(45vw, 550px);
+      aspect-ratio: 1;
+    }
 
-        #feature-1 h3 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #f1f5f9;
-            margin-bottom: 12px;
-        }
+    #hero-visual svg {
+      width: 100%;
+      height: 100%;
+    }
 
-        #feature-1 p {
-            font-size: 15px;
-            color: rgba(148, 163, 184, 0.85);
-            line-height: 1.65;
-        }
+    /* Feature Cards Container */
+    #features-container {
+      bottom: 8%;
+      left: 5%;
+      display: flex;
+      gap: 20px;
+      z-index: 10;
+    }
 
-        /* Feature Card 2 */
-        #feature-2 {
-            top: 280px;
-            left: 458px;
-            width: 340px;
-            padding: 32px;
-            background: linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 24px;
-            backdrop-filter: blur(20px);
-        }
+    .feature-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 24px 28px;
+      width: 220px;
+      transition: all 0.3s ease;
+    }
 
-        #feature-2 .icon-box {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
+    .feature-card:hover {
+      background: rgba(99, 102, 241, 0.08);
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-4px);
+    }
 
-        #feature-2 .icon-box svg {
-            width: 28px;
-            height: 28px;
-            fill: white;
-        }
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 14px;
+      font-size: 1.3rem;
+    }
 
-        #feature-2 h3 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #f1f5f9;
-            margin-bottom: 12px;
-        }
+    .feature-card h3 {
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
 
-        #feature-2 p {
-            font-size: 15px;
-            color: rgba(148, 163, 184, 0.85);
-            line-height: 1.65;
-        }
+    .feature-card p {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
 
-        /* Feature Card 3 */
-        #feature-3 {
-            top: 280px;
-            left: 836px;
-            width: 340px;
-            padding: 32px;
-            background: linear-gradient(145deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: 24px;
-            backdrop-filter: blur(20px);
-        }
+    /* Stats Bar */
+    #stats-bar {
+      top: 8%;
+      right: 5%;
+      display: flex;
+      gap: 32px;
+      z-index: 10;
+    }
 
-        #feature-3 .icon-box {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-        }
+    .stat-item {
+      text-align: center;
+    }
 
-        #feature-3 .icon-box svg {
-            width: 28px;
-            height: 28px;
-            fill: white;
-        }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -1px;
+    }
 
-        #feature-3 h3 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #f1f5f9;
-            margin-bottom: 12px;
-        }
+    .stat-label {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
 
-        #feature-3 p {
-            font-size: 15px;
-            color: rgba(148, 163, 184, 0.85);
-            line-height: 1.65;
-        }
+    /* CTA Button */
+    #cta-button {
+      bottom: 8%;
+      right: 5%;
+      z-index: 10;
+    }
 
-        /* Visual Showcase */
-        #visual-showcase {
-            top: 520px;
-            left: 80px;
-            width: 1120px;
-            height: 140px;
-            display: flex;
-            align-items: center;
-            gap: 24px;
-        }
+    #cta-button button {
+      padding: 18px 40px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      box-shadow:
+        0 4px 20px rgba(99, 102, 241, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transition: all 0.3s ease;
+    }
 
-        .timeline-bar {
-            flex: 1;
-            height: 8px;
-            background: rgba(255,255,255,0.06);
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-        }
+    #cta-button button:hover {
+      transform: scale(1.05);
+      box-shadow:
+        0 8px 30px rgba(99, 102, 241, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
 
-        .timeline-fill {
-            height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #8b5cf6, #06b6d4, #ec4899);
-            border-radius: 4px;
-        }
+    /* Decorative Lines */
+    .deco-line {
+      position: absolute;
+      background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
+      height: 1px;
+      pointer-events: none;
+    }
 
-        .track-labels {
-            display: flex;
-            gap: 8px;
-        }
+    .deco-line-1 {
+      top: 30%;
+      left: 0;
+      width: 30%;
+    }
 
-        .track-label {
-            padding: 8px 14px;
-            background: rgba(99, 102, 241, 0.15);
-            border: 1px solid rgba(99, 102, 241, 0.3);
-            border-radius: 8px;
-            color: #a5b4fc;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
+    .deco-line-2 {
+      bottom: 35%;
+      right: 0;
+      width: 25%;
+    }
 
-        /* CTA Badge */
-        #cta-badge {
-            top: 55px;
-            right: 80px;
-            padding: 14px 28px;
-            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-            border-radius: 50px;
-            color: white;
-            font-size: 14px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
-        }
+    /* Timeline Progress Indicator */
+    #progress-indicator {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #6366f1, #ec4899, #22d3ee);
+      width: 0%;
+      z-index: 100;
+      pointer-events: none;
+    }
 
-        /* Decorative Elements */
-        .deco-line {
-            position: absolute;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
-        }
-
-        .line-1 {
-            top: 250px;
-            left: 80px;
-            width: 180px;
-        }
-
-        .line-2 {
-            top: 260px;
-            left: 80px;
-            width: 120px;
-        }
-    </style>
+    @media (max-width: 768px) {
+      #hero-visual { display: none; }
+      #stats-bar { display: none; }
+      #features-container {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .feature-card { width: calc(90vw - 40px); }
+      #cta-button {
+        left: 5%;
+        right: auto;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div id="stage" data-composition-id="hyperframes-promo">
 
-        <!-- Background Layer -->
-        <div class="clip bg-grid" data-start="0" data-duration="12" data-track-index="0"></div>
-        <div class="clip orb orb-1" data-start="0" data-duration="12" data-track-index="0"></div>
-        <div class="clip orb orb-2" data-start="0" data-duration="12" data-track-index="0"></div>
-        <div class="clip orb orb-3" data-start="0" data-duration="12" data-track-index="0"></div>
+<div id="stage" data-composition-id="hyperframes-promo">
 
-        <!-- Decorative Lines -->
-        <div class="clip deco-line line-1" data-start="1" data-duration="10" data-track-index="0"></div>
-        <div class="clip deco-line line-2" data-start="1.2" data-duration="10" data-track-index="0"></div>
+  <!-- Background Elements -->
+  <div class="bg-grid"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
 
-        <!-- Title Card -->
-        <div id="title-card" class="clip" data-start="0.5" data-duration="11" data-track-index="1">
-            <h1>HyperFrames</h1>
-            <p class="subtitle">Motion Composition Engine</p>
-        </div>
+  <!-- Decorative Lines -->
+  <div class="deco-line deco-line-1"></div>
+  <div class="deco-line deco-line-2"></div>
 
-        <!-- CTA Badge -->
-        <div id="cta-badge" class="clip" data-start="1.5" data-duration="10" data-track-index="1">
-            Get Started
-        </div>
+  <!-- Clip 1: Title Card -->
+  <div id="title-card" class="clip" data-start="0" data-duration="10" data-track-index="0">
+    <h1>
+      <span>Hyper</span><span class="accent">Frames</span>
+    </h1>
+    <p>Motion Composition Engine</p>
+  </div>
 
-        <!-- Feature Card 1 -->
-        <div id="feature-1" class="clip" data-start="1.8" data-duration="9" data-track-index="2">
-            <div class="icon-box">
-                <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-            </div>
-            <h3>Timeline Precision</h3>
-            <p>Frame-perfect animations with GSAP-powered timelines and clip-based sequencing for professional results.</p>
-        </div>
+  <!-- Clip 2: Hero Visual (Abstract SVG Shape) -->
+  <div id="hero-visual" class="clip" data-start="0.5" data-duration="10" data-track-index="1">
+    <svg viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+          <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="grad2" x1="100%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style="stop-color:#22d3ee;stop-opacity:0.8" />
+          <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0.3" />
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+          <feMerge>
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
 
-        <!-- Feature Card 2 -->
-        <div id="feature-2" class="clip" data-start="2.3" data-duration="8.5" data-track-index="2">
-            <div class="icon-box">
-                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-            </div>
-            <h3>Track Management</h3>
-            <p>Organize multiple animation layers with track indices for complex, synchronized motion compositions.</p>
-        </div>
+      <!-- Outer Ring -->
+      <circle cx="200" cy="200" r="180" stroke="url(#grad1)" stroke-width="1.5" fill="none" opacity="0.3"/>
 
-        <!-- Feature Card 3 -->
-        <div id="feature-3" class="clip" data-start="2.8" data-duration="8" data-track-index="2">
-            <div class="icon-box">
-                <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-            </div>
-            <h3>Data-Driven Clips</h3>
-            <p>Declarative composition with start times, durations, and metadata embedded directly in your markup.</p>
-        </div>
+      <!-- Middle Ring -->
+      <circle cx="200" cy="200" r="140" stroke="url(#grad2)" stroke-width="2" fill="none" opacity="0.5"/>
 
-        <!-- Visual Showcase -->
-        <div id="visual-showcase" class="clip" data-start="3.5" data-duration="7.5" data-track-index="3">
-            <div class="track-labels">
-                <span class="track-label">TRACK 0</span>
-                <span class="track-label">TRACK 1</span>
-                <span class="track-label">TRACK 2</span>
-                <span class="track-label">TRACK 3</span>
-            </div>
-            <div class="timeline-bar">
-                <div class="timeline-fill" id="timeline-fill"></div>
-            </div>
-        </div>
+      <!-- Inner Geometric Shape -->
+      <polygon points="200,60 320,140 290,280 110,280 80,140" fill="url(#grad1)" opacity="0.15" filter="url(#glow)"/>
+      <polygon points="200,80 300,145 275,260 125,260 100,145" stroke="url(#grad1)" stroke-width="2" fill="none"/>
 
+      <!-- Center Element -->
+      <circle cx="200" cy="200" r="50" fill="url(#grad1)" opacity="0.2" filter="url(#glow)"/>
+      <circle cx="200" cy="200" r="35" stroke="#fff" stroke-width="1.5" fill="none" opacity="0.7"/>
+      <circle cx="200" cy="200" r="8" fill="#fff" opacity="0.9"/>
+
+      <!-- Orbiting Dots -->
+      <circle cx="200" cy="40" r="5" fill="#22d3ee" opacity="0.8"/>
+      <circle cx="340" cy="200" r="5" fill="#ec4899" opacity="0.8"/>
+      <circle cx="200" cy="360" r="5" fill="#6366f1" opacity="0.8"/>
+      <circle cx="60" cy="200" r="5" fill="#22d3ee" opacity="0.8"/>
+
+      <!-- Connecting Lines -->
+      <line x1="200" y1="200" x2="200" y2="40" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+      <line x1="200" y1="200" x2="340" y2="200" stroke="rgba(236,72,153,0.3)" stroke-width="1"/>
+      <line x1="200" y1="200" x2="200" y2="360" stroke="rgba(99,102,241,0.3)" stroke-width="1"/>
+      <line x1="200" y1="200" x2="60" y2="200" stroke="rgba(34,211,238,0.3)" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <!-- Clip 3: Stats Bar -->
+  <div id="stats-bar" class="clip" data-start="1.5" data-duration="8.5" data-track-index="2">
+    <div class="stat-item">
+      <div class="stat-value">60</div>
+      <div class="stat-label">FPS Target</div>
     </div>
+    <div class="stat-item">
+      <div class="stat-value">∞</div>
+      <div class="stat-label">Possibilities</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">0ms</div>
+      <div class="stat-label">Latency</div>
+    </div>
+  </div>
 
-    <script>
-        const tl = gsap.timeline({ paused: true });
+  <!-- Clip 4: Feature Cards -->
+  <div id="features-container" class="clip" data-start="2" data-duration="8" data-track-index="3">
+    <div class="feature-card">
+      <div class="feature-icon" style="background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(139,92,246,0.2));">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <h3>Real-time Engine</h3>
+      <p>Hardware-accelerated rendering with GSAP timeline precision.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background: linear-gradient(135deg, rgba(236,72,153,0.2), rgba(244,114,182,0.2));">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      </div>
+      <h3>Modular Clips</h3>
+      <p>Composable timeline segments with declarative attributes.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(103,232,249,0.2));">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <h3>Layer System</h3>
+      <p>Multi-track composition with independent timing control.</p>
+    </div>
+  </div>
 
-        // Background orbs floating animation
-        tl.fromTo('.orb-1',
-            { x: 0, y: 0, scale: 1 },
-            { x: 60, y: 40, scale: 1.15, duration: 8, ease: "sine.inOut", repeat: 1, yoyo: true },
-            0
-        );
-        tl.fromTo('.orb-2',
-            { x: 0, y: 0, scale: 1 },
-            { x: -50, y: -30, scale: 1.1, duration: 7, ease: "sine.inOut", repeat: 1, yoyo: true },
-            0.5
-        );
-        tl.fromTo('.orb-3',
-            { x: 0, y: 0, scale: 1, opacity: 0.25 },
-            { x: 80, y: -50, scale: 1.2, opacity: 0.4, duration: 9, ease: "sine.inOut", repeat: 1, yoyo: true },
-            1
-        );
+  <!-- Clip 5: CTA Button -->
+  <div id="cta-button" class="clip" data-start="3" data-duration="7" data-track-index="4">
+    <button>Get Started</button>
+  </div>
 
-        // Background grid fade in
-        tl.from('.bg-grid', { opacity: 0, duration: 2 }, 0);
+</div>
 
-        // Decorative lines reveal
-        tl.from('.line-1', { scaleX: 0, transformOrigin: "left", duration: 1.2, ease: "power3.out" }, 1);
-        tl.from('.line-2', { scaleX: 0, transformOrigin: "left", duration: 1, ease: "power3.out" }, 1.2);
+<div id="progress-indicator"></div>
 
-        // Title card entrance
-        tl.from('#title-card', { opacity: 0, x: -80, duration: 1.4, ease: "power4.out" }, 0.5);
-        tl.from('#title-card h1', { opacity: 0, y: 50, duration: 1, ease: "power3.out" }, 0.7);
-        tl.from('#title-card .subtitle', { opacity: 0, y: 30, duration: 0.8, ease: "power3.out" }, 1);
+<script>
+  // Initialize timelines registry
+  window.__timelines = window.__timelines || {};
 
-        // CTA badge entrance
-        tl.from('#cta-badge', { opacity: 0, scale: 0.7, y: -20, duration: 0.8, ease: "back.out(1.7)" }, 1.5);
-        tl.to('#cta-badge', { boxShadow: "0 8px 40px rgba(139, 92, 246, 0.6)", duration: 0.4, repeat: -1, yoyo: true, ease: "sine.inOut" }, 2.5);
+  const COMPOSITION_ID = "hyperframes-promo";
+  const TOTAL_DURATION = 10;
 
-        // Feature cards staggered entrance
-        tl.from('#feature-1', { opacity: 0, y: 60, rotationX: -15, duration: 1, ease: "power3.out" }, 1.8);
-        tl.from('#feature-1 .icon-box', { scale: 0, rotation: -180, duration: 0.7, ease: "back.out(2)" }, 2.2);
+  // Create main paused timeline
+  const tl = gsap.timeline({ paused: true });
 
-        tl.from('#feature-2', { opacity: 0, y: 60, rotationX: -15, duration: 1, ease: "power3.out" }, 2.3);
-        tl.from('#feature-2 .icon-box', { scale: 0, rotation: -180, duration: 0.7, ease: "back.out(2)" }, 2.7);
+  // ============================================
+  // Track 0: Title Card Animation
+  // ============================================
+  tl.from("#title-card", {
+    opacity: 0,
+    x: -60,
+    duration: 1.2,
+    ease: "power4.out"
+  }, 0);
 
-        tl.from('#feature-3', { opacity: 0, y: 60, rotationX: -15, duration: 1, ease: "power3.out" }, 2.8);
-        tl.from('#feature-3 .icon-box', { scale: 0, rotation: -180, duration: 0.7, ease: "back.out(2)" }, 3.2);
+  tl.from("#title-card span", {
+    opacity: 0,
+    y: 50,
+    duration: 0.8,
+    stagger: 0.15,
+    ease: "back.out(1.7)"
+  }, 0.3);
 
-        // Subtle hover effect simulation on cards
-        tl.to(['#feature-1', '#feature-2', '#feature-3'], {
-            borderColor: "rgba(139, 92, 246, 0.25)",
-            duration: 0.5,
-            stagger: 0.15,
-            ease: "power1.inOut",
-            repeat: 1,
-            yoyo: true
-        }, 5);
+  tl.from("#title-card p", {
+    opacity: 0,
+    y: 20,
+    duration: 0.6,
+    ease: "power3.out"
+  }, 0.8);
 
-        // Visual showcase entrance
-        tl.from('#visual-showcase', { opacity: 0, y: 40, duration: 1, ease: "power3.out" }, 3.5);
-        tl.from('.track-label', { opacity: 0, scale: 0.8, duration: 0.5, stagger: 0.1, ease: "back.out(2)" }, 4);
-        tl.from('.timeline-bar', { scaleX: 0, transformOrigin: "left", duration: 1.2, ease: "power3.inOut" }, 4.3);
+  // Subtle title pulse
+  tl.to("#title-card h1", {
+    scale: 1.02,
+    duration: 2,
+    repeat: 1,
+    yoyo: true,
+    ease: "sine.inOut"
+  }, 3);
 
-        // Timeline fill animation
-        tl.to('#timeline-fill', { width: "100%", duration: 4, ease: "power2.inOut" }, 4.5);
+  // ============================================
+  // Track 1: Hero Visual Animation
+  // ============================================
+  tl.from("#hero-visual", {
+    opacity: 0,
+    scale: 0.7,
+    rotation: -15,
+    duration: 1.5,
+    ease: "elastic.out(1, 0.6)"
+  }, 0.5);
 
-        // Final pulse effect on title
-        tl.to('#title-card h1', {
-            scale: 1.03,
-            duration: 0.6,
-            ease: "sine.inOut",
-            repeat: 2,
-            yoyo: true
-        }, 8);
+  // Rotate the entire SVG slowly
+  tl.to("#hero-visual svg", {
+    rotation: 360,
+    duration: 20,
+    repeat: -1,
+    ease: "none",
+    transformOrigin: "center center"
+  }, 2);
 
-        window.__timelines = window.__timelines || {};
-        window.__timelines["hyperframes-promo"] = tl;
-    </script>
+  // Pulse the inner circle
+  tl.to("#hero-visual circle:nth-of-type(5)", {
+    attr: { r: 60 },
+    opacity: 0.35,
+    duration: 1.5,
+    repeat: 3,
+    yoyo: true,
+    ease: "sine.inOut"
+  }, 2);
+
+  // ============================================
+  // Track 2: Stats Bar Animation
+  // ============================================
+  tl.from(".stat-item", {
+    opacity: 0,
+    y: -30,
+    duration: 0.6,
+    stagger: 0.2,
+    ease: "back.out(2)"
+  }, 1.5);
+
+  // Counter animation for stat values
+  tl.from(".stat-value", {
+    textContent: 0,
+    duration: 2,
+    snap: { textContent: 1 },
+    ease: "power2.out",
+    onUpdate: function() {
+      // Only animate the first stat value (60)
+      const targets = this.targets();
+      if (targets[0] && targets[0].textContent !== "∞" && targets[0].textContent !== "0ms") {
+        targets[0].textContent = Math.round(targets[0].textContent);
+      }
+    }
+  }, 2);
+
+  // ============================================
+  // Track 3: Feature Cards Animation
+  // ============================================
+  tl.from(".feature-card", {
+    opacity: 0,
+    y: 60,
+    rotationX: -15,
+    duration: 0.8,
+    stagger: 0.2,
+    ease: "power3.out"
+  }, 2);
+
+  // Staggered icon entrance
+  tl.from(".feature-icon", {
+    scale: 0,
+    rotation: -180,
+    duration: 0.5,
+    stagger: 0.2,
+    ease: "back.out(2.5)"
+  }, 2.4);
+
+  // Card hover-like pulse sequence
+  tl.to(".feature-card", {
+    y: -6,
+    duration: 0.4,
+    stagger: 0.3,
+    yoyo: true,
+    repeat: 1,
+    ease: "sine.inOut"
+  }, 5);
+
+  // ============================================
+  // Track 4: CTA Button Animation
+  // ============================================
+  tl.from("#cta-button", {
+    opacity: 0,
+    scale: 0.8,
+    duration: 0.7,
+    ease: "back.out(2)"
+  }, 3);
+
+  // Button glow pulse
+  tl.to("#cta-button button", {
+    boxShadow: "0 8px 40px rgba(99, 102, 241, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+    duration: 1,
+    repeat: 3,
+    yoyo: true,
+    ease: "sine.inOut"
+  }, 4);
+
+  // ============================================
+  // Global: Ambient Animations
+  // ============================================
+
+  // Orb floating motion
+  tl.to(".orb-1", {
+    x: 30,
+    y: 20,
+    duration: 4,
+    repeat: -1,
+    yoyo: true,
+    ease: "sine.inOut"
+  }, 0);
+
+  tl.to(".orb-2", {
+    x: -25,
+    y: -15,
+    duration: 5,
+    repeat: -1,
+    yoyo: true,
+    ease: "sine.inOut"
+  }, 0.5);
+
+  tl.to(".orb-3", {
+    scale: 1.2,
+    opacity: 0.5,
+    duration: 3,
+    repeat: -1,
+    yoyo: true,
+    ease: "sine.inOut"
+  }, 1);
+
+  // Decorative lines sweep
+  tl.fromTo(".deco-line-1",
+    { scaleX: 0, transformOrigin: "left center" },
+    { scaleX: 1, duration: 1.5, ease: "power2.out" },
+    1
+  );
+
+  tl.fromTo(".deco-line-2",
+    { scaleX: 0, transformOrigin: "right center" },
+    { scaleX: 1, duration: 1.5, ease: "power2.out" },
+    1.5
+  );
+
+  // ============================================
+  // Progress Indicator
+  // ============================================
+  tl.to("#progress-indicator", {
+    width: "100%",
+    duration: TOTAL_DURATION,
+    ease: "linear"
+  }, 0);
+
+  // Register timeline on window.__timelines
+  window.__timelines[COMPOSITION_ID] = tl;
+
+  // Auto-play for preview purposes (remove in production if needed)
+  tl.play();
+
+  // Optional: Log composition info
+  console.log(`[HyperFrames] Composition "${COMPOSITION_ID}" loaded`);
+  console.log(`[HyperFrames] Duration: ${TOTAL_DURATION}s | Tracks: 5 | Clips: 5`);
+</script>
+
 </body>
 </html>

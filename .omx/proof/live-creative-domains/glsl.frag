@@ -4,24 +4,21 @@ uniform vec2 u_resolution;
 
 void main() {
   vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-  uv = uv * 2.0 - 1.0;
-  uv.x *= u_resolution.x / u_resolution.y;
+  vec2 p = uv * 8.0;
 
-  float t = u_time * 0.5;
+  float v1 = sin(p.x + u_time);
+  float v2 = sin(p.y + u_time * 0.7);
+  float v3 = sin((p.x + p.y) * 0.5 + u_time * 1.3);
+  float v4 = sin(length(p - 4.0) + u_time * 0.9);
 
-  float v1 = sin(uv.x * 10.0 + t);
-  float v2 = sin(10.0 * (uv.x * sin(t / 2.0) + uv.y * cos(t / 3.0)) + t);
-  float v3 = sin(sqrt(100.0 * ((uv.x - 0.5) * (uv.x - 0.5) + (uv.y - 0.5) * (uv.y - 0.5))) + t);
+  float plasma = (v1 + v2 + v3 + v4) / 4.0;
 
-  float v = (v1 + v2 + v3);
-  vec3 base = vec3(v, v, v);
-  float n = normalize(base).x;
-
-  vec3 col = vec3(
-    0.5 + 0.5 * sin(n * 3.14159),
-    0.5 + 0.5 * sin(n * 3.14159 + 2.094),
-    0.5 + 0.5 * sin(n * 3.14159 + 4.188)
+  vec3 color = vec3(
+    sin(plasma * 3.14159 + u_time),
+    sin(plasma * 3.14159 + u_time + 2.094),
+    sin(plasma * 3.14159 + u_time + 4.189)
   );
+  color = 0.5 + 0.5 * color;
 
-  gl_FragColor = vec4(col, 1.0);
+  gl_FragColor = vec4(color, 1.0);
 }

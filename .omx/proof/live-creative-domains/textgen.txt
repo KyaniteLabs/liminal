@@ -1,0 +1,22 @@
+loop
+           /    \
+         while   for
+        /          \
+      dream      sleep
+     /    \      /    \
+  repeat  each  until  next
+    |      |      |      |
+  memory  data  cache  stack
+    \      |      |      /
+     \_____|_____|_____/
+          |||
+       machine
+          |
+      _______
+     /       \
+    |  DREAM  |
+     \_______/
+        |||
+    recursion
+    recursion
+    recursion

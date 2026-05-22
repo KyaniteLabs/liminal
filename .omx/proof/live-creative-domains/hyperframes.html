@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HyperFrames Promo Composition</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #0a0e17;
+      --accent: #00f0ff;
+      --accent-2: #ff2d75;
+      --text-main: #ffffff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg-color);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    #stage {
+      position: relative;
+      width: 1280px;
+      height: 720px;
+      background: radial-gradient(circle at center, #141b2d 0%, #0a0e17 70%);
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 25px 80px rgba(0, 240, 255, 0.08);
+    }
+
+    .clip {
+      position: absolute;
+      will-change: transform, opacity;
+    }
+
+    /* Background Grid */
+    .bg-grid {
+      width: 100%;
+      height: 100%;
+      opacity: 0.04;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+
+    /* Ambient Glow Blobs */
+    .glow-blob {
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0;
+    }
+    .blob-cyan {
+      width: 500px;
+      height: 500px;
+      background: var(--accent);
+      top: -150px;
+      right: -100px;
+    }
+    .blob-pink {
+      width: 400px;
+      height: 400px;
+      background: var(--accent-2);
+      bottom: -100px;
+      left: -80px;
+    }
+
+    /* Title Card */
+    #title-card {
+      top: 60px;
+      left: 80px;
+      z-index: 10;
+    }
+    #title-card h1 {
+      font-size: 72px;
+      font-weight: 800;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    #title-card p {
+      font-size: 22px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 16px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    /* Feature Clips (Image-like) */
+    .feature-clip {
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .feature-clip .visual {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    .feature-clip .label {
+      padding: 14px 20px;
+      background: rgba(10, 14, 23, 0.85);
+      backdrop-filter: blur(12px);
+      font-size: 15px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.85);
+      letter-spacing: 0.5px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* Clip 1 */
+    #clip-1 {
+      width: 420px;
+      height: 320px;
+      top: 180px;
+      left: 80px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(0, 240, 255, 0.06);
+    }
+    #clip-1 .visual {
+      background: linear-gradient(135deg, #1a2744 0%, #0f1729 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #clip-1 svg { width: 140px; height: 140px; }
+
+    /* Clip 2 */
+    #clip-2 {
+      width: 380px;
+      height: 260px;
+      top: 200px;
+      right: 80px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(255, 45, 117, 0.06);
+    }
+    #clip-2 .visual {
+      background: linear-gradient(145deg, #241835 0%, #140e21 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #clip-2 svg { width: 110px; height: 110px; }
+
+    /* Clip 3 */
+    #clip-3 {
+      width: 340px;
+      height: 220px;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(0, 240, 255, 0.05);
+    }
+    #clip-3 .visual {
+      background: linear-gradient(160deg, #0d2818 0%, #071510 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #clip-3 svg { width: 90px; height: 90px; }
+
+    /* Stats Bar */
+    #stats-bar {
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.04);
+    }
+    #stats-bar .fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 0 3px 3px 0;
+    }
+
+    /* Floating Particles */
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--accent);
+      border-radius: 50%;
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="stage" data-composition-id="hyperframes-promo">
+
+  <!-- Background Elements -->
+  <div class="clip bg-grid" data-start="0" data-duration="12" data-track-index="0"></div>
+
+  <div class="clip glow-blob blob-cyan" data-start="0.5" data-duration="11.5" data-track-index="0"></div>
+  <div class="clip glow-blob blob-pink" data-start="1" data-duration="11" data-track-index="0"></div>
+
+  <!-- Title Card -->
+  <div id="title-card" class="clip" data-start="0.5" data-duration="11.5" data-track-index="1">
+    <h1>HyperFrames</h1>
+    <p>Motion Composition Engine</p>
+  </div>
+
+  <!-- Feature Clip 1 -->
+  <div id="clip-1" class="clip feature-clip" data-start="1.5" data-duration="9" data-track-index="2">
+    <div class="visual">
+      <!-- Timeline Icon SVG -->
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="10" y="20" width="18" height="60" rx="4" fill="#00f0ff" fill-opacity="0.2"/>
+        <rect x="10" y="20" width="18" height="38" rx="4" fill="#00f0ff"/>
+        <rect x="36" y="35" width="18" height="45" rx="4" fill="#00f0ff" fill-opacity="0.2"/>
+        <rect x="36" y="35" width="18" height="26" rx="4" fill="#00f0ff"/>
+        <rect x="62" y="12" width="18" height="68" rx="4" fill="#00f0ff" fill-opacity="0.2"/>
+        <rect x="62" y="12" width="18" height="52" rx="4" fill="#00f0ff"/>
+      </svg>
+    </div>
+    <div class="label">Precision Timeline Control</div>
+  </div>
+
+  <!-- Feature Clip 2 -->
+  <div id="clip-2" class="clip feature-clip" data-start="2.5" data-duration="8" data-track-index="3">
+    <div class="visual">
+      <!-- Layers Icon SVG -->
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="55" width="70" height="12" rx="6" fill="#ff2d75" fill-opacity="0.3"/>
+        <rect x="15" y="44" width="70" height="12" rx="6" fill="#ff2d75" fill-opacity="0.6"/>
+        <rect x="15" y="33" width="70" height="12" rx="6" fill="#ff2d75"/>
+        <circle cx="78" cy="39" r="7" fill="#fff"/>
+        <path d="M76 39L77.5 40.5L80.5 37.5" stroke="#ff2d75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="label">Multi-Track Layering</div>
+  </div>
+
+  <!-- Feature Clip 3 -->
+  <div id="clip-3" class="clip feature-clip" data-start="3.5" data-duration="7" data-track-index="4">
+    <div class="visual">
+      <!-- Performance Icon SVG -->
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="50,12 61,42 93,42 67,62 78,92 50,74 22,92 33,62 7,42 39,42"
+                 stroke="#00f0ff" stroke-width="3" fill="none" fill-opacity="0.1"/>
+        <polygon points="50,22 57,41 78,41 61,54 68,73 50,62 32,73 39,54 22,41 43,41"
+                 fill="#00f0ff" fill-opacity="0.25"/>
+      </svg>
+    </div>
+    <div class="label">GPU-Accelerated Rendering</div>
+  </div>
+
+  <!-- Stats Progress Bar -->
+  <div id="stats-bar" class="clip" data-start="0" data-duration="12" data-track-index="0">
+    <div class="fill"></div>
+  </div>
+
+  <!-- Floating Particles -->
+  <div class="particle clip" style="top: 25%; left: 15%;" data-start="2" data-duration="8" data-track-index="0"></div>
+  <div class="particle clip" style="top: 65%; left: 82%;" data-start="3" data-duration="7" data-track-index="0"></div>
+  <div class="particle clip" style="top: 45%; left: 48%;" data-start="4" data-duration="6" data-track-index="0"></div>
+  <div class="particle clip" style="top: 75%; left: 25%;" data-start="5" data-duration="5" data-track-index="0"></div>
+  <div class="particle clip" style="top: 20%; left: 70%;" data-start="2.5" data-duration="7.5" data-track-index="0"></div>
+
+</div>
+
+<script>
+  // Initialize the timeline in a paused state
+  const tl = gsap.timeline({ paused: true });
+
+  // ============================================
+  // TRACK 0: Background & Atmosphere
+  // ============================================
+
+  // Glow blobs fade in and pulse
+  tl.fromTo('.blob-cyan',
+    { opacity: 0, scale: 0.7 },
+    { opacity: 0.35, scale: 1, duration: 2.5, ease: 'power2.out' },
+    0.5
+  );
+
+  tl.fromTo('.blob-pink',
+    { opacity: 0, scale: 0.7 },
+    { opacity: 0.25, scale: 1, duration: 2.5, ease: 'power2.out' },
+    1
+  );
+
+  // Subtle ambient floating for blobs
+  tl.to('.blob-cyan', {
+    x: 30, y: 20, duration: 5, ease: 'sine.inOut', yoyo: true, repeat: 1
+  }, 2);
+
+  tl.to('.blob-pink', {
+    x: -25, y: -15, duration: 4.5, ease: 'sine.inOut', yoyo: true, repeat: 1
+  }, 2.5);
+
+  // Stats bar progress animation
+  tl.to('#stats-bar .fill', {
+    width: '100%', duration: 10, ease: 'none'
+  }, 0);
+
+  // Floating particles
+  document.querySelectorAll('.particle').forEach((particle, i) => {
+    const startDelay = 2 + i * 0.5;
+
+    tl.fromTo(particle,
+      { opacity: 0, scale: 0, y: 0 },
+      { opacity: 0.7, scale: 1.5, duration: 1, ease: 'back.out(2)' },
+      startDelay
+    );
+
+    tl.to(particle, {
+      y: -120 - Math.random() * 80,
+      x: (Math.random() - 0.5) * 100,
+      opacity: 0,
+      duration: 4 + Math.random() * 2,
+      ease: 'power1.in'
+    }, startDelay + 1);
+  });
+
+  // ============================================
+  // TRACK 1: Title Card Animation
+  // ============================================
+
+  tl.from('#title-card h1', {
+    opacity: 0,
+    y: 60,
+    rotationX: -15,
+    duration: 1.2,
+    ease: 'power4.out'
+  }, 0.5);
+
+  tl.from('#title-card p', {
+    opacity: 0,
+    y: 30,
+    duration: 0.8,
+    ease: 'power3.out'
+  }, 1);
+
+  // Subtle title breathing effect
+  tl.to('#title-card h1', {
+    scale: 1.02,
+    duration: 2,
+    ease: 'sine.inOut',
+    yoyo: true,
+    repeat: 2
+  }, 3);
+
+  // ============================================
+  // TRACK 2: Feature Clip 1 (Timeline)
+  // ============================================
+
+  tl.from('#clip-1', {
+    opacity: 0,
+    x: -80,
+    rotateY: -12,
+    transformOrigin: 'left center',
+    duration: 1,
+    ease: 'power3.out'
+  }, 1.5);
+
+  // Animate bars inside clip 1
+  tl.from('#clip-1 rect[fill="#00f0ff"]', {
+    scaleY: 0,
+    transformOrigin: 'bottom',
+    stagger: 0.15,
+    duration: 0.6,
+    ease: 'back.out(2)'
+  }, 2.2);
+
+  // Hover-like lift effect
+  tl.to('#clip-1', {
+    y: -8,
+    boxShadow: '0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(0, 240, 255, 0.12)',
+    duration: 0.4,
+    ease: 'power2.out',
+    yoyo: true,
+    repeat: 1
+  }, 5);
+
+  // ============================================
+  // TRACK 3: Feature Clip 2 (Layers)
+  // ============================================
+
+  tl.from('#clip-2', {
+    opacity: 0,
+    x: 80,
+    rotateY: 12,
+    transformOrigin: 'right center',
+    duration: 1,
+    ease: 'power3.out'
+  }, 2.5);
+
+  // Staggered layer reveal
+  tl.from('#clip-2 rect[fill^="#ff"]', {
+    scaleX: 0,
+    transformOrigin: 'left',
+    stagger: 0.12,
+    duration: 0.5,
+    ease: 'power2.out'
+  }, 3.2);
+
+  // Checkmark draw-in
+  tl.from('#clip-2 path', {
+    strokeDasharray: 20,
+    strokeDashoffset: 20,
+    duration: 0.5,
+    ease: 'power2.inOut'
+  }, 3.8);
+
+  tl.to('#clip-2', {
+    y: -8,
+    boxShadow: '0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(255, 45, 117, 0.12)',
+    duration: 0.4,
+    ease: 'power2.out',
+    yoyo: true,
+    repeat: 1
+  }, 6);
+
+  // ============================================
+  // TRACK 4: Feature Clip 3 (Performance)
+  // ============================================
+
+  tl.from('#clip-3', {
+    opacity: 0,
+    y: 60,
+    scale: 0.9,
+    duration: 0.9,
+    ease: 'back.out(1.7)'
+  }, 3.5);
+
+  // Star icon draw animation
+  tl.from('#clip-3 polygon[stroke]', {
+    strokeDasharray: 300,
+    strokeDashoffset: 300,
+    duration: 1,
+    ease: 'power2.inOut',
+    rotation: -90,
+    transformOrigin: 'center'
+  }, 4.2);
+
+  tl.from('#clip-3 polygon[fill-opacity="0.25"]', {
+    fillOpacity: 0,
+    duration: 0.6,
+    ease: 'power2.out'
+  }, 4.8);
+
+  tl.to('#clip-3', {
+    y: -6,
+    boxShadow: '0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(0, 240, 255, 0.1)',
+    duration: 0.4,
+    ease: 'power2.out',
+    yoyo: true,
+    repeat: 1
+  }, 7);
+
+  // ============================================
+  // Final Sequence: Converge & Fade
+  // ============================================
+
+  // All clips converge slightly toward center
+  tl.to(['#clip-1', '#clip-2', '#clip-3'], {
+    scale: 1.03,
+    duration: 0.6,
+    ease: 'power2.inOut',
+    yoyo: true,
+    repeat: 1
+  }, 9);
+
+  // Final fade out
+  tl.to(['#title-card', '#clip-1', '#clip-2', '#clip-3', '.glow-blob', '.particle'], {
+    opacity: 0,
+    y: -20,
+    duration: 1.2,
+    ease: 'power2.in',
+    stagger: 0.08
+  }, 11);
+
+  // ============================================
+  // Register Timeline on Window
+  // ============================================
+
+  window.__timelines = window.__timelines || {};
+  window.__timelines['hyperframes-promo'] = tl;
+
+</script>
+</body>
+</html>

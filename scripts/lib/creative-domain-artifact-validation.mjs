@@ -47,6 +47,7 @@ function domainChecks(domain, source) {
       addCheck(checks, 'svg-root', /^<svg[\s>]/i.test(trimmed), 'missing root <svg>');
       addCheck(checks, 'svg-close', /<\/svg>\s*$/i.test(trimmed), 'missing closing </svg>');
       addCheck(checks, 'svg-visible-shape', /<(path|circle|rect|line|polyline|polygon|ellipse|text)\b/i.test(source), 'missing visible SVG shape');
+      addCheck(checks, 'svg-transparent-background', !hasOpaqueFullCanvasRect(source), 'opaque full-canvas rect violates the transparent-background SVG proof contract');
       break;
     case 'glsl':
       addCheck(checks, 'glsl-main', /\bvoid\s+main\s*\(/.test(source), 'missing void main()');
@@ -111,4 +112,69 @@ function addCheck(checks, name, passed, message) {
     passed: Boolean(passed),
     ...(passed ? {} : { message }),
   });
+}
+
+function hasOpaqueFullCanvasRect(source) {
+  const svgAttributes = parseAttributes(source.match(/<svg\b([^>]*)>/i)?.[1] || '');
+  const viewBox = parseViewBox(svgAttributes.viewBox);
+  const svgWidth = parseLength(svgAttributes.width);
+  const svgHeight = parseLength(svgAttributes.height);
+
+  for (const match of source.matchAll(/<rect\b([^>]*)\/?>/gi)) {
+    const attrs = parseAttributes(match[1] || '');
+    if (!isFullCanvasRect(attrs, viewBox, svgWidth, svgHeight)) continue;
+    if (isTransparentFill(attrs)) continue;
+    return true;
+  }
+
+  return false;
+}
+
+function parseAttributes(source) {
+  const attrs = {};
+  for (const match of source.matchAll(/([\w:-]+)\s*=\s*(['"])(.*?)\2/g)) {
+    attrs[match[1]] = match[3];
+  }
+  return attrs;
+}
+
+function parseViewBox(value) {
+  if (!value) return null;
+  const parts = value.trim().split(/[\s,]+/).map(Number);
+  return parts.length === 4 && parts.every(Number.isFinite)
+    ? { x: parts[0], y: parts[1], width: parts[2], height: parts[3] }
+    : null;
+}
+
+function parseLength(value) {
+  if (!value) return null;
+  if (String(value).trim() === '100%') return '100%';
+  const numeric = Number(String(value).trim().replace(/px$/i, ''));
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function isFullCanvasRect(attrs, viewBox, svgWidth, svgHeight) {
+  const x = parseLength(attrs.x) ?? 0;
+  const y = parseLength(attrs.y) ?? 0;
+  const width = parseLength(attrs.width);
+  const height = parseLength(attrs.height);
+  const originX = viewBox?.x ?? 0;
+  const originY = viewBox?.y ?? 0;
+
+  if (width === '100%' && height === '100%') return true;
+  if (x !== originX || y !== originY) return false;
+  if (viewBox && width === viewBox.width && height === viewBox.height) return true;
+  return svgWidth !== null && svgHeight !== null && width === svgWidth && height === svgHeight;
+}
+
+function isTransparentFill(attrs) {
+  const styleFill = attrs.style?.match(/(?:^|;)\s*fill\s*:\s*([^;]+)/i)?.[1];
+  const fill = String(attrs.fill ?? styleFill ?? '').trim().toLowerCase();
+  const opacity = attrs.opacity ?? attrs['fill-opacity'] ?? attrs.style?.match(/(?:^|;)\s*(?:opacity|fill-opacity)\s*:\s*([^;]+)/i)?.[1];
+
+  if (fill === 'none' || fill === 'transparent') return true;
+  if (/^#[\da-f]{4}$/i.test(fill) && fill.slice(-1) === '0') return true;
+  if (/^#[\da-f]{8}$/i.test(fill) && fill.slice(-2) === '00') return true;
+  if (/^rgba\([^)]*,\s*0(?:\.0+)?\s*\)$/i.test(fill)) return true;
+  return opacity !== undefined && Number(opacity) === 0;
 }

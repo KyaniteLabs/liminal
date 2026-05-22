@@ -2,153 +2,171 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Kinetic Typography</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kinetic Typography Orbit</title>
     <style>
         :root {
             --bg: #050508;
             --glow: #00f3ff;
             --accent: #ff0055;
-            --text: #ffffff;
+            --text: #e0e0e0;
         }
 
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            margin: 0;
+            background-color: var(--bg);
             height: 100vh;
-            background: var(--bg);
+            width: 100vw;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text);
         }
 
         .scene {
             position: relative;
-            width: 100vmin;
-            height: 100vmin;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            width: 100%;
+            height: 100%;
+            perspective: 1200px;
         }
 
-        /* The Luminous Threshold */
+        /* The Luminous Threshold (Center) */
         .threshold {
-            position: absolute;
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            box-shadow:
-                0 0 60px var(--glow),
-                inset 0 0 40px var(--glow),
-                0 0 120px rgba(0, 243, 255, 0.4);
-            animation: pulse-threshold 4s ease-in-out infinite alternate;
-            z-index: 1;
-        }
-
-        @keyframes pulse-threshold {
-            0% { transform: scale(1); opacity: 0.6; filter: blur(1px); }
-            100% { transform: scale(1.15); opacity: 1; filter: blur(2px); }
-        }
-
-        /* Orbiting Words Base */
-        .orbit {
             position: absolute;
             top: 50%;
             left: 50%;
-            animation-timing-function: linear;
-            animation-iteration-count: infinite;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(0,243,255,0.4) 40%, transparent 70%);
+            box-shadow:
+                0 0 60px var(--glow),
+                0 0 120px var(--glow),
+                inset 0 0 30px rgba(255,255,255,0.5);
             z-index: 10;
+            animation: pulse-core 4s infinite ease-in-out alternate;
         }
 
-        /* Individual Orbits */
-        .o1 {
-            width: 300px; height: 300px; margin-left: -150px; margin-top: -150px;
-            animation-name: spin; animation-duration: 12s;
-        }
-        .o2 {
-            width: 450px; height: 450px; margin-left: -225px; margin-top: -225px;
-            animation-name: spin-reverse; animation-duration: 18s;
-        }
-        .o3 {
-            width: 600px; height: 600px; margin-left: -300px; margin-top: -300px;
-            animation-name: spin; animation-duration: 25s;
-        }
-        .o4 {
-            width: 750px; height: 750px; margin-left: -375px; margin-top: -375px;
-            animation-name: spin-reverse; animation-duration: 35s;
-        }
-
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes spin-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
-
-        /* Word Styling & Kinetic Effects */
+        /* Base Word Styling */
         .word {
             position: absolute;
-            font-weight: 800;
+            top: 50%;
+            left: 50%;
+            font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 2px;
             white-space: nowrap;
-            color: transparent;
-            -webkit-text-stroke: 1px var(--text);
-            filter: drop-shadow(0 0 5px currentColor);
-            animation: word-fx 6s ease-in-out infinite alternate;
+            transform-origin: center center;
+            pointer-events: none;
+            text-shadow: 0 0 10px currentColor;
         }
 
-        .w-glow { color: var(--glow); -webkit-text-stroke: 0; text-shadow: 0 0 20px var(--glow), 0 0 40px var(--glow); }
-        .w-accent { color: var(--accent); -webkit-text-stroke: 0; text-shadow: 0 0 20px var(--accent), 0 0 40px var(--accent); }
+        /* Orbital Paths & Animations */
 
-        @keyframes word-fx {
-            0% { transform: scale(0.9) translateY(0); opacity: 0.7; }
-            100% { transform: scale(1.2) translateY(-5px); opacity: 1; filter: brightness(1.5) drop-shadow(0 0 15px white); }
+        /* Orbit 1 */
+        .orbit-1 {
+            font-size: 2.5rem;
+            color: var(--glow);
+            animation: orbit-1-spin 12s linear infinite;
+        }
+        @keyframes orbit-1-spin {
+            from { transform: rotate(0deg) translateX(220px) rotate(0deg); }
+            to { transform: rotate(360deg) translateX(220px) rotate(-360deg); }
         }
 
-        /* Positioning words on the orbit edge */
-        .t1 { top: 0; left: 50%; transform-origin: 0 150px; font-size: 24px; animation-delay: 0s; }
-        .t2 { top: 50%; right: 0; transform-origin: -112.5px 0; font-size: 32px; animation-delay: -1s; }
-        .t3 { bottom: 0; left: 50%; transform-origin: 0 -150px; font-size: 28px; animation-delay: -2s; }
-        .t4 { top: 50%; left: 0; transform-origin: 187.5px 0; font-size: 22px; animation-delay: -3s; }
+        /* Orbit 2 */
+        .orbit-2 {
+            font-size: 1.8rem;
+            color: var(--accent);
+            animation: orbit-2-spin 18s linear infinite reverse;
+        }
+        @keyframes orbit-2-spin {
+            from { transform: rotate(45deg) translateX(320px) rotate(-45deg); }
+            to { transform: rotate(-315deg) translateX(320px) rotate(315deg); }
+        }
 
-        .t5 { top: 0; left: 50%; transform-origin: 0 225px; font-size: 36px; animation-delay: -0.5s; }
-        .t6 { bottom: 0; left: 50%; transform-origin: 0 -225px; font-size: 26px; animation-delay: -2.5s; }
+        /* Orbit 3 */
+        .orbit-3 {
+            font-size: 3rem;
+            color: #fff;
+            animation: orbit-3-spin 25s linear infinite;
+        }
+        @keyframes orbit-3-spin {
+            from { transform: rotate(90deg) translateX(420px) rotate(-90deg); }
+            to { transform: rotate(450deg) translateX(420px) rotate(-450deg); }
+        }
 
-        .t7 { top: 0; left: 50%; transform-origin: 0 300px; font-size: 42px; animation-delay: -1.5s; }
-        .t8 { bottom: 0; left: 50%; transform-origin: 0 -300px; font-size: 30px; animation-delay: -3.5s; }
+        /* Orbit 4 (Tilted) */
+        .orbit-4 {
+            font-size: 1.4rem;
+            color: #bd00ff;
+            animation: orbit-4-spin 15s linear infinite;
+        }
+        @keyframes orbit-4-spin {
+            0% { transform: rotateX(70deg) rotateZ(0deg) translateX(280px) rotateZ(0deg); }
+            100% { transform: rotateX(70deg) rotateZ(360deg) translateX(280px) rotateZ(-360deg); }
+        }
 
-        .t9 { top: 0; left: 50%; transform-origin: 0 375px; font-size: 48px; animation-delay: -0.2s; }
-        .t10 { bottom: 0; left: 50%; transform-origin: 0 -375px; font-size: 34px; animation-delay: -4.2s; }
+        /* Core Animation */
+        @keyframes pulse-core {
+            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; box-shadow: 0 0 40px var(--glow); }
+            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; box-shadow: 0 0 80px var(--glow), 0 0 150px var(--accent); }
+        }
+
+        /* Kinetic Text Effects */
+        .wobble { animation: wobble-text 3s ease-in-out infinite alternate; }
+        @keyframes wobble-text {
+            0% { letter-spacing: 2px; transform: scale(1); }
+            100% { letter-spacing: 10px; transform: scale(1.05); }
+        }
+
+        .blink { animation: blink-text 2s step-end infinite; }
+        @keyframes blink-text {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .scale-pulse { animation: scale-pulse 4s ease-in-out infinite; }
+        @keyframes scale-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        .color-shift { animation: color-shift 6s linear infinite; }
+        @keyframes color-shift {
+            0% { color: var(--glow); text-shadow: 0 0 20px var(--glow); }
+            33% { color: var(--accent); text-shadow: 0 0 20px var(--accent); }
+            66% { color: #bd00ff; text-shadow: 0 0 20px #bd00ff; }
+            100% { color: var(--glow); text-shadow: 0 0 20px var(--glow); }
+        }
+
+        .skew-dance { animation: skew-dance 5s ease-in-out infinite; }
+        @keyframes skew-dance {
+            0% { transform: skewX(-15deg); }
+            50% { transform: skewX(15deg); }
+            100% { transform: skewX(-15deg); }
+        }
 
     </style>
 </head>
 <body>
 
     <div class="scene">
-        <!-- Luminous Core -->
+        <!-- Central Luminous Threshold -->
         <div class="threshold"></div>
 
-        <!-- Orbit 1 (Inner) -->
-        <div class="orbit o1">
-            <div class="word t1 w-glow">Kinetic</div>
-            <div class="word t3 w-accent">Type</div>
-        </div>
-
-        <!-- Orbit 2 -->
-        <div class="orbit o2">
-            <div class="word t2 w-glow">Orbiting</div>
-            <div class="word t6 w-accent">Motion</div>
-        </div>
-
-        <!-- Orbit 3 -->
-        <div class="orbit o3">
-            <div class="word t7 w-accent">Luminous</div>
-            <div class="word t8 w-glow">Threshold</div>
-        </div>
-
-        <!-- Orbit 4 (Outer) -->
-        <div class="orbit o4">
-            <div class="word t9 w-glow">Velocity</div>
-            <div class="word t10 w-accent">Design</div>
-        </div>
+        <!-- Orbiting Words -->
+        <div class="word orbit-1 wobble">Kinetic</div>
+        <div class="word orbit-2 blink">Threshold</div>
+        <div class="word orbit-3 color-shift">Luminous</div>
+        <div class="word orbit-4 scale-pulse">Orbiting</div>
+        <div class="word orbit-1 skew-dance" style="animation-delay: -5s;">Typography</div>
+        <div class="word orbit-2 color-shift" style="animation-delay: -9s;">Design</div>
+        <div class="word orbit-3 wobble" style="animation-delay: -12s;">Motion</div>
+        <div class="word orbit-4 blink" style="animation-delay: -2s;">Vector</div>
     </div>
 
 

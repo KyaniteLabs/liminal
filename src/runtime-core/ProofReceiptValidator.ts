@@ -198,7 +198,7 @@ export function validateProofReceipt(
 }
 
 function listGitSourceFiles(repoRoot: string): string[] | null {
-  return gitOutput(repoRoot, ['ls-files', '--cached', '--others', '--exclude-standard'])
+  return gitOutput(repoRoot, ['ls-files', '--cached'])
     ?.split('\n')
     .filter(Boolean) ?? null;
 }

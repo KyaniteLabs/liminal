@@ -189,7 +189,7 @@ function resolveGitDir(repoRoot) {
 }
 
 function listGitSourceFiles(repoRoot) {
-  return gitOutput(repoRoot, ['ls-files', '--cached', '--others', '--exclude-standard'])
+  return gitOutput(repoRoot, ['ls-files', '--cached'])
     ?.split('\n')
     .filter(Boolean) ?? null;
 }

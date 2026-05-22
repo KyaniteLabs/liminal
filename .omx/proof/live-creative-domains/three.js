@@ -1,5 +1,5 @@
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111122);
+scene.background = new THREE.Color(0x1a1a2e);
 
 const width = window.innerWidth;
 const height = window.innerHeight;
@@ -12,55 +12,53 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 document.body.appendChild(renderer.domElement);
 
 // Lights
-const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+const ambientLight = new THREE.AmbientLight(0x404060, 0.5);
 scene.add(ambientLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 1.2);
-pointLight.position.set(4, 4, 4);
+const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+keyLight.position.set(5, 5, 5);
+scene.add(keyLight);
+
+const fillLight = new THREE.DirectionalLight(0x4488ff, 0.6);
+fillLight.position.set(-4, -2, -3);
+scene.add(fillLight);
+
+const pointLight = new THREE.PointLight(0xff6644, 1, 20);
+pointLight.position.set(3, 2, 2);
 scene.add(pointLight);
 
-const pointLight2 = new THREE.PointLight(0xff6688, 0.9);
-pointLight2.position.set(-3, -2, 3);
-scene.add(pointLight2);
-
-// Rotating cube
-const cubeGeo = new THREE.BoxGeometry(1.8, 1.8, 1.8);
-const cubeMat = new THREE.MeshStandardMaterial({
-  color: 0x22aaff,
-  metalness: 0.35,
-  roughness: 0.45
+// Cube with standard material for lighting response
+const geometry = new THREE.BoxGeometry(2, 2, 2);
+const material = new THREE.MeshStandardMaterial({
+  color: 0x22aacc,
+  metalness: 0.3,
+  roughness: 0.4
 });
-const cube = new THREE.Mesh(cubeGeo, cubeMat);
+const cube = new THREE.Mesh(geometry, material);
 scene.add(cube);
 
-// Secondary sphere for lighting contrast
-const sphereGeo = new THREE.SphereGeometry(0.55, 32, 32);
-const sphereMat = new THREE.MeshStandardMaterial({
-  color: 0xff8844,
-  metalness: 0.7,
-  roughness: 0.25
-});
-const sphere = new THREE.Mesh(sphereGeo, sphereMat);
-sphere.position.set(-2.2, 1.2, -0.5);
-scene.add(sphere);
-
-// Ground plane to catch shadows
-const planeGeo = new THREE.PlaneGeometry(12, 12);
-const planeMat = new THREE.MeshStandardMaterial({
+// Floor plane to catch shadows and show light interaction
+const floorGeo = new THREE.PlaneGeometry(20, 20);
+const floorMat = new THREE.MeshStandardMaterial({
   color: 0x222233,
-  roughness: 0.85,
-  metalness: 0.05
+  metalness: 0.1,
+  roughness: 0.9
 });
-const plane = new THREE.Mesh(planeGeo, planeMat);
-plane.rotation.x = -Math.PI / 2;
-plane.position.y = -1.8;
-scene.add(plane);
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -2;
+scene.add(floor);
 
-renderer.shadowMap.enabled = true;
-cube.castShadow = true;
-sphere.castShadow = true;
-plane.receiveShadow = true;
-pointLight.castShadow = true;
+// Small orbiting sphere for extra visual interest
+const sphereGeo = new THREE.SphereGeometry(0.3, 16, 16);
+const sphereMat = new THREE.MeshStandardMaterial({
+  color: 0xff4466,
+  emissive: 0x441122,
+  metalness: 0.6,
+  roughness: 0.2
+});
+const orbiter = new THREE.Mesh(sphereGeo, sphereMat);
+scene.add(orbiter);
 
 let time = 0;
 
@@ -68,21 +66,24 @@ function animate() {
   requestAnimationFrame(animate);
   time += 0.01;
 
-  // Rotate the cube
+  // Rotate the main cube
   cube.rotation.x += 0.008;
   cube.rotation.y += 0.012;
 
-  // Orbit camera with sin/cos
-  const camRadius = 5.5 + Math.sin(time * 0.4) * 1.2;
-  camera.position.x = Math.sin(time * 0.3) * camRadius;
-  camera.position.y = Math.cos(time * 0.22) * 2.0 + 1.5;
-  camera.position.z = Math.cos(time * 0.3) * camRadius;
+  // Orbit the small sphere around the cube
+  const orbitRadius = 2.8;
+  orbiter.position.x = Math.cos(time * 1.5) * orbitRadius;
+  orbiter.position.y = Math.sin(time * 0.8) * 0.8;
+  orbiter.position.z = Math.sin(time * 1.5) * orbitRadius;
+
+  // Animate camera position slightly
+  camera.position.x = Math.sin(time * 0.3) * 0.8;
+  camera.position.y = Math.cos(time * 0.2) * 0.5;
   camera.lookAt(0, 0, 0);
 
-  // Animate lights
-  pointLight.position.x = Math.sin(time * 0.7) * 5;
-  pointLight.position.z = Math.cos(time * 0.7) * 5;
-  pointLight2.position.y = Math.sin(time * 0.5) * 3;
+  // Animate point light position
+  pointLight.position.x = Math.sin(time) * 4;
+  pointLight.position.z = Math.cos(time) * 4;
 
   renderer.render(scene, camera);
 }

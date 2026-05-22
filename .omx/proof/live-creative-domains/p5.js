@@ -2,14 +2,14 @@ let particles = [];
 
 function setup() {
   createCanvas(600, 600);
-  colorMode(HSB, 360, 100, 100, 1);
-  for (let i = 0; i < 200; i++) {
+  colorMode(HSB, 360, 100, 100, 100);
+  for (let i = 0; i < 120; i++) {
     particles.push(new Particle());
   }
 }
 
 function draw() {
-  background(20, 30, 8);
+  background(220, 15, 8);
   for (let p of particles) {
     p.update();
     p.show();
@@ -19,22 +19,20 @@ function draw() {
 class Particle {
   constructor() {
     this.pos = createVector(random(width), random(height));
-    this.vel = createVector(0, 0);
+    this.vel = createVector(random(-1, 1), random(-1, 1));
     this.acc = createVector(0, 0);
-    this.maxSpeed = random(2, 4);
-    this.hue = random(160, 220);
     this.size = random(3, 10);
-    this.prevPos = this.pos.copy();
+    this.hue = random(160, 220);
+    this.prev = this.pos.copy();
   }
 
   update() {
     let angle = noise(this.pos.x * 0.005, this.pos.y * 0.005, frameCount * 0.005) * TWO_PI * 4;
     this.acc = p5.Vector.fromAngle(angle).mult(0.15);
     this.vel.add(this.acc);
-    this.vel.limit(this.maxSpeed);
-    this.prevPos = this.pos.copy();
+    this.vel.limit(2.5);
+    this.prev = this.pos.copy();
     this.pos.add(this.vel);
-
     if (this.pos.x < 0) this.pos.x = width;
     if (this.pos.x > width) this.pos.x = 0;
     if (this.pos.y < 0) this.pos.y = height;
@@ -42,10 +40,11 @@ class Particle {
   }
 
   show() {
-    let speed = this.vel.mag();
-    let alpha = map(speed, 0, this.maxSpeed, 0.2, 0.9);
-    stroke(this.hue, 80, 90, alpha);
+    stroke(this.hue, 70, 85, 60);
     strokeWeight(this.size * 0.6);
-    line(this.prevPos.x, this.prevPos.y, this.pos.x, this.pos.y);
+    line(this.prev.x, this.prev.y, this.pos.x, this.pos.y);
+    noStroke();
+    fill(this.hue, 50, 95, 80);
+    circle(this.pos.x, this.pos.y, this.size);
   }
 }

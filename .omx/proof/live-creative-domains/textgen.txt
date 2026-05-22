@@ -1,40 +1,40 @@
-d
-             r
-            e
-           a
-          m
-         ( )
-        /   \
-       while  true
-      /         \
-     memory      flickers
-    /               \
-   static            noise
-  /                     \
- time                      bends
-/                           \
-\                           /
- \                         /
-  \                       /
-   \                     /
-    \                   /
-     \                 /
-      \               /
-       \             /
-        \           /
-         \         /
-          \       /
-           \     /
-            \   /
-             \ /
-              ●
-             /|\
-            / | \
-           /  |  \
-          /   |   \
-         /    |    \
-        /     |     \
-       /      |      \
-      /       |       \
-     /        |        \
-    /         |         \
+loop:
+         /      \
+       /    zz  \
+     /   zzzzzz  \
+    |  zzzzzzzz  |
+    | zzzzzzzzzz |
+    |  zzzzzzzz  |
+     \   zzzzzz  /
+       \    zz  /
+         \____/
+        a machine
+        .-------.
+       /  dream  \
+      |  _______  |
+      | |       | |
+      | | loop  | |
+      | |_______| |
+      |           |
+      \___________/
+            ||
+           _||_
+          |____|
+        dreams in loops
+              ()
+             /  \
+            / .. \
+           | ()() |
+            \ .. /
+             \__/
+               |
+          _____|_____
+         /           \
+        |   while(1)  |
+        |   {dream}   |
+        \_____________/
+               |
+            [recurs]
+      the machine sleeps
+      but its eyes are open
+           .-"""""-.

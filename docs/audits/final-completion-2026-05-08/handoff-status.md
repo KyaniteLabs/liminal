@@ -1,6 +1,6 @@
 # Handoff Status
 
-Last updated: 2026-05-10
+Last updated: 2026-05-22
 
 ## Done
 
@@ -9,7 +9,7 @@ Last updated: 2026-05-10
 - **PR #528** — Closed as superseded by the final gate/documentation updates.
 - **PR #529** — Live creative-domain proof refreshed. 12/12 domains pass via glm/GLM-5v-turbo. Merged.
 - **PR #530** — Full gate pass + audit docs update merged.
-- **PR #531** — Operator journey evidence recorded in this PR.
+- **PR #531** — Operator journey evidence recorded and merged.
 - **All programmatic gate commands pass:**
   - `check:script-targets` ✅ `check:orphans` ✅ `check:doc-links` ✅
   - `final-qa:test-quality` ✅ `final-qa:surface` ✅
@@ -28,10 +28,10 @@ Last updated: 2026-05-10
 
 ## Remaining Blockers
 
-1. **Merge this PR (#531)** — It records the final operator journey evidence.
-2. **FCQA-001** — Re-run a generation through actual timeout expiry and record recourse behavior.
-3. **FCQA-002** — Disconnect or kill the provider mid-generation and record the user-visible error/recourse path.
-4. **Final closure sweep on `main`** — Pull latest main after those fixes and rerun the required final gates.
+1. **FCQA-001** — Re-run a generation through actual timeout expiry and record recourse behavior.
+2. **FCQA-002** — Disconnect or kill the provider mid-generation and record the user-visible error/recourse path.
+3. **Final closure sweep on `main`** — Pull latest main after those fixes and rerun the full required gate suite.
+4. **Audit PR closure check** — Confirm no audit/completion-program PRs remain open; unrelated repository PRs are not blockers for this audit cycle.
 
 ## Operator Journey Results (2026-05-08)
 
@@ -57,23 +57,46 @@ cd "$ROOT"
 git checkout main && git pull
 
 # Verify gates on merged main:
+pnpm check:script-targets
+pnpm check:orphans
+pnpm check:doc-links
 pnpm final-qa:test-quality
 pnpm final-qa:surface
 pnpm typecheck
 pnpm build
+pnpm gui:build
+pnpm bubbletea:test
+pnpm verify:integration
+pnpm test:e2e
+pnpm test:ci:slow
+pnpm proof:live-creative-domains -- --timeout-ms=180000
+pnpm qa:creative-domains:static
 
-# Confirm no blocking completion-program PRs remain:
+# Confirm no blocking audit/completion-program PRs remain.
+# Filter by audit/completion branch, title, or label; unrelated open PRs do not block this audit closure.
 gh pr list --state open
 
-# If all green and no blocking completion PRs remain, update this file to COMPLETE.
+# If all gates are green and no blocking audit PRs remain, update this file to COMPLETE.
 ```
 
 ## Task 6 Closure Checklist
 
-- [ ] PR #531 merged
+- [x] PR #531 merged
+- [ ] `pnpm check:script-targets` passes on merged main
+- [ ] `pnpm check:orphans` passes on merged main
+- [ ] `pnpm check:doc-links` passes on merged main
 - [ ] `pnpm final-qa:test-quality` passes on merged main
 - [ ] `pnpm final-qa:surface` passes on merged main
+- [ ] `pnpm typecheck` passes on merged main
+- [ ] `pnpm build` passes on merged main
+- [ ] `pnpm gui:build` passes on merged main
+- [ ] `pnpm bubbletea:test` passes on merged main
+- [ ] `pnpm verify:integration` passes on merged main
+- [ ] `pnpm test:e2e` passes on merged main
+- [ ] `pnpm test:ci:slow` passes on merged main
+- [ ] `pnpm proof:live-creative-domains -- --timeout-ms=180000` passes on merged main when live credentials are configured
+- [ ] `pnpm qa:creative-domains:static` passes on merged main
 - [ ] FCQA-001 actual timeout expiry recourse validated
 - [ ] FCQA-002 provider disconnect handling validated
-- [ ] `gh pr list --state open` has no blocking completion-program PRs
+- [ ] Audit/completion-program PR filter has no blocking open PRs
 - [ ] This file updated to COMPLETE

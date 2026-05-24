@@ -96,6 +96,9 @@ function parseArgs(args: string[]): CliOptions {
     }
   }
 
+  if (options.backend === 'openai' && !options.endpoint) {
+    options.endpoint = 'http://127.0.0.1:8080/v1/chat/completions';
+  }
   if (options.backend === 'http' && !options.endpoint) {
     throw new Error(`--backend http requires --endpoint\n\n${usage()}`);
   }
@@ -103,8 +106,8 @@ function parseArgs(args: string[]): CliOptions {
 }
 
 function parseBackend(value: string): PhraseBenchmarkBackend {
-  if (value === 'mock' || value === 'http') return value;
-  throw new Error(`Unsupported backend: ${value}. Use mock or http.`);
+  if (value === 'mock' || value === 'http' || value === 'openai') return value;
+  throw new Error(`Unsupported backend: ${value}. Use mock, http, or openai.`);
 }
 
 function parsePositiveInteger(value: string, flag: string): number {
@@ -133,11 +136,12 @@ function printUsage(): void {
 
 function usage(): string {
   return [
-    'Usage: pnpm --filter sing bench:phrases --model <model> --backend <mock|http> --samples <n>',
+    'Usage: pnpm --filter sing bench:phrases --model <model> --backend <mock|http|openai> --samples <n>',
     '',
     'Examples:',
     '  pnpm --filter sing bench:phrases --model LiquidAI/LFM2.5-350M --backend mock --samples 10 --pretty',
     '  pnpm --filter sing bench:phrases --model LiquidAI/LFM2.5-1.2B-Instruct --backend http --endpoint http://127.0.0.1:8080/phrases --samples 50',
+    '  pnpm --filter sing bench:phrases --model /path/to/LFM2.5-1.2B-Instruct-MLX-8bit --backend openai --samples 50',
   ].join('\n');
 }
 

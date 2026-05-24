@@ -13,7 +13,7 @@ export const LFM25_CANDIDATE_MODELS = [
   'LiquidAI/LFM2.5-1.2B-Instruct-MLX',
 ] as const;
 
-export type PhraseBenchmarkBackend = 'mock' | 'http';
+export type PhraseBenchmarkBackend = 'mock' | 'http' | 'openai';
 export type PhraseBenchmarkStatus = 'ok' | 'timeout' | 'error' | 'invalid_output';
 export type PhraseBenchmarkRecommendationStatus = 'selected' | 'rejected' | 'baseline_only' | 'failed';
 
@@ -256,6 +256,8 @@ function createRunner(options: PhraseBenchmarkInputOptions): PhraseBenchmarkRunn
       return createMockRunner(options.clock);
     case 'http':
       return createHttpRunner(options);
+    case 'openai':
+      return createOpenAiRunner(options);
   }
 }
 
@@ -296,6 +298,44 @@ function createHttpRunner(options: PhraseBenchmarkInputOptions): PhraseBenchmark
         model: options.model,
         max_new_tokens: sampleOptions.maxNewTokens,
         sample_index: sampleOptions.sampleIndex,
+      }),
+    });
+    const body = await response.text();
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${body.slice(0, 120)}`);
+    const text = extractTextFromHttpResponse(body);
+    const elapsedMs = globalThis.performance.now() - startedAt;
+    return {
+      text,
+      timeToFirstTokenMs: elapsedMs,
+      timeToFirstPhraseMs: elapsedMs,
+      tokensGenerated: estimateTokens(text),
+    };
+  };
+}
+
+function createOpenAiRunner(options: PhraseBenchmarkInputOptions): PhraseBenchmarkRunner {
+  const endpoint = options.endpoint ?? 'http://127.0.0.1:8080/v1/chat/completions';
+  const fetchImpl = options.fetchImpl ?? globalThis.fetch;
+  if (!fetchImpl) throw new Error('OpenAI-compatible phrase benchmark requires fetch support');
+
+  return async (prompt, _input, sampleOptions) => {
+    const startedAt = globalThis.performance.now();
+    const response = await fetchImpl(endpoint, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: options.model,
+        messages: [
+          {
+            role: 'system',
+            content: 'Return only newline-separated 1 to 6 word singable phrase fragments.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        max_tokens: sampleOptions.maxNewTokens,
+        temperature: 0.9,
+        top_p: 0.9,
+        stream: false,
       }),
     });
     const body = await response.text();

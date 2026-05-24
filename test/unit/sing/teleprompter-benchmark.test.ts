@@ -78,6 +78,30 @@ describe('Sing phrase benchmark harness', () => {
     expect(extractTextFromHttpResponse(JSON.stringify({ choices: [{ message: { content: 'soft machine' } }] }))).toBe('soft machine');
   });
 
+  it('can call an OpenAI-compatible local model server', async () => {
+    const fetchImpl = vi.fn(async (_url: string, init: { body: string }) => {
+      const body = JSON.parse(init.body) as { messages: Array<{ role: string; content: string }> };
+      expect(body.messages[0]).toEqual(expect.objectContaining({ role: 'system' }));
+      expect(body.messages[1]?.content).toContain('Return only newline-separated fragments.');
+      return {
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ choices: [{ message: { content: 'blue ash\nno shore' } }] }),
+      };
+    });
+
+    const report = await runPhraseBenchmark({
+      model: '/models/LFM2.5-1.2B-Instruct-MLX-8bit',
+      backend: 'openai',
+      samples: 1,
+      fetchImpl,
+    });
+
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(report.samples_completed).toBe(1);
+    expect(report.recommendation.status).toBe('selected');
+  });
+
   it('filters full-lyric or numbered output before scoring samples', () => {
     expect(parsePhraseFragments('1. blue ash\nVerse 1:\nunder the glass moon\nthis line has too many words to be a valid fragment')).toEqual([
       'blue ash',

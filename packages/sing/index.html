@@ -7,6 +7,13 @@
   </head>
   <body>
     <canvas id="sing-canvas" aria-label="Sing visual instrument"></canvas>
+    <section id="sing-teleprompter" aria-label="Lyric teleprompter" data-mode="strip">
+      <div id="sing-teleprompter-phrases" aria-live="polite"></div>
+      <div id="sing-teleprompter-controls">
+        <button id="sing-teleprompter-toggle" type="button">Hide phrases</button>
+        <button id="sing-teleprompter-refresh" type="button">Refresh</button>
+      </div>
+    </section>
     <section id="sing-panel" aria-label="Sing controls">
       <strong>Sing</strong>
       <span id="sing-status">loading instrument</span>

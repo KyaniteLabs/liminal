@@ -2,12 +2,22 @@ import { validateSingPreset, type SingPresetArtifact } from '@liminal/audio-core
 import type { VoiceFeatureFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
 import { createSingRenderer, stabilizeSingFrame, type SingRenderer, type SingUniformFrame } from './render/pipeline';
 import { SessionRecorder } from './recording/SessionRecorder';
+import {
+  createMockPhraseSuggestions,
+  PhraseRingBuffer,
+  type LyricSidecarInput,
+  type PhraseFeedbackEvent,
+} from './teleprompter/phrases';
 import './style.css';
 
 const canvas = requireElement<HTMLCanvasElement>('#sing-canvas');
 const statusEl = requireElement<HTMLElement>('#sing-status');
 const startButton = requireElement<HTMLButtonElement>('#sing-start');
 const recordButton = requireElement<HTMLButtonElement>('#sing-record');
+const teleprompterEl = requireElement<HTMLElement>('#sing-teleprompter');
+const teleprompterPhrasesEl = requireElement<HTMLElement>('#sing-teleprompter-phrases');
+const teleprompterToggleButton = requireElement<HTMLButtonElement>('#sing-teleprompter-toggle');
+const teleprompterRefreshButton = requireElement<HTMLButtonElement>('#sing-teleprompter-refresh');
 
 let renderer: SingRenderer | null = null;
 let stream: MediaStream | null = null;
@@ -19,10 +29,14 @@ let latestFrame: VoiceFeatureFrame | null = null;
 let stableFrame: SingUniformFrame | null = null;
 let sessionRecorder: SessionRecorder | null = null;
 let recording = false;
+let teleprompterHidden = false;
+let lastPhraseRefreshAt = 0;
+const phraseQueue = new PhraseRingBuffer({ maxVisibleSuggestions: 5 });
 
 const preset = await loadPreset();
 if (preset) {
   renderer = createSingRenderer(canvas, preset);
+  refreshMockPhrases();
   renderIdle();
   setStatus(`${preset.name} ready`);
 } else {
@@ -46,6 +60,15 @@ recordButton.addEventListener('click', () => {
   } else {
     startRecording();
   }
+});
+
+teleprompterToggleButton.addEventListener('click', () => {
+  teleprompterHidden = !teleprompterHidden;
+  renderTeleprompter();
+});
+
+teleprompterRefreshButton.addEventListener('click', () => {
+  refreshMockPhrases(latestFrame);
 });
 
 window.addEventListener('resize', () => renderer?.resize());
@@ -141,6 +164,7 @@ function renderIdle(): void {
       confidence: 0,
       elapsedSeconds: (performance.now() - startedAt) / 1000,
     });
+    maybeRefreshMockPhrases(latestFrame);
     if (!stream) animationId = window.requestAnimationFrame(loop);
   };
   loop();
@@ -164,10 +188,89 @@ function renderLive(): void {
     if (latestFrame) {
       const pitch = Math.round(latestFrame.pitchHz);
       setStatus(`${latestFrame.voiced ? 'voiced' : 'listening'} · rms ${latestFrame.rms.toFixed(2)} · ${pitch || '--'} Hz`);
+      maybeRefreshMockPhrases(latestFrame);
     }
     animationId = window.requestAnimationFrame(loop);
   };
   loop();
+}
+
+function maybeRefreshMockPhrases(frame?: VoiceFeatureFrame | null): void {
+  const now = performance.now();
+  if (now - lastPhraseRefreshAt < 4000) return;
+  lastPhraseRefreshAt = now;
+  refreshMockPhrases(frame);
+}
+
+function refreshMockPhrases(frame?: VoiceFeatureFrame | null): void {
+  if (!preset) return;
+  const now = Date.now();
+  phraseQueue.add(createMockPhraseSuggestions(lyricInput(frame), { count: 5, now, ttlMs: 15_000 }), now);
+  renderTeleprompter();
+}
+
+function lyricInput(frame?: VoiceFeatureFrame | null): LyricSidecarInput {
+  return {
+    presetId: preset?.id || 'sing-preset',
+    sceneName: preset?.name,
+    visualTags: preset ? [preset.instrument, preset.shader.language] : ['sing'],
+    recentAcceptedPhrases: [],
+    recentDismissedPhrases: phraseQueue.events()
+      .filter((event) => event.type === 'phrase.dismissed')
+      .map((event) => event.text),
+    audioMood: {
+      intensity: frameIntensity(frame),
+      pitchMotion: 'wandering',
+      brightness: (frame?.centroid ?? 0) > 0.58 ? 'bright' : (frame?.centroid ?? 0) < 0.28 ? 'dark' : 'balanced',
+      onsetDensity: (frame?.spectralFlux ?? 0) > 0.03 ? 'dense' : 'sparse',
+      vibrato: 'subtle',
+    },
+  };
+}
+
+function frameIntensity(frame?: VoiceFeatureFrame | null): LyricSidecarInput['audioMood']['intensity'] {
+  if (!frame || frame.rms < 0.015) return 'silent';
+  if (frame.rms < 0.07) return 'soft';
+  if (frame.rms < 0.18) return 'medium';
+  return 'high';
+}
+
+function renderTeleprompter(): void {
+  teleprompterEl.dataset.mode = teleprompterHidden ? 'hidden' : 'strip';
+  teleprompterToggleButton.textContent = teleprompterHidden ? 'Show phrases' : 'Hide phrases';
+  teleprompterPhrasesEl.replaceChildren(...phraseQueue.visible(Date.now()).map(renderPhrase));
+}
+
+function renderPhrase(phrase: { id: string; text: string }): HTMLElement {
+  const item = document.createElement('div');
+  item.className = 'sing-phrase';
+  item.dataset.phraseId = phrase.id;
+
+  const text = document.createElement('span');
+  text.className = 'sing-phrase__text';
+  text.textContent = phrase.text;
+  item.append(text);
+  item.append(phraseButton('Pin', () => recordPhraseEvent(phraseQueue.pin(phrase.id, Date.now()))));
+  item.append(phraseButton('More', () => recordPhraseEvent(phraseQueue.moreLikeThis(phrase.id, Date.now()))));
+  item.append(phraseButton('Dismiss', () => recordPhraseEvent(phraseQueue.dismiss(phrase.id, 'not_now', Date.now()))));
+  return item;
+}
+
+function phraseButton(label: string, onClick: () => void): HTMLButtonElement {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  button.title = label;
+  button.setAttribute('aria-label', label);
+  button.addEventListener('click', () => {
+    onClick();
+    renderTeleprompter();
+  });
+  return button;
+}
+
+function recordPhraseEvent(event: PhraseFeedbackEvent | null): void {
+  if (event && recording) sessionRecorder?.appendPhraseEvent(event);
 }
 
 function startRecording(): void {

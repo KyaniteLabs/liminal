@@ -32,6 +32,63 @@ body,
   backdrop-filter: blur(16px);
 }
 
+#sing-teleprompter {
+  position: fixed;
+  left: 50%;
+  bottom: 92px;
+  width: min(760px, calc(100vw - 48px));
+  transform: translateX(-50%);
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+
+#sing-teleprompter-phrases {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+#sing-teleprompter-controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+#sing-teleprompter[data-mode="hidden"] #sing-teleprompter-phrases {
+  display: none;
+}
+
+.sing-phrase {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: min(100%, 320px);
+  padding: 8px 10px;
+  border: 1px solid rgba(129, 198, 255, 0.26);
+  border-radius: 8px;
+  background: rgba(5, 8, 11, 0.58);
+  color: #f2f9ff;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px);
+  pointer-events: auto;
+}
+
+.sing-phrase__text {
+  overflow-wrap: anywhere;
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.sing-phrase button {
+  min-width: 58px;
+  width: auto;
+  height: 28px;
+  padding: 0 8px;
+}
+
 #sing-status {
   min-width: 190px;
   font-size: 12px;
@@ -66,6 +123,15 @@ button:not(:disabled):hover {
     right: 12px;
     bottom: 12px;
     grid-template-columns: 1fr 1fr;
+  }
+
+  #sing-teleprompter {
+    bottom: 116px;
+    width: calc(100vw - 24px);
+  }
+
+  .sing-phrase__text {
+    font-size: 15px;
   }
 
   #sing-status {

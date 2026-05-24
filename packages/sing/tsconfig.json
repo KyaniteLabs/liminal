@@ -16,5 +16,5 @@
     "types": ["vite/client"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/recording/render-cli.ts"]
+  "exclude": ["src/recording/render-cli.ts", "src/teleprompter/benchmark-cli.ts"]
 }

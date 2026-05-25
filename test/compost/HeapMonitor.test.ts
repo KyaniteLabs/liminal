@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { ok, err } from 'neverthrow';
 import { HeapMonitor } from '../../src/compost/HeapMonitor.js';
 
 vi.mock('../../src/compost/CompostMill.js', () => ({}));
@@ -11,7 +12,7 @@ function makeMockMill(overrides: Record<string, unknown> = {}) {
   const fn = vi.fn();
   return {
     shouldAutoDigest: fn.mockResolvedValue(false),
-    digest: fn.mockResolvedValue({ stats: {}, seeds: [], digestPath: '' }),
+    digest: fn.mockResolvedValue(ok({ stats: {}, seeds: [], digestPath: '' })),
     ...overrides,
   };
 }
@@ -38,7 +39,7 @@ describe('HeapMonitor', () => {
   });
 
   it('triggers digest when shouldAutoDigest returns true', async () => {
-    const digestFn = vi.fn().mockResolvedValue({ stats: {}, seeds: [], digestPath: '/tmp/digest' });
+    const digestFn = vi.fn().mockResolvedValue(ok({ stats: {}, seeds: [], digestPath: '/tmp/digest' }));
     const mockMill = makeMockMill({
       shouldAutoDigest: vi.fn().mockResolvedValue(true),
       digest: digestFn,
@@ -54,8 +55,8 @@ describe('HeapMonitor', () => {
   });
 
   it('debounces when already digesting', async () => {
-    let digestResolve: () => void;
-    const digestPromise = new Promise<void>(resolve => { digestResolve = resolve; });
+    let digestResolve: (value: unknown) => void;
+    const digestPromise = new Promise<unknown>(resolve => { digestResolve = resolve; });
     const digestFn = vi.fn().mockImplementation(() => digestPromise);
     const mockMill = makeMockMill({
       shouldAutoDigest: vi.fn().mockResolvedValue(true),
@@ -76,15 +77,15 @@ describe('HeapMonitor', () => {
     expect(digestFn.mock.calls.length).toBeLessThanOrEqual(callCount + 1);
 
     // Release the hanging digest
-    digestResolve!();
+    digestResolve!(ok({ stats: {}, seeds: [], digestPath: '' }));
     monitor.stop();
   });
 
-  it('catches and logs digest errors', async () => {
+  it('logs digest Result errors', async () => {
     const { Logger } = await import('../../src/utils/Logger.js');
     const mockMill = makeMockMill({
       shouldAutoDigest: vi.fn().mockResolvedValue(true),
-      digest: vi.fn().mockRejectedValue(new Error('digest explosion')),
+      digest: vi.fn().mockResolvedValue(err(new Error('digest explosion'))),
     });
     const monitor = new HeapMonitor(30);
     monitor.start(mockMill);
@@ -92,6 +93,6 @@ describe('HeapMonitor', () => {
     await new Promise(resolve => setTimeout(resolve, 80));
     monitor.stop();
 
-    expect(Logger.warn).toHaveBeenCalledWith('HeapMonitor', 'auto-digest failed (exceptional):', expect.any(Error));
+    expect(Logger.warn).toHaveBeenCalledWith('HeapMonitor', 'auto-digest failed:', 'digest explosion');
   });
 });

@@ -157,7 +157,8 @@
     "picomatch": "4.0.4",
     "@protobufjs/utf8": "1.1.1",
     "protobufjs": "^7.5.6",
-    "vite": "8.0.9"
+    "vite": "8.0.9",
+    "ws": "8.20.1"
   },
   "bin": {
     "liminal": "bin/liminal",
@@ -199,7 +200,8 @@
       "@protobufjs/utf8": "1.1.1",
       "protobufjs": "^7.5.6",
       "vite": "8.0.9",
-      "uuid": "^14.0.0"
+      "uuid": "^14.0.0",
+      "ws": "8.20.1"
     }
   }
 }

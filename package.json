@@ -52,6 +52,9 @@
     "final-qa:test-quality": "pnpm test:quality:strict",
     "final-qa:surface": "node scripts/ci/final-qa-surface-gate.mjs",
     "gui:build": "pnpm --dir gui build",
+    "sing:build": "pnpm --filter sing build",
+    "sing:typecheck": "pnpm --filter sing typecheck",
+    "sing:dev": "pnpm --filter sing dev",
     "bubbletea:test": "cd bubbletea && go test ./...",
     "typecheck": "tsc --noEmit",
     "docs": "typedoc --out docs src/",
@@ -116,6 +119,7 @@
     "vitest": "^4.1.2"
   },
   "dependencies": {
+    "@liminal/audio-core": "workspace:*",
     "@babel/parser": "^7.29.2",
     "@babel/traverse": "^7.29.0",
     "@babel/types": "^7.29.0",

@@ -1,196 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Kinetic Typography</title>
-    <style>
-        :root {
-            --bg: #050508;
-            --glow: #00f3ff;
-            --accent: #ff0055;
-            --text: #ffffff;
-        }
+<meta charset="UTF-8">
+<title>Kinetic Typography</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    background: #050505;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+  }
 
-        body {
-            margin: 0;
-            height: 100vh;
-            background-color: var(--bg);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+  .scene {
+    position: relative;
+    width: 80vmin;
+    height: 80vmin;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 
-        .scene {
-            position: relative;
-            width: 500px;
-            height: 500px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+  .threshold {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    box-shadow:
+      0 0 20px #fff,
+      0 0 40px #ff00de,
+      0 0 60px #ff00de,
+      inset 0 0 20px rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    z-index: 10;
+    animation: pulse 4s infinite alternate ease-in-out;
+  }
 
-        /* The Luminous Threshold */
-        .threshold {
-            position: absolute;
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            border: 2px solid rgba(0, 243, 255, 0.2);
-            box-shadow:
-                0 0 20px var(--glow),
-                0 0 40px var(--glow),
-                inset 0 0 20px var(--glow);
-            animation: pulseThreshold 4s infinite alternate ease-in-out;
-            z-index: 1;
-        }
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 0.8; filter: hue-rotate(0deg); }
+    100% { transform: scale(1.15); opacity: 1; filter: hue-rotate(90deg); }
+  }
 
-        @keyframes pulseThreshold {
-            0% { transform: scale(1); opacity: 0.6; box-shadow: 0 0 20px var(--glow); }
-            100% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 50px var(--glow), 0 0 80px var(--accent); }
-        }
+  .orbit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform-origin: center;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
 
-        /* Orbiting Words Base */
-        .orbit {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform-origin: center;
-            pointer-events: none;
-        }
+  .word {
+    position: absolute;
+    white-space: nowrap;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    text-shadow: 0 0 8px currentColor, 0 0 20px currentColor;
+    animation-duration: 6s;
+    animation-direction: alternate;
+    animation-iteration-count: infinite;
+  }
 
-        /* Word Styling */
-        .word {
-            position: absolute;
-            white-space: nowrap;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: transparent;
-            -webkit-text-stroke: 1px var(--text);
-            filter: drop-shadow(0 0 5px currentColor);
-        }
+  /* Orbit 1 */
+  .o1 {
+    width: 300px; height: 300px;
+    margin-left: -150px; margin-top: -150px;
+    animation-name: spin-cw;
+    animation-duration: 12s;
+  }
+  .w1 { color: #ff0055; transform-origin: -30px 50%; animation: wobble1 3s ease-in-out infinite; }
+  .w1 span { display: block; transform: rotate(0deg); }
 
-        /* Orbit 1 */
-        .o1 {
-            width: 300px;
-            height: 300px;
-            margin-left: -150px;
-            margin-top: -150px;
-            animation: spin 12s linear infinite;
-        }
-        .w1 {
-            top: -10px; left: 50%; margin-left: -30px;
-            font-size: 18px;
-            animation: flicker 3s infinite alternate;
-            color: var(--glow);
-        }
+  /* Orbit 2 */
+  .o2 {
+    width: 450px; height: 450px;
+    margin-left: -225px; margin-top: -225px;
+    animation-name: spin-ccw;
+    animation-duration: 18s;
+  }
+  .w2 { color: #00ffff; transform-origin: -45px 50%; animation: wobble2 4s ease-in-out infinite; }
+  .w2 span { display: block; transform: rotate(72deg); }
 
-        /* Orbit 2 */
-        .o2 {
-            width: 420px;
-            height: 420px;
-            margin-left: -210px;
-            margin-top: -210px;
-            animation: spin 18s linear infinite reverse;
-        }
-        .w2 {
-            bottom: 10px; left: 50%; margin-left: -45px;
-            font-size: 24px;
-            color: var(--accent);
-            animation: pulseText 4s infinite ease-in-out;
-        }
+  /* Orbit 3 */
+  .o3 {
+    width: 600px; height: 600px;
+    margin-left: -300px; margin-top: -300px;
+    animation-name: spin-cw;
+    animation-duration: 25s;
+  }
+  .w3 { color: #ccff00; transform-origin: -55px 50%; animation: wobble3 5s ease-in-out infinite; }
+  .w3 span { display: block; transform: rotate(144deg); }
 
-        /* Orbit 3 (Diagonal) */
-        .o3 {
-            width: 380px;
-            height: 180px;
-            margin-left: -190px;
-            margin-top: -90px;
-            transform: rotate(-30deg);
-            animation: spin 9s linear infinite;
-        }
-        .w3 {
-            right: -20px; top: 50%; margin-top: -10px;
-            font-size: 14px;
-            letter-spacing: 6px;
-            color: #fff;
-            animation: glitch 2s steps(2) infinite;
-        }
+  /* Orbit 4 */
+  .o4 {
+    width: 750px; height: 750px;
+    margin-left: -375px; margin-top: -375px;
+    animation-name: spin-ccw;
+    animation-duration: 35s;
+  }
+  .w4 { color: #bd00ff; transform-origin: -65px 50%; animation: wobble4 7s ease-in-out infinite; }
+  .w4 span { display: block; transform: rotate(216deg); }
 
-        /* Orbit 4 (Vertical) */
-        .o4 {
-            width: 120px;
-            height: 450px;
-            margin-left: -60px;
-            margin-top: -225px;
-            transform: rotate(15deg);
-            animation: spin 22s linear infinite reverse;
-        }
-        .w4 {
-            bottom: 0; left: 0;
-            font-size: 16px;
-            writing-mode: vertical-rl;
-            color: var(--glow);
-            text-shadow: 0 0 10px var(--glow);
-        }
+  @keyframes spin-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes spin-ccw { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
 
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
+  @keyframes wobble1 { 0%, 100% { transform: scale(1) skewX(0deg); } 50% { transform: scale(1.2) skewX(-10deg); } }
+  @keyframes wobble2 { 0%, 100% { transform: scale(1) skewY(0deg); } 50% { transform: scale(1.3) skewY(10deg); } }
+  @keyframes wobble3 { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.1) rotate(5deg); } }
+  @keyframes wobble4 { 0%, 100% { transform: scale(1) translateX(0); } 50% { transform: scale(1.2) translateX(10px); } }
 
-        @keyframes flicker {
-            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-                text-shadow: 0 0 7px var(--glow), 0 0 10px var(--glow);
-                opacity: 1;
-            }
-            20%, 24%, 55% {
-                text-shadow: none;
-                opacity: 0.4;
-            }
-        }
-
-        @keyframes pulseText {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.2); opacity: 1; text-shadow: 0 0 20px var(--accent); }
-            100% { transform: scale(1); opacity: 0.8; }
-        }
-
-        @keyframes glitch {
-            0% { transform: translate(0); filter: hue-rotate(0deg); }
-            25% { transform: translate(-2px, 2px); filter: hue-rotate(90deg); }
-            50% { transform: translate(2px, -2px); filter: hue-rotate(180deg); }
-            75% { transform: translate(-2px, -2px); filter: hue-rotate(270deg); }
-            100% { transform: translate(0); filter: hue-rotate(360deg); }
-        }
-
-    </style>
+</style>
 </head>
 <body>
 
-    <div class="scene">
-        <!-- Central Luminous Core -->
-        <div class="threshold"></div>
+<div class="scene">
+  <div class="threshold"></div>
 
-        <!-- Orbital Paths & Text -->
-        <div class="orbit o1">
-            <span class="word w1">Velocity</span>
-        </div>
+  <!-- Ring 1 -->
+  <div class="orbit o1">
+    <div class="word w1"><span>Velocity</span></div>
+  </div>
 
-        <div class="orbit o2">
-            <span class="word w2">Threshold</span>
-        </div>
+  <!-- Ring 2 -->
+  <div class="orbit o2">
+    <div class="word w2"><span>Threshold</span></div>
+  </div>
 
-        <div class="orbit o3">
-            <span class="word w3">KINETIC</span>
-        </div>
+  <!-- Ring 3 -->
+  <div class="orbit o3">
+    <div class="word w3"><span>Luminous</span></div>
+  </div>
 
-        <div class="orbit o4">
-            <span class="word w4">LUMINOUS</span>
-        </div>
-    </div>
+  <!-- Ring 4 -->
+  <div class="orbit o4">
+    <div class="word w4"><span>Orbiting</span></div>
+  </div>
+</div>
 
 
 

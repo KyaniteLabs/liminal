@@ -355,6 +355,21 @@ describe('LLMClient constructor and config', () => {
     expect(config.apiStyle).toBe('ollama');
   });
 
+  it('preserves provider template metadata without treating it as dropped config', () => {
+    const client = new LLMClient({
+      provider: 'glm',
+      name: 'GLM',
+      description: 'Cloud provider',
+      baseUrl: 'https://api.z.ai/api/anthropic',
+      model: 'GLM-5v-turbo',
+    });
+    const config = client.getConfig();
+
+    expect(config.provider).toBe('glm');
+    expect(config.name).toBe('GLM');
+    expect(config.description).toBe('Cloud provider');
+  });
+
   it('accepts custom endpointPath', () => {
     const client = new LLMClient({ endpointPath: '/v1/custom/completions' });
     const config = client.getConfig();

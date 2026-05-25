@@ -1,29 +1,23 @@
 precision mediump float;
 uniform float u_time;
 uniform vec2 u_resolution;
-uniform vec2 u_mouse;
-
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-    vec2 uv = fragCoord / u_resolution.xy;
-
-    float v1 = sin(uv.x * 10.0 + u_time);
-    float v2 = sin(10.0 * (uv.x * sin(u_time / 2.0) + uv.y * cos(u_time / 3.0)) + u_time);
-    float cx = uv.x + 0.5 * sin(u_time / 5.0);
-    float cy = uv.y + 0.5 * cos(u_time / 3.0);
-    float v3 = sin(sqrt(100.0 * ((cx - 0.5) * (cx - 0.5) + (cy - 0.5) * (cy - 0.5))) + u_time);
-
-    float v = v1 + v2 + v3;
-
-    vec3 col = vec3(
-        sin(v * 3.14159),
-        sin(v * 3.14159 + 2.094),
-        sin(v * 3.14159 + 4.188)
-    );
-    col = 0.5 + 0.5 * col;
-
-    fragColor = vec4(col, 1.0);
-}
 
 void main() {
-    mainImage(gl_FragCoord, gl_FragCoord);
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  vec2 p = uv * 8.0;
+
+  float v1 = sin(p.x + u_time);
+  float v2 = sin(p.y + u_time * 0.7);
+  float v3 = sin(p.x + p.y + u_time * 1.3);
+  float v4 = sin(distance(p, vec4(0.0).xy) / 2.0 + u_time * 0.9);
+
+  float plasma = (v1 + v2 + v3 + v4) / 4.0;
+
+  vec3 color = vec3(
+    sin(plasma * 3.14159 + 0.0),
+    sin(plasma * 3.14159 + 2.094),
+    sin(plasma * 3.14159 + 4.189)
+  ) * 0.5 + 0.5;
+
+  gl_FragColor = vec4(color, 1.0);
 }

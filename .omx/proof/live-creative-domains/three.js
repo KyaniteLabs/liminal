@@ -3,7 +3,6 @@ scene.background = new THREE.Color(0x111122);
 
 const width = window.innerWidth;
 const height = window.innerHeight;
-
 const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
 camera.position.z = 5;
 
@@ -16,36 +15,37 @@ document.body.appendChild(renderer.domElement);
 const ambientLight = new THREE.AmbientLight(0x404050, 0.6);
 scene.add(ambientLight);
 
-const pointLight1 = new THREE.PointLight(0xff6644, 1.2, 20);
-pointLight1.position.set(3, 3, 3);
-scene.add(pointLight1);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+directionalLight.position.set(3, 4, 5);
+scene.add(directionalLight);
 
-const pointLight2 = new THREE.PointLight(0x4488ff, 1.0, 20);
-pointLight2.position.set(-3, -2, 2);
-scene.add(pointLight2);
+const pointLight = new THREE.PointLight(0xff6644, 1.2, 20);
+pointLight.position.set(-3, -2, 3);
+scene.add(pointLight);
 
 // Cube with standard material for lighting response
-const geometry = new THREE.BoxGeometry(1.6, 1.6, 1.6);
+const geometry = new THREE.BoxGeometry(1.8, 1.8, 1.8);
 const material = new THREE.MeshStandardMaterial({
-  color: 0xdd8844,
-  metalness: 0.35,
-  roughness: 0.45,
+  color: 0x22aaff,
+  metalness: 0.4,
+  roughness: 0.35
 });
 const cube = new THREE.Mesh(geometry, material);
 scene.add(cube);
 
-// Floor plane to show light interaction
-const planeGeo = new THREE.PlaneGeometry(12, 12);
-const planeMat = new THREE.MeshStandardMaterial({
-  color: 0x222233,
-  metalness: 0.15,
-  roughness: 0.85,
+// Floor plane to show lighting
+const floorGeo = new THREE.PlaneGeometry(12, 12);
+const floorMat = new THREE.MeshStandardMaterial({
+  color: 0x333344,
+  metalness: 0.2,
+  roughness: 0.7
 });
-const plane = new THREE.Mesh(planeGeo, planeMat);
-plane.rotation.x = -Math.PI / 2;
-plane.position.y = -1.8;
-scene.add(plane);
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -1.6;
+scene.add(floor);
 
+// Animation
 let time = 0;
 function animate() {
   requestAnimationFrame(animate);
@@ -55,19 +55,15 @@ function animate() {
   cube.rotation.x += 0.008;
   cube.rotation.y += 0.012;
 
-  // Animate lights in orbits
-  pointLight1.position.x = Math.sin(time * 1.3) * 4;
-  pointLight1.position.z = Math.cos(time * 1.3) * 4;
-  pointLight1.position.y = Math.sin(time * 0.7) * 2 + 2;
-
-  pointLight2.position.x = Math.cos(time * 0.9) * 3.5;
-  pointLight2.position.z = Math.sin(time * 0.9) * 3.5;
-  pointLight2.position.y = Math.cos(time * 1.1) * 1.5 - 1;
-
-  // Gentle camera sway
-  camera.position.x = Math.sin(time * 0.25) * 0.6;
-  camera.position.y = Math.cos(time * 0.18) * 0.4;
+  // Animate camera orbit with sin/cos
+  const camRadius = 5;
+  camera.position.x = Math.sin(time * 0.5) * camRadius * 0.4;
+  camera.position.y = Math.cos(time * 0.3) * 2 + 1;
   camera.lookAt(0, 0, 0);
+
+  // Animate point light position
+  pointLight.position.x = Math.sin(time) * 4;
+  pointLight.position.z = Math.cos(time) * 4;
 
   renderer.render(scene, camera);
 }
@@ -75,9 +71,7 @@ function animate() {
 animate();
 
 window.addEventListener('resize', () => {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  camera.aspect = w / h;
+  camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
+  renderer.setSize(window.innerWidth, window.innerHeight);
 });

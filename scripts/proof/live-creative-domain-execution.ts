@@ -53,6 +53,7 @@ const DOMAIN_TIMEOUT_FLOORS_MS: Partial<Record<Domain, number>> = {
   // These domains ask for larger structured artifacts and can be slow on live
   // coding providers; keep the launch proof bounded without misclassifying
   // valid slow generations as failures.
+  ascii: 180_000,
   tone: 180_000,
   hyperframes: 240_000,
 };
@@ -117,6 +118,14 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function normalizeArtifactCode(raw: string): string {
+  return raw
+    .split('\n')
+    .map(line => line.trimEnd())
+    .join('\n')
+    .trim();
+}
+
 function createGenerator(domain: Domain, config: { baseUrl?: string; model?: string; apiKey?: string; apiStyle?: 'openai' | 'anthropic' | 'ollama' }): GeneratorLike {
   switch (domain) {
     case 'p5': return new P5GeneratorV2(config);
@@ -147,7 +156,7 @@ async function runDomain(domain: Domain, rootOutDir: string, timeoutMs: number, 
       maxTokens: 4096,
       ...(domain === 'hyperframes' ? { useGeneratorTools: false } : {}),
     };
-    const code = String(await generator.generate(prompt, generateOptions)).trim();
+    const code = normalizeArtifactCode(String(await generator.generate(prompt, generateOptions)));
     const codeBytes = Buffer.byteLength(code, 'utf8');
     const artifactPath = path.join(rootOutDir, `${domain}.${EXTENSIONS[domain]}`);
     const artifactValidation = validateCreativeDomainArtifact(domain, artifactPath, code);

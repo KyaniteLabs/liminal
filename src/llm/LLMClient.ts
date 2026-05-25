@@ -47,6 +47,12 @@ export interface LLMConfig {
   apiKey?: string;
   /** Model name to use */
   model: string;
+  /** Provider metadata for diagnostics and compatibility with provider templates. */
+  provider?: string;
+  /** Human-readable provider name, when supplied by provider templates. */
+  name?: string;
+  /** Human-readable provider description, when supplied by provider templates. */
+  description?: string;
   /** Temperature for generation (0-2) */
   temperature?: number;
   /** Maximum tokens to generate */
@@ -250,6 +256,9 @@ export class LLMClient {
       baseUrl,
       apiKey: config?.apiKey ?? roleApiKey ?? selectApiKeyForEndpoint(baseUrl, model, ['LLM_API_KEY']),
       model,
+      provider: config?.provider,
+      name: config?.name,
+      description: config?.description,
       temperature: config?.temperature ?? roleTemperature ?? 0.7,
       maxTokens: config?.maxTokens ?? roleMaxTokens ?? 4096,
       role: this.role,

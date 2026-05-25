@@ -234,4 +234,24 @@ describe('execute — export-finetuning', () => {
 
     expect(chunks).toHaveLength(0);
   });
+
+  it('does not enable info logging for stdout export paths', async () => {
+    mockExportFn.mockReturnValue([]);
+    const previousLogLevel = process.env.LIMINAL_LOG_LEVEL;
+    delete process.env.LIMINAL_LOG_LEVEL;
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    try {
+      await execute({ command: 'export-finetuning' }, {} as any);
+    } finally {
+      consoleSpy.mockRestore();
+      if (previousLogLevel === undefined) {
+        delete process.env.LIMINAL_LOG_LEVEL;
+      } else {
+        process.env.LIMINAL_LOG_LEVEL = previousLogLevel;
+      }
+    }
+
+    expect(consoleSpy).not.toHaveBeenCalled();
+  });
 });

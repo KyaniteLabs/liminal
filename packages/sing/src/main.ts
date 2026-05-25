@@ -5,9 +5,9 @@ import {
   PhraseRingBuffer,
   PhraseSessionLog,
   TeleprompterController,
-  createMockPhraseGenerator,
   type LyricSidecarInput,
 } from './lyrics/Teleprompter';
+import { createLyricSidecarGenerator, readLyricSidecarConfig } from './lyrics/SidecarRuntime';
 import { createSingRenderer, stabilizeSingFrame, type SingRenderer, type SingUniformFrame } from './render/pipeline';
 import { SessionRecorder } from './recording/SessionRecorder';
 import './style.css';
@@ -22,6 +22,7 @@ const phraseToggleButton = requireElement<HTMLButtonElement>('#sing-phrase-toggl
 const phraseMoreButton = requireElement<HTMLButtonElement>('#sing-phrase-more');
 const phrasePinButton = requireElement<HTMLButtonElement>('#sing-phrase-pin');
 const phraseDismissButton = requireElement<HTMLButtonElement>('#sing-phrase-dismiss');
+const phraseDisableButton = requireElement<HTMLButtonElement>('#sing-phrase-disable');
 
 let renderer: SingRenderer | null = null;
 let stream: MediaStream | null = null;
@@ -37,12 +38,15 @@ let phraseTimer: number | null = null;
 
 const phraseBuffer = new PhraseRingBuffer();
 const phraseLog = new PhraseSessionLog();
+const sidecarConfig = readLyricSidecarConfig(window.location.search);
 const teleprompter = new TeleprompterController(
-  createMockPhraseGenerator(),
+  createLyricSidecarGenerator(sidecarConfig),
   phraseBuffer,
   phraseLog,
   DEFAULT_LYRIC_RUNTIME_CONFIG,
+  sidecarConfig.source,
 );
+if (sidecarConfig.disabled) teleprompter.disable(performance.now());
 
 const preset = await loadPreset();
 if (preset) {
@@ -102,6 +106,16 @@ phraseDismissButton.addEventListener('click', () => {
   if (current) teleprompter.dismiss(current.id, performance.now());
   renderTeleprompter();
   void queuePhraseRefresh();
+});
+
+phraseDisableButton.addEventListener('click', () => {
+  if (teleprompter.isDisabled()) {
+    teleprompter.enable(performance.now());
+  } else {
+    teleprompter.disable(performance.now());
+  }
+  renderTeleprompter();
+  if (!teleprompter.isDisabled()) void queuePhraseRefresh();
 });
 
 window.addEventListener('resize', () => renderer?.resize());
@@ -257,14 +271,16 @@ async function queuePhraseRefresh(): Promise<void> {
 
 function renderTeleprompter(): void {
   const hidden = teleprompter.isHidden();
+  const disabled = teleprompter.isDisabled();
   phrasePanel.classList.toggle('sing-teleprompter--hidden', hidden);
   phraseEl.hidden = hidden;
   phraseToggleButton.textContent = hidden ? 'Show' : 'Hide';
+  phraseDisableButton.textContent = disabled ? 'On' : 'Off';
   const current = phraseBuffer.current(performance.now());
-  phraseEl.textContent = current?.text ?? 'listen for the next phrase';
-  phraseMoreButton.disabled = hidden;
-  phrasePinButton.disabled = hidden || !current;
-  phraseDismissButton.disabled = hidden || !current;
+  phraseEl.textContent = disabled ? 'phrase sidecar off' : current?.text ?? 'listen for the next phrase';
+  phraseMoreButton.disabled = hidden || disabled;
+  phrasePinButton.disabled = hidden || disabled || !current;
+  phraseDismissButton.disabled = hidden || disabled || !current;
 }
 
 function buildLyricInput(): LyricSidecarInput {

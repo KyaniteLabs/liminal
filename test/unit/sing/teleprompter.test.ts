@@ -117,4 +117,39 @@ describe('Sing teleprompter sidecar', () => {
     expect(buffer.visible(1)).toHaveLength(0);
     expect(log.all().map((event) => event.type)).toEqual(['hidden', 'request_skipped']);
   });
+
+  it('makes disabled sidecar mode skip generator calls', async () => {
+    const generator: PhraseGenerator = {
+      generate: vi.fn(async () => ['where the light bends']),
+    };
+    const buffer = new PhraseRingBuffer();
+    const log = new PhraseSessionLog();
+    const controller = new TeleprompterController(generator, buffer, log);
+
+    controller.disable(0);
+    await controller.request(input, 1);
+
+    expect(controller.isDisabled()).toBe(true);
+    expect(generator.generate).not.toHaveBeenCalled();
+    expect(log.all().map((event) => event.type)).toEqual(['disabled', 'request_skipped']);
+  });
+
+  it('logs model failures without poisoning the render loop', async () => {
+    const generator: PhraseGenerator = {
+      generate: vi.fn(async () => {
+        throw new Error('local model crashed');
+      }),
+    };
+    const buffer = new PhraseRingBuffer();
+    const log = new PhraseSessionLog();
+    const controller = new TeleprompterController(generator, buffer, log);
+
+    await expect(controller.request(input, 10)).resolves.toEqual([]);
+
+    expect(buffer.visible(10)).toHaveLength(0);
+    expect(log.all().at(-1)).toMatchObject({
+      type: 'request_failed',
+      reason: 'local model crashed',
+    });
+  });
 });

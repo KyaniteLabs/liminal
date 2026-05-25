@@ -55,6 +55,7 @@
     "sing:build": "pnpm --filter sing build",
     "sing:typecheck": "pnpm --filter sing typecheck",
     "sing:dev": "pnpm --filter sing dev",
+    "sing:bench:phrases": "pnpm --filter sing bench:phrases",
     "bubbletea:test": "cd bubbletea && go test ./...",
     "typecheck": "tsc --noEmit",
     "docs": "typedoc --out docs src/",

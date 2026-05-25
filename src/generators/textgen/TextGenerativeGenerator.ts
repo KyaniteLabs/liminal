@@ -103,7 +103,10 @@ export class TextGenerativeGenerator extends TierBasedGenerator {
       'Do not return HTML, SVG, CSS, JavaScript, markdown fences, placeholder comments, or DOM structure.',
       'Use plain text lines that can be shown inside a <pre> element.',
     ].join('\n');
-    const raw = await super.generate(textPrompt, options);
+    const raw = await super.generate(textPrompt, {
+      ...options,
+      useGeneratorTools: options?.useGeneratorTools ?? false,
+    });
     const validation = this.validateOutput(raw);
     if (!validation.valid) {
       throw new Error(validation.error);
@@ -135,10 +138,18 @@ export class TextGenerativeGenerator extends TierBasedGenerator {
       return { valid: false, error: 'Output appears to be HTML/code placeholder, not text art' };
     }
 
-    // Check for remaining code-like patterns after stripping fences
-    if (/\bfunction\b/.test(stripped) || /\bclass\b/.test(stripped) ||
-        /\bconst\b.*[=;]/.test(stripped) || /\blet\b.*[=;]/.test(stripped) ||
-        /\breturn\b/.test(stripped) || /\bif\b.*\(/.test(stripped)) {
+    const hasCodeSyntax = [
+      /\bfunction\s+[A-Za-z_$][\w$]*\s*\(/,
+      /\bclass\s+[A-Za-z_$][\w$]*(?:\s+extends\s+[A-Za-z_$][\w$]*)?\s*\{/,
+      /\b(?:const|let|var)\s+[A-Za-z_$][\w$]*\s*=/,
+      /\breturn\b[^\n;{}]*[;}]/,
+      /\b(?:if|for|while)\s*\([^\n)]*\)\s*\{\s*\n\s*(?:return|const|let|var|[A-Za-z_$][\w$]*(?:\.|\())/,
+      /\b(?:import|export)\s+.+\bfrom\b/,
+      /\b[A-Za-z_$][\w$]*\.[A-Za-z_$][\w$]*\s*\(/,
+      /\b[A-Za-z_$][\w$]*\s*\([^)\n]*\)\s*;/,
+      /=>/,
+    ].some(pattern => pattern.test(stripped));
+    if (hasCodeSyntax) {
       return { valid: false, error: 'Output appears to be code, not text art' };
     }
 

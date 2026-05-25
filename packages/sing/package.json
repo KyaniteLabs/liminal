@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "pnpm --filter @liminal/audio-core build && vite --host 127.0.0.1 --port 5176",
     "build": "pnpm --filter @liminal/audio-core build && vite build && tsc -p tsconfig.node.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "typecheck": "pnpm --filter @liminal/audio-core build && tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "render": "node dist-node/recording/render-cli.js",
     "bench:phrases": "pnpm --filter @liminal/audio-core build && tsc -p tsconfig.node.json && node dist-node/lyrics/bench-phrases.js"
   },

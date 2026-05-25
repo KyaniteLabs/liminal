@@ -28,4 +28,17 @@ describe('live creative-domain execution matrix', () => {
     expect(script).not.toMatch(/html:\s*'create an HTML landing page/i);
     expect(script).not.toContain("case 'html': return new HTMLWebGenerator");
   });
+
+  it('keeps slow live-provider domains bounded without using the global timeout as a false failure', () => {
+    expect(script).toContain('DOMAIN_TIMEOUT_FLOORS_MS');
+    expect(script).toMatch(/ascii:\s*180_000/);
+    expect(script).toMatch(/tone:\s*180_000/);
+    expect(script).toMatch(/hyperframes:\s*240_000/);
+  });
+
+  it('normalizes generated artifacts before writing tracked proof files', () => {
+    expect(script).toContain('function normalizeArtifactCode');
+    expect(script).toContain('.map(line => line.trimEnd())');
+    expect(script).toContain('normalizeArtifactCode(String(await generator.generate');
+  });
 });

@@ -20,7 +20,7 @@ export class KineticGenerator extends TierBasedGenerator {
 
   async generate(prompt: string, options?: KineticGeneratorOptions): Promise<string> {
     const response = await this.generateFull(prompt, options);
-    if (!response.success || response.error) {
+    if (!response.success || !response.code?.trim()) {
       throw new GenerationError(`KineticGenerator: ${response.error ?? 'generation failed'}`, 'kinetic', {
         generatedCode: response.code,
       });

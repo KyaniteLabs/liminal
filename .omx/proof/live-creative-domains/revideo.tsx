@@ -1,7 +1,7 @@
 import { makeScene2D, Txt, Rect } from '@revideo/2d';
 import { createRef, waitFor } from '@revideo/core';
 
-export default makeScene2D('TitleFadeScene', function* (view) {
+export default makeScene2D('TitleScene', function* (view) {
   const title = createRef<Txt>();
   const subtitle = createRef<Txt>();
 
@@ -11,20 +11,19 @@ export default makeScene2D('TitleFadeScene', function* (view) {
         ref={title}
         text={'Timeline Composition'}
         fill={'#e8e6f0'}
-        fontSize={96}
-        fontWeight={700}
+        fontSize={80}
         fontFamily={'sans-serif'}
+        fontWeight={700}
         opacity={0}
-        y={-80}
       />
       <Txt
         ref={subtitle}
         text={'Animated Title & Subtitle Fade'}
-        fill={'#7a7890'}
-        fontSize={48}
+        fill={'#7b79a0'}
+        fontSize={36}
         fontFamily={'sans-serif'}
+        y={100}
         opacity={0}
-        y={80}
       />
     </Rect>
   );
@@ -32,8 +31,8 @@ export default makeScene2D('TitleFadeScene', function* (view) {
   yield* title().opacity(1, 1.2);
   yield* waitFor(0.4);
   yield* subtitle().opacity(1, 1.0);
-  yield* waitFor(1.5);
-  yield* title().opacity(0, 0.8);
+  yield* waitFor(2.0);
   yield* subtitle().opacity(0, 0.8);
+  yield* title().opacity(0, 1.0);
   yield* waitFor(0.5);
 });

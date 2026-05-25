@@ -142,11 +142,15 @@ describe('KineticGenerator', () => {
     expect(result.error).toContain('Recovered with deterministic CSS kinetic scaffold');
   });
 
-  it('generate rejects recovery scaffolds so callers can receipt the failed candidate', async () => {
+  it('generate returns recovery scaffolds so operators still get a visible artifact', async () => {
     mockComplete.mockResolvedValueOnce({ text: '', success: true });
     mockGenerate.mockResolvedValueOnce({ code: '', success: true });
     const gen = new KineticGenerator();
 
-    await expect(gen.generate('empty')).rejects.toThrow('Recovered with deterministic CSS kinetic scaffold');
+    const code = await gen.generate('empty');
+
+    expect(code).toContain('<!DOCTYPE html>');
+    expect(code).toContain('Liminal recovery');
+    expect(code).toContain('@keyframes orbit');
   });
 });

@@ -33,13 +33,32 @@ export function routeStudioComposerMessage(
   if (!context.hasCurrentArtifact) return { intent: 'generate' };
 
   const lower = message.toLowerCase();
-  if (/\b(receipt|details?|explain|inspect|what happened|show me)\b/.test(lower)) return { intent: 'inspect' };
-  if (/\b(export|save|download|write out)\b/.test(lower)) return { intent: 'export' };
+  if (isInspectIntent(lower)) return { intent: 'inspect' };
+  if (isExportIntent(lower)) return { intent: 'export' };
   if (/\b(variation|variant|another version|different composition|fresh variation)\b/.test(lower)) {
     return { intent: 'variant', revisionKind: 'variation' };
   }
   if (/\b(new artifact|start over|from scratch)\b/.test(lower)) return { intent: 'generate' };
   return { intent: 'revise', revisionKind: 'revise' };
+}
+
+function isInspectIntent(lower: string): boolean {
+  return [
+    /\b(receipt|inspect)\b/,
+    /\bwhat happened\b/,
+    /\bshow me\s+(?:the\s+)?(?:receipt|run details?|generation details?|work log|activity log|details?)\b/,
+    /\b(?:run|generation|work|activity)\s+details?\b/,
+    /\bdetails?\s+(?:of|for|about)\s+(?:the\s+)?(?:run|generation|artifact|current|latest)\b/,
+    /\bexplain\s+(?:what happened|the\s+(?:run|generation|receipt|details?))\b/,
+  ].some(pattern => pattern.test(lower));
+}
+
+function isExportIntent(lower: string): boolean {
+  return [
+    /\b(export|download|write out)\b/,
+    /\bsave\s+(?:the\s+)?(?:current\s+)?(?:artifact|preview|output|result|file|image|sketch|composition)\b/,
+    /\bsave\s+(?:it|this)\s+(?:as|to)\b/,
+  ].some(pattern => pattern.test(lower));
 }
 
 export function buildStudioComposerSubmission(input: {

@@ -29,6 +29,24 @@ describe('Studio composer conversation routing', () => {
     })).toEqual({ intent: 'inspect' });
   });
 
+  it('keeps creative detail and show-me follow-ups as revisions', () => {
+    expect(routeStudioComposerMessage('add more detail to the motion', {
+      hasCurrentArtifact: true,
+    })).toEqual({ intent: 'revise', revisionKind: 'revise' });
+    expect(routeStudioComposerMessage('show me a slower version', {
+      hasCurrentArtifact: true,
+    })).toEqual({ intent: 'revise', revisionKind: 'revise' });
+  });
+
+  it('keeps save-themed creative follow-ups as revisions unless export is explicit', () => {
+    expect(routeStudioComposerMessage('save the blue palette but make the camera drift slower', {
+      hasCurrentArtifact: true,
+    })).toEqual({ intent: 'revise', revisionKind: 'revise' });
+    expect(routeStudioComposerMessage('save this as a file', {
+      hasCurrentArtifact: true,
+    })).toEqual({ intent: 'export' });
+  });
+
   it('carries the prior run receipt when building a follow-up submission', () => {
     const submission = buildStudioComposerSubmission({
       message: 'make it slower',

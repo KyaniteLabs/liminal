@@ -35,7 +35,7 @@ export const XRayPanel: React.FC<XRayPanelProps> = ({
         timestamp: Date.now(),
         type: 'raw',
       }));
-      
+
       setTokens(prev => [...prev, ...newTokens]);
     }
   }, [rawOutput]);

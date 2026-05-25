@@ -754,11 +754,11 @@ export class RalphLoop {
 
         // Check code completeness (structural - braces, parens balanced)
         const isComplete = RalphLoop.isCodeComplete(currentCode);
-        
+
         // Runtime validation: test if code actually works
         let runtimeValid = true;
         let runtimeError = '';
-        
+
         // Detect output type and run appropriate runtime test
         const outputType = detectOutputType(currentCode);
         if (outputType === Domain.GLSL) {
@@ -770,7 +770,7 @@ export class RalphLoop {
             runtimeError = 'Missing main() or gl_FragColor';
           }
         }
-        
+
         // Log runtime validation results
         if (!runtimeValid) {
           Logger.warn('RalphLoop', `Runtime validation failed: ${runtimeError}`);
@@ -1147,12 +1147,12 @@ export class RalphLoop {
             if (normalizedOptions.chatMode) {
               normalizedOptions.onThought?.('Running render-based quality analysis...');
             }
-            
+
             const { RenderAndScorePipeline } = await import('../render/RenderAndScorePipeline.js');
             const pipeline = new RenderAndScorePipeline(normalizedOptions.renderScoringOptions);
-            
+
             const renderResult = await pipeline.process(currentCode);
-            
+
             if (renderResult.success) {
               // Blend render score with existing score
               const blendedScore = RenderAndScorePipeline.blendScores({
@@ -1161,10 +1161,10 @@ export class RalphLoop {
                 renderWeight: 0.4,
                 mode: 'adaptive',
               });
-              
+
               const oldScore = evaluation.score;
               evaluation.score = blendedScore;
-              
+
               if (normalizedOptions.chatMode) {
                 normalizedOptions.onThought?.(`Render score: ${renderResult.score.toFixed(2)}, blended: ${blendedScore.toFixed(2)} (was ${oldScore.toFixed(2)})`);
                 if (renderResult.warnings?.length) {
@@ -1174,13 +1174,13 @@ export class RalphLoop {
               if (renderResult.warnings?.length) {
                 Logger.warn('RalphLoop', `Render scoring warnings: ${renderResult.warnings.join(' | ')}`);
               }
-              
+
               // Add render score info to dimensions
               if (!evaluation.dimensions) {
                 evaluation.dimensions = {};
               }
               evaluation.dimensions.render = renderResult.score;
-              
+
               // Log render details
               if (renderResult.visual) {
                 Logger.debug('RalphLoop', `Visual score: ${renderResult.visual.score.toFixed(2)} (color: ${renderResult.visual.colorVariety.toFixed(2)}, edges: ${renderResult.visual.edgeComplexity.toFixed(2)})`);
@@ -1194,7 +1194,7 @@ export class RalphLoop {
                 normalizedOptions.onThought?.(`Render analysis skipped: ${renderResult.error}`);
               }
             }
-            
+
             // Clean up resources
             await pipeline.close();
           } catch (renderError) {
@@ -1511,7 +1511,7 @@ export class RalphLoop {
             duration: Date.now() - startTime,
           });
         }
-        
+
         if (!normalizedOptions.tolerateErrors) {
           throw error;
         }

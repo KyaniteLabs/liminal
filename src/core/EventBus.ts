@@ -159,25 +159,25 @@ class Bus extends EventEmitter {
     this.setMaxListeners(Bus.MAX_LISTENERS);
   }
 
-  /** 
+  /**
    * Enable TUI mode — routes event logs to stderr instead of stdout.
    * Uses simple lock to prevent race conditions in concurrent toggles.
    */
-  static enableTuiMode(): void { 
+  static enableTuiMode(): void {
     if (!Bus._tuiModeLock) {
       Bus._tuiModeLock = true;
-      Bus._tuiMode = true; 
+      Bus._tuiMode = true;
       Bus._tuiModeLock = false;
     }
   }
-  /** 
+  /**
    * Disable TUI mode — event logs go to stdout again.
    * Uses simple lock to prevent race conditions in concurrent toggles.
    */
-  static disableTuiMode(): void { 
+  static disableTuiMode(): void {
     if (!Bus._tuiModeLock) {
       Bus._tuiModeLock = true;
-      Bus._tuiMode = false; 
+      Bus._tuiMode = false;
       Bus._tuiModeLock = false;
     }
   }
@@ -216,7 +216,7 @@ class Bus extends EventEmitter {
       Logger.error('EventBus', 'Attempted to register null/undefined listener');
       return this;
     }
-    
+
     const wrappedListener = (event: BusEvent) => {
       try {
         listener(event);
@@ -224,7 +224,7 @@ class Bus extends EventEmitter {
         Logger.error('EventBus', 'Handler failed:', err);
       }
     };
-    
+
     this.listenerMap.set(listener, wrappedListener);
     return super.on('event', wrappedListener);
   }
@@ -234,13 +234,13 @@ class Bus extends EventEmitter {
     if (!listener) {
       return this;
     }
-    
+
     const wrappedListener = this.listenerMap.get(listener);
     if (wrappedListener) {
       this.listenerMap.delete(listener);
       return super.off('event', wrappedListener);
     }
-    
+
     // Fallback: try to remove the original listener directly
     return super.off('event', listener);
   }
@@ -266,7 +266,7 @@ class Bus extends EventEmitter {
   addRecentEvent(event: BusEvent): void {
     const maxSize = Bus.MAX_RECENT;
     const currentSize = this.recentEvents.length;
-    
+
     if (currentSize < maxSize) {
       // Buffer not full yet, just append
       this.recentEvents.push(event);
@@ -284,14 +284,14 @@ class Bus extends EventEmitter {
   getRecentEvents(): BusEvent[] {
     const maxSize = Bus.MAX_RECENT;
     const size = this.recentEvents.length;
-    
+
     if (size === 0) return [];
-    
+
     // If buffer is not full, just return copy
     if (size < maxSize) {
       return [...this.recentEvents];
     }
-    
+
     // Buffer is full, reorder to chronological
     const result: BusEvent[] = [];
     for (let i = 0; i < maxSize; i++) {

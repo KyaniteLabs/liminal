@@ -1,5 +1,13 @@
 import { validateSingPreset, type SingPresetArtifact } from '@liminal/audio-core/PresetSchema.js';
 import type { VoiceFeatureFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
+import {
+  DEFAULT_LYRIC_RUNTIME_CONFIG,
+  PhraseRingBuffer,
+  PhraseSessionLog,
+  TeleprompterController,
+  createMockPhraseGenerator,
+  type LyricSidecarInput,
+} from './lyrics/Teleprompter';
 import { createSingRenderer, stabilizeSingFrame, type SingRenderer, type SingUniformFrame } from './render/pipeline';
 import { SessionRecorder } from './recording/SessionRecorder';
 import './style.css';
@@ -8,6 +16,12 @@ const canvas = requireElement<HTMLCanvasElement>('#sing-canvas');
 const statusEl = requireElement<HTMLElement>('#sing-status');
 const startButton = requireElement<HTMLButtonElement>('#sing-start');
 const recordButton = requireElement<HTMLButtonElement>('#sing-record');
+const phrasePanel = requireElement<HTMLElement>('#sing-teleprompter');
+const phraseEl = requireElement<HTMLElement>('#sing-phrase');
+const phraseToggleButton = requireElement<HTMLButtonElement>('#sing-phrase-toggle');
+const phraseMoreButton = requireElement<HTMLButtonElement>('#sing-phrase-more');
+const phrasePinButton = requireElement<HTMLButtonElement>('#sing-phrase-pin');
+const phraseDismissButton = requireElement<HTMLButtonElement>('#sing-phrase-dismiss');
 
 let renderer: SingRenderer | null = null;
 let stream: MediaStream | null = null;
@@ -19,15 +33,31 @@ let latestFrame: VoiceFeatureFrame | null = null;
 let stableFrame: SingUniformFrame | null = null;
 let sessionRecorder: SessionRecorder | null = null;
 let recording = false;
+let phraseTimer: number | null = null;
+
+const phraseBuffer = new PhraseRingBuffer();
+const phraseLog = new PhraseSessionLog();
+const teleprompter = new TeleprompterController(
+  createMockPhraseGenerator(),
+  phraseBuffer,
+  phraseLog,
+  DEFAULT_LYRIC_RUNTIME_CONFIG,
+);
 
 const preset = await loadPreset();
 if (preset) {
   renderer = createSingRenderer(canvas, preset);
   renderIdle();
   setStatus(`${preset.name} ready`);
+  renderTeleprompter();
+  void queuePhraseRefresh();
+  phraseTimer = window.setInterval(() => {
+    void queuePhraseRefresh();
+  }, DEFAULT_LYRIC_RUNTIME_CONFIG.suggestionIntervalMs);
 } else {
   startButton.disabled = true;
   recordButton.disabled = true;
+  phrasePanel.hidden = true;
   setStatus('Open a generated Sing preset from Studio');
 }
 
@@ -48,8 +78,35 @@ recordButton.addEventListener('click', () => {
   }
 });
 
+phraseToggleButton.addEventListener('click', () => {
+  if (teleprompter.isHidden()) {
+    teleprompter.show(performance.now());
+  } else {
+    teleprompter.hide(performance.now());
+  }
+  renderTeleprompter();
+});
+
+phraseMoreButton.addEventListener('click', () => {
+  void queuePhraseRefresh();
+});
+
+phrasePinButton.addEventListener('click', () => {
+  const current = phraseBuffer.current(performance.now());
+  if (current) teleprompter.pin(current.id, performance.now());
+  renderTeleprompter();
+});
+
+phraseDismissButton.addEventListener('click', () => {
+  const current = phraseBuffer.current(performance.now());
+  if (current) teleprompter.dismiss(current.id, performance.now());
+  renderTeleprompter();
+  void queuePhraseRefresh();
+});
+
 window.addEventListener('resize', () => renderer?.resize());
 window.addEventListener('pagehide', () => {
+  if (phraseTimer != null) window.clearInterval(phraseTimer);
   void stopInstrument();
 });
 
@@ -165,6 +222,7 @@ function renderLive(): void {
       const pitch = Math.round(latestFrame.pitchHz);
       setStatus(`${latestFrame.voiced ? 'voiced' : 'listening'} · rms ${latestFrame.rms.toFixed(2)} · ${pitch || '--'} Hz`);
     }
+    renderTeleprompter();
     animationId = window.requestAnimationFrame(loop);
   };
   loop();
@@ -186,8 +244,54 @@ async function stopRecording(): Promise<void> {
   recordButton.textContent = 'Record';
   downloadBlob(exported.telemetryBlob, `sing-telemetry-${exported.startedAt}.jsonl`);
   if (exported.audioBlob) downloadBlob(exported.audioBlob, `sing-audio-${exported.startedAt}.webm`);
+  if (phraseLog.all().length > 0) downloadBlob(phraseLog.toBlob(), `sing-phrases-${exported.startedAt}.jsonl`);
   sessionRecorder = null;
   setStatus('session exported');
+}
+
+async function queuePhraseRefresh(): Promise<void> {
+  if (!preset) return;
+  await teleprompter.request(buildLyricInput(), performance.now());
+  renderTeleprompter();
+}
+
+function renderTeleprompter(): void {
+  const hidden = teleprompter.isHidden();
+  phrasePanel.classList.toggle('sing-teleprompter--hidden', hidden);
+  phraseEl.hidden = hidden;
+  phraseToggleButton.textContent = hidden ? 'Show' : 'Hide';
+  const current = phraseBuffer.current(performance.now());
+  phraseEl.textContent = current?.text ?? 'listen for the next phrase';
+  phraseMoreButton.disabled = hidden;
+  phrasePinButton.disabled = hidden || !current;
+  phraseDismissButton.disabled = hidden || !current;
+}
+
+function buildLyricInput(): LyricSidecarInput {
+  const frame = stableFrame ?? {
+    rms: latestFrame?.rms ?? 0,
+    pitchHz: latestFrame?.pitchHz ?? 0,
+    centroid: latestFrame?.centroid ?? 0.3,
+    spectralFlux: latestFrame?.spectralFlux ?? 0,
+    onset: latestFrame?.onset ? 1 : 0,
+    voiced: latestFrame?.voiced ? 1 : 0,
+    confidence: latestFrame?.confidence ?? 0,
+    elapsedSeconds: audioContext?.currentTime ?? 0,
+  };
+  return {
+    presetId: preset?.id ?? 'sing',
+    sceneName: preset?.name,
+    visualTags: ['voice', 'shader', ...Array.from(new Set(preset?.mappings.map((mapping) => mapping.feature) ?? []))],
+    recentAcceptedPhrases: phraseBuffer.acceptedTexts().slice(-5),
+    recentDismissedPhrases: phraseBuffer.dismissedTexts().slice(-8),
+    audioMood: {
+      intensity: frame.rms > 0.55 ? 'high' : frame.rms > 0.24 ? 'medium' : frame.rms > 0.06 ? 'soft' : 'silent',
+      pitchMotion: frame.pitchHz > 0 ? 'wandering' : 'flat',
+      brightness: frame.centroid > 0.62 ? 'bright' : frame.centroid < 0.28 ? 'dark' : 'balanced',
+      onsetDensity: frame.spectralFlux > 0.45 || frame.onset > 0 ? 'dense' : frame.spectralFlux > 0.14 ? 'medium' : 'sparse',
+      vibrato: frame.voiced > 0 && frame.confidence > 0.72 ? 'subtle' : 'none',
+    },
+  };
 }
 
 function downloadBlob(blob: Blob, filename: string): void {

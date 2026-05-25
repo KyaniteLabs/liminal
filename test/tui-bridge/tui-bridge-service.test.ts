@@ -78,7 +78,7 @@ describe('TuiBridgeService', () => {
     const service = new TuiBridgeService();
     const status = service.createSession();
 
-    expect(status.sessionId).not.toBeNull();
+    expect(status.sessionId).toMatch(/^tui-\d+-[a-z0-9]+$/);
     expect(status.mode).toBe('chat');
     expect(status.trust.level).toBe('untrusted');
   });

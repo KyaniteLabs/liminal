@@ -22,6 +22,7 @@ import {
 } from './gui/createModes';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 import { latestClarificationRequest, latestCognitiveReceipt, latestRunReceipt } from './gui/workbenchTelemetry';
+import { buildStudioComposerSubmission } from './gui/studioConversation';
 import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
 import { buildSingInstrumentUrl, buildStudioSingPreset, selectCurrentSingShader } from './gui/singPreset';
 
@@ -183,6 +184,7 @@ export default function App() {
   const [runStatus, setRunStatus] = useState<string>('');
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [createRunError, setCreateRunError] = useState<string | null>(null);
+  const [studioConversationNotice, setStudioConversationNotice] = useState<string | null>(null);
   const [failedPreviewSrc, setFailedPreviewSrc] = useState<string | null>(null);
   const [improveReport, setImproveReport] = useState<ImproveReport | null>(null);
   const [improveLoading, setImproveLoading] = useState<boolean>(false);
@@ -683,12 +685,20 @@ export default function App() {
   const activeSingPreview = '';
   const hasDirectSingTarget = false;
   const hasSingTarget = Boolean(previewUrl || bridgePreview || hasDirectSingTarget);
+  const hasCurrentArtifact = activeMode.id === 'generate' && Boolean(runReceipt?.artifact || runReceipt?.preview || bridgePreview || bridgeCodePreview);
   const promptCreateMode = detectPromptCreateMode(createPrompt);
   const effectiveCreateMode = promptCreateMode ?? createMode;
   const createModeOption = getCreateModeOption(effectiveCreateMode);
   const selectedCreateModeOption = getCreateModeOption(createMode);
   const promptOverridesMode = Boolean(promptCreateMode && promptCreateMode !== createMode);
   const draftReady = activeMode.id === 'generate' && !bridgeSummary.active && bridgeSummary.processSteps.some((step) => step.id === 'ready' && step.status === 'done');
+  const composerRunLabel = bridge.submitting
+    ? 'Sending'
+    : bridge.session?.pendingAction
+      ? 'Review'
+      : activeMode.id === 'generate' && hasCurrentArtifact && createExecutionMode === 'draft'
+        ? 'Revise'
+        : runLabel;
 
   const handleWorkbenchRun = () => {
     if (activeMode.id === 'improve') {
@@ -700,10 +710,21 @@ export default function App() {
         void handleCreateRun();
         return;
       }
-      void bridge.submitPrompt(buildWorkbenchPrompt(effectiveCreateMode, createPrompt), {
-        clientIntent: 'creative',
-        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode, timeoutMinutes),
+      const submission = buildStudioComposerSubmission({
+        message: createPrompt,
+        mode: createMode,
+        executionMode: createExecutionMode,
+        maxIterations: createMaxIterations,
+        timeoutMinutes,
+        hasCurrentArtifact,
+        priorRunReceipt: runReceipt,
       });
+      if (submission.kind !== 'submit') {
+        setStudioConversationNotice(submission.notice);
+        return;
+      }
+      setStudioConversationNotice(null);
+      void bridge.submitPrompt(submission.prompt, submission.options);
       return;
     }
     void handleCreateRun();
@@ -712,11 +733,21 @@ export default function App() {
   const handleWorkbenchRunPrompt = (promptText: string) => {
     setCreatePrompt(promptText);
     if (activeMode.id === 'generate') {
-      const mode = detectPromptCreateMode(promptText) ?? createMode;
-      void bridge.submitPrompt(buildWorkbenchPrompt(mode, promptText), {
-        clientIntent: 'creative',
-        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, mode, timeoutMinutes),
+      const submission = buildStudioComposerSubmission({
+        message: promptText,
+        mode: createMode,
+        executionMode: createExecutionMode,
+        maxIterations: createMaxIterations,
+        timeoutMinutes,
+        hasCurrentArtifact,
+        priorRunReceipt: runReceipt,
       });
+      if (submission.kind !== 'submit') {
+        setStudioConversationNotice(submission.notice);
+        return;
+      }
+      setStudioConversationNotice(null);
+      void bridge.submitPrompt(submission.prompt, submission.options);
       return;
     }
     void handleCreateRun();
@@ -1269,14 +1300,18 @@ export default function App() {
       onModeChange={handleWorkbenchModeChange}
       onTabChange={(tab) => dispatchLive(switchToLiveOrganismView(tab as GuiTab))}
       prompt={createPrompt}
-      onPromptChange={setCreatePrompt}
+      onPromptChange={(value) => {
+        setCreatePrompt(value);
+        setStudioConversationNotice(null);
+      }}
       onRun={handleWorkbenchRun}
       onRunPrompt={handleWorkbenchRunPrompt}
       onCancelRun={bridgeSummary.active ? () => void bridge.cancelCurrent() : undefined}
       runDisabled={activeMode.id === 'improve' ? improveLoading : bridge.submitting || runStatus === 'running' || !createPrompt.trim() || (runNeedsBridgeSession && !bridge.session)}
       stageBusy={bridgeSummary.active || runStatus === 'running'}
       artifactReady={activeMode.id === 'generate' && hasSingTarget}
-      runLabel={bridge.submitting ? 'Sending' : bridge.session?.pendingAction ? 'Review' : runLabel}
+      runLabel={composerRunLabel}
+      conversationNotice={studioConversationNotice}
       audioSlot={audioSlot}
       providerLabel={providerLabel}
       evaluatorLabel={evaluatorLabel}

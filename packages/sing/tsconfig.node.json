@@ -16,5 +16,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["src/recording/render-cli.ts"]
+  "include": ["src/recording/render-cli.ts", "src/teleprompter/benchmark-cli.ts"]
 }

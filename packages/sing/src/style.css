@@ -16,12 +16,20 @@ body,
   height: 100vh;
 }
 
+#sing-skeleton {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
 #sing-panel {
   position: fixed;
   left: 24px;
   bottom: 24px;
   display: grid;
-  grid-template-columns: auto auto auto;
+  grid-template-columns: auto auto auto auto;
   gap: 10px;
   align-items: center;
   padding: 10px;
@@ -32,11 +40,89 @@ body,
   backdrop-filter: blur(16px);
 }
 
+#sing-teleprompter {
+  position: fixed;
+  left: 50%;
+  bottom: 166px;
+  width: min(760px, calc(100vw - 48px));
+  transform: translateX(-50%);
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+
+#sing-teleprompter-phrases {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+#sing-teleprompter-controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+#sing-teleprompter[data-mode="hidden"] #sing-teleprompter-phrases {
+  display: none;
+}
+
+.sing-phrase {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: min(100%, 320px);
+  padding: 8px 10px;
+  border: 1px solid rgba(129, 198, 255, 0.26);
+  border-radius: 8px;
+  background: rgba(5, 8, 11, 0.58);
+  color: #f2f9ff;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px);
+  pointer-events: auto;
+}
+
+.sing-phrase__text {
+  overflow-wrap: anywhere;
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.sing-phrase button {
+  min-width: 58px;
+  width: auto;
+  height: 28px;
+  padding: 0 8px;
+}
+
 #sing-status {
   min-width: 190px;
   font-size: 12px;
   letter-spacing: 0;
   color: rgba(238, 246, 240, 0.78);
+}
+
+#sing-privacy {
+  min-width: 130px;
+  font-size: 11px;
+  color: rgba(132, 234, 198, 0.76);
+}
+
+#sing-movement-control {
+  display: inline-grid;
+  grid-template-columns: auto minmax(88px, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 140px;
+  font-size: 12px;
+  color: rgba(238, 246, 240, 0.74);
+}
+
+#sing-movement-sensitivity {
+  width: 100%;
+  accent-color: #84eac6;
 }
 
 button {
@@ -65,10 +151,21 @@ button:not(:disabled):hover {
     left: 12px;
     right: 12px;
     bottom: 12px;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  #sing-status {
+  #sing-teleprompter {
+    bottom: 226px;
+    width: calc(100vw - 24px);
+  }
+
+  .sing-phrase__text {
+    font-size: 15px;
+  }
+
+  #sing-status,
+  #sing-privacy,
+  #sing-movement-control {
     grid-column: 1 / -1;
     min-width: 0;
   }

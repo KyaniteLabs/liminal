@@ -1,4 +1,5 @@
 import type { SingPresetArtifact, SingPresetMapping, SingVoiceFeature } from '@liminal/audio-core/PresetSchema.js';
+import { EMPTY_MOVEMENT_FEATURES, type MovementFeatures } from '../movement/features';
 
 export interface SingUniformFrame {
   rms: number;
@@ -9,6 +10,7 @@ export interface SingUniformFrame {
   voiced: number;
   confidence: number;
   elapsedSeconds: number;
+  movement?: MovementFeatures;
 }
 
 export interface SingRenderer {
@@ -25,6 +27,20 @@ const DEFAULT_UNIFORM_VALUES = {
   u_onset: (frame: SingUniformFrame) => frame.onset,
   u_voiced: (frame: SingUniformFrame) => frame.voiced,
   u_confidence: (frame: SingUniformFrame) => frame.confidence,
+} as const;
+
+const DEFAULT_MOVEMENT_UNIFORM_VALUES = {
+  u_body_x: (movement: MovementFeatures) => movement.bodyCenterX,
+  u_body_y: (movement: MovementFeatures) => movement.bodyCenterY,
+  u_distance: (movement: MovementFeatures) => movement.distanceToCamera,
+  u_left_hand: (movement: MovementFeatures) => movement.leftHandHeight,
+  u_right_hand: (movement: MovementFeatures) => movement.rightHandHeight,
+  u_hands_apart: (movement: MovementFeatures) => movement.handsApart,
+  u_torso_angle: (movement: MovementFeatures) => movement.torsoAngle,
+  u_head_tilt: (movement: MovementFeatures) => movement.headTilt,
+  u_movement: (movement: MovementFeatures) => movement.movementEnergy,
+  u_stillness: (movement: MovementFeatures) => movement.stillness,
+  u_gesture: (movement: MovementFeatures) => movement.gestureOnset ? 1 : 0,
 } as const;
 
 const DEFAULT_MAPPING_SMOOTHING: Record<SingVoiceFeature, number> = {
@@ -79,7 +95,11 @@ export function createSingRenderer(canvas: HTMLCanvasElement, preset: SingPreset
   const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
   const timeLocation = gl.getUniformLocation(program, 'u_time');
   const uniformLocations = new Map<string, WebGLUniformLocation | null>();
-  const mappedTargets = new Set([...Object.keys(DEFAULT_UNIFORM_VALUES), ...preset.mappings.map((mapping) => mapping.target)]);
+  const mappedTargets = new Set([
+    ...Object.keys(DEFAULT_UNIFORM_VALUES),
+    ...Object.keys(DEFAULT_MOVEMENT_UNIFORM_VALUES),
+    ...preset.mappings.map((mapping) => mapping.target),
+  ]);
   for (const target of mappedTargets) {
     uniformLocations.set(target, gl.getUniformLocation(program, target));
   }
@@ -135,6 +155,10 @@ export function mapSingPresetUniforms(
   const values = new Map<string, number>();
   for (const [target, readValue] of Object.entries(DEFAULT_UNIFORM_VALUES)) {
     values.set(target, readValue(frame));
+  }
+  const movement = frame.movement ?? EMPTY_MOVEMENT_FEATURES;
+  for (const [target, readValue] of Object.entries(DEFAULT_MOVEMENT_UNIFORM_VALUES)) {
+    values.set(target, readValue(movement));
   }
   for (const mapping of preset.mappings) {
     const mapped = applyMappingCurve(featureValue(frame, mapping.feature), mapping);

@@ -32,6 +32,39 @@ describe('Sing render pipeline', () => {
     expect(uniforms.get('u_customPitch')).toBeCloseTo(220);
   });
 
+  it('exposes movement features as stable shader uniforms', () => {
+    const preset = createSingPreset({
+      id: 'movement',
+      name: 'Movement',
+      shader: 'void main() { gl_FragColor = vec4(1.0); }',
+      mappings: [
+        { feature: 'rms', target: 'u_energy', curve: 'linear', min: 0, max: 1 },
+      ],
+    });
+
+    const uniforms = mapSingPresetUniforms(preset, {
+      ...frame,
+      movement: {
+        bodyCenterX: 0.2,
+        bodyCenterY: 0.8,
+        distanceToCamera: 0.4,
+        leftHandHeight: 0.7,
+        rightHandHeight: 0.1,
+        handsApart: 0.6,
+        torsoAngle: -0.2,
+        headTilt: 0.3,
+        movementEnergy: 0.9,
+        stillness: 0.1,
+        gestureOnset: true,
+      },
+    });
+
+    expect(uniforms.get('u_body_x')).toBeCloseTo(0.2);
+    expect(uniforms.get('u_left_hand')).toBeCloseTo(0.7);
+    expect(uniforms.get('u_movement')).toBeCloseTo(0.9);
+    expect(uniforms.get('u_gesture')).toBe(1);
+  });
+
   it('binds mapped preset targets when rendering a frame', () => {
     const gl = createMockGl();
     const canvas = {

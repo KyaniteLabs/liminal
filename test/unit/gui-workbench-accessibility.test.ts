@@ -5,6 +5,7 @@ const shell = fs.readFileSync('gui/src/components/WorkbenchShell.tsx', 'utf8');
 const app = fs.readFileSync('gui/src/App.tsx', 'utf8');
 const css = fs.readFileSync('gui/src/index.css', 'utf8');
 const bridgeHook = fs.readFileSync('gui/src/gui/useTuiBridgeSession.ts', 'utf8');
+const studioConversation = fs.readFileSync('gui/src/gui/studioConversation.ts', 'utf8');
 
 describe('GUI workbench accessibility contract', () => {
   it('keeps the workbench navigable and announced for assistive technology', () => {
@@ -104,7 +105,11 @@ describe('GUI workbench accessibility contract', () => {
   });
 
   it('passes the visible loop timeout into every Studio Generate submission', () => {
-    expect(app.match(/buildWorkbenchRunOptionsForMode\([^)]*timeoutMinutes/g)?.length).toBe(7);
+    const directSubmissions = app.match(/buildWorkbenchRunOptionsForMode\([^)]*timeoutMinutes/g)?.length ?? 0;
+    const routedComposerSubmissions = app.match(/buildStudioComposerSubmission\(\{[\s\S]*?timeoutMinutes,[\s\S]*?priorRunReceipt: runReceipt,[\s\S]*?\}\);/g)?.length ?? 0;
+
+    expect(directSubmissions + routedComposerSubmissions).toBe(7);
+    expect(studioConversation).toContain('buildWorkbenchRunOptionsForMode(input.executionMode, input.maxIterations, mode, input.timeoutMinutes)');
     expect(app).not.toContain('buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode),');
     expect(app).not.toContain("buildWorkbenchRunOptionsForMode('draft', createMaxIterations, retryMode),");
     expect(app).not.toContain('audio-sing-worklet');

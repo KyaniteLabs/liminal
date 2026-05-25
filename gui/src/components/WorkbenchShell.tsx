@@ -26,6 +26,7 @@ interface WorkbenchShellProps {
   leftSlot: React.ReactNode;
   recourseSlot?: React.ReactNode;
   recourseState?: 'failed' | 'stopped';
+  conversationNotice?: string | null;
   children?: React.ReactNode;
 }
 
@@ -54,6 +55,7 @@ export function WorkbenchShell({
   leftSlot,
   recourseSlot,
   recourseState,
+  conversationNotice,
   children,
 }: WorkbenchShellProps) {
   const primaryMode = modes.find((mode) => mode.id === 'generate') ?? modes[0];
@@ -351,7 +353,11 @@ export function WorkbenchShell({
           </div>
         </div>
         <div className="liminal-canvas__promptbar-hint">
-          <kbd>Enter</kbd> to run · <kbd>Shift+Enter</kbd> for new line
+          {conversationNotice || (
+            <>
+              <kbd>Enter</kbd> to run · <kbd>Shift+Enter</kbd> for new line
+            </>
+          )}
         </div>
         <p id="workbench-run-status" className="sr-only" aria-live="polite">
           {stageBusy ? `${runLabel} in progress` : runDisabled ? 'Describe an artifact to enable generation' : `${runLabel} ready`}

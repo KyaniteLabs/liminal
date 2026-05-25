@@ -7,11 +7,28 @@
   </head>
   <body>
     <canvas id="sing-canvas" aria-label="Sing visual instrument"></canvas>
+    <canvas id="sing-skeleton" aria-label="Movement skeleton overlay" hidden></canvas>
+    <section id="sing-teleprompter" aria-label="Lyric teleprompter" data-mode="strip">
+      <div id="sing-teleprompter-phrases" aria-live="polite"></div>
+      <div id="sing-teleprompter-controls">
+        <button id="sing-teleprompter-toggle" type="button">Hide phrases</button>
+        <button id="sing-teleprompter-refresh" type="button">Refresh</button>
+        <button id="sing-sidecar-toggle" type="button" disabled>Use LFM</button>
+      </div>
+    </section>
     <section id="sing-panel" aria-label="Sing controls">
       <strong>Sing</strong>
       <span id="sing-status">loading instrument</span>
       <button id="sing-start" type="button">Start mic</button>
       <button id="sing-record" type="button" disabled>Record</button>
+      <button id="sing-camera" type="button">Start camera</button>
+      <button id="sing-skeleton-toggle" type="button" disabled>Show skeleton</button>
+      <button id="sing-calibrate" type="button" disabled>Calibrate</button>
+      <label id="sing-movement-control">
+        <span>Move</span>
+        <input id="sing-movement-sensitivity" type="range" min="0" max="2" step="0.05" value="1" />
+      </label>
+      <span id="sing-privacy">camera off</span>
     </section>
     <script type="module" src="/src/main.ts"></script>
   </body>

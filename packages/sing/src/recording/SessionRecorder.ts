@@ -1,4 +1,6 @@
 import type { VoiceFeatureFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
+import type { MovementFeatures } from '../movement/features';
+import type { PhraseFeedbackEvent } from '../teleprompter/phrases';
 
 export interface SingSessionExport {
   audioBlob: Blob | null;
@@ -36,6 +38,34 @@ export class SessionRecorder {
       onset: frame.onset,
       voiced: frame.voiced,
       confidence: frame.confidence,
+    }));
+  }
+
+  appendPhraseEvent(event: PhraseFeedbackEvent): void {
+    this.telemetry.push(JSON.stringify({
+      t: event.createdAt,
+      type: event.type,
+      phraseId: event.phraseId,
+      text: event.text,
+      reason: event.reason,
+    }));
+  }
+
+  appendMovementTelemetry(tMs: number, features: MovementFeatures): void {
+    this.telemetry.push(JSON.stringify({
+      t: tMs,
+      type: 'movement.features',
+      bodyCenterX: features.bodyCenterX,
+      bodyCenterY: features.bodyCenterY,
+      distanceToCamera: features.distanceToCamera,
+      leftHandHeight: features.leftHandHeight,
+      rightHandHeight: features.rightHandHeight,
+      handsApart: features.handsApart,
+      torsoAngle: features.torsoAngle,
+      headTilt: features.headTilt,
+      movementEnergy: features.movementEnergy,
+      stillness: features.stillness,
+      gestureOnset: features.gestureOnset,
     }));
   }
 

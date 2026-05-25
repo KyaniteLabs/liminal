@@ -99,7 +99,7 @@ describe('LIR E2E — full pipeline verification', () => {
     const mill = new CompostMill(createMockLLM(), makeConfig(true, heapDir, seedDir));
     mill.setParser(parser);
 
-    const result = await mill.digest();
+    const result = (await mill.digest())._unsafeUnwrap();
 
     // Should have seeds with code LIR
     const codeSeeds = result.seeds.filter(s => s.lir?.type === 'code');
@@ -131,7 +131,7 @@ describe('LIR E2E — full pipeline verification', () => {
     const mill = new CompostMill(createMockLLM(), makeConfig(true, heapDir, seedDir));
     mill.setParser(parser);
 
-    const result = await mill.digest();
+    const result = (await mill.digest())._unsafeUnwrap();
 
     const docSeeds = result.seeds.filter(s => s.lir?.type === 'doc');
     expect(docSeeds.length).toBeGreaterThanOrEqual(1);
@@ -155,7 +155,7 @@ describe('LIR E2E — full pipeline verification', () => {
     const mill = new CompostMill(createMockLLM(), makeConfig(true, heapDir, seedDir));
     mill.setParser(parser);
 
-    const result = await mill.digest();
+    const result = (await mill.digest())._unsafeUnwrap();
 
     const textSeeds = result.seeds.filter(s => s.lir?.type === 'text');
     expect(textSeeds.length).toBeGreaterThanOrEqual(1);
@@ -177,7 +177,7 @@ describe('LIR E2E — full pipeline verification', () => {
     // No parser, no LIR — fully legacy mode
     const mill = new CompostMill(createMockLLM(), makeConfig(false, heapDir, seedDir));
 
-    const result = await mill.digest();
+    const result = (await mill.digest())._unsafeUnwrap();
 
     // Should still produce seeds
     expect(result.seeds.length).toBeGreaterThanOrEqual(1);

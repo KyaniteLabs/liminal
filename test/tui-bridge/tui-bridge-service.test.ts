@@ -6,6 +6,23 @@ import {
 } from '../../src/tui-bridge/TuiBridgeService.js';
 import type { LLMSession } from '../../src/harness/agent/index.js';
 
+type BridgeEvent = ReturnType<TuiBridgeService['getEvents']>[number];
+
+async function waitForEvent(
+  service: TuiBridgeService,
+  sessionId: string,
+  predicate: (event: BridgeEvent) => boolean,
+  timeoutMs = 1000,
+): Promise<BridgeEvent> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const event = service.getEvents(sessionId).find(predicate);
+    if (event) return event;
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  throw new Error(`Timed out waiting for bridge event in ${sessionId}`);
+}
+
 describe('TuiBridgeService', () => {
   it('uses a meta-harness system prompt instead of creative-only identity', () => {
     expect(TUI_SYSTEM_PROMPT).toContain('Meta-Harness');
@@ -478,8 +495,7 @@ describe('TuiBridgeService', () => {
           clientIntent: 'chat',
         }, llm as never);
 
-        // Wait for async streamDirectChat to complete
-        await new Promise(r => setTimeout(r, 100));
+        await waitForEvent(service, session.sessionId, e => e.type === 'response.metadata');
 
         const events = service.getEvents(session.sessionId);
         const types = events.map(e => e.type);

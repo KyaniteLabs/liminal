@@ -1,0 +1,90 @@
+{
+  "schema": "liminal.shared-artifact.domain-map",
+  "schemaVersion": "2026-05-25.phase1",
+  "domains": [
+    {
+      "shared": "p5",
+      "composition": "p5",
+      "validator": "p5",
+      "scope": "artifact"
+    },
+    {
+      "shared": "svg",
+      "composition": "html",
+      "validator": "svg",
+      "scope": "artifact"
+    },
+    {
+      "shared": "glsl",
+      "composition": "shader",
+      "validator": "glsl",
+      "scope": "artifact"
+    },
+    {
+      "shared": "three",
+      "composition": "three",
+      "validator": "three",
+      "scope": "artifact"
+    },
+    {
+      "shared": "hydra",
+      "composition": "hydra",
+      "validator": "hydra",
+      "scope": "artifact"
+    },
+    {
+      "shared": "strudel",
+      "composition": "strudel",
+      "validator": "strudel",
+      "scope": "artifact"
+    },
+    {
+      "shared": "tone",
+      "composition": "tone",
+      "validator": "tone",
+      "scope": "artifact"
+    },
+    {
+      "shared": "revideo",
+      "composition": "video",
+      "validator": "revideo",
+      "scope": "artifact"
+    },
+    {
+      "shared": "hyperframes",
+      "composition": "html",
+      "validator": "hyperframes",
+      "scope": "artifact"
+    },
+    {
+      "shared": "ascii",
+      "composition": "ascii",
+      "validator": "ascii",
+      "scope": "artifact"
+    },
+    {
+      "shared": "kinetic",
+      "composition": "html",
+      "validator": "kinetic",
+      "scope": "artifact"
+    },
+    {
+      "shared": "textgen",
+      "composition": "textgen",
+      "validator": "unknown",
+      "scope": "artifact"
+    },
+    {
+      "shared": "site",
+      "composition": "html",
+      "validator": "html",
+      "scope": "product-specialization"
+    },
+    {
+      "shared": "instrument",
+      "composition": "group",
+      "validator": "unknown",
+      "scope": "product-specialization"
+    }
+  ]
+}

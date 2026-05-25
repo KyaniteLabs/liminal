@@ -1,0 +1,44 @@
+{
+  "schema": "liminal.shared-instrument-preset",
+  "schemaVersion": "2026-05-25.phase1",
+  "id": "instrument_preset_moon_garden_001",
+  "baseArtifactId": "artifact_studio_moon_garden_001",
+  "name": "Moon Garden Voice Field",
+  "renderer": "p5",
+  "files": [
+    {
+      "path": "presets/moon-garden/sketch.js",
+      "role": "source",
+      "mimeType": "text/javascript"
+    }
+  ],
+  "controls": [
+    {
+      "id": "firefly_density",
+      "label": "Firefly density",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "defaultValue": 0.4,
+      "smoothingMs": 80,
+      "exposedToInstrument": true
+    }
+  ],
+  "mappings": [
+    {
+      "id": "mapping_voice_amplitude_density",
+      "input": "amplitude",
+      "feature": "rms",
+      "controlPortId": "firefly_density",
+      "transform": "linear"
+    }
+  ],
+  "provenance": {
+    "artifactId": "instrument_preset_moon_garden_001",
+    "parentArtifactId": "artifact_studio_moon_garden_001",
+    "prompt": "Turn Moon Garden into a voice-reactive performance preset.",
+    "generatedAt": "2026-05-25T05:15:25Z",
+    "generatedBy": "instrument",
+    "receipts": []
+  }
+}

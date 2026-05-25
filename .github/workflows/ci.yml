@@ -39,6 +39,8 @@ jobs:
         run: pnpm check:orphans
       - name: Package script target check
         run: pnpm check:script-targets
+      - name: Liminal shared artifact contract check
+        run: pnpm check:liminal-contracts
       - run: pnpm lint
       - run: pnpm build
       - name: Prompt surface audit

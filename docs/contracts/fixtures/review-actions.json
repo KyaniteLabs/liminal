@@ -1,0 +1,51 @@
+[
+  {
+    "schema": "liminal.review-action",
+    "schemaVersion": "2026-05-25.phase1",
+    "id": "review_open_site_pr_001",
+    "kind": "open_site_pr",
+    "status": "approved",
+    "summary": "Open a reviewed PR that applies the Moon Garden skin to the site.",
+    "target": {
+      "kind": "repo",
+      "repo": "KyaniteLabs/liminal-sites",
+      "branch": "codex/moon-garden-skin"
+    },
+    "risk": "medium",
+    "requiresConfirmation": true,
+    "reviewedBy": "owner",
+    "reviewedAt": "2026-05-25T05:50:25Z"
+  },
+  {
+    "schema": "liminal.review-action",
+    "schemaVersion": "2026-05-25.phase1",
+    "id": "review_export_instrument_preset_001",
+    "kind": "export_instrument_preset",
+    "status": "approved",
+    "summary": "Export the Moon Garden Voice Field preset after preview rehearsal.",
+    "target": {
+      "kind": "instrument_preset",
+      "artifactId": "instrument_preset_moon_garden_001"
+    },
+    "risk": "low",
+    "requiresConfirmation": true,
+    "reviewedBy": "owner",
+    "reviewedAt": "2026-05-25T05:51:25Z"
+  },
+  {
+    "schema": "liminal.review-action",
+    "schemaVersion": "2026-05-25.phase1",
+    "id": "review_ingest_session_001",
+    "kind": "ingest_session",
+    "status": "approved",
+    "summary": "Ingest performance telemetry into Studio memory after performer review.",
+    "target": {
+      "kind": "session",
+      "id": "instrument_session_moon_garden_001"
+    },
+    "risk": "medium",
+    "requiresConfirmation": true,
+    "reviewedBy": "owner",
+    "reviewedAt": "2026-05-25T05:52:25Z"
+  }
+]

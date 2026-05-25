@@ -16,12 +16,24 @@ body,
   height: 100vh;
 }
 
+#sing-movement-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
+#sing-movement-overlay[hidden] {
+  display: none;
+}
+
 #sing-panel {
   position: fixed;
   left: 24px;
   bottom: 24px;
   display: grid;
-  grid-template-columns: auto auto auto;
+  grid-template-columns: auto minmax(190px, auto) repeat(3, auto);
   gap: 10px;
   align-items: center;
   padding: 10px;

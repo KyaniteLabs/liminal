@@ -8,13 +8,22 @@ import {
   type LyricSidecarInput,
 } from './lyrics/Teleprompter';
 import { createLyricSidecarGenerator, readLyricSidecarConfig } from './lyrics/SidecarRuntime';
+import { createMovementCameraController, type MovementCameraController } from './movement/MovementCamera';
+import {
+  markMovementStale,
+  reduceMovementFrame,
+  type MovementFeatureFrame,
+  type MovementState,
+} from './movement/MovementFeatures';
 import { createSingRenderer, stabilizeSingFrame, type SingRenderer, type SingUniformFrame } from './render/pipeline';
 import { SessionRecorder } from './recording/SessionRecorder';
 import './style.css';
 
 const canvas = requireElement<HTMLCanvasElement>('#sing-canvas');
+const movementOverlay = requireElement<HTMLCanvasElement>('#sing-movement-overlay');
 const statusEl = requireElement<HTMLElement>('#sing-status');
 const startButton = requireElement<HTMLButtonElement>('#sing-start');
+const cameraButton = requireElement<HTMLButtonElement>('#sing-camera');
 const recordButton = requireElement<HTMLButtonElement>('#sing-record');
 const phrasePanel = requireElement<HTMLElement>('#sing-teleprompter');
 const phraseEl = requireElement<HTMLElement>('#sing-phrase');
@@ -32,6 +41,9 @@ let sharedFrame: Float32Array | null = null;
 let animationId: number | null = null;
 let latestFrame: VoiceFeatureFrame | null = null;
 let stableFrame: SingUniformFrame | null = null;
+let movementController: MovementCameraController | null = null;
+let movementState: MovementState | null = null;
+let movementCameraStarting = false;
 let sessionRecorder: SessionRecorder | null = null;
 let recording = false;
 let phraseTimer: number | null = null;
@@ -82,6 +94,14 @@ recordButton.addEventListener('click', () => {
   }
 });
 
+cameraButton.addEventListener('click', () => {
+  if (movementController?.isRunning()) {
+    stopMovementCamera();
+  } else {
+    void startMovementCamera();
+  }
+});
+
 phraseToggleButton.addEventListener('click', () => {
   if (teleprompter.isHidden()) {
     teleprompter.show(performance.now());
@@ -121,6 +141,7 @@ phraseDisableButton.addEventListener('click', () => {
 window.addEventListener('resize', () => renderer?.resize());
 window.addEventListener('pagehide', () => {
   if (phraseTimer != null) window.clearInterval(phraseTimer);
+  stopMovementCamera();
   void stopInstrument();
 });
 
@@ -199,10 +220,62 @@ async function stopInstrument(): Promise<void> {
   if (preset) renderIdle();
 }
 
+async function startMovementCamera(): Promise<void> {
+  if (movementCameraStarting || movementController?.isRunning()) return;
+  movementCameraStarting = true;
+  cameraButton.disabled = true;
+  const controller = createMovementCameraController({
+    onFrame(frame) {
+      movementState = reduceMovementFrame(movementState, frame);
+      renderMovementOverlay(frame);
+    },
+    onStall(now) {
+      movementState = markMovementStale(movementState, now);
+      renderMovementOverlay(null);
+    },
+    onError(error) {
+      setStatus(error.message);
+      stopMovementCamera();
+    },
+  });
+  movementController = controller;
+
+  try {
+    await controller.start();
+    if (movementController !== controller) {
+      controller.stop();
+      return;
+    }
+    movementOverlay.hidden = false;
+    cameraButton.textContent = 'Stop cam';
+    setStatus('camera movement active');
+  } catch (error) {
+    if (movementController === controller) stopMovementCamera();
+    const message = error instanceof DOMException && error.name === 'NotAllowedError'
+      ? 'Camera permission denied'
+      : error instanceof Error ? error.message : 'Unable to start camera';
+    setStatus(message);
+  } finally {
+    movementCameraStarting = false;
+    cameraButton.disabled = false;
+  }
+}
+
+function stopMovementCamera(): void {
+  movementCameraStarting = false;
+  movementController?.stop();
+  movementController = null;
+  movementState = null;
+  movementOverlay.hidden = true;
+  cameraButton.disabled = false;
+  cameraButton.textContent = 'Start cam';
+  clearMovementOverlay();
+}
+
 function renderIdle(): void {
   const startedAt = performance.now();
   const loop = () => {
-    renderer?.render({
+    renderer?.render(withMovementFrame({
       rms: 0.08 + Math.sin(performance.now() / 900) * 0.025,
       pitchHz: 220 + Math.sin(performance.now() / 1400) * 90,
       centroid: 0.3,
@@ -211,7 +284,7 @@ function renderIdle(): void {
       voiced: 0,
       confidence: 0,
       elapsedSeconds: (performance.now() - startedAt) / 1000,
-    });
+    }));
     if (!stream) animationId = window.requestAnimationFrame(loop);
   };
   loop();
@@ -231,7 +304,7 @@ function renderLive(): void {
       elapsedSeconds: audioContext?.currentTime ?? performance.now() / 1000,
     };
     stableFrame = stabilizeSingFrame(rawFrame, stableFrame);
-    renderer?.render(stableFrame);
+    renderer?.render(withMovementFrame(stableFrame));
     if (latestFrame) {
       const pitch = Math.round(latestFrame.pitchHz);
       setStatus(`${latestFrame.voiced ? 'voiced' : 'listening'} · rms ${latestFrame.rms.toFixed(2)} · ${pitch || '--'} Hz`);
@@ -240,6 +313,18 @@ function renderLive(): void {
     animationId = window.requestAnimationFrame(loop);
   };
   loop();
+}
+
+function withMovementFrame(frame: SingUniformFrame): SingUniformFrame {
+  movementState = markMovementStale(movementState, performance.now());
+  const movement = movementState?.stale ? null : movementState?.frame ?? null;
+  return {
+    ...frame,
+    movementEnergy: movement?.movementEnergy ?? 0,
+    movementX: movement?.movementX ?? 0.5,
+    movementY: movement?.movementY ?? 0.5,
+    distanceToCamera: movement?.distanceToCamera ?? 0,
+  };
 }
 
 function startRecording(): void {
@@ -308,6 +393,41 @@ function buildLyricInput(): LyricSidecarInput {
       vibrato: frame.voiced > 0 && frame.confidence > 0.72 ? 'subtle' : 'none',
     },
   };
+}
+
+function renderMovementOverlay(frame: MovementFeatureFrame | null): void {
+  if (movementOverlay.hidden || !frame) {
+    clearMovementOverlay();
+    return;
+  }
+  const context = movementOverlay.getContext('2d');
+  if (!context) return;
+  const dpr = window.devicePixelRatio || 1;
+  const width = Math.max(1, Math.floor(movementOverlay.clientWidth * dpr));
+  const height = Math.max(1, Math.floor(movementOverlay.clientHeight * dpr));
+  if (movementOverlay.width !== width || movementOverlay.height !== height) {
+    movementOverlay.width = width;
+    movementOverlay.height = height;
+  }
+  context.clearRect(0, 0, width, height);
+  if (frame.confidence <= 0) return;
+  const x = frame.movementX * width;
+  const y = frame.movementY * height;
+  const radius = 22 + frame.distanceToCamera * 86;
+  context.strokeStyle = `rgba(238, 246, 240, ${0.18 + frame.confidence * 0.48})`;
+  context.lineWidth = 2 * dpr;
+  context.beginPath();
+  context.arc(x, y, radius, 0, Math.PI * 2);
+  context.moveTo(x - radius * 0.62, y);
+  context.lineTo(x + radius * 0.62, y);
+  context.moveTo(x, y - radius * 0.62);
+  context.lineTo(x, y + radius * 0.62);
+  context.stroke();
+}
+
+function clearMovementOverlay(): void {
+  const context = movementOverlay.getContext('2d');
+  context?.clearRect(0, 0, movementOverlay.width, movementOverlay.height);
 }
 
 function downloadBlob(blob: Blob, filename: string): void {

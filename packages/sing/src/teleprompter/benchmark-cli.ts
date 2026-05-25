@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { hostname, platform, arch, cpus } from 'node:os';
-import { dirname, resolve } from 'node:path';
+import { dirname, isAbsolute, resolve } from 'node:path';
 import {
   LFM25_CANDIDATE_MODELS,
   runPhraseBenchmark,
@@ -11,6 +11,7 @@ interface CliOptions {
   model: string;
   backend: PhraseBenchmarkBackend;
   samples: number;
+  warmupSamples: number;
   endpoint?: string;
   out?: string;
   quantization?: string;
@@ -26,6 +27,7 @@ async function main(): Promise<void> {
     model: options.model,
     backend: options.backend,
     samples: options.samples,
+    warmupSamples: options.warmupSamples,
     endpoint: options.endpoint,
     quantization: options.quantization,
     performerScore: options.performerScore,
@@ -37,7 +39,7 @@ async function main(): Promise<void> {
   const output = JSON.stringify({ ...report, machine }, null, options.pretty ? 2 : 0);
 
   if (options.out) {
-    const target = resolve(options.out);
+    const target = resolveOutputPath(options.out);
     mkdirSync(dirname(target), { recursive: true });
     writeFileSync(target, `${output}\n`);
   }
@@ -49,6 +51,7 @@ function parseArgs(args: string[]): CliOptions {
     model: LFM25_CANDIDATE_MODELS[0],
     backend: 'mock',
     samples: 50,
+    warmupSamples: 0,
     requestTimeoutMs: 2500,
     maxNewTokens: 48,
     pretty: false,
@@ -65,6 +68,9 @@ function parseArgs(args: string[]): CliOptions {
         break;
       case '--samples':
         options.samples = parsePositiveInteger(requireValue(args, ++index, arg), arg);
+        break;
+      case '--warmup-samples':
+        options.warmupSamples = parsePositiveIntegerOrZero(requireValue(args, ++index, arg), arg);
         break;
       case '--endpoint':
         options.endpoint = requireValue(args, ++index, arg);
@@ -116,6 +122,12 @@ function parsePositiveInteger(value: string, flag: string): number {
   return parsed;
 }
 
+function parsePositiveIntegerOrZero(value: string, flag: string): number {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) throw new Error(`${flag} must be zero or a positive integer`);
+  return parsed;
+}
+
 function parsePerformerScore(value: string): number {
   const parsed = Number.parseFloat(value);
   if (!Number.isFinite(parsed) || parsed < 1 || parsed > 5) {
@@ -141,8 +153,13 @@ function usage(): string {
     'Examples:',
     '  pnpm --filter sing bench:phrases --model LiquidAI/LFM2.5-350M --backend mock --samples 10 --pretty',
     '  pnpm --filter sing bench:phrases --model LiquidAI/LFM2.5-1.2B-Instruct --backend http --endpoint http://127.0.0.1:8080/phrases --samples 50',
-    '  pnpm --filter sing bench:phrases --model /path/to/LFM2.5-1.2B-Instruct-MLX-8bit --backend openai --samples 50',
+    '  pnpm --filter sing bench:phrases --model /path/to/LFM2.5-1.2B-Instruct-MLX-8bit --backend openai --warmup-samples 1 --samples 50',
   ].join('\n');
+}
+
+function resolveOutputPath(outputPath: string): string {
+  if (isAbsolute(outputPath)) return outputPath;
+  return resolve(process.env.INIT_CWD || process.cwd(), outputPath);
 }
 
 main().catch((error: unknown) => {

@@ -21,6 +21,7 @@ export interface PhraseBenchmarkInputOptions {
   model: string;
   backend: PhraseBenchmarkBackend;
   samples: number;
+  warmupSamples?: number;
   input?: LyricSidecarInput;
   requestTimeoutMs?: number;
   maxNewTokens?: number;
@@ -84,6 +85,7 @@ export interface PhraseBenchmarkReport {
   model: string;
   quantization: string | null;
   samples_requested: number;
+  warmup_samples: number;
   samples_completed: number;
   metrics: PhraseBenchmarkMetrics;
   recommendation: {
@@ -130,6 +132,7 @@ const DEFAULT_INPUT: LyricSidecarInput = {
 
 export async function runPhraseBenchmark(options: PhraseBenchmarkInputOptions): Promise<PhraseBenchmarkReport> {
   const samples = Math.max(1, Math.floor(options.samples || DEFAULT_SAMPLE_COUNT));
+  const warmupSamples = Math.max(0, Math.floor(options.warmupSamples ?? 0));
   const requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   const maxNewTokens = options.maxNewTokens ?? DEFAULT_MAX_NEW_TOKENS;
   const input = options.input ?? DEFAULT_INPUT;
@@ -140,6 +143,15 @@ export async function runPhraseBenchmark(options: PhraseBenchmarkInputOptions): 
   const renderProbe = new RenderLoopProbe({ clock });
   const rows: PhraseBenchmarkSample[] = [];
   let peakMemoryMb = memoryMb();
+
+  for (let warmupIndex = 0; warmupIndex < warmupSamples; warmupIndex += 1) {
+    await runSample(runner, prompt, input, {
+      sampleIndex: -1 - warmupIndex,
+      requestTimeoutMs,
+      maxNewTokens,
+      clock,
+    });
+  }
 
   renderProbe.start();
   for (let sampleIndex = 0; sampleIndex < samples; sampleIndex += 1) {
@@ -162,6 +174,7 @@ export async function runPhraseBenchmark(options: PhraseBenchmarkInputOptions): 
     quantization: options.quantization ?? null,
     promptTokens: estimateTokens(prompt),
     maxNewTokens,
+    warmupSamples,
     machine: options.endpoint ? `${DEFAULT_MACHINE}:${new URL(options.endpoint).host}` : DEFAULT_MACHINE,
     performerScore: options.performerScore ?? null,
     peakMemoryMb,
@@ -176,6 +189,7 @@ export function summarizePhraseBenchmark(input: {
   quantization: string | null;
   promptTokens: number;
   maxNewTokens: number;
+  warmupSamples?: number;
   machine: string;
   performerScore: number | null;
   peakMemoryMb: number | null;
@@ -212,6 +226,7 @@ export function summarizePhraseBenchmark(input: {
     model: input.model,
     quantization: input.quantization,
     samples_requested: input.samples.length,
+    warmup_samples: input.warmupSamples ?? 0,
     samples_completed: completed.length,
     metrics,
     recommendation,

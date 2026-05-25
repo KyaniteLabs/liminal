@@ -18,6 +18,7 @@ describe('Sing phrase benchmark harness', () => {
     });
 
     expect(report.ok).toBe(true);
+    expect(report.warmup_samples).toBe(0);
     expect(report.samples_completed).toBe(2);
     expect(report.metrics).toEqual(expect.objectContaining({
       max_new_tokens: 48,
@@ -122,6 +123,28 @@ describe('Sing phrase benchmark harness', () => {
 
     expect(report.ok).toBe(false);
     expect(report.samples[0]).toEqual(expect.objectContaining({ status: 'timeout' }));
+  });
+
+  it('runs warmup samples without including them in scored samples', async () => {
+    const runner = vi.fn(async () => ({
+      text: 'blue ash\nno shore',
+      timeToFirstTokenMs: 10,
+      timeToFirstPhraseMs: 10,
+      tokensGenerated: 4,
+    }));
+
+    const report = await runPhraseBenchmark({
+      model: 'LiquidAI/LFM2.5-1.2B-Instruct-MLX',
+      backend: 'openai',
+      samples: 2,
+      warmupSamples: 1,
+      runner,
+    });
+
+    expect(runner).toHaveBeenCalledTimes(3);
+    expect(report.warmup_samples).toBe(1);
+    expect(report.samples).toHaveLength(2);
+    expect(report.samples.map((sample) => sample.sample_index)).toEqual([0, 1]);
   });
 });
 

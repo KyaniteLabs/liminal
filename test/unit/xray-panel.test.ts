@@ -34,7 +34,7 @@ describe('XRayPanel Logic', () => {
       rawOutput: [],
       isStreaming: false,
     };
-    
+
     expect(props.iterations).toEqual([]);
     expect(props.rawOutput).toEqual([]);
   });
@@ -61,7 +61,7 @@ describe('XRayPanel Logic', () => {
       timestamp: Date.now(),
       type: 'raw',
     }));
-    
+
     expect(tokens.length).toBe(3);
     expect(tokens[0].id).not.toBe(tokens[1].id);
     expect(tokens[1].id).not.toBe(tokens[2].id);
@@ -70,14 +70,14 @@ describe('XRayPanel Logic', () => {
   test('code truncation respects limit', () => {
     const longCode = 'a'.repeat(300);
     const truncated = longCode.slice(0, 200);
-    
+
     expect(truncated.length).toBe(200);
     expect(truncated).not.toBe(longCode);
   });
 
   test('streaming state can be toggled', () => {
     const states = [true, false, true, false];
-    
+
     expect(states).toContain(true);
     expect(states).toContain(false);
   });
@@ -94,7 +94,7 @@ describe('XRayPanel Logic', () => {
       timestamp: i,
       type: 'raw',
     }));
-    
+
     const visibleTokens = tokens.slice(-10);
     expect(visibleTokens.length).toBe(10);
     expect(visibleTokens[0].text).toBe('text 10');

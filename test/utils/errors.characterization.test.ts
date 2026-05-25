@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest';
 
 /**
  * Characterization tests for error formatting patterns
- * 
+ *
  * These tests document the current behavior of error formatting
  * across 25+ locations in the codebase. The pattern:
- * 
+ *
  *   const message = error instanceof Error ? error.message : String(error);
  *   const formatted = `${context}: ${message}`;
- * 
+ *
  * is duplicated in many files. This test ensures the extracted
  * utility maintains the same behavior.
  */
@@ -18,61 +18,61 @@ describe('Error Formatting Patterns (Characterization)', () => {
     it('should format Error instances with their message', () => {
       const error = new Error('Something went wrong');
       const context = 'TestContext';
-      
+
       // Current pattern used across codebase
       const message = error instanceof Error ? error.message : String(error);
       const formatted = `${context}: ${message}`;
-      
+
       expect(formatted).toBe('TestContext: Something went wrong');
     });
 
     it('should format non-Error values using String()', () => {
       const error = 'string error';
       const context = 'TestContext';
-      
+
       const message = error instanceof Error ? error.message : String(error);
       const formatted = `${context}: ${message}`;
-      
+
       expect(formatted).toBe('TestContext: string error');
     });
 
     it('should format numbers using String()', () => {
       const error = 404;
       const context = 'Status';
-      
+
       const message = error instanceof Error ? error.message : String(error);
       const formatted = `${context}: ${message}`;
-      
+
       expect(formatted).toBe('Status: 404');
     });
 
     it('should format null using String()', () => {
       const error = null;
       const context = 'NullTest';
-      
+
       const message = error instanceof Error ? error.message : String(error);
       const formatted = `${context}: ${message}`;
-      
+
       expect(formatted).toBe('NullTest: null');
     });
 
     it('should format undefined using String()', () => {
       const error = undefined;
       const context = 'UndefinedTest';
-      
+
       const message = error instanceof Error ? error.message : String(error);
       const formatted = `${context}: ${message}`;
-      
+
       expect(formatted).toBe('UndefinedTest: undefined');
     });
 
     it('should format objects using String()', () => {
       const error = { code: 'ERR_001' };
       const context = 'ObjectTest';
-      
+
       const message = error instanceof Error ? error.message : String(error);
       const formatted = `${context}: ${message}`;
-      
+
       expect(formatted).toBe('ObjectTest: [object Object]');
     });
   });
@@ -81,7 +81,7 @@ describe('Error Formatting Patterns (Characterization)', () => {
     it('should include stack trace when available', () => {
       const error = new Error('With stack');
       const context = 'StackTest';
-      
+
       // Pattern used in some locations for detailed errors
       let formatted: string;
       if (error instanceof Error && error.stack) {
@@ -90,7 +90,7 @@ describe('Error Formatting Patterns (Characterization)', () => {
         const message = error instanceof Error ? error.message : String(error);
         formatted = `${context}: ${message}`;
       }
-      
+
       expect(formatted).toContain('StackTest: With stack');
       expect(formatted).toContain('Error: With stack');
     });
@@ -98,7 +98,7 @@ describe('Error Formatting Patterns (Characterization)', () => {
     it('should fall back to basic formatting without stack', () => {
       const error = 'no stack here';
       const context = 'StackTest';
-      
+
       let formatted: string;
       if (error instanceof Error && error.stack) {
         formatted = `${context}: ${error.message}\n${error.stack}`;
@@ -106,7 +106,7 @@ describe('Error Formatting Patterns (Characterization)', () => {
         const message = error instanceof Error ? error.message : String(error);
         formatted = `${context}: ${message}`;
       }
-      
+
       expect(formatted).toBe('StackTest: no stack here');
     });
   });
@@ -115,11 +115,11 @@ describe('Error Formatting Patterns (Characterization)', () => {
     it('should use "Unknown error" as fallback (used in backup.ts)', () => {
       const error = null;
       const context = 'BackupContext';
-      
+
       // Variation found in src/harness/tools/backup.ts
       const message = error instanceof Error ? error.message : 'Unknown error';
       const formatted = `${context}: ${message}`;
-      
+
       expect(formatted).toBe('BackupContext: Unknown error');
     });
   });
@@ -152,10 +152,10 @@ describe('Error Formatting Patterns (Characterization)', () => {
         'src/guardrails/RuntimeHealthMonitor.ts:229',
         'src/core/RalphLoop.ts:520',
       ];
-      
+
       // Verify we have documented all 24 locations
       expect(locations.length).toBe(24);
-      
+
       // All should follow the pattern (file path with line number)
       locations.forEach(location => {
         expect(location).toMatch(/^[a-zA-Z0-9_\/\-.]+\.tsx?:\d+$/);

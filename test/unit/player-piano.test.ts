@@ -49,7 +49,7 @@ describe('PlayerPiano Logic', () => {
       onIndexChange: () => {},
       onTogglePlay: () => {},
     };
-    
+
     // All expected props should be present and correctly typed
     expect(props.iterations).toEqual([{ id: 1, code: 'test', timestamp: 1000 }]);
     expect(props.currentIndex).toBe(0);
@@ -61,11 +61,11 @@ describe('PlayerPiano Logic', () => {
 
   test('boundary conditions for currentIndex', () => {
     const iterations = Array.from({ length: 10 }, (_, i) => ({ id: i, code: 'x', timestamp: i }));
-    
+
     // Test lower bound
     const minIndex = Math.max(0, -1);
     expect(minIndex).toBe(0);
-    
+
     // Test upper bound
     const maxIndex = Math.min(iterations.length - 1, 15);
     expect(maxIndex).toBe(9);
@@ -83,10 +83,10 @@ describe('PlayerPiano Logic', () => {
       { id: 3, code: 'line 3', timestamp: 3 },
     ];
     const currentIndex = 1;
-    
+
     const start = Math.max(0, currentIndex - 5);
     const end = Math.min(iterations.length, currentIndex + 10);
-    
+
     expect(start).toBe(0);
     expect(end).toBe(3);
     expect(end).toBeLessThanOrEqual(iterations.length);

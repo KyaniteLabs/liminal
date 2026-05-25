@@ -3,13 +3,13 @@ process.env.LIMINAL_ALLOW_LOCALHOST_LLM = "true";
 
 /**
  * E2E Guardrails Test with Real LLM Calls
- * 
+ *
  * Tests the complete Deterministic Guardrails Framework with actual LLM calls.
  * - Generates code using real LLM
  * - Validates through all guardrail layers
  * - Demonstrates learning from failures
  * - Shows Constitution in action
- * 
+ *
  * Skips gracefully if:
  * - No LLM available (no API key, unreachable)
  * - Chrome/Puppeteer unavailable for sandbox
@@ -81,17 +81,17 @@ describe('E2E Guardrails with Real LLM', () => {
     if (!llmAvailable) {
       console.warn('[E2E] LLM not available - LLM-dependent tests will be skipped');
     }
-    
+
     // Initialize constitution for learning
     constitution = initializeConstitution();
-    
+
     // Initialize full guardrail system
     system = initializeGuardrailSystem({
       shadowMode: false,
       defaultTier: GuardrailTier.ENFORCING,
       telemetry: true,
     });
-    
+
     // Register additional guardrails
     system.registry.register(new TypeCheckGuardrail({
       maxErrors: 10,
@@ -99,7 +99,7 @@ describe('E2E Guardrails with Real LLM', () => {
       failOnError: true,
       fixCommand: 'tsc --noEmit',
     }));
-    
+
     system.registry.register(new CodeStyleGuardrail({
       fixCommand: 'eslint --fix',
       formatCommand: 'prettier --write',
@@ -107,7 +107,7 @@ describe('E2E Guardrails with Real LLM', () => {
       fixOnViolation: true,
       checkDocumentation: true,
     }));
-    
+
     // Register self-healing guardrail
     system.registry.register(new SelfHealingGuardrail(constitution, {
       confidenceThreshold: 0.5,
@@ -156,12 +156,12 @@ describe('E2E Guardrails with Real LLM', () => {
         maxTimeMs: 30000,
         maxApiCalls: 10,
       });
-      
+
       // Simulate resource usage exceeding limits (API calls - has terminal action)
       for (let i = 0; i < 15; i++) {
         limiter.recordApiCall(); // 15 calls, exceeds limit of 10
       }
-      
+
       const result = await system.registry.evaluate({
         taskId: 'resource-test',
         step: 10,
@@ -214,7 +214,7 @@ describe('E2E Guardrails with Real LLM', () => {
   describe('Phase 2: Validation Layer', () => {
     it('should validate output schema', async () => {
       const validator = new SchemaValidator();
-      
+
       validator.registerSchema('p5Code', {
         type: 'object',
         required: true,
@@ -225,7 +225,7 @@ describe('E2E Guardrails with Real LLM', () => {
       });
 
       // Valid data
-      const validResult = validator.validate('p5Code', { 
+      const validResult = validator.validate('p5Code', {
         code: 'function setup() {}',
         explanation: 'Test'
       });
@@ -233,8 +233,8 @@ describe('E2E Guardrails with Real LLM', () => {
       expect(validResult.errors).toHaveLength(0);
 
       // Invalid data (missing required 'code')
-      const invalidResult = validator.validate('p5Code', { 
-        explanation: 'Missing code' 
+      const invalidResult = validator.validate('p5Code', {
+        explanation: 'Missing code'
       });
       expect(invalidResult.success).toBe(false);
       expect(invalidResult.errors.length).toBeGreaterThan(0);
@@ -371,13 +371,13 @@ describe('E2E Guardrails with Real LLM', () => {
 
       const rule = await constitution.learnFromFailure(failure);
       expect(rule).toMatchObject({ id: expect.stringMatching(/\S/), confidence: expect.any(Number) });
-      
+
       const initialConfidence = rule!.confidence;
-      
+
       // Update with success
       constitution.updateRuleConfidence(rule!.id, true);
       expect(constitution.getRule(rule!.id)!.confidence).toBeGreaterThan(initialConfidence);
-      
+
       // Update with failure
       constitution.updateRuleConfidence(rule!.id, false);
       expect(constitution.getRule(rule!.id)!.confidence).toBeLessThan(initialConfidence + 0.1);
@@ -392,7 +392,7 @@ describe('E2E Guardrails with Real LLM', () => {
       }
 
       const taskId = `e2e-llm-${Date.now()}`;
-      
+
       // Generate code using LLM
       const client = new LLMClient();
       const prompt = `Generate a minimal p5.js sketch that draws a blue circle in the center.
@@ -416,7 +416,7 @@ Output only the code, no explanation.`;
       } catch (error) {
         generationError = error instanceof Error ? error : new Error(String(error));
       }
-      
+
       // The live gate should produce code; keep the diagnostic explicit if a
       // configured provider fails after the availability probe passed.
       if (generationError) {
@@ -449,7 +449,7 @@ Output only the code, no explanation.`;
 
       // Should pass guardrails (no catastrophic issues)
       expect(guardrailResult.passed).toBe(true);
-      
+
       // Record success in constitution
       if (guardrailResult.passed) {
         await constitution.learnFromFailure({
@@ -484,11 +484,11 @@ Output only the code, no explanation.`;
       // Validate generated p5-like structure without assuming a specific wrapper shape.
       // Some providers return an immediately invoked function rather than setup/draw.
       expect(generatedCode).toMatch(/createCanvas\s*\(/);
-      
+
       // Run in sandbox if code looks valid
       if (generatedCode.includes('createCanvas')) {
         const sandboxResult = await runInSandbox(generatedCode, { timeoutMs: 15000 });
-        
+
         // Skip sandbox assertions if Chrome is unavailable
         if (!isChromeUnavailableError(sandboxResult.error)) {
           expect(sandboxResult.completed).toBe(true);
@@ -499,7 +499,7 @@ Output only the code, no explanation.`;
 
     it('should learn from failed generations', async () => {
       const taskId = `e2e-fail-${Date.now()}`;
-      
+
       // Simulate a "failed" generation (incomplete code)
       const incompleteCode = `function setup() {
   createCanvas(400, 400);
@@ -560,7 +560,7 @@ Output only the code, no explanation.`;
       // Constitution should have learned this pattern
       const rules = constitution.getActiveRules();
       expect(rules.length).toBeGreaterThan(0);
-      
+
       // Check for rule effectiveness report
       const effectiveness = constitution.getEffectivenessReport();
       expect(effectiveness.totalRules).toBeGreaterThan(0);
@@ -606,7 +606,7 @@ Output only the code, no explanation.`;
       // Import into new constitution
       const newConstitution = new Constitution();
       newConstitution.import(exported);
-      
+
       expect(newConstitution.getAllRules().length).toBe(exported.rules.length);
       expect(newConstitution.getActiveRules().length).toBeGreaterThan(0);
     });
@@ -648,7 +648,7 @@ Output only the code, no explanation.`;
 
       // All evaluations should have results
       expect(results.length).toBe(evaluations.length);
-      
+
       // Check violation stats
       const stats = system.registry.getViolationStats();
       expect(Object.keys(stats).length).toBeGreaterThan(0);

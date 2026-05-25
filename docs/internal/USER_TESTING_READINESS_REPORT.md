@@ -1,7 +1,7 @@
 # Liminal — User Testing Readiness Report
 
-**Date:** 2026-04-07  
-**Branch:** claude/testing-check-t0WYV (based on main @ 82dd498)  
+**Date:** 2026-04-07
+**Branch:** claude/testing-check-t0WYV (based on main @ 82dd498)
 **Auditor:** Claude Code agent (worktree: liminal-testing-wt)
 
 > Historical snapshot: this report is not the current launch-readiness source
@@ -112,7 +112,7 @@ Minor: an async method that doesn't actually await anything. No user-visible imp
 
 ## 4. GUI Readiness
 
-**Backend:** `node gui/start.js` → Express server on port 5174  
+**Backend:** `node gui/start.js` → Express server on port 5174
 
 Routes available:
 - `GET  /api/health` — Health check

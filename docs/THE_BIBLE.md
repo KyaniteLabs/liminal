@@ -1,6 +1,6 @@
 # THE BIBLE - Liminal System Documentation
 
-**Version:** 2.1.0 - Beta  
+**Version:** 2.1.0 - Beta
 **Date:** 2026-04-15
 **Status:** Security redteam adapter salvage in progress
 **Branch:** security/redteam-salvage-20260415

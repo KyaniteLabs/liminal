@@ -489,7 +489,7 @@ export class LLMClient {
    */
   private async generateWithBreaker<T>(provider: string, fn: () => Promise<T>): Promise<T> {
     const breaker = this.getBreaker(provider);
-    
+
     if (!breaker.canExecute()) {
       throw new LLMError(
         `Circuit breaker open for provider: ${provider}. Too many recent failures.`,
@@ -658,12 +658,12 @@ export class LLMClient {
   /** Auto-detect model from LM Studio /v1/models endpoint */
   private async resolveModel(): Promise<string> {
     if (this.resolvedModel) return this.resolvedModel;
-    
+
     // Race-safe lazy initialization: only first caller creates the promise
     if (!this.resolveModelPromise) {
       this.resolveModelPromise = this.doResolveModel();
     }
-    
+
     return this.resolveModelPromise;
   }
 
@@ -677,7 +677,7 @@ export class LLMClient {
     this.syncResolvedModel(resolvedModel);
     return resolvedModel;
   }
-  
+
   private async doResolveModel(): Promise<string> {
     // Only auto-detect for local endpoints (LM Studio, etc.)
     const baseUrl = this.config.baseUrl;
@@ -821,7 +821,7 @@ export class LLMClient {
       });
 
       const providerName = this.detectProvider();
-      
+
       const result = await RetryManager.executeWithRetry(async () => {
         return this.generateWithBreaker(providerName, async () => {
           const provider = await this.getProvider();

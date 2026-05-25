@@ -83,18 +83,18 @@ export const PlayerPiano: React.FC<PlayerPianoProps> = ({
       </Box>
 
       {/* Piano Roll - Code Lines */}
-      <Box 
-        flexDirection="column" 
-        flexGrow={1} 
+      <Box
+        flexDirection="column"
+        flexGrow={1}
         overflow="hidden"
         data-testid="piano-roll"
       >
         {visibleIterations.map((iteration, idx) => {
           const actualIndex = Math.max(0, currentIndex - 5) + idx;
           const isCurrent = actualIndex === currentIndex;
-          
+
           return (
-            <Box 
+            <Box
               key={iteration.id}
               data-current={isCurrent ? 'true' : 'false'}
               flexDirection="row"
@@ -103,7 +103,7 @@ export const PlayerPiano: React.FC<PlayerPianoProps> = ({
               <Text color={isCurrent ? '#22C55E' : '#94A3B8'} dimColor={!isCurrent}>
                 {String(actualIndex + 1).padStart(3, '0')} │
               </Text>
-              <Text 
+              <Text
                 color={isCurrent ? '#F8FAFC' : '#94A3B8'}
                 dimColor={!isCurrent}
                 wrap="truncate-end"

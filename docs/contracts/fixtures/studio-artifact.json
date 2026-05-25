@@ -1,0 +1,42 @@
+{
+  "schema": "liminal.shared-artifact",
+  "schemaVersion": "2026-05-25.phase1",
+  "id": "artifact_studio_moon_garden_001",
+  "title": "Moon Garden",
+  "domain": "p5",
+  "files": [
+    {
+      "path": "artifacts/moon-garden/sketch.js",
+      "role": "source",
+      "mimeType": "text/javascript"
+    }
+  ],
+  "controls": [
+    {
+      "id": "firefly_density",
+      "label": "Firefly density",
+      "type": "number",
+      "min": 0,
+      "max": 1,
+      "defaultValue": 0.4,
+      "exposedToSites": true,
+      "exposedToInstrument": true
+    }
+  ],
+  "provenance": {
+    "artifactId": "artifact_studio_moon_garden_001",
+    "prompt": "Create a quiet moonlit garden with slow luminous motion.",
+    "generatedAt": "2026-05-25T05:15:25Z",
+    "generatedBy": "studio",
+    "receipts": [
+      {
+        "id": "receipt_generation_001",
+        "kind": "generation",
+        "summary": "Generated p5 sketch and control surface.",
+        "createdAt": "2026-05-25T05:15:25Z"
+      }
+    ]
+  },
+  "createdAt": "2026-05-25T05:15:25Z",
+  "updatedAt": "2026-05-25T05:15:25Z"
+}

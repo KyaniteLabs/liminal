@@ -46,6 +46,7 @@
     "lint": "eslint src/ --cache --cache-location .eslintcache",
     "check:examples": "node scripts/ci/smoke-composition-examples.mjs",
     "check:doc-links": "node scripts/ci/check-doc-links.mjs",
+    "check:liminal-contracts": "node scripts/ci/check-liminal-shared-artifacts.mjs",
     "test:quality": "node scripts/testing/test-quality-check.mjs --baseline scripts/testing/test-quality-baseline.txt",
     "test:quality:strict": "node scripts/testing/test-quality-check.mjs --strict --baseline scripts/testing/test-quality-baseline.txt",
     "final-qa:test-quality": "pnpm test:quality:strict",

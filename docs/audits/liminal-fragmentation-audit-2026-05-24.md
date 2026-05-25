@@ -28,6 +28,12 @@ The stalled processes were stopped. The partial raw file outside the repo was:
 This means the Phase 0 acceptance bar is not fully met. The table below is a
 bounded, safe inventory using commands that avoid the known stuck status path.
 
+Follow-up timeout-bounded inspection confirmed that `git status`,
+`git diff --name-status`, and `git ls-files -m` all time out on that checkout
+within five seconds. `git diff --cached --name-status` returned no staged
+changes. Treat the checkout as unreadable for working-tree dirtiness until a
+human repairs or excludes it.
+
 ## Discovered Local Repositories
 
 | Path | Branch | HEAD | Remotes | Sing/audio evidence |
@@ -38,6 +44,7 @@ bounded, safe inventory using commands that avoid the known stuck status path.
 | `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal` | `main` | `1acd69e7` | `origin=https://github.com/KyaniteLabs/liminal.git`, `personal=https://github.com/simongonzalezdc/liminal.git` | No tracked `packages/sing` or `packages/audio-core` files found by the bounded scan. |
 | `/Users/simongonzalezdecruz/workspaces/personal/liminal-sites` | `main` | `988052b35` | `origin=https://github.com/Pushing-Squares/liminal-sites.git`, `upstream=https://github.com/KyaniteLabs/liminal.git` | No Sing/audio files found. This is the Sites sibling work surface. |
 | `/Users/simongonzalezdecruz/Desktop/OMC/liminal` | `repo-pipeline-fix-20260420-liminal` | `14d39ec2` | `origin=https://github.com/KyaniteLabs/liminal.git` | No Sing/audio files were returned before the bounded listing finished. Full status remains unsafe because this path stalled earlier. |
+| `/Users/simongonzalezdecruz/actions-runner/simongonzalezdc-liminal/_work/liminal/liminal` | detached HEAD | `b9dd856` | `origin=https://github.com/simongonzalezdc/liminal` | CI runner checkout with the older Sing/audio package surface. |
 
 Additional candidate directories found by local path search included:
 
@@ -54,6 +61,9 @@ Additional candidate directories found by local path search included:
 
 Those paths were not all promoted to verified repo rows in this branch because
 the audit was deliberately bounded after the stuck OMC checkout.
+
+The timeout-bounded follow-up found no usable git checkout at the other listed
+candidate paths in this run.
 
 ## Remote Truth Not Yet Fully Reconciled
 
@@ -109,3 +119,9 @@ Keep `packages/sing` and `packages/audio-core` inside the current Liminal repo
 until the stalled OMC checkout and the remaining candidate paths are audited
 cleanly. A future `KyaniteLabs/liminal-instrument` repo may still be justified,
 but only as a full-history carveout after the machine audit is complete.
+
+The consolidation proposal for the current branch is:
+
+```text
+docs/audits/liminal-consolidation-proposal-2026-05-24.md
+```

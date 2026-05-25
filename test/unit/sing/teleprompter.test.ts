@@ -109,4 +109,26 @@ describe('Sing mock lyric teleprompter', () => {
     const exported = await recorder.stop();
     await expect(exported.telemetryBlob.text()).resolves.toContain('"type":"phrase.pinned"');
   });
+
+  it('writes movement features into the session telemetry log', async () => {
+    const recorder = new SessionRecorder();
+    recorder.appendMovementTelemetry(1234, {
+      bodyCenterX: 0.4,
+      bodyCenterY: 0.6,
+      distanceToCamera: 0.2,
+      leftHandHeight: 0.7,
+      rightHandHeight: 0.3,
+      handsApart: 0.5,
+      torsoAngle: -0.1,
+      headTilt: 0.2,
+      movementEnergy: 0.8,
+      stillness: 0.2,
+      gestureOnset: true,
+    });
+
+    const exported = await recorder.stop();
+    const text = await exported.telemetryBlob.text();
+    expect(text).toContain('"type":"movement.features"');
+    expect(text).toContain('"movementEnergy":0.8');
+  });
 });

@@ -60,6 +60,18 @@ Commits `99d7fc9e`, `52e95df3`, and `9eea129d` added the phrase benchmark
 harness, local OpenAI-compatible backend support, and a real local MLX
 benchmark report.
 
+The follow-up Phase 7 benchmark selected:
+
+```text
+/Users/simongonzalezdecruz/.lmstudio/models/LiquidAI/LFM2.5-350M-MLX-4bit
+```
+
+Its integration is optional and documented in:
+
+```text
+docs/audits/real-lyric-sidecar-integration-2026-05-24.md
+```
+
 ## Real LFM Benchmark Verdict
 
 The benchmark report is:
@@ -78,7 +90,9 @@ dropped_render_frames: 39
 recommendation: rejected
 ```
 
-Therefore Phase 8 real sidecar integration is intentionally blocked.
+Therefore the 1.2B candidate must not be wired into performance. The later 350M
+candidate passed the first realtime benchmark and is the only selected model for
+the optional Phase 8 sidecar.
 
 ## Repository Recommendation
 

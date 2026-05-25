@@ -95,6 +95,11 @@ should treat synchronous pose detection as main-thread risk and put detection in
 a worker. Rendering may use stale pose features briefly; it must not wait for
 pose output.
 
+The first branch implementation uses a dependency-free worker-backed pixel
+movement reducer. It exposes movement shader uniforms, privacy controls,
+calibration, and a skeleton overlay without adding MediaPipe yet. This keeps the
+realtime contract testable before a heavier pose model is adopted.
+
 ## Repository Rule
 
 Keep `packages/sing` and `packages/audio-core` where they are until the

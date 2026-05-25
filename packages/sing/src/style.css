@@ -16,12 +16,20 @@ body,
   height: 100vh;
 }
 
+#sing-skeleton {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+}
+
 #sing-panel {
   position: fixed;
   left: 24px;
   bottom: 24px;
   display: grid;
-  grid-template-columns: auto auto auto;
+  grid-template-columns: auto auto auto auto;
   gap: 10px;
   align-items: center;
   padding: 10px;
@@ -35,7 +43,7 @@ body,
 #sing-teleprompter {
   position: fixed;
   left: 50%;
-  bottom: 92px;
+  bottom: 166px;
   width: min(760px, calc(100vw - 48px));
   transform: translateX(-50%);
   display: grid;
@@ -96,6 +104,27 @@ body,
   color: rgba(238, 246, 240, 0.78);
 }
 
+#sing-privacy {
+  min-width: 130px;
+  font-size: 11px;
+  color: rgba(132, 234, 198, 0.76);
+}
+
+#sing-movement-control {
+  display: inline-grid;
+  grid-template-columns: auto minmax(88px, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 140px;
+  font-size: 12px;
+  color: rgba(238, 246, 240, 0.74);
+}
+
+#sing-movement-sensitivity {
+  width: 100%;
+  accent-color: #84eac6;
+}
+
 button {
   min-width: 84px;
   height: 34px;
@@ -122,11 +151,11 @@ button:not(:disabled):hover {
     left: 12px;
     right: 12px;
     bottom: 12px;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   #sing-teleprompter {
-    bottom: 116px;
+    bottom: 226px;
     width: calc(100vw - 24px);
   }
 
@@ -134,7 +163,9 @@ button:not(:disabled):hover {
     font-size: 15px;
   }
 
-  #sing-status {
+  #sing-status,
+  #sing-privacy,
+  #sing-movement-control {
     grid-column: 1 / -1;
     min-width: 0;
   }

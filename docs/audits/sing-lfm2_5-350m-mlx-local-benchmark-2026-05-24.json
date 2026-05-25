@@ -1,0 +1,91 @@
+{
+  "ok": true,
+  "generated_at": "2026-05-25T02:52:58.093Z",
+  "machine": "Mac-302.lan darwin arm64 10cpu",
+  "backend": "openai",
+  "model": "/Users/simongonzalezdecruz/.lmstudio/models/LiquidAI/LFM2.5-350M-MLX-4bit",
+  "quantization": null,
+  "samples_requested": 5,
+  "warmup_samples": 1,
+  "samples_completed": 5,
+  "metrics": {
+    "prompt_tokens": 95,
+    "max_new_tokens": 48,
+    "time_to_first_token_ms": 37.73,
+    "time_to_first_phrase_ms": 37.73,
+    "tokens_per_second": 79.59,
+    "peak_memory_mb": 77,
+    "cpu_percent": null,
+    "gpu_percent": null,
+    "dropped_render_frames": 0,
+    "audio_glitches": 0,
+    "performer_score": null
+  },
+  "recommendation": {
+    "status": "selected",
+    "selected_model": "/Users/simongonzalezdecruz/.lmstudio/models/LiquidAI/LFM2.5-350M-MLX-4bit",
+    "reason": "Model meets latency, output, render stability, and usefulness gates."
+  },
+  "samples": [
+    {
+      "sample_index": 0,
+      "status": "ok",
+      "phrase_count": 1,
+      "phrases": [
+        "Violet light hum"
+      ],
+      "time_to_first_token_ms": 39.74562500000002,
+      "time_to_first_phrase_ms": 39.74562500000002,
+      "tokens_generated": 3,
+      "tokens_per_second": 75.43303275365142
+    },
+    {
+      "sample_index": 1,
+      "status": "ok",
+      "phrase_count": 1,
+      "phrases": [
+        "Violet light hum"
+      ],
+      "time_to_first_token_ms": 38.50658299999998,
+      "time_to_first_phrase_ms": 38.50658299999998,
+      "tokens_generated": 3,
+      "tokens_per_second": 77.87378606124118
+    },
+    {
+      "sample_index": 2,
+      "status": "ok",
+      "phrase_count": 1,
+      "phrases": [
+        "Violet light hum"
+      ],
+      "time_to_first_token_ms": 37.76166599999999,
+      "time_to_first_phrase_ms": 37.76166599999999,
+      "tokens_generated": 3,
+      "tokens_per_second": 79.40849354305715
+    },
+    {
+      "sample_index": 3,
+      "status": "ok",
+      "phrase_count": 1,
+      "phrases": [
+        "Violet light hum"
+      ],
+      "time_to_first_token_ms": 35.337541999999985,
+      "time_to_first_phrase_ms": 35.337541999999985,
+      "tokens_generated": 3,
+      "tokens_per_second": 84.84472905514525
+    },
+    {
+      "sample_index": 4,
+      "status": "ok",
+      "phrase_count": 1,
+      "phrases": [
+        "Violet light hum"
+      ],
+      "time_to_first_token_ms": 37.278459,
+      "time_to_first_phrase_ms": 37.278459,
+      "tokens_generated": 3,
+      "tokens_per_second": 80.38414834240788
+    }
+  ]
+}

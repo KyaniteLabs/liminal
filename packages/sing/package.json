@@ -1,0 +1,20 @@
+{
+  "name": "sing",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @liminal/audio-core build && vite --host 127.0.0.1 --port 5176",
+    "build": "pnpm --filter @liminal/audio-core build && vite build && tsc -p tsconfig.node.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "render": "node dist-node/recording/render-cli.js"
+  },
+  "dependencies": {
+    "@liminal/audio-core": "workspace:*",
+    "vite": "8.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.9.3"
+  }
+}

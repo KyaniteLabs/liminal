@@ -24,6 +24,7 @@ import { buildSyncPreviewHtml } from './gui/syncPreview';
 import { formatMicCaptureError } from '../../src/shared/micPermission';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 import { latestClarificationRequest, latestCognitiveReceipt, latestRunReceipt } from './gui/workbenchTelemetry';
+import { buildStudioComposerSubmission } from './gui/studioConversation';
 import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
 
 const CuratorMode = React.lazy(() => import('./components/CuratorMode').then((module) => ({ default: module.CuratorMode })));
@@ -184,6 +185,7 @@ export default function App() {
   const [runStatus, setRunStatus] = useState<string>('');
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [createRunError, setCreateRunError] = useState<string | null>(null);
+  const [studioConversationNotice, setStudioConversationNotice] = useState<string | null>(null);
   const [failedPreviewSrc, setFailedPreviewSrc] = useState<string | null>(null);
   const [improveReport, setImproveReport] = useState<ImproveReport | null>(null);
   const [improveLoading, setImproveLoading] = useState<boolean>(false);
@@ -800,12 +802,20 @@ export default function App() {
   const syncPreviewHtml = bridgeCodePreview?.code ? buildSyncPreviewHtml(bridgeCodePreview.code) : '';
   const hasDirectSyncTarget = Boolean(syncPreviewHtml);
   const hasSyncTarget = Boolean(previewUrl || bridgePreview || hasDirectSyncTarget);
+  const hasCurrentArtifact = activeMode.id === 'generate' && Boolean(runReceipt?.artifact || runReceipt?.preview || bridgePreview || bridgeCodePreview);
   const promptCreateMode = detectPromptCreateMode(createPrompt);
   const effectiveCreateMode = promptCreateMode ?? createMode;
   const createModeOption = getCreateModeOption(effectiveCreateMode);
   const selectedCreateModeOption = getCreateModeOption(createMode);
   const promptOverridesMode = Boolean(promptCreateMode && promptCreateMode !== createMode);
   const draftReady = activeMode.id === 'generate' && !bridgeSummary.active && bridgeSummary.processSteps.some((step) => step.id === 'ready' && step.status === 'done');
+  const composerRunLabel = bridge.submitting
+    ? 'Sending'
+    : bridge.session?.pendingAction
+      ? 'Review'
+      : activeMode.id === 'generate' && hasCurrentArtifact && createExecutionMode === 'draft'
+        ? 'Revise'
+        : runLabel;
 
   const handleWorkbenchRun = () => {
     if (activeMode.id === 'improve') {
@@ -817,10 +827,21 @@ export default function App() {
         void handleCreateRun();
         return;
       }
-      void bridge.submitPrompt(buildWorkbenchPrompt(effectiveCreateMode, createPrompt), {
-        clientIntent: 'creative',
-        ...buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode, timeoutMinutes),
+      const submission = buildStudioComposerSubmission({
+        message: createPrompt,
+        mode: createMode,
+        executionMode: createExecutionMode,
+        maxIterations: createMaxIterations,
+        timeoutMinutes,
+        hasCurrentArtifact,
+        priorRunReceipt: runReceipt,
       });
+      if (submission.kind !== 'submit') {
+        setStudioConversationNotice(submission.notice);
+        return;
+      }
+      setStudioConversationNotice(null);
+      void bridge.submitPrompt(submission.prompt, submission.options);
       return;
     }
     void handleCreateRun();
@@ -1348,13 +1369,17 @@ export default function App() {
       onModeChange={handleWorkbenchModeChange}
       onTabChange={(tab) => dispatchLive(switchToLiveOrganismView(tab as GuiTab))}
       prompt={createPrompt}
-      onPromptChange={setCreatePrompt}
+      onPromptChange={(value) => {
+        setCreatePrompt(value);
+        setStudioConversationNotice(null);
+      }}
       onRun={handleWorkbenchRun}
       onCancelRun={bridgeSummary.active ? () => void bridge.cancelCurrent() : undefined}
       runDisabled={activeMode.id === 'improve' ? improveLoading : bridge.submitting || runStatus === 'running' || !createPrompt.trim() || (runNeedsBridgeSession && !bridge.session)}
       stageBusy={bridgeSummary.active || runStatus === 'running'}
       artifactReady={activeMode.id === 'generate' && hasSyncTarget}
-      runLabel={bridge.submitting ? 'Sending' : bridge.session?.pendingAction ? 'Review' : runLabel}
+      runLabel={composerRunLabel}
+      conversationNotice={studioConversationNotice}
       audioSlot={audioSlot}
       providerLabel={providerLabel}
       evaluatorLabel={evaluatorLabel}

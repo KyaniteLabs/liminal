@@ -568,6 +568,13 @@ body::before {
   border-color: var(--liminal-cyan);
 }
 
+.liminal-composer-notice {
+  margin: 0;
+  color: var(--liminal-muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
 .liminal-preview-panel {
   grid-area: preview;
   min-width: 0;

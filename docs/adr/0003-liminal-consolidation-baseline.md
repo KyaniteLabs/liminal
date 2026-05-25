@@ -67,4 +67,3 @@ Minimum follow-up checks before merging consolidation work:
 - `pnpm check:doc-links`
 - `pnpm check:script-targets`
 - Targeted tests/proof commands named by each follow-up PR
-

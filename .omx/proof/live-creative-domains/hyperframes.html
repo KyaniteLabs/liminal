@@ -8,31 +8,32 @@
     <style>
         :root {
             --bg-color: #0a0a0f;
-            --accent-primary: #00f0ff;
-            --accent-secondary: #ff0055;
-            --text-light: #ffffff;
+            --accent: #00ffaa;
+            --secondary: #ff006e;
+            --text: #ffffff;
         }
 
         body {
             margin: 0;
             padding: 0;
             background: var(--bg-color);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            width: 100vw;
         }
 
         #stage {
             position: relative;
-            width: 1280px;
-            height: 720px;
-            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+            width: 100%;
+            max-width: 1280px;
+            aspect-ratio: 16 / 9;
+            background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0f 100%);
             overflow: hidden;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
         }
 
         .clip {
@@ -40,242 +41,258 @@
             will-change: transform, opacity;
         }
 
-        /* Title Card Styles */
-        #title-card {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            z-index: 10;
-            opacity: 0;
-        }
-
-        #main-title {
-            font-size: 80px;
-            font-weight: 900;
-            letter-spacing: -2px;
-            margin: 0;
-            color: transparent;
-            -webkit-text-stroke: 2px var(--accent-primary);
-            text-transform: uppercase;
-        }
-
-        #sub-title {
-            font-size: 24px;
-            font-weight: 300;
-            letter-spacing: 12px;
-            color: rgba(255,255,255,0.7);
-            margin-top: 10px;
-            text-transform: uppercase;
-        }
-
-        /* Background Grid / Shape */
+        /* Background Grid */
         #bg-grid {
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
+            opacity: 0.05;
             background-image:
-                linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
             background-size: 60px 60px;
-            transform: scale(1.5);
-            opacity: 0;
         }
 
-        /* Hero Visual Element (Abstract Shape) */
-        #hero-shape {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0);
-            width: 600px;
-            height: 600px;
-            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
-            background: conic-gradient(from 180deg at 50% 50%, var(--accent-secondary), var(--accent-primary), var(--bg-color));
-            filter: blur(40px);
-            z-index: 1;
-            mix-blend-mode: screen;
+        /* Title Card */
+        #title-card {
+            top: 10%;
+            left: 5%;
+            width: 90%;
+            text-align: center;
+            z-index: 10;
         }
 
-        /* Feature List */
-        #feature-list {
-            bottom: 10%;
-            left: 10%;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            z-index: 11;
-            opacity: 0;
+        #title-card h1 {
+            font-size: clamp(3rem, 6vw, 5rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin: 0;
+            background: linear-gradient(135deg, #ffffff 0%, var(--accent) 50%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .feature-item {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            color: white;
-            font-size: 18px;
-            font-weight: 500;
-            transform: translateX(-50px);
-            opacity: 0;
-        }
-
-        .feature-icon {
-            width: 24px;
-            height: 24px;
-            background: var(--accent-primary);
-            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-        }
-
-        /* CTA Button Area */
-        #cta-area {
-            bottom: 15%;
-            right: 10%;
-            z-index: 12;
-            opacity: 0;
-        }
-
-        .btn {
-            padding: 15px 40px;
-            background: transparent;
-            border: 2px solid var(--accent-primary);
-            color: var(--accent-primary);
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
+        #title-card p {
+            font-size: clamp(1rem, 2vw, 1.4rem);
+            margin-top: 12px;
+            opacity: 0.7;
+            letter-spacing: 0.15em;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            position: relative;
-            overflow: hidden;
-            transition: color 0.4s;
         }
 
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: var(--accent-primary);
-            transition: left 0.4s;
-            z-index: -1;
+        /* Visual Clip 1 - Geometric Shape */
+        #visual-1 {
+            top: 25%;
+            left: -300px;
+            width: 400px;
+            height: 400px;
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            background: linear-gradient(135deg, var(--accent), transparent);
+            filter: blur(60px);
+            opacity: 0.4;
         }
 
+        /* Visual Clip 2 - Secondary Shape */
+        #visual-2 {
+            bottom: -200px;
+            right: -150px;
+            width: 500px;
+            height: 350px;
+            border-radius: 40%;
+            background: linear-gradient(135deg, var(--secondary), transparent);
+            filter: blur(80px);
+            opacity: 0.35;
+        }
+
+        /* Feature Cards */
+        .feature-card {
+            bottom: 18%;
+            width: 280px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+        }
+
+        .feature-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.1rem;
+            color: var(--accent);
+        }
+
+        .feature-card p {
+            margin: 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            opacity: 0.75;
+        }
+
+        #feature-1 { left: 8%; }
+        #feature-2 { left: 38%; }
+        #feature-3 { left: 68%; }
+
+        /* Decorative Lines */
+        #line-accent {
+            top: 22%;
+            left: 50%;
+            width: 120px;
+            height: 3px;
+            background: var(--accent);
+            transform: translateX(-50%) scaleX(0);
+            box-shadow: 0 0 20px var(--accent);
+        }
+
+        /* Badge */
+        #badge {
+            top: 8%;
+            right: 5%;
+            padding: 8px 20px;
+            background: rgba(0, 255, 170, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 24px;
+            font-size: 0.8rem;
+            color: var(--accent);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* Progress Bar */
+        #progress-bar {
+            bottom: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--secondary));
+        }
     </style>
 </head>
 <body>
 
 <div id="stage" data-composition-id="hyperframes-promo">
 
-    <!-- Track 0: Background Elements -->
+    <!-- Background Element -->
     <div id="bg-grid" class="clip" data-start="0" data-duration="12" data-track-index="0"></div>
-    <div id="hero-shape" class="clip" data-start="1" data-duration="10" data-track-index="0"></div>
 
-    <!-- Track 1: Typography & Titles -->
-    <div id="title-card" class="clip" data-start="2" data-duration="6" data-track-index="1">
-        <h1 id="main-title">HyperFrames</h1>
-        <p id="sub-title">Motion Engine v2.0</p>
+    <!-- Ambient Shapes -->
+    <div id="visual-1" class="clip" data-start="0.5" data-duration="11" data-track-index="1"></div>
+    <div id="visual-2" class="clip" data-start="1" data-duration="11" data-track-index="1"></div>
+
+    <!-- Accent Line -->
+    <div id="line-accent" class="clip" data-start="1.5" data-duration="10" data-track-index="2"></div>
+
+    <!-- Badge -->
+    <div id="badge" class="clip" data-start="1.8" data-duration="10" data-track-index="2">New Release</div>
+
+    <!-- Main Title Card -->
+    <div id="title-card" class="clip" data-start="2" data-duration="10" data-track-index="3">
+        <h1>HyperFrames</h1>
+        <p>Precision Motion Composition Engine</p>
     </div>
 
-    <!-- Track 2: Informational Content -->
-    <div id="feature-list" class="clip" data-start="4" data-duration="7" data-track-index="2">
-        <div class="feature-item">
-            <div class="feature-icon"></div>
-            <span>GSAP Timeline Integration</span>
-        </div>
-        <div class="feature-item">
-            <div class="feature-icon"></div>
-            <span>Staged Clip Architecture</span>
-        </div>
-        <div class="feature-item">
-            <div class="feature-icon"></div>
-            <span>Precision Timing Control</span>
-        </div>
+    <!-- Feature Cards -->
+    <div id="feature-1" class="clip feature-card" data-start="3.5" data-duration="8" data-track-index="4">
+        <h3>Timeline Control</h3>
+        <p>Frame-perfect animations with GSAP precision timing</p>
     </div>
 
-    <!-- Track 3: Call to Action -->
-    <div id="cta-area" class="clip" data-start="6" data-duration="5" data-track-index="3">
-        <button class="btn">Launch Composition</button>
+    <div id="feature-2" class="clip feature-card" data-start="4" data-duration="7.5" data-track-index="4">
+        <h3>Multi-Track</h3>
+        <p>Layer multiple clips across independent tracks</p>
     </div>
+
+    <div id="feature-3" class="clip feature-card" data-start="4.5" data-duration="7" data-track-index="4">
+        <h3>Data-Driven</h3>
+        <p>Declarative composition with semantic attributes</p>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div id="progress-bar" class="clip" data-start="0" data-duration="12" data-track-index="5"></div>
 
 </div>
 
 <script>
-    // Initialize the global timeline registry
+    // Initialize timeline registry
     window.__timelines = window.__timelines || {};
 
-    // Create the main timeline for this composition
-    const tl = gsap.timeline({ paused: true });
+    // Create main composition timeline
+    const tl = gsap.timeline({
+        paused: true,
+        defaults: { ease: "power3.out" }
+    });
 
     const compositionId = "hyperframes-promo";
 
-    // --- Animation Sequence ---
+    // Track 0: Background fade in
+    tl.from("#bg-grid", { opacity: 0, duration: 2 }, 0);
 
-    // 1. Background Grid Fade In
-    tl.from("#bg-grid", {
+    // Track 1: Ambient shape animations
+    tl.fromTo("#visual-1",
+        { x: -400, scale: 0.6, opacity: 0 },
+        { x: 80, scale: 1, opacity: 0.4, duration: 3 },
+        0.5
+    );
+    tl.to("#visual-1", { x: 120, scale: 1.1, duration: 4, ease: "sine.inOut" }, 4);
+    tl.to("#visual-1", { rotation: 45, duration: 6, ease: "none" }, 0.5);
+
+    tl.fromTo("#visual-2",
+        { x: 300, y: 100, scale: 0.5, opacity: 0 },
+        { x: 0, y: 0, scale: 1, opacity: 0.35, duration: 3.5 },
+        1
+    );
+    tl.to("#visual-2", { scale: 1.15, duration: 5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 4.5);
+
+    // Track 2: UI Elements
+    tl.to("#line-accent", { scaleX: 1, duration: 1.2, ease: "expo.out" }, 1.5);
+    tl.from("#badge", { y: -30, opacity: 0, duration: 0.8 }, 1.8);
+
+    // Track 3: Title Card
+    tl.from("#title-card h1", {
+        y: 60,
         opacity: 0,
-        duration: 1.5,
-        ease: "power2.out"
-    }, 0);
+        duration: 1.4,
+        ease: "back.out(1.4)"
+    }, 2);
+    tl.from("#title-card p", {
+        y: 30,
+        opacity: 0,
+        duration: 1
+    }, 2.4);
 
-    // 2. Hero Shape Morph & Scale
-    tl.to("#hero-shape", {
-        scale: 1.2,
-        rotation: 120,
-        duration: 4,
-        ease: "power3.inOut",
-        repeat: 1,
-        yoyo: true
-    }, 1);
+    // Subtle title float
+    tl.to("#title-card", { y: -8, duration: 2.5, ease: "sine.inOut", yoyo: true, repeat: 1 }, 5);
 
-    // 3. Title Card Entrance
-    tl.fromTo("#title-card",
-        { opacity: 0, scale: 0.9, y: 30 },
-        { opacity: 1, scale: 1, y: 0, duration: 1.2, ease: "back.out(1.7)" },
-        2
-    );
+    // Track 4: Feature Cards (staggered entrance)
+    const features = ["#feature-1", "#feature-2", "#feature-3"];
+    features.forEach((selector, i) => {
+        tl.from(selector, {
+            y: 80,
+            opacity: 0,
+            scale: 0.92,
+            duration: 0.9,
+            ease: "back.out(1.2)"
+        }, 3.5 + i * 0.25);
 
-    // 4. Main Title Text Fill Effect
-    tl.to("#main-title", {
-        color: "#ffffff",
-        duration: 1,
-        ease: "power2.inOut"
-    }, 2.5);
+        // Hover-like pulse effect
+        tl.to(selector, {
+            borderColor: "rgba(0, 255, 170, 0.3)",
+            backgroundColor: "rgba(255, 255, 255, 0.06)",
+            duration: 0.6,
+            ease: "power2.out",
+            yoyo: true,
+            repeat: 1
+        }, 6 + i * 0.3);
+    });
 
-    // 5. Feature Items Staggered Entry
-    tl.to(".feature-item", {
-        x: 0,
-        opacity: 1,
-        stagger: 0.25,
-        duration: 0.8,
-        ease: "power3.out"
-    }, 4);
+    // Track 5: Progress Bar
+    tl.to("#progress-bar", { width: "100%", duration: 12, ease: "linear" }, 0);
 
-    // 6. Feature List Container Fade
-    tl.to("#feature-list", {
-        opacity: 1,
-        duration: 0.5
-    }, 4);
-
-    // 7. CTA Slide Up
-    tl.fromTo("#cta-area",
-        { opacity: 0, y: 40 },
-        { opacity: 1, y: 0, duration: 0.8, ease: "circ.out" },
-        6
-    );
-
-    // 8. Continuous Ambient Rotation for Hero Shape
-    tl.to("#hero-shape", {
-        rotation: "+=360",
-        duration: 20,
-        ease: "none",
-        repeat: -1
-    }, 0);
-
-    // Register timeline globally
+    // Register the timeline
     window.__timelines[compositionId] = tl;
 
-    // Optional: Auto-play for preview purposes (comment out for production integration)
+    // Auto-play for preview (optional - can be removed for production)
     // tl.play();
-
 </script>
+
 </body>
 </html>

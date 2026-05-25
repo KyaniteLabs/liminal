@@ -112,7 +112,19 @@ describe('CLI execute', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (mockMill.shouldAutoDigest as any).mockResolvedValue(false);
 
-    await execute({ command: 'status' }, mockMill as any);
+    const previousLogLevel = process.env.LIMINAL_LOG_LEVEL;
+    delete process.env.LIMINAL_LOG_LEVEL;
+    try {
+      await execute({ command: 'status' }, mockMill as any);
+    } finally {
+      if (previousLogLevel === undefined) {
+        delete process.env.LIMINAL_LOG_LEVEL;
+      } else {
+        process.env.LIMINAL_LOG_LEVEL = previousLogLevel;
+      }
+    }
+
     expect(mockMill.statusAsync).toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith('[CompostCLI] Compost Mill Status:');
   });
 });

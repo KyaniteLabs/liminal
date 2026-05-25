@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 describe('studio and improve CLI contract', () => {
   const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
   const bin = () => fs.readFileSync(path.join(repoRoot, 'bin/liminal'), 'utf8');
+  const studioStart = () => fs.readFileSync(path.join(repoRoot, 'gui/start.js'), 'utf8');
   const pkg = () => JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')) as { version: string; scripts: Record<string, string> };
 
   it('advertises GUI-first studio and improve scan commands', () => {
@@ -34,6 +35,13 @@ describe('studio and improve CLI contract', () => {
     expect(scripts.gui).toBe('npm run build && node scripts/utils/start-studio.js');
     expect(scripts.studio).toBe('npm run gui');
     expect(scripts['gui:all']).toBeUndefined();
+  });
+
+  it('advertises the Studio preview route that actually exists', () => {
+    const content = studioStart();
+
+    expect(content).toContain('POST /api/preview/run');
+    expect(content).not.toContain('POST /api/sandbox/run');
   });
 
   it('has launch-risk proof scripts and docs for explicit risk ownership', () => {

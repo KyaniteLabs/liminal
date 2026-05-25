@@ -17,9 +17,18 @@ const mockGenerateWithToolLoop = vi.hoisted(() =>
   })
 );
 
+const mockComplete = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({
+    text: 'line one\nline two\nline three',
+    success: true,
+    error: undefined,
+  })
+);
+
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
     generate = mockGenerate;
+    complete = mockComplete;
     generateWithToolLoop = mockGenerateWithToolLoop;
     getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' });
   }
@@ -72,6 +81,15 @@ describe('TextGenerativeGenerator', () => {
       toolCallsMade: 0,
       success: true,
       error: undefined,
+    });
+    mockComplete.mockReset();
+    mockComplete.mockImplementation(async () => {
+      const result = await mockGenerateWithToolLoop();
+      return {
+        text: result.content,
+        success: result.success,
+        error: result.error,
+      };
     });
   });
 
@@ -290,6 +308,25 @@ describe('TextGenerativeGenerator', () => {
     it('rejects output containing class declarations', () => {
       const gen = new TextGenerativeGenerator();
       const result = (gen as any).validateOutput('class Foo {\n  bar() {}\n}\nmore text');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('appears to be code');
+    });
+
+    it('accepts poetic programming words without code syntax', () => {
+      const gen = new TextGenerativeGenerator();
+      const result = (gen as any).validateOutput('return\n  function\n    if\n      class\n        machine dreams in loops');
+      expect(result.valid).toBe(true);
+    });
+
+    it('accepts code-shaped concrete poetry without runnable statements', () => {
+      const gen = new TextGenerativeGenerator();
+      const result = (gen as any).validateOutput('while (true) {\n  ╭ dreaming ╮\n  process() -> sleep\n  loop loop loop\n}');
+      expect(result.valid).toBe(true);
+    });
+
+    it('rejects executable loop statements', () => {
+      const gen = new TextGenerativeGenerator();
+      const result = (gen as any).validateOutput('while (true) {\n  console.log(\"loop\");\n}');
       expect(result.valid).toBe(false);
       expect(result.error).toContain('appears to be code');
     });

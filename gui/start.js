@@ -36,7 +36,7 @@ const server = app.listen(PORT, () => {
   console.log(`  POST /api/config`);
   console.log(`  GET  /api/gallery`);
   console.log(`  GET  /api/gallery/:project`);
-  console.log(`  POST /api/sandbox/run`);
+  console.log(`  POST /api/preview/run`);
   console.log(`  POST /api/run`);
   console.log(`  POST /api/live-music/music`);
   console.log(`  POST /api/live-music/visuals`);

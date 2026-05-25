@@ -28,7 +28,7 @@ export interface PhraseSuggestion {
   id: string;
   text: string;
   mode: LyricMode;
-  source: 'mock' | 'lfm2_5_350m' | 'lfm2_5_1_2b' | 'manual';
+  source: 'mock' | 'lfm2_5_350m' | 'lfm2_5_1_2b' | 'openai_compatible' | 'manual';
   confidence?: number;
   createdAt: number;
   expiresAt: number;
@@ -38,7 +38,17 @@ export interface PhraseSuggestion {
 }
 
 export interface PhraseEvent {
-  type: 'suggested' | 'pinned' | 'dismissed' | 'hidden' | 'shown' | 'request_timeout' | 'request_skipped';
+  type:
+    | 'suggested'
+    | 'pinned'
+    | 'dismissed'
+    | 'hidden'
+    | 'shown'
+    | 'disabled'
+    | 'enabled'
+    | 'request_timeout'
+    | 'request_failed'
+    | 'request_skipped';
   at: number;
   phraseId?: string;
   text?: string;
@@ -123,6 +133,7 @@ export function isValidPhraseFragment(text: string): boolean {
   if (!trimmed) return false;
   if (/^(verse|chorus|bridge)\b/i.test(trimmed)) return false;
   if (/^\d+[.)]/.test(trimmed)) return false;
+  if (/\b(write|generate|compose)\b.*\b(song|verse|chorus|lyrics)\b/i.test(trimmed)) return false;
   const words = trimmed.split(/\s+/);
   return words.length >= 1 && words.length <= 6;
 }
@@ -146,7 +157,7 @@ export class PhraseRingBuffer {
         confidence: source === 'mock' ? 0.6 : undefined,
         createdAt: now,
         expiresAt: now + this.ttlMs,
-        tags: ['mock', 'performance'],
+        tags: [source, 'performance'],
       }));
     this.suggestions.push(...added);
     this.trim();
@@ -213,6 +224,7 @@ export class PhraseSessionLog {
 
 export class TeleprompterController {
   private hidden = false;
+  private disabled = false;
   private requestInFlight = false;
 
   constructor(
@@ -220,10 +232,25 @@ export class TeleprompterController {
     private readonly buffer: PhraseRingBuffer,
     private readonly log: PhraseSessionLog,
     private readonly config = DEFAULT_LYRIC_RUNTIME_CONFIG,
+    private readonly source: PhraseSuggestion['source'] = 'mock',
   ) {}
 
   isHidden(): boolean {
     return this.hidden;
+  }
+
+  isDisabled(): boolean {
+    return this.disabled;
+  }
+
+  disable(now: number): void {
+    this.disabled = true;
+    this.log.append({ type: 'disabled', at: now });
+  }
+
+  enable(now: number): void {
+    this.disabled = false;
+    this.log.append({ type: 'enabled', at: now });
   }
 
   hide(now: number): void {
@@ -237,6 +264,10 @@ export class TeleprompterController {
   }
 
   async request(input: LyricSidecarInput, now: number): Promise<PhraseSuggestion[]> {
+    if (this.disabled) {
+      this.log.append({ type: 'request_skipped', at: now, reason: 'disabled' });
+      return [];
+    }
     if (this.hidden) {
       this.log.append({ type: 'request_skipped', at: now, reason: 'hidden' });
       return [];
@@ -252,11 +283,15 @@ export class TeleprompterController {
         this.log.append({ type: 'request_timeout', at: now, reason: `>${this.config.requestTimeoutMs}ms` });
         return [];
       }
-      const added = this.buffer.add(result.fragments, now, 'mock');
+      const added = this.buffer.add(result.fragments, now, this.source);
       for (const phrase of added) {
         this.log.append({ type: 'suggested', at: now, phraseId: phrase.id, text: phrase.text });
       }
       return added;
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'unknown sidecar failure';
+      this.log.append({ type: 'request_failed', at: now, reason });
+      return [];
     } finally {
       this.requestInFlight = false;
     }

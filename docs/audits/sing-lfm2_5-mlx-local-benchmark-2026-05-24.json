@@ -1,0 +1,111 @@
+{
+  "ok": false,
+  "generated_at": "2026-05-25T01:05:40.558Z",
+  "machine": "Mac-299.lan darwin arm64 10cpu",
+  "backend": "openai",
+  "model": "/Users/simongonzalezdecruz/.lmstudio/models/lmstudio-community/LFM2.5-1.2B-Instruct-MLX-8bit",
+  "quantization": null,
+  "samples_requested": 5,
+  "warmup_samples": 1,
+  "samples_completed": 5,
+  "metrics": {
+    "prompt_tokens": 95,
+    "max_new_tokens": 48,
+    "time_to_first_token_ms": 1616.76,
+    "time_to_first_phrase_ms": 1616.76,
+    "tokens_per_second": 9.65,
+    "peak_memory_mb": 77,
+    "cpu_percent": null,
+    "gpu_percent": null,
+    "dropped_render_frames": 39,
+    "audio_glitches": 0,
+    "performer_score": null
+  },
+  "recommendation": {
+    "status": "rejected",
+    "selected_model": null,
+    "reason": "Average first phrase latency is above the 1500ms target."
+  },
+  "samples": [
+    {
+      "sample_index": 0,
+      "status": "ok",
+      "phrase_count": 5,
+      "phrases": [
+        "Breath flows through colors",
+        "Soft echoes drift",
+        "Haze of glowing light",
+        "Whispered shadows",
+        "Trembling silence"
+      ],
+      "time_to_first_token_ms": 1380.0439589999999,
+      "time_to_first_phrase_ms": 1380.0439589999999,
+      "tokens_generated": 15,
+      "tokens_per_second": 10.868751376314515
+    },
+    {
+      "sample_index": 1,
+      "status": "ok",
+      "phrase_count": 5,
+      "phrases": [
+        "Breath flows through colors",
+        "Soft echoes drift",
+        "Haze of glowing light",
+        "Whispered shadows",
+        "Trembling silence"
+      ],
+      "time_to_first_token_ms": 1176.1928340000004,
+      "time_to_first_phrase_ms": 1176.1928340000004,
+      "tokens_generated": 15,
+      "tokens_per_second": 12.752207213872786
+    },
+    {
+      "sample_index": 2,
+      "status": "ok",
+      "phrase_count": 5,
+      "phrases": [
+        "Breath flows through colors",
+        "Soft echoes drift",
+        "Haze of glowing light",
+        "Whispered shadows",
+        "Trembling silence"
+      ],
+      "time_to_first_token_ms": 1604.8836250000004,
+      "time_to_first_phrase_ms": 1604.8836250000004,
+      "tokens_generated": 15,
+      "tokens_per_second": 9.346191579461214
+    },
+    {
+      "sample_index": 3,
+      "status": "ok",
+      "phrase_count": 5,
+      "phrases": [
+        "Breath flows through colors",
+        "Soft echoes drift",
+        "Haze of glowing light",
+        "Whispered shadows",
+        "Trembling silence"
+      ],
+      "time_to_first_token_ms": 1965.4834580000006,
+      "time_to_first_phrase_ms": 1965.4834580000006,
+      "tokens_generated": 15,
+      "tokens_per_second": 7.631400634604992
+    },
+    {
+      "sample_index": 4,
+      "status": "ok",
+      "phrase_count": 5,
+      "phrases": [
+        "Breath flows through colors",
+        "Soft echoes drift",
+        "Haze of glowing light",
+        "Whispered shadows",
+        "Trembling silence"
+      ],
+      "time_to_first_token_ms": 1957.1723329999995,
+      "time_to_first_phrase_ms": 1957.1723329999995,
+      "tokens_generated": 15,
+      "tokens_per_second": 7.663845349731918
+    }
+  ]
+}

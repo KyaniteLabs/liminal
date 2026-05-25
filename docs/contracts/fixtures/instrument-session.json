@@ -1,0 +1,28 @@
+{
+  "schema": "liminal.shared-instrument-session",
+  "schemaVersion": "2026-05-25.phase1",
+  "id": "instrument_session_moon_garden_001",
+  "presetIds": ["instrument_preset_moon_garden_001"],
+  "startedAt": "2026-05-25T05:15:25Z",
+  "endedAt": "2026-05-25T05:45:25Z",
+  "audioFile": "sessions/moon-garden/audio.wav",
+  "telemetryFile": "sessions/moon-garden/telemetry.jsonl",
+  "phraseEventsFile": "sessions/moon-garden/phrases.jsonl",
+  "performerNotes": "Keep the firefly density subtle during quiet phrases.",
+  "provenance": {
+    "artifactId": "instrument_session_moon_garden_001",
+    "parentArtifactId": "instrument_preset_moon_garden_001",
+    "prompt": "Capture rehearsal telemetry for future preset refinement.",
+    "generatedAt": "2026-05-25T05:45:25Z",
+    "generatedBy": "instrument",
+    "receipts": [
+      {
+        "id": "receipt_performance_001",
+        "kind": "performance",
+        "path": "sessions/moon-garden/telemetry.jsonl",
+        "summary": "Recorded rehearsal telemetry for post-session ingestion.",
+        "createdAt": "2026-05-25T05:45:25Z"
+      }
+    ]
+  }
+}

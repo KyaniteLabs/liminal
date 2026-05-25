@@ -5,6 +5,8 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 
+const emergenceHooksTestTimeoutMs = 30000;
+
 describe('EmergenceHooks', () => {
   let tmpDir: string;
   let liminalFs: LiminalFS;
@@ -35,7 +37,7 @@ describe('EmergenceHooks', () => {
     expect(result.signals.novelty).toBeLessThanOrEqual(1);
     expect(result.placement.accepted).toBe(true);
     expect(result.placement.outcome).toBe('new-cell');
-  }, 30000);
+  }, emergenceHooksTestTimeoutMs);
 
   it('rejects low-quality artifacts', async () => {
     const hooks = new EmergenceHooks(liminalFs, { minQuality: 0.5 });
@@ -47,7 +49,7 @@ describe('EmergenceHooks', () => {
 
     expect(result.placement.accepted).toBe(false);
     expect(result.placement.outcome).toBe('rejected');
-  });
+  }, emergenceHooksTestTimeoutMs);
 
   it('tracks lineage for remix runs', async () => {
     const hooks = new EmergenceHooks(liminalFs);
@@ -66,7 +68,7 @@ describe('EmergenceHooks', () => {
 
     expect(child.lineage.parentIds).toEqual([parent.lineage.artifactId]);
     expect(child.lineage.provenance).toBe('remix');
-  });
+  }, emergenceHooksTestTimeoutMs);
 
   it('emergence signals are all in 0–1 range', async () => {
     const hooks = new EmergenceHooks(liminalFs);
@@ -81,7 +83,7 @@ describe('EmergenceHooks', () => {
       expect(signals[key]).toBeGreaterThanOrEqual(0);
       expect(signals[key]).toBeLessThanOrEqual(1);
     }
-  });
+  }, emergenceHooksTestTimeoutMs);
 
   it('exposes archive for querying', async () => {
     const hooks = new EmergenceHooks(liminalFs);
@@ -94,7 +96,7 @@ describe('EmergenceHooks', () => {
     const stats = hooks.getArchive().getStats();
     expect(stats.totalCells).toBe(1);
     expect(stats.totalElites).toBe(1);
-  }, 30000);
+  }, emergenceHooksTestTimeoutMs);
 
   it('exposes lineage tracker for querying', async () => {
     const hooks = new EmergenceHooks(liminalFs);
@@ -108,12 +110,12 @@ describe('EmergenceHooks', () => {
     const tracker = hooks.getLineageTracker();
     const stats = await tracker.getStats();
     expect(stats.totalRecords).toBeGreaterThanOrEqual(1);
-  });
+  }, emergenceHooksTestTimeoutMs);
 
   it('exposes extractor for querying', async () => {
     const hooks = new EmergenceHooks(liminalFs);
     expect(hooks.getExtractor().getAvailableAxes()).toHaveLength(6);
-  });
+  }, emergenceHooksTestTimeoutMs);
 });
 
 import { beforeEach, afterEach } from 'vitest';

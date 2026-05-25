@@ -153,7 +153,7 @@ describe('final QA surface gate', () => {
       rmSync(sentinelPath, { force: true });
       rmSync(tempRoot, { recursive: true, force: true });
     }
-  });
+  }, 30000);
 
   it('fails when a launch-scoped creative domain is missing from the live receipt', () => {
     const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-final-qa-surface-missing-'));

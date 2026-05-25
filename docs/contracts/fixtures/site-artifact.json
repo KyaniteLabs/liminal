@@ -1,0 +1,29 @@
+{
+  "schema": "liminal.shared-site-artifact",
+  "schemaVersion": "2026-05-25.phase1",
+  "id": "site_artifact_moon_garden_skin_001",
+  "baseArtifactId": "artifact_studio_moon_garden_001",
+  "siteProfileId": "moon-garden-site",
+  "aestheticTags": ["luminous", "quiet", "organic", "slow-motion"],
+  "patchPlan": {
+    "id": "patch_plan_moon_garden_001",
+    "repo": "KyaniteLabs/liminal-sites",
+    "summary": "Apply approved moon garden skin after preview review.",
+    "files": [
+      {
+        "path": "sites/moon-garden/skin.css",
+        "role": "style",
+        "mimeType": "text/css"
+      }
+    ],
+    "reviewActionId": "review_open_site_pr_001"
+  },
+  "provenance": {
+    "artifactId": "site_artifact_moon_garden_skin_001",
+    "parentArtifactId": "artifact_studio_moon_garden_001",
+    "prompt": "Adapt Moon Garden into a living website skin.",
+    "generatedAt": "2026-05-25T05:15:25Z",
+    "generatedBy": "sites",
+    "receipts": []
+  }
+}

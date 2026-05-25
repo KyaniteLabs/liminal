@@ -101,8 +101,8 @@ Keep Instrument/Sing in this repo for now.
 Do not create `KyaniteLabs/liminal-instrument` and do not rename
 `packages/sing` until:
 
-1. the stalled `/Users/simongonzalezdecruz/Desktop/OMC/liminal` checkout is
-   audited safely,
+1. the preserved old `/Users/simongonzalezdecruz/Desktop/OMC/liminal`
+   checkout backup is classified safely,
 2. remaining local candidate paths are classified,
 3. local-only Instrument/Sing commits are fully accounted for, and
 4. the camera/movement prototype proves whether Instrument needs a separate

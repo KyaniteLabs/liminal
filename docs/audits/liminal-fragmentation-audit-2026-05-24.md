@@ -11,7 +11,7 @@ No destructive commands were used. In particular, this audit did not run
 `git pull`, `git merge`, `git rebase`, `git reset`, `git clean`, `git push`, or
 directory deletion.
 
-## Audit Caveat
+## Audit Caveat And Repair
 
 The full package script and a bounded retry both stalled while inspecting:
 
@@ -25,14 +25,33 @@ The stalled processes were stopped. The partial raw file outside the repo was:
 /Users/simongonzalezdecruz/Desktop/liminal-fragmentation-audit-Mac-299-20260524-183744.md
 ```
 
-This means the Phase 0 acceptance bar is not fully met. The table below is a
-bounded, safe inventory using commands that avoid the known stuck status path.
-
 Follow-up timeout-bounded inspection confirmed that `git status`,
-`git diff --name-status`, and `git ls-files -m` all time out on that checkout
-within five seconds. `git diff --cached --name-status` returned no staged
-changes. Treat the checkout as unreadable for working-tree dirtiness until a
-human repairs or excludes it.
+`git diff --name-status`, and `git ls-files -m` all timed out on that checkout
+within five seconds. Sampling showed Git blocked while reading tracked files and
+then a loose Git object from the Desktop checkout.
+
+The live path was repaired on 2026-05-24 by preserving the broken physical tree
+and rebuilding `/Users/simongonzalezdecruz/Desktop/OMC/liminal` from the
+verified current branch:
+
+```text
+preserved old tree: /Users/simongonzalezdecruz/Desktop/OMC/liminal.broken-working-tree-20260524-201253
+old branch/head: repo-pipeline-fix-20260420-liminal @ 14d39ec2
+repaired live path: /Users/simongonzalezdecruz/Desktop/OMC/liminal
+repaired branch/head: codex/studio-conversation-ux-20260524 @ d1ce6144
+```
+
+Post-repair verification completed successfully with:
+
+```text
+git status --short --branch --untracked-files=no
+git diff --name-status -- .
+git ls-files -m
+```
+
+The preserved old tree is still available for forensic recovery of the
+local-only `14d39ec2` branch, but it should not be treated as a healthy working
+checkout.
 
 ## Discovered Local Repositories
 
@@ -43,7 +62,7 @@ human repairs or excludes it.
 | `/Users/simongonzalezdecruz/workspaces/liminal/.claude/worktrees/rescue-sing-20260524` | `codex/rescue-sing-into-current-20260524` | `35e4164c` | `origin=https://github.com/simongonzalezdc/liminal.git` | Contains the Mac mini cadence fix and pre-teleprompter Sing rescue state. |
 | `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal` | `main` | `1acd69e7` | `origin=https://github.com/KyaniteLabs/liminal.git`, `personal=https://github.com/simongonzalezdc/liminal.git` | No tracked `packages/sing` or `packages/audio-core` files found by the bounded scan. |
 | `/Users/simongonzalezdecruz/workspaces/personal/liminal-sites` | `main` | `988052b35` | `origin=https://github.com/Pushing-Squares/liminal-sites.git`, `upstream=https://github.com/KyaniteLabs/liminal.git` | No Sing/audio files found. This is the Sites sibling work surface. |
-| `/Users/simongonzalezdecruz/Desktop/OMC/liminal` | `repo-pipeline-fix-20260420-liminal` | `14d39ec2` | `origin=https://github.com/KyaniteLabs/liminal.git` | No Sing/audio files were returned before the bounded listing finished. Full status remains unsafe because this path stalled earlier. |
+| `/Users/simongonzalezdecruz/Desktop/OMC/liminal` | `codex/studio-conversation-ux-20260524` | `d1ce6144` | `origin=https://github.com/KyaniteLabs/liminal.git` | Rebuilt from the verified current branch after the old Desktop checkout stalled. `git status`, `git diff --name-status`, and `git ls-files -m` now complete. The old local-only `repo-pipeline-fix-20260420-liminal @ 14d39ec2` tree is preserved at `/Users/simongonzalezdecruz/Desktop/OMC/liminal.broken-working-tree-20260524-201253`. |
 | `/Users/simongonzalezdecruz/actions-runner/simongonzalezdc-liminal/_work/liminal/liminal` | detached HEAD | `b9dd856` | `origin=https://github.com/simongonzalezdc/liminal` | CI runner checkout with the older Sing/audio package surface. |
 
 Additional candidate directories found by local path search included:
@@ -60,7 +79,7 @@ Additional candidate directories found by local path search included:
 ```
 
 Those paths were not all promoted to verified repo rows in this branch because
-the audit was deliberately bounded after the stuck OMC checkout.
+the package audit was deliberately bounded before the later OMC repair.
 
 The timeout-bounded follow-up found no usable git checkout at the other listed
 candidate paths in this run.
@@ -116,9 +135,10 @@ docs/audits/sing-lfm2_5-mlx-local-benchmark-2026-05-24.*
 Do not split or rename Instrument/Sing yet.
 
 Keep `packages/sing` and `packages/audio-core` inside the current Liminal repo
-until the stalled OMC checkout and the remaining candidate paths are audited
-cleanly. A future `KyaniteLabs/liminal-instrument` repo may still be justified,
-but only as a full-history carveout after the machine audit is complete.
+until the preserved old OMC tree and any remaining candidate paths are
+classified cleanly. A future `KyaniteLabs/liminal-instrument` repo may still be
+justified, but only as a full-history carveout after the machine audit is
+complete.
 
 The consolidation proposal for the current branch is:
 

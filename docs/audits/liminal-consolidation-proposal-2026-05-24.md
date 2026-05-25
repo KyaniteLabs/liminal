@@ -26,14 +26,18 @@ the existing workspace:
 - camera/movement prototype landed inside `packages/sing`
 - shared `packages/audio-core` remains usable by Studio and Sing
 
-The full local-machine audit still has one known-stuck checkout:
+The local-machine audit found one broken Desktop checkout:
 
 ```text
 /Users/simongonzalezdecruz/Desktop/OMC/liminal
 ```
 
-Because that checkout times out on ordinary status/diff operations, a full
-history carveout would be premature.
+That live path has now been repaired by preserving the broken tree at
+`/Users/simongonzalezdecruz/Desktop/OMC/liminal.broken-working-tree-20260524-201253`
+and rebuilding `/Users/simongonzalezdecruz/Desktop/OMC/liminal` from the
+verified current branch. The preserved old tree still contains the local-only
+`repo-pipeline-fix-20260420-liminal @ 14d39ec2` state, so a full history
+carveout remains premature until that backup is classified.
 
 ## Pros
 
@@ -51,8 +55,9 @@ history carveout would be premature.
 
 ## Migration Risk
 
-Main risk is history loss or duplicated work if a split happens before the OMC
-checkout and remaining local candidates are fully classified.
+Main risk is history loss or duplicated work if a split happens before the
+preserved old OMC tree, Mac mini evidence, and remaining local candidates are
+fully classified.
 
 Secondary risk is product-boundary drift. The ADRs in this branch are the guard:
 
@@ -89,7 +94,8 @@ docs/contracts/liminal-shared-artifact-contracts.md
 
 If a split becomes necessary later:
 
-1. Finish timeout-bounded audit of every local candidate checkout.
+1. Finish timeout-bounded audit of every local candidate checkout, including the
+   preserved old OMC tree.
 2. Fetch remote refs without merging.
 3. Identify local-only commits touching the carveout roots.
 4. Use a history-preserving split tool such as `git filter-repo` in a temporary
@@ -113,4 +119,4 @@ After any future split:
 ## Current Decision
 
 Keep building in `packages/sing` inside this branch. Revisit the repo split only
-after the stuck OMC checkout is repaired or explicitly excluded by a human.
+after the preserved old OMC tree and remaining machine evidence are classified.

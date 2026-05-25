@@ -100,7 +100,10 @@ export function parseArgs(args: string[]): CLIAction {
   return { command: 'status' };
 }
 
-function showCompostCliInfoByDefault(): () => void {
+function showCompostCliInfoByDefault(action: CLIAction): () => void {
+  if (action.command === 'export-finetuning') {
+    return () => {};
+  }
   const previousLevel = process.env.LIMINAL_LOG_LEVEL;
   if (previousLevel === undefined) {
     process.env.LIMINAL_LOG_LEVEL = 'info';
@@ -113,7 +116,7 @@ function showCompostCliInfoByDefault(): () => void {
 
 /** Execute a CLI action against the CompostMill. */
 export async function execute(action: CLIAction, mill: CompostMill): Promise<void> {
-  const restoreLogLevel = showCompostCliInfoByDefault();
+  const restoreLogLevel = showCompostCliInfoByDefault(action);
   try {
     switch (action.command) {
     case 'add':

@@ -82,7 +82,7 @@ export class KineticGenerator extends TierBasedGenerator {
     // Keep the operator path visible while preserving the provider failure in receipts.
     return {
       code: this.buildRecoveryKineticArtifact(prompt),
-      success: true,
+      success: false,
       error: `Recovered with deterministic CSS kinetic scaffold: ${reason}`,
     };
   }

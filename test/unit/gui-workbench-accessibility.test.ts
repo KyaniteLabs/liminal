@@ -3,6 +3,7 @@ import fs from 'node:fs';
 
 const shell = fs.readFileSync('gui/src/components/WorkbenchShell.tsx', 'utf8');
 const app = fs.readFileSync('gui/src/App.tsx', 'utf8');
+const studioConversation = fs.readFileSync('gui/src/gui/studioConversation.ts', 'utf8');
 const css = fs.readFileSync('gui/src/index.css', 'utf8');
 const bridgeHook = fs.readFileSync('gui/src/gui/useTuiBridgeSession.ts', 'utf8');
 
@@ -105,7 +106,8 @@ describe('GUI workbench accessibility contract', () => {
   });
 
   it('passes the visible loop timeout into every Studio Generate submission', () => {
-    expect(app.match(/buildWorkbenchRunOptionsForMode\([^)]*timeoutMinutes/g)?.length).toBe(6);
+    const studioSubmissionSources = `${app}\n${studioConversation}`;
+    expect(studioSubmissionSources.match(/buildWorkbenchRunOptionsForMode\([^)]*timeoutMinutes/g)?.length).toBe(6);
     expect(app).not.toContain('buildWorkbenchRunOptionsForMode(createExecutionMode, createMaxIterations, effectiveCreateMode),');
     expect(app).not.toContain("buildWorkbenchRunOptionsForMode('draft', createMaxIterations, retryMode),");
   });

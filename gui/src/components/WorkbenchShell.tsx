@@ -25,6 +25,7 @@ interface WorkbenchShellProps {
   leftSlot: React.ReactNode;
   recourseSlot?: React.ReactNode;
   recourseState?: 'failed' | 'stopped';
+  conversationNotice?: string | null;
   children?: React.ReactNode;
 }
 
@@ -52,6 +53,7 @@ export function WorkbenchShell({
   leftSlot,
   recourseSlot,
   recourseState,
+  conversationNotice,
   children,
 }: WorkbenchShellProps) {
   const primaryMode = modes.find((mode) => mode.id === 'generate') ?? modes[0];
@@ -278,6 +280,9 @@ export function WorkbenchShell({
             placeholder="Create a p5.js sketch of luminous blue-green particles orbiting a dark center…"
             aria-describedby="workbench-run-status"
           />
+          {conversationNotice ? (
+            <p className="liminal-composer-notice" role="status">{conversationNotice}</p>
+          ) : null}
           <div className="liminal-composer-actions">
             {audioSlot ? (
               <details className="liminal-composer-options">

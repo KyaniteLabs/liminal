@@ -43,6 +43,8 @@ jobs:
         run: pnpm check:liminal-contracts
       - run: pnpm lint
       - run: pnpm build
+      - name: Sing package build
+        run: pnpm sing:build
       - name: Prompt surface audit
         run: npx tsx scripts/ci/check-prompt-surface.ts
       - name: Route performance proof

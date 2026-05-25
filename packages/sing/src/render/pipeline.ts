@@ -9,6 +9,10 @@ export interface SingUniformFrame {
   voiced: number;
   confidence: number;
   elapsedSeconds: number;
+  movementEnergy?: number;
+  movementX?: number;
+  movementY?: number;
+  distanceToCamera?: number;
 }
 
 export interface SingRenderer {
@@ -25,6 +29,10 @@ const DEFAULT_UNIFORM_VALUES = {
   u_onset: (frame: SingUniformFrame) => frame.onset,
   u_voiced: (frame: SingUniformFrame) => frame.voiced,
   u_confidence: (frame: SingUniformFrame) => frame.confidence,
+  u_movement: (frame: SingUniformFrame) => frame.movementEnergy ?? 0,
+  u_movement_x: (frame: SingUniformFrame) => frame.movementX ?? 0.5,
+  u_movement_y: (frame: SingUniformFrame) => frame.movementY ?? 0.5,
+  u_distance: (frame: SingUniformFrame) => frame.distanceToCamera ?? 0,
 } as const;
 
 const DEFAULT_MAPPING_SMOOTHING: Record<SingVoiceFeature, number> = {

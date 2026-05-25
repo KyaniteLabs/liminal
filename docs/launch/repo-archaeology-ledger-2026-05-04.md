@@ -17,11 +17,11 @@ Files that contain valuable historical design hypotheses or roadmap records but 
   > This file contains valuable historical context or design records but may not match current production configurations. Treat as a design hypothesis, not current truth.
   ```
 * **Reconciled Files:**
-  * [docs/internal/ADVERSARIAL_REVIEW_AND_ROADMAP.md](file:///Users/simongonzalezdecruz/workspaces/liminal/.claude/worktrees/repo-archaeology-455/docs/internal/ADVERSARIAL_REVIEW_AND_ROADMAP.md)
-  * [docs/internal/LOOSE_ENDS.md](file:///Users/simongonzalezdecruz/workspaces/liminal/.claude/worktrees/repo-archaeology-455/docs/internal/LOOSE_ENDS.md)
-  * [docs/MASTER_PLAN.md](file:///Users/simongonzalezdecruz/workspaces/liminal/.claude/worktrees/repo-archaeology-455/docs/MASTER_PLAN.md)
-  * [docs/ARCHITECTURE_AND_PHILOSOPHY.md](file:///Users/simongonzalezdecruz/workspaces/liminal/.claude/worktrees/repo-archaeology-455/docs/ARCHITECTURE_AND_PHILOSOPHY.md)
-  * [docs/orphaned-module-catalog.md](file:///Users/simongonzalezdecruz/workspaces/liminal/.claude/worktrees/repo-archaeology-455/docs/orphaned-module-catalog.md)
+  * [docs/internal/ADVERSARIAL_REVIEW_AND_ROADMAP.md](../internal/ADVERSARIAL_REVIEW_AND_ROADMAP.md)
+  * [docs/internal/LOOSE_ENDS.md](../internal/LOOSE_ENDS.md)
+  * [docs/MASTER_PLAN.md](../MASTER_PLAN.md)
+  * [docs/ARCHITECTURE_AND_PHILOSOPHY.md](../ARCHITECTURE_AND_PHILOSOPHY.md)
+  * [docs/orphaned-module-catalog.md](../orphaned-module-catalog.md)
 
 ### Category B: Outdated / Historical Only
 Files representing point-in-time launch checklists, audits, or pre-flight snapshots that are purely historical and should not be used as operational references.
@@ -32,10 +32,10 @@ Files representing point-in-time launch checklists, audits, or pre-flight snapsh
   > This is a historical snapshot or obsolete record. Do not reference as current system state.
   ```
 * **Reconciled Files:**
-  * [docs/ARCHITECTURE_QUICKREF.md](file:///Users/simongonzalezdecruz/workspaces/liminal/.claude/worktrees/repo-archaeology-455/docs/ARCHITECTURE_QUICKREF.md)
-  * [docs/READY_TO_LAUNCH.md](file:///Users/simongonzalezdecruz/workspaces/liminal/.claude/worktrees/repo-archaeology-455/docs/READY_TO_LAUNCH.md)
-  * [docs/VERIFICATION_ALL_SYSTEMS_ONLINE.md](file:///Users/simongonzalezdecruz/workspaces/liminal/.claude/worktrees/repo-archaeology-455/docs/VERIFICATION_ALL_SYSTEMS_ONLINE.md)
-  * [docs/COMPREHENSIVE_AUDIT_REPORT.md](file:///Users/simongonzalezdecruz/workspaces/liminal/.claude/worktrees/repo-archaeology-455/docs/COMPREHENSIVE_AUDIT_REPORT.md)
+  * [docs/ARCHITECTURE_QUICKREF.md](../ARCHITECTURE_QUICKREF.md)
+  * [docs/READY_TO_LAUNCH.md](../READY_TO_LAUNCH.md)
+  * [docs/VERIFICATION_ALL_SYSTEMS_ONLINE.md](../VERIFICATION_ALL_SYSTEMS_ONLINE.md)
+  * [docs/COMPREHENSIVE_AUDIT_REPORT.md](../COMPREHENSIVE_AUDIT_REPORT.md)
 
 ---
 

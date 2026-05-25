@@ -68,7 +68,7 @@ describe('TUI Integration v2.0', () => {
       { key: 'q', action: 'exit' },
       { key: '1', action: 'toggle-player-piano' },
     ];
-    
+
     expect(shortcuts.length).toBe(2);
     expect(shortcuts[0].key).toBe('q');
     expect(shortcuts[1].key).toBe('1');
@@ -96,14 +96,14 @@ describe('TUI Integration v2.0', () => {
   test('component width distribution', () => {
     // Layout: LogsPanel (25%) + PlayerPiano (25%) + X-Ray (25%) + Gallery (25%)
     // Or responsive: adjusts based on terminal size
-    
+
     const components = [
       { name: 'LogsPanel', width: '25%' },
       { name: 'PlayerPiano', width: '25%' },
       { name: 'XRayPanel', width: '25%' },
       { name: 'GalleryPanel', width: '25%' },
     ];
-    
+
     const totalWidth = components.reduce((sum, comp) => sum + parseInt(comp.width), 0);
     expect(totalWidth).toBe(100);
   });
@@ -111,7 +111,7 @@ describe('TUI Integration v2.0', () => {
   test('PlayerPiano toggle works', () => {
     let isPlaying = false;
     const toggle = () => { isPlaying = !isPlaying; };
-    
+
     expect(isPlaying).toBe(false);
     toggle();
     expect(isPlaying).toBe(true);

@@ -44,10 +44,10 @@ describe('CompostMill Promise Characterization', () => {
   describe('statusAsync() promise behavior', () => {
     it('should return a Promise that resolves to MillStatus', async () => {
       const result = mill.statusAsync();
-      
+
       // Verify it returns a Promise
       expect(result).toBeInstanceOf(Promise);
-      
+
       // Verify it resolves to expected shape
       const status = await result;
       expect(status).toHaveProperty('heapSize');
@@ -67,14 +67,14 @@ describe('CompostMill Promise Characterization', () => {
       await mill.add([file1, file2]);
 
       const status = await mill.statusAsync();
-      
+
       // This verifies the .then(f => f.length) behavior is working
       expect(status.heapFileCount).toBe(2);
     });
 
     it('should handle empty heap correctly', async () => {
       const status = await mill.statusAsync();
-      
+
       // When heap is empty, .then(f => f.length) should return 0
       expect(status.heapFileCount).toBe(0);
       expect(status.heapSize).toBe(0);
@@ -85,7 +85,7 @@ describe('CompostMill Promise Characterization', () => {
       const startTime = Date.now();
       const status = await mill.statusAsync();
       const duration = Date.now() - startTime;
-      
+
       // Should resolve quickly (parallel, not sequential)
       expect(duration).toBeLessThan(100);
       expect(status.heapSize).toBe(0);
@@ -96,7 +96,7 @@ describe('CompostMill Promise Characterization', () => {
     it('should maintain consistent state between calls', async () => {
       const status1 = await mill.statusAsync();
       const status2 = await mill.statusAsync();
-      
+
       // Multiple calls should return consistent results for same state
       expect(status1.heapFileCount).toBe(status2.heapFileCount);
       expect(status1.seedCount).toBe(status2.seedCount);
@@ -108,10 +108,10 @@ describe('CompostMill Promise Characterization', () => {
     it('should handle non-existent files gracefully via .catch() pattern', async () => {
       // Adding a non-existent file should not throw
       const nonExistentPath = path.join(tmpDir, 'does-not-exist.txt');
-      
+
       // Should not throw
       await expect(mill.add([nonExistentPath])).resolves.not.toThrow();
-      
+
       // Heap should remain empty
       const files = await mill.getHeapFiles();
       expect(files).toHaveLength(0);

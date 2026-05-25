@@ -1,7 +1,7 @@
 /**
  * Centralized HTML wrapping utility for Liminal outputs
  * Routes to domain-specific wrappers
- * 
+ *
  * Supported domains:
  * - p5: p5.js sketches with canvas (P5Wrapper)
  * - shader: GLSL fragment shaders (GenericWrapper)
@@ -91,17 +91,17 @@ export class HTMLWrapper {
    */
   static isAlreadyWrapped(code: string): boolean {
     if (!code || typeof code !== 'string') return false;
-    
+
     const cleaned = this.stripLLMContaminants(code).trim();
-    
+
     const hasDoctype = /^<!DOCTYPE\s+html/i.test(cleaned) ||
                        /^<!doctype\s+html/i.test(cleaned);
     const hasHtmlTag = /^<html/i.test(cleaned);
     const hasHtmlEnd = /<\/html>\s*$/i.test(cleaned);
-    
+
     return (hasDoctype || hasHtmlTag) && hasHtmlEnd;
   }
-  
+
   /**
    * Strip common LLM output contaminants that break HTML detection
    */
@@ -125,8 +125,8 @@ export class HTMLWrapper {
       if (code.includes('hydra-synth') || code.includes('new Hydra(')) return 'hydra';
       if (/data-composition-id/i.test(code) && (/gsap\.(?:timeline|from|to)\s*\(/.test(code) || /window\.__timelines/.test(code))) return 'hyperframes';
       if (code.includes('tone@') || /\bTone\./.test(code) || /from\s+['"]tone['"]/.test(code)) return 'tone';
-      if (code.includes('import * as THREE') || 
-          code.includes('from "three"') || 
+      if (code.includes('import * as THREE') ||
+          code.includes('from "three"') ||
           code.includes("from 'three'") ||
           /<script\s+type="importmap"[^>]*>[\s\S]*?"three"[\s\S]*?<\/script>/i.test(code)) {
         return 'three';

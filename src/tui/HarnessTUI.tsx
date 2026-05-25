@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
  * Harness TUI - Terminal UI with Natural Language Interface
- * 
+ *
  * Claude Code style: No prefixes, just type naturally
  * "Fix the validation" → Agent mode
- * "What's the status?" → Command mode  
+ * "What's the status?" → Command mode
  * "Tell me about p5.js" → Chat mode
  */
 
@@ -15,8 +15,8 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { Logger } from '../utils/Logger.js';
 import clipboard from 'clipboardy';
-import { 
-  metaHarness, 
+import {
+  metaHarness,
   createHarnessAgent,
   createLLMModeAgent,
   type AgentTask,
@@ -64,11 +64,11 @@ const StatusBar = ({ status, message, activity, modelName, providerLabel }: { st
     validating: '[CHECK]',
     retrying: '[RETRY]',
   }[activity.phase];
-  
-  const progress = activity.step && activity.totalSteps 
-    ? `[${activity.step}/${activity.totalSteps}]` 
+
+  const progress = activity.step && activity.totalSteps
+    ? `[${activity.step}/${activity.totalSteps}]`
     : '';
-  
+
   const tool = activity.currentTool ? `→ ${activity.currentTool}` : '';
   const thinking = activity.thinkingChars ? `(${activity.thinkingChars} chars)` : '';
 
@@ -162,8 +162,8 @@ const DebugPanel = ({ logs, activity, debuggerActive, logFilePath }: {
   </Box>
 );
 
-const Input = ({ value, onChange, onSubmit, onCopy, onToggleDebug }: { 
-  value: string; 
+const Input = ({ value, onChange, onSubmit, onCopy, onToggleDebug }: {
+  value: string;
   onChange: (v: string) => void;
   onSubmit: () => void;
   onCopy?: () => void;
@@ -223,17 +223,17 @@ function App() {
   const [shouldExit, setShouldExit] = useState(false);
   const [modelName, setModelName] = useState('');
   const [providerLabel, setProviderLabel] = useState('');
-  
+
   // Use ref for latest state in callbacks
   const interfaceRef = useRef<NaturalInterface | null>(null);
   const debugLogRef = useRef<string[]>([]);
   const streamingRef = useRef({ content: '' });
-  
+
   // Helper to update activity with timestamp
   const updateActivity = useCallback((update: Partial<ActivityState>) => {
     setActivity(prev => ({ ...prev, ...update, lastActivity: Date.now() }));
   }, []);
-  
+
   // Add to debug log (ref + state for performance, also feeds TuiDebugger)
   const addDebug = useCallback((msg: string) => {
     const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
@@ -246,20 +246,20 @@ function App() {
   // Init
   useEffect(() => {
     let mounted = true;
-    
+
     const init = async () => {
       try {
         await metaHarness.initialize();
         if (!mounted) return;
-        
+
         setStatus(metaHarness.getStatus());
-        
+
         // DEV MODE: Use harness LLM (MiniMax) for BOTH chat and harness
         // This gives better English grammar than local qwen models
         const harnessLLMClient = metaHarness.getLLMClient();
-        
+
         Logger.info('TUI', 'DEV MODE: Using harness LLM for chat');
-        
+
         if (harnessLLMClient) {
           const llmCfg = harnessLLMClient.getConfig();
           setModelName(llmCfg.model);
@@ -269,7 +269,7 @@ function App() {
           setProviderLabel(detected);
           const harnessAgent = createHarnessAgent(harnessLLMClient);
           const llmAgent = createLLMModeAgent(harnessLLMClient);
-          
+
           const ni = new NaturalInterface({
             harnessAgent,
             llmAgent,
@@ -280,10 +280,10 @@ function App() {
               setHistory(h => [...h, { type: 'system', content: msg }]);
             },
           });
-          
+
           setNaturalInterface(ni);
           interfaceRef.current = ni;
-          
+
           // Load tasks
           await loadTasks(ni);
         } else {
@@ -295,9 +295,9 @@ function App() {
         setHistory(h => [...h, { type: 'error', content: `Initialization error: ${err instanceof Error ? err.message : String(err)}` }]);
       }
     };
-    
+
     void init();
-    
+
     return () => { mounted = false; };
   }, []);
 
@@ -339,9 +339,9 @@ function App() {
 
     const ni = interfaceRef.current;
     if (!ni) {
-      setHistory(h => [...h, { 
-        type: 'error', 
-        content: 'System not initialized. Check LLM configuration.' 
+      setHistory(h => [...h, {
+        type: 'error',
+        content: 'System not initialized. Check LLM configuration.'
       }]);
       return;
     }
@@ -400,7 +400,7 @@ function App() {
       const streamingContent = streamingRef.current.content;
       addDebug(`LLM: Stream complete in ${Date.now() - startTime}ms, ${streamingContent.length} chars`);
       addDebug(`RESULT: type=${result.type}, responseLen=${result.response?.length || 0}`);
-      
+
       // Finalize the message - mark as not streaming
       // Use streamingContent if result.response is empty (streaming mode)
       const finalContent = streamingContent || result.response || '(no response)';
@@ -408,14 +408,14 @@ function App() {
       setHistory(h => {
         const lastMsg = h[h.length - 1];
         if (lastMsg && lastMsg.streaming) {
-          return [...h.slice(0, -1), { 
-            type: displayType, 
+          return [...h.slice(0, -1), {
+            type: displayType,
             content: finalContent,
           }];
         }
         return [...h, { type: displayType, content: finalContent }];
       });
-      
+
       if (!result.shouldContinue) {
         setShouldExit(true);
       }
@@ -427,9 +427,9 @@ function App() {
       setStatusMsg('Error');
       const errorMsg = err instanceof Error ? err.message : String(err);
       addDebug(`ERROR: ${errorMsg}`);
-      setHistory(h => [...h, { 
-        type: 'error', 
-        content: errorMsg 
+      setHistory(h => [...h, {
+        type: 'error',
+        content: errorMsg
       }]);
     }
   }, [input, updateActivity, addDebug]);
@@ -451,29 +451,29 @@ function App() {
       process.stderr.write('\n👋 Interrupted. Goodbye!\n');
       process.exit(0);
     };
-    
+
     const handleSIGTERM = () => {
       audioPlayer.stop();
       process.exit(0);
     };
-    
+
     const handleUncaughtException = (err: Error) => {
       process.stderr.write(`\n💥 Fatal error: ${err.message}\n`);
       audioPlayer.stop();
       process.exit(1);
     };
-    
+
     const handleUnhandledRejection = (reason: unknown) => {
       process.stderr.write(`\n⚠️ Unhandled rejection: ${reason}\n`);
       // Don't exit, just log
     };
-    
+
     // Register handlers
     process.on('SIGINT', handleSIGINT);
     process.on('SIGTERM', handleSIGTERM);
     process.on('uncaughtException', handleUncaughtException);
     process.on('unhandledRejection', handleUnhandledRejection);
-    
+
     return () => {
       // Cleanup handlers on unmount
       process.off('SIGINT', handleSIGINT);
@@ -525,10 +525,10 @@ function App() {
           />
         )}
       </Box>
-      <Input 
-        value={input} 
-        onChange={setInput} 
-        onSubmit={() => { void handleSubmit(); }} 
+      <Input
+        value={input}
+        onChange={setInput}
+        onSubmit={() => { void handleSubmit(); }}
         onCopy={() => { void handleCopy(); }}
         onToggleDebug={handleToggleDebug}
       />

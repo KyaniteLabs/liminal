@@ -1,16 +1,16 @@
 /**
  * TextGenerativeGenerator - Experimental text-based generative art
- * 
+ *
  * Unlike ASCIIArtGenerator which uses character density for visual patterns,
  * TextGenerativeGenerator produces freeform text: concrete poetry, word art,
  * experimental typography, and semantic visual compositions.
- * 
+ *
  * Key differences from ASCIIArtGenerator:
  * - No fixed grid (freeform output)
  * - No character restrictions (any text valid)
  * - Focus on semantic/playful creativity vs visual density
  * - Optimized for small/fast models (1.2B+)
- * 
+ *
  * @example
  *   Input: "dripping water"
  *   Output:
@@ -22,7 +22,7 @@
  *          i
  *           n
  *            g
- * 
+ *
  * @example
  *   Input: "neon city in words"
  *   Output:
@@ -31,7 +31,7 @@
  *     ║    C  I  T  Y    ║
  *     ║      G  L  O  W  ║
  *     ╚══════════════════╝
- * 
+ *
  * @since 2.2.0
  * @author Liminal Team
  */
@@ -39,7 +39,7 @@
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 
 /** Available text generative forms */
-export type TextGenForm = 
+export type TextGenForm =
   | 'concrete'      // Visual poetry using word arrangement
   | 'cascade'       // Words flow/drip down the page
   | 'radial'        // Words radiate from center
@@ -49,7 +49,7 @@ export type TextGenForm =
   | 'freeform';     // No constraints, pure experimentation
 
 /** Style modifiers for text generation */
-export type TextGenStyle = 
+export type TextGenStyle =
   | 'minimal'       // Sparse, lots of whitespace
   | 'dense'         // Packed, overlapping
   | 'chaotic'       // Random, energetic
@@ -77,7 +77,7 @@ export interface TextGenOptions extends TierBasedGeneratorOptions {
 
 /**
  * Generator for experimental text-based art
- * 
+ *
  * Optimized for speed over complexity - works well with small models (1.2B+)
  * due to the low token count of text outputs compared to code.
  */
@@ -88,11 +88,11 @@ export class TextGenerativeGenerator extends TierBasedGenerator {
 
   /**
    * Generate text-based art from a prompt
-   * 
+   *
    * @param prompt - The creative concept (e.g., "dripping water", "neon anxiety")
    * @param options - Generation options
    * @returns Formatted text composition
-   * 
+   *
    * @throws {GenerationError} If LLM returns invalid or empty output
    */
   async generate(prompt: string, options?: TextGenOptions): Promise<string> {
@@ -116,7 +116,7 @@ export class TextGenerativeGenerator extends TierBasedGenerator {
 
   /**
    * Validate that output is appropriate text content
-   * 
+   *
    * Unlike ASCIIArtGenerator, we don't restrict characters.
    * We only check that it's not empty and not code.
    */
@@ -158,7 +158,7 @@ export class TextGenerativeGenerator extends TierBasedGenerator {
 
   /**
    * Format and clean the generated text
-   * 
+   *
    * - Removes code block markers
    * - Applies line/width constraints
    * - Handles Unicode vs ASCII preference
@@ -194,7 +194,7 @@ export class TextGenerativeGenerator extends TierBasedGenerator {
 
   /**
    * Get default options based on model tier
-   * 
+   *
    * Small models get simpler constraints to avoid confusion
    */
   protected getDefaultOptions(): Partial<TextGenOptions> {
@@ -207,7 +207,7 @@ export class TextGenerativeGenerator extends TierBasedGenerator {
         unicode: false,
       };
     }
-    
+
     if (this.tier === 'local') {
       return {
         form: 'freeform',

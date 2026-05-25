@@ -150,7 +150,7 @@ export class GenericWrapper {
       /\.fast\s*\(/,
       /\.slow\s*\(/,
     ];
-    return strudelPatterns.some(p => p.test(code)) && 
+    return strudelPatterns.some(p => p.test(code)) &&
            !code.includes('function setup()') &&
            !code.includes('void main()');
   }
@@ -211,7 +211,7 @@ export class GenericWrapper {
     const hasAsciiArtDensity = artChars >= 8 && artChars / visibleChars > 0.35;
     const noJSFunctions = !/\b(function|const|let|var|import|export)\b/.test(code);
     const noHTMLTags = !/<[a-z][\s\S]*>/i.test(code);
-    
+
     return hasMultipleLines && hasAsciiArtDensity && noJSFunctions && noHTMLTags;
   }
 
@@ -220,7 +220,7 @@ export class GenericWrapper {
    */
   static wrap(code: string, options: GenericWrapOptions): string {
     const { domain } = options;
-    
+
     switch (domain) {
       case 'strudel':
         return this.wrapStrudel(code, options.autoPlay ?? false);
@@ -294,7 +294,7 @@ ${safeCommentCode}
 
   private static wrapHydra(code: string, resolution: { width: number; height: number }): string {
     const safeCode = code.replace(/`/g, '\\`');
-    
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -304,9 +304,9 @@ ${safeCommentCode}
     <title>Hydra Visual Synthesizer</title>
     <script src="${HYDRA_CDN}"></script>
     <style>
-        body { 
-            margin: 0; 
-            background: #000; 
+        body {
+            margin: 0;
+            background: #000;
             overflow: hidden;
             display: flex;
             justify-content: center;
@@ -338,21 +338,21 @@ ${safeCommentCode}
     <script>
         const canvas = document.getElementById('hydra-canvas');
         const errorDiv = document.getElementById('error');
-        
+
         try {
             canvas.width = ${resolution.width};
             canvas.height = ${resolution.height};
-            
-            const hydra = new Hydra({ 
+
+            const hydra = new Hydra({
                 canvas: canvas,
                 detectAudio: false,
                 enableStreamCapture: false
             });
             const go = () => {};
             const o = typeof o0 !== 'undefined' ? o0 : undefined;
-            
+
             ${safeCode}
-            
+
         } catch (err) {
             console.error('Hydra error:', err);
             errorDiv.style.display = 'block';
@@ -713,7 +713,7 @@ ${safeCommentCode}
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
-    
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -737,7 +737,7 @@ ${safeCommentCode}
             text-align: center;
             width: min(980px, 96vw);
         }
-        pre { 
+        pre {
             font-size: clamp(18px, 2.2vw, 34px);
             line-height: 1.2;
             background: linear-gradient(135deg, rgba(0,0,0,.95), rgba(15,23,42,.86));
@@ -775,7 +775,7 @@ ${safeCommentCode}
 
     const safeCode = cleanedCode.replace(/`/g, '\\`');
     const bpm = this.extractToneBpm(cleanedCode) ?? 120;
-    
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -785,9 +785,9 @@ ${safeCommentCode}
     <title>Tone.js Audio Synthesizer</title>
     <script src="${TONE_CDN}"></script>
     <style>
-        body { 
-            margin: 0; 
-            background: #0a0a0f; 
+        body {
+            margin: 0;
+            background: #0a0a0f;
             color: #e2e8f0;
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             display: flex;
@@ -907,7 +907,7 @@ ${safeCommentCode}
         } finally {
             syncLiminalToneTempo();
         }
-        
+
         playBtn.addEventListener('click', async () => {
             await Tone.start();
             syncLiminalToneTempo();
@@ -919,7 +919,7 @@ ${safeCommentCode}
                 : '🔊 Playing';
             if (typeof play === 'function') play();
         });
-        
+
         stopBtn.addEventListener('click', () => {
             isPlaying = false;
             statusEl.className = 'ready';

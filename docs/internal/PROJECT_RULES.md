@@ -1,6 +1,6 @@
 # Liminal Project Rules & Memory
 
-**Last Updated:** April 1, 2026  
+**Last Updated:** April 1, 2026
 **Status:** ACTIVE - These rules govern all future work
 
 ---
@@ -242,11 +242,11 @@ docs: Updated features.html and dashboard.html
 - **NO competing HTML documentation sites allowed**
 
 ### Forbidden Actions
-❌ Creating new `dashboard.html` anywhere else  
-❌ Creating new `landing.html` anywhere else  
-❌ Creating new documentation HTML sites  
-❌ Creating "status pages" outside of docs/  
-❌ Creating "project overview" HTML files  
+❌ Creating new `dashboard.html` anywhere else
+❌ Creating new `landing.html` anywhere else
+❌ Creating new documentation HTML sites
+❌ Creating "status pages" outside of docs/
+❌ Creating "project overview" HTML files
 
 ### If You See Another Agent Trying to Create:
 1. **STOP THEM IMMEDIATELY**

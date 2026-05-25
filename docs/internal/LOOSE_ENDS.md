@@ -1,8 +1,8 @@
 # Loose Ends Audit - Liminal Repository
 
-**Generated:** 2026-04-02  
-**Branch:** narrative/liminal-archaeology  
-**Commit:** 20c68ff  
+**Generated:** 2026-04-02
+**Branch:** narrative/liminal-archaeology
+**Commit:** 20c68ff
 
 ---
 

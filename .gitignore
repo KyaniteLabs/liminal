@@ -135,14 +135,8 @@ audit-*.png
 # oh-my-claudecode runtime state
 .omc/
 
-# oh-my-codex runtime state. Proof receipts and durable plans are versioned.
-.omx/*
-!.omx/context/
-!.omx/context/**
-!.omx/plans/
-!.omx/plans/**
-!.omx/proof/
-!.omx/proof/**
+# oh-my-codex runtime state
+.omx/
 
 # Agent session artifacts
 ISSUE-REPORT.md

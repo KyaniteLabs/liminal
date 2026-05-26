@@ -3,6 +3,8 @@
 [![CI](https://github.com/KyaniteLabs/liminal/actions/workflows/ci.yml/badge.svg)](https://github.com/KyaniteLabs/liminal/actions/workflows/ci.yml)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](./LICENSE)
 
+[Public landing page](https://kyanitelabs.github.io/liminal/) | [GitHub repository](https://github.com/KyaniteLabs/liminal) | [AI discovery file](llms.txt)
+
 > Codex for creative coding: a chat-first Studio that helps you turn natural language, sound, and iteration into sketches, shaders, music, video compositions, and other creative-code artifacts.
 >
 > **Finish-line contract:** Liminal is a creative cognitive system, not a narrowed proof wedge. See [docs/FINISH_LINE.md](docs/FINISH_LINE.md) for the domain, cognitive-organ, self-improvement, and model-assimilation contract.
@@ -17,6 +19,8 @@ Liminal Studio is the artist-facing workbench: clean chat on the left, live prev
 ## Public Discovery
 
 **Liminal** is a model-agnostic creative coding studio for AI-assisted art, music, shaders, sketches, video compositions, and iterative creative systems. It combines a chat-first Studio, CLI, TUI, multi-agent critique, taste learning, creative-code generation, and self-improvement loops.
+
+**Public URL:** [kyanitelabs.github.io/liminal](https://kyanitelabs.github.io/liminal/) is the front door for search engines, AI assistants, and people evaluating the project before cloning it.
 
 **AI discovery:** [`llms.txt`](llms.txt) provides a compact project summary for AI assistants and search crawlers.
 

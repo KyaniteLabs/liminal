@@ -2,6 +2,9 @@
 
 > Model-agnostic creative coding studio and agentic art workbench.
 
+Homepage: https://kyanitelabs.github.io/liminal/
+Repository: https://github.com/KyaniteLabs/liminal
+
 Liminal turns natural-language prompts into creative-code artifacts across p5.js, GLSL, Three.js, SVG, Hydra, Strudel, Tone.js, Revideo, ASCII, kinetic text, and other creative domains. It includes a chat-first Studio, CLI, TUI, multi-agent critique, taste learning, compost/dreaming systems, and self-improvement workflows.
 
 ## Use cases

@@ -1,7 +1,9 @@
 # ADR 0003: Liminal Consolidation Baseline
 
 Date: 2026-05-25
-Status: Accepted for consolidation Phase 0
+Status: Historical ADR; superseded for current routing by the 2026-05-26 KyaniteLabs public-source-of-truth consolidation.
+
+> Current state: `KyaniteLabs/liminal` is the public canonical remote. The personal and duplicate-machine references below are preserved as historical consolidation evidence, not live routing guidance.
 
 ## Context
 

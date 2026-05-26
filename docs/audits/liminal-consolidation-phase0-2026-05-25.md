@@ -1,5 +1,7 @@
 # Liminal Consolidation Phase 0 Audit
 
+> Historical note (2026-05-26): This file is a point-in-time audit from before the final KyaniteLabs public consolidation. Current live routing is `KyaniteLabs/liminal` for core and `KyaniteLabs/liminal-sites` for sites. Personal, duplicate Mac, and Pushing-Squares references below are evidence from that audit, not current operating instructions.
+
 Date: 2026-05-25
 Branch: `codex/consolidation-phase0-audit-20260525`
 Base: `kyanite/main` at `94ceb80a58521e4a1d033ffa8a801a36aa0d4808`

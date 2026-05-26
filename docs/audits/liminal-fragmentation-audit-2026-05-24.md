@@ -1,5 +1,7 @@
 # Liminal Fragmentation Audit - 2026-05-24
 
+> Historical note (2026-05-26): This audit captured the fragmented pre-consolidation state. Current source-of-truth routing is `KyaniteLabs/liminal` and `KyaniteLabs/liminal-sites`; old personal, local duplicate, and Pushing-Squares references below are preserved only as forensic evidence.
+
 ## Purpose
 
 The document pack required a read-only audit of local and remote Liminal,

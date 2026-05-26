@@ -217,7 +217,7 @@ For each material finding:
 8. Open one PR per coherent subsystem.
 9. Merge only after checks/review requirements are satisfied.
 
-If a fix teaches something transferable to `liminal-sites`, create a GitHub issue in `https://github.com/Pushing-Squares/liminal-sites` with the learning, evidence, and a concise recommendation.
+If a fix teaches something transferable to `liminal-sites`, create a GitHub issue in `https://github.com/KyaniteLabs/liminal-sites` with the learning, evidence, and a concise recommendation.
 
 ## Task 6: Final Closure Verification
 

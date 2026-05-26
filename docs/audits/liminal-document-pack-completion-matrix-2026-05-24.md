@@ -1,5 +1,7 @@
 # Liminal Document Pack Completion Matrix - 2026-05-24
 
+> Historical note (2026-05-26): This matrix records document-pack work before the final KyaniteLabs consolidation. Treat personal, duplicate local, and old sites references as historical evidence only. Current public remotes are `KyaniteLabs/liminal` and `KyaniteLabs/liminal-sites`.
+
 ## Scope
 
 This matrix tracks the 13-document handoff package plus the execution plan in

@@ -68,7 +68,7 @@ export interface CompostConfig {
   lirSummaryBudget: number;
   lirBatchSize: number;
   lirMaxSymbolsPerFile: number;
-  /** Fitness weights for multi-axis evaluation (novelty/quality/technical/diversity). */
+  /** Fitness weights for multi-axis evaluation (novelty/quality/technical/diversity/engagement). */
   fitnessWeights?: Partial<import('../evolution/FitnessCombiner.js').FitnessWeights>;
   /** MAP-Elites grid dimensions (default: [10, 10]). */
   mapElitesDims?: number[];

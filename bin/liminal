@@ -289,6 +289,7 @@ function printHelp() {
   console.log('  fix <file|description>      Auto-fix code issues with LLM assistance');
   console.log('  consolidate                 Run memory consolidation (L3→L2 compression)');
   console.log('  ledger <subcommand>         Task ledger: list, show, run, verify, accept, reject, status');
+  console.log('  site evolve                 Run the living website evolution daemon');
   console.log('  self-improve gauntlet       Run headless self-improvement reflex/capability gauntlet');
   console.log('  domains gauntlet            Run preserved creative-domain gauntlet');
   console.log('  model audition <model>      Dry-run model assimilation audition');
@@ -895,6 +896,26 @@ if (isLiveMusic) {
     console.error('❌ Error:', err.message);
     process.exit(1);
   }
+  process.exit(0);
+}
+
+if (cmd === 'site') {
+  const { runSiteEvolve } = await import('../dist/cli/SiteCommand.js');
+  const subCmd = cmdArgs[0];
+
+  if (subCmd !== 'evolve') {
+    console.error('Usage: liminal site evolve [--once] [--dry-run] [--slot <id>]');
+    process.exit(1);
+  }
+
+  const options = {
+    once: cmdArgs.includes('--once'),
+    dryRun: cmdArgs.includes('--dry-run'),
+    slot: (() => { const idx = cmdArgs.indexOf('--slot'); return idx !== -1 ? cmdArgs[idx + 1] : undefined; })(),
+    interval: (() => { const idx = cmdArgs.indexOf('--interval'); return idx !== -1 ? parseInt(cmdArgs[idx + 1]) : undefined; })(),
+  };
+
+  await runSiteEvolve(options);
   process.exit(0);
 }
 

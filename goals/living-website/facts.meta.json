@@ -1,0 +1,24 @@
+{
+  "facts": [
+    {"id": "fact-engagement-axis", "text": "FitnessCombiner has a 5th fitness axis called 'engagement' with weight 0.25. Weights rebalanced to: novelty(0.25), quality(0.25), technical(0.15), diversity(0.10), engagement(0.25).", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-engagement-score", "text": "EngagementFitness computes a 0-1 score from PostHog experiment data: 0.3×dwellRate + 0.2×scrollDepth + 0.3×interactionRate + 0.2×retentionScore. Each component normalized to 0-1.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-engagement-neutral-default", "text": "New variants that have no PostHog data yet receive engagement=0.5 (neutral) so they don't get penalized before being tested.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-posthog-server", "text": "PostHogClient wraps posthog-node to send server-side events (generation_started, generation_completed, generation_failed, variant_deployed, variant_promoted, variant_retired) to the PostHog project via puenteworks.com/ph proxy.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-posthog-dep", "text": "posthog-node is added as a direct dependency in package.json.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-slot-model", "text": "SlotManager manages named site regions (slots). Each slot has: id, page path, allowed domains, active variant (htmlPath, experimentId, fitness, deployedAt), optional challenger variant. State persisted to JSON on disk.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-phases-slots", "text": "Slots are added in phases: Phase 1 = home-hero. Phase 2 = about-background, blog-header. Phase 3 = nav-accent, footer-art, 404-page.", "recommendedAutomatedVerification": false, "automatedVerification": false},
+    {"id": "fact-slot-html", "text": "Each slot on kyanitelabs.tech pages is an iframe or div loaded via PostHog feature flag.", "recommendedAutomatedVerification": false, "automatedVerification": false},
+    {"id": "fact-ph-snippet", "text": "HTMLWrapper.wrap() injects PostHog bootstrap snippet when LIMINAL_POSTHOG_KEY env var is set.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-csp-update", "text": "All CSP variants updated to allow connect-src to puenteworks.com/ph.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-daemon-loop", "text": "LivingSiteDaemon runs a loop every 6 hours: check→promote→generate→deploy→experiment.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-min-samples", "text": "Min 200 visitors per variant before promotion evaluation.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-wildcard", "text": "Weekly wildcard variant with novelty-biased weights (novelty 0.5, engagement 0.1).", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-variant-render", "text": "All variants must pass RenderAndScorePipeline with min score 0.2.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-variant-deploy", "text": "Files deployed to /var/www/kyanitelabs/liminal-asset/.", "recommendedAutomatedVerification": false, "automatedVerification": false},
+    {"id": "fact-daemon-cli", "text": "CLI: liminal site evolve --once --dry-run --slot.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-generation-tracking", "text": "Server-side PostHog events per generation cycle.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-no-mutation-existing", "text": "No behavior change without LIMINAL_POSTHOG_KEY env var.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-mapelites-per-slot", "text": "Each slot gets its own MAP-Elites grid instance.", "recommendedAutomatedVerification": true, "automatedVerification": true},
+    {"id": "fact-existing-tests-pass", "text": "All existing tests pass after changes.", "recommendedAutomatedVerification": true, "automatedVerification": true}
+  ]
+}

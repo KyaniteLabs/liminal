@@ -1,0 +1,130 @@
+{
+  "stage": "interview",
+  "title": "Living Website — Liminal × kyanitelabs.tech × PostHog",
+  "goalSlug": "living-website",
+  "questions": [
+    {
+      "id": "slot-locations",
+      "prompt": "Which site regions should become living slots? The home page hero is the obvious first candidate. What else should evolve?",
+      "description": "Slots are named regions on kyanitelabs.tech pages where Liminal injects creative output. Each slot runs its own A/B evolution cycle. Start small — we can always add more slots later.",
+      "answerMode": "multi-custom",
+      "recommendedAnswer": "home-hero (the main visual on the landing page) as the first slot. Expand to about-background and blog-header once the system proves stable.",
+      "recommendedOptionIds": ["home-hero", "about-bg", "blog-header"],
+      "options": [
+        { "id": "home-hero", "label": "Homepage hero" },
+        { "id": "about-bg", "label": "About page background" },
+        { "id": "blog-header", "label": "Blog post headers" },
+        { "id": "nav-accent", "label": "Navigation accent/animation" },
+        { "id": "footer-art", "label": "Footer generative art" },
+        { "id": "404-page", "label": "Custom 404 generative page" }
+      ],
+      "required": true
+    },
+    {
+      "id": "cycle-frequency",
+      "prompt": "How often should the evolution daemon run a generation cycle?",
+      "description": "Each cycle: generate variants → render & score → deploy challenger → check PostHog results → promote winner. More frequent = faster evolution but needs more traffic for statistical significance.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "Every 6 hours. Fast enough to feel alive, slow enough to collect meaningful data per variant.",
+      "recommendedOptionIds": ["6h"],
+      "options": [
+        { "id": "1h", "label": "Every hour" },
+        { "id": "6h", "label": "Every 6 hours" },
+        { "id": "24h", "label": "Every 24 hours" },
+        { "id": "on-demand", "label": "On-demand only (manual trigger)" }
+      ],
+      "required": true
+    },
+    {
+      "id": "novelty-pressure",
+      "prompt": "How aggressively should Liminal explore wild/novel variants vs. refining what works?",
+      "description": "High novelty = the site changes dramatically and sometimes surprisingly. Low novelty = the site converges on what performs best and evolves subtly. This is the exploration/exploitation tradeoff.",
+      "answerMode": "single",
+      "recommendedAnswer": "Balanced with periodic wildcards — mostly refine winners, but every few cycles generate something completely unexpected.",
+      "recommendedOptionIds": ["balanced-wildcard"],
+      "options": [
+        { "id": "conservative", "label": "Conservative — mostly refine, rare wildcards" },
+        { "id": "balanced-wildcard", "label": "Balanced — refine + weekly wildcard" },
+        { "id": "aggressive", "label": "Aggressive — frequent novel directions" }
+      ],
+      "required": true
+    },
+    {
+      "id": "initial-generators",
+      "prompt": "Which Liminal generators should be available for slot filling?",
+      "description": "Each slot can accept output from any of these domains. More domains = more variety but more complex rendering.",
+      "answerMode": "multi",
+      "recommendedAnswer": "All of them — the whole point is Liminal decides what works best across all its creative tools.",
+      "recommendedOptionIds": ["p5", "three", "glsl", "svg", "html", "kinetic"],
+      "options": [
+        { "id": "p5", "label": "p5.js (particle systems, 2D animation)" },
+        { "id": "three", "label": "Three.js (3D scenes)" },
+        { "id": "glsl", "label": "GLSL shaders" },
+        { "id": "svg", "label": "SVG generative" },
+        { "id": "html", "label": "HTML/CSS animation" },
+        { "id": "kinetic", "label": "Kinetic typography" },
+        { "id": "hydra", "label": "Hydra video synth" },
+        { "id": "strudel", "label": "Strudel (audio)" }
+      ],
+      "required": true
+    },
+    {
+      "id": "vps-deploy-path",
+      "prompt": "Where on the VPS should Liminal-generated variant files be served from?",
+      "description": "Needs to be a directory nginx can serve as static files. The daemon writes HTML here, nginx serves it.",
+      "answerMode": "single-custom",
+      "recommendedAnswer": "/var/www/kyanitelabs/liminal-asset/ — alongside the existing site root, served under the same domain.",
+      "recommendedOptionIds": ["default"],
+      "options": [
+        { "id": "default", "label": "/var/www/kyanitelabs/liminal-asset/" },
+        { "id": "home-dir", "label": "~/liminal-asset/" },
+        { "id": "tmp", "label": "/tmp/liminal-asset/ (ephemeral)" }
+      ],
+      "required": true
+    },
+    {
+      "id": "engagement-goals",
+      "prompt": "What engagement signals should determine a 'winning' variant?",
+      "description": "These are the metrics PostHog tracks per variant. They become the engagement fitness axis that feeds back into Liminal's evolution.",
+      "answerMode": "multi",
+      "recommendedAnswer": "Dwell time (>10s), scroll depth, and any click/interaction. Bounce rate as a negative signal.",
+      "recommendedOptionIds": ["dwell", "scroll", "interact", "bounce"],
+      "options": [
+        { "id": "dwell", "label": "Dwell time (time on page > threshold)" },
+        { "id": "scroll", "label": "Scroll depth" },
+        { "id": "interact", "label": "Click/touch interaction with the slot" },
+        { "id": "bounce", "label": "Bounce rate (inverse — lower is better)" },
+        { "id": "return", "label": "Return visits (visitor comes back within 7 days)" },
+        { "id": "share", "label": "Share button click (if added)" }
+      ],
+      "required": true
+    },
+    {
+      "id": "min-samples",
+      "prompt": "Minimum visitors per variant before declaring an A/B winner?",
+      "description": "Too few = unreliable results. Too many = slow evolution. PostHog recommends ~200 minimum for low-effect experiments.",
+      "answerMode": "single",
+      "recommendedAnswer": "200 visitors per variant minimum. Good statistical power without making the cycle too slow.",
+      "recommendedOptionIds": ["200"],
+      "options": [
+        { "id": "100", "label": "100 visitors (fast but noisy)" },
+        { "id": "200", "label": "200 visitors (balanced)" },
+        { "id": "500", "label": "500 visitors (conservative, slow)" }
+      ],
+      "required": true
+    },
+    {
+      "id": "first-slot-urgency",
+      "prompt": "For the first working demo, should we wire one slot end-to-end first or build all infrastructure at once?",
+      "description": "End-to-end one slot = you see it working faster. All infrastructure = complete system but longer before anything is visible.",
+      "answerMode": "single",
+      "recommendedAnswer": "One slot end-to-end first (home-hero). Prove the loop works, then scale.",
+      "recommendedOptionIds": ["one-slot"],
+      "options": [
+        { "id": "one-slot", "label": "One slot end-to-end first (Recommended)" },
+        { "id": "all-at-once", "label": "Build full infrastructure first" }
+      ],
+      "required": true
+    }
+  ]
+}

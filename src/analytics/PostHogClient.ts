@@ -9,6 +9,7 @@
 
 import { PostHog } from "posthog-node";
 import { Logger } from "../utils/Logger.js";
+import type { EngagementMetrics } from "../evolution/EngagementFitness.js";
 
 const ENV_KEY = "LIMINAL_POSTHOG_KEY";
 const ENV_HOST = "LIMINAL_POSTHOG_HOST";
@@ -16,6 +17,12 @@ const DEFAULT_HOST = "https://puenteworks.com/ph";
 
 export interface PostHogEventProperties {
 	[key: string]: string | number | boolean | null | undefined;
+}
+
+export interface VariantEngagementResult {
+	variantId: string;
+	visitors: number;
+	metrics: EngagementMetrics;
 }
 
 export class PostHogClient {
@@ -68,6 +75,16 @@ export class PostHogClient {
 		} catch (err) {
 			Logger.warn("PostHogClient", "Failed to track event:", err);
 		}
+	}
+
+	/**
+	 * Fetch engagement metrics for a deployed variant.
+	 *
+	 * Returns null until a project-specific PostHog query adapter is configured.
+	 * The daemon treats null as "not enough data yet" rather than guessing.
+	 */
+	async getVariantEngagementMetrics(_variantId: string): Promise<VariantEngagementResult | null> {
+		return null;
 	}
 
 	/**

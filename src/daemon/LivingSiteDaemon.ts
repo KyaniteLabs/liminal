@@ -21,8 +21,10 @@ import { FitnessCombiner } from "../evolution/FitnessCombiner.js";
 import { PostHogClient } from "../analytics/PostHogClient.js";
 import { HTMLWrapper } from "../utils/htmlWrapper.js";
 import { MapElites } from "../evolution/MapElites.js";
+import { RenderAndScorePipeline } from "../render/RenderAndScorePipeline.js";
+import { RalphLoop } from "../core/RalphLoop.js";
+import type { LoopOptions } from "../core/LoopConfig.js";
 import { Domain } from "../types/domains.js";
-import { generatorRegistry } from "../generators/GeneratorRegistry.js";
 import { registerAllGenerators } from "../generators/registerGenerators.js";
 import { Logger } from "../utils/Logger.js";
 import { randomBytes } from "node:crypto";
@@ -47,7 +49,7 @@ export const DEFAULT_DAEMON_CONFIG: DaemonConfig = {
 	minSampleSize: 200,
 	cycleIntervalMs: 21_600_000, // 6 hours
 	wildcardIntervalDays: 7,
-	minVisualScore: 0.2,
+	minVisualScore: 0.65,
 };
 
 export class LivingSiteDaemon {
@@ -104,18 +106,72 @@ export class LivingSiteDaemon {
 	 * Promotes the challenger if it has higher engagement.
 	 */
 	async evaluateChallenger(slot: SiteSlot, dryRun: boolean): Promise<void> {
-		// Use engagement scorer to compute neutral score for now
-		// In production, this would query PostHog experiment API for real data
-		const _score = this.engagement.neutralScore();
-		void _score;
+		if (!slot.challenger) return;
+
+		const [activeResult, challengerResult] = await Promise.all([
+			this.posthog.getVariantEngagementMetrics(slot.active.experimentId),
+			this.posthog.getVariantEngagementMetrics(slot.challenger.experimentId),
+		]);
+
+		if (
+			!activeResult ||
+			!challengerResult ||
+			activeResult.visitors < this.config.minSampleSize ||
+			challengerResult.visitors < this.config.minSampleSize
+		) {
+			this.posthog.trackEvent("liminal_challenger_waiting_for_samples", {
+				slotId: slot.id,
+				challengerExperimentId: slot.challenger.experimentId,
+				activeExperimentId: slot.active.experimentId,
+				activeVisitors: activeResult?.visitors ?? 0,
+				challengerVisitors: challengerResult?.visitors ?? 0,
+				minSampleSize: this.config.minSampleSize,
+				dryRun,
+			});
+			return;
+		}
+
+		const activeScore = this.engagement.score(activeResult.metrics);
+		const challengerScore = this.engagement.score(challengerResult.metrics);
+		const challengerWins = challengerScore > activeScore;
+
 		this.posthog.trackEvent("liminal_challenger_evaluated", {
 			slotId: slot.id,
-			challengerExperimentId: slot.challenger!.experimentId,
+			challengerExperimentId: slot.challenger.experimentId,
 			activeExperimentId: slot.active.experimentId,
+			activeScore,
+			challengerScore,
 			dryRun,
 		});
 
-		Logger.info("LivingSiteDaemon", `Evaluated challenger for slot ${slot.id}`);
+		if (challengerWins) {
+			if (!dryRun) {
+				this.slotManager.promoteChallenger(slot.id);
+			}
+			this.posthog.trackEvent("liminal_challenger_promoted", {
+				slotId: slot.id,
+				challengerExperimentId: challengerResult.variantId,
+				activeExperimentId: activeResult.variantId,
+				activeScore,
+				challengerScore,
+				dryRun,
+			});
+			Logger.info("LivingSiteDaemon", `Promoted challenger for slot ${slot.id}`);
+			return;
+		}
+
+		if (!dryRun) {
+			this.slotManager.clearChallenger(slot.id);
+		}
+		this.posthog.trackEvent("liminal_challenger_rejected", {
+			slotId: slot.id,
+			challengerExperimentId: challengerResult.variantId,
+			activeExperimentId: activeResult.variantId,
+			activeScore,
+			challengerScore,
+			dryRun,
+		});
+		Logger.info("LivingSiteDaemon", `Rejected challenger for slot ${slot.id}`);
 	}
 
 	/**
@@ -133,52 +189,42 @@ export class LivingSiteDaemon {
 		const filename = `${slot.id}-${hash}.html`;
 		const htmlPath = join(this.config.assetDir, filename);
 
-		// Build a creative prompt for this slot
+		// Build a brand-specific creative prompt for this slot.
 		const isWildcard = this.isWildcardDay();
-		const styleHint = isWildcard
-			? "Surprise me with something completely unexpected and visually striking."
-			: "Create something beautiful and engaging.";
-		const prompt =
-			`Generate a creative animated visual for the "${slot.id}" section of a website. ` +
-			`It should be visually captivating and run smoothly in a browser. ${styleHint} ` +
-			`Target creative domain: ${slot.domains[0]}.`;
+		const prompt = this.buildCreativePrompt(slot, isWildcard);
 
-		// Dispatch to the best generator for this prompt
-		const dispatched = generatorRegistry.dispatch(prompt);
-
-		let code: string;
-		let model: string;
-
-		if (dispatched) {
-			Logger.info(
-				"LivingSiteDaemon",
-				`Dispatched to ${dispatched.entry.name} (confidence: ${dispatched.confidence})`,
-			);
-			const result = await dispatched.entry.generate(prompt);
-			code = typeof result === "string" ? result : result.code;
-			model =
-				typeof result === "string" ? "unknown" : (result.model ?? "unknown");
-		} else {
-			// Fallback: no generator matched, generate directly via LLMClient
-			Logger.warn(
-				"LivingSiteDaemon",
-				"No generator matched, using LLMClient fallback",
-			);
-			const { LLMClient } = await import("../llm/LLMClient.js");
-			await LLMClient.loadRoles();
-			const llm = new LLMClient({ role: "generator" });
-			const response = await llm.complete({
-				prompt,
-				systemPrompt: "You are a creative coder. Return only valid p5.js code.",
-			});
-			code = response.text;
-			model = llm.getConfig().model ?? "unknown";
-		}
+		// Use RalphLoop so living-site output gets iterative generation, evaluation,
+		// repair, and render scoring instead of a single-shot prompt response.
+		const loopResult = await RalphLoop.run(
+			prompt,
+			this.buildRalphLoopOptions(slot),
+		);
+		const code = loopResult.code;
+		const model = loopResult.model ?? "unknown";
 
 		if (!code || code.trim().length < 20) {
 			Logger.error(
 				"LivingSiteDaemon",
 				`Generation produced insufficient output (${code?.length ?? 0} chars), skipping`,
+			);
+			return;
+		}
+
+		const detectedDomain = HTMLWrapper.detectDomain(code);
+		const renderScore = await this.scoreVariantForDeploy(code, detectedDomain);
+		if (!this.passesVisualDeployGate(renderScore)) {
+			this.posthog.trackEvent("liminal_variant_rejected", {
+				slotId: slot.id,
+				variantHash: hash,
+				reason: renderScore.success ? "visual_score_below_threshold" : "render_failed",
+				visualScore: renderScore.score,
+				minVisualScore: this.config.minVisualScore,
+				error: renderScore.error,
+				dryRun,
+			});
+			Logger.warn(
+				"LivingSiteDaemon",
+				`Rejected challenger for ${slot.id}: visual score ${renderScore.score.toFixed(2)} below ${this.config.minVisualScore.toFixed(2)}`,
 			);
 			return;
 		}
@@ -191,11 +237,10 @@ export class LivingSiteDaemon {
 			await writeFile(htmlPath, html, "utf-8");
 		}
 
-		const detectedDomain = HTMLWrapper.detectDomain(code);
 		const variant: SlotVariant = {
 			htmlPath,
 			experimentId: `liminal-${slot.id}-${hash}`,
-			fitness: 0.5,
+			fitness: renderScore.score,
 			deployedAt: new Date().toISOString(),
 			model,
 			domain:
@@ -216,6 +261,8 @@ export class LivingSiteDaemon {
 			experimentId: variant.experimentId,
 			model,
 			codeLength: code.length,
+			visualScore: renderScore.score,
+			minVisualScore: this.config.minVisualScore,
 			dryRun,
 		});
 
@@ -223,6 +270,93 @@ export class LivingSiteDaemon {
 			"LivingSiteDaemon",
 			`Generated challenger for ${slot.id}: ${filename} (${code.length} chars, model: ${model})`,
 		);
+	}
+
+	/**
+	 * Build a brand-specific generation prompt for a website slot.
+	 */
+	buildCreativePrompt(slot: SiteSlot, wildcard: boolean): string {
+		const noveltyBrief = wildcard
+			? "This is a controlled wildcard: introduce one memorable visual surprise. Do not abandon the KyaniteLabs brand system."
+			: "Create a refined, brand-consistent visual that feels intentional rather than decorative.";
+
+		return [
+			"Generate one production-quality creative-coded website visual for KyaniteLabs.",
+			`Slot: ${slot.id}`,
+			`Page: ${slot.page}`,
+			`Target creative domain: ${slot.domains[0]}`,
+			"Brand: KyaniteLabs is an operator lab for verifiable AI tools, implementation help, creative coding, and agent-system field notes.",
+			"Taste direction: premium technical, calm but alive, more declassified instrument panel than generic SaaS confetti.",
+			"Palette: deep ink background, kyanite blue highlights, cool cyan glows, restrained violet accents, warm off-white text contrast.",
+			"Motion: slow, precise, legible, ambient; use generative movement that suggests signal, proof, traces, constellations, instrumentation, or evolving systems.",
+			"Composition: leave breathing room for real website copy; avoid covering text; make it work as a section accent or background layer.",
+			"Quality bar: avoid generic AI art, rainbow particles, noisy blobs, random bouncing balls, over-saturated gradients, cheap neon, and template-looking hero effects.",
+			"Technical constraints: browser-smooth, self-contained, no external assets, no network requests, no eval/new Function, no console spam.",
+			noveltyBrief,
+			"Return only valid creative code for the selected domain.",
+		].join("\n");
+	}
+
+	/**
+	 * RalphLoop options for high-quality living-site generation.
+	 */
+	buildRalphLoopOptions(slot: SiteSlot): LoopOptions {
+		return {
+			maxIterations: 5,
+			minQualityScore: 0.78,
+			collabDomain: slot.domains[0],
+			evaluationCriteria: [
+				"aesthetic",
+				"technical",
+				"novelty",
+				"emergence",
+				"interestingness",
+			],
+			useRenderScoring: true,
+			renderScoringOptions: {
+				scoreVisual: true,
+				scoreAudio: false,
+				timeout: 30_000,
+			},
+			useAestheticGuardrails: true,
+			useHumanPerceptionGuardrails: true,
+			useEvolution: true,
+			tolerateErrors: false,
+			project: "kyanitelabs-living-site",
+		};
+	}
+
+	/**
+	 * Render-score a generated variant before allowing deployment.
+	 */
+	async scoreVariantForDeploy(
+		code: string,
+		detectedDomain: ReturnType<typeof HTMLWrapper.detectDomain>,
+	): Promise<{ success: boolean; score: number; error?: string }> {
+		const pipeline = new RenderAndScorePipeline({
+			scoreVisual: true,
+			scoreAudio: false,
+			timeout: 30_000,
+		});
+		try {
+			const domainHint = detectedDomain === "three" ? "three" : detectedDomain === "shader" ? "glsl" : "p5";
+			return await pipeline.process(code, domainHint);
+		} catch (error) {
+			return {
+				success: false,
+				score: 0,
+				error: error instanceof Error ? error.message : String(error),
+			};
+		} finally {
+			await pipeline.close();
+		}
+	}
+
+	/**
+	 * Conservative deploy gate: failed renders and weak visuals do not reach nginx.
+	 */
+	passesVisualDeployGate(result: { success: boolean; score: number }): boolean {
+		return result.success && result.score >= this.config.minVisualScore;
 	}
 
 	/**

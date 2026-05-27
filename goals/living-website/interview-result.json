@@ -1,0 +1,43 @@
+{
+  "stage": "interview-result",
+  "title": "Living Website — Liminal × kyanitelabs.tech × PostHog",
+  "goalSlug": "living-website",
+  "answers": {
+    "slot-locations": {
+      "answer": "All regions (home hero, about bg, blog header, nav accent, footer art, 404 page) but phased — start with home-hero end-to-end, then expand.",
+      "selectedOptions": ["home-hero", "about-bg", "blog-header", "nav-accent", "footer-art", "404-page"],
+      "note": "Phased: Phase 1 = home-hero. Phase 2 = about-bg + blog-header. Phase 3 = all remaining."
+    },
+    "cycle-frequency": {
+      "answer": "Every 6 hours.",
+      "selectedOptions": ["6h"]
+    },
+    "novelty-pressure": {
+      "answer": "Balanced — mostly refine winners, weekly wildcard variant for surprise.",
+      "selectedOptions": ["balanced-wildcard"]
+    },
+    "initial-generators": {
+      "answer": "All generators available. Liminal decides what works best.",
+      "selectedOptions": ["p5", "three", "glsl", "svg", "html", "kinetic", "hydra", "strudel"],
+      "inferred": true
+    },
+    "vps-deploy-path": {
+      "answer": "/var/www/kyanitelabs/liminal-asset/",
+      "selectedOptions": ["default"],
+      "inferred": true
+    },
+    "engagement-goals": {
+      "answer": "Dwell time (>10s), scroll depth, click/touch interaction, bounce rate (inverse).",
+      "selectedOptions": ["dwell", "scroll", "interact", "bounce"]
+    },
+    "min-samples": {
+      "answer": "200 visitors per variant minimum.",
+      "selectedOptions": ["200"],
+      "inferred": true
+    },
+    "first-slot-urgency": {
+      "answer": "One slot end-to-end first (home-hero), then expand.",
+      "selectedOptions": ["one-slot"]
+    }
+  }
+}

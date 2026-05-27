@@ -129,6 +129,146 @@ describe("LivingSiteDaemon", () => {
 		});
 	});
 
+	describe("evaluateChallenger", () => {
+		it("promotes challenger when engagement beats active variant", async () => {
+			const sm = new SlotManager(statePath);
+			const ph = new PostHogClient();
+			const active = makeVariant({ experimentId: "active-1", fitness: 0.4 });
+			const challenger = makeVariant({ experimentId: "challenger-1", fitness: 0.7 });
+			sm.setSlot(makeSlot({ active, challenger }));
+			vi.spyOn(ph, "getVariantEngagementMetrics")
+				.mockResolvedValueOnce({
+					variantId: active.experimentId,
+					visitors: 250,
+					metrics: { dwellRate: 0.2, scrollDepth: 0.2, interactionRate: 0.2, retentionScore: 0.2 },
+				})
+				.mockResolvedValueOnce({
+					variantId: challenger.experimentId,
+					visitors: 250,
+					metrics: { dwellRate: 0.9, scrollDepth: 0.9, interactionRate: 0.9, retentionScore: 0.9 },
+				});
+			vi.spyOn(ph, "trackEvent");
+			const daemon = new LivingSiteDaemon(sm, ph, { ...DEFAULT_DAEMON_CONFIG, assetDir: tmpDir });
+
+			await daemon.evaluateChallenger(sm.getSlot("home-hero")!, false);
+
+			expect(sm.getSlot("home-hero")!.active.experimentId).toBe("challenger-1");
+			expect(sm.getSlot("home-hero")!.challenger).toBeNull();
+			expect(ph.trackEvent).toHaveBeenCalledWith(
+				"liminal_challenger_promoted",
+				expect.objectContaining({
+					activeScore: expect.closeTo(0.2),
+					challengerScore: expect.closeTo(0.9),
+				}),
+			);
+			cleanup();
+		});
+
+		it("keeps active variant when challenger engagement loses", async () => {
+			const sm = new SlotManager(statePath);
+			const ph = new PostHogClient();
+			const active = makeVariant({ experimentId: "active-1", fitness: 0.8 });
+			const challenger = makeVariant({ experimentId: "challenger-1", fitness: 0.7 });
+			sm.setSlot(makeSlot({ active, challenger }));
+			vi.spyOn(ph, "getVariantEngagementMetrics")
+				.mockResolvedValueOnce({
+					variantId: active.experimentId,
+					visitors: 250,
+					metrics: { dwellRate: 0.8, scrollDepth: 0.8, interactionRate: 0.8, retentionScore: 0.8 },
+				})
+				.mockResolvedValueOnce({
+					variantId: challenger.experimentId,
+					visitors: 250,
+					metrics: { dwellRate: 0.3, scrollDepth: 0.3, interactionRate: 0.3, retentionScore: 0.3 },
+				});
+			const daemon = new LivingSiteDaemon(sm, ph, { ...DEFAULT_DAEMON_CONFIG, assetDir: tmpDir });
+
+			await daemon.evaluateChallenger(sm.getSlot("home-hero")!, false);
+
+			expect(sm.getSlot("home-hero")!.active.experimentId).toBe("active-1");
+			expect(sm.getSlot("home-hero")!.challenger).toBeNull();
+			cleanup();
+		});
+
+		it("waits when either variant lacks enough engagement samples", async () => {
+			const sm = new SlotManager(statePath);
+			const ph = new PostHogClient();
+			sm.setSlot(makeSlot({ challenger: makeVariant({ experimentId: "challenger-1" }) }));
+			vi.spyOn(ph, "getVariantEngagementMetrics").mockResolvedValue(null);
+			const daemon = new LivingSiteDaemon(sm, ph, { ...DEFAULT_DAEMON_CONFIG, assetDir: tmpDir });
+
+			await daemon.evaluateChallenger(sm.getSlot("home-hero")!, false);
+
+			expect(sm.getSlot("home-hero")!.challenger).not.toBeNull();
+			cleanup();
+		});
+	});
+
+	describe("buildCreativePrompt", () => {
+		it("includes KyaniteLabs brand context and anti-generic taste constraints", () => {
+			const sm = new SlotManager(statePath);
+			const ph = new PostHogClient();
+			const daemon = new LivingSiteDaemon(sm, ph);
+			const prompt = daemon.buildCreativePrompt(makeSlot(), false);
+
+			expect(prompt).toContain("KyaniteLabs");
+			expect(prompt).toContain("kyanite blue");
+			expect(prompt).toContain("avoid generic AI art");
+			expect(prompt).toContain("home-hero");
+			expect(prompt).toContain("/");
+			expect(prompt).toContain(Domain.P5);
+			cleanup();
+		});
+
+		it("adds a controlled novelty brief on wildcard days", () => {
+			const sm = new SlotManager(statePath);
+			const ph = new PostHogClient();
+			const daemon = new LivingSiteDaemon(sm, ph);
+			const prompt = daemon.buildCreativePrompt(makeSlot(), true);
+
+			expect(prompt).toContain("controlled wildcard");
+			expect(prompt).toContain("Do not abandon the KyaniteLabs brand system");
+			cleanup();
+		});
+	});
+
+	describe("RalphLoop quality options", () => {
+		it("uses iterative render-scored generation for living-site variants", () => {
+			const sm = new SlotManager(statePath);
+			const ph = new PostHogClient();
+			const daemon = new LivingSiteDaemon(sm, ph);
+			const options = daemon.buildRalphLoopOptions(makeSlot());
+
+			expect(options.maxIterations).toBeGreaterThanOrEqual(5);
+			expect(options.minQualityScore).toBeGreaterThanOrEqual(0.75);
+			expect(options.useRenderScoring).toBe(true);
+			expect(options.evaluationCriteria).toEqual(
+				expect.arrayContaining(["aesthetic", "technical", "novelty", "emergence", "interestingness"]),
+			);
+			cleanup();
+		});
+	});
+
+	describe("quality gate", () => {
+		it("uses a conservative default visual deploy threshold", () => {
+			expect(DEFAULT_DAEMON_CONFIG.minVisualScore).toBeGreaterThanOrEqual(0.6);
+		});
+
+		it("rejects render results below the deploy threshold", () => {
+			const sm = new SlotManager(statePath);
+			const ph = new PostHogClient();
+			const daemon = new LivingSiteDaemon(sm, ph, {
+				...DEFAULT_DAEMON_CONFIG,
+				minVisualScore: 0.65,
+			});
+
+			expect(daemon.passesVisualDeployGate({ success: true, score: 0.64 })).toBe(false);
+			expect(daemon.passesVisualDeployGate({ success: true, score: 0.65 })).toBe(true);
+			expect(daemon.passesVisualDeployGate({ success: false, score: 0.99 })).toBe(false);
+			cleanup();
+		});
+	});
+
 	describe("isWildcardDay", () => {
 		it("returns true when no last wildcard date", () => {
 			const sm = new SlotManager(statePath);

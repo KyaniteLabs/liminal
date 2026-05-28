@@ -204,6 +204,26 @@ describe("LivingSiteDaemon", () => {
 		});
 	});
 
+	describe("injectVariantEngagementTracking", () => {
+		it("adds variant-specific PostHog events used by engagement readback", () => {
+			const sm = new SlotManager(statePath);
+			const ph = new PostHogClient();
+			const daemon = new LivingSiteDaemon(sm, ph);
+			const html = daemon.injectVariantEngagementTracking(
+				"<html><head></head><body><main>visual</main></body></html>",
+				makeSlot(),
+				"liminal-home-hero-abc123",
+			);
+
+			expect(html).toContain("liminal_slot_view");
+			expect(html).toContain("liminal_slot_interaction");
+			expect(html).toContain("liminal_slot_bounce");
+			expect(html).toContain("liminal_variant_id");
+			expect(html).toContain("liminal-home-hero-abc123");
+			cleanup();
+		});
+	});
+
 	describe("buildCreativePrompt", () => {
 		it("includes KyaniteLabs brand context and anti-generic taste constraints", () => {
 			const sm = new SlotManager(statePath);

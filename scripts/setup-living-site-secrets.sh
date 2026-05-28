@@ -40,9 +40,14 @@ if [[ -z "$API_KEY" ]]; then
   exit 1
 fi
 
-printf "Enter LIMINAL_POSTHOG_KEY (input hidden, leave blank to skip): "
+printf "Enter LIMINAL_POSTHOG_KEY / public project key (input hidden, leave blank to skip): "
 read -rs POSTHOG_KEY
 printf "\n"
+printf "Enter LIMINAL_POSTHOG_PERSONAL_API_KEY / server read key (input hidden, leave blank to skip): "
+read -rs POSTHOG_PERSONAL_API_KEY
+printf "\n"
+printf "Enter LIMINAL_POSTHOG_PROJECT_ID (leave blank to skip): "
+read -r POSTHOG_PROJECT_ID
 
 TMP_FILE="$(mktemp)"
 {
@@ -58,6 +63,13 @@ TMP_FILE="$(mktemp)"
   if [[ -n "$POSTHOG_KEY" ]]; then
     echo "LIMINAL_POSTHOG_KEY=${POSTHOG_KEY}"
     echo "LIMINAL_POSTHOG_HOST=https://puenteworks.com/ph"
+  fi
+  if [[ -n "$POSTHOG_PERSONAL_API_KEY" ]]; then
+    echo "LIMINAL_POSTHOG_PERSONAL_API_KEY=${POSTHOG_PERSONAL_API_KEY}"
+    echo "LIMINAL_POSTHOG_API_HOST=https://app.posthog.com"
+  fi
+  if [[ -n "$POSTHOG_PROJECT_ID" ]]; then
+    echo "LIMINAL_POSTHOG_PROJECT_ID=${POSTHOG_PROJECT_ID}"
   fi
 } > "$TMP_FILE"
 

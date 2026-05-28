@@ -40,6 +40,9 @@ LIMINAL_ALLOW_PRIVATE_IP_LLM=false
 LIMINAL_ALLOW_LOCALHOST_LLM=false
 LIMINAL_POSTHOG_KEY=REPLACE_ON_SERVER_ONLY
 LIMINAL_POSTHOG_HOST=https://puenteworks.com/ph
+LIMINAL_POSTHOG_PERSONAL_API_KEY=REPLACE_ON_SERVER_ONLY
+LIMINAL_POSTHOG_API_HOST=https://app.posthog.com
+LIMINAL_POSTHOG_PROJECT_ID=REPLACE_ON_SERVER_ONLY
 ```
 
 GLM example, with fake placeholders only:
@@ -53,7 +56,27 @@ LIMINAL_ALLOW_PRIVATE_IP_LLM=false
 LIMINAL_ALLOW_LOCALHOST_LLM=false
 LIMINAL_POSTHOG_KEY=REPLACE_ON_SERVER_ONLY
 LIMINAL_POSTHOG_HOST=https://puenteworks.com/ph
+LIMINAL_POSTHOG_PERSONAL_API_KEY=REPLACE_ON_SERVER_ONLY
+LIMINAL_POSTHOG_API_HOST=https://app.posthog.com
+LIMINAL_POSTHOG_PROJECT_ID=REPLACE_ON_SERVER_ONLY
 ```
+
+## PostHog readback variables
+
+Two PostHog credentials are intentionally separate:
+
+- `LIMINAL_POSTHOG_KEY`: public project key used by generated pages to emit browser events through the proxy.
+- `LIMINAL_POSTHOG_PERSONAL_API_KEY`: server-side personal API key used only by the daemon to query HogQL readback data. Keep this secret.
+
+The daemon queries `/api/projects/{LIMINAL_POSTHOG_PROJECT_ID}/query/` and aggregates variant events by `liminal_variant_id`.
+
+Generated variants emit:
+
+- `liminal_slot_view`
+- `liminal_slot_interaction`
+- `liminal_slot_bounce`
+
+Each event includes `liminal_slot_id`, `liminal_page`, and `liminal_variant_id`.
 
 ## systemd
 

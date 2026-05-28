@@ -8,6 +8,10 @@ describe("PostHogClient", () => {
 		process.env = { ...originalEnv };
 		delete process.env.LIMINAL_POSTHOG_KEY;
 		delete process.env.LIMINAL_POSTHOG_HOST;
+		delete process.env.LIMINAL_POSTHOG_PERSONAL_API_KEY;
+		delete process.env.LIMINAL_POSTHOG_PROJECT_ID;
+		delete process.env.LIMINAL_POSTHOG_API_HOST;
+		vi.restoreAllMocks();
 	});
 
 	afterEach(() => {
@@ -65,6 +69,60 @@ describe("PostHogClient", () => {
 			expect(() =>
 				client.trackEvent("test_event", { key: "value" }),
 			).not.toThrow();
+		});
+	});
+
+	describe("getVariantEngagementMetrics", () => {
+		it("returns null when the server-side PostHog query credentials are missing", async () => {
+			process.env.LIMINAL_POSTHOG_KEY = "phc_public_key";
+			const client = new PostHogClient();
+
+			await expect(client.getVariantEngagementMetrics("variant-a")).resolves.toBeNull();
+		});
+
+		it("queries HogQL and maps variant engagement metrics", async () => {
+			process.env.LIMINAL_POSTHOG_KEY = "phc_public_key";
+			process.env.LIMINAL_POSTHOG_PERSONAL_API_KEY = "phx_private_key";
+			process.env.LIMINAL_POSTHOG_PROJECT_ID = "12345";
+			process.env.LIMINAL_POSTHOG_API_HOST = "https://app.posthog.com";
+			const fetchMock = vi.fn().mockResolvedValue({
+				ok: true,
+				json: async () => ({
+					results: [[250, 0.6, 0.7, 0.2, 0.8]],
+				}),
+			});
+			vi.stubGlobal("fetch", fetchMock);
+			const client = new PostHogClient();
+
+			const result = await client.getVariantEngagementMetrics("home-hero-abc123");
+
+			expect(fetchMock).toHaveBeenCalledWith(
+				"https://app.posthog.com/api/projects/12345/query/",
+				expect.objectContaining({
+					method: "POST",
+					headers: expect.objectContaining({ Authorization: "Bearer phx_private_key" }),
+				}),
+			);
+			expect(result).toEqual({
+				variantId: "home-hero-abc123",
+				visitors: 250,
+				metrics: {
+					dwellRate: 0.6,
+					scrollDepth: 0.7,
+					interactionRate: 0.2,
+					retentionScore: 0.8,
+				},
+			});
+		});
+
+		it("returns null when PostHog query fails", async () => {
+			process.env.LIMINAL_POSTHOG_KEY = "phc_public_key";
+			process.env.LIMINAL_POSTHOG_PERSONAL_API_KEY = "phx_private_key";
+			process.env.LIMINAL_POSTHOG_PROJECT_ID = "12345";
+			vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 403 }));
+			const client = new PostHogClient();
+
+			await expect(client.getVariantEngagementMetrics("variant-a")).resolves.toBeNull();
 		});
 	});
 

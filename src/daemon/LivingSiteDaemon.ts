@@ -188,6 +188,7 @@ export class LivingSiteDaemon {
 		const hash = randomBytes(6).toString("hex");
 		const filename = `${slot.id}-${hash}.html`;
 		const htmlPath = join(this.config.assetDir, filename);
+		const experimentId = `liminal-${slot.id}-${hash}`;
 
 		// Build a brand-specific creative prompt for this slot.
 		const isWildcard = this.isWildcardDay();
@@ -229,8 +230,12 @@ export class LivingSiteDaemon {
 			return;
 		}
 
-		// Wrap in HTML with PostHog injection
-		const html = HTMLWrapper.wrap(code);
+		// Wrap in HTML with PostHog injection and variant-specific engagement events.
+		const html = this.injectVariantEngagementTracking(
+			HTMLWrapper.wrap(code),
+			slot,
+			experimentId,
+		);
 
 		if (!dryRun) {
 			await mkdir(this.config.assetDir, { recursive: true });
@@ -239,7 +244,7 @@ export class LivingSiteDaemon {
 
 		const variant: SlotVariant = {
 			htmlPath,
-			experimentId: `liminal-${slot.id}-${hash}`,
+			experimentId,
 			fitness: renderScore.score,
 			deployedAt: new Date().toISOString(),
 			model,
@@ -270,6 +275,46 @@ export class LivingSiteDaemon {
 			"LivingSiteDaemon",
 			`Generated challenger for ${slot.id}: ${filename} (${code.length} chars, model: ${model})`,
 		);
+	}
+
+	/**
+	 * Inject variant-specific engagement events for PostHog readback.
+	 */
+	injectVariantEngagementTracking(html: string, slot: SiteSlot, variantId: string): string {
+		const payload = JSON.stringify({
+			liminal_slot_id: slot.id,
+			liminal_page: slot.page,
+			liminal_variant_id: variantId,
+		});
+		const script = `<script>
++(function(){
++  var base = ${payload};
++  var started = Date.now();
++  var maxScroll = 0;
++  function depth(){
++    var doc = document.documentElement;
++    var body = document.body || doc;
++    var scrollTop = window.scrollY || doc.scrollTop || body.scrollTop || 0;
++    var max = Math.max(1, (doc.scrollHeight || body.scrollHeight || 1) - window.innerHeight);
++    return Math.max(0, Math.min(1, scrollTop / max));
++  }
++  function capture(event, extra){
++    if (!window.posthog || typeof window.posthog.capture !== 'function') return;
++    window.posthog.capture(event, Object.assign({}, base, extra || {}));
++  }
++  window.addEventListener('scroll', function(){ maxScroll = Math.max(maxScroll, depth()); }, { passive: true });
++  document.addEventListener('click', function(){ capture('liminal_slot_interaction', { liminal_scroll_depth: maxScroll }); }, { passive: true });
++  window.addEventListener('load', function(){ capture('liminal_slot_view', { liminal_scroll_depth: maxScroll }); });
++  window.addEventListener('pagehide', function(){
++    var dwell = Math.max(0, Math.round((Date.now() - started) / 1000));
++    var event = dwell < 10 ? 'liminal_slot_bounce' : 'liminal_slot_view';
++    capture(event, { liminal_dwell_seconds: dwell, liminal_scroll_depth: maxScroll });
++  });
++})();
++</script>`;
+		return html.includes("</body>")
+			? html.replace("</body>", `${script}\n</body>`)
+			: `${html}\n${script}`;
 	}
 
 	/**

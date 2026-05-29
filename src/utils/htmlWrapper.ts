@@ -42,13 +42,13 @@ export class HTMLWrapper {
     '<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">',
   ];
 
-  private static readonly DEFAULT_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; font-src 'self';";
+  private static readonly DEFAULT_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://puenteworks.com/ph; font-src 'self';";
 
-  private static readonly HYDRA_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://unpkg.com; font-src 'self';";
+  private static readonly HYDRA_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://unpkg.com https://puenteworks.com/ph; font-src 'self';";
 
-  private static readonly STRUDEL_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://raw.githubusercontent.com https://unpkg.com; font-src 'self';";
+  private static readonly STRUDEL_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://raw.githubusercontent.com https://unpkg.com https://puenteworks.com/ph; font-src 'self';";
 
-  private static readonly TONE_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; font-src 'self'; media-src 'self';";
+  private static readonly TONE_CSP = "default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src https://puenteworks.com/ph; font-src 'self'; media-src 'self';";
 
   private static securityHeadersFor(domain: Domain): string[] {
     const csp = domain === 'hydra'
@@ -238,7 +238,10 @@ export class HTMLWrapper {
     }
 
     // Inject security headers at a single central point for all wrapped outputs
-    return this.injectSecurityHeaders(wrapped, detectedDomain);
+    const withSecurity = this.injectSecurityHeaders(wrapped, detectedDomain);
+
+    // Inject PostHog analytics when configured
+    return this.injectPostHog(withSecurity);
   }
 
   private static wrapSVG(code: string, title: string): string {
@@ -283,6 +286,24 @@ export class HTMLWrapper {
     </main>
 </body>
 </html>`;
+  }
+
+  /**
+   * Inject PostHog analytics snippet into HTML.
+   * No-op when LIMINAL_POSTHOG_KEY env var is not set.
+   */
+  private static injectPostHog(html: string): string {
+    const apiKey = process.env.LIMINAL_POSTHOG_KEY;
+    if (!apiKey) return html;
+
+    const host = process.env.LIMINAL_POSTHOG_HOST || 'https://puenteworks.com/ph';
+    const snippet = `<script>
+!function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.async=!0,p.src=s.api_host+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},o="capture identify page people.set people.set_once set_config register register_once alias unregister get_distinct_id get_property clear_charges has_charged set_super_properties set_super_properties_once set_once register_for_session unregister_for_session reset get_session_id get_distinct_id_for_session debug evaluate isFeatureEnabled getFeatureFlag getFeatureFlagPayload reloadFeatureFlags updateEarlyAccessFeatureEnrollment onFeatureFlags onSessionId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+posthog.init('${apiKey}',{api_host:'${host}',persistence:'localStorage+cookie',capture_pageview:true,capture_pageleave:false});
+</script>`;
+
+    return html.replace('</head>', `${snippet}
+</head>`);
   }
 
   /**

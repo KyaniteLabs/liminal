@@ -6,6 +6,10 @@
  * - quality (0-1): code quality / aesthetic score
  * - technical (0-1): technical complexity / correctness
  * - diversity (0-1): behavior-space diversity contribution
+ * - engagement (0-1): real-user engagement from PostHog A/B tests
+ *
+ * Engagement is gated on LIMINAL_POSTHOG_KEY — when absent,
+ * the 4-axis legacy weights are used and engagement defaults to 0.5.
  */
 
 export interface FitnessWeights {
@@ -13,13 +17,15 @@ export interface FitnessWeights {
   quality: number;
   technical: number;
   diversity: number;
+  engagement: number;
 }
 
 export const DEFAULT_FITNESS_WEIGHTS: FitnessWeights = {
-  novelty: 0.4,
-  quality: 0.3,
-  technical: 0.2,
-  diversity: 0.1,
+  novelty: 0.25,
+  quality: 0.25,
+  technical: 0.15,
+  diversity: 0.10,
+  engagement: 0.25,
 };
 
 export interface FitnessComponents {
@@ -27,6 +33,7 @@ export interface FitnessComponents {
   quality: number;
   technical: number;
   diversity: number;
+  engagement: number;
 }
 
 export interface RankedItem {
@@ -49,7 +56,8 @@ export class FitnessCombiner {
     return c.novelty * this.weights.novelty
       + c.quality * this.weights.quality
       + c.technical * this.weights.technical
-      + c.diversity * this.weights.diversity;
+      + c.diversity * this.weights.diversity
+      + c.engagement * this.weights.engagement;
   }
 
   /** Batch calculation for multiple items. */
@@ -75,7 +83,7 @@ export class FitnessCombiner {
   getWeights(): FitnessWeights { return { ...this.weights }; }
 
   private validateWeights(): void {
-    const sum = this.weights.novelty + this.weights.quality + this.weights.technical + this.weights.diversity;
+    const sum = this.weights.novelty + this.weights.quality + this.weights.technical + this.weights.diversity + this.weights.engagement;
     if (Math.abs(sum - 1.0) > 0.01) {
       throw new Error(`Fitness weights must sum to 1.0, got ${sum.toFixed(3)}`);
     }
@@ -87,6 +95,7 @@ export class FitnessCombiner {
       quality: Math.max(0, Math.min(1, c.quality)),
       technical: Math.max(0, Math.min(1, c.technical)),
       diversity: Math.max(0, Math.min(1, c.diversity)),
+      engagement: Math.max(0, Math.min(1, c.engagement)),
     };
   }
 }

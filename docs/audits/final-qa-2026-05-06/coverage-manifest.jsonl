@@ -1,7 +1,7 @@
 {"path":".agents/rules/ARCHAEOLOGY_EDIT_RULES.md","primaryCluster":"codecraft","secondaryCluster":"agentic_reality","tertiaryCluster":null,"highRisk":false}
 {"path":".cursorrules","primaryCluster":"codecraft","secondaryCluster":"customer_fury","tertiaryCluster":null,"highRisk":false}
 {"path":".editorconfig","primaryCluster":"codecraft","secondaryCluster":"customer_fury","tertiaryCluster":null,"highRisk":false}
-{"path":".env.dogfood","primaryCluster":"codecraft","secondaryCluster":"customer_fury","tertiaryCluster":null,"highRisk":false}
+{"path":".env.dogfood.example","primaryCluster":"codecraft","secondaryCluster":"customer_fury","tertiaryCluster":null,"highRisk":false}
 {"path":".env.example","primaryCluster":"codecraft","secondaryCluster":"customer_fury","tertiaryCluster":null,"highRisk":false}
 {"path":".eslintrc.cjs","primaryCluster":"codecraft","secondaryCluster":"customer_fury","tertiaryCluster":null,"highRisk":false}
 {"path":".githooks/post-checkout","primaryCluster":"codecraft","secondaryCluster":"customer_fury","tertiaryCluster":null,"highRisk":false}

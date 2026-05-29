@@ -1,0 +1,32 @@
+version: 1
+suppress:
+  - id: Possible secret-like field without credential shape
+    reason: Liminal intentionally references API-key environment variables and apiKey config fields in runtime configuration, examples, tests, and dogfood scripts; these sites contain placeholders, reads, or secret-routing code, not literal credentials.
+    files:
+      - docs/living-site-secure-inference.md
+      - docs/research/audit/config/test-env-manipulation.json
+      - docs/superpowers/plans/2026-04-10-dogfood-role-eval.md
+      - docs/tutorials/first-composition.md
+      - dogfood-cloud-agent-a-fast.ts
+      - gui/server.js
+      - gui/src/App.tsx
+      - scripts/analysis/run-agent-b.ts
+      - scripts/campaign-cloud.ts
+      - scripts/campaign-ollama-cloud.ts
+      - scripts/debug-minimax.ts
+      - scripts/dogfood-all-providers-telemetry.ts
+      - scripts/dogfood-cloud-agent-b.ts
+      - scripts/dogfood-cloud-first.ts
+      - scripts/dogfood-cloud.ts
+      - scripts/dogfood-glm.ts
+      - scripts/dogfood-kimi.ts
+      - scripts/dogfood-role-eval.ts
+      - scripts/dogfood-telemetry-focused.ts
+      - scripts/dogfood-with-telemetry.ts
+      - scripts/dogfood/dogfood-minimax-m27.ts
+      - scripts/proof/live-provider-smoke.ts
+      - scripts/proof/user-surface-observability.ts
+      - scripts/testing/test-llm-client.ts
+      - scripts/ultra-supreme-dogfood.ts
+    reviewed_by: KyaniteLabs
+    reviewed_at: "2026-05-29"

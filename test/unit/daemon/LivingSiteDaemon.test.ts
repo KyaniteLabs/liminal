@@ -91,13 +91,15 @@ describe("LivingSiteDaemon", () => {
 				},
 			);
 
-			await daemon.runCycle();
-			expect(sm.getSlot("home-hero")!.challenger).not.toBeNull();
-			expect(sm.getSlot("home-hero")!.challenger!.experimentId).toContain(
-				"liminal-home-hero-",
-			);
-			cleanup();
-		});
+				await daemon.runCycle();
+				expect(sm.getSlot("home-hero")!.challenger).toMatchObject({
+					experimentId: "liminal-home-hero-abc123",
+					fitness: 0.5,
+					model: "mock-model",
+					domain: Domain.P5,
+				});
+				cleanup();
+			});
 
 		it("does not deploy files in dry-run mode", async () => {
 			const sm = new SlotManager(statePath);
@@ -122,11 +124,14 @@ describe("LivingSiteDaemon", () => {
 				},
 			);
 
-			await daemon.runCycle(true); // dry-run
-			// Challenger should be set in memory but file not written
-			expect(sm.getSlot("home-hero")!.challenger).not.toBeNull();
-			cleanup();
-		});
+				await daemon.runCycle(true); // dry-run
+				// Challenger should be set in memory but file not written
+				expect(sm.getSlot("home-hero")!.challenger).toMatchObject({
+					experimentId: "liminal-home-hero-abc123",
+					fitness: 0.5,
+				});
+				cleanup();
+			});
 	});
 
 	describe("evaluateChallenger", () => {
@@ -197,11 +202,13 @@ describe("LivingSiteDaemon", () => {
 			vi.spyOn(ph, "getVariantEngagementMetrics").mockResolvedValue(null);
 			const daemon = new LivingSiteDaemon(sm, ph, { ...DEFAULT_DAEMON_CONFIG, assetDir: tmpDir });
 
-			await daemon.evaluateChallenger(sm.getSlot("home-hero")!, false);
+				await daemon.evaluateChallenger(sm.getSlot("home-hero")!, false);
 
-			expect(sm.getSlot("home-hero")!.challenger).not.toBeNull();
-			cleanup();
-		});
+				expect(sm.getSlot("home-hero")!.challenger).toMatchObject({
+					experimentId: "challenger-1",
+				});
+				cleanup();
+			});
 	});
 
 	describe("injectVariantEngagementTracking", () => {
@@ -232,13 +239,13 @@ describe("LivingSiteDaemon", () => {
 			const prompt = daemon.buildCreativePrompt(makeSlot(), false);
 
 			expect(prompt).toContain("KyaniteLabs");
-			expect(prompt).toContain("kyanite blue");
-			expect(prompt).toContain("avoid generic AI art");
-			expect(prompt).toContain("home-hero");
-			expect(prompt).toContain("/");
-			expect(prompt).toContain(Domain.P5);
-			cleanup();
-		});
+				expect(prompt).toContain("kyanite blue");
+				expect(prompt).toContain("avoid generic AI art");
+				expect(prompt).toContain("home-hero");
+				expect(prompt).toContain("Page: /");
+				expect(prompt).toContain(Domain.P5);
+				cleanup();
+			});
 
 		it("adds a controlled novelty brief on wildcard days", () => {
 			const sm = new SlotManager(statePath);
@@ -348,13 +355,12 @@ describe("LivingSiteDaemon", () => {
 	describe("getGridForSlot", () => {
 		it("creates a new grid for unknown slot", () => {
 			const sm = new SlotManager(statePath);
-			const ph = new PostHogClient();
-			const daemon = new LivingSiteDaemon(sm, ph);
-			const grid = daemon.getGridForSlot("test-slot");
-			expect(grid).toBeDefined();
-			expect(grid.size()).toBe(0);
-			cleanup();
-		});
+				const ph = new PostHogClient();
+				const daemon = new LivingSiteDaemon(sm, ph);
+				const grid = daemon.getGridForSlot("test-slot");
+				expect(grid.size()).toBe(0);
+				cleanup();
+			});
 
 		it("returns same grid on repeated calls", () => {
 			const sm = new SlotManager(statePath);

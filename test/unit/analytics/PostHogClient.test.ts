@@ -25,7 +25,7 @@ describe("PostHogClient", () => {
 		});
 
 		it("returns true when LIMINAL_POSTHOG_KEY is set", () => {
-			process.env.LIMINAL_POSTHOG_KEY = "phc_testkey123";
+			process.env.LIMINAL_POSTHOG_KEY = "phc_a";
 			const client = new PostHogClient();
 			expect(client.isConfigured()).toBe(true);
 		});
@@ -38,9 +38,9 @@ describe("PostHogClient", () => {
 		});
 
 		it("returns the configured key", () => {
-			process.env.LIMINAL_POSTHOG_KEY = "phc_testkey456";
+			process.env.LIMINAL_POSTHOG_KEY = "phc_b";
 			const client = new PostHogClient();
-			expect(client.getApiKey()).toBe("phc_testkey456");
+			expect(client.getApiKey()).toBe("phc_b");
 		});
 	});
 
@@ -64,7 +64,7 @@ describe("PostHogClient", () => {
 		});
 
 		it("does not throw when configured and called", () => {
-			process.env.LIMINAL_POSTHOG_KEY = "phc_testkey789";
+			process.env.LIMINAL_POSTHOG_KEY = "phc_c";
 			const client = new PostHogClient();
 			expect(() =>
 				client.trackEvent("test_event", { key: "value" }),
@@ -74,15 +74,15 @@ describe("PostHogClient", () => {
 
 	describe("getVariantEngagementMetrics", () => {
 		it("returns null when the server-side PostHog query credentials are missing", async () => {
-			process.env.LIMINAL_POSTHOG_KEY = "phc_public_key";
+			process.env.LIMINAL_POSTHOG_KEY = "phc_public";
 			const client = new PostHogClient();
 
 			await expect(client.getVariantEngagementMetrics("variant-a")).resolves.toBeNull();
 		});
 
 		it("queries HogQL and maps variant engagement metrics", async () => {
-			process.env.LIMINAL_POSTHOG_KEY = "phc_public_key";
-			process.env.LIMINAL_POSTHOG_PERSONAL_API_KEY = "phx_private_key";
+			process.env.LIMINAL_POSTHOG_KEY = "phc_public";
+			process.env.LIMINAL_POSTHOG_PERSONAL_API_KEY = "phx_private";
 			process.env.LIMINAL_POSTHOG_PROJECT_ID = "12345";
 			process.env.LIMINAL_POSTHOG_API_HOST = "https://app.posthog.com";
 			const fetchMock = vi.fn().mockResolvedValue({
@@ -100,7 +100,7 @@ describe("PostHogClient", () => {
 				"https://app.posthog.com/api/projects/12345/query/",
 				expect.objectContaining({
 					method: "POST",
-					headers: expect.objectContaining({ Authorization: "Bearer phx_private_key" }),
+						headers: expect.objectContaining({ Authorization: "Bearer phx_private" }),
 				}),
 			);
 			expect(result).toEqual({
@@ -116,8 +116,8 @@ describe("PostHogClient", () => {
 		});
 
 		it("returns null when PostHog query fails", async () => {
-			process.env.LIMINAL_POSTHOG_KEY = "phc_public_key";
-			process.env.LIMINAL_POSTHOG_PERSONAL_API_KEY = "phx_private_key";
+				process.env.LIMINAL_POSTHOG_KEY = "phc_public";
+				process.env.LIMINAL_POSTHOG_PERSONAL_API_KEY = "phx_private";
 			process.env.LIMINAL_POSTHOG_PROJECT_ID = "12345";
 			vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, status: 403 }));
 			const client = new PostHogClient();

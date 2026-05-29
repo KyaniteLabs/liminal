@@ -64,9 +64,10 @@ describe("SlotManager", () => {
 			const sm2 = new SlotManager(statePath);
 			await sm2.load();
 			const loaded = sm2.getSlot("home-hero");
-			expect(loaded).toBeDefined();
-			expect(loaded!.id).toBe("home-hero");
-			expect(loaded!.active.fitness).toBe(0.75);
+			expect(loaded).toMatchObject({
+				id: "home-hero",
+				active: { fitness: 0.75 },
+			});
 
 			cleanup();
 		});
@@ -116,8 +117,10 @@ describe("SlotManager", () => {
 				experimentId: "challenger-1",
 			});
 			sm.setChallenger("home-hero", challenger);
-			expect(sm.getSlot("home-hero")!.challenger).toBeDefined();
-			expect(sm.getSlot("home-hero")!.challenger!.fitness).toBe(0.85);
+			expect(sm.getSlot("home-hero")!.challenger).toMatchObject({
+				experimentId: "challenger-1",
+				fitness: 0.85,
+			});
 		});
 
 		it("clears the challenger", () => {

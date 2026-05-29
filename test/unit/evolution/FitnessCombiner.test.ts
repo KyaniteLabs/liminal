@@ -31,7 +31,6 @@ describe("DEFAULT_FITNESS_WEIGHTS", () => {
 	});
 
 	it("includes engagement axis", () => {
-		expect(DEFAULT_FITNESS_WEIGHTS.engagement).toBeDefined();
 		expect(DEFAULT_FITNESS_WEIGHTS.engagement).toBeGreaterThan(0);
 	});
 });

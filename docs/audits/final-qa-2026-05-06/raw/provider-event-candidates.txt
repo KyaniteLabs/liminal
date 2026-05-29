@@ -4015,7 +4015,7 @@ test/integration/gui-security-regression.test.js:84:    delete process.env.ATELI
 test/integration/gui-security-regression.test.js:85:    delete process.env.ATELIER_LLM_BASE_URL;
 test/integration/gui-security-regression.test.js:86:    delete process.env.ATELIER_LLM_API_KEY;
 test/integration/gui-security-regression.test.js:106:      providers: {
-test/integration/gui-security-regression.test.js:107:        openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-4', apiKey: 'sk-test-secret-key-12345' },
+test/integration/gui-security-regression.test.js:107:        openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-4', apiKey: 'sk-test-test-key' },
 test/integration/gui-security-regression.test.js:153:    delete process.env.ATELIER_LLM_PROVIDER;
 test/integration/gui-security-regression.test.js:154:    delete process.env.ATELIER_LLM_MODEL;
 test/integration/gui-security-regression.test.js:155:    delete process.env.ATELIER_LLM_BASE_URL;
@@ -10142,7 +10142,7 @@ test/unit/llm/LLMClientExtended.test.ts:383:    const client = new LLMClient({ p
 test/unit/llm/LLMClientExtended.test.ts:390:describe('LLMClient getSafeConfig', () => {
 test/unit/llm/LLMClientExtended.test.ts:393:    delete process.env.LIMINAL_LLM_API_KEY;
 test/unit/llm/LLMClientExtended.test.ts:398:    delete process.env.LIMINAL_LLM_API_KEY;
-test/unit/llm/LLMClientExtended.test.ts:402:    const client = new LLMClient({ apiKey: 'secret-key-12345' });
+test/unit/llm/LLMClientExtended.test.ts:402:    const client = new LLMClient({ apiKey: 'test-key' });
 test/unit/llm/LLMClientExtended.test.ts:410:    const client = new LLMClient();
 test/unit/llm/LLMClientExtended.test.ts:417:describe('LLMClient complete failure provenance', () => {
 test/unit/llm/LLMClientExtended.test.ts:418:  it('returns provider, model, endpoint, status, retryability, and body on provider errors', async () => {

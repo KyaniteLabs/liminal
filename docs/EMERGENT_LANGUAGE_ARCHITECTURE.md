@@ -145,7 +145,7 @@ Phase B: Agora Inter-Agent Protocol
 
 | File | Purpose |
 |------|---------|
-| `src/swarm/CreativeNotation.ts` | Token registry, expand/compress functions |
+| `src/swarm/CreativeNotation.ts` | Notation registry, expand/compress functions |
 | `src/swarm/NotationTranslator.ts` | Prompt-aware encoder/decoder |
 | `src/swarm/prompt-fragments.ts` | `notationLegend`, `composeExpertPrompt()` |
 | `src/swarm/ExpertPersonas.ts` | Persona definitions with `promptParts` |

@@ -414,7 +414,7 @@ describe('LLMClient getSafeConfig', () => {
   });
 
   it('redacts API key in safe config', () => {
-    const client = new LLMClient({ apiKey: 'secret-key-12345' });
+    const client = new LLMClient({ apiKey: 'test-key' });
     const safeConfig = client.getSafeConfig();
 
     expect(safeConfig.apiKey).toBe('[REDACTED]');

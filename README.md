@@ -279,3 +279,15 @@ Business Source License 1.1. Source code is available for viewing, learning, and
 ---
 
 **Liminal** — The code evolves. You curate. The system learns.
+
+---
+
+## Part of KyaniteLabs
+
+Open-source tools by [KyaniteLabs](https://kyanitelabs.tech). Related projects:
+
+- **[liminal-sites](https://github.com/KyaniteLabs/liminal-sites)** — living website-evolution engine
+- **[Elixis](https://github.com/KyaniteLabs/Elixis)** — local-first AI pattern-synthesis engine for ideas
+- **[Innerscape](https://github.com/KyaniteLabs/Innerscape)** — personal-growth OS: journaling & reflection
+
+→ More at **[kyanitelabs.tech](https://kyanitelabs.tech)**

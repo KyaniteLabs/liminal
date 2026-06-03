@@ -284,7 +284,7 @@ Business Source License 1.1. Source code is available for viewing, learning, and
 
 ## Part of KyaniteLabs
 
-Open-source tools by [KyaniteLabs](https://kyanitelabs.tech). Related projects:
+More from [KyaniteLabs](https://kyanitelabs.tech). Related projects:
 
 - **[liminal-sites](https://github.com/KyaniteLabs/liminal-sites)** — living website-evolution engine
 - **[Elixis](https://github.com/KyaniteLabs/Elixis)** — local-first AI pattern-synthesis engine for ideas

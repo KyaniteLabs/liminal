@@ -10,6 +10,7 @@ import { Server } from 'http';
 import type { AddressInfo } from 'node:net';
 import { existsSync } from 'node:fs';
 import { readdir, stat } from 'node:fs/promises';
+import { randomBytes } from 'node:crypto';
 import helmet from 'helmet';
 import { doubleCsrf } from 'csrf-csrf';
 import cookieParser from 'cookie-parser';
@@ -150,10 +151,17 @@ export class PreviewServer {
     // CSRF Protection using double-submit cookie pattern (disabled in test environment)
     const isTestEnv = process.env.NODE_ENV === 'test';
 
-    // SECURITY: CSRF_SECRET is required in production, no fallback
-    const csrfSecret = process.env.CSRF_SECRET;
-    if (!isTestEnv && !csrfSecret) {
-      throw new Error('CSRF_SECRET environment variable is required');
+    // SECURITY: CSRF_SECRET is required in production. For local dev it falls
+    // back to an ephemeral random secret so `liminal serve`/`studio` work out of
+    // the box (a fresh secret per process; set CSRF_SECRET to persist sessions).
+    const isProduction = process.env.NODE_ENV === 'production';
+    let csrfSecret = process.env.CSRF_SECRET;
+    if (!csrfSecret && !isTestEnv) {
+      if (isProduction) {
+        throw new Error('CSRF_SECRET environment variable is required');
+      }
+      csrfSecret = randomBytes(32).toString('hex');
+      console.warn('[PreviewServer] CSRF_SECRET not set — using an ephemeral dev secret. Set CSRF_SECRET for production.');
     }
 
     const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({

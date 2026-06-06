@@ -1,4 +1,5 @@
 import type { SingPresetArtifact, SingPresetMapping, SingVoiceFeature } from '@liminal/audio-core/PresetSchema.js';
+import { OneEuroFilter } from '@liminal/audio-core/dsp/OneEuroFilter.js';
 
 export interface SingUniformFrame {
   rms: number;
@@ -51,30 +52,54 @@ void main() {
 }
 `;
 
-export function stabilizeSingFrame(frame: SingUniformFrame, previous?: SingUniformFrame | null): SingUniformFrame {
-  const rms = smoothValue(normalizeRange(frame.rms, 0.015, 0.16), previous?.rms, 0.68);
-  const centroid = smoothValue(clamp01(frame.centroid), previous?.centroid, 0.72);
-  const spectralFlux = smoothValue(normalizeRange(frame.spectralFlux, 0.001, 0.025), previous?.spectralFlux, 0.78);
-  const voiced = clamp01(frame.voiced);
-  const confidence = clamp01(frame.confidence);
-  const pitchTarget = frame.pitchHz > 0 && (voiced > 0.2 || confidence > 0.08)
-    ? frame.pitchHz
-    : previous?.pitchHz ?? 0;
-  const pitchHz = pitchTarget > 0 && previous?.pitchHz
-    ? smoothValue(pitchTarget, previous.pitchHz, 0.82)
-    : pitchTarget;
-  const onset = frame.onset > 0.5 ? 1 : Math.max(0, (previous?.onset ?? 0) * 0.82);
+export interface SingStabilizer {
+  /** Condition one raw frame into a stable, visual-ready frame. */
+  stabilize(frame: SingUniformFrame): SingUniformFrame;
+  /** Clear filter state (call when a new session starts). */
+  reset(): void;
+}
 
-  return {
-    ...frame,
-    rms,
-    pitchHz,
-    centroid,
-    spectralFlux,
-    onset,
-    voiced,
-    confidence,
-  };
+/**
+ * Stateful frame conditioner using per-feature One-Euro filters (low lag on
+ * fast change, smooth at rest) instead of the previous fixed-EMA smoothing.
+ * Keeps the pitch-hold-on-unvoiced behavior and the onset decay envelope.
+ */
+export function createSingStabilizer(): SingStabilizer {
+  let rmsFilter = new OneEuroFilter({ minCutoff: 1.2, beta: 0.02 });
+  let centroidFilter = new OneEuroFilter({ minCutoff: 1.0, beta: 0.02 });
+  let fluxFilter = new OneEuroFilter({ minCutoff: 1.5, beta: 0.05 });
+  let pitchFilter = new OneEuroFilter({ minCutoff: 0.8, beta: 0.01 });
+  let prevPitch = 0;
+  let prevOnset = 0;
+
+  function stabilize(frame: SingUniformFrame): SingUniformFrame {
+    const tMs = frame.elapsedSeconds * 1000;
+    const rms = rmsFilter.filter(normalizeRange(frame.rms, 0.015, 0.16), tMs);
+    const centroid = centroidFilter.filter(clamp01(frame.centroid), tMs);
+    const spectralFlux = fluxFilter.filter(normalizeRange(frame.spectralFlux, 0.001, 0.025), tMs);
+    const voiced = clamp01(frame.voiced);
+    const confidence = clamp01(frame.confidence);
+    const pitchTarget = frame.pitchHz > 0 && (voiced > 0.2 || confidence > 0.08)
+      ? frame.pitchHz
+      : prevPitch;
+    const pitchHz = pitchTarget > 0 ? pitchFilter.filter(pitchTarget, tMs) : 0;
+    prevPitch = pitchTarget;
+    const onset = frame.onset > 0.5 ? 1 : Math.max(0, prevOnset * 0.82);
+    prevOnset = onset;
+
+    return { ...frame, rms, pitchHz, centroid, spectralFlux, onset, voiced, confidence };
+  }
+
+  function reset(): void {
+    rmsFilter = new OneEuroFilter({ minCutoff: 1.2, beta: 0.02 });
+    centroidFilter = new OneEuroFilter({ minCutoff: 1.0, beta: 0.02 });
+    fluxFilter = new OneEuroFilter({ minCutoff: 1.5, beta: 0.05 });
+    pitchFilter = new OneEuroFilter({ minCutoff: 0.8, beta: 0.01 });
+    prevPitch = 0;
+    prevOnset = 0;
+  }
+
+  return { stabilize, reset };
 }
 
 export function createSingRenderer(canvas: HTMLCanvasElement, preset: SingPresetArtifact): SingRenderer {
@@ -196,10 +221,6 @@ function smoothUniformValue(value: number, previous: number | undefined, smoothi
   if (previous === undefined) return value;
   const amount = clamp01(smoothing);
   return previous * amount + value * (1 - amount);
-}
-
-function smoothValue(value: number, previous: number | undefined, smoothing: number): number {
-  return smoothUniformValue(value, previous, smoothing);
 }
 
 function clamp01(value: number): number {

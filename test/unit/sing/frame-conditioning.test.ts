@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { createSingPreset } from '../../../packages/audio-core/src/PresetSchema.js';
 import {
+  createSingStabilizer,
   mapSingPresetUniforms,
-  stabilizeSingFrame,
   type SingUniformFrame,
 } from '../../../packages/sing/src/render/pipeline.js';
 
@@ -19,7 +19,8 @@ describe('Sing frame conditioning', () => {
   };
 
   it('normalizes ordinary mic energy into a useful visual range and smooths frame changes', () => {
-    const first = stabilizeSingFrame({
+    const stabilizer = createSingStabilizer();
+    const first = stabilizer.stabilize({
       ...quietFrame,
       rms: 0.08,
       pitchHz: 240,
@@ -28,7 +29,7 @@ describe('Sing frame conditioning', () => {
       voiced: 1,
       confidence: 0.7,
     });
-    const second = stabilizeSingFrame({ ...quietFrame, elapsedSeconds: 1.02 }, first);
+    const second = stabilizer.stabilize({ ...quietFrame, elapsedSeconds: 1.02 });
 
     expect(first.rms).toBeGreaterThan(0.3);
     expect(first.spectralFlux).toBeGreaterThan(0.2);

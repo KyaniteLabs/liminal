@@ -15,7 +15,7 @@ import {
   type MovementFeatureFrame,
   type MovementState,
 } from './movement/MovementFeatures';
-import { createSingRenderer, stabilizeSingFrame, type SingRenderer, type SingUniformFrame } from './render/pipeline';
+import { createSingRenderer, createSingStabilizer, type SingRenderer, type SingStabilizer, type SingUniformFrame } from './render/pipeline';
 import { SessionRecorder } from './recording/SessionRecorder';
 import './style.css';
 
@@ -41,6 +41,7 @@ let sharedFrame: Float32Array | null = null;
 let animationId: number | null = null;
 let latestFrame: VoiceFeatureFrame | null = null;
 let stableFrame: SingUniformFrame | null = null;
+const stabilizer: SingStabilizer = createSingStabilizer();
 let movementController: MovementCameraController | null = null;
 let movementState: MovementState | null = null;
 let movementCameraStarting = false;
@@ -180,6 +181,7 @@ async function startInstrument(): Promise<void> {
     const source = audioContext.createMediaStreamSource(stream);
     workletNode = new AudioWorkletNode(audioContext, 'sing-voice-processor');
     sharedFrame = new Float32Array(new SharedArrayBuffer(Float32Array.BYTES_PER_ELEMENT * 8));
+    stabilizer.reset();
     workletNode.port.postMessage({ type: 'shared-frame', buffer: sharedFrame.buffer });
     workletNode.port.onmessage = (event: MessageEvent<{ type: string; frame: VoiceFeatureFrame }>) => {
       if (event.data?.type !== 'voice-frame') return;
@@ -303,7 +305,7 @@ function renderLive(): void {
       confidence: sharedFrame[6] ?? 0,
       elapsedSeconds: audioContext?.currentTime ?? performance.now() / 1000,
     };
-    stableFrame = stabilizeSingFrame(rawFrame, stableFrame);
+    stableFrame = stabilizer.stabilize(rawFrame);
     renderer?.render(withMovementFrame(stableFrame));
     if (latestFrame) {
       const pitch = Math.round(latestFrame.pitchHz);

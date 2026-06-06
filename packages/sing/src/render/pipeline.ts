@@ -1,5 +1,6 @@
 import type { SingPresetArtifact, SingRawMapping, SemanticChannel, SingMappingCurve, SingVoiceFeature } from '@liminal/audio-core/PresetSchema.js';
 import type { SemanticVisualState } from '@liminal/audio-core/SemanticMapper.js';
+import { DEFAULT_SEMANTIC_MAPPINGS } from '@liminal/audio-core/defaultMapping.js';
 import { OneEuroFilter } from '@liminal/audio-core/dsp/OneEuroFilter.js';
 
 export interface SingUniformFrame {
@@ -117,7 +118,11 @@ export function createSingRenderer(canvas: HTMLCanvasElement, preset: SingPreset
   const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
   const timeLocation = gl.getUniformLocation(program, 'u_time');
   const uniformLocations = new Map<string, WebGLUniformLocation | null>();
-  const mappedTargets = new Set([...Object.keys(DEFAULT_UNIFORM_VALUES), ...preset.mappings.map((mapping) => mapping.target)]);
+  const mappedTargets = new Set([
+    ...Object.keys(DEFAULT_UNIFORM_VALUES),
+    ...DEFAULT_SEMANTIC_MAPPINGS.map((mapping) => mapping.target),
+    ...preset.mappings.map((mapping) => mapping.target),
+  ]);
   for (const target of mappedTargets) {
     uniformLocations.set(target, gl.getUniformLocation(program, target));
   }
@@ -174,7 +179,13 @@ export function mapSingPresetUniforms(
   for (const [target, readValue] of Object.entries(DEFAULT_UNIFORM_VALUES)) {
     values.set(target, readValue(frame));
   }
-  for (const mapping of preset.mappings) {
+  // Merge the default semantic vocabulary for any uniform the preset doesn't map.
+  const explicitTargets = new Set(preset.mappings.map((m) => m.target));
+  const mappings = [
+    ...preset.mappings,
+    ...DEFAULT_SEMANTIC_MAPPINGS.filter((m) => !explicitTargets.has(m.target)),
+  ];
+  for (const mapping of mappings) {
     let mapped: number;
     let smoothing: number;
     if (mapping.source === 'semantic') {

@@ -405,7 +405,7 @@ function buildLyricInput(): LyricSidecarInput {
   return {
     presetId: preset?.id ?? 'sing',
     sceneName: preset?.name,
-    visualTags: ['voice', 'shader', ...Array.from(new Set(preset?.mappings.map((mapping) => mapping.feature) ?? []))],
+    visualTags: ['voice', 'shader', ...Array.from(new Set(preset?.mappings.map((mapping) => (mapping.source === 'semantic' ? mapping.channel : mapping.feature)) ?? []))],
     recentAcceptedPhrases: phraseBuffer.acceptedTexts().slice(-5),
     recentDismissedPhrases: phraseBuffer.dismissedTexts().slice(-8),
     audioMood: {

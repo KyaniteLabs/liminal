@@ -161,6 +161,7 @@ export class PreviewServer {
         throw new Error('CSRF_SECRET environment variable is required');
       }
       csrfSecret = randomBytes(32).toString('hex');
+      // eslint-disable-next-line no-console -- intentional dev-time security notice
       console.warn('[PreviewServer] CSRF_SECRET not set — using an ephemeral dev secret. Set CSRF_SECRET for production.');
     }
 

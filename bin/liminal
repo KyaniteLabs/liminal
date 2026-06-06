@@ -2442,7 +2442,11 @@ else if (cmd === 'prompt' && cmdArgs[0] === 'synthesize') {
 }
 else {
   console.error('');
-  console.error('Run "liminal --configure" to set up LM Studio');
-  console.error('Or use: liminal "your idea"');
+  if (cmd) {
+    console.error(`Unknown command or subcommand: ${[cmd, ...cmdArgs].join(' ')}`);
+    console.error('Run "liminal --help" to see available commands and subcommands.');
+  } else {
+    console.error('Run "liminal --help" for usage, or: liminal "your idea"');
+  }
   process.exit(1);
 }

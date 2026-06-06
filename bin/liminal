@@ -2305,8 +2305,12 @@ else if (cmd === 'ship' && cmdArgs[0] === 'garden') {
   const { CreativeWeaknessEmitter } = await import('../dist/autonomy/CreativeWeaknessEmitter.js');
 
   // Readiness gate check
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
   const healthMonitor = new GardenHealthMonitor();
   const readinessBuilder = new LaunchSummaryBuilder();
+  const liminalFs = LiminalFS.open(process.cwd());
+  const hooks = new EmergenceHooks(liminalFs);
   const archive = hooks.getArchive();
   const cells = archive.getAllCells();
   const health = healthMonitor.measure(cells);

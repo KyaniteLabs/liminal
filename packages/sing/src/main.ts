@@ -1,5 +1,6 @@
 import { validateSingPreset, type SingPresetArtifact } from '@liminal/audio-core/PresetSchema.js';
-import type { VoiceFeatureFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
+import { analyzeVoiceFrame, type VoiceFeatureFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
+import { sampleRingByteLength, createSampleRingViews, readWindowFromRing } from '@liminal/audio-core/dsp/SampleRingShared.js';
 import {
   DEFAULT_LYRIC_RUNTIME_CONFIG,
   PhraseRingBuffer,
@@ -37,7 +38,12 @@ let renderer: SingRenderer | null = null;
 let stream: MediaStream | null = null;
 let audioContext: AudioContext | null = null;
 let workletNode: AudioWorkletNode | null = null;
-let sharedFrame: Float32Array | null = null;
+const ANALYSIS_WINDOW = 2048;
+const SAMPLE_RING_CAPACITY = 4096;
+let ringControl: Int32Array | null = null;
+let ringSamples: Float32Array | null = null;
+let previousSpectrum: Float32Array | null = null;
+const analysisWindow = new Float32Array(ANALYSIS_WINDOW);
 let animationId: number | null = null;
 let latestFrame: VoiceFeatureFrame | null = null;
 let stableFrame: SingUniformFrame | null = null;
@@ -180,14 +186,15 @@ async function startInstrument(): Promise<void> {
 
     const source = audioContext.createMediaStreamSource(stream);
     workletNode = new AudioWorkletNode(audioContext, 'sing-voice-processor');
-    sharedFrame = new Float32Array(new SharedArrayBuffer(Float32Array.BYTES_PER_ELEMENT * 8));
+    const ringBuffer = new SharedArrayBuffer(sampleRingByteLength(SAMPLE_RING_CAPACITY));
+    const views = createSampleRingViews(ringBuffer, SAMPLE_RING_CAPACITY);
+    ringControl = views.control;
+    ringSamples = views.ring;
+    previousSpectrum = null;
     stabilizer.reset();
-    workletNode.port.postMessage({ type: 'shared-frame', buffer: sharedFrame.buffer });
-    workletNode.port.onmessage = (event: MessageEvent<{ type: string; frame: VoiceFeatureFrame }>) => {
-      if (event.data?.type !== 'voice-frame') return;
-      latestFrame = event.data.frame;
-      if (recording) sessionRecorder?.appendTelemetry(event.data.frame);
-    };
+    // The worklet only fills this ring with raw samples; analysis (FFT/YIN) runs
+    // on the main thread in renderLive(), off the realtime audio thread.
+    workletNode.port.postMessage({ type: 'sample-ring', buffer: ringBuffer, capacity: SAMPLE_RING_CAPACITY });
 
     const silent = audioContext.createGain();
     silent.gain.value = 0;
@@ -213,7 +220,9 @@ async function stopInstrument(): Promise<void> {
   stream = null;
   await audioContext?.close();
   audioContext = null;
-  sharedFrame = null;
+  ringControl = null;
+  ringSamples = null;
+  previousSpectrum = null;
   latestFrame = null;
   stableFrame = null;
   startButton.textContent = 'Start mic';
@@ -294,23 +303,35 @@ function renderIdle(): void {
 
 function renderLive(): void {
   const loop = () => {
-    if (!sharedFrame) return;
+    if (!ringControl || !ringSamples || !audioContext) return;
+    // Pull the latest analysis window from the worklet's raw-sample ring and run
+    // FFT/YIN here, on the main thread (≈16ms frame budget), not the audio thread.
+    readWindowFromRing(ringControl, ringSamples, ANALYSIS_WINDOW, analysisWindow);
+    const frame = analyzeVoiceFrame({
+      samples: analysisWindow,
+      sampleRate: audioContext.sampleRate,
+      previousSpectrum,
+      nowMs: audioContext.currentTime * 1000,
+    });
+    previousSpectrum = frame.spectrum;
+    latestFrame = frame;
+    if (recording) sessionRecorder?.appendTelemetry(frame);
+
     const rawFrame: SingUniformFrame = {
-      rms: sharedFrame[0] ?? 0,
-      pitchHz: sharedFrame[1] ?? 0,
-      centroid: sharedFrame[2] ?? 0,
-      spectralFlux: sharedFrame[3] ?? 0,
-      onset: sharedFrame[4] ?? 0,
-      voiced: sharedFrame[5] ?? 0,
-      confidence: sharedFrame[6] ?? 0,
-      elapsedSeconds: audioContext?.currentTime ?? performance.now() / 1000,
+      rms: frame.rms,
+      pitchHz: frame.pitchHz,
+      centroid: frame.centroid,
+      spectralFlux: frame.spectralFlux,
+      onset: frame.onset ? 1 : 0,
+      voiced: frame.voiced ? 1 : 0,
+      confidence: frame.confidence,
+      elapsedSeconds: audioContext.currentTime,
     };
     stableFrame = stabilizer.stabilize(rawFrame);
     renderer?.render(withMovementFrame(stableFrame));
-    if (latestFrame) {
-      const pitch = Math.round(latestFrame.pitchHz);
-      setStatus(`${latestFrame.voiced ? 'voiced' : 'listening'} · rms ${latestFrame.rms.toFixed(2)} · ${pitch || '--'} Hz`);
-    }
+
+    const pitch = Math.round(frame.pitchHz);
+    setStatus(`${frame.voiced ? 'voiced' : 'listening'} · rms ${frame.rms.toFixed(2)} · ${pitch || '--'} Hz`);
     renderTeleprompter();
     animationId = window.requestAnimationFrame(loop);
   };

@@ -123,6 +123,10 @@ dogfood-output*/
 dogfood-campaign-*/
 dogfood-*.json
 
+# pnpm-only: never commit npm lockfiles or nested workspace lockfiles
+**/package-lock.json
+gui/pnpm-lock.yaml
+
 # Narrative local data
 narrative/data/
 

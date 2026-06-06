@@ -1,8 +1,0 @@
-osc(6, 0.15, 1.0)
-  .kaleid(8)
-  .modulate(voronoi(4, 0.3, 0.2), 0.4)
-  .add(noise(3, 0.2).scale(1.6))
-  .color(0.9, 0.5, 0.7)
-  .saturate(1.3)
-  .out()
-render()

@@ -32,7 +32,7 @@ describe('studio and improve CLI contract', () => {
   it('has a canonical studio script for the GUI workbench', () => {
     const scripts = pkg().scripts;
 
-    expect(scripts.gui).toBe('npm run build && node scripts/utils/start-studio.js');
+    expect(scripts.gui).toBe('pnpm build && node scripts/utils/start-studio.js');
     expect(scripts.studio).toBe('npm run gui');
     expect(scripts['gui:all']).toBeUndefined();
   });

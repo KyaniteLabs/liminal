@@ -1,4 +1,6 @@
-import { detectPitch } from './PitchDetector.js';
+import { magnitudeSpectrum } from './dsp/fft.js';
+import { detectPitchYin } from './dsp/yin.js';
+import { hannWindow, applyWindow } from './dsp/window.js';
 
 export interface VoiceFeatureFrame {
   rms: number;
@@ -19,15 +21,17 @@ export interface VoiceFeatureInput {
   nowMs?: number;
 }
 
-const SPECTRUM_BINS = 64;
-
+/**
+ * Analyze one full analysis window (>= ~1024 samples) of voice audio.
+ *
+ * Pitch uses YIN over the whole window (stable down to ~50 Hz), and the spectrum
+ * uses a Hann-windowed radix-2 FFT — replacing the previous 128-sample naive DFT
+ * + zero-crossing fallback that produced jittery pitch.
+ */
 export function analyzeVoiceFrame(input: VoiceFeatureInput): VoiceFeatureFrame {
   const rms = computeRms(input.samples);
-  const detectorPitch = detectPitch(input.samples, input.sampleRate);
-  const pitch = detectorPitch.frequency === null
-    ? estimatePitchByZeroCrossing(input.samples, input.sampleRate, rms)
-    : detectorPitch;
-  const spectrum = computeSpectrum(input.samples, SPECTRUM_BINS);
+  const pitch = detectPitchYin(input.samples, input.sampleRate);
+  const spectrum = computeSpectrum(input.samples);
   const centroid = computeCentroid(spectrum);
   const spectralFlux = input.previousSpectrum ? computeSpectralFlux(spectrum, input.previousSpectrum) : 0;
   const voiced = rms > 0.015 && pitch.frequency !== null && pitch.clarity > 0.1;
@@ -46,26 +50,10 @@ export function analyzeVoiceFrame(input: VoiceFeatureInput): VoiceFeatureFrame {
   };
 }
 
-function estimatePitchByZeroCrossing(samples: Float32Array, sampleRate: number, rms: number): ReturnType<typeof detectPitch> {
-  if (samples.length === 0 || rms < 0.01) return { frequency: null, clarity: 0, midi: null, noteName: null };
-  const crossings: number[] = [];
-  for (let i = 1; i < samples.length; i++) {
-    const previous = samples[i - 1];
-    const current = samples[i];
-    if (previous <= 0 && current > 0) {
-      const span = current - previous;
-      const offset = span === 0 ? 0 : -previous / span;
-      crossings.push(i - 1 + offset);
-    }
-  }
-
-  if (crossings.length < 2) return { frequency: null, clarity: 0, midi: null, noteName: null };
-  const elapsedSamples = crossings[crossings.length - 1] - crossings[0];
-  const cycles = crossings.length - 1;
-  if (elapsedSamples <= 0) return { frequency: null, clarity: 0, midi: null, noteName: null };
-  const frequency = (cycles * sampleRate) / elapsedSamples;
-  if (frequency < 50 || frequency > 2000) return { frequency: null, clarity: 0, midi: null, noteName: null };
-  return { frequency, clarity: Math.min(1, rms * 2), midi: null, noteName: null };
+function largestPowerOfTwoLE(n: number): number {
+  let p = 1;
+  while (p * 2 <= n) p *= 2;
+  return p;
 }
 
 function computeRms(samples: Float32Array): number {
@@ -75,22 +63,16 @@ function computeRms(samples: Float32Array): number {
   return Math.sqrt(sum / samples.length);
 }
 
-function computeSpectrum(samples: Float32Array, bins: number): Float32Array {
-  const spectrum = new Float32Array(bins);
-  if (samples.length === 0) return spectrum;
-
-  for (let bin = 0; bin < bins; bin++) {
-    let real = 0;
-    let imag = 0;
-    const frequency = bin / bins;
-    for (let i = 0; i < samples.length; i++) {
-      const phase = -2 * Math.PI * frequency * i;
-      real += samples[i] * Math.cos(phase);
-      imag += samples[i] * Math.sin(phase);
-    }
-    spectrum[bin] = Math.sqrt(real * real + imag * imag) / samples.length;
-  }
-  return spectrum;
+/**
+ * Hann-windowed FFT magnitude spectrum of the most-recent power-of-two samples.
+ * Returns N/2 magnitude bins (bin k ≈ k * sampleRate / N Hz).
+ */
+function computeSpectrum(samples: Float32Array): Float32Array {
+  const p2 = largestPowerOfTwoLE(samples.length);
+  if (p2 < 2) return new Float32Array(0);
+  const slice = samples.length === p2 ? samples : samples.slice(samples.length - p2);
+  const windowed = applyWindow(slice, hannWindow(p2));
+  return magnitudeSpectrum(windowed, 0);
 }
 
 function computeCentroid(spectrum: Float32Array): number {
@@ -100,7 +82,7 @@ function computeCentroid(spectrum: Float32Array): number {
     total += spectrum[i];
     weighted += spectrum[i] * i;
   }
-  return total === 0 ? 0 : weighted / total / spectrum.length;
+  return total === 0 || spectrum.length === 0 ? 0 : weighted / total / spectrum.length;
 }
 
 function computeSpectralFlux(current: Float32Array, previous: Float32Array): number {

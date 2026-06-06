@@ -1,4 +1,5 @@
 import { analyzeVoiceFrame, type VoiceFeatureFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
+import { AnalysisRingBuffer } from '@liminal/audio-core/dsp/RingBuffer.js';
 
 declare const currentTime: number;
 declare const sampleRate: number;
@@ -10,9 +11,13 @@ declare class AudioWorkletProcessor {
 
 declare function registerProcessor(name: string, processorCtor: typeof AudioWorkletProcessor): void;
 
+const ANALYSIS_WINDOW = 2048;
+const HOP = 256;
+
 class SingVoiceProcessor extends AudioWorkletProcessor {
   private previousSpectrum: Float32Array | null = null;
   private sharedFrame: Float32Array | null = null;
+  private readonly ring = new AnalysisRingBuffer(ANALYSIS_WINDOW);
 
   constructor() {
     super();
@@ -27,8 +32,13 @@ class SingVoiceProcessor extends AudioWorkletProcessor {
     const channel = inputs[0]?.[0];
     if (!channel || channel.length === 0) return true;
 
+    // Accumulate quanta; analyze on a stable sliding window once HOP samples arrive.
+    this.ring.push(channel);
+    const window = this.ring.takeFrameIfReady(HOP);
+    if (!window) return true;
+
     const frame = analyzeVoiceFrame({
-      samples: channel,
+      samples: window,
       sampleRate,
       previousSpectrum: this.previousSpectrum,
       nowMs: currentTime * 1000,

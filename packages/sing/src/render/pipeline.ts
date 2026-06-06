@@ -1,4 +1,6 @@
-import type { SingPresetArtifact, SingPresetMapping, SingVoiceFeature } from '@liminal/audio-core/PresetSchema.js';
+import type { SingPresetArtifact, SingRawMapping, SemanticChannel, SingMappingCurve, SingVoiceFeature } from '@liminal/audio-core/PresetSchema.js';
+import type { SemanticVisualState } from '@liminal/audio-core/SemanticMapper.js';
+import { DEFAULT_SEMANTIC_MAPPINGS } from '@liminal/audio-core/defaultMapping.js';
 import { OneEuroFilter } from '@liminal/audio-core/dsp/OneEuroFilter.js';
 
 export interface SingUniformFrame {
@@ -14,7 +16,11 @@ export interface SingUniformFrame {
   movementX?: number;
   movementY?: number;
   distanceToCamera?: number;
+  /** Semantic visual state (palette/form/motion/...) for semantic-bound uniforms. */
+  semantic?: SemanticVisualState;
 }
+
+const DEFAULT_SEMANTIC_SMOOTHING = 0.6;
 
 export interface SingRenderer {
   render(frame: SingUniformFrame): void;
@@ -112,7 +118,11 @@ export function createSingRenderer(canvas: HTMLCanvasElement, preset: SingPreset
   const resolutionLocation = gl.getUniformLocation(program, 'u_resolution');
   const timeLocation = gl.getUniformLocation(program, 'u_time');
   const uniformLocations = new Map<string, WebGLUniformLocation | null>();
-  const mappedTargets = new Set([...Object.keys(DEFAULT_UNIFORM_VALUES), ...preset.mappings.map((mapping) => mapping.target)]);
+  const mappedTargets = new Set([
+    ...Object.keys(DEFAULT_UNIFORM_VALUES),
+    ...DEFAULT_SEMANTIC_MAPPINGS.map((mapping) => mapping.target),
+    ...preset.mappings.map((mapping) => mapping.target),
+  ]);
   for (const target of mappedTargets) {
     uniformLocations.set(target, gl.getUniformLocation(program, target));
   }
@@ -169,12 +179,34 @@ export function mapSingPresetUniforms(
   for (const [target, readValue] of Object.entries(DEFAULT_UNIFORM_VALUES)) {
     values.set(target, readValue(frame));
   }
-  for (const mapping of preset.mappings) {
-    const mapped = applyMappingCurve(featureValue(frame, mapping.feature), mapping);
+  // Merge the default semantic vocabulary for any uniform the preset doesn't map.
+  const explicitTargets = new Set(preset.mappings.map((m) => m.target));
+  const mappings = [
+    ...preset.mappings,
+    ...DEFAULT_SEMANTIC_MAPPINGS.filter((m) => !explicitTargets.has(m.target)),
+  ];
+  for (const mapping of mappings) {
+    let mapped: number;
+    let smoothing: number;
+    if (mapping.source === 'semantic') {
+      const channelValue = frame.semantic ? readSemanticChannel(frame.semantic, mapping.channel) : 0;
+      mapped = curveValue(clamp01(channelValue), mapping.curve ?? 'linear');
+      smoothing = mapping.smoothing ?? DEFAULT_SEMANTIC_SMOOTHING;
+    } else {
+      mapped = applyMappingCurve(featureValue(frame, mapping.feature), mapping);
+      smoothing = mapping.smoothing ?? DEFAULT_MAPPING_SMOOTHING[mapping.feature];
+    }
     const previous = previousValues.get(mapping.target);
-    values.set(mapping.target, smoothUniformValue(mapped, previous, mapping.smoothing ?? DEFAULT_MAPPING_SMOOTHING[mapping.feature]));
+    values.set(mapping.target, smoothUniformValue(mapped, previous, smoothing));
   }
   return values;
+}
+
+function readSemanticChannel(state: SemanticVisualState, channel: SemanticChannel): number {
+  const [group, key] = channel.split('.') as [keyof SemanticVisualState, string];
+  const section = state[group] as Record<string, number> | undefined;
+  const value = section?.[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }
 
 function featureValue(frame: SingUniformFrame, feature: SingVoiceFeature): number {
@@ -194,7 +226,7 @@ function featureValue(frame: SingUniformFrame, feature: SingVoiceFeature): numbe
   }
 }
 
-function applyMappingCurve(value: number, mapping: SingPresetMapping): number {
+function applyMappingCurve(value: number, mapping: SingRawMapping): number {
   const span = mapping.max - mapping.min;
   if (span === 0) return mapping.min;
   const normalized = clamp01((value - mapping.min) / span);
@@ -202,7 +234,7 @@ function applyMappingCurve(value: number, mapping: SingPresetMapping): number {
   return mapping.min + curved * span;
 }
 
-function curveValue(value: number, curve: SingPresetMapping['curve']): number {
+function curveValue(value: number, curve: SingMappingCurve): number {
   switch (curve) {
     case 'easeIn':
       return value * value;

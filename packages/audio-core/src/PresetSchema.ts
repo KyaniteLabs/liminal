@@ -1,7 +1,27 @@
 export type SingVoiceFeature = 'rms' | 'pitchHz' | 'centroid' | 'spectralFlux' | 'onset' | 'voiced';
 export type SingMappingCurve = 'linear' | 'easeIn' | 'easeOut' | 'exponential' | 'step';
 
-export interface SingPresetMapping {
+/** Semantic visual channels a preset can bind to (see SemanticMapper). */
+export type SemanticChannel =
+  | 'palette.hue' | 'palette.saturation' | 'palette.value' | 'palette.accentHue'
+  | 'form.family' | 'form.complexity' | 'form.symmetry' | 'form.sharpness'
+  | 'motion.flow' | 'motion.turbulence' | 'motion.shimmer'
+  | 'texture.grain' | 'texture.glow' | 'texture.softness'
+  | 'density.coverage' | 'density.spawn'
+  | 'composition.scale' | 'composition.focalY' | 'composition.depth';
+
+export const SEMANTIC_CHANNELS: readonly SemanticChannel[] = [
+  'palette.hue', 'palette.saturation', 'palette.value', 'palette.accentHue',
+  'form.family', 'form.complexity', 'form.symmetry', 'form.sharpness',
+  'motion.flow', 'motion.turbulence', 'motion.shimmer',
+  'texture.grain', 'texture.glow', 'texture.softness',
+  'density.coverage', 'density.spawn',
+  'composition.scale', 'composition.focalY', 'composition.depth',
+];
+
+/** Raw feature → uniform binding (legacy `source` optional, defaults to raw). */
+export interface SingRawMapping {
+  source?: 'raw';
   feature: SingVoiceFeature;
   target: string;
   curve: SingMappingCurve;
@@ -9,6 +29,17 @@ export interface SingPresetMapping {
   max: number;
   smoothing?: number;
 }
+
+/** Semantic channel → uniform binding. */
+export interface SingSemanticMapping {
+  source: 'semantic';
+  channel: SemanticChannel;
+  target: string;
+  curve?: SingMappingCurve;
+  smoothing?: number;
+}
+
+export type SingPresetMapping = SingRawMapping | SingSemanticMapping;
 
 export interface SingPresetArtifact {
   schemaVersion: 1;
@@ -77,14 +108,23 @@ function nonEmpty(value: unknown): value is string {
 
 function isValidMapping(mapping: unknown): mapping is SingPresetMapping {
   if (!mapping || typeof mapping !== 'object') return false;
-  const candidate = mapping as Partial<SingPresetMapping>;
+  const candidate = mapping as Record<string, unknown>;
+  if (!nonEmpty(candidate.target)) return false;
+  if (candidate.source === 'semantic') {
+    return isSemanticChannel(candidate.channel)
+      && (candidate.curve === undefined || isCurve(candidate.curve));
+  }
+  // Raw mapping (source 'raw' or absent for backward compatibility).
   return isVoiceFeature(candidate.feature)
-    && nonEmpty(candidate.target)
     && isCurve(candidate.curve)
     && typeof candidate.min === 'number'
     && typeof candidate.max === 'number'
     && Number.isFinite(candidate.min)
     && Number.isFinite(candidate.max);
+}
+
+function isSemanticChannel(value: unknown): value is SemanticChannel {
+  return typeof value === 'string' && (SEMANTIC_CHANNELS as readonly string[]).includes(value);
 }
 
 function isVoiceFeature(value: unknown): value is SingVoiceFeature {

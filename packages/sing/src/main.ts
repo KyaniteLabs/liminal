@@ -1,6 +1,8 @@
 import { validateSingPreset, type SingPresetArtifact } from '@liminal/audio-core/PresetSchema.js';
 import { analyzeVoiceFrame, type VoiceFeatureFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
 import { sampleRingByteLength, createSampleRingViews, readWindowFromRing } from '@liminal/audio-core/dsp/SampleRingShared.js';
+import { mapVoiceToSemantic } from '@liminal/audio-core/SemanticMapper.js';
+import { VibratoTracker } from '@liminal/audio-core/dsp/VibratoTracker.js';
 import {
   DEFAULT_LYRIC_RUNTIME_CONFIG,
   PhraseRingBuffer,
@@ -48,6 +50,7 @@ let animationId: number | null = null;
 let latestFrame: VoiceFeatureFrame | null = null;
 let stableFrame: SingUniformFrame | null = null;
 const stabilizer: SingStabilizer = createSingStabilizer();
+const vibrato = new VibratoTracker();
 let movementController: MovementCameraController | null = null;
 let movementState: MovementState | null = null;
 let movementCameraStarting = false;
@@ -192,6 +195,7 @@ async function startInstrument(): Promise<void> {
     ringSamples = views.ring;
     previousSpectrum = null;
     stabilizer.reset();
+    vibrato.reset();
     // The worklet only fills this ring with raw samples; analysis (FFT/YIN) runs
     // on the main thread in renderLive(), off the realtime audio thread.
     workletNode.port.postMessage({ type: 'sample-ring', buffer: ringBuffer, capacity: SAMPLE_RING_CAPACITY });
@@ -317,6 +321,8 @@ function renderLive(): void {
     latestFrame = frame;
     if (recording) sessionRecorder?.appendTelemetry(frame);
 
+    const vib = vibrato.update(frame.pitchHz, audioContext.currentTime * 1000);
+    const semantic = mapVoiceToSemantic(frame, vib);
     const rawFrame: SingUniformFrame = {
       rms: frame.rms,
       pitchHz: frame.pitchHz,
@@ -326,6 +332,7 @@ function renderLive(): void {
       voiced: frame.voiced ? 1 : 0,
       confidence: frame.confidence,
       elapsedSeconds: audioContext.currentTime,
+      semantic,
     };
     stableFrame = stabilizer.stabilize(rawFrame);
     renderer?.render(withMovementFrame(stableFrame));
@@ -405,7 +412,7 @@ function buildLyricInput(): LyricSidecarInput {
   return {
     presetId: preset?.id ?? 'sing',
     sceneName: preset?.name,
-    visualTags: ['voice', 'shader', ...Array.from(new Set(preset?.mappings.map((mapping) => mapping.feature) ?? []))],
+    visualTags: ['voice', 'shader', ...Array.from(new Set(preset?.mappings.map((mapping) => (mapping.source === 'semantic' ? mapping.channel : mapping.feature)) ?? []))],
     recentAcceptedPhrases: phraseBuffer.acceptedTexts().slice(-5),
     recentDismissedPhrases: phraseBuffer.dismissedTexts().slice(-8),
     audioMood: {

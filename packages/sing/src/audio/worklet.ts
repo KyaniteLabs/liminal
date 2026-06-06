@@ -1,7 +1,4 @@
-import { analyzeVoiceFrame, type VoiceFeatureFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
-
-declare const currentTime: number;
-declare const sampleRate: number;
+import { createSampleRingViews, writeSamplesToRing } from '@liminal/audio-core/dsp/SampleRingShared.js';
 
 declare class AudioWorkletProcessor {
   readonly port: MessagePort;
@@ -10,59 +7,36 @@ declare class AudioWorkletProcessor {
 
 declare function registerProcessor(name: string, processorCtor: typeof AudioWorkletProcessor): void;
 
+/**
+ * Realtime-safe producer: copies mic sample quanta into a shared raw-sample ring
+ * and does NO analysis. FFT/YIN run off the audio thread (main-thread render
+ * loop), so this processor never risks missing the audio render deadline.
+ */
 class SingVoiceProcessor extends AudioWorkletProcessor {
-  private previousSpectrum: Float32Array | null = null;
-  private sharedFrame: Float32Array | null = null;
+  private control: Int32Array | null = null;
+  private ring: Float32Array | null = null;
 
   constructor() {
     super();
     this.port.onmessage = (event: MessageEvent) => {
-      if (event.data?.type === 'shared-frame' && event.data.buffer instanceof SharedArrayBuffer) {
-        this.sharedFrame = new Float32Array(event.data.buffer);
+      if (
+        event.data?.type === 'sample-ring' &&
+        event.data.buffer instanceof SharedArrayBuffer &&
+        typeof event.data.capacity === 'number'
+      ) {
+        const views = createSampleRingViews(event.data.buffer, event.data.capacity);
+        this.control = views.control;
+        this.ring = views.ring;
       }
     };
   }
 
   process(inputs: Float32Array[][]): boolean {
     const channel = inputs[0]?.[0];
-    if (!channel || channel.length === 0) return true;
-
-    const frame = analyzeVoiceFrame({
-      samples: channel,
-      sampleRate,
-      previousSpectrum: this.previousSpectrum,
-      nowMs: currentTime * 1000,
-    });
-    this.previousSpectrum = frame.spectrum;
-    this.writeSharedFrame(frame);
-    this.port.postMessage({ type: 'voice-frame', frame: serializeFrame(frame) });
+    if (!channel || channel.length === 0 || !this.control || !this.ring) return true;
+    writeSamplesToRing(this.control, this.ring, channel);
     return true;
   }
-
-  private writeSharedFrame(frame: VoiceFeatureFrame): void {
-    if (!this.sharedFrame) return;
-    this.sharedFrame[0] = frame.rms;
-    this.sharedFrame[1] = frame.pitchHz;
-    this.sharedFrame[2] = frame.centroid;
-    this.sharedFrame[3] = frame.spectralFlux;
-    this.sharedFrame[4] = frame.onset ? 1 : 0;
-    this.sharedFrame[5] = frame.voiced ? 1 : 0;
-    this.sharedFrame[6] = frame.confidence;
-    this.sharedFrame[7] = frame.capturedAt / 1000;
-  }
-}
-
-function serializeFrame(frame: VoiceFeatureFrame): Omit<VoiceFeatureFrame, 'spectrum'> {
-  return {
-    rms: frame.rms,
-    pitchHz: frame.pitchHz,
-    centroid: frame.centroid,
-    spectralFlux: frame.spectralFlux,
-    onset: frame.onset,
-    voiced: frame.voiced,
-    confidence: frame.confidence,
-    capturedAt: frame.capturedAt,
-  };
 }
 
 registerProcessor('sing-voice-processor', SingVoiceProcessor);

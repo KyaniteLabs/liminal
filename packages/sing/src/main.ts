@@ -3,6 +3,7 @@ import { analyzeVoiceFrame, type VoiceFeatureFrame } from '@liminal/audio-core/V
 import { sampleRingByteLength, createSampleRingViews, readWindowFromRing } from '@liminal/audio-core/dsp/SampleRingShared.js';
 import { mapVoiceToSemantic } from '@liminal/audio-core/SemanticMapper.js';
 import { VibratoTracker } from '@liminal/audio-core/dsp/VibratoTracker.js';
+import { moonlitGardenPreset } from './presets/moonlitGarden';
 import {
   DEFAULT_LYRIC_RUNTIME_CONFIG,
   PhraseRingBuffer,
@@ -157,7 +158,7 @@ window.addEventListener('pagehide', () => {
 
 async function loadPreset(): Promise<SingPresetArtifact | null> {
   const presetUrl = new URLSearchParams(window.location.search).get('preset');
-  if (!presetUrl) return null;
+  if (!presetUrl) return moonlitGardenPreset(); // built-in showpiece default
 
   const response = await fetch(presetUrl);
   if (!response.ok) throw new Error(`Unable to load Sing preset: ${response.status}`);

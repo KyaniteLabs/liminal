@@ -31,7 +31,7 @@ export const DEFAULT_GIT_CONFIG: GitConfig = {
   branchPerRun: true,
   branchPrefix: 'liminal/',
   autoPush: false,
-  commitMessageTemplate: 'liminal: {prompt} iteration {n} (score: {score})',
+  commitMessageTemplate: 'sinter: {prompt} iteration {n} (score: {score})',
   bridgeToCompost: true,
 };
 

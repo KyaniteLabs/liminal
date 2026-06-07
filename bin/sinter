@@ -2,6 +2,20 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+// Env back-compat: mirror SINTER_*/LIMINAL_* so both prefixes work whichever the
+// user set (the canonical prefix is SINTER_; LIMINAL_ stays supported).
+(function mirrorBrandEnv() {
+  for (const key of Object.keys(process.env)) {
+    const base = key.startsWith('SINTER_') ? key.slice(7)
+      : key.startsWith('LIMINAL_') ? key.slice(8) : undefined;
+    if (!base) continue;
+    const value = process.env[key];
+    if (value === undefined) continue;
+    if (process.env[`SINTER_${base}`] === undefined) process.env[`SINTER_${base}`] = value;
+    if (process.env[`LIMINAL_${base}`] === undefined) process.env[`LIMINAL_${base}`] = value;
+  }
+})();
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';

@@ -27,14 +27,14 @@ describe('SinterFS', () => {
     expect(existsSync(join(tempDir, '.sinter', 'objects'))).toBe(true);
   });
 
-  it('writeArtifact — stores content and returns ref with liminal://artifact/ URI', () => {
+  it('writeArtifact — stores content and returns ref with sinter://artifact/ URI', () => {
     const ref = liminalFs.writeArtifact({
       kind: 'generated-code',
       content: 'console.log("hello")',
       filename: 'test.js',
     });
 
-    expect(ref.uri).toMatch(/^liminal:\/\/artifact\/[a-f0-9]{64}$/);
+    expect(ref.uri).toMatch(/^sinter:\/\/artifact\/[a-f0-9]{64}$/);
     expect(ref.kind).toBe('generated-code');
     expect(ref.hash).toHaveLength(64);
   });
@@ -82,7 +82,7 @@ describe('SinterFS', () => {
 
   it('readArtifact — returns null for non-existent hash', () => {
     const result = liminalFs.readArtifact({
-      uri: 'liminal://artifact/0000000000000000000000000000000000000000000000000000000000000000',
+      uri: 'sinter://artifact/0000000000000000000000000000000000000000000000000000000000000000',
       hash: '0000000000000000000000000000000000000000000000000000000000000000',
       kind: 'asset',
     });
@@ -109,7 +109,7 @@ describe('SinterFS', () => {
       prompt: 'generate a circle',
       project: 'my-project',
       status: 'completed' as const,
-      artifacts: [{ uri: 'liminal://artifact/abc', kind: 'generated-code' as const }],
+      artifacts: [{ uri: 'sinter://artifact/abc', kind: 'generated-code' as const }],
       metadata: { score: 0.9 },
     };
 
@@ -141,7 +141,7 @@ describe('SinterFS', () => {
 
   it('writeRef — writes a ref and the file exists at .sinter/refs/<name>.json', () => {
     const ref = {
-      uri: 'liminal://artifact/abc123',
+      uri: 'sinter://artifact/abc123',
       hash: 'abc123',
       kind: 'generated-code' as const,
     };
@@ -152,7 +152,7 @@ describe('SinterFS', () => {
 
   it('writeRef — can read the ref back with matching uri, hash, kind', () => {
     const ref = {
-      uri: 'liminal://artifact/def456',
+      uri: 'sinter://artifact/def456',
       hash: 'def456',
       kind: 'seed' as const,
       path: '/some/path',
@@ -165,19 +165,19 @@ describe('SinterFS', () => {
 
   it('writeRef — throws on .. in name', () => {
     expect(() =>
-      liminalFs.writeRef('../escape', { uri: 'liminal://artifact/x', kind: 'asset' }),
+      liminalFs.writeRef('../escape', { uri: 'sinter://artifact/x', kind: 'asset' }),
     ).toThrow('path traversal');
   });
 
   it('writeRef — throws on absolute path in name', () => {
     expect(() =>
-      liminalFs.writeRef('/etc/passwd', { uri: 'liminal://artifact/x', kind: 'asset' }),
+      liminalFs.writeRef('/etc/passwd', { uri: 'sinter://artifact/x', kind: 'asset' }),
     ).toThrow('absolute paths');
   });
 
   it('writeRef — supports namespaced names with / (e.g., gallery/latest)', () => {
     const ref = {
-      uri: 'liminal://artifact/gal123',
+      uri: 'sinter://artifact/gal123',
       hash: 'gal123',
       kind: 'gallery-version' as const,
     };
@@ -188,11 +188,11 @@ describe('SinterFS', () => {
   });
 
   it('writeRef — overwrites existing ref with same name', () => {
-    liminalFs.writeRef('overwrite', { uri: 'liminal://artifact/v1', kind: 'asset' });
-    liminalFs.writeRef('overwrite', { uri: 'liminal://artifact/v2', kind: 'asset' });
+    liminalFs.writeRef('overwrite', { uri: 'sinter://artifact/v1', kind: 'asset' });
+    liminalFs.writeRef('overwrite', { uri: 'sinter://artifact/v2', kind: 'asset' });
 
     const result = liminalFs.readRef('overwrite');
-    expect(result?.uri).toBe('liminal://artifact/v2');
+    expect(result?.uri).toBe('sinter://artifact/v2');
   });
 
   it('readRef — returns null for non-existent ref', () => {

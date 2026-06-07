@@ -110,7 +110,7 @@ export class TaskLedger {
 
     // Write a ref pointing to the attempt (for discoverability)
     this.fs.writeRef(`${TASK_PREFIX}/${attempt.taskId}/attempt/${attempt.id}`, {
-      uri: `liminal://task/${attempt.taskId}/attempt/${attempt.id}`,
+      uri: `sinter://task/${attempt.taskId}/attempt/${attempt.id}`,
       kind: 'run',
     });
 

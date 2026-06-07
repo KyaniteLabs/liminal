@@ -29,11 +29,11 @@ describe('TraceFSAdapter', () => {
     expect(result.artifactRefs).toHaveLength(1);
   });
 
-  it('linkReasoningTrace — creates artifact with liminal://artifact/ URI', () => {
+  it('linkReasoningTrace — creates artifact with sinter://artifact/ URI', () => {
     const result = adapter.linkReasoningTrace('trace-123', 'run-456');
 
     const ref = result.artifactRefs[0];
-    expect(ref.uri).toMatch(/^liminal:\/\/artifact\/[a-f0-9]{64}$/);
+    expect(ref.uri).toMatch(/^sinter:\/\/artifact\/[a-f0-9]{64}$/);
     expect(ref.kind).toBe('trace');
     expect(ref.hash).toHaveLength(64);
   });

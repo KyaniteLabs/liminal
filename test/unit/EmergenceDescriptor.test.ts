@@ -102,7 +102,7 @@ function makeEntry(id: string, qualityScore: number, descriptorOverrides?: Parti
   };
 
   const ref: SinterObjectRef = {
-    uri: `liminal://artifact/${id}`,
+    uri: `sinter://artifact/${id}`,
     kind: 'generated-code',
   };
 

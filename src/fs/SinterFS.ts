@@ -29,7 +29,7 @@ export class SinterFS {
   writeArtifact(input: WriteArtifactInput): SinterObjectRef {
     const stored = this.projectStore.storeAssetContent(input.content, input.filename, input.kind);
     const ref: SinterObjectRef = {
-      uri: `liminal://artifact/${stored.hash}`,
+      uri: `sinter://artifact/${stored.hash}`,
       hash: stored.hash,
       kind: input.kind,
       path: stored.storedPath,

@@ -35,10 +35,10 @@ describe('SeedFSAdapter', () => {
     expect(seedData?.seed).toBe('seed-abc');
   });
 
-  it('saveSeed — returns SinterObjectRef with liminal://artifact/ URI', async () => {
+  it('saveSeed — returns SinterObjectRef with sinter://artifact/ URI', async () => {
     const ref = await adapter.saveSeed('seed-xyz', {});
 
-    expect(ref.uri).toMatch(/^liminal:\/\/artifact\/[a-f0-9]{64}$/);
+    expect(ref.uri).toMatch(/^sinter:\/\/artifact\/[a-f0-9]{64}$/);
     expect(ref.kind).toBe('seed');
     expect(ref.hash).toHaveLength(64);
   });

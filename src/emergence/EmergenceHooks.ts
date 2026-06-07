@@ -101,7 +101,7 @@ export class EmergenceHooks {
 
     // 4. Attempt archive placement
     const placeholderRef = {
-      uri: `liminal://artifact/${lineage.artifactId}`,
+      uri: `sinter://artifact/${lineage.artifactId}`,
       kind: 'generated-code' as const,
     };
 

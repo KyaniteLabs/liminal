@@ -154,7 +154,7 @@ describe('GitIntegration', () => {
       mockCommit.mockResolvedValue({
         hash: 'abc123',
         date: new Date().toISOString(),
-        message: 'liminal: particles iteration 1 (score: 0.85)',
+        message: 'sinter: particles iteration 1 (score: 0.85)',
         author: 'liminal',
       });
 
@@ -264,7 +264,7 @@ describe('GitIntegration', () => {
       mockAddAllAndCommit.mockResolvedValue({
         hash: 'final',
         date: new Date().toISOString(),
-        message: 'liminal: run complete',
+        message: 'sinter: run complete',
         author: 'liminal',
       });
       mockCheckout.mockResolvedValue(undefined);

@@ -261,7 +261,7 @@ export class CompositionOrchestrator {
     document.getElementById('liminal-start').addEventListener('click', function () {
       this.remove();
       document.querySelectorAll('iframe.liminal-layer').forEach(function (f) {
-        try { f.contentWindow && f.contentWindow.postMessage('liminal:start', '*'); } catch (e) {}
+        try { f.contentWindow && f.contentWindow.postMessage('sinter:start', '*'); } catch (e) {}
         // Re-poke the iframe so any deferred audio context can resume on this gesture.
         var s = f.getAttribute('src'); f.setAttribute('src', s);
       });

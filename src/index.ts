@@ -151,6 +151,8 @@ export async function run(prompt: string, options: {
   swarm?: import('./types/options/SwarmOptions.js').SwarmOptions;
   /** Enable intuition-based quality scoring dimension */
   useIntuition?: boolean;
+  /** Creative domain to route generation + validation to (else defaults to p5). */
+  collabDomain?: import('./types/domains.js').Domain;
 } = {}): Promise<{
   code: string;
   iterations: number;
@@ -227,13 +229,17 @@ export async function run(prompt: string, options: {
       swarmMode: options.swarmMode as import('./swarm/types.js').SwarmMode,
       swarmConfig: options.swarmConfig as Partial<import('./swarm/types.js').SwarmConfig>,
       useIntuition: options.useIntuition,
+      collabDomain: options.collabDomain,
     });
 
     // Initialize Exporter
     const exporter = new Exporter();
 
-    // Final validation gate before saving
-    const finalValidation = CodeValidator.validate(loopResult.code);
+    // Final validation gate before saving. Pass the known domain so the gate
+    // validates against it instead of re-detecting from content — otherwise a
+    // valid non-p5 artifact (e.g. a short Strudel pattern) can be misdetected
+    // as another domain (ASCII) and wrongly rejected.
+    const finalValidation = CodeValidator.validate(loopResult.code, options.collabDomain);
     if (!finalValidation.valid) {
       throw new ValidationError('Generation failed validation', finalValidation.errors, {
           reason: loopResult.reason

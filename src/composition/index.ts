@@ -87,6 +87,16 @@ export {
 // Re-export adapter types separately
 export type { Export, Import } from './adapters/index.js';
 
+// End-to-end "combine outputs" orchestrator: generate each layer via the
+// domain generators and assemble a standalone layered artifact.
+export {
+  CompositionOrchestrator,
+  type CompositionSpec,
+  type CompositionLayerSpec,
+  type CompositionResult,
+  type ComposedLayer,
+} from './CompositionOrchestrator.js';
+
 // Concrete adapters (register as needed)
 export { P5Adapter, p5Adapter } from './adapters/P5Adapter.js';
 export { ToneAdapter, toneAdapter } from './adapters/ToneAdapter.js';

@@ -6,6 +6,7 @@ const KNOWN_COMMANDS = new Set([
   'bridge',
   'bubbletea',
   'chat',
+  'compose',
   'composite',
   'compost',
   'consolidate',

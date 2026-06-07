@@ -17,6 +17,7 @@ import { GenerationError } from '../errors/GenerationError.js';
 import { Layer, createLayer, DomainType, LayerRole } from '../composition/types.js';
 import { Logger } from '../utils/Logger.js';
 import { getEffectiveConfig } from '../config/ConfigLoader.js';
+import { loadRoleConfig } from '../config/RoleConfig.js';
 import { GENERATOR_TOOLS, createGeneratorToolExecutor } from '../harness/tools/generator-tools.js';
 import { GeneratorHarnessTools } from './GeneratorHarnessTools.js';
 import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
@@ -90,16 +91,26 @@ export abstract class TierBasedGenerator {
   }
   
   private async doResolveConfig(): Promise<void> {
-    const config = await getEffectiveConfig(undefined, process.cwd());
-    if (!config) {
-      Logger.warn('TierBasedGenerator', 'Failed to resolve config');
-      return;
+    // Resolve the GENERATOR ROLE explicitly. Previously this used
+    // getEffectiveConfig() (the default provider) and passed its baseUrl/model/
+    // apiKey into the client — which override `role: 'generator'` in the LLMClient
+    // constructor, so a per-role generator model was silently ignored and
+    // generation always used the default provider.
+    let gen;
+    try {
+      const roles = await loadRoleConfig(process.cwd());
+      gen = roles.generator;
+    } catch (err) {
+      Logger.warn('TierBasedGenerator', 'Role config load failed, falling back to effective config:', err);
+      const config = await getEffectiveConfig(undefined, process.cwd());
+      gen = config?.baseUrl ? { baseUrl: config.baseUrl, model: config.model, apiKey: config.apiKey, temperature: undefined } : undefined;
     }
-    if (config.baseUrl || config.apiKey) {
+    if (gen?.baseUrl || gen?.apiKey) {
       this.llm = new LLMClient({
-        baseUrl: config.baseUrl,
-        model: config.model,
-        apiKey: config.apiKey,
+        baseUrl: gen.baseUrl,
+        model: gen.model,
+        apiKey: gen.apiKey,
+        temperature: gen.temperature,
         role: 'generator',
       });
       this.tier = detectModelTier(this.llm.getConfig());

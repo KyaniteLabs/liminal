@@ -33,8 +33,8 @@ const CLI_PROVIDER_DEFAULTS = {
   },
   minimax: {
     label: 'MiniMax',
-    baseUrl: 'https://api.minimax.io/anthropic',
-    model: 'MiniMax-M2.7',
+    baseUrl: 'https://api.minimax.io/anthropic', // international token-plan endpoint (China uses api.minimaxi.com)
+    model: 'MiniMax-M3',
     requiresKey: true,
     apiKeyEnv: 'MINIMAX_API_KEY',
   },
@@ -75,6 +75,44 @@ function resolveCliProvider(value) {
   return CLI_PROVIDER_DEFAULTS[normalized] ? normalized : undefined;
 }
 
+function liminalConfigPath() {
+  return path.join(process.env.HOME || process.env.USERPROFILE || '.', '.liminal', 'config.json');
+}
+
+// Write an API key (and provider block) into ~/.liminal/config.json, merging with
+// whatever is already there. With `activate`, also point the generator+evaluator
+// roles + defaultProvider at this provider so the next run uses it immediately.
+function setProviderKey(providerKey, apiKey, { model, baseUrl, activate } = {}) {
+  const defaults = CLI_PROVIDER_DEFAULTS[providerKey];
+  if (!defaults) throw new Error(`Unknown provider: ${providerKey} (one of: ${CLI_PROVIDER_NAMES.join(', ')})`);
+  const cfgPath = liminalConfigPath();
+  let config = {};
+  if (fs.existsSync(cfgPath)) {
+    try { config = JSON.parse(fs.readFileSync(cfgPath, 'utf-8')); }
+    catch (e) { throw new Error(`Existing config is not valid JSON (${cfgPath}): ${e.message}`); }
+  }
+  // baseUrl override lets a provider point at a self-hosted endpoint (e.g. a
+  // remote Ollama/vLLM/LM Studio on a home server) instead of its default URL.
+  const block = {
+    baseUrl: baseUrl || defaults.baseUrl,
+    model: model || defaults.model,
+  };
+  if (apiKey) block.apiKey = apiKey; // keyless local servers (ollama/lmstudio) need none
+  config.providers = { ...(config.providers || {}), [providerKey]: block };
+  if (activate) {
+    config.defaultProvider = providerKey;
+    // Switching the active provider resets roles to a single generator entry;
+    // evaluator/harness/studio inherit it. Replacing (not merging) avoids leaving
+    // stale per-role overrides pointing at the previous provider. Power users who
+    // want a different model per role set roles.* in config.json directly.
+    const roleBlock = { provider: providerKey, ...block };
+    config.roles = { generator: { ...roleBlock } };
+  }
+  fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
+  fs.writeFileSync(cfgPath, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });
+  return { cfgPath, model: block.model, baseUrl: block.baseUrl, activated: !!activate };
+}
+
 function printProviderHelp() {
   console.log('');
   console.log('🔌 Liminal Provider Setup');
@@ -83,6 +121,7 @@ function printProviderHelp() {
   console.log('  liminal provider help');
   console.log('  liminal provider list');
   console.log('  liminal provider status');
+  console.log('  liminal provider set-key <name> [<API_KEY>] [--base-url <url>] [--model <id>] [--use]');
   console.log('  liminal --configure --provider <name>');
   console.log('');
   console.log('PROVIDERS:');
@@ -95,6 +134,7 @@ function printProviderHelp() {
   console.log('');
   console.log('EXAMPLES:');
   console.log('  liminal --configure --provider lmstudio');
+  console.log('  liminal provider set-key minimax sk-... --use   # MiniMax-M3, international endpoint, made active');
   console.log('  GLM_API_KEY=... liminal --provider glm "make a p5 sketch"');
   console.log('  liminal provider status');
   console.log('');
@@ -110,16 +150,37 @@ function printProviderList() {
   console.log('');
 }
 
+function readLiminalConfig() {
+  try {
+    const p = liminalConfigPath();
+    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf-8'));
+  } catch { /* ignore unreadable/invalid config */ }
+  return {};
+}
+
+function savedKeyFor(name, config) {
+  const fromProvider = config.providers?.[name]?.apiKey;
+  const fromRole = ['generator', 'evaluator', 'harness']
+    .map((r) => config.roles?.[r])
+    .find((role) => role?.provider === name && role?.apiKey)?.apiKey;
+  return Boolean(fromProvider || fromRole);
+}
+
 function printProviderStatus() {
+  const config = readLiminalConfig();
+  const active = config.defaultProvider;
   console.log('');
   console.log('Liminal provider readiness:');
   for (const [name, provider] of Object.entries(CLI_PROVIDER_DEFAULTS)) {
-    const configured = !provider.requiresKey || Boolean(process.env[provider.apiKeyEnv]);
-    const status = configured ? 'ready' : `missing ${provider.apiKeyEnv}`;
-    console.log(`  ${name.padEnd(10)} ${status}`);
+    // Ready if no key needed, or a key is present in env OR the saved config.
+    const hasKey = Boolean(process.env[provider.apiKeyEnv]) || savedKeyFor(name, config);
+    const configured = !provider.requiresKey || hasKey;
+    const status = configured ? 'ready' : `missing key (set with: liminal provider set-key ${name} <KEY>)`;
+    const activeMark = name === active ? ' (active)' : '';
+    console.log(`  ${name.padEnd(10)} ${status}${activeMark}`);
   }
   console.log('');
-  console.log('Use `liminal --configure --provider <name>` to write ~/.liminal/config.json.');
+  console.log('Set a key with `liminal provider set-key <name> <KEY> --use`.');
   console.log('');
 }
 
@@ -149,8 +210,12 @@ for (let i = 0; i < args.length; i++) {
     flags.provider = args[++i];
   } else if (arg === '--model') {
     flags.model = args[++i];
+  } else if (arg === '--base-url') {
+    flags.baseUrl = args[++i];
   } else if (arg === '--configure') {
     flags.configure = true;
+  } else if (arg === '--use' || arg === '--activate') {
+    flags.use = true;
   } else if (arg === '--recent') {
     const nextArg = args[i + 1];
     if (nextArg && !nextArg.startsWith('-') && !isNaN(parseInt(nextArg))) {
@@ -284,6 +349,7 @@ function printHelp() {
   console.log('  list, ls                    Show saved sketches');
   console.log('  compost <subcommand>        Compost Mill: add, digest, soup, seeds, status');
   console.log('  composite                   Analyze composition spec and generate layer plan');
+  console.log('  compose --spec <s.json>     Generate every layer and assemble one layered work');
   console.log('  chat                        Start conversational creative coding mode');
   console.log('  git <subcommand>            Git integration: status, log, diff, branch, commit, init');
   console.log('  fix <file|description>      Auto-fix code issues with LLM assistance');
@@ -373,9 +439,43 @@ if (cmd === 'provider') {
     printProviderStatus();
     process.exit(0);
   }
+  if (subCmd === 'set-key') {
+    // cmdArgs[0] is 'set-key'; --use/--model/--base-url are parsed into flags.
+    const providerKey = resolveCliProvider(cmdArgs[1]);
+    const apiKey = cmdArgs[2];
+    const model = flags.model;
+    const baseUrl = flags.baseUrl;
+    const activate = !!flags.use;
+    // Local servers (ollama/lmstudio) need no key; cloud providers do.
+    const keyRequired = providerKey ? CLI_PROVIDER_DEFAULTS[providerKey].requiresKey : true;
+    if (!providerKey || (keyRequired && !apiKey)) {
+      console.error('Usage: liminal provider set-key <provider> [<API_KEY>] [--base-url <url>] [--model <id>] [--use]');
+      console.error(`Providers: ${CLI_PROVIDER_NAMES.join(', ')}`);
+      console.error('  Cloud:  liminal provider set-key minimax sk-... --use');
+      console.error('  Local:  liminal provider set-key ollama --base-url http://192.168.1.50:11434/v1 --model qwen2.5-coder --use');
+      process.exit(1);
+    }
+    try {
+      const r = setProviderKey(providerKey, apiKey, { model, baseUrl, activate });
+      console.log('');
+      console.log(`✅ Saved ${CLI_PROVIDER_DEFAULTS[providerKey].label} provider to ${r.cfgPath}`);
+      console.log(`   endpoint: ${r.baseUrl}`);
+      console.log(`   model:    ${r.model}`);
+      console.log(`   active:   ${r.activated ? 'yes (default — all roles inherit it)' : 'no (use --use to activate)'}`);
+      console.log('');
+      console.log(r.activated
+        ? '   Try: liminal --prompt "a glsl aurora shader" --max-iterations 1 -o output/test'
+        : `   Activate with: liminal provider set-key ${providerKey} ${keyRequired ? '<KEY> ' : ''}--use`);
+      console.log('');
+      process.exit(0);
+    } catch (e) {
+      console.error(`❌ ${e.message}`);
+      process.exit(1);
+    }
+  }
 
   console.error(`Unknown provider subcommand: ${subCmd}`);
-  console.error('Usage: liminal provider <help|list|status>');
+  console.error('Usage: liminal provider <help|list|status|set-key>');
   process.exit(1);
 }
 
@@ -940,6 +1040,12 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
   console.log('Generating:', prompt);
   console.log('');
 
+  // Route generation + validation to the domain the prompt asks for (else the
+  // loop defaults to p5 and a "GLSL shader" prompt fails p5 validation).
+  const { detectPromptDomain } = await import('../dist/core/detectPromptDomain.js');
+  const detectedDomain = await detectPromptDomain(prompt);
+  if (detectedDomain) console.log('🎯 Detected domain: ' + detectedDomain + '\n');
+
   const aestheticConfig = {
     ...(loadAestheticConfig(flags.aestheticConfig) || {}),
     ...(flags.aesthetic ? { preset: flags.aesthetic } : {}),
@@ -949,6 +1055,7 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
     maxIterations: maxIterations,
     output: outDir,
     project: 'cli-project',
+    collabDomain: detectedDomain,
     useSwarm: flags.useSwarm,
     swarmMode: flags.swarmMode,
     swarmConfig: flags.swarmRounds ? { maxRounds: flags.swarmRounds } : undefined,
@@ -1238,6 +1345,58 @@ else if (cmd === 'composite') {
     process.exit(1);
   }
 }
+else if (cmd === 'compose') {
+  // End-to-end layered work: generate every layer via the domain generators and
+  // assemble one standalone composite HTML (stacked, blended visual layers +
+  // audio). This is the "combine outputs" path — Liminal's core mixing capability.
+  const specPath = flags.spec;
+  if (!specPath) {
+    console.error('Usage: liminal compose --spec <spec.json> [-o <dir>]');
+    console.error('  spec: { "title", "background", "layers": [ { "domain", "prompt", "blendMode", "opacity" } ] }');
+    console.error('  domains: p5, three, shader, hydra, ascii, html, tone, strudel');
+    process.exit(1);
+  }
+  const outDir = flags.output || 'output';
+  const { CompositionOrchestrator } = await import('../dist/composition/CompositionOrchestrator.js');
+  const { harnessMemory } = await import('../dist/harness/HarnessMemory.js');
+  try {
+    const spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+    console.log('🎨 Composing ' + (spec.layers?.length ?? 0) + ' layers...');
+    console.log('');
+    const result = await CompositionOrchestrator.compose(spec);
+    fs.mkdirSync(outDir, { recursive: true });
+    const htmlPath = path.join(outDir, 'composition.html');
+    fs.writeFileSync(htmlPath, result.html, 'utf-8');
+    for (const l of result.layers) {
+      console.log('  [' + l.domain + '] ' + (l.generated
+        ? 'ok — ' + l.codeLength + ' chars, blend=' + l.blendMode + ' opacity=' + l.opacity
+        : 'FAILED: ' + l.error));
+    }
+    console.log('');
+    console.log('✅ ' + result.successCount + '/' + result.layers.length + ' layers composed');
+    console.log('✅ Saved: ' + htmlPath);
+    // Feed self-improvement: record this composition as a generation episode.
+    try {
+      await harnessMemory.initialize();
+      harnessMemory.recordEpisode({
+        type: 'generation',
+        domain: 'composition',
+        prompt: result.title + ' :: ' + result.layers.map(l => l.domain + ':' + l.prompt).join(' | '),
+        code: result.html,
+        score: result.layers.length ? result.successCount / result.layers.length : 0,
+        tags: ['composition', ...result.layers.map(l => l.domain)],
+      });
+      await harnessMemory.save();
+      console.log('🧠 Recorded composition episode for self-improvement');
+    } catch (memErr) {
+      console.log('⚠️  Episode not recorded: ' + memErr.message);
+    }
+    process.exit(result.successCount > 0 ? 0 : 1);
+  } catch (err) {
+    console.error('Compose failed:', err.message);
+    process.exit(1);
+  }
+}
 else if (cmd === 'chat') {
   // Chat command - conversational creative coding mode
   chatCommand({ verbose: flags.verbose || false }).catch(err => {
@@ -1263,6 +1422,7 @@ else if (cmd === 'consolidate' || flags.consolidate) {
   console.log('');
 
   const memory = new HarnessMemory();
+  await memory.initialize(); // load persisted episodes from disk before reading them
   const modelSampler = new ThompsonSampler({ minPulls: 1, successThreshold: 0.7 });
   const strategySampler = new ThompsonSampler({ minPulls: 1, successThreshold: 0.7 });
   const prototype = new DomainPrototype();

@@ -144,11 +144,16 @@ export async function loadRoleConfig(projectDir?: string): Promise<Record<ModelR
     }
   }
 
-  // Resolve each role
+  // Resolve each role. Generator resolves first; the other roles inherit its
+  // provider identity (model + key + url) when not explicitly configured, so
+  // configuring a single model makes every role work — only the role-specific
+  // sampling (temperature/streaming) differs. Without this, an unset role
+  // silently fell back to the local LM Studio default with model "unknown",
+  // breaking harness/studio flows whenever the user set only generator/evaluator.
   const generator = resolveRole('generator', merged);
-  const evaluator = resolveRole('evaluator', merged);
-  const harness = resolveRole('harness', merged);
-  const studio = resolveRole('studio', merged);
+  const evaluator = resolveRole('evaluator', merged, generator);
+  const harness = resolveRole('harness', merged, generator);
+  const studio = resolveRole('studio', merged, generator);
 
   return { generator, evaluator, harness, studio };
 }
@@ -156,7 +161,11 @@ export async function loadRoleConfig(projectDir?: string): Promise<Record<ModelR
 /**
  * Resolve a single role's configuration from merged file config + env vars.
  */
-function resolveRole(role: ModelRole, fileConfig: RoleConfigFile | null): ResolvedRoleConfig {
+function resolveRole(
+  role: ModelRole,
+  fileConfig: RoleConfigFile | null,
+  inherit?: ResolvedRoleConfig,
+): ResolvedRoleConfig {
   const fileRole = fileConfig?.roles?.[role];
 
   // Environment variable fallbacks per role
@@ -185,15 +194,19 @@ function resolveRole(role: ModelRole, fileConfig: RoleConfigFile | null): Resolv
   };
 
   const envSources = envMap[role];
-  const baseUrl = fileRole?.baseUrl
-    || envSources.baseUrl.map(k => env(k)).find(Boolean)
-    || DEFAULT_BASE_URL;
-  const model = fileRole?.model
-    || envSources.model.map(k => env(k)).find(Boolean)
-    || 'unknown';
-  const provider = fileRole?.provider || detectProviderType(baseUrl, model);
+  // Explicit = configured by file or role/generic env var. Only when a role has
+  // no explicit endpoint do we inherit the generator's identity (then the local
+  // default as a last resort).
+  const explicitBaseUrl = fileRole?.baseUrl || envSources.baseUrl.map(k => env(k)).find(Boolean);
+  const explicitModel = fileRole?.model || envSources.model.map(k => env(k)).find(Boolean);
+  const baseUrl = explicitBaseUrl || inherit?.baseUrl || DEFAULT_BASE_URL;
+  const model = explicitModel || inherit?.model || 'unknown';
+  const provider = fileRole?.provider
+    || (explicitBaseUrl ? detectProviderType(baseUrl, model) : inherit?.provider)
+    || detectProviderType(baseUrl, model);
   const apiKey = fileRole?.apiKey
-    || selectApiKeyForEndpoint(baseUrl, model, envSources.apiKey);
+    || selectApiKeyForEndpoint(baseUrl, model, envSources.apiKey)
+    || (explicitBaseUrl ? undefined : inherit?.apiKey);
 
   return {
     provider,

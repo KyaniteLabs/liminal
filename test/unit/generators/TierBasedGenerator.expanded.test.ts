@@ -25,6 +25,7 @@ const {
   mockGetConfig,
   mockIsConfigured,
   mockGetEffectiveConfig,
+  mockLoadRoleConfig,
   mockLoadContext,
   mockPromptBuilderBuild,
   mockDetectModelTier,
@@ -43,6 +44,7 @@ const {
   mockGetConfig: vi.fn(() => ({ model: 'gpt-4o', baseUrl: 'http://test', role: 'generator' as const })),
   mockIsConfigured: vi.fn(() => true),
   mockGetEffectiveConfig: vi.fn(),
+  mockLoadRoleConfig: vi.fn(),
   mockLoadContext: vi.fn().mockResolvedValue({}),
   mockPromptBuilderBuild: vi.fn().mockReturnValue({ system: 'sys', user: 'usr', combined: 'combined' }),
   mockDetectModelTier: vi.fn().mockReturnValue('flagship' as const),
@@ -76,6 +78,10 @@ vi.mock('../../../src/llm/LLMClient.js', () => {
 
 vi.mock('../../../src/config/ConfigLoader.js', () => ({
   getEffectiveConfig: mockGetEffectiveConfig,
+}));
+
+vi.mock('../../../src/config/RoleConfig.js', () => ({
+  loadRoleConfig: mockLoadRoleConfig,
 }));
 
 vi.mock('../../../src/llm/PromptBuilder.js', () => ({
@@ -269,6 +275,23 @@ describe('TierBasedGenerator (expanded)', () => {
       await gen.generate('test prompt');
 
       expect(mockGetEffectiveConfig).toHaveBeenCalled();
+    });
+
+    it('resolves the GENERATOR ROLE, not the default provider (regression: per-role model was ignored)', async () => {
+      // When the generator role resolves, the default-provider fallback
+      // (getEffectiveConfig) must NOT be consulted — otherwise a per-role
+      // generator model is overridden by the default provider.
+      mockLoadRoleConfig.mockResolvedValueOnce({
+        generator: { baseUrl: 'https://gen-role.example/v1', model: 'gen-role-model', apiKey: 'gen-role-key', temperature: 0.7 },
+      });
+
+      const gen = new TestGenerator('p5');
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult());
+
+      await gen.generate('test prompt');
+
+      expect(mockLoadRoleConfig).toHaveBeenCalled();
+      expect(mockGetEffectiveConfig).not.toHaveBeenCalled();
     });
 
     it('does not resolve when LLMClient was provided', async () => {

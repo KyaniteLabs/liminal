@@ -806,6 +806,15 @@ export class LLMClient {
     const resolvedModel = await this.resolveModel();
     this.syncResolvedModel(resolvedModel);
 
+    // Drop image input for text-only models. Without this, sending a rendered
+    // screenshot to a text-only model (e.g. a local qwen via LiteLLM, or any
+    // non-vision evaluator) fails with "image input is not supported". The
+    // caller then scores from code/text instead of the screenshot.
+    if (imageInputs && imageInputs.length > 0 && !CapabilityRegistry.supportsVision(resolvedModel)) {
+      Logger.debug('LLMClient', `Model ${resolvedModel} is text-only; dropping ${imageInputs.length} image input(s) and proceeding text-only.`);
+      imageInputs = undefined;
+    }
+
     try {
       // Check cache
       const hasImages = !!(imageInputs && imageInputs.length > 0);

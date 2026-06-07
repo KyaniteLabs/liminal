@@ -2,7 +2,7 @@
 /**
  * Deterministic model-assimilation proof.
  *
- * This is an offline evidence-contract runner: it proves that Liminal can take
+ * This is an offline evidence-contract runner: it proves that Sinter can take
  * role/domain audition evidence, compare candidates against baselines, preserve
  * fallback provenance, and emit promote/hold/demote assignments without
  * silently changing routes. Live provider calls can feed the same report shape.
@@ -218,7 +218,7 @@ async function buildReport(mode: Mode): Promise<ModelAssimilationReport> {
 
 function formatMarkdown(report: ModelAssimilationReport): string {
   const lines = [
-    '# Liminal Model Assimilation Report',
+    '# Sinter Model Assimilation Report',
     '',
     `Mode: ${report.mode}`,
     `Generated: ${report.generatedAt}`,

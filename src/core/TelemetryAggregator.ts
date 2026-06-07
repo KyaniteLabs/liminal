@@ -1,7 +1,7 @@
 /**
  * Telemetry Aggregator
  * 
- * Collects and analyzes telemetry from LIMINAL generations to:
+ * Collects and analyzes telemetry from SINTER generations to:
  * 1. Track model performance per domain
  * 2. Identify quality regressions
  * 3. Automatically update model routing recommendations

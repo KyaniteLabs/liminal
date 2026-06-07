@@ -118,7 +118,7 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
   if (error) {
     return (
       <div className="atelier-alert atelier-alert--warn">
-        Could not load seeds: {error}. Run <code>liminal compost digest</code> first.
+        Could not load seeds: {error}. Run <code>sinter compost digest</code> first.
       </div>
     );
   }

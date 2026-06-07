@@ -50,7 +50,7 @@ for (const file of gitFiles) {
 
 run('git', ['init'], { cwd: sourceRoot });
 run('git', ['config', 'user.email', 'proof@liminal.local'], { cwd: sourceRoot });
-run('git', ['config', 'user.name', 'Liminal Proof'], { cwd: sourceRoot });
+run('git', ['config', 'user.name', 'Sinter Proof'], { cwd: sourceRoot });
 run('git', ['add', '.'], { cwd: sourceRoot });
 run('git', ['commit', '-m', 'proof source'], { cwd: sourceRoot });
 
@@ -89,7 +89,7 @@ run('node', [
 const version = run('node', [path.join(consumerRoot, 'node_modules', '.bin', 'liminal'), '--version'], {
   cwd: consumerRoot,
 }).stdout.trim();
-const versionLine = version.split(/\r?\n/).find(line => /\bLiminal v\d+\.\d+\.\d+/.test(line));
+const versionLine = version.split(/\r?\n/).find(line => /\bSinter v\d+\.\d+\.\d+/.test(line));
 if (!versionLine) {
   throw new Error(`Unexpected liminal --version output: ${version}`);
 }

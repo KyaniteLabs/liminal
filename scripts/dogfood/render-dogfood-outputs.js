@@ -95,7 +95,7 @@ const TitleSequence = () => {
             opacity: Math.min(1, Math.max(0, (frame - 30) / 30)),
           }}
         >
-          LIMINAL
+          SINTER
         </div>
         <div
           style={{

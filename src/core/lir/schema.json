@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "LIR Token Schema",
-  "description": "JSON Schema for Liminal Intermediate Representation (LIR) tokens. LIR tokens are the atomic units of code, documentation, and text representation used throughout the Liminal system.",
+  "description": "JSON Schema for Sinter Intermediate Representation (LIR) tokens. LIR tokens are the atomic units of code, documentation, and text representation used throughout the Sinter system.",
   "definitions": {
     "LIRTokenBase": {
       "type": "object",

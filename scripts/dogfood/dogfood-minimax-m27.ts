@@ -2,7 +2,7 @@
 /**
  * Dogfood Test: Minimax M2.7 Through All Generators
  * 
- * Runs Minimax M2.7 through every Liminal generator with stress test prompts.
+ * Runs Minimax M2.7 through every Sinter generator with stress test prompts.
  * Collects detailed telemetry for diagnostics.
  * 
  * ONE TEST AT A TIME - foreground execution only
@@ -96,7 +96,7 @@ async function runStressTest(domain: typeof STRESS_TESTS[0], testNum: number, to
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   
   try {
-    console.log('   [calling Liminal generate...]');
+    console.log('   [calling Sinter generate...]');
     
     const result = await run(domain.prompt, {
       maxIterations: 5,

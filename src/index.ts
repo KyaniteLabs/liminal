@@ -1,5 +1,5 @@
 /**
- * Liminal - Creative Coding Agent
+ * Sinter - Creative Coding Agent
  *
  * Main entry point for the creative coding agent with internal Ralph-Wiggum Loop
  * for generating emergent generative art.
@@ -354,7 +354,7 @@ export async function run(prompt: string, options: {
       });
     }
     throw new GenerationError(
-        `Liminal run failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Sinter run failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'unknown',
         {},
         error instanceof Error ? error : undefined
@@ -363,7 +363,7 @@ export async function run(prompt: string, options: {
 }
 
 /**
- * Convenience function to run Liminal with CLI-style arguments
+ * Convenience function to run Sinter with CLI-style arguments
  *
  * @param args - Command line arguments
  * @returns Result object
@@ -389,9 +389,9 @@ export async function runFromArgs(args: {
 }
 
 /**
- * Main Liminal class - entry point for the creative coding agent
+ * Main Sinter class - entry point for the creative coding agent
  */
-export class Liminal {
+export class Sinter {
   private config: SinterConfig;
 
   constructor(config: Partial<SinterConfig> = {}) {
@@ -423,6 +423,9 @@ export class Liminal {
     });
   }
 }
+
+/** @deprecated Renamed to {@link Sinter} in the Liminal→Sinter rebrand. Kept as a back-compat alias. */
+export const Liminal = Sinter;
 
 // ============================================================================
 // CORE COMPONENT EXPORTS - Programmatic Access

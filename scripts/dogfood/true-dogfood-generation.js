@@ -13,7 +13,7 @@ const OUTPUT_DIR = './landing-assets/real-dogfood';
 // Create output directory
 await fs.mkdir(OUTPUT_DIR, { recursive: true });
 
-// TRUE prompts - what we actually want to see Liminal generate
+// TRUE prompts - what we actually want to see Sinter generate
 const dogfoodPrompts = [
   {
     id: 'p5-cyberpunk',

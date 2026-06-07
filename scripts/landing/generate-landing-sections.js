@@ -17,7 +17,7 @@ const examples = [
     prompt: 'p5.js bioluminescent jellyfish with flowing tentacles',
     html: 'dogfood-p5-jellyfish.html',
     score: 0.83,
-    info: 'Real Liminal output • MiniMax-M2.7 cloud'
+    info: 'Real Sinter output • MiniMax-M2.7 cloud'
   },
   {
     type: 'p5',
@@ -26,7 +26,7 @@ const examples = [
     prompt: 'flowing particle field with warm autumn colors',
     html: 'dogfood-p5-autumn.html',
     score: 0.68,
-    info: 'Real Liminal output • MiniMax-M2.7 cloud'
+    info: 'Real Sinter output • MiniMax-M2.7 cloud'
   },
   {
     type: 'p5',
@@ -72,7 +72,7 @@ const examples = [
     prompt: 'GLSL raymarched fractal landscape with volumetric fog',
     html: 'dogfood-shader-fractal.html',
     score: 0.82,
-    info: 'Real Liminal output • MiniMax-M2.7 cloud'
+    info: 'Real Sinter output • MiniMax-M2.7 cloud'
   },
   {
     type: 'shader',
@@ -81,7 +81,7 @@ const examples = [
     prompt: 'GLSL shader with warping noise patterns',
     html: 'dogfood-shader-warp.html',
     score: 0.90,
-    info: 'Real Liminal output • Highest score'
+    info: 'Real Sinter output • Highest score'
   },
   {
     type: 'shader',
@@ -109,7 +109,7 @@ const examples = [
     prompt: 'Three.js 3D scene with reflective crystal surfaces',
     html: 'dogfood-three-crystal.html',
     score: 0.88,
-    info: 'Real Liminal output • Hit quality gate 0.95'
+    info: 'Real Sinter output • Hit quality gate 0.95'
   },
   {
     type: 'three',
@@ -118,7 +118,7 @@ const examples = [
     prompt: 'Three.js rotating geometric shapes with dynamic lighting',
     html: 'dogfood-three-rotating.html',
     score: 0.88,
-    info: 'Real Liminal output • MiniMax-M2.7 cloud'
+    info: 'Real Sinter output • MiniMax-M2.7 cloud'
   },
   {
     type: 'three',

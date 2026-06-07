@@ -32,7 +32,7 @@ type GeneratorLike = { generate(prompt: string, options?: { signal?: AbortSignal
 
 const PROMPTS: Record<Domain, string> = {
   p5: 'create a concise p5 generative sketch with blue green particles and visible motion',
-  svg: 'create an SVG vector logo for Liminal with a transparent background',
+  svg: 'create an SVG vector logo for Sinter with a transparent background',
   strudel: 'create a Strudel live coding rhythm with kick snare hats and bass pattern',
   tone: 'create a Tone.js ambient synth sequence with reverb and a clear start affordance',
   revideo: 'create a Revideo timeline composition with animated title text and subtitle fade',

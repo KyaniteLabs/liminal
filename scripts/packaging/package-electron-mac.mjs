@@ -7,7 +7,7 @@ import electronPath from 'electron';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..', '..');
-const appName = 'Liminal Studio';
+const appName = 'Sinter Studio';
 const bundleId = 'com.kyanitelabs.liminalstudio';
 const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
 const outputDir = path.join(root, 'dist-desktop', `${appName}-darwin-${arch}`);

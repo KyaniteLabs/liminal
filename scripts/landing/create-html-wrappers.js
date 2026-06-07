@@ -14,7 +14,7 @@ const p5Template = (jsFile) => `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liminal Dogfood - p5.js</title>
+    <title>Sinter Dogfood - p5.js</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
     <style>
         body { margin: 0; padding: 0; overflow: hidden; background: #0a0a0f; }
@@ -32,7 +32,7 @@ const threeTemplate = (jsFile) => `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liminal Dogfood - Three.js</title>
+    <title>Sinter Dogfood - Three.js</title>
     <script type="importmap">
     {
         "imports": {
@@ -56,7 +56,7 @@ const shaderTemplate = (jsFile) => `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liminal Dogfood - GLSL Shader</title>
+    <title>Sinter Dogfood - GLSL Shader</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body { margin: 0; padding: 0; overflow: hidden; background: #0a0a0f; }
@@ -75,7 +75,7 @@ const hydraTemplate = (code) => `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liminal Dogfood - Hydra Visual</title>
+    <title>Sinter Dogfood - Hydra Visual</title>
     <script src="https://unpkg.com/hydra-synth"></script>
     <style>
         body { margin: 0; padding: 0; overflow: hidden; background: #0a0a0f; }

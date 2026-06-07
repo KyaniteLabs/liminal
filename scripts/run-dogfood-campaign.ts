@@ -2,7 +2,7 @@
 /**
  * Dogfood Campaign - All Domains × All Available Models
  * 
- * Runs every domain through Liminal with every available LLM provider.
+ * Runs every domain through Sinter with every available LLM provider.
  * Populates landing-live/ gallery with results.
  */
 

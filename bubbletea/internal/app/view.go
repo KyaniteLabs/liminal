@@ -11,7 +11,7 @@ import (
 
 func (m Model) View() string {
 	if !m.Ready {
-		return ui.BrandStyle.Render("◆ LIMINAL") + "  Initializing..."
+		return ui.BrandStyle.Render("◆ SINTER") + "  Initializing..."
 	}
 
 	header := m.renderHeader()
@@ -100,7 +100,7 @@ func (m Model) operatorPaneStatus() string {
 }
 
 func (m Model) renderHeader() string {
-	brand := ui.BrandStyle.Render("◆ LIMINAL")
+	brand := ui.BrandStyle.Render("◆ SINTER")
 	mode := ui.ModeStyle.Render(strings.ToLower(m.Mode))
 	provider := ui.ProviderStyle.Render(m.Provider + "/" + m.ModelName)
 	connDot := ui.StatusDot(m.Connected, m.Reconnecting)

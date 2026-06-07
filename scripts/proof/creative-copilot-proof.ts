@@ -2,7 +2,7 @@
 /**
  * Creative copilot automated proof runner.
  *
- * Runs representative creative prompts through Liminal generators and writes
+ * Runs representative creative prompts through Sinter generators and writes
  * durable artifacts, screenshot previews, JSON, Markdown, and issue evidence.
  */
 

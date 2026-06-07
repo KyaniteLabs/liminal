@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Test all Liminal generators and collect outputs for dogfood examples
+ * Test all Sinter generators and collect outputs for dogfood examples
  */
 
 import { 

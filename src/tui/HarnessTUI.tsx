@@ -40,7 +40,7 @@ const C = {
 
 const Header = () => (
   <Box borderStyle="double" borderColor={C.primary} paddingX={2}>
-    <Text bold color={C.primary}>LIMINAL</Text>
+    <Text bold color={C.primary}>SINTER</Text>
     <Spacer />
     <Text color={C.muted}>Natural Interface</Text>
   </Box>
@@ -552,7 +552,7 @@ export async function startHarnessTUI() {
       tuiDebugger.enable();
       const logPath = tuiDebugger.logFilePath;
       if (logPath) {
-        process.stderr.write(`\n[LIMINAL] Verbose debug ON — tail -f ${logPath}\n\n`);
+        process.stderr.write(`\n[SINTER] Verbose debug ON — tail -f ${logPath}\n\n`);
       }
     }
 

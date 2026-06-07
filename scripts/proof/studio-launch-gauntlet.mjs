@@ -67,7 +67,7 @@ const cases = [
   {
     id: 'revideo-title-card',
     domain: 'revideo',
-    prompt: 'Create a Revideo composition: a 4-second cinematic title card saying LIMINAL REVIDEO, with animated text, a moving rectangle accent, and a soft fade. Use @revideo/2d and @revideo/core.',
+    prompt: 'Create a Revideo composition: a 4-second cinematic title card saying SINTER REVIDEO, with animated text, a moving rectangle accent, and a soft fade. Use @revideo/2d and @revideo/core.',
     mustInclude: [/revideo|@revideo|makeScene2D|timeline preview/i],
     mustNotInclude: [/Remotion|useCurrentFrame|React\.FC/i],
   },

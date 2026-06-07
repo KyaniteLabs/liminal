@@ -147,7 +147,14 @@ export class CompositionOrchestrator {
       '"prompt": string, "blendMode": one of ["normal","screen","multiply","overlay","lighten","darken"], ' +
       '"opacity": number 0..1}]}. Order layers back-to-front (first = background). Put a background ' +
       'layer first (shader/three), foreground detail next (p5/ascii) with a "screen" or "lighten" ' +
-      'blend so it shows through, and an optional audio layer (tone/strudel) last.';
+      'blend so it shows through, and an optional audio layer (tone/strudel) last. ' +
+      'CONTRAST BETWEEN LAYERS IS CRITICAL — the composite must stay legible, not muddy: ' +
+      'use "screen"/"lighten" for bright detail over a DARK background, and "normal" (opacity ~1) ' +
+      'for an opaque focal element; AVOID "multiply"/"overlay"/"darken" unless two layers have ' +
+      'clearly different lightness, because they muddy or wash out similar-value layers. ' +
+      'Give each layer prompt a deliberate palette that contrasts the layers beneath it, and pick a ' +
+      'background color at the opposite lightness end from the foreground. The composite should have ' +
+      'ONE clear focal layer with depth — never an even, low-contrast mush.';
     const res = await client.generate(system, `Idea: ${prompt}`);
     const spec = this.parseSpec(res.code ?? '', prompt);
     Logger.info('CompositionOrchestrator', `Decomposed prompt into ${spec.layers.length} layers: ${spec.layers.map(l => l.domain).join(', ')}`);

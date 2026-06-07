@@ -57,6 +57,74 @@ export class PromptBuilder {
   }
 
   /**
+   * Curated palette/style families. The generator was defaulting to a
+   * dark-background + neon-glow monoculture; offering a deliberate, varied
+   * palette (chosen stably per-request) breaks that and lifts contrast.
+   */
+  private static readonly PALETTE_FAMILIES = [
+    'warm sunset — amber, coral and rose on a soft cream ground',
+    'cool mint and teal on near-white, airy and high-key',
+    'monochrome ink — a single hue from light to dark, restrained and elegant',
+    'earthy terracotta, ochre and sage — natural and grounded',
+    'bold primaries (red/blue/yellow) with generous negative space, Bauhaus-clean',
+    'muted editorial — slate and bone with one saturated accent',
+    'duotone — only two contrasting hues, posterized and graphic',
+    'iridescent pastel — peach, lavender and sky, dreamy but legible',
+    'high-contrast black-and-white with a single electric accent',
+    'deep jewel tones — emerald, sapphire and garnet, richly lit',
+  ];
+  private static readonly AUDIO_TEXTURES = [
+    'sparse and percussive, with space between events',
+    'warm pad-driven and slowly evolving',
+    'bright, arpeggiated and rhythmic',
+    'lo-fi, detuned and intimate',
+    'glassy, bell-like tones with long decay',
+  ];
+
+  /** Stable string hash so the same prompt yields the same suggestion (cache-safe). */
+  private static stableHash(s: string): number {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return (h >>> 0);
+  }
+
+  /**
+   * Aesthetic directive injected into every creative generation. Pushes palette
+   * diversity, strong figure/ground contrast, and deliberate composition —
+   * tailored to visual / audio / text domains.
+   */
+  private aestheticDirective(ctx: PromptContext): string {
+    const d = (ctx.domain || '').toLowerCase();
+    const seed = PromptBuilder.stableHash(ctx.userRequest || ctx.domain || '');
+    const pick = <T>(arr: readonly T[]): T => arr[seed % arr.length];
+    const visual = ['p5', 'shader', 'three', 'hydra', 'svg', 'kinetic', 'hyperframes', 'html', 'revideo'].includes(d);
+    const audio = ['tone', 'strudel', 'music'].includes(d);
+    if (audio) {
+      return [
+        '<aesthetics>',
+        `Unless the request specifies a mood, lean toward: ${pick(PromptBuilder.AUDIO_TEXTURES)}.`,
+        'Vary dynamics, timbre and rhythm over time — never a single flat repeating loop.',
+        '</aesthetics>',
+      ].join('\n');
+    }
+    if (visual) {
+      return [
+        '<aesthetics>',
+        '- Composition: deliberate focal point, intentional negative space, balanced (do not just center everything).',
+        `- Palette: unless the request names colors/mood, commit to ONE specific palette — e.g. ${pick(PromptBuilder.PALETTE_FAMILIES)}. Do NOT default to a dark background with neon glow unless the concept truly calls for it.`,
+        '- Contrast is MANDATORY and bidirectional: place the background and the subject at OPPOSITE ends of the lightness scale. A LIGHT background requires dark/deeply-saturated subjects; a DARK background requires bright/luminous subjects. Aim for a large lightness gap. NEVER light-on-light, dark-on-dark, or low-saturation tones on a similar-value ground — if a viewer might struggle to see the subject, raise the contrast.',
+        '- Aim for work a senior designer would be proud of: refined and intentional, not generic.',
+        '</aesthetics>',
+      ].join('\n');
+    }
+    return [
+      '<aesthetics>',
+      'Favor strong structure, rhythm and legibility; high-contrast text against its ground; let the form itself be expressive.',
+      '</aesthetics>',
+    ].join('\n');
+  }
+
+  /**
    * Build a prompt for the detected tier
    */
   build(context: PromptContext): BuiltPrompt {
@@ -93,6 +161,8 @@ export class PromptBuilder {
       ctx.userRequest,
       '</request>',
       '',
+      this.aestheticDirective(ctx),
+      '',
       '<instruction>',
       `Generate ${ctx.domain} code. Output ONLY code, no explanations.`,
       '</instruction>',
@@ -121,6 +191,8 @@ export class PromptBuilder {
       '<request>',
       ctx.userRequest,
       '</request>',
+      '',
+      this.aestheticDirective(ctx),
       '',
       '<instruction>',
       'Generate valid ' + ctx.domain + ' code.',
@@ -158,6 +230,8 @@ export class PromptBuilder {
       '<request>',
       ctx.userRequest,
       '</request>',
+      '',
+      this.aestheticDirective(ctx),
       '',
       '<instruction>',
       'Return executable code only.',

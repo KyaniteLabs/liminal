@@ -7,6 +7,9 @@
  */
 
 import { beforeAll, afterAll, beforeEach } from 'vitest';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 const nativeFetch = globalThis.fetch?.bind(globalThis);
 if (nativeFetch) {
@@ -121,6 +124,14 @@ const CI_ENV_KEYS = [
 const saved: Record<string, string | undefined> = {};
 let originalTestEnv: string | undefined;
 
+// Per-file throwaway root for the Sinter object store. Without this, any test
+// that runs a loop / preview server writes `.sinter/objects` and
+// `.sinter/refs/gallery/<project>` into the repo working tree (that is how
+// test-fixture refs leaked into the tracked tree). resolveSinterProjectRoot()
+// in src/fs/projectRoot.ts reads SINTER_PROJECT_ROOT and falls back to cwd.
+let sinterRootDir: string | undefined;
+let savedSinterRoot: string | undefined;
+
 function shouldPreserveLiveLLMEnv(): boolean {
   return Boolean(
     process.env.RUN_CLOUD_MODEL_TESTS
@@ -151,6 +162,12 @@ beforeAll(() => {
   originalTestEnv = process.env.NODE_ENV;
   process.env.NODE_ENV = 'test';
   process.env.VITEST = 'true';
+
+  // Redirect the Sinter object store to a throwaway dir so loop/preview runs
+  // never write the content-addressable store into the repo tree.
+  savedSinterRoot = process.env.SINTER_PROJECT_ROOT;
+  sinterRootDir = mkdtempSync(join(tmpdir(), 'sinter-test-root-'));
+  process.env.SINTER_PROJECT_ROOT = sinterRootDir;
 });
 
 beforeEach(() => {
@@ -193,7 +210,18 @@ afterAll(() => {
   } else {
     delete process.env.NODE_ENV;
   }
-  
+
+  // Restore Sinter store root and remove the throwaway directory.
+  if (savedSinterRoot !== undefined) {
+    process.env.SINTER_PROJECT_ROOT = savedSinterRoot;
+  } else {
+    delete process.env.SINTER_PROJECT_ROOT;
+  }
+  if (sinterRootDir) {
+    rmSync(sinterRootDir, { recursive: true, force: true });
+    sinterRootDir = undefined;
+  }
+
   // Keep VITEST=true during cleanup to prevent side effects
 });
 

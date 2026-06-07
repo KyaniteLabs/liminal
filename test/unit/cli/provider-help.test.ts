@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 const execFileAsync = promisify(execFile);
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
-const binPath = path.join(repoRoot, 'bin', 'liminal');
+const binPath = path.join(repoRoot, 'bin', 'sinter');
 
 describe('liminal CLI provider setup help', () => {
   it('advertises the documented ProviderRuntime providers instead of legacy provider names', async () => {

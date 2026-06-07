@@ -1,5 +1,5 @@
 /**
- * CLI argument parser and executor for `liminal compost` subcommands.
+ * CLI argument parser and executor for `sinter compost` subcommands.
  *
  * Extended with event-sourced history commands:
  *   - log       — Show recent events on the timeline
@@ -124,7 +124,7 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
         await mill.add(action.paths);
         Logger.info('CompostCLI', 'Added ' + action.paths.length + ' item(s) to heap.');
       } else {
-        Logger.info('CompostCLI', 'Usage: liminal compost add <file-or-directory>...');
+        Logger.info('CompostCLI', 'Usage: sinter compost add <file-or-directory>...');
       }
       break;
 
@@ -160,7 +160,7 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
       if (action.subcommand === 'list') {
         const seeds = await mill.listSeeds();
         if (seeds.length === 0) {
-          Logger.info('CompostCLI', 'No seeds yet. Run `liminal compost digest` first.');
+          Logger.info('CompostCLI', 'No seeds yet. Run `sinter compost digest` first.');
         } else {
           Logger.info('CompostCLI', 'Seeds (' + seeds.length + '):');
           for (const seed of seeds) {
@@ -187,8 +187,8 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
       } else if (action.subcommand === 'show') {
         const seedId = action.args?.[0];
         if (!seedId) {
-          Logger.info('CompostCLI', 'Usage: liminal compost seeds show <seed-id>');
-          Logger.info('CompostCLI', 'Run `liminal compost seeds list` to see available seeds.');
+          Logger.info('CompostCLI', 'Usage: sinter compost seeds show <seed-id>');
+          Logger.info('CompostCLI', 'Run `sinter compost seeds list` to see available seeds.');
         } else {
           const seeds = await mill.listSeeds();
           const match = seeds.find((s: Seed) => s.id === seedId || s.id.startsWith(seedId));
@@ -290,7 +290,7 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
       } else if (action.subcommand === 'create') {
         const name = action.args?.[0];
         if (!name) {
-          Logger.info('CompostCLI', 'Usage: liminal compost branch create <name> [--description "desc"]');
+          Logger.info('CompostCLI', 'Usage: sinter compost branch create <name> [--description "desc"]');
           break;
         }
         try {
@@ -302,7 +302,7 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
       } else if (action.subcommand === 'switch') {
         const name = action.args?.[0];
         if (!name) {
-          Logger.info('CompostCLI', 'Usage: liminal compost branch switch <name>');
+          Logger.info('CompostCLI', 'Usage: sinter compost branch switch <name>');
           break;
         }
         try {
@@ -314,7 +314,7 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
       } else if (action.subcommand === 'delete') {
         const name = action.args?.[0];
         if (!name) {
-          Logger.info('CompostCLI', 'Usage: liminal compost branch delete <name>');
+          Logger.info('CompostCLI', 'Usage: sinter compost branch delete <name>');
           break;
         }
         try {

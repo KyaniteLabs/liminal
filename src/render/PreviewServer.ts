@@ -152,7 +152,7 @@ export class PreviewServer {
     const isTestEnv = process.env.NODE_ENV === 'test';
 
     // SECURITY: CSRF_SECRET is required in production. For local dev it falls
-    // back to an ephemeral random secret so `liminal serve`/`studio` work out of
+    // back to an ephemeral random secret so `sinter serve`/`studio` work out of
     // the box (a fresh secret per process; set CSRF_SECRET to persist sessions).
     const isProduction = process.env.NODE_ENV === 'production';
     let csrfSecret = process.env.CSRF_SECRET;
@@ -250,7 +250,7 @@ export class PreviewServer {
 
     // ── SinterFS-backed gallery endpoints ────────────────────────────
 
-    this.app.get('/api/liminal/gallery/:project', async (req, res) => {
+    this.app.get('/api/sinter/gallery/:project', async (req, res) => {
       const project = decodeURIComponent(req.params.project);
       try {
         assertSafeSegment(project, 'Project name');
@@ -293,7 +293,7 @@ export class PreviewServer {
       }
     });
 
-    this.app.get('/api/liminal/gallery/:project/:version', (req, res) => {
+    this.app.get('/api/sinter/gallery/:project/:version', (req, res) => {
       const project = decodeURIComponent(req.params.project);
       const versionParam = req.params.version;
       if (!/^\d+$/.test(versionParam)) {

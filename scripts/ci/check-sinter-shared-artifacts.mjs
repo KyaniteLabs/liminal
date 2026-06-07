@@ -113,7 +113,7 @@ function validateProvenance(failures, pathLabel, provenance, expectedArtifactId)
 
 function validateReviewAction(failures, action) {
   const pathLabel = `review-actions.json:${action?.id ?? 'unknown'}`;
-  validateSchema(failures, pathLabel, action, 'liminal.review-action');
+  validateSchema(failures, pathLabel, action, 'sinter.review-action');
   requireString(failures, pathLabel, action.id, 'id');
   requireString(failures, pathLabel, action.summary, 'summary');
   if (!reviewActionKinds.has(action.kind)) fail(failures, pathLabel, `invalid kind ${action.kind}`);
@@ -199,7 +199,7 @@ function main() {
   validateProvenance(failures, 'studio-artifact.json', studioArtifact.provenance, studioArtifact.id);
 
   const siteArtifact = readJson('docs/contracts/fixtures/site-artifact.json');
-  validateSchema(failures, 'site-artifact.json', siteArtifact, 'liminal.shared-site-artifact');
+  validateSchema(failures, 'site-artifact.json', siteArtifact, 'sinter.shared-site-artifact');
   requireString(failures, 'site-artifact.json', siteArtifact.id, 'id');
   requireString(failures, 'site-artifact.json', siteArtifact.siteProfileId, 'siteProfileId');
   if (!Array.isArray(siteArtifact.aestheticTags) || siteArtifact.aestheticTags.length === 0) {
@@ -214,7 +214,7 @@ function main() {
   }
 
   const instrumentPreset = readJson('docs/contracts/fixtures/instrument-preset.json');
-  validateSchema(failures, 'instrument-preset.json', instrumentPreset, 'liminal.shared-instrument-preset');
+  validateSchema(failures, 'instrument-preset.json', instrumentPreset, 'sinter.shared-instrument-preset');
   requireString(failures, 'instrument-preset.json', instrumentPreset.id, 'id');
   validateFiles(failures, 'instrument-preset.json', instrumentPreset.files);
   validateProvenance(failures, 'instrument-preset.json', instrumentPreset.provenance, instrumentPreset.id);
@@ -227,7 +227,7 @@ function main() {
   }
 
   const instrumentSession = readJson('docs/contracts/fixtures/instrument-session.json');
-  validateSchema(failures, 'instrument-session.json', instrumentSession, 'liminal.shared-instrument-session');
+  validateSchema(failures, 'instrument-session.json', instrumentSession, 'sinter.shared-instrument-session');
   requireString(failures, 'instrument-session.json', instrumentSession.id, 'id');
   requireString(failures, 'instrument-session.json', instrumentSession.telemetryFile, 'telemetryFile');
   if (!Array.isArray(instrumentSession.presetIds) || instrumentSession.presetIds.length === 0) {

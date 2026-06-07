@@ -2,7 +2,7 @@
 
 const { contextBridge } = require('electron');
 
-contextBridge.exposeInMainWorld('liminalDesktop', Object.freeze({
+contextBridge.exposeInMainWorld('sinterDesktop', Object.freeze({
   platform: process.platform,
   shell: 'electron',
 }));

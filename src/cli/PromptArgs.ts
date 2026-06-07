@@ -68,8 +68,8 @@ const SELF_IMPROVEMENT_MARKERS = [
   'finish yourself',
   'finish building yourself',
   'improve your own',
-  'improve the actual liminal application',
-  'prompt -> liminal acts -> liminal improves itself',
+  'improve the actual sinter application',
+  'prompt -> sinter acts -> sinter improves itself',
   'codex for art',
 ];
 

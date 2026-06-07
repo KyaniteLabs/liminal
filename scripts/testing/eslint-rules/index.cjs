@@ -1,5 +1,5 @@
 /**
- * Test quality lint rules for liminal.
+ * Test quality lint rules for sinter.
  *
  * These rules enforce patterns discovered during the test quality audit (Apr 2026).
  * Register them in .eslintrc.cjs via the `rulesdir` plugin.

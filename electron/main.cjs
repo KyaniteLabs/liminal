@@ -124,7 +124,7 @@ function startStudio(root, launch) {
   studioProcess.on('exit', (code, signal) => {
     studioProcess = null;
     if (mainWindow && code !== 0 && code !== null) {
-      mainWindow.webContents.send('liminal-desktop:studio-exit', { code, signal });
+      mainWindow.webContents.send('sinter-desktop:studio-exit', { code, signal });
     }
   });
 }

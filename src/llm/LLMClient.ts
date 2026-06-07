@@ -720,7 +720,7 @@ export class LLMClient {
 
     if (shouldAutoDetectLocalModel) {
       throw new LLMError(
-        `No local LLM model detected at ${baseUrl}/models. Start LM Studio/Ollama with a loaded model, run "liminal --configure", or set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.`,
+        `No local LLM model detected at ${baseUrl}/models. Start LM Studio/Ollama with a loaded model, run "sinter --configure", or set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.`,
         this.detectProvider(),
         undefined,
         false,

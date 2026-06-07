@@ -1,7 +1,7 @@
 /**
  * Type definitions for the AutoFixOrchestrator system.
  *
- * These types support the `liminal fix` command for self-healing code fixes.
+ * These types support the `sinter fix` command for self-healing code fixes.
  */
 
 /**

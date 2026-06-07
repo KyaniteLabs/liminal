@@ -1,5 +1,5 @@
 {
-  "schema": "liminal.shared-instrument-preset",
+  "schema": "sinter.shared-instrument-preset",
   "schemaVersion": "2026-05-25.phase1",
   "id": "instrument_preset_moon_garden_001",
   "baseArtifactId": "artifact_studio_moon_garden_001",

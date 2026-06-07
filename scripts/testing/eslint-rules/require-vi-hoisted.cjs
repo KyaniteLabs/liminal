@@ -17,7 +17,7 @@
  *
  * None.
  *
- * @author liminal test quality enforcement
+ * @author sinter test quality enforcement
  */
 
 'use strict';
@@ -29,7 +29,7 @@ module.exports = {
     docs: {
       description: 'Require vi.hoisted() for mock variables used in vi.mock() factories',
       recommended: true,
-      url: 'https://github.com/liminal/liminal/blob/main/scripts/testing/eslint-rules/require-vi-hoisted.js',
+      url: 'https://github.com/sinter/sinter/blob/main/scripts/testing/eslint-rules/require-vi-hoisted.js',
     },
     messages: {
       notHoisted:

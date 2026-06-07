@@ -338,7 +338,7 @@ function mergeConfigs(base: RoleConfigFile | null, overlay: RoleConfigFile | nul
 }
 
 /**
- * Write a role config file (for `liminal config` CLI command).
+ * Write a role config file (for `sinter config` CLI command).
  */
 export async function saveRoleConfig(config: RoleConfigFile, configPath?: string): Promise<void> {
   const target = configPath || USER_CONFIG_PATH;

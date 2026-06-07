@@ -1,5 +1,5 @@
 /**
- * AutoFixOrchestrator - Core orchestrator for the `liminal fix` command.
+ * AutoFixOrchestrator - Core orchestrator for the `sinter fix` command.
  *
  * Coordinates self-healing fixes by:
  * 1. Analyzing the error/request
@@ -19,7 +19,7 @@ import { readFileTool } from '../harness/tools/index.js';
 import { execSync } from 'child_process';
 
 /**
- * Orchestrates the auto-fix workflow for the `liminal fix` command.
+ * Orchestrates the auto-fix workflow for the `sinter fix` command.
  */
 export class AutoFixOrchestrator {
   private _llmClient: LLMClient;
@@ -36,7 +36,7 @@ export class AutoFixOrchestrator {
   /**
    * Executes a fix request based on the provided parameters.
    *
-   * This is the main entry point for the `liminal fix` command.
+   * This is the main entry point for the `sinter fix` command.
    * Uses LLMModeAgent to autonomously fix code issues.
    *
    * @param request - The fix request parameters

@@ -5,7 +5,7 @@
  * - GitService: Core git operations (commit, branch, diff, log)
  * - GitIntegration: RalphLoop orchestrator (branch-per-run, commit-per-iteration)
  * - CompostBridge: Bridges git events into the compost EventStore timeline
- * - GitCLI: CLI handler for `liminal git <subcommand>`
+ * - GitCLI: CLI handler for `sinter git <subcommand>`
  */
 
 export { GitService } from './GitService.js';

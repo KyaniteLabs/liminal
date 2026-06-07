@@ -18,7 +18,7 @@ describe('PreviewServer SinterFS endpoints', () => {
   let originalCwd: typeof process.cwd;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), 'liminal-preview-test-'));
+    projectRoot = mkdtempSync(join(tmpdir(), 'sinter-preview-test-'));
     originalCwd = process.cwd;
     process.cwd = () => projectRoot;
     server = new PreviewServer();

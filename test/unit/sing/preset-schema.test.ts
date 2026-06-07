@@ -27,7 +27,7 @@ describe('Sing preset schema', () => {
   it('rejects presets that cannot drive the standalone instrument', () => {
     const invalid = {
       schemaVersion: 1,
-      instrument: 'liminal-studio',
+      instrument: 'sinter-studio',
       id: 'bad',
       name: 'Bad',
       shader: { language: 'glsl-fragment', source: '' },

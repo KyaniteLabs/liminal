@@ -34,7 +34,7 @@ describe('OnboardingWizard', () => {
     ]) {
       delete process.env[key];
     }
-    tempHome = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-onboarding-'));
+    tempHome = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-onboarding-'));
     vi.spyOn(os, 'homedir').mockReturnValue(tempHome);
     wizard = new OnboardingWizard();
   });

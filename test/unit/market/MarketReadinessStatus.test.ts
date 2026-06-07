@@ -56,7 +56,7 @@ describe('collectRepositoryMarketReadinessStatus', () => {
   });
 
   it('does not accept a stale or failed live-provider receipt as market-ready', () => {
-    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-market-'));
+    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sinter-market-'));
     const proofDir = path.join(repoRoot, '.omx', 'proof');
     fs.mkdirSync(proofDir, { recursive: true });
     fs.writeFileSync(path.join(proofDir, 'live-provider-smoke.json'), JSON.stringify({ status: 'fail', blockers: ['bad output'] }));
@@ -69,7 +69,7 @@ describe('collectRepositoryMarketReadinessStatus', () => {
   });
 
   it('rejects passing live-provider receipts without commit and artifact proof', () => {
-    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-market-'));
+    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sinter-market-'));
     writeFakeGitHead(repoRoot);
     const proofDir = path.join(repoRoot, '.omx', 'proof');
     fs.mkdirSync(proofDir, { recursive: true });
@@ -89,7 +89,7 @@ describe('collectRepositoryMarketReadinessStatus', () => {
   });
 
   it('accepts a fresh live-provider receipt bound to the current commit and artifact', () => {
-    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-market-'));
+    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sinter-market-'));
     const gitCommit = writeFakeGitHead(repoRoot);
     const proofDir = path.join(repoRoot, '.omx', 'proof');
     const artifactPath = path.join(proofDir, 'live-provider-smoke', 'p5.js');

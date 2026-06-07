@@ -19,7 +19,7 @@ describe('Sinter Main Entry Point', () => {
     originalHome = process.env.HOME;
     originalGlmKey = process.env.GLM_API_KEY;
     originalSinterKey = process.env.LIMINAL_LLM_API_KEY;
-    tempHome = mkdtempSync(join(tmpdir(), 'liminal-index-test-'));
+    tempHome = mkdtempSync(join(tmpdir(), 'sinter-index-test-'));
     process.env.HOME = tempHome;
     delete process.env.GLM_API_KEY;
     delete process.env.LIMINAL_LLM_API_KEY;

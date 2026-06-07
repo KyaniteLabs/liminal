@@ -19,7 +19,7 @@ describe('TaskLedger', () => {
   let ledger: TaskLedger;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'liminal-ledger-test-'));
+    tempDir = mkdtempSync(join(tmpdir(), 'sinter-ledger-test-'));
     liminalFs = SinterFS.open(tempDir);
     ledger = new TaskLedger(liminalFs);
   });

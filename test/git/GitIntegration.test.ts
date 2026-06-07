@@ -78,7 +78,7 @@ import { DEFAULT_GIT_CONFIG } from '../../src/git/types.js';
 
 describe('GitIntegration', () => {
   let integration: GitIntegration;
-  const tmpDir = path.join(os.tmpdir(), `liminal-git-test-${Date.now()}`);
+  const tmpDir = path.join(os.tmpdir(), `sinter-git-test-${Date.now()}`);
 
   beforeEach(() => {
     vi.clearAllMocks();

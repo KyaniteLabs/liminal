@@ -48,7 +48,7 @@ describe('CanvasRecorder error handling', () => {
 
   it('logs cleanup error when fs.rm fails — recording still succeeds', async () => {
     const loggerSpy = vi.spyOn(Logger, 'error').mockImplementation(() => {});
-    vi.spyOn(fs, 'mkdtemp').mockResolvedValue('/tmp/liminal-frames-test');
+    vi.spyOn(fs, 'mkdtemp').mockResolvedValue('/tmp/sinter-frames-test');
     vi.spyOn(fs, 'mkdir').mockResolvedValue(undefined);
     vi.spyOn(fs, 'rm').mockRejectedValue(new Error('Permission denied during cleanup'));
 
@@ -66,7 +66,7 @@ describe('CanvasRecorder error handling', () => {
 
   it('logs cleanup error with non-Error thrown value', async () => {
     const loggerSpy = vi.spyOn(Logger, 'error').mockImplementation(() => {});
-    vi.spyOn(fs, 'mkdtemp').mockResolvedValue('/tmp/liminal-frames-test');
+    vi.spyOn(fs, 'mkdtemp').mockResolvedValue('/tmp/sinter-frames-test');
     vi.spyOn(fs, 'mkdir').mockResolvedValue(undefined);
     vi.spyOn(fs, 'rm').mockRejectedValue('string error');
 
@@ -82,7 +82,7 @@ describe('CanvasRecorder error handling', () => {
 
   it('logs cleanup error when directory not empty', async () => {
     const loggerSpy = vi.spyOn(Logger, 'error').mockImplementation(() => {});
-    vi.spyOn(fs, 'mkdtemp').mockResolvedValue('/tmp/liminal-frames-test');
+    vi.spyOn(fs, 'mkdtemp').mockResolvedValue('/tmp/sinter-frames-test');
     vi.spyOn(fs, 'mkdir').mockResolvedValue(undefined);
     vi.spyOn(fs, 'rm').mockRejectedValue(new Error('Directory not empty'));
 

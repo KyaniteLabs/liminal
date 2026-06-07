@@ -1206,9 +1206,9 @@ describe('DreamEngine', () => {
       { minEpisodesForPattern: 1 },
     );
     entropy = new MetabolicEntropyEngine({
-      eventStorePath: '/tmp/liminal-test/events',
-      compostHeapPath: '/tmp/liminal-test/compost',
-      telemetryCollectorPath: '/tmp/liminal-test/telemetry',
+      eventStorePath: '/tmp/sinter-test/events',
+      compostHeapPath: '/tmp/sinter-test/compost',
+      telemetryCollectorPath: '/tmp/sinter-test/telemetry',
     });
 
     engine = new DreamEngine(

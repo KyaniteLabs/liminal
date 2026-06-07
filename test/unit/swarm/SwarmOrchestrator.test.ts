@@ -213,7 +213,7 @@ describe('SwarmOrchestrator', () => {
   let tempDir: string;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'liminal-swarm-test-'));
+    tempDir = mkdtempSync(join(tmpdir(), 'sinter-swarm-test-'));
     vi.resetAllMocks();
   });
 

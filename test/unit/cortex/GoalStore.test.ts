@@ -17,7 +17,7 @@ vi.mock('node:fs', () => ({
 describe('GoalStore', () => {
   let store: GoalStore;
   let stored: Map<string, Record<string, unknown>>;
-  const projectRoot = '/tmp/test-liminal-goalstore';
+  const projectRoot = '/tmp/test-sinter-goalstore';
 
   const mockFs = {
     getProjectRoot: () => projectRoot,

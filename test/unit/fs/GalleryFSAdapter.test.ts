@@ -14,8 +14,8 @@ describe('GalleryFSAdapter', () => {
   let adapter: GalleryFSAdapter;
 
   beforeEach(() => {
-    galleryDir = mkdtempSync(join(tmpdir(), 'liminal-gallery-test-'));
-    projectRoot = mkdtempSync(join(tmpdir(), 'liminal-fs-test-'));
+    galleryDir = mkdtempSync(join(tmpdir(), 'sinter-gallery-test-'));
+    projectRoot = mkdtempSync(join(tmpdir(), 'sinter-fs-test-'));
     gallery = new Gallery(galleryDir);
     fs = SinterFS.open(projectRoot);
     adapter = new GalleryFSAdapter(gallery, fs);

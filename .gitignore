@@ -54,7 +54,7 @@ yarn-error.log*
 *.pem
 *.key
 
-# LiminalFS runtime database (SQLite)
+# SinterFS runtime database (SQLite)
 .liminal/
 
 # Generated artifacts

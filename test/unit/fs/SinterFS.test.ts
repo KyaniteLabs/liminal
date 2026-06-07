@@ -9,7 +9,7 @@ describe('SinterFS', () => {
   let liminalFs: SinterFS;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'liminal-fs-test-'));
+    tempDir = mkdtempSync(join(tmpdir(), 'sinter-fs-test-'));
     liminalFs = SinterFS.open(tempDir);
   });
 

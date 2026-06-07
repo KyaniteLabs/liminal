@@ -11,7 +11,7 @@ describe('TraceFSAdapter', () => {
   let adapter: TraceFSAdapter;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), 'liminal-trace-test-'));
+    projectRoot = mkdtempSync(join(tmpdir(), 'sinter-trace-test-'));
     fs = SinterFS.open(projectRoot);
     adapter = new TraceFSAdapter(fs);
   });

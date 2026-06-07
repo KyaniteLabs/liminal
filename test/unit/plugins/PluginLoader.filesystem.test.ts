@@ -249,7 +249,7 @@ describe('PluginLoader filesystem loading', () => {
     });
 
     it('empty directory returns empty results', async () => {
-      const emptyLoader = new PluginLoader('/tmp/liminal-test-no-such-dir-' + Date.now());
+      const emptyLoader = new PluginLoader('/tmp/sinter-test-no-such-dir-' + Date.now());
       const results = await emptyLoader.loadAll();
       expect(results).toEqual([]);
     });

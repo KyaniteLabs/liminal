@@ -20,8 +20,8 @@ describe('OrganismLoop SinterFS integration', () => {
   let originalCwd: typeof process.cwd;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), 'liminal-organism-test-'));
-    galleryDir = mkdtempSync(join(tmpdir(), 'liminal-organism-gallery-'));
+    projectRoot = mkdtempSync(join(tmpdir(), 'sinter-organism-test-'));
+    galleryDir = mkdtempSync(join(tmpdir(), 'sinter-organism-gallery-'));
     originalCwd = process.cwd;
     process.cwd = () => projectRoot;
 

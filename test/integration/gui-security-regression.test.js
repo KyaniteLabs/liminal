@@ -300,7 +300,7 @@ describe('Security regression — Wave 3 preview isolation', () => {
 
     // The artist-facing p5 preview should read as a polished stage, not a
     // small top-left canvas on a blank browser page.
-    expect(html).toContain('data-liminal-p5-preview-shell');
+    expect(html).toContain('data-sinter-p5-preview-shell');
     expect(html).toContain('place-items: center');
     expect(html).toContain('width: min(100vw, 960px) !important');
   });

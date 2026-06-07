@@ -18,7 +18,7 @@ import type { TaskAttempt, TaskCandidate, TaskDecision } from '../../src/ledger/
 // ─── Helpers ──────────────────────────────────────────────────────
 
 function makeTempDir(): string {
-  return mkdtempSync(join(tmpdir(), 'liminal-ledger-inttest-'));
+  return mkdtempSync(join(tmpdir(), 'sinter-ledger-inttest-'));
 }
 
 /** Minimal task definition matching L001.json from the corpus */

@@ -4,7 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
-const TEST_CACHE_DIR = path.join(os.tmpdir(), 'liminal-parsing-cache-test');
+const TEST_CACHE_DIR = path.join(os.tmpdir(), 'sinter-parsing-cache-test');
 
 describe('ParsingCache', () => {
   let cache: ParsingCache;

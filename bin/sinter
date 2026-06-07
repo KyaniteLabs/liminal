@@ -111,7 +111,7 @@ function resolveCliProvider(value) {
   return CLI_PROVIDER_DEFAULTS[normalized] ? normalized : undefined;
 }
 
-function liminalConfigPath() {
+function sinterConfigPath() {
   return path.join(process.env.HOME || process.env.USERPROFILE || '.', '.sinter', 'config.json');
 }
 
@@ -121,7 +121,7 @@ function liminalConfigPath() {
 function setProviderKey(providerKey, apiKey, { model, baseUrl, activate } = {}) {
   const defaults = CLI_PROVIDER_DEFAULTS[providerKey];
   if (!defaults) throw new Error(`Unknown provider: ${providerKey} (one of: ${CLI_PROVIDER_NAMES.join(', ')})`);
-  const cfgPath = liminalConfigPath();
+  const cfgPath = sinterConfigPath();
   let config = {};
   if (fs.existsSync(cfgPath)) {
     try { config = JSON.parse(fs.readFileSync(cfgPath, 'utf-8')); }
@@ -186,9 +186,9 @@ function printProviderList() {
   console.log('');
 }
 
-function readLiminalConfig() {
+function readSinterConfig() {
   try {
-    const p = liminalConfigPath();
+    const p = sinterConfigPath();
     if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf-8'));
   } catch { /* ignore unreadable/invalid config */ }
   return {};
@@ -203,7 +203,7 @@ function savedKeyFor(name, config) {
 }
 
 function printProviderStatus() {
-  const config = readLiminalConfig();
+  const config = readSinterConfig();
   const active = config.defaultProvider;
   console.log('');
   console.log('Sinter provider readiness:');
@@ -1784,8 +1784,8 @@ else if (cmd === 'fix') {
 }
 else if (cmd === 'fs') {
   const subCmd = cmdArgs[0];
-  const { LiminalFS } = await import('../dist/fs/index.js');
-  const liminalFs = LiminalFS.open(process.cwd());
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const sinterFs = SinterFS.open(process.cwd());
 
   try {
     if (subCmd === 'artifacts') {
@@ -1825,7 +1825,7 @@ else if (cmd === 'fs') {
         }
         console.log('');
       } else {
-        const ref = liminalFs.readRef(refName);
+        const ref = sinterFs.readRef(refName);
         if (!ref) {
           console.error(`Ref not found: ${refName}`);
           process.exit(1);
@@ -1834,7 +1834,7 @@ else if (cmd === 'fs') {
       }
     } else if (subCmd === 'runs') {
       // Query EventStore for run_record events
-      const projectStore = liminalFs.getProjectStore();
+      const projectStore = sinterFs.getProjectStore();
       const eventStore = projectStore.getEventStore();
       // EventStore has queryEvents method — use it to filter run_record events
       const events = eventStore.queryEvents({ type: 'run_record' });
@@ -1859,37 +1859,37 @@ else if (cmd === 'fs') {
       process.exit(1);
     }
   } finally {
-    liminalFs.close();
+    sinterFs.close();
   }
 }
 else if (cmd === 'ledger') {
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { TaskLedger } = await import('../dist/ledger/index.js');
   const { parseArgs, execute } = await import('../dist/ledger/cli.js');
 
-  const liminalFs = LiminalFS.open(process.cwd());
-  const taskLedger = new TaskLedger(liminalFs);
+  const sinterFs = SinterFS.open(process.cwd());
+  const taskLedger = new TaskLedger(sinterFs);
 
   try {
     const action = parseArgs(cmdArgs);
     await execute(action, taskLedger);
     process.exit(0);
   } finally {
-    liminalFs.close();
+    sinterFs.close();
   }
 }
 else if (cmd === 'archive') {
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks, LineageTracker, ArchivePlacement } = await import('../dist/emergence/index.js');
 
   const subCmd = cmdArgs[0];
   const artifactRef = cmdArgs[1];
 
-  const liminalFs = LiminalFS.open(process.cwd());
+  const sinterFs = SinterFS.open(process.cwd());
 
   try {
     if (subCmd === 'inspect' && artifactRef) {
-      const hooks = new EmergenceHooks(liminalFs);
+      const hooks = new EmergenceHooks(sinterFs);
       const cell = hooks.getArchive().findCellForArtifact(artifactRef);
       if (!cell) {
         console.error(`Artifact ${artifactRef} not found in archive.`);
@@ -1940,7 +1940,7 @@ else if (cmd === 'archive') {
       console.log('  (Branch action recorded. Use sinter gen with --parent to continue.)');
       console.log('');
     } else if (subCmd === 'list') {
-      const hooks = new EmergenceHooks(liminalFs);
+      const hooks = new EmergenceHooks(sinterFs);
       const stats = hooks.getArchive().getStats();
       const elites = hooks.getArchive().getAllElites();
       console.log('');
@@ -1959,7 +1959,7 @@ else if (cmd === 'archive') {
       process.exit(1);
     }
   } finally {
-    liminalFs.close();
+    sinterFs.close();
   }
   process.exit(0);
 }
@@ -2093,10 +2093,10 @@ else if (cmd === 'report' && cmdArgs[0] === 'provenance') {
   const { ProvenanceNarrativeBuilder } = await import('../dist/reporting/index.js');
   const { PolicyChangeManifest } = await import('../dist/release/PolicyChangeManifest.js');
   const { CreativeWeaknessEmitter } = await import('../dist/autonomy/CreativeWeaknessEmitter.js');
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks } = await import('../dist/emergence/index.js');
 
-  const liminalFs = LiminalFS.open(process.cwd());
+  const sinterFs = SinterFS.open(process.cwd());
   try {
     const manifest = new PolicyChangeManifest();
     const changes = manifest.getByStatus('promoted');
@@ -2120,19 +2120,19 @@ else if (cmd === 'report' && cmdArgs[0] === 'provenance') {
     }
     console.log('');
   } finally {
-    liminalFs.close();
+    sinterFs.close();
   }
   process.exit(0);
 }
 else if (cmd === 'report' && cmdArgs[0] === 'archive') {
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks } = await import('../dist/emergence/index.js');
   const { EmergenceScorecard } = await import('../dist/evaluation/EmergenceScorecard.js');
   const { NicheQuotaPolicy } = await import('../dist/autonomy/NicheQuotaPolicy.js');
 
-  const liminalFs = LiminalFS.open(process.cwd());
+  const sinterFs = SinterFS.open(process.cwd());
   try {
-    const hooks = new EmergenceHooks(liminalFs);
+    const hooks = new EmergenceHooks(sinterFs);
     const archive = hooks.getArchive();
     const stats = archive.getStats();
     const elites = archive.getAllElites();
@@ -2167,18 +2167,18 @@ else if (cmd === 'report' && cmdArgs[0] === 'archive') {
     }
     console.log('');
   } finally {
-    liminalFs.close();
+    sinterFs.close();
   }
   process.exit(0);
 }
 else if (cmd === 'taste' && cmdArgs[0] === 'train') {
   const { PreferenceDatasetBuilder, TasteModelTrainer } = await import('../dist/learning/index.js');
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks } = await import('../dist/emergence/index.js');
 
-  const liminalFs = LiminalFS.open(process.cwd());
+  const sinterFs = SinterFS.open(process.cwd());
   try {
-    const hooks = new EmergenceHooks(liminalFs);
+    const hooks = new EmergenceHooks(sinterFs);
     const archive = hooks.getArchive();
     const elites = archive.getAllElites();
 
@@ -2208,18 +2208,18 @@ else if (cmd === 'taste' && cmdArgs[0] === 'train') {
     console.log(`  Axis weights: ${model.axisWeights.map((w, i) => `[${i}]${w.toFixed(3)}`).join(' ')}`);
     console.log('');
   } finally {
-    liminalFs.close();
+    sinterFs.close();
   }
   process.exit(0);
 }
 else if (cmd === 'taste' && cmdArgs[0] === 'eval') {
   const { PreferenceDatasetBuilder, TasteModelTrainer, TasteModelEvaluator } = await import('../dist/learning/index.js');
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks } = await import('../dist/emergence/index.js');
 
-  const liminalFs = LiminalFS.open(process.cwd());
+  const sinterFs = SinterFS.open(process.cwd());
   try {
-    const hooks = new EmergenceHooks(liminalFs);
+    const hooks = new EmergenceHooks(sinterFs);
     const archive = hooks.getArchive();
     const elites = archive.getAllElites();
 
@@ -2246,19 +2246,19 @@ else if (cmd === 'taste' && cmdArgs[0] === 'eval') {
     console.log(`  Beats baseline: ${result.beatsBaseline ? 'YES' : 'NO'}`);
     console.log('');
   } finally {
-    liminalFs.close();
+    sinterFs.close();
   }
 }
 else if (cmd === 'dream' && cmdArgs[0] === 'run') {
   const { DreamPlanner, RecombinationEngine } = await import('../dist/dreaming/index.js');
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks } = await import('../dist/emergence/index.js');
 
   const strategy = cmdArgs[1] || 'auto';
 
-  const liminalFs = LiminalFS.open(process.cwd());
+  const sinterFs = SinterFS.open(process.cwd());
   try {
-    const hooks = new EmergenceHooks(liminalFs);
+    const hooks = new EmergenceHooks(sinterFs);
     const archive = hooks.getArchive();
     const cells = archive.getAllCells();
     const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
@@ -2286,19 +2286,19 @@ else if (cmd === 'dream' && cmdArgs[0] === 'run') {
     }
     console.log('');
   } finally {
-    liminalFs.close();
+    sinterFs.close();
   }
   process.exit(0);
 }
 else if (cmd === 'garden' && cmdArgs[0] === 'status') {
   const { GardenPolicy } = await import('../dist/autonomy/GardenPolicy.js');
   const { StagnationDetector } = await import('../dist/autonomy/StagnationDetector.js');
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks } = await import('../dist/emergence/index.js');
 
-  const liminalFs = LiminalFS.open(process.cwd());
+  const sinterFs = SinterFS.open(process.cwd());
   try {
-    const hooks = new EmergenceHooks(liminalFs);
+    const hooks = new EmergenceHooks(sinterFs);
     const archive = hooks.getArchive();
     const cells = archive.getAllCells();
     const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
@@ -2324,18 +2324,18 @@ else if (cmd === 'garden' && cmdArgs[0] === 'status') {
     }
     console.log('');
   } finally {
-    liminalFs.close();
+    sinterFs.close();
   }
   process.exit(0);
 }
 else if (cmd === 'garden' && cmdArgs[0] === 'rebalance') {
   const { NicheQuotaPolicy } = await import('../dist/autonomy/NicheQuotaPolicy.js');
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks } = await import('../dist/emergence/index.js');
 
-  const liminalFs = LiminalFS.open(process.cwd());
+  const sinterFs = SinterFS.open(process.cwd());
   try {
-    const hooks = new EmergenceHooks(liminalFs);
+    const hooks = new EmergenceHooks(sinterFs);
     const archive = hooks.getArchive();
     const cells = archive.getAllCells();
     const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
@@ -2354,7 +2354,7 @@ else if (cmd === 'garden' && cmdArgs[0] === 'rebalance') {
     }
     console.log('');
   } finally {
-    liminalFs.close();
+    sinterFs.close();
   }
   process.exit(0);
 }
@@ -2362,12 +2362,12 @@ else if (cmd === 'report' && cmdArgs[0] === 'garden') {
   const { GardenHealthMonitor } = await import('../dist/autonomy/GardenHealthMonitor.js');
   const { StagnationDetector } = await import('../dist/autonomy/StagnationDetector.js');
   const { NicheQuotaPolicy } = await import('../dist/autonomy/NicheQuotaPolicy.js');
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks } = await import('../dist/emergence/index.js');
 
-  const liminalFs = LiminalFS.open(process.cwd());
+  const sinterFs = SinterFS.open(process.cwd());
   try {
-    const hooks = new EmergenceHooks(liminalFs);
+    const hooks = new EmergenceHooks(sinterFs);
     const archive = hooks.getArchive();
     const cells = archive.getAllCells();
     const healthMonitor = new GardenHealthMonitor();
@@ -2403,7 +2403,7 @@ else if (cmd === 'report' && cmdArgs[0] === 'garden') {
 
     console.log('');
   } finally {
-    liminalFs.close();
+    sinterFs.close();
   }
   process.exit(0);
 }
@@ -2412,12 +2412,12 @@ else if (cmd === 'report' && cmdArgs[0] === 'readiness') {
   const { GardenHealthMonitor } = await import('../dist/autonomy/GardenHealthMonitor.js');
   const { PolicyChangeManifest } = await import('../dist/release/PolicyChangeManifest.js');
   const { CreativeWeaknessEmitter } = await import('../dist/autonomy/CreativeWeaknessEmitter.js');
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks } = await import('../dist/emergence/index.js');
 
-  const liminalFs = LiminalFS.open(process.cwd());
+  const sinterFs = SinterFS.open(process.cwd());
   try {
-    const hooks = new EmergenceHooks(liminalFs);
+    const hooks = new EmergenceHooks(sinterFs);
     const archive = hooks.getArchive();
     const cells = archive.getAllCells();
     const healthMonitor = new GardenHealthMonitor();
@@ -2447,7 +2447,7 @@ else if (cmd === 'report' && cmdArgs[0] === 'readiness') {
     }
     console.log('');
   } finally {
-    liminalFs.close();
+    sinterFs.close();
   }
   process.exit(0);
 }
@@ -2458,11 +2458,11 @@ else if (cmd === 'garden' && cmdArgs[0] === 'start') {
     process.exit(1);
   }
   const { AutonomousGardener } = await import('../dist/autonomy/AutonomousGardener.js');
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks } = await import('../dist/emergence/index.js');
 
-  const liminalFs = LiminalFS.open(process.cwd());
-  const hooks = new EmergenceHooks(liminalFs);
+  const sinterFs = SinterFS.open(process.cwd());
+  const hooks = new EmergenceHooks(sinterFs);
   const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
 
   const gardener = new AutonomousGardener({ mode, totalBudget: 100 });
@@ -2491,7 +2491,7 @@ else if (cmd === 'garden' && cmdArgs[0] === 'start') {
 
   process.on('SIGINT', () => {
     gardener.stop();
-    liminalFs.close();
+    sinterFs.close();
     console.log('');
     console.log(`  Garden stopped after ${cycleCount} cycles.`);
     process.exit(0);
@@ -2511,12 +2511,12 @@ else if (cmd === 'ship' && cmdArgs[0] === 'garden') {
   const { CreativeWeaknessEmitter } = await import('../dist/autonomy/CreativeWeaknessEmitter.js');
 
   // Readiness gate check
-  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks } = await import('../dist/emergence/index.js');
   const healthMonitor = new GardenHealthMonitor();
   const readinessBuilder = new LaunchSummaryBuilder();
-  const liminalFs = LiminalFS.open(process.cwd());
-  const hooks = new EmergenceHooks(liminalFs);
+  const sinterFs = SinterFS.open(process.cwd());
+  const hooks = new EmergenceHooks(sinterFs);
   const archive = hooks.getArchive();
   const cells = archive.getAllCells();
   const health = healthMonitor.measure(cells);

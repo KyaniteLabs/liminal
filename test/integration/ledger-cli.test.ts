@@ -21,7 +21,7 @@ describe('Ledger CLI integration', () => {
   let ledger: TaskLedger;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'liminal-cli-integ-'));
+    tempDir = mkdtempSync(join(tmpdir(), 'sinter-cli-integ-'));
     liminalFs = SinterFS.open(tempDir);
     ledger = new TaskLedger(liminalFs);
   });

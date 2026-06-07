@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 const execFileAsync = promisify(execFile);
 
 interface ModelAssimilationReport {
-  contract: 'liminal-model-assimilation-v1';
+  contract: 'sinter-model-assimilation-v1';
   mode: 'fixture' | 'live';
   gitCommit: string;
   caseCoverage: {
@@ -31,7 +31,7 @@ describe('model-assimilation proof script', () => {
   });
 
   async function tempRoot(): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), 'liminal-model-assimilation-'));
+    const dir = await mkdtemp(join(tmpdir(), 'sinter-model-assimilation-'));
     tempDirs.push(dir);
     return dir;
   }
@@ -48,7 +48,7 @@ describe('model-assimilation proof script', () => {
     const report = JSON.parse(await readFile(reportPath, 'utf8')) as ModelAssimilationReport;
     const markdown = await readFile(markdownPath, 'utf8');
 
-    expect(report.contract).toBe('liminal-model-assimilation-v1');
+    expect(report.contract).toBe('sinter-model-assimilation-v1');
     expect(report.mode).toBe('fixture');
     expect(report.gitCommit).toMatch(/^[0-9a-f]{7,40}$/);
     expect(report.candidates.map(candidate => candidate.model)).toEqual(expect.arrayContaining([

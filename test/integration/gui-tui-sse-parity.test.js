@@ -58,7 +58,7 @@ describe('GUI TUI SSE parity', () => {
   let tmpDir;
 
   beforeAll(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-gui-sse-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-gui-sse-'));
     configPath = path.join(tmpDir, 'config.json');
     process.env.LIMINAL_CONFIG_PATH = configPath;
     const { createApp } = await import('../../gui/server.js');

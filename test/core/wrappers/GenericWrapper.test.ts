@@ -237,7 +237,7 @@ document.body.innerHTML = ` + '`' + `<button id="startButton">Start Ambient Sequ
       const result = GenericWrapper.wrap(code, { domain: 'tone' });
 
       expect(result).toContain('data-tone-preview-shell');
-      expect(result).toContain('id="liminal-tone-visualizer"');
+      expect(result).toContain('id="sinter-tone-visualizer"');
       const runtimeBlock = result.slice(result.indexOf('try {'), result.indexOf('} catch (error)'));
       expect(runtimeBlock).not.toContain('<script');
       expect(runtimeBlock).not.toContain('document.body.innerHTML');
@@ -288,8 +288,8 @@ document.body.innerHTML = ` + '`' + `<button id="startButton">Start Ambient Sequ
       const result = GenericWrapper.wrap(code, { domain: 'tone' });
 
       expect(result).toContain('data-tone-preview-shell');
-      expect(result).toContain('id="liminal-tone-start"');
-      expect(result).toContain('id="liminal-tone-visualizer"');
+      expect(result).toContain('id="sinter-tone-start"');
+      expect(result).toContain('id="sinter-tone-visualizer"');
       expect(result).toContain('id="startButton"');
       expect(result).toContain('Embedded Tone artifact');
     });

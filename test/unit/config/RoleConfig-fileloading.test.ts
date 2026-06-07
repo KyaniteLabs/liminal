@@ -13,7 +13,7 @@ import os from 'os';
 // Setup and cleanup
 // ---------------------------------------------------------------------------
 
-const tmpDir = path.join(os.tmpdir(), 'liminal-roleconfig-test-' + process.pid);
+const tmpDir = path.join(os.tmpdir(), 'sinter-roleconfig-test-' + process.pid);
 
 beforeEach(async () => {
   await fs.mkdir(tmpDir, { recursive: true });

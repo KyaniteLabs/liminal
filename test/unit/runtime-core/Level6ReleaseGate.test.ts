@@ -9,7 +9,7 @@ const MODEL_ASSIMILATION_DOMAINS = ['svg', 'p5', 'glsl', 'hydra', 'three', 'tone
 const MODEL_ASSIMILATION_ROLES = ['generator', 'evaluator', 'harness'];
 
 function createSourceContractRepo(): string {
-  const repoRoot = mkdtempSync(join(tmpdir(), 'liminal-level6-live-'));
+  const repoRoot = mkdtempSync(join(tmpdir(), 'sinter-level6-live-'));
   writeFakeGitHead(repoRoot);
   for (const domain of CREATIVE_DOMAIN_GAUNTLET_DOMAINS) {
     for (const file of domain.implementationFiles) {

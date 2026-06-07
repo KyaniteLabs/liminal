@@ -31,10 +31,10 @@ const defaultState: SoupState = {
 };
 
 const config: CompostConfig = {
-  heapDir: '/tmp/liminal-test/heap',
+  heapDir: '/tmp/sinter-test/heap',
   maxHeapSizeBytes: 1_000_000,
-  digestDir: '/tmp/liminal-test/digest',
-  seedDir: '/tmp/liminal-test/seeds',
+  digestDir: '/tmp/sinter-test/digest',
+  seedDir: '/tmp/sinter-test/seeds',
   digestSchedule: 'manual',
   digestDayOfWeek: 0,
   soupEnabled: true,

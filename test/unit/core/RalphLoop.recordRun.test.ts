@@ -17,8 +17,8 @@ describe('RalphLoop recordRun SinterFS integration', () => {
   let saveIterationSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), 'liminal-recordrun-test-'));
-    galleryDir = mkdtempSync(join(tmpdir(), 'liminal-gallery-test-'));
+    projectRoot = mkdtempSync(join(tmpdir(), 'sinter-recordrun-test-'));
+    galleryDir = mkdtempSync(join(tmpdir(), 'sinter-gallery-test-'));
     originalApiKey = process.env.OPENAI_API_KEY;
     process.env.OPENAI_API_KEY = 'fake-api-key-for-tests';
     originalCwd = process.cwd;

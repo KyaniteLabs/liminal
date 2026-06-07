@@ -13,8 +13,8 @@ describe('LoopPersistence', () => {
   let fs: SinterFS;
 
   beforeEach(() => {
-    galleryDir = mkdtempSync(join(tmpdir(), 'liminal-gallery-test-'));
-    projectRoot = mkdtempSync(join(tmpdir(), 'liminal-fs-test-'));
+    galleryDir = mkdtempSync(join(tmpdir(), 'sinter-gallery-test-'));
+    projectRoot = mkdtempSync(join(tmpdir(), 'sinter-fs-test-'));
     gallery = new Gallery(galleryDir);
     fs = SinterFS.open(projectRoot);
   });
@@ -82,7 +82,7 @@ describe('LoopPersistence', () => {
   });
 
   it('saveIteration with SinterFS propagates gallery write failures when tolerateErrors is false', async () => {
-    const blockedRoot = mkdtempSync(join(tmpdir(), 'liminal-blocked-gallery-test-'));
+    const blockedRoot = mkdtempSync(join(tmpdir(), 'sinter-blocked-gallery-test-'));
     const blockedGalleryPath = join(blockedRoot, 'not-a-directory');
     writeFileSync(blockedGalleryPath, 'blocking file');
 

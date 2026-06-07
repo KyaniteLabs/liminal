@@ -12,8 +12,8 @@ import { Domain } from "../../../src/types/domains.js";
 
 function makeVariant(overrides: Partial<SlotVariant> = {}): SlotVariant {
 	return {
-		htmlPath: "/var/www/liminal-asset/test-abc.html",
-		experimentId: "liminal-test-flag",
+		htmlPath: "/var/www/sinter-asset/test-abc.html",
+		experimentId: "sinter-test-flag",
 		fitness: 0.75,
 		deployedAt: new Date().toISOString(),
 		model: "minimax-m27",
@@ -27,7 +27,7 @@ function makeSlot(overrides: Partial<SiteSlot> = {}): SiteSlot {
 		id: "home-hero",
 		page: "/",
 		domains: [Domain.P5, Domain.THREE, Domain.GLSL],
-		active: makeVariant({ experimentId: "liminal-home-hero-active" }),
+		active: makeVariant({ experimentId: "sinter-home-hero-active" }),
 		challenger: null,
 		...overrides,
 	};
@@ -38,7 +38,7 @@ describe("SlotManager", () => {
 	let statePath: string;
 
 	beforeEach(() => {
-		tmpDir = mkdtempSync(join(tmpdir(), "liminal-slot-test-"));
+		tmpDir = mkdtempSync(join(tmpdir(), "sinter-slot-test-"));
 		statePath = join(tmpDir, "slots.json");
 	});
 

@@ -10,7 +10,7 @@ import { ContextAccumulation } from '../../src/core/ContextAccumulation.js';
 import path from 'path';
 import os from 'os';
 
-const TEST_GALLERY_DIR = path.join(os.tmpdir(), 'liminal-thinking-test');
+const TEST_GALLERY_DIR = path.join(os.tmpdir(), 'sinter-thinking-test');
 
 // Track metaHarness calls for verification
 const metaHarnessCalls: Array<{

@@ -11,7 +11,7 @@ const checkerScript = resolve(repoRoot, 'scripts/testing/test-quality-check.mjs'
 const tempDirs: string[] = [];
 
 function makeTempRepo(): string {
-  const tempDir = mkdtempSync(join(tmpdir(), 'liminal-quality-check-'));
+  const tempDir = mkdtempSync(join(tmpdir(), 'sinter-quality-check-'));
   tempDirs.push(tempDir);
   mkdirSync(join(tempDir, 'test'), { recursive: true });
   return tempDir;

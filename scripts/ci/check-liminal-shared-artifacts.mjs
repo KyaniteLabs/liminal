@@ -156,7 +156,7 @@ function main() {
   const validatorDomains = extractUnionLiterals('src/core/validators/types.ts', 'Domain');
   const contractDomains = extractUnionLiterals(
     'docs/contracts/liminal-shared-artifact-contracts.md',
-    'LiminalDomain',
+    'SinterDomain',
   );
 
   const domainMap = readJson('docs/contracts/fixtures/domain-map.json');
@@ -165,7 +165,7 @@ function main() {
   const sharedDomains = entries.map((entry) => entry.shared).sort();
   const expectedDomains = [...contractDomains].sort();
   if (JSON.stringify(sharedDomains) !== JSON.stringify(expectedDomains)) {
-    fail(failures, 'domain-map.json', `shared domains must match LiminalDomain: ${expectedDomains.join(', ')}`);
+    fail(failures, 'domain-map.json', `shared domains must match SinterDomain: ${expectedDomains.join(', ')}`);
   }
   for (const entry of entries) {
     const label = `domain-map.json:${entry.shared}`;

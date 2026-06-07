@@ -257,7 +257,7 @@ describe('getProviderConfig', () => {
   });
 
   it('ignores placeholder custom env keys and falls back to config file keys', () => {
-    const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-provider-test-'));
+    const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), 'sinter-provider-test-'));
     fs.mkdirSync(path.join(tempHome, '.sinter'), { recursive: true });
     fs.writeFileSync(path.join(tempHome, '.sinter', 'config.json'), JSON.stringify({
       defaultProvider: 'custom',

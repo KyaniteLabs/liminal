@@ -32,7 +32,7 @@ describe('ProjectStore', () => {
   let store: ProjectStore;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'liminal-project-test-'));
+    tempDir = mkdtempSync(join(tmpdir(), 'sinter-project-test-'));
     store = new ProjectStore({ projectRoot: tempDir });
   });
 

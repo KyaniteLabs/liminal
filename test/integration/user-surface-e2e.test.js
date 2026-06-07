@@ -55,7 +55,7 @@ describe('non-visual GUI/TUI surface E2E contract', () => {
   let tmpDir;
 
   beforeAll(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-surfaces-e2e-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-surfaces-e2e-'));
     process.env.LIMINAL_CONFIG_PATH = path.join(tmpDir, 'config.json');
 
     const bridge = new TuiBridgeService();

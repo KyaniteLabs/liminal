@@ -41,7 +41,7 @@ describe('TaskVerifier', () => {
   let verifier: TaskVerifier;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'liminal-verifier-test-'));
+    tempDir = mkdtempSync(join(tmpdir(), 'sinter-verifier-test-'));
     liminalFs = SinterFS.open(tempDir);
     ledger = new TaskLedger(liminalFs);
     verifier = new TaskVerifier(ledger);

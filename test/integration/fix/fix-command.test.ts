@@ -15,7 +15,7 @@ import { tmpdir } from 'os';
  */
 
 describe('fix command integration', () => {
-  const testDir = join(tmpdir(), 'liminal-fix-test-' + Date.now());
+  const testDir = join(tmpdir(), 'sinter-fix-test-' + Date.now());
 
   beforeEach(() => {
     // Create test directory

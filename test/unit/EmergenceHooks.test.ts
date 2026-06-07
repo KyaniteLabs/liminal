@@ -12,7 +12,7 @@ describe('EmergenceHooks', () => {
   let liminalFs: SinterFS;
 
   beforeEach(() => {
-    tmpDir = mkdtempSync(join(tmpdir(), 'liminal-hooks-test-'));
+    tmpDir = mkdtempSync(join(tmpdir(), 'sinter-hooks-test-'));
     liminalFs = SinterFS.open(tmpDir);
   });
 

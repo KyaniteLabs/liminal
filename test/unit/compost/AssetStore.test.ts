@@ -16,7 +16,7 @@ describe('AssetStore', () => {
   let assetStore: AssetStore;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'liminal-asset-test-'));
+    tempDir = mkdtempSync(join(tmpdir(), 'sinter-asset-test-'));
     eventStore = new EventStore({ projectRoot: tempDir });
     eventStore.init();
     assetStore = new AssetStore(eventStore);

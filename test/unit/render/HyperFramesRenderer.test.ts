@@ -145,7 +145,7 @@ describe('HyperFramesRenderer', () => {
     expect(capturedHtml).toContain('data-track-index="2"');
 
     // Injection container
-    expect(capturedHtml).toContain('id="liminal-injected-assets"');
+    expect(capturedHtml).toContain('id="sinter-injected-assets"');
   });
 
   it('defaults fps to 30 and quality to standard', async () => {

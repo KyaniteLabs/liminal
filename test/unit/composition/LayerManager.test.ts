@@ -480,11 +480,11 @@ describe('LayerManager', () => {
     it('generates CSS for an existing animation', () => {
       manager.addLayer(layer1);
       mockCreateAnim.mockReturnValue({ id: 'anim-1' });
-      mockGenCSS.mockReturnValue('@keyframes liminal-anim-1 { ... }');
+      mockGenCSS.mockReturnValue('@keyframes sinter-anim-1 { ... }');
       manager.createAnimation(layer1.id, 1000, []);
 
       const css = manager.generateAnimationCSS('anim-1');
-      expect(css).toBe('@keyframes liminal-anim-1 { ... }');
+      expect(css).toBe('@keyframes sinter-anim-1 { ... }');
     });
 
     it('returns null for nonexistent animation', () => {

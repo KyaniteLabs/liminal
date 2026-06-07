@@ -8,7 +8,7 @@ describe('fs utilities', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = path.join(os.tmpdir(), `liminal-fs-test-${Date.now()}`);
+    tmpDir = path.join(os.tmpdir(), `sinter-fs-test-${Date.now()}`);
   });
 
   afterEach(() => {

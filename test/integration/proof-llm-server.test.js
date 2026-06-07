@@ -18,14 +18,14 @@ describe('integration proof LLM server', () => {
     const models = await fetch(`${proof.baseUrl}/models`);
     expect(models.status).toBe(200);
     await expect(models.json()).resolves.toMatchObject({
-      data: [{ id: 'liminal-integration-proof-model' }],
+      data: [{ id: 'sinter-integration-proof-model' }],
     });
 
     const completion = await fetch(`${proof.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'liminal-integration-proof-model',
+        model: 'sinter-integration-proof-model',
         messages: [{ role: 'user', content: 'Create an animated interactive cellular automata particle system' }],
       }),
     });
@@ -58,7 +58,7 @@ describe('integration proof LLM server', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'liminal-integration-proof-model',
+        model: 'sinter-integration-proof-model',
         messages: [
           { role: 'system', content: 'You are an expert creative artifact evaluator. Return ONLY a JSON object.' },
           { role: 'user', content: 'Criteria: technical quality\nArtifact:\nfunction setup(){}' },

@@ -14,8 +14,8 @@ describe('SeedFSAdapter', () => {
   let adapter: SeedFSAdapter;
 
   beforeEach(() => {
-    archiveDir = mkdtempSync(join(tmpdir(), 'liminal-seed-test-'));
-    projectRoot = mkdtempSync(join(tmpdir(), 'liminal-fs-test-'));
+    archiveDir = mkdtempSync(join(tmpdir(), 'sinter-seed-test-'));
+    projectRoot = mkdtempSync(join(tmpdir(), 'sinter-fs-test-'));
     archive = new SeedArchive(archiveDir);
     fs = SinterFS.open(projectRoot);
     adapter = new SeedFSAdapter(archive, fs);

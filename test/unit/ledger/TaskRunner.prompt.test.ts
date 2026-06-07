@@ -31,7 +31,7 @@ describe('TaskRunner prompt construction', () => {
   let runner: TaskRunner;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'liminal-prompt-test-'));
+    tempDir = mkdtempSync(join(tmpdir(), 'sinter-prompt-test-'));
     liminalFs = SinterFS.open(tempDir);
     ledger = new TaskLedger(liminalFs);
     runner = new TaskRunner(ledger);

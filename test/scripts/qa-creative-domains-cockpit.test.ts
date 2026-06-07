@@ -24,7 +24,7 @@ describe('creative-domain QA cockpit script', () => {
   });
 
   it('builds a disposable manual cockpit bundle from domain artifacts', () => {
-    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-qa-cockpit-test-'));
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'sinter-qa-cockpit-test-'));
     try {
       const inputDir = path.join(tempRoot, 'sweep');
       const outDir = path.join(tempRoot, 'cockpit');
@@ -74,7 +74,7 @@ describe('creative-domain QA cockpit script', () => {
   });
 
   it('builds from the live all-domain receipt shape', () => {
-    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-live-qa-cockpit-test-'));
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'sinter-live-qa-cockpit-test-'));
     try {
       const proofDir = path.join(tempRoot, 'proof');
       const artifactDir = path.join(proofDir, 'live-creative-domains');

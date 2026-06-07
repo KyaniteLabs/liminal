@@ -26,7 +26,7 @@ function isLLMUnavailable(err) {
 describe('E2E: seed and quality gate', () => {
   beforeAll(async () => {
     originalCwd = process.cwd();
-    e2eProjectRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-e2e-seed-quality-'));
+    e2eProjectRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-e2e-seed-quality-'));
     e2eGalleryDir = 'gallery';
     await fs.mkdir(path.join(e2eProjectRoot, e2eGalleryDir), { recursive: true });
 

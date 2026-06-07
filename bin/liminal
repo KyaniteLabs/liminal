@@ -82,7 +82,7 @@ function liminalConfigPath() {
 // Write an API key (and provider block) into ~/.liminal/config.json, merging with
 // whatever is already there. With `activate`, also point the generator+evaluator
 // roles + defaultProvider at this provider so the next run uses it immediately.
-function setProviderKey(providerKey, apiKey, { model, activate } = {}) {
+function setProviderKey(providerKey, apiKey, { model, baseUrl, activate } = {}) {
   const defaults = CLI_PROVIDER_DEFAULTS[providerKey];
   if (!defaults) throw new Error(`Unknown provider: ${providerKey} (one of: ${CLI_PROVIDER_NAMES.join(', ')})`);
   const cfgPath = liminalConfigPath();
@@ -91,16 +91,19 @@ function setProviderKey(providerKey, apiKey, { model, activate } = {}) {
     try { config = JSON.parse(fs.readFileSync(cfgPath, 'utf-8')); }
     catch (e) { throw new Error(`Existing config is not valid JSON (${cfgPath}): ${e.message}`); }
   }
+  // baseUrl override lets a provider point at a self-hosted endpoint (e.g. a
+  // remote Ollama/vLLM/LM Studio on a home server) instead of its default URL.
   const block = {
-    baseUrl: defaults.baseUrl,
+    baseUrl: baseUrl || defaults.baseUrl,
     model: model || defaults.model,
-    apiKey,
   };
+  if (apiKey) block.apiKey = apiKey; // keyless local servers (ollama/lmstudio) need none
   config.providers = { ...(config.providers || {}), [providerKey]: block };
   if (activate) {
     config.defaultProvider = providerKey;
+    // Only the generator role is written; evaluator/harness/studio inherit it.
     const roleBlock = { provider: providerKey, ...block };
-    config.roles = { ...(config.roles || {}), generator: { ...roleBlock }, evaluator: { ...roleBlock } };
+    config.roles = { ...(config.roles || {}), generator: { ...roleBlock } };
   }
   fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
   fs.writeFileSync(cfgPath, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });
@@ -115,7 +118,7 @@ function printProviderHelp() {
   console.log('  liminal provider help');
   console.log('  liminal provider list');
   console.log('  liminal provider status');
-  console.log('  liminal provider set-key <name> <API_KEY> [--model <id>] [--use]');
+  console.log('  liminal provider set-key <name> [<API_KEY>] [--base-url <url>] [--model <id>] [--use]');
   console.log('  liminal --configure --provider <name>');
   console.log('');
   console.log('PROVIDERS:');
@@ -204,6 +207,8 @@ for (let i = 0; i < args.length; i++) {
     flags.provider = args[++i];
   } else if (arg === '--model') {
     flags.model = args[++i];
+  } else if (arg === '--base-url') {
+    flags.baseUrl = args[++i];
   } else if (arg === '--configure') {
     flags.configure = true;
   } else if (arg === '--use' || arg === '--activate') {
@@ -432,28 +437,32 @@ if (cmd === 'provider') {
     process.exit(0);
   }
   if (subCmd === 'set-key') {
-    // cmdArgs[0] is 'set-key'; --use and --model are already parsed into flags.
+    // cmdArgs[0] is 'set-key'; --use/--model/--base-url are parsed into flags.
     const providerKey = resolveCliProvider(cmdArgs[1]);
     const apiKey = cmdArgs[2];
     const model = flags.model;
+    const baseUrl = flags.baseUrl;
     const activate = !!flags.use;
-    if (!providerKey || !apiKey) {
-      console.error('Usage: liminal provider set-key <provider> <API_KEY> [--model <id>] [--use]');
+    // Local servers (ollama/lmstudio) need no key; cloud providers do.
+    const keyRequired = providerKey ? CLI_PROVIDER_DEFAULTS[providerKey].requiresKey : true;
+    if (!providerKey || (keyRequired && !apiKey)) {
+      console.error('Usage: liminal provider set-key <provider> [<API_KEY>] [--base-url <url>] [--model <id>] [--use]');
       console.error(`Providers: ${CLI_PROVIDER_NAMES.join(', ')}`);
-      console.error('Example: liminal provider set-key minimax sk-... --use   # MiniMax-M3, international endpoint, active');
+      console.error('  Cloud:  liminal provider set-key minimax sk-... --use');
+      console.error('  Local:  liminal provider set-key ollama --base-url http://192.168.1.50:11434/v1 --model qwen2.5-coder --use');
       process.exit(1);
     }
     try {
-      const r = setProviderKey(providerKey, apiKey, { model, activate });
+      const r = setProviderKey(providerKey, apiKey, { model, baseUrl, activate });
       console.log('');
-      console.log(`✅ Saved ${CLI_PROVIDER_DEFAULTS[providerKey].label} key to ${r.cfgPath}`);
+      console.log(`✅ Saved ${CLI_PROVIDER_DEFAULTS[providerKey].label} provider to ${r.cfgPath}`);
       console.log(`   endpoint: ${r.baseUrl}`);
       console.log(`   model:    ${r.model}`);
-      console.log(`   active:   ${r.activated ? 'yes (generator + evaluator + default)' : 'no (use --use to activate)'}`);
+      console.log(`   active:   ${r.activated ? 'yes (default — all roles inherit it)' : 'no (use --use to activate)'}`);
       console.log('');
       console.log(r.activated
         ? '   Try: liminal --prompt "a glsl aurora shader" --max-iterations 1 -o output/test'
-        : `   Activate with: liminal provider set-key ${providerKey} <KEY> --use`);
+        : `   Activate with: liminal provider set-key ${providerKey} ${keyRequired ? '<KEY> ' : ''}--use`);
       console.log('');
       process.exit(0);
     } catch (e) {

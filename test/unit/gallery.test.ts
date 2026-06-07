@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach, beforeAll, afterEach, afterAll } from
 
 import fs from 'fs/promises';
 import path from 'path';
-import { Gallery, type Iteration } from '../../src/gallery/Gallery.js';
+import { Gallery, parseVersionContent, type Iteration } from '../../src/gallery/Gallery.js';
 
 describe('Gallery', () => {
   const TEST_GALLERY_DIR = 'test-gallery-temp';
@@ -646,6 +646,50 @@ function draw() {
       expect(history).toHaveLength(1);
       expect(history[0].version).toBe(1);
       expect((history[0] as { code?: string }).code).toBe('legacy p5 code here');
+    });
+  });
+
+  describe('Gallery composition format', () => {
+    it('saveComposition saves composition payload; loadHistory returns composition iteration', async () => {
+      const gallery = new Gallery(TEST_GALLERY_DIR);
+      const html = '<!DOCTYPE html><html lang="en"><body><iframe class="sinter-layer"></iframe></body></html>';
+
+      await gallery.saveComposition('compose-project', 1, html, {
+        title: 'Neon Reef',
+        layers: ['shader', 'p5', 'tone'],
+      });
+
+      const history = await gallery.loadHistory('compose-project');
+      expect(history).toHaveLength(1);
+      expect(history[0].version).toBe(1);
+      const first = history[0] as { type?: string; code?: string; title?: string; layers?: string[] };
+      expect(first.type).toBe('composition');
+      // `code` carries the full standalone HTML so generic ('code' in iter) consumers work.
+      expect(first.code).toBe(html);
+      expect(first.title).toBe('Neon Reef');
+      expect(first.layers).toEqual(['shader', 'p5', 'tone']);
+    });
+
+    it('parseVersionContent round-trips a composition payload', () => {
+      const payload = JSON.stringify({
+        type: 'composition',
+        code: '<html lang="en"></html>',
+        title: 'Tidal',
+        layers: ['p5'],
+      });
+      const iter = parseVersionContent(payload, 2, '2026-06-07T00:00:00Z') as {
+        type?: string; code?: string; title?: string; layers?: string[]; version: number;
+      };
+      expect(iter.type).toBe('composition');
+      expect(iter.version).toBe(2);
+      expect(iter.code).toBe('<html lang="en"></html>');
+      expect(iter.title).toBe('Tidal');
+      expect(iter.layers).toEqual(['p5']);
+    });
+
+    it('saveComposition rejects empty html', async () => {
+      const gallery = new Gallery(TEST_GALLERY_DIR);
+      await expect(gallery.saveComposition('compose-empty', 1, '   ', {})).rejects.toThrow(/html/i);
     });
   });
 });

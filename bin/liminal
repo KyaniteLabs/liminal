@@ -33,8 +33,8 @@ const CLI_PROVIDER_DEFAULTS = {
   },
   minimax: {
     label: 'MiniMax',
-    baseUrl: 'https://api.minimax.io/anthropic',
-    model: 'MiniMax-M2.7',
+    baseUrl: 'https://api.minimax.io/anthropic', // international token-plan endpoint (China uses api.minimaxi.com)
+    model: 'MiniMax-M3',
     requiresKey: true,
     apiKeyEnv: 'MINIMAX_API_KEY',
   },
@@ -75,6 +75,38 @@ function resolveCliProvider(value) {
   return CLI_PROVIDER_DEFAULTS[normalized] ? normalized : undefined;
 }
 
+function liminalConfigPath() {
+  return path.join(process.env.HOME || process.env.USERPROFILE || '.', '.liminal', 'config.json');
+}
+
+// Write an API key (and provider block) into ~/.liminal/config.json, merging with
+// whatever is already there. With `activate`, also point the generator+evaluator
+// roles + defaultProvider at this provider so the next run uses it immediately.
+function setProviderKey(providerKey, apiKey, { model, activate } = {}) {
+  const defaults = CLI_PROVIDER_DEFAULTS[providerKey];
+  if (!defaults) throw new Error(`Unknown provider: ${providerKey} (one of: ${CLI_PROVIDER_NAMES.join(', ')})`);
+  const cfgPath = liminalConfigPath();
+  let config = {};
+  if (fs.existsSync(cfgPath)) {
+    try { config = JSON.parse(fs.readFileSync(cfgPath, 'utf-8')); }
+    catch (e) { throw new Error(`Existing config is not valid JSON (${cfgPath}): ${e.message}`); }
+  }
+  const block = {
+    baseUrl: defaults.baseUrl,
+    model: model || defaults.model,
+    apiKey,
+  };
+  config.providers = { ...(config.providers || {}), [providerKey]: block };
+  if (activate) {
+    config.defaultProvider = providerKey;
+    const roleBlock = { provider: providerKey, ...block };
+    config.roles = { ...(config.roles || {}), generator: { ...roleBlock }, evaluator: { ...roleBlock } };
+  }
+  fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
+  fs.writeFileSync(cfgPath, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });
+  return { cfgPath, model: block.model, baseUrl: block.baseUrl, activated: !!activate };
+}
+
 function printProviderHelp() {
   console.log('');
   console.log('🔌 Liminal Provider Setup');
@@ -83,6 +115,7 @@ function printProviderHelp() {
   console.log('  liminal provider help');
   console.log('  liminal provider list');
   console.log('  liminal provider status');
+  console.log('  liminal provider set-key <name> <API_KEY> [--model <id>] [--use]');
   console.log('  liminal --configure --provider <name>');
   console.log('');
   console.log('PROVIDERS:');
@@ -95,6 +128,7 @@ function printProviderHelp() {
   console.log('');
   console.log('EXAMPLES:');
   console.log('  liminal --configure --provider lmstudio');
+  console.log('  liminal provider set-key minimax sk-... --use   # MiniMax-M3, international endpoint, made active');
   console.log('  GLM_API_KEY=... liminal --provider glm "make a p5 sketch"');
   console.log('  liminal provider status');
   console.log('');
@@ -151,6 +185,8 @@ for (let i = 0; i < args.length; i++) {
     flags.model = args[++i];
   } else if (arg === '--configure') {
     flags.configure = true;
+  } else if (arg === '--use' || arg === '--activate') {
+    flags.use = true;
   } else if (arg === '--recent') {
     const nextArg = args[i + 1];
     if (nextArg && !nextArg.startsWith('-') && !isNaN(parseInt(nextArg))) {
@@ -373,9 +409,39 @@ if (cmd === 'provider') {
     printProviderStatus();
     process.exit(0);
   }
+  if (subCmd === 'set-key') {
+    // cmdArgs[0] is 'set-key'; --use and --model are already parsed into flags.
+    const providerKey = resolveCliProvider(cmdArgs[1]);
+    const apiKey = cmdArgs[2];
+    const model = flags.model;
+    const activate = !!flags.use;
+    if (!providerKey || !apiKey) {
+      console.error('Usage: liminal provider set-key <provider> <API_KEY> [--model <id>] [--use]');
+      console.error(`Providers: ${CLI_PROVIDER_NAMES.join(', ')}`);
+      console.error('Example: liminal provider set-key minimax sk-... --use   # MiniMax-M3, international endpoint, active');
+      process.exit(1);
+    }
+    try {
+      const r = setProviderKey(providerKey, apiKey, { model, activate });
+      console.log('');
+      console.log(`✅ Saved ${CLI_PROVIDER_DEFAULTS[providerKey].label} key to ${r.cfgPath}`);
+      console.log(`   endpoint: ${r.baseUrl}`);
+      console.log(`   model:    ${r.model}`);
+      console.log(`   active:   ${r.activated ? 'yes (generator + evaluator + default)' : 'no (use --use to activate)'}`);
+      console.log('');
+      console.log(r.activated
+        ? '   Try: liminal --prompt "a glsl aurora shader" --max-iterations 1 -o output/test'
+        : `   Activate with: liminal provider set-key ${providerKey} <KEY> --use`);
+      console.log('');
+      process.exit(0);
+    } catch (e) {
+      console.error(`❌ ${e.message}`);
+      process.exit(1);
+    }
+  }
 
   console.error(`Unknown provider subcommand: ${subCmd}`);
-  console.error('Usage: liminal provider <help|list|status>');
+  console.error('Usage: liminal provider <help|list|status|set-key>');
   process.exit(1);
 }
 
@@ -940,6 +1006,12 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
   console.log('Generating:', prompt);
   console.log('');
 
+  // Route generation + validation to the domain the prompt asks for (else the
+  // loop defaults to p5 and a "GLSL shader" prompt fails p5 validation).
+  const { detectPromptDomain } = await import('../dist/core/detectPromptDomain.js');
+  const detectedDomain = await detectPromptDomain(prompt);
+  if (detectedDomain) console.log('🎯 Detected domain: ' + detectedDomain + '\n');
+
   const aestheticConfig = {
     ...(loadAestheticConfig(flags.aestheticConfig) || {}),
     ...(flags.aesthetic ? { preset: flags.aesthetic } : {}),
@@ -949,6 +1021,7 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
     maxIterations: maxIterations,
     output: outDir,
     project: 'cli-project',
+    collabDomain: detectedDomain,
     useSwarm: flags.useSwarm,
     swarmMode: flags.swarmMode,
     swarmConfig: flags.swarmRounds ? { maxRounds: flags.swarmRounds } : undefined,

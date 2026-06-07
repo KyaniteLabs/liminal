@@ -151,6 +151,8 @@ export async function run(prompt: string, options: {
   swarm?: import('./types/options/SwarmOptions.js').SwarmOptions;
   /** Enable intuition-based quality scoring dimension */
   useIntuition?: boolean;
+  /** Creative domain to route generation + validation to (else defaults to p5). */
+  collabDomain?: import('./types/domains.js').Domain;
 } = {}): Promise<{
   code: string;
   iterations: number;
@@ -227,6 +229,7 @@ export async function run(prompt: string, options: {
       swarmMode: options.swarmMode as import('./swarm/types.js').SwarmMode,
       swarmConfig: options.swarmConfig as Partial<import('./swarm/types.js').SwarmConfig>,
       useIntuition: options.useIntuition,
+      collabDomain: options.collabDomain,
     });
 
     // Initialize Exporter

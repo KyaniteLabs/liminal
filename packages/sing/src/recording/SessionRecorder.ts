@@ -1,4 +1,4 @@
-import type { VoiceFeatureFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
+import type { VoiceFeatureFrame } from '@sinter/audio-core/VoiceFeatureStream.js';
 
 export interface SingSessionExport {
   audioBlob: Blob | null;

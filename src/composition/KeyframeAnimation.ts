@@ -218,7 +218,7 @@ export class KeyframeAnimation {
    */
   generateCSS(animation: Animation): string {
     const { id, duration, loop, keyframes } = animation;
-    const animationName = `liminal-${id}`;
+    const animationName = `sinter-${id}`;
 
     // Generate keyframes
     let keyframesCSS = `@keyframes ${animationName} {\n`;
@@ -283,7 +283,7 @@ export class KeyframeAnimation {
       easing: k.easing || 'linear',
     }));
 
-    const js = `// Liminal Animation: ${id}
+    const js = `// Sinter Animation: ${id}
 // Target layer: ${layerId}
 // Duration: ${duration}ms
 

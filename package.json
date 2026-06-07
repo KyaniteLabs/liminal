@@ -46,7 +46,7 @@
     "lint": "eslint src/ --cache --cache-location .eslintcache",
     "check:examples": "node scripts/ci/smoke-composition-examples.mjs",
     "check:doc-links": "node scripts/ci/check-doc-links.mjs",
-    "check:liminal-contracts": "node scripts/ci/check-liminal-shared-artifacts.mjs",
+    "check:sinter-contracts": "node scripts/ci/check-sinter-shared-artifacts.mjs",
     "test:quality": "node scripts/testing/test-quality-check.mjs --baseline scripts/testing/test-quality-baseline.txt",
     "test:quality:strict": "node scripts/testing/test-quality-check.mjs --strict --baseline scripts/testing/test-quality-baseline.txt",
     "final-qa:test-quality": "pnpm test:quality:strict",
@@ -123,7 +123,7 @@
     "@babel/parser": "^7.29.2",
     "@babel/traverse": "^7.29.0",
     "@babel/types": "^7.29.0",
-    "@liminal/audio-core": "workspace:*",
+    "@sinter/audio-core": "workspace:*",
     "@types/babel__traverse": "^7.28.0",
     "@xenova/transformers": "^2.17.2",
     "archiver": "^7.0.1",
@@ -171,9 +171,9 @@
     "ws": "8.20.1"
   },
   "bin": {
-    "sinter": "bin/liminal",
-    "liminal": "bin/liminal",
-    "lim": "bin/liminal"
+    "sinter": "bin/sinter",
+    "liminal": "bin/sinter",
+    "lim": "bin/sinter"
   },
   "optionalDependencies": {
     "@hyperframes/producer": "^0.4.3",

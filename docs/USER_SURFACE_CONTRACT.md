@@ -1,6 +1,6 @@
-# Liminal User Surface Contract — Chat First, Preview First
+# Sinter User Surface Contract — Chat First, Preview First
 
-Liminal has one generation engine with two user-facing surfaces:
+Sinter has one generation engine with two user-facing surfaces:
 
 - **Studio GUI** — the artist-facing workbench: clean conversation, same-screen preview, quick revision, optional details.
 - **Operator TUI** — the keyboard-first cockpit for deeper diagnostics, review actions, stop controls, and proof/debug work.

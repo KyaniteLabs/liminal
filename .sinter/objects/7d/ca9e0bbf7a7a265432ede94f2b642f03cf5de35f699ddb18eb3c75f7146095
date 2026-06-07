@@ -1,0 +1,16 @@
+function setup() {
+  createCanvas(800, 600);
+  background(20);
+}
+
+function draw() {
+  background(20, 10);
+  fill(100, 150, 255);
+  noStroke();
+  ellipse(width / 2, height / 2, 50 + sin(frameCount * 0.05) * 20);
+  for (let i = 0; i < 5; i++) {
+    let x = width / 2 + cos(frameCount * 0.02 + i) * 100;
+    let y = height / 2 + sin(frameCount * 0.02 + i) * 100;
+    ellipse(x, y, 20);
+  }
+}

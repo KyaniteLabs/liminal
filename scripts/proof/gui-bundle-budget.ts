@@ -9,7 +9,7 @@ const outPath = path.join(outDir, 'gui-bundle-budget.json');
 const maxChunkBytes = Number(process.env.LIMINAL_GUI_MAX_JS_CHUNK_BYTES || 500 * 1024);
 
 if (!fs.existsSync(assetsDir)) {
-  throw new Error('GUI dist assets not found. Run `pnpm --filter liminal-studio-gui build` first.');
+  throw new Error('GUI dist assets not found. Run `pnpm --filter sinter-studio-gui build` first.');
 }
 
 const jsAssets = fs.readdirSync(assetsDir)

@@ -14,7 +14,7 @@ describe('PostGenerationCognitiveWriter', () => {
   });
 
   async function tempRoot(): Promise<string> {
-    const dir = await mkdtemp(join(tmpdir(), 'liminal-cognition-'));
+    const dir = await mkdtemp(join(tmpdir(), 'sinter-cognition-'));
     tempDirs.push(dir);
     return dir;
   }

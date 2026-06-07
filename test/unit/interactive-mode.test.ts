@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 /**
- * Interactive mode tests - TUI for Liminal
+ * Interactive mode tests - TUI for Sinter
  */
 import { InteractiveMode } from '../../src/tui/InteractiveMode.js';
 import { PromptHistory } from '../../src/config/PromptHistory.js';

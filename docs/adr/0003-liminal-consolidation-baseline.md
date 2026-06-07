@@ -1,4 +1,4 @@
-# ADR 0003: Liminal Consolidation Baseline
+# ADR 0003: Sinter Consolidation Baseline
 
 Date: 2026-05-25
 Status: Historical ADR; superseded for current routing by the 2026-05-26 KyaniteLabs public-source-of-truth consolidation.
@@ -7,7 +7,7 @@ Status: Historical ADR; superseded for current routing by the 2026-05-26 Kyanite
 
 ## Context
 
-Liminal currently has multiple plausible source surfaces:
+Sinter currently has multiple plausible source surfaces:
 
 - `KyaniteLabs/liminal` main at `94ceb80a58521e4a1d033ffa8a801a36aa0d4808`.
 - `simongonzalezdc/liminal` main at `129bfb0699ecfc90941e4317edf6b939d1ea7c2b`.
@@ -26,7 +26,7 @@ Classify the other surfaces as follows:
 - `simongonzalezdc/liminal` main `129bfb06`: import source, not baseline.
 - PR #552 branch `12167603`: active PR lane that must be conflict-reviewed against the Kyanite baseline.
 - Mac mini `912e2fde`: stale duplicate and cleanup candidate only after explicit approval.
-- `KyaniteLabs/liminal-sites` `0077659a`: sibling repo baseline, not core Liminal baseline.
+- `KyaniteLabs/liminal-sites` `0077659a`: sibling repo baseline, not core Sinter baseline.
 - Dirty Mac mini `liminal-sites/.github/workflows/blacksmith-probe.yml`: preserve as a sibling-repo patch before cleanup.
 
 ## Drivers

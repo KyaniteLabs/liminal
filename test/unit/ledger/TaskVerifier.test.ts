@@ -8,7 +8,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 import { TaskLedger } from '../../../src/ledger/TaskLedger.js';
 import type { TaskManifest, TaskAttempt } from '../../../src/ledger/types.js';
 
@@ -36,13 +36,13 @@ import { TaskVerifier } from '../../../src/ledger/TaskVerifier.js';
 
 describe('TaskVerifier', () => {
   let tempDir: string;
-  let liminalFs: LiminalFS;
+  let liminalFs: SinterFS;
   let ledger: TaskLedger;
   let verifier: TaskVerifier;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'liminal-verifier-test-'));
-    liminalFs = LiminalFS.open(tempDir);
+    tempDir = mkdtempSync(join(tmpdir(), 'sinter-verifier-test-'));
+    liminalFs = SinterFS.open(tempDir);
     ledger = new TaskLedger(liminalFs);
     verifier = new TaskVerifier(ledger);
     mockScore.mockReset();

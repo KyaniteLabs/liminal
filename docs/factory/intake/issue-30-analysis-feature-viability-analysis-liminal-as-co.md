@@ -1,4 +1,4 @@
-# Factory intake for issue #30: [Analysis] Feature Viability Analysis — Liminal as Commercial Product
+# Factory intake for issue #30: [Analysis] Feature Viability Analysis — Sinter as Commercial Product
 
 Repository: `KyaniteLabs/liminal`
 Category: `llm_fix`
@@ -8,7 +8,7 @@ Source issue: `#30`
 
 ## Summary
 
-Comprehensive viability analysis for Liminal as a **proprietary commercial product**. Full document: [`docs/feature-viability-analysis.md`](../../feature-viability-analysis.md)
+Comprehensive viability analysis for Sinter as a **proprietary commercial product**. Full document: [`docs/feature-viability-analysis.md`](../../feature-viability-analysis.md)
 
 **Updated 2026-04-21:** Analysis refreshed to reflect Phases 11-16 completion (StudioAgent, LiminalCortex, Emergence, Taste Learning, Autonomous Gardener). PR #322.
 
@@ -28,7 +28,7 @@ The **Autonomous Gardener** (TasteModelTrainer + DreamPlanner + EmergenceCritic 
 ### Critical Legal Actions Required
 1. Re-license from MIT to proprietary (BSL or custom EULA)
 2. Audit AGPL dependencies (hydra-synth, strudel)
-3. Trademark search for "Liminal"
+3. Trademark search for "Sinter"
 4. Create THIRD_PARTY_NOTICES file
 
 ### Recommended Phases

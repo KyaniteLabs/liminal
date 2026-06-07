@@ -16,8 +16,8 @@
 | MiniMax API Key | MINIMAX_API_KEY | 5 files (MultiProviderConfig.ts, ConfigLoader.ts) | MEDIUM |
 | GLM API Key | GLM_API_KEY | 3 files (MultiProviderConfig.ts) | MEDIUM |
 | OpenRouter Key | OPENROUTER_API_KEY | 3 files (MultiProviderConfig.ts) | MEDIUM |
-| Liminal LLM Key | LIMINAL_LLM_API_KEY | 6 files | LOW (prefixed) |
-| Liminal Harness Key | LIMINAL_HARNESS_API_KEY | 1 file | LOW (prefixed) |
+| Sinter LLM Key | LIMINAL_LLM_API_KEY | 6 files | LOW (prefixed) |
+| Sinter Harness Key | LIMINAL_HARNESS_API_KEY | 1 file | LOW (prefixed) |
 
 **Issue:** Mixed naming conventions - some secrets use `LIMINAL_` prefix, others use raw provider names
 **Risk:** Environment variable collision with other tools using same env vars (e.g., another CLI tool using OPENAI_API_KEY)
@@ -119,7 +119,7 @@ getConfig(): LLMConfig {
 
 ### Scenario 2: Environment Variable Collision
 **Risk:** MEDIUM  
-**Description:** Another tool sets OPENAI_API_KEY, Liminal unintentionally uses it  
+**Description:** Another tool sets OPENAI_API_KEY, Sinter unintentionally uses it  
 **Mitigation:** Migrate to LIMINAL_OPENAI_API_KEY with backward compatibility
 
 ### Scenario 3: Memory Dump Exposure
@@ -279,7 +279,7 @@ Add SECURITY.md section:
 
 ### Key Rotation
 1. Set new key in environment
-2. Restart Liminal
+2. Restart Sinter
 3. Old key can be revoked after restart
 ```
 

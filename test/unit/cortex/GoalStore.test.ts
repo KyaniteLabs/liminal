@@ -17,7 +17,7 @@ vi.mock('node:fs', () => ({
 describe('GoalStore', () => {
   let store: GoalStore;
   let stored: Map<string, Record<string, unknown>>;
-  const projectRoot = '/tmp/test-liminal-goalstore';
+  const projectRoot = '/tmp/test-sinter-goalstore';
 
   const mockFs = {
     getProjectRoot: () => projectRoot,
@@ -55,7 +55,7 @@ describe('GoalStore', () => {
   });
 
   function makeStore(): GoalStore {
-    return new GoalStore(mockFs as unknown as import('../../../src/fs/LiminalFS.js').LiminalFS);
+    return new GoalStore(mockFs as unknown as import('../../../src/fs/SinterFS.js').SinterFS);
   }
 
   function getStoredGoal(id: string): CortexGoal | null {

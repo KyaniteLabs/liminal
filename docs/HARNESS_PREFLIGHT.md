@@ -8,7 +8,7 @@
 
 ### 1. Build Status
 ```bash
-cd /Users/simongonzalezdecruz/workspaces/liminal
+cd /Users/simongonzalezdecruz/workspaces/sinter
 npm run build
 ```
 **Expected:** No errors, clean exit
@@ -135,7 +135,7 @@ npm run build
 **Scenario 3: TUI crashes**
 ```bash
 # Restart
-cd /Users/simongonzalezdecruz/workspaces/liminal
+cd /Users/simongonzalezdecruz/workspaces/sinter
 npm run tui
 ```
 Harness state is preserved via HarnessMemory.

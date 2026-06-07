@@ -17,7 +17,7 @@ describe('EventStore', () => {
   let store: EventStore;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'liminal-eventstore-test-'));
+    tempDir = mkdtempSync(join(tmpdir(), 'sinter-eventstore-test-'));
     store = new EventStore({ projectRoot: tempDir });
     store.init();
   });

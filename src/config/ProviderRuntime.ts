@@ -331,7 +331,7 @@ export function selectRuntimeApiKey(args: {
   currentApiKey?: string;
   genericFallbackKeys?: string[];
   /**
-   * Prefer generic Liminal keys over provider-specific keys for user-facing
+   * Prefer generic Sinter keys over provider-specific keys for user-facing
    * default config. Endpoint-specific callers should keep the default false.
    */
   genericFirst?: boolean;

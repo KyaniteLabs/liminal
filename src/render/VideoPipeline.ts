@@ -30,7 +30,7 @@ export class VideoPipeline {
         const isLast = i === steps.length - 1;
         const stepOutputPath = isLast
           ? outputPath
-          : path.join(os.tmpdir(), `liminal-pipeline-${Date.now()}-${i}.mp4`);
+          : path.join(os.tmpdir(), `sinter-pipeline-${Date.now()}-${i}.mp4`);
 
         if (!isLast) {
           tempFiles.push(stepOutputPath);

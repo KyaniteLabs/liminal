@@ -1,5 +1,5 @@
 /**
- * Creative coding domains supported by Liminal
+ * Creative coding domains supported by Sinter
  * Use these instead of magic strings
  */
 export enum Domain {

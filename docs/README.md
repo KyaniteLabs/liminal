@@ -1,4 +1,4 @@
-# Liminal Documentation
+# Sinter Documentation
 
 ---
 

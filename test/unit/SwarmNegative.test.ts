@@ -222,7 +222,7 @@ describe('SafetyGuardrails negative tests', () => {
   });
 
   it('should handle stop file that exists', () => {
-    const stopFile = path.join(os.tmpdir(), `liminal-stop-test-${Date.now()}`);
+    const stopFile = path.join(os.tmpdir(), `sinter-stop-test-${Date.now()}`);
     try {
       fs.writeFileSync(stopFile, '');
       const guard = new SafetyGuardrails({ stopFilePath: stopFile });

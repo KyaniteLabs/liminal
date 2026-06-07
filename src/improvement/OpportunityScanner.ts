@@ -152,7 +152,7 @@ export function scanGreenSystemOpportunities(evidence: ImprovementOpportunityEvi
     category: 'integration cleanup',
     evidence: evidence.duplicatedLaunchPaths ?? [],
     measurableTarget: 'One documented GUI command starts backend plus workbench, with Bubble Tea kept as operator cockpit',
-    expectedVerification: ['node bin/liminal --help', 'pnpm test -- studio-improve-cli-contract'],
+    expectedVerification: ['node bin/sinter --help', 'pnpm test -- studio-improve-cli-contract'],
     impact: 5,
     confidence: 5,
     effort: 2,
@@ -392,7 +392,7 @@ export function collectRepositoryOpportunityEvidence(repoRoot = process.cwd()): 
 }
 
 export function formatOpportunityReport(report: ImprovementOpportunityReport): string {
-  const lines = [`Liminal self-healing ${report.runType} report`, report.summary, '', 'Proposals:'];
+  const lines = [`Sinter self-healing ${report.runType} report`, report.summary, '', 'Proposals:'];
   if (report.proposals.length === 0) {
     lines.push('  none');
   } else {

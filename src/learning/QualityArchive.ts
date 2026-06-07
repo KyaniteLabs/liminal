@@ -90,7 +90,7 @@ export class QualityArchive {
   static readonly DEFAULT_MAX_EXAMPLES = 20;
 
   /** Default archive path */
-  static readonly DEFAULT_PATH = `${process.env.HOME}/.liminal/archive/quality_archive.json`;
+  static readonly DEFAULT_PATH = `${process.env.HOME}/.sinter/archive/quality_archive.json`;
 
   /**
    * Create a new QualityArchive instance.

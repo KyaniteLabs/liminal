@@ -1,7 +1,7 @@
 /**
  * ProjectSerializer - Import/Export v2.0
  *
- * Handles serialization and deserialization of Liminal projects
+ * Handles serialization and deserialization of Sinter projects
  * with support for:
  * - v2.0 format with groups, animations, and masks
  * - Backward compatibility with v1.0
@@ -12,8 +12,8 @@
 import type { CompositionEngine } from './CompositionEngine.js';
 import { Logger } from '../utils/Logger.js';
 import {
-  LiminalProject,
-  LiminalProjectV1,
+  SinterProject,
+  SinterProjectV1,
   Composition,
   Animation,
   LayerMask,
@@ -73,18 +73,18 @@ export interface ValidationResult {
 }
 
 /**
- * ProjectSerializer - Handles import/export of Liminal projects
+ * ProjectSerializer - Handles import/export of Sinter projects
  */
 export class ProjectSerializer {
   private supportedVersions = ['1.0', '2.0'];
 
   /**
-   * Export a composition engine's state to Liminal project format.
+   * Export a composition engine's state to Sinter project format.
    */
   exportProject(
     engine: CompositionEngine,
     options?: ExportOptions
-  ): LiminalProject {
+  ): SinterProject {
     const layers = engine.getLayers();
     const settings = engine.getSettings();
 
@@ -100,7 +100,7 @@ export class ProjectSerializer {
       },
     };
 
-    const project: LiminalProject = {
+    const project: SinterProject = {
       version: '2.0',
       composition,
       metadata: {
@@ -130,12 +130,12 @@ export class ProjectSerializer {
   }
 
   /**
-   * Import a Liminal project into a composition engine.
+   * Import a Sinter project into a composition engine.
    * Returns the imported animations, masks, and assets.
    */
   // eslint-disable-next-line @typescript-eslint/require-await
   async importProject(
-    project: LiminalProject | LiminalProjectV1,
+    project: SinterProject | SinterProjectV1,
     engine: CompositionEngine
   ): Promise<ImportResult> {
     // Validate project
@@ -145,11 +145,11 @@ export class ProjectSerializer {
     }
 
     // Migrate v1.0 to v2.0 if needed
-    let v2Project: LiminalProject;
+    let v2Project: SinterProject;
     if (project.version === '1.0') {
-      v2Project = this.migrateV1ToV2(project as LiminalProjectV1);
+      v2Project = this.migrateV1ToV2(project as SinterProjectV1);
     } else {
-      v2Project = project as LiminalProject;
+      v2Project = project as SinterProject;
     }
 
     // Clear existing state
@@ -194,7 +194,7 @@ export class ProjectSerializer {
    * Export project to ZIP format.
    * Returns a Blob containing the ZIP archive.
    */
-  async exportToZip(project: LiminalProject): Promise<Blob> {
+  async exportToZip(project: SinterProject): Promise<Blob> {
     // For browser environment, use JSZip if available
     if (typeof window !== 'undefined') {
       try {
@@ -235,7 +235,7 @@ export class ProjectSerializer {
   /**
    * Import project from ZIP format.
    */
-  async importFromZip(zip: Blob): Promise<LiminalProject> {
+  async importFromZip(zip: Blob): Promise<SinterProject> {
     // For browser environment, use JSZip if available
     if (typeof window !== 'undefined') {
       try {
@@ -255,7 +255,7 @@ export class ProjectSerializer {
         }
 
         const projectJson = await projectFile.async('string');
-        const project = JSON.parse(projectJson) as LiminalProject;
+        const project = JSON.parse(projectJson) as SinterProject;
 
         // Load embedded assets
         if (project.assets) {
@@ -280,13 +280,13 @@ export class ProjectSerializer {
 
     // Fallback: try to parse as JSON directly
     const text = await zip.text();
-    return JSON.parse(text) as LiminalProject;
+    return JSON.parse(text) as SinterProject;
   }
 
   /**
    * Import project from URL.
    */
-  async importFromURL(url: string): Promise<LiminalProject> {
+  async importFromURL(url: string): Promise<SinterProject> {
     // Validate URL to prevent SSRF attacks
     await validateUrl(url, {
       allowedHosts: getAllowedHostsFromEnv(),
@@ -299,7 +299,7 @@ export class ProjectSerializer {
       throw new Error(`Failed to fetch project: ${response.status} ${response.statusText}`);
     }
 
-    const project = (await response.json()) as LiminalProject;
+    const project = (await response.json()) as SinterProject;
 
     // Validate imported project
     const validation = this.validateProject(project);
@@ -313,7 +313,7 @@ export class ProjectSerializer {
   /**
    * Migrate a v1.0 project to v2.0 format.
    */
-  migrateV1ToV2(project: LiminalProjectV1): LiminalProject {
+  migrateV1ToV2(project: SinterProjectV1): SinterProject {
     return {
       version: '2.0',
       composition: project.composition,
@@ -425,7 +425,7 @@ export class ProjectSerializer {
   /**
    * Create a fallback ZIP-like blob for non-browser environments.
    */
-  private createFallbackZip(project: LiminalProject): Blob {
+  private createFallbackZip(project: SinterProject): Blob {
     // In Node.js, return JSON as a blob
     // The archiver package could be used for real ZIP support
     const json = JSON.stringify(project, null, 2);

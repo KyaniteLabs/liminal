@@ -23,7 +23,7 @@ run_gen() {
   echo "Mode: $mode"
   echo "========================================"
   
-  node bin/liminal generate \
+  node bin/sinter generate \
     -p "$prompt" \
     --mode=$mode \
     --output "$OUTPUT_DIR/$name" \

@@ -45,7 +45,7 @@ export interface UserConfig {
   galleryPath?: string;
 }
 
-/** Project config shape (config/liminal.json) */
+/** Project config shape (config/sinter.json) */
 export interface ProjectConfig {
   name?: string;
   version?: string;
@@ -229,36 +229,44 @@ export interface MultiModelConfig {
   };
 }
 
-const LIMINAL_CONFIG_DIR = '.liminal';
+const LIMINAL_CONFIG_DIR = '.sinter';
 const DEFAULT_CONFIG_PATH = path.join(os.homedir(), LIMINAL_CONFIG_DIR, 'config.json');
 
-const PROJECT_CONFIG_FILENAME = 'liminal.json';
+const PROJECT_CONFIG_FILENAME = 'sinter.json';
+/** Legacy project-config filenames tried in order when sinter.json is absent. */
+const LEGACY_PROJECT_CONFIG_FILENAMES = ['liminal.json', 'atelier.json'] as const;
 
 /**
- * Migrate config from legacy ~/.atelier/ to ~/.liminal/ if it exists.
- * Runs once on first load — does not delete the old directory.
+ * Migrate a legacy config home (~/.liminal, then ~/.atelier) to ~/.sinter once.
+ * Moves the WHOLE directory (config, keys, memory, gallery, …) atomically when
+ * possible so nothing is lost across the rebrand. Runs only when ~/.sinter does
+ * not yet exist; never deletes data on failure.
  */
 async function migrateLegacyConfig(): Promise<void> {
-  const legacyPath = path.join(os.homedir(), '.atelier', 'config.json');
-  const newPath = DEFAULT_CONFIG_PATH;
+  const home = os.homedir();
+  const newDir = path.join(home, LIMINAL_CONFIG_DIR); // '.sinter'
 
   try {
-    // Check if legacy config exists without throwing
-    try {
-      await fs.access(legacyPath);
-    } catch {
-      // No legacy config exists, skip migration silently
-      return;
-    }
+    // New home already exists → nothing to migrate.
+    try { await fs.access(newDir); return; } catch { /* not yet created */ }
 
-    // Legacy config exists — check if new config already exists
-    try {
-      await fs.access(newPath);
-      // New config already exists, skip migration
-    } catch (accessError) {
-      // New config doesn't exist — copy legacy
-      await fs.mkdir(path.dirname(newPath), { recursive: true });
-      await fs.copyFile(legacyPath, newPath);
+    for (const legacyName of ['.liminal', '.atelier']) {
+      const legacyDir = path.join(home, legacyName);
+      try { await fs.access(legacyDir); } catch { continue; } // legacy absent → try next
+
+      try {
+        // Atomic move preserves config + keys + memory + gallery in one step.
+        await fs.rename(legacyDir, newDir);
+        Logger.info('ConfigLoader', `Migrated config home ~/${legacyName} → ~/${LIMINAL_CONFIG_DIR}`);
+      } catch {
+        // Cross-device or in-use: fall back to copying just config.json.
+        await fs.mkdir(newDir, { recursive: true });
+        try {
+          await fs.copyFile(path.join(legacyDir, 'config.json'), path.join(newDir, 'config.json'));
+          Logger.info('ConfigLoader', `Copied config.json from ~/${legacyName} → ~/${LIMINAL_CONFIG_DIR}`);
+        } catch { /* no config.json to copy */ }
+      }
+      return; // migrated from the first legacy home found
     }
   } catch (err) {
     Logger.warn('ConfigLoader', 'Config migration failed:', err instanceof Error ? err.message : err);
@@ -266,9 +274,9 @@ async function migrateLegacyConfig(): Promise<void> {
 }
 
 /**
- * Load project config from config/liminal.json in the given directory (or path to file).
+ * Load project config from config/sinter.json in the given directory (or path to file).
  * Falls back to config/atelier.json for backward compatibility.
- * @param configDirOrPath - Directory containing config/liminal.json (e.g. cwd), or path to file
+ * @param configDirOrPath - Directory containing config/sinter.json (e.g. cwd), or path to file
  * @returns Result with Project config or PersistenceError
  */
 export async function loadProjectConfig(configDirOrPath?: string): Promise<Result<ProjectConfig, PersistenceError>> {
@@ -291,28 +299,33 @@ export async function loadProjectConfig(configDirOrPath?: string): Promise<Resul
     }
     return ok(parsed);
   } catch (readError) {
-    // Fallback: try legacy atelier.json filename
-    const legacyPath = projectConfigPath.replace(/liminal\.json$/, 'atelier.json');
-    try {
-      const content = await fs.readFile(legacyPath, 'utf-8');
-      const parsed: unknown = JSON.parse(content);
-      if (!isValidProjectConfig(parsed)) {
-        return reject(new PersistenceError('Invalid legacy project config structure', { retryable: false }));
+    // Fallback: try legacy project-config filenames (liminal.json, atelier.json) in order.
+    let lastError: unknown = readError;
+    for (const legacyName of LEGACY_PROJECT_CONFIG_FILENAMES) {
+      const legacyPath = projectConfigPath.replace(/[^/\\]+$/, legacyName);
+      if (legacyPath === projectConfigPath) continue;
+      try {
+        const content = await fs.readFile(legacyPath, 'utf-8');
+        const parsed: unknown = JSON.parse(content);
+        if (!isValidProjectConfig(parsed)) {
+          return reject(new PersistenceError('Invalid legacy project config structure', { retryable: false }));
+        }
+        return ok(parsed);
+      } catch (error) {
+        lastError = error;
       }
-      return ok(parsed);
-    } catch (error) {
-      Logger.warn('ConfigLoader', 'Failed to load legacy config:', error);
-      return reject(new PersistenceError('Failed to load project config', {
-        cause: error instanceof Error ? error : new Error(String(error)),
-        retryable: false,
-      }));
     }
+    Logger.warn('ConfigLoader', 'Failed to load legacy config:', lastError);
+    return reject(new PersistenceError('Failed to load project config', {
+      cause: lastError instanceof Error ? lastError : new Error(String(lastError)),
+      retryable: false,
+    }));
   }
 }
 
 /**
  * Load config from JSON file
- * @param configPath Path to config file (defaults to ~/.liminal/config.json)
+ * @param configPath Path to config file (defaults to ~/.sinter/config.json)
  * @returns Result with UserConfig or PersistenceError
  */
 export async function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Promise<Result<UserConfig, PersistenceError>> {
@@ -338,7 +351,7 @@ export async function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Prom
 /**
  * Save config to JSON file
  * @param config Config object to save
- * @param configPath Path to config file (defaults to ~/.liminal/config.json)
+ * @param configPath Path to config file (defaults to ~/.sinter/config.json)
  */
 export async function saveConfig(config: UserConfig, configPath: string = DEFAULT_CONFIG_PATH): Promise<void> {
   await fs.mkdir(path.dirname(configPath), { recursive: true });
@@ -348,7 +361,7 @@ export async function saveConfig(config: UserConfig, configPath: string = DEFAUL
 /**
  * Get effective configuration by merging project config (optional), file config, and env vars.
  * Env vars take precedence over file config; project config overrides user file for overlapping keys.
- * @param projectConfigPath - Optional directory or path to load config/liminal.json from
+ * @param projectConfigPath - Optional directory or path to load config/sinter.json from
  */
 export async function getEffectiveConfig(configPath?: string, projectConfigPath?: string): Promise<EffectiveConfig> {
   const fileConfigResult = configPath ? await loadConfig(configPath) : await loadConfig();

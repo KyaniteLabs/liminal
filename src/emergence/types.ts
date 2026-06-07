@@ -3,10 +3,10 @@
  *
  * Core interfaces for the quality-diversity archive, behavior descriptors,
  * lineage tracking, and emergence signals. These form the foundation for
- * Liminal's transition from "best candidate wins" to creative search.
+ * Sinter's transition from "best candidate wins" to creative search.
  */
 
-import type { LiminalObjectRef } from '../fs/types.js';
+import type { SinterObjectRef } from '../fs/types.js';
 
 // ── Behavior Descriptors ──
 
@@ -78,8 +78,8 @@ export interface ArchiveCell {
 /** An artifact entry stored in the archive. */
 export interface ArchiveEntry {
   id: string;
-  /** Ref to the actual artifact in LiminalFS */
-  artifactRef: LiminalObjectRef;
+  /** Ref to the actual artifact in SinterFS */
+  artifactRef: SinterObjectRef;
   /** Behavior descriptor vector */
   descriptor: BehaviorDescriptor;
   /** Lineage metadata */

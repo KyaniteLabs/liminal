@@ -77,7 +77,7 @@ export interface CollaborationEngineConfig {
 // ---------------------------------------------------------------------------
 
 /**
- * CollaborationEngine - THE collaboration system for Liminal.
+ * CollaborationEngine - THE collaboration system for Sinter.
  *
  * Consolidated to use only SwarmOrchestrator. All collaboration modes
  * now route through the swarm for consistency and maintainability.

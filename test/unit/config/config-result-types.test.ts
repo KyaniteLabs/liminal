@@ -60,7 +60,7 @@ describe('loadConfig()', () => {
     });
     mockReadFile.mockResolvedValue(configData);
 
-    const result = await loadConfig('/tmp/.liminal/config.json');
+    const result = await loadConfig('/tmp/.sinter/config.json');
 
     expect(result.isOk()).toBe(true);
     if (result.isOk()) {
@@ -73,7 +73,7 @@ describe('loadConfig()', () => {
   it('returns err(PersistenceError) when config file does not exist', async () => {
     mockReadFile.mockRejectedValue(new Error('ENOENT: no such file'));
 
-    const result = await loadConfig('/tmp/.liminal/nonexistent.json');
+    const result = await loadConfig('/tmp/.sinter/nonexistent.json');
 
     expect(result.isErr()).toBe(true);
     if (result.isErr()) {
@@ -86,7 +86,7 @@ describe('loadConfig()', () => {
   it('returns err(PersistenceError) when config file has invalid JSON', async () => {
     mockReadFile.mockResolvedValue('{ this is not valid json }');
 
-    const result = await loadConfig('/tmp/.liminal/bad.json');
+    const result = await loadConfig('/tmp/.sinter/bad.json');
 
     expect(result.isErr()).toBe(true);
     if (result.isErr()) {

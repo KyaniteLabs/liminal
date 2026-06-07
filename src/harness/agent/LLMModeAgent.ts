@@ -903,7 +903,7 @@ When the task is complete and build passes, respond with tool "complete".`;
   private async repairPlainTextToolCall(text: string): Promise<ToolCall | null> {
     if (text.trim().length === 0) return null;
     const response = await this.llmClient.complete({
-      systemPrompt: 'Convert the previous agent response into one valid Liminal tool-call JSON object. Return JSON only.',
+      systemPrompt: 'Convert the previous agent response into one valid Sinter tool-call JSON object. Return JSON only.',
       prompt: `Previous response:
 ${text.slice(0, 4000)}
 

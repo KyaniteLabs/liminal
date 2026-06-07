@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the integration of the TransparencyViewer into the Liminal TUI, providing real-time process visibility during deep collaboration runs.
+This document describes the integration of the TransparencyViewer into the Sinter TUI, providing real-time process visibility during deep collaboration runs.
 
 ## Files Created
 
@@ -125,7 +125,7 @@ viewer.addEvent({
 
 ## Usage
 
-1. Start the Liminal TUI
+1. Start the Sinter TUI
 2. Enter a prompt and press Enter
 3. During generation (with deep collab enabled), press `t` to toggle the Transparency panel
 4. View real-time process events grouped by phase

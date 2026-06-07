@@ -1,10 +1,10 @@
-import { LiminalError } from './base.js';
+import { SinterError } from './base.js';
 
 /**
  * Error for code/content generation failures.
  * Used when LLM generation or template rendering fails.
  */
-export class GenerationError extends LiminalError {
+export class GenerationError extends SinterError {
   public domain?: string;
   public cause?: Error;
 

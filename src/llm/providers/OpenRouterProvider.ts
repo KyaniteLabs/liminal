@@ -85,7 +85,7 @@ export class OpenRouterProvider extends BaseProvider {
     }
     // OpenRouter recommended headers
     headers['HTTP-Referer'] = 'https://liminal.art';
-    headers['X-Title'] = 'Liminal';
+    headers['X-Title'] = 'Sinter';
     return headers;
   }
 

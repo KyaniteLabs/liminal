@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ProjectSerializer } from '../../../src/composition/ProjectSerializer.js';
-import type { LiminalProject, LiminalProjectV1 } from '../../../src/composition/types.js';
+import type { SinterProject, SinterProjectV1 } from '../../../src/composition/types.js';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // vi.hoisted() — mandatory for all mock variables referenced in vi.mock()
@@ -55,7 +55,7 @@ function makeEngine(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function validV2Project(overrides: Partial<LiminalProject> = {}): LiminalProject {
+function validV2Project(overrides: Partial<SinterProject> = {}): SinterProject {
   return {
     version: '2.0',
     composition: {
@@ -72,7 +72,7 @@ function validV2Project(overrides: Partial<LiminalProject> = {}): LiminalProject
   };
 }
 
-function validV1Project(): LiminalProjectV1 {
+function validV1Project(): SinterProjectV1 {
   return {
     version: '1.0',
     composition: {

@@ -39,7 +39,7 @@ export class P5GeneratorLLM {
   /**
    * Resolve LLM config from getEffectiveConfig() if no explicit config was provided.
    * Called lazily on first generation to ensure providers like MiniMax (from
-   * ~/.liminal/config.json) are properly wired without requiring env vars.
+   * ~/.sinter/config.json) are properly wired without requiring env vars.
    */
   private async resolveConfigIfNeeded(): Promise<void> {
     if (!this._configNeedsResolution) return;

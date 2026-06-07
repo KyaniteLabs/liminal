@@ -3,21 +3,21 @@ import { mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Gallery } from '../../../src/gallery/Gallery.js';
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 import { GalleryFSAdapter } from '../../../src/fs/adapters/GalleryFSAdapter.js';
 
 describe('GalleryFSAdapter', () => {
   let galleryDir: string;
   let projectRoot: string;
   let gallery: Gallery;
-  let fs: LiminalFS;
+  let fs: SinterFS;
   let adapter: GalleryFSAdapter;
 
   beforeEach(() => {
-    galleryDir = mkdtempSync(join(tmpdir(), 'liminal-gallery-test-'));
-    projectRoot = mkdtempSync(join(tmpdir(), 'liminal-fs-test-'));
+    galleryDir = mkdtempSync(join(tmpdir(), 'sinter-gallery-test-'));
+    projectRoot = mkdtempSync(join(tmpdir(), 'sinter-fs-test-'));
     gallery = new Gallery(galleryDir);
-    fs = LiminalFS.open(projectRoot);
+    fs = SinterFS.open(projectRoot);
     adapter = new GalleryFSAdapter(gallery, fs);
   });
 
@@ -35,10 +35,10 @@ describe('GalleryFSAdapter', () => {
     expect(history[0].version).toBe(1);
   });
 
-  it('saveGalleryVersion — returns LiminalObjectRef with liminal://artifact/ URI', async () => {
+  it('saveGalleryVersion — returns SinterObjectRef with sinter://artifact/ URI', async () => {
     const ref = await adapter.saveGalleryVersion('my-project', 1, 'console.log(1)');
 
-    expect(ref.uri).toMatch(/^liminal:\/\/artifact\/[a-f0-9]{64}$/);
+    expect(ref.uri).toMatch(/^sinter:\/\/artifact\/[a-f0-9]{64}$/);
     expect(ref.kind).toBe('gallery-version');
     expect(ref.hash).toHaveLength(64);
   });

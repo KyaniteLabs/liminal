@@ -1,4 +1,4 @@
-# Liminal Dogfood QA - Comprehensive Audit Findings
+# Sinter Dogfood QA - Comprehensive Audit Findings
 
 ## Executive Summary
 **Date:** 2026-03-31  

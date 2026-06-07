@@ -8,11 +8,11 @@
 
 ## 1. Concept
 
-The Compost Mill is a living digestion system for creative material. Everything that is rejected, outdated, or no longer useful gets thrown into the heap instead of deleted. The Mill decomposes it into reusable creative nutrients — seeds for new ideas — and makes those seeds available to all Liminal functions.
+The Compost Mill is a living digestion system for creative material. Everything that is rejected, outdated, or no longer useful gets thrown into the heap instead of deleted. The Mill decomposes it into reusable creative nutrients — seeds for new ideas — and makes those seeds available to all Sinter functions.
 
 **Metaphor:** Dead projects are organic matter. The Mill composts them into fertile soil. New projects grow from that soil.
 
-**Key principle:** The Mill creates fertile ground, not finished products. It produces seeds. You (or any Liminal function) decide what to plant.
+**Key principle:** The Mill creates fertile ground, not finished products. It produces seeds. You (or any Sinter function) decide what to plant.
 
 ---
 
@@ -46,7 +46,7 @@ The Compost Mill is a living digestion system for creative material. Everything 
               ┌────────────────┼────────────────┐
               │                │                │
         ┌─────┴─────┐   ┌────┴────┐   ┌──────┴──────┐
-        │ seed bank │   │ digest/ │   │ Liminal     │
+        │ seed bank │   │ digest/ │   │ Sinter     │
         │ seeds/    │   │ weekly  │   │ functions   │
         │ seeds.json│   │ .md     │   │ read from   │
         │ latest/   │   │         │   │ seed bank   │
@@ -72,7 +72,7 @@ compost/
 ├── digest/                      # Weekly digests
 │   ├── 2026-03-20.md
 │   └── 2026-03-13.md
-├── seeds/                       # Seed bank — all Liminal systems read from here
+├── seeds/                       # Seed bank — all Sinter systems read from here
 │   ├── seeds.json               # Machine-readable seed index
 │   └── latest/                  # Most recent nuggets as individual files
 │       ├── seed-001-glaze-frequency.md
@@ -437,9 +437,9 @@ interface SoupState {
 
 ---
 
-## 7. Seed Bank — Feeding Liminal
+## 7. Seed Bank — Feeding Sinter
 
-The seed bank is the fertile soil. All Liminal functions can draw from it.
+The seed bank is the fertile soil. All Sinter functions can draw from it.
 
 ### 7.1 Seed Format
 
@@ -454,14 +454,14 @@ interface Seed {
     domains: string[];            // source domains
   };
   promotedAt: string;             // ISO timestamp
-  usedBy: string[];               // which Liminal functions have used this seed
+  usedBy: string[];               // which Sinter functions have used this seed
   useCount: number;
 }
 ```
 
 ### 7.2 Integration Points
 
-| Liminal Function | How it uses seeds |
+| Sinter Function | How it uses seeds |
 |---|---|
 | `SwarmOrchestrator` | Seeds available as swarm prompt seeds (via `FragmentArchive.randomPromptSeed()`) |
 | `GeneratorRegistry` | Seeds inform generator routing — a ceramics seed routes to P5, a music seed to Strudel |
@@ -481,7 +481,7 @@ interface Seed {
     ┌────┼────────────────────┐
     │    │                    │
     │    ▼                    ▼
-    │  Used by Liminal    Used by Soup
+    │  Used by Sinter    Used by Soup
     │  function           (re-evolved)
     │    │                    │
     │    ▼                    ▼
@@ -523,7 +523,7 @@ type LLMProvider = 'local' | 'cloud' | 'auto';
 The `CompostMill` constructor accepts an optional `fastLLM` parameter. When provided, high-volume stages use the fast LLM while creative stages use the primary LLM.
 
 ```typescript
-// bin/liminal — CLI wiring
+// bin/sinter — CLI wiring
 const llm = new LLMClient();                          // primary (hybrid: MiniMax → LM Studio fallback)
 const fastLLM = new LLMClient({ provider: 'lmstudio' }); // fast local for bulk work
 const mill = new CompostMill(llm, { soupEnabled: true, fastLLM });
@@ -626,7 +626,7 @@ The weekly digest is a markdown file in `compost/digest/`.
 3. **Soup Highlights** — best offspring, most productive collision, emergent patterns
 4. **Domain Heatmap** — which domain intersections produced the most value this week
 5. **Temporal Patterns** — what times/days produced the most creative material
-6. **Mature Seeds** — seeds that have been used by Liminal functions (with use count)
+6. **Mature Seeds** — seeds that have been used by Sinter functions (with use count)
 
 ### 10.2 Seed Entry Format
 
@@ -644,27 +644,27 @@ The weekly digest is a markdown file in `compost/digest/`.
 
 ```
 # Drop files into the heap
-liminal compost add <file-or-directory>...
+sinter compost add <file-or-directory>...
 
 # Trigger digestion manually
-liminal compost digest
+sinter compost digest
 
 # Start/stop the soup
-liminal compost soup start
-liminal compost soup stop
-liminal compost soup status
+sinter compost soup start
+sinter compost soup stop
+sinter compost soup status
 
 # Browse the seed bank
-liminal compost seeds list [--top N] [--domain <domain>]
-liminal compost seeds show <seed-id>
+sinter compost seeds list [--top N] [--domain <domain>]
+sinter compost seeds show <seed-id>
 
 # Configuration
-liminal compost config [--heap-size <MB>] [--schedule <daily|weekly>]
-liminal compost config --llm local --base-url http://100.66.225.85:1234/v1
-liminal compost config --llm cloud --provider anthropic
+sinter compost config [--heap-size <MB>] [--schedule <daily|weekly>]
+sinter compost config --llm local --base-url http://100.66.225.85:1234/v1
+sinter compost config --llm cloud --provider anthropic
 
 # Status
-liminal compost status
+sinter compost status
 ```
 
 ---
@@ -695,7 +695,7 @@ liminal compost status
 - Seed bank → FragmentArchive bridge
 - Seed bank → PromptLibrary bridge
 - Seed bank → SwarmOrchestrator seed injection
-- CLI commands (`liminal compost ...`)
+- CLI commands (`sinter compost ...`)
 - Config file support
 
 ### Phase 5: Polish

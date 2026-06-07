@@ -76,7 +76,7 @@ pnpm install
 pnpm build
 
 # 2. Configure a provider (or run sinter --configure)
-export LIMINAL_LLM_PROVIDER=glm
+export SINTER_LLM_PROVIDER=glm
 export GLM_API_KEY=your-key
 
 # 3. Generate from natural language
@@ -221,7 +221,7 @@ LLM_MODEL=MiniMax-M2.7
 LLM_BASE_URL=https://api.minimax.io/anthropic
 
 # Or swap models on the fly
-LIMINAL_LLM_MODEL='google/gemini-3.1-pro-preview' sinter bubbletea
+SINTER_LLM_MODEL='google/gemini-3.1-pro-preview' sinter bubbletea
 ```
 
 ---

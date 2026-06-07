@@ -197,7 +197,7 @@ export class TaskIntake {
       status: 'pending',
       files: {
         allowlist: [testFile],
-        denylist: ['src/core/RalphLoop.ts', 'src/fs/LiminalFS.ts', 'src/llm/LLMClient.ts'],
+        denylist: ['src/core/RalphLoop.ts', 'src/fs/SinterFS.ts', 'src/llm/LLMClient.ts'],
       },
       verifyCommand: `pnpm vitest run ${testFile} --no-coverage`,
       scoringCriteria: this.buildScoringCriteria(taskClass),
@@ -223,7 +223,7 @@ export class TaskIntake {
       status: 'pending',
       files: {
         allowlist: [anno.file, testFile],
-        denylist: ['src/core/RalphLoop.ts', 'src/fs/LiminalFS.ts'],
+        denylist: ['src/core/RalphLoop.ts', 'src/fs/SinterFS.ts'],
       },
       verifyCommand: `pnpm vitest run ${testFile} --no-coverage`,
       scoringCriteria: [

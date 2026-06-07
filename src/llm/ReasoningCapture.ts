@@ -135,7 +135,7 @@ export class ReasoningCapture {
   private sessionId: string;
 
   constructor(sessionId?: string) {
-    this.logDir = join(homedir(), '.liminal', 'reasoning');
+    this.logDir = join(homedir(), '.sinter', 'reasoning');
     this.sessionId = sessionId || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     this.ensureDir();
   }

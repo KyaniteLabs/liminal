@@ -40,7 +40,7 @@ describe('LocalCheckpointTool', () => {
 
   it('rejects when there are no changes', async () => {
     mockExecFile
-      .mockResolvedValueOnce({ stdout: 'local/liminal-runtime\n' }) // branch
+      .mockResolvedValueOnce({ stdout: 'local/sinter-runtime\n' }) // branch
       .mockResolvedValueOnce({ stdout: '' }); // git status --short
 
     const result = await tool.execute({ message: 'checkpoint' });
@@ -51,7 +51,7 @@ describe('LocalCheckpointTool', () => {
 
   it('creates a local checkpoint commit with metadata', async () => {
     mockExecFile
-      .mockResolvedValueOnce({ stdout: 'local/liminal-runtime\n' }) // branch
+      .mockResolvedValueOnce({ stdout: 'local/sinter-runtime\n' }) // branch
       .mockResolvedValueOnce({ stdout: ' M src/file.ts\n?? notes.md\n' }) // status
       .mockResolvedValueOnce({ stdout: '', stderr: '' }) // npm run build
       .mockResolvedValueOnce({ stdout: '', stderr: '' }) // git add -A
@@ -68,7 +68,7 @@ describe('LocalCheckpointTool', () => {
     expect(result.data).toMatchObject({
       commitHash: 'abcdef1234567890',
       shortHash: 'abcdef12',
-      branch: 'local/liminal-runtime',
+      branch: 'local/sinter-runtime',
       filesChanged: 2,
       buildVerified: true,
     });
@@ -78,7 +78,7 @@ describe('LocalCheckpointTool', () => {
 
   it('can skip build verification when verifyBuild is false', async () => {
     mockExecFile
-      .mockResolvedValueOnce({ stdout: 'local/liminal-runtime\n' }) // branch
+      .mockResolvedValueOnce({ stdout: 'local/sinter-runtime\n' }) // branch
       .mockResolvedValueOnce({ stdout: ' M src/file.ts\n' }) // status
       .mockResolvedValueOnce({ stdout: '', stderr: '' }) // git add -A
       .mockResolvedValueOnce({ stdout: '', stderr: '' }) // git commit

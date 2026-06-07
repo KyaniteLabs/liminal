@@ -76,7 +76,7 @@ let child;
 let bridgeLogStream;
 if (!bridgeOnly) {
   bridgeLogStream = routeBridgeConsoleToFile(bridgeLogFile);
-  const binary = path.join(ROOT, 'bubbletea', 'liminal-tui');
+  const binary = path.join(ROOT, 'bubbletea', 'sinter-tui');
   const env = {
     ...process.env,
     LIMINAL_ROOT: ROOT,

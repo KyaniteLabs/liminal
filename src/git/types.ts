@@ -3,7 +3,7 @@
  *
  * GitConfig controls the RalphLoop integration behavior.
  * CommitInfo, BranchInfo, DiffResult wrap simple-git responses
- * into Liminal-native shapes.
+ * into Sinter-native shapes.
  */
 
 /** Configuration for git integration in RalphLoop */
@@ -31,7 +31,7 @@ export const DEFAULT_GIT_CONFIG: GitConfig = {
   branchPerRun: true,
   branchPrefix: 'liminal/',
   autoPush: false,
-  commitMessageTemplate: 'liminal: {prompt} iteration {n} (score: {score})',
+  commitMessageTemplate: 'sinter: {prompt} iteration {n} (score: {score})',
   bridgeToCompost: true,
 };
 

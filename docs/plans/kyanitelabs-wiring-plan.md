@@ -1,4 +1,4 @@
-# Plan: Living Website — Liminal × kyanitelabs.tech × PostHog
+# Plan: Living Website — Sinter × kyanitelabs.tech × PostHog
 
 **Date:** 2026-05-25
 **Status:** Draft — awaiting review
@@ -7,7 +7,7 @@
 
 ## What This Actually Is
 
-kyanitelabs.tech is not a static site with a `/liminal/` section bolted on. It's a **living canvas**. Liminal is the engine that continuously generates, tests, and evolves the site's visual and interactive elements. PostHog is the **fitness function** — it measures what real visitors actually respond to.
+kyanitelabs.tech is not a static site with a `/liminal/` section bolted on. It's a **living canvas**. Sinter is the engine that continuously generates, tests, and evolves the site's visual and interactive elements. PostHog is the **fitness function** — it measures what real visitors actually respond to.
 
 The site is alive. It changes. It gets better on its own.
 
@@ -21,7 +21,7 @@ The site is alive. It changes. It gets better on its own.
                     │        (your VPS, nginx)         │
                     │                                  │
                     │  Pages contain <canvas>/<iframe> │
-                    │  slots powered by Liminal output │
+                    │  slots powered by Sinter output │
                     └──────────┬──────────────────────┘
                                │
                     ┌──────────▼──────────────────────┐
@@ -34,7 +34,7 @@ The site is alive. It changes. It gets better on its own.
                                │  experiment results
                                │  (variant A vs B)
                     ┌──────────▼──────────────────────┐
-                    │   Liminal Evolution Daemon       │
+                    │   Sinter Evolution Daemon       │
                     │   (cron / systemd on VPS)        │
                     │                                  │
                     │  1. Pull PostHog experiment data │
@@ -70,7 +70,7 @@ The site is alive. It changes. It gets better on its own.
 | **PostHog on kyanitelabs.tech** | ✅ Fully wired | `/static/posthog.js` on site |
 | **EvolutionIntegration** | ✅ Coordinates MAP-Elites + novelty + aesthetic | `src/core/EvolutionIntegration.ts` |
 
-**What's missing:** The bridge between Liminal's evolution system and the live site. The feedback loop that closes when real humans interact.
+**What's missing:** The bridge between Sinter's evolution system and the live site. The feedback loop that closes when real humans interact.
 
 ---
 
@@ -112,7 +112,7 @@ export class EngagementFitness {
 
 **File:** New `src/site/SlotManager.ts`
 
-The kyanitelabs.tech pages get named "slots" — regions where Liminal can inject creative output. Think of them like ad slots, but for art.
+The kyanitelabs.tech pages get named "slots" — regions where Sinter can inject creative output. Think of them like ad slots, but for art.
 
 ```typescript
 export interface SiteSlot {
@@ -212,7 +212,7 @@ Loop every N hours:
 
 ## Fitness Function — The Heart
 
-Current Liminal fitness:
+Current Sinter fitness:
 ```
 fitness = 0.4×novelty + 0.3×quality + 0.2×technical + 0.1×diversity
 ```
@@ -229,7 +229,7 @@ Where engagement = normalize(
 )
 ```
 
-**Key insight:** Engagement only has 25% weight. The site doesn't just chase clicks — it balances human response with Liminal's own aesthetic judgment. A visually stunning piece that gets moderate engagement beats a boring piece that gets high engagement.
+**Key insight:** Engagement only has 25% weight. The site doesn't just chase clicks — it balances human response with Sinter's own aesthetic judgment. A visually stunning piece that gets moderate engagement beats a boring piece that gets high engagement.
 
 ---
 
@@ -288,10 +288,10 @@ Step 2: FitnessCombiner 5th axis + EvolutionIntegration update
 
 Step 3: SlotManager + kyanitelabs.tech HTML changes
         → Add first slot (home hero) to the actual site
-        ~2-3h (mostly the site HTML, not Liminal code)
+        ~2-3h (mostly the site HTML, not Sinter code)
 
 Step 4: htmlWrapper PostHog injection + CSP update
-        → Every Liminal output gets analytics
+        → Every Sinter output gets analytics
         ~1-2h
 
 Step 5: LivingSiteDaemon
@@ -299,7 +299,7 @@ Step 5: LivingSiteDaemon
         ~3-4h
 
 Step 6: Deploy variant script + nginx config
-        → Serve Liminal assets from VPS
+        → Serve Sinter assets from VPS
         ~1h
 
 Step 7: First automated generation cycle

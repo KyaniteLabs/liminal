@@ -46,7 +46,7 @@ export class TaskRunner {
       artifactRef: null,
     };
 
-    // Store generated code as a LiminalFS artifact and link to attempt
+    // Store generated code as a SinterFS artifact and link to attempt
     if (result.code) {
       const artifactRef = this.ledger.getFs().writeArtifact({
         kind: 'task-attempt',

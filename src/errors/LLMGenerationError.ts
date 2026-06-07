@@ -1,11 +1,11 @@
-import { LiminalError } from './base.js';
+import { SinterError } from './base.js';
 
 /**
  * Error for LLM generation failures.
  * Includes context about the model, provider, upstream endpoint/status, and
  * request duration for debugging.
  */
-export class LLMGenerationError extends LiminalError {
+export class LLMGenerationError extends SinterError {
   public readonly model?: string;
   public readonly provider?: string;
   public readonly endpoint?: string;

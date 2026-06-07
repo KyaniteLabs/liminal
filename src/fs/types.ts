@@ -1,4 +1,4 @@
-export type LiminalObjectKind =
+export type SinterObjectKind =
   | 'generated-code'
   | 'gallery-version'
   | 'organism'
@@ -14,25 +14,25 @@ export type LiminalObjectKind =
   | 'archive-entry'
   | 'preference-event';
 
-export interface LiminalObjectRef {
+export interface SinterObjectRef {
   uri: string;
   hash?: string;
-  kind: LiminalObjectKind;
+  kind: SinterObjectKind;
   path?: string;
 }
 
 export interface WriteArtifactInput {
-  kind: LiminalObjectKind;
+  kind: SinterObjectKind;
   content: string | Buffer;
   filename: string;
   metadata?: Record<string, unknown>;
 }
 
-export interface LiminalRunRecord {
+export interface SinterRunRecord {
   runId: string;
   prompt: string;
   project?: string;
   status: 'started' | 'completed' | 'failed' | 'suspended';
-  artifacts?: LiminalObjectRef[];
+  artifacts?: SinterObjectRef[];
   metadata?: Record<string, unknown>;
 }

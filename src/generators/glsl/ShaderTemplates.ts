@@ -449,7 +449,7 @@ export function selectShaderTemplate(prompt: string): string {
     return [CRUSH_RGB_SHIFT, CRUSH_VHS_TRACKING, CRUSH_SCANLINE_JITTER, CRUSH_DATAMOSHING, CRUSH_SCREEN_TEARING][idx];
   }
 
-  // Original Liminal templates
+  // Original Sinter templates
   if (/\b(fractal|mandelbrot|julia)\b/.test(lower)) return FRACTAL_TEMPLATE;
   if (/\bvoronoi\b/.test(lower)) return VORONOI_TEMPLATE;
   if (/\b(plasma|lava|fire)\b/.test(lower)) return PLASMA_TEMPLATE;

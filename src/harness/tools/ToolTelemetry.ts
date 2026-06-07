@@ -74,7 +74,7 @@ export class ToolTelemetry {
   private lastTool?: string;
 
   constructor(sessionId?: string) {
-    this.logDir = join(homedir(), '.liminal', 'tool-telemetry');
+    this.logDir = join(homedir(), '.sinter', 'tool-telemetry');
     this.sessionId = sessionId || `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     this.ensureDir();
   }

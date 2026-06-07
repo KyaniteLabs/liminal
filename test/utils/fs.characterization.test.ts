@@ -11,7 +11,7 @@ describe('FS pattern characterization', () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = path.join(os.tmpdir(), `liminal-fs-test-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
+    tmpDir = path.join(os.tmpdir(), `sinter-fs-test-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`);
   });
 
   afterEach(() => {
@@ -95,7 +95,7 @@ describe('FS pattern characterization', () => {
   describe('Pattern: mkdirSync with relative paths', () => {
     it('creates directories relative to cwd', () => {
       const originalCwd = process.cwd();
-      const testDir = path.join(os.tmpdir(), `liminal-cwd-test-${Date.now()}`);
+      const testDir = path.join(os.tmpdir(), `sinter-cwd-test-${Date.now()}`);
       const relativeDir = 'test-temp-relative-dir';
       
       try {

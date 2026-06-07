@@ -13,7 +13,7 @@ Status: first-pass white-box review complete. This cluster found release-blockin
 - Severity: P1
 - Material: yes
 - Evidence: `README.md:59`, `README.md:88`, `src/market/MarketReadinessStatus.ts:33`, `src/market/MarketReadinessStatus.ts:70`, `src/market/LiveProviderSmokeReceipt.ts:40`
-- Failure mode: `liminal market status` can report READY from static checks plus a narrow p5 live-provider receipt while public copy implies broader product readiness.
+- Failure mode: `sinter market status` can report READY from static checks plus a narrow p5 live-provider receipt while public copy implies broader product readiness.
 - Customer impact: launch claim dishonesty and angry evaluators who trust the readiness language.
 - Recommended proof: map every readiness label to a required command and receipt with freshness, commit, provider, and artifact checks.
 
@@ -30,7 +30,7 @@ Status: first-pass white-box review complete. This cluster found release-blockin
 
 - Severity: P1
 - Material: yes
-- Evidence: `README.md:10`, `README.md:68`, `README.md:117`, `bin/liminal:194`, `bin/liminal:512`, `src/harness/MultiProviderConfig.ts:4`
+- Evidence: `README.md:10`, `README.md:68`, `README.md:117`, `bin/sinter:194`, `bin/sinter:512`, `src/harness/MultiProviderConfig.ts:4`
 - Failure mode: README promises broad provider freedom, but CLI configure/help and env diagnostics still teach old provider names and incomplete `--base-url` setup.
 - Customer impact: first-run setup fails or sends users down the wrong provider path.
 - Recommended proof: credential-free setup smoke across documented provider labels and env diagnostics.

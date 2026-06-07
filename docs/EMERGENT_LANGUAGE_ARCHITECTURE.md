@@ -2,7 +2,7 @@
 
 ## Overview
 
-Liminal's emergent language system gives the creative swarm its own compact vocabulary. Instead of sending verbose English instructions every round, personas communicate via structured notation tokens that are denser, cheaper, and evolve over time.
+Sinter's emergent language system gives the creative swarm its own compact vocabulary. Instead of sending verbose English instructions every round, personas communicate via structured notation tokens that are denser, cheaper, and evolve over time.
 
 **Three complementary systems:**
 - **CreativeNotation** (declarative) — fixed registry of ~30 tokens for input instructions

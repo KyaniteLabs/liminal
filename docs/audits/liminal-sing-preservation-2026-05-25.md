@@ -1,6 +1,6 @@
-# Liminal Sing Preservation Audit - 2026-05-25
+# Sinter Sing Preservation Audit - 2026-05-25
 
-> Historical note (2026-05-26): This audit explains how Instrument/Sing work was rescued into the current KyaniteLabs Liminal line. The personal and Mac mini branch names below are source evidence, not current remotes to use.
+> Historical note (2026-05-26): This audit explains how Instrument/Sing work was rescued into the current KyaniteLabs Sinter line. The personal and Mac mini branch names below are source evidence, not current remotes to use.
 
 ## Purpose
 

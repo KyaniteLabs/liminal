@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, it, expect } from 'vitest';
 /**
- * Tests for Liminal main entry point
+ * Tests for Sinter main entry point
  * Tests the run() and runFromArgs() functions
  */
 
@@ -9,17 +9,17 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-describe('Liminal Main Entry Point', () => {
+describe('Sinter Main Entry Point', () => {
   let originalHome;
   let tempHome;
   let originalGlmKey;
-  let originalLiminalKey;
+  let originalSinterKey;
 
   beforeEach(() => {
     originalHome = process.env.HOME;
     originalGlmKey = process.env.GLM_API_KEY;
-    originalLiminalKey = process.env.LIMINAL_LLM_API_KEY;
-    tempHome = mkdtempSync(join(tmpdir(), 'liminal-index-test-'));
+    originalSinterKey = process.env.LIMINAL_LLM_API_KEY;
+    tempHome = mkdtempSync(join(tmpdir(), 'sinter-index-test-'));
     process.env.HOME = tempHome;
     delete process.env.GLM_API_KEY;
     delete process.env.LIMINAL_LLM_API_KEY;
@@ -30,8 +30,8 @@ describe('Liminal Main Entry Point', () => {
     else process.env.HOME = originalHome;
     if (originalGlmKey === undefined) delete process.env.GLM_API_KEY;
     else process.env.GLM_API_KEY = originalGlmKey;
-    if (originalLiminalKey === undefined) delete process.env.LIMINAL_LLM_API_KEY;
-    else process.env.LIMINAL_LLM_API_KEY = originalLiminalKey;
+    if (originalSinterKey === undefined) delete process.env.LIMINAL_LLM_API_KEY;
+    else process.env.LIMINAL_LLM_API_KEY = originalSinterKey;
     rmSync(tempHome, { recursive: true, force: true });
   });
 
@@ -46,7 +46,7 @@ describe('Liminal Main Entry Point', () => {
 
     it('should throw when no LLM is configured', async () => {
       await expect(run('test prompt', { output: './test-output' })).rejects.toThrow(
-        /No LLM configured|Liminal run failed/
+        /No LLM configured|Sinter run failed/
       );
     }, 15000);
   });
@@ -55,7 +55,7 @@ describe('Liminal Main Entry Point', () => {
     it('should throw when no LLM is configured', async () => {
       await expect(
         runFromArgs({ prompt: 'test prompt', maxIterations: 10, output: './test-output', project: 'cli-test' })
-      ).rejects.toThrow(/No LLM configured|Liminal run failed/);
+      ).rejects.toThrow(/No LLM configured|Sinter run failed/);
     });
   });
 });

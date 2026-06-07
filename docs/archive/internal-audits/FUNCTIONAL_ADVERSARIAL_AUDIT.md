@@ -1,4 +1,4 @@
-# Liminal — Functional Adversarial Audit Report
+# Sinter — Functional Adversarial Audit Report
 
 **Date:** 2026-03-30  
 **Auditor:** Red Team (Functionality Focus)  
@@ -195,7 +195,7 @@ The evaluation engine is surprisingly sophisticated:
 - Sound score (audio API detection)
 
 **LIR Integration:**
-- LIR (Liminal Intermediate Representation) tokens overlay regex-based scoring
+- LIR (Sinter Intermediate Representation) tokens overlay regex-based scoring
 - Provides more precise metrics (cyclomatic complexity, nesting depth)
 - Feature-flagged with cold fallback
 
@@ -275,7 +275,7 @@ While this audit focuses on functionality, note:
 
 ## 7. Conclusion
 
-Liminal is a **functional and architecturally sound** creative coding agent with:
+Sinter is a **functional and architecturally sound** creative coding agent with:
 
 - ✅ Solid evaluation engine with multi-dimensional scoring
 - ✅ Well-designed prompt system

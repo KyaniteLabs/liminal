@@ -2,7 +2,7 @@
  * Comprehensive artistic knowledge data for ArtKnowledgeGraph
  *
  * This file contains extensive artistic techniques, movements, artists, and principles
- * organized by domain (p5, shader, three, music, hydra, strudel) to make Liminal
+ * organized by domain (p5, shader, three, music, hydra, strudel) to make Sinter
  * a well-rounded artistic creative tool.
  */
 

@@ -1,10 +1,10 @@
-import { LiminalError } from './base.js';
+import { SinterError } from './base.js';
 
 /**
  * Error for validation failures.
  * Used when code or content fails validation checks.
  */
-export class ValidationError extends LiminalError {
+export class ValidationError extends SinterError {
   public errors?: string[];
 
   constructor(

@@ -1,7 +1,7 @@
 /**
  * CompositionOrchestrator — the end-to-end "combine outputs" path.
  *
- * Liminal's core is not just generating single-domain pieces; it is *layering*
+ * Sinter's core is not just generating single-domain pieces; it is *layering*
  * them into mixed works. The pieces existed (per-domain generators + the
  * composition engine/adapters/blendModes) but nothing connected them: there was
  * no way to take a layer spec, generate each layer, and assemble one runnable
@@ -106,7 +106,7 @@ export class CompositionOrchestrator {
     }
     await registerAllGenerators();
 
-    const title = spec.title ?? 'Liminal Composition';
+    const title = spec.title ?? 'Sinter Composition';
     const results = await Promise.all(
       spec.layers.map((layer, index) => this.generateLayer(layer, index)),
     );
@@ -193,7 +193,7 @@ export class CompositionOrchestrator {
       layers.push({ domain: 'p5', prompt: originalPrompt, blendMode: 'normal', opacity: 1 });
     }
     return {
-      title: typeof obj.title === 'string' && obj.title.trim() ? obj.title.trim() : 'Liminal Composition',
+      title: typeof obj.title === 'string' && obj.title.trim() ? obj.title.trim() : 'Sinter Composition',
       background: typeof obj.background === 'string' && obj.background.trim() ? obj.background.trim() : '#05070f',
       layers,
     };
@@ -249,19 +249,19 @@ export class CompositionOrchestrator {
         ? 'width:1px;height:1px;opacity:0;pointer-events:none;'
         : `width:100%;height:100%;mix-blend-mode:${blend};opacity:${opacity};`;
       frames.push(
-        `      <iframe class="liminal-layer" data-domain="${r.spec.domain}" allow="autoplay" ` +
+        `      <iframe class="sinter-layer" data-domain="${r.spec.domain}" allow="autoplay" ` +
         `style="position:absolute;inset:0;border:0;${visualStyle}z-index:${z};" src="${dataUri}"></iframe>`,
       );
       z++;
     }
 
     const startOverlay = hasAudio
-      ? `  <button id="liminal-start" aria-label="Start composition" style="position:fixed;inset:0;z-index:9999;border:0;background:rgba(0,0,0,0.55);color:#fff;font:600 18px system-ui,sans-serif;cursor:pointer">▶ Click to start (audio)</button>
+      ? `  <button id="sinter-start" aria-label="Start composition" style="position:fixed;inset:0;z-index:9999;border:0;background:rgba(0,0,0,0.55);color:#fff;font:600 18px system-ui,sans-serif;cursor:pointer">▶ Click to start (audio)</button>
   <script>
-    document.getElementById('liminal-start').addEventListener('click', function () {
+    document.getElementById('sinter-start').addEventListener('click', function () {
       this.remove();
-      document.querySelectorAll('iframe.liminal-layer').forEach(function (f) {
-        try { f.contentWindow && f.contentWindow.postMessage('liminal:start', '*'); } catch (e) {}
+      document.querySelectorAll('iframe.sinter-layer').forEach(function (f) {
+        try { f.contentWindow && f.contentWindow.postMessage('sinter:start', '*'); } catch (e) {}
         // Re-poke the iframe so any deferred audio context can resume on this gesture.
         var s = f.getAttribute('src'); f.setAttribute('src', s);
       });
@@ -277,13 +277,13 @@ export class CompositionOrchestrator {
   <title>${safeTitle}</title>
   <style>
     html, body { margin: 0; height: 100%; background: ${background}; overflow: hidden; }
-    #liminal-stage { position: fixed; inset: 0; }
+    #sinter-stage { position: fixed; inset: 0; }
     a.skip { position: absolute; left: -999px; }
   </style>
 </head>
 <body>
-  <a class="skip" href="#liminal-stage">Skip to content</a>
-  <main id="liminal-stage" role="img" aria-label="${safeTitle}">
+  <a class="skip" href="#sinter-stage">Skip to content</a>
+  <main id="sinter-stage" role="img" aria-label="${safeTitle}">
 ${frames.join('\n')}
   </main>
 ${startOverlay}

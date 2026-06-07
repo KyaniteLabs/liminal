@@ -1,6 +1,6 @@
 /**
  * SeedBank — persistent storage for promoted creative seeds.
- * All Liminal functions draw from this seed bank.
+ * All Sinter functions draw from this seed bank.
  * Now with semantic search using embeddings.
  */
 

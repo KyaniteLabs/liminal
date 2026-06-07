@@ -34,7 +34,7 @@ describe('OnboardingWizard', () => {
     ]) {
       delete process.env[key];
     }
-    tempHome = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-onboarding-'));
+    tempHome = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-onboarding-'));
     vi.spyOn(os, 'homedir').mockReturnValue(tempHome);
     wizard = new OnboardingWizard();
   });
@@ -77,7 +77,7 @@ describe('OnboardingWizard', () => {
   });
 
   it('writes config when overrides provide both baseUrl and apiKey', async () => {
-    const configDir = path.join(os.homedir(), '.liminal');
+    const configDir = path.join(os.homedir(), '.sinter');
     const configPath = path.join(configDir, 'config.json');
 
     const result = await wizard.run({

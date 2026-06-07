@@ -6,7 +6,7 @@
 
 ## Overview
 
-There are **FIVE distinct types** of guardrails in Liminal. Each catches different failure modes. Missing any creates quality holes.
+There are **FIVE distinct types** of guardrails in Sinter. Each catches different failure modes. Missing any creates quality holes.
 
 ---
 

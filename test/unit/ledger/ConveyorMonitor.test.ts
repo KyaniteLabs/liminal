@@ -2,7 +2,7 @@
  * Unit tests for ConveyorMonitor — Phase 10 Lane 10-5
  *
  * Tests dashboard generation, alert detection, and text formatting.
- * Uses real LiminalFS (tmpdir) — no mocks on the ledger.
+ * Uses real SinterFS (tmpdir) — no mocks on the ledger.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -10,7 +10,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { TaskLedger } from '../../../src/ledger/TaskLedger.js';
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 import { ConveyorMonitor } from '../../../src/ledger/ConveyorMonitor.js';
 import type { ConveyorBatchResult } from '../../../src/ledger/types.js';
 
@@ -50,7 +50,7 @@ describe('ConveyorMonitor', () => {
 
   beforeEach(() => {
     tempDir = mkdtempSync(join(tmpdir(), 'conveyor-monitor-test-'));
-    const fs = LiminalFS.open(tempDir);
+    const fs = SinterFS.open(tempDir);
     ledger = new TaskLedger(fs);
 
     // Create tasks that match the batch result

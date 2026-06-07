@@ -7,7 +7,7 @@
  *   - Sessions are tracked per workspace
  *
  * Workspaces are in-memory for now.
- * Future: persist to ~/.liminal/workspaces/<name>/config.json
+ * Future: persist to ~/.sinter/workspaces/<name>/config.json
  */
 
 import type { ProductMode } from './ProductMode.js';

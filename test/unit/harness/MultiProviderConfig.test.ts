@@ -53,7 +53,7 @@ beforeEach(() => {
     savedEnv[key] = process.env[key];
     delete process.env[key];
   }
-  // Isolate from ~/.liminal/config.json: clear cache and redirect homedir
+  // Isolate from ~/.sinter/config.json: clear cache and redirect homedir
   _resetConfigCache();
   homedirSpy = vi.spyOn(os, 'homedir').mockReturnValue('/nonexistent-test-home');
 });
@@ -257,9 +257,9 @@ describe('getProviderConfig', () => {
   });
 
   it('ignores placeholder custom env keys and falls back to config file keys', () => {
-    const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-provider-test-'));
-    fs.mkdirSync(path.join(tempHome, '.liminal'), { recursive: true });
-    fs.writeFileSync(path.join(tempHome, '.liminal', 'config.json'), JSON.stringify({
+    const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), 'sinter-provider-test-'));
+    fs.mkdirSync(path.join(tempHome, '.sinter'), { recursive: true });
+    fs.writeFileSync(path.join(tempHome, '.sinter', 'config.json'), JSON.stringify({
       defaultProvider: 'custom',
       providers: {
         custom: {

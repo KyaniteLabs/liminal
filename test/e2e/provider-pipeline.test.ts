@@ -17,8 +17,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import path from 'path';
 import os from 'os';
 
-// Block real ~/.liminal/config.json so env var tests are isolated
-const _userConfigPath = path.join(os.homedir(), '.liminal', 'config.json');
+// Block real ~/.sinter/config.json so env var tests are isolated
+const _userConfigPath = path.join(os.homedir(), '.sinter', 'config.json');
 vi.mock('fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs/promises')>();
   return {

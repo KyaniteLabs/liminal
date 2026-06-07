@@ -1,4 +1,4 @@
-import { createSampleRingViews, writeSamplesToRing } from '@liminal/audio-core/dsp/SampleRingShared.js';
+import { createSampleRingViews, writeSamplesToRing } from '@sinter/audio-core/dsp/SampleRingShared.js';
 
 declare class AudioWorkletProcessor {
   readonly port: MessagePort;

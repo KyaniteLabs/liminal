@@ -4,7 +4,7 @@
  * Step-by-step provider detection and setup wizard:
  *   1. Detect available providers from env vars / config
  *   2. Validate API key connectivity
- *   3. Write config to ~/.liminal/config.json
+ *   3. Write config to ~/.sinter/config.json
  *
  * Designed to be driven from the TUI (step-by-step events)
  * or CLI (batch mode).
@@ -43,7 +43,7 @@ export class OnboardingWizard {
   private steps: OnboardingStep[] = [
     { id: 'detect', title: 'Detect provider', description: 'Check env vars and existing config', status: 'pending' },
     { id: 'validate', title: 'Validate connectivity', description: 'Test API key against provider endpoint', status: 'pending' },
-    { id: 'write', title: 'Write config', description: 'Save to ~/.liminal/config.json', status: 'pending' },
+    { id: 'write', title: 'Write config', description: 'Save to ~/.sinter/config.json', status: 'pending' },
   ];
 
   /**
@@ -51,7 +51,7 @@ export class OnboardingWizard {
    * provider config when driven from TUI input.
    */
   async run(overrides?: { provider?: string; baseUrl?: string; apiKey?: string; model?: string }): Promise<OnboardingResult> {
-    const configDir = path.join(os.homedir(), '.liminal');
+    const configDir = path.join(os.homedir(), '.sinter');
     const configPath = path.join(configDir, 'config.json');
 
     // Step 1: Detect provider

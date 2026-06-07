@@ -1,9 +1,9 @@
 /**
- * LIR (Liminal Intermediate Representation) Core Type Definitions
+ * LIR (Sinter Intermediate Representation) Core Type Definitions
  *
  * This module defines the source-of-truth TypeScript types for LIR tokens.
  * LIR tokens are the atomic units of code, documentation, and text representation
- * used throughout the Liminal system for analysis, retrieval, and processing.
+ * used throughout the Sinter system for analysis, retrieval, and processing.
  */
 
 /**

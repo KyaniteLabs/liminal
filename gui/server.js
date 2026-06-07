@@ -441,7 +441,7 @@ export function createApp(configPath, port = 5174) {
   });
 
   const getConfigPath = () =>
-    // ATELIER_CONFIG_PATH is legacy compatibility for pre-Liminal installs.
+    // ATELIER_CONFIG_PATH is legacy compatibility for pre-Sinter installs.
     configPath || process.env.LIMINAL_CONFIG_PATH || process.env.ATELIER_CONFIG_PATH || path.join(process.env.HOME || '', '.liminal', 'config.json');
 
   const backendOrigin = `http://localhost:${port}`;
@@ -674,7 +674,7 @@ export function createApp(configPath, port = 5174) {
 <body>
   <main>
     <h1>Preview expired or missing</h1>
-    <p>This preview no longer has stored code. Run the artifact again from Liminal Studio to create a fresh sandboxed preview.</p>
+    <p>This preview no longer has stored code. Run the artifact again from Sinter Studio to create a fresh sandboxed preview.</p>
   </main>
 </body>
 </html>`;
@@ -721,7 +721,7 @@ export function createApp(configPath, port = 5174) {
   ${P5_SENSOR_POLICY_SCRIPT}
   <script src="${P5_CDN}" integrity="sha384-bOv+b6RV+dlZvdQAx6+cJ+FK9ab8JCSVWyJ1JPhMVQjPW+4C8V2cOKK+qZDfnRnx" crossorigin="anonymous"></script>
 </head>
-<body data-liminal-p5-preview-shell>
+<body data-sinter-p5-preview-shell>
   <script>
     // Wave 3 isolation: strip network access before running generated code
     window.fetch = undefined;

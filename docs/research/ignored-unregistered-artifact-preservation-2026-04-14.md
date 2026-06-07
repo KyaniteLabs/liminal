@@ -69,7 +69,7 @@ The archive also includes small Claude local-state/context directories:
 ## How to verify the archive
 
 ```bash
-cd /Users/simongonzalezdecruz/workspaces/liminal
+cd /Users/simongonzalezdecruz/workspaces/sinter
 shasum -a 256 -c .omx/artifact-preservation/2026-04-14Tartifact-preservation/ignored-unregistered-artifacts-2026-04-14.tar.gz.sha256
 tar -tzf .omx/artifact-preservation/2026-04-14Tartifact-preservation/ignored-unregistered-artifacts-2026-04-14.tar.gz | head
 ```

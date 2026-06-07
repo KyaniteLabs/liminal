@@ -36,7 +36,7 @@ importers:
       '@babel/types':
         specifier: ^7.29.0
         version: 7.29.0
-      '@liminal/audio-core':
+      '@sinter/audio-core':
         specifier: workspace:*
         version: link:packages/audio-core
       '@types/babel__traverse':
@@ -277,7 +277,7 @@ importers:
 
   packages/sing:
     dependencies:
-      '@liminal/audio-core':
+      '@sinter/audio-core':
         specifier: workspace:*
         version: link:../audio-core
       vite:

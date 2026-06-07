@@ -237,7 +237,7 @@ document.body.innerHTML = ` + '`' + `<button id="startButton">Start Ambient Sequ
       const result = GenericWrapper.wrap(code, { domain: 'tone' });
 
       expect(result).toContain('data-tone-preview-shell');
-      expect(result).toContain('id="liminal-tone-visualizer"');
+      expect(result).toContain('id="sinter-tone-visualizer"');
       const runtimeBlock = result.slice(result.indexOf('try {'), result.indexOf('} catch (error)'));
       expect(runtimeBlock).not.toContain('<script');
       expect(runtimeBlock).not.toContain('document.body.innerHTML');
@@ -260,7 +260,7 @@ document.body.innerHTML = ` + '`' + `<button id="startButton">Start Ambient Sequ
       const result = GenericWrapper.wrap(code, { domain: 'tone' });
       const startBlock = result.slice(result.indexOf("playBtn.addEventListener('click'"));
 
-      expect(result).toContain('syncLiminalToneTempo();');
+      expect(result).toContain('syncSinterToneTempo();');
       expect(result).toContain('Tone.Transport.bpm.value = bpm;');
       expect(startBlock).not.toContain('Tone.Transport.bpm.value = liminalToneBpm');
     });
@@ -288,8 +288,8 @@ document.body.innerHTML = ` + '`' + `<button id="startButton">Start Ambient Sequ
       const result = GenericWrapper.wrap(code, { domain: 'tone' });
 
       expect(result).toContain('data-tone-preview-shell');
-      expect(result).toContain('id="liminal-tone-start"');
-      expect(result).toContain('id="liminal-tone-visualizer"');
+      expect(result).toContain('id="sinter-tone-start"');
+      expect(result).toContain('id="sinter-tone-visualizer"');
       expect(result).toContain('id="startButton"');
       expect(result).toContain('Embedded Tone artifact');
     });
@@ -375,14 +375,14 @@ void main() { fragColor = vec4(1.0); }`;
     it('renders a browser-visible timeline preview before the source details', () => {
       const code = `import { makeScene2D, Txt } from "@revideo/2d";
 export default makeScene2D("PreviewScene", function* (view) {
-  yield view.add(<Txt text="Liminal title" />);
+  yield view.add(<Txt text="Sinter title" />);
 });`;
       const result = GenericWrapper.wrap(code, { domain: 'revideo' });
 
       expect(result).toContain('data-revideo-timeline-preview');
       expect(result).toContain('class="revideo-stage"');
       expect(result).toContain('class="timeline-playhead"');
-      expect(result).toContain('Liminal title');
+      expect(result).toContain('Sinter title');
       expect(result.indexOf('data-revideo-timeline-preview')).toBeLessThan(result.indexOf('<details'));
     });
   });

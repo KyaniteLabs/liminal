@@ -1,5 +1,5 @@
 {
-  "schema": "liminal.shared-artifact.domain-map",
+  "schema": "sinter.shared-artifact.domain-map",
   "schemaVersion": "2026-05-25.phase1",
   "domains": [
     {

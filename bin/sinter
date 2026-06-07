@@ -1,0 +1,2658 @@
+#!/usr/bin/env node
+import dotenv from "dotenv";
+dotenv.config();
+
+// Env back-compat: mirror SINTER_*/LIMINAL_* so both prefixes work whichever the
+// user set (the canonical prefix is SINTER_; LIMINAL_ stays supported).
+(function mirrorBrandEnv() {
+  for (const key of Object.keys(process.env)) {
+    const base = key.startsWith('SINTER_') ? key.slice(7)
+      : key.startsWith('LIMINAL_') ? key.slice(8) : undefined;
+    if (!base) continue;
+    const value = process.env[key];
+    if (value === undefined) continue;
+    if (process.env[`SINTER_${base}`] === undefined) process.env[`SINTER_${base}`] = value;
+    if (process.env[`LIMINAL_${base}`] === undefined) process.env[`LIMINAL_${base}`] = value;
+  }
+})();
+
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const binDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.join(binDir, '..');
+const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8'));
+const args = process.argv.slice(2);
+
+// One-time config-home migration: if the new ~/.sinter home doesn't exist yet
+// but a legacy ~/.sinter (or ~/.atelier) does, move it wholesale so existing
+// keys/config/memory/gallery carry over. Runs before any config read.
+(function migrateConfigHome() {
+  const home = process.env.HOME || process.env.USERPROFILE;
+  if (!home) return;
+  const newDir = path.join(home, '.sinter');
+  if (fs.existsSync(newDir)) return;
+  for (const legacy of ['.liminal', '.atelier']) {
+    const oldDir = path.join(home, legacy);
+    if (!fs.existsSync(oldDir)) continue;
+    try { fs.renameSync(oldDir, newDir); }
+    catch {
+      try {
+        fs.mkdirSync(newDir, { recursive: true });
+        fs.copyFileSync(path.join(oldDir, 'config.json'), path.join(newDir, 'config.json'));
+      } catch { /* nothing to carry over */ }
+    }
+    break;
+  }
+})();
+
+const CLI_PROVIDER_DEFAULTS = {
+  lmstudio: {
+    label: 'LM Studio',
+    baseUrl: 'http://localhost:1234/v1',
+    model: 'local-model',
+    requiresKey: false,
+  },
+  ollama: {
+    label: 'Ollama',
+    baseUrl: 'http://localhost:11434',
+    model: 'llama3.2',
+    requiresKey: false,
+  },
+  openai: {
+    label: 'OpenAI',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-5.4',
+    requiresKey: true,
+    apiKeyEnv: 'OPENAI_API_KEY',
+  },
+  minimax: {
+    label: 'MiniMax',
+    baseUrl: 'https://api.minimax.io/anthropic', // international token-plan endpoint (China uses api.minimaxi.com)
+    model: 'MiniMax-M3',
+    requiresKey: true,
+    apiKeyEnv: 'MINIMAX_API_KEY',
+  },
+  glm: {
+    label: 'GLM',
+    baseUrl: 'https://api.z.ai/api/anthropic',
+    model: 'GLM-5v-turbo',
+    requiresKey: true,
+    apiKeyEnv: 'GLM_API_KEY',
+  },
+  openrouter: {
+    label: 'OpenRouter',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'anthropic/claude-3.5-sonnet',
+    requiresKey: true,
+    apiKeyEnv: 'OPENROUTER_API_KEY',
+  },
+  kimi: {
+    label: 'Kimi Code',
+    baseUrl: 'https://api.kimi.com/coding/v1',
+    model: 'k2p5',
+    requiresKey: true,
+    apiKeyEnv: 'KIMI_API_KEY',
+  },
+  moonshot: {
+    label: 'Moonshot AI',
+    baseUrl: 'https://api.moonshot.ai/v1',
+    model: 'kimi-k2.5',
+    requiresKey: true,
+    apiKeyEnv: 'MOONSHOT_API_KEY',
+  },
+};
+const CLI_PROVIDER_NAMES = Object.keys(CLI_PROVIDER_DEFAULTS);
+
+function resolveCliProvider(value) {
+  if (!value) return undefined;
+  const normalized = value.toLowerCase();
+  return CLI_PROVIDER_DEFAULTS[normalized] ? normalized : undefined;
+}
+
+function sinterConfigPath() {
+  return path.join(process.env.HOME || process.env.USERPROFILE || '.', '.sinter', 'config.json');
+}
+
+// Write an API key (and provider block) into ~/.sinter/config.json, merging with
+// whatever is already there. With `activate`, also point the generator+evaluator
+// roles + defaultProvider at this provider so the next run uses it immediately.
+function setProviderKey(providerKey, apiKey, { model, baseUrl, activate } = {}) {
+  const defaults = CLI_PROVIDER_DEFAULTS[providerKey];
+  if (!defaults) throw new Error(`Unknown provider: ${providerKey} (one of: ${CLI_PROVIDER_NAMES.join(', ')})`);
+  const cfgPath = sinterConfigPath();
+  let config = {};
+  if (fs.existsSync(cfgPath)) {
+    try { config = JSON.parse(fs.readFileSync(cfgPath, 'utf-8')); }
+    catch (e) { throw new Error(`Existing config is not valid JSON (${cfgPath}): ${e.message}`); }
+  }
+  // baseUrl override lets a provider point at a self-hosted endpoint (e.g. a
+  // remote Ollama/vLLM/LM Studio on a home server) instead of its default URL.
+  const block = {
+    baseUrl: baseUrl || defaults.baseUrl,
+    model: model || defaults.model,
+  };
+  if (apiKey) block.apiKey = apiKey; // keyless local servers (ollama/lmstudio) need none
+  config.providers = { ...(config.providers || {}), [providerKey]: block };
+  if (activate) {
+    config.defaultProvider = providerKey;
+    // Switching the active provider resets roles to a single generator entry;
+    // evaluator/harness/studio inherit it. Replacing (not merging) avoids leaving
+    // stale per-role overrides pointing at the previous provider. Power users who
+    // want a different model per role set roles.* in config.json directly.
+    const roleBlock = { provider: providerKey, ...block };
+    config.roles = { generator: { ...roleBlock } };
+  }
+  fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
+  fs.writeFileSync(cfgPath, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });
+  return { cfgPath, model: block.model, baseUrl: block.baseUrl, activated: !!activate };
+}
+
+function printProviderHelp() {
+  console.log('');
+  console.log('🔌 Sinter Provider Setup');
+  console.log('');
+  console.log('USAGE:');
+  console.log('  sinter provider help');
+  console.log('  sinter provider list');
+  console.log('  sinter provider status');
+  console.log('  sinter provider set-key <name> [<API_KEY>] [--base-url <url>] [--model <id>] [--use]');
+  console.log('  sinter --configure --provider <name>');
+  console.log('');
+  console.log('PROVIDERS:');
+  for (const [name, provider] of Object.entries(CLI_PROVIDER_DEFAULTS)) {
+    const keyHint = provider.requiresKey && provider.apiKeyEnv
+      ? `requires ${provider.apiKeyEnv}`
+      : 'no API key required';
+    console.log(`  ${name.padEnd(10)} ${provider.label.padEnd(13)} model=${provider.model} (${keyHint})`);
+  }
+  console.log('');
+  console.log('EXAMPLES:');
+  console.log('  sinter --configure --provider lmstudio');
+  console.log('  sinter provider set-key minimax sk-... --use   # MiniMax-M3, international endpoint, made active');
+  console.log('  GLM_API_KEY=... sinter --provider glm "make a p5 sketch"');
+  console.log('  sinter provider status');
+  console.log('');
+}
+
+function printProviderList() {
+  console.log('');
+  console.log('Available Sinter providers:');
+  for (const name of CLI_PROVIDER_NAMES) {
+    const provider = CLI_PROVIDER_DEFAULTS[name];
+    console.log(`  ${name.padEnd(10)} ${provider.label} (${provider.baseUrl})`);
+  }
+  console.log('');
+}
+
+function readSinterConfig() {
+  try {
+    const p = sinterConfigPath();
+    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf-8'));
+  } catch { /* ignore unreadable/invalid config */ }
+  return {};
+}
+
+function savedKeyFor(name, config) {
+  const fromProvider = config.providers?.[name]?.apiKey;
+  const fromRole = ['generator', 'evaluator', 'harness']
+    .map((r) => config.roles?.[r])
+    .find((role) => role?.provider === name && role?.apiKey)?.apiKey;
+  return Boolean(fromProvider || fromRole);
+}
+
+function printProviderStatus() {
+  const config = readSinterConfig();
+  const active = config.defaultProvider;
+  console.log('');
+  console.log('Sinter provider readiness:');
+  for (const [name, provider] of Object.entries(CLI_PROVIDER_DEFAULTS)) {
+    // Ready if no key needed, or a key is present in env OR the saved config.
+    const hasKey = Boolean(process.env[provider.apiKeyEnv]) || savedKeyFor(name, config);
+    const configured = !provider.requiresKey || hasKey;
+    const status = configured ? 'ready' : `missing key (set with: sinter provider set-key ${name} <KEY>)`;
+    const activeMark = name === active ? ' (active)' : '';
+    console.log(`  ${name.padEnd(10)} ${status}${activeMark}`);
+  }
+  console.log('');
+  console.log('Set a key with `sinter provider set-key <name> <KEY> --use`.');
+  console.log('');
+}
+
+// Parse flags
+const flags = {};
+let cmd = null;
+let cmdArgs = [];
+let prompt = null;
+let maxIterations = 3;
+let output = null;
+
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i];
+  if (arg === '--help' || arg === '-h') {
+    flags.help = true;
+  } else if (arg === '--version') {
+    flags.version = true;
+  } else if (arg === '--prompt' || arg === '-p') {
+    flags.prompt = args[++i];
+  } else if (arg === '--max-iterations' || arg === '-m') {
+    flags.maxIterations = parseInt(args[++i]);
+  } else if (arg === '--output' || arg === '-o') {
+    flags.output = args[++i];
+  } else if (arg === '--input' || arg === '-f') {
+    flags.input = args[++i];
+  } else if (arg === '--provider') {
+    flags.provider = args[++i];
+  } else if (arg === '--model') {
+    flags.model = args[++i];
+  } else if (arg === '--base-url') {
+    flags.baseUrl = args[++i];
+  } else if (arg === '--configure') {
+    flags.configure = true;
+  } else if (arg === '--use' || arg === '--activate') {
+    flags.use = true;
+  } else if (arg === '--recent') {
+    const nextArg = args[i + 1];
+    if (nextArg && !nextArg.startsWith('-') && !isNaN(parseInt(nextArg))) {
+      flags.recent = parseInt(args[++i]);
+    } else {
+      flags.recent = 10;
+    }
+  } else if (arg === '--favorite') {
+    flags.favorite = args[++i];
+  } else if (arg === '--favorites') {
+    flags.favorites = true;
+  } else if (arg === '--interactive' || arg === '-i') {
+    flags.interactive = true;
+  } else if (arg === '--mode') {
+    flags.mode = args[++i];
+  } else if (arg === '--use-swarm') {
+    flags.useSwarm = true;
+  } else if (arg === '--swarm-mode') {
+    flags.swarmMode = args[++i];
+  } else if (arg === '--swarm-rounds') {
+    flags.swarmRounds = parseInt(args[++i]);
+  } else if (arg === '--fast-model') {
+    flags.fastModel = args[++i];
+  } else if (arg === '--candidate') {
+    flags.candidate = args[++i];
+  } else if (arg === '--to') {
+    flags.to = args[++i];
+  } else if (arg === '--powerful-model') {
+    flags.powerfulModel = args[++i];
+  } else if (arg === '--routing-mode') {
+    flags.routingMode = args[++i];
+  } else if (arg === '--confidence-threshold') {
+    flags.confidenceThreshold = parseFloat(args[++i]);
+  } else if (arg === '--spec') {
+    flags.spec = args[++i];
+  } else if (arg === '--voice') {
+    flags.voice = true;
+  } else if (arg === '--voice-file') {
+    flags.voiceFile = args[++i];
+  } else if (arg === '--aesthetic') {
+    flags.aesthetic = args[++i];
+  } else if (arg === '--aesthetic-config') {
+    flags.aestheticConfig = args[++i];
+  } else if (arg === '--intuition') {
+    flags.intuition = true;
+  } else if (arg === '--consolidate') {
+    flags.consolidate = true;
+  } else if (arg === '--error') {
+    flags.error = args[++i];
+  } else if (arg === '--test-failures') {
+    flags.testFailures = true;
+  } else if (arg === '--test-file') {
+    flags.testFile = args[++i];
+  } else if (arg === '--dry-run') {
+    flags.dryRun = true;
+  } else if (arg === '--force') {
+    flags.force = true;
+  } else if (arg === '--gates-passed') {
+    flags.gatesPassed = true;
+  } else if (arg === '--confirm') {
+    flags.confirm = args[++i];
+  } else if (arg.startsWith('--confirm=')) {
+    flags.confirm = arg.split('=')[1];
+  } else if (arg === '--verbose' || arg === '-v') {
+    flags.verbose = true;
+  } else if (arg === '--script-only') {
+    flags.scriptOnly = true;
+  } else if (arg === '--spec-only') {
+    flags.specOnly = true;
+  } else if (!arg.startsWith('-')) {
+    if (cmd === null) { cmd = arg; } else { cmdArgs.push(arg); }
+  }
+}
+
+
+function isIsolatedWorktree(cwd = process.cwd()) {
+  return cwd.includes(`${path.sep}.worktrees${path.sep}`)
+    || cwd.includes(`${path.sep}.claude${path.sep}worktrees${path.sep}`);
+}
+
+function loadAestheticConfig(configPath) {
+  if (!configPath) return undefined;
+  const resolvedPath = path.resolve(configPath);
+  try {
+    return JSON.parse(fs.readFileSync(resolvedPath, 'utf-8'));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`Error: failed to load --aesthetic-config from ${resolvedPath}: ${message}`);
+    process.exit(1);
+  }
+}
+
+
+function summarizeSession(session) {
+  return {
+    status: session.status,
+    exitReason: session.exitReason,
+    startTime: session.startTime,
+    endTime: session.endTime,
+    stepCount: session.stepCount,
+    mutatedFiles: Array.from(session.mutatedFiles || []),
+    successfulMutatedFiles: Array.from(session.successfulMutatedFiles || []),
+    exploredPaths: Array.from(session.exploredPaths || []),
+    messages: (session.messages || []).map((message) => ({
+      role: message.role,
+      content: typeof message.content === 'string' ? message.content.slice(0, 4000) : message.content,
+      toolCall: message.toolCall,
+      toolResult: message.toolResult,
+    })),
+  };
+}
+
+function printHelp() {
+  console.log('');
+  console.log('🎨 Sinter: Creative Coding Agent');
+  console.log('');
+  console.log('USAGE:');
+  console.log('  sinter [options] <command> [args]');
+  console.log('  sinter "natural language prompt"');
+  console.log('');
+  console.log('COMMANDS:');
+  console.log('  <prompt>                    Natural-language creative request (no magic verb required)');
+  console.log('  generate, gen, g <prompt>   Create art/code from prompt');
+  console.log('  tui                         Launch Bubble Tea operator cockpit');
+  console.log('  bridge [port]               Start TUI bridge server (default: 3000)');
+  console.log('  studio                     Launch GUI workbench (backend + browser app)');
+  console.log('  provider <help|list|status> Show provider setup and missing key diagnostics');
+  console.log('  bubbletea [port]            Launch Bubble Tea operator cockpit with bridge');
+  console.log('  operator [port]             Alias for Bubble Tea operator cockpit');
+  console.log('  serve, s [port]             Start preview server (default: 3456)');
+  console.log('  list, ls                    Show saved sketches');
+  console.log('  compost <subcommand>        Compost Mill: add, digest, soup, seeds, status');
+  console.log('  composite                   Analyze composition spec and generate layer plan');
+  console.log('  compose --prompt "<idea>"     Decompose an idea into layers + assemble (or --spec)');
+  console.log('  chat                        Start conversational creative coding mode');
+  console.log('  git <subcommand>            Git integration: status, log, diff, branch, commit, init');
+  console.log('  fix <file|description>      Auto-fix code issues with LLM assistance');
+  console.log('  consolidate                 Run memory consolidation (L3→L2 compression)');
+  console.log('  ledger <subcommand>         Task ledger: list, show, run, verify, accept, reject, status');
+  console.log('  site evolve                 Run the living website evolution daemon');
+  console.log('  self-improve gauntlet       Run headless self-improvement reflex/capability gauntlet');
+  console.log('  domains gauntlet            Run preserved creative-domain gauntlet');
+  console.log('  model audition <model>      Dry-run model assimilation audition');
+  console.log('  release gate                Run Level 6 release gate');
+  console.log('  improve <scan|run>          Diagnose repair, hardening, and optimization proposals');
+  console.log('  quality <subcommand>       Quality gate: run, gate');
+  console.log('  market status              Show honest market readiness status');
+  console.log('  archive <subcommand>      Archive: inspect, lineage, branch, list');
+  console.log('  preferences <subcommand>  Preferences: export, stats');
+  console.log('  report cognition           Show creative body and cognitive architecture atlas');
+  console.log('');
+  console.log('OPTIONS:');
+  console.log('  --prompt, -p <text>         Prompt for generation');
+  console.log('  --max-iterations, -m <num>  Max iterations (default: 3)');
+  console.log('  --output, -o <path>         Output directory');
+  console.log(`  --provider <name>           LLM provider (${CLI_PROVIDER_NAMES.join(', ')})`);
+  console.log('  --model <name>              Model name');
+  console.log('  --configure                 Set up provider config (default: LM Studio)');
+  console.log('  --recent [n]                Show recent prompts (default: 10)');
+  console.log('  --favorite <prompt>         Add prompt to favorites');
+  console.log('  --favorites                 List favorite prompts');
+  console.log('  --interactive, -i           Interactive TUI mode');
+  console.log('  --mode <mode>              Mode: live-music (Live AV Strudel + Hydra to --output)');
+  console.log('  --use-swarm                Use Sinter swarm (5 default personas) for generation');
+  console.log('  --swarm-mode <mode>        Swarm mode: competitive, hybrid, ring, mesh (default: hybrid)');
+  console.log('  --swarm-rounds <num>       Max swarm rounds (default: 10)');
+  console.log('  --fast-model <name>        Primary/fast model for dual-mode (e.g., qwen3.5:9b)');
+  console.log('  --powerful-model <name>     Secondary/powerful model (e.g., qwen3:30b-a3b)');
+  console.log('  --routing-mode <mode>       Dual-model routing: cascade, speculative, ensemble, specialized');
+  console.log('  --confidence-threshold <n>  Cascade escalation threshold (0-1, default: 0.8)');
+  console.log('  --gates-passed              For improve scan: report improve mode after external gates pass');
+  console.log('  --verbose, -v               Verbose output');
+  console.log('  --voice                     Enable voice-driven visual mapping');
+  console.log('  --voice-file <path>         Audio file for voice-to-visual analysis');
+  console.log('  --aesthetic <preset>        Creative preference preset (minimalist|vibrant|cinematic|playful|free)');
+  console.log('  --aesthetic-config <path>  Path to aesthetic/perception config JSON');
+  console.log('  --intuition                 Enable intuition scoring dimension');
+  console.log('  --consolidate               Run memory consolidation (L3→L2 compression)');
+  console.log('  --error <text>              Error description for fix command');
+  console.log('  --test-failures             Auto-detect and fix test failures');
+  console.log('  --test-file <path>          Fix based on specific test file pattern');
+  console.log('  --dry-run                   Show what would be fixed without making changes');
+  console.log('                              With release gate: report Level 6 candidate gates without requiring live receipts');
+  console.log('  --confirm <auto|ask|never>  Confirmation level for fix command (default: ask)');
+  console.log('  --help, -h                  Show this help message');
+  console.log('  --version                   Show version');
+  console.log('');
+  console.log('EXAMPLES:');
+  console.log('  sinter "icebergs dancing in the sky"');
+  console.log('  sinter --prompt "blue particles"');
+  console.log('  sinter --prompt "red circles" --provider lmstudio');
+  console.log('  sinter --configure');
+  console.log('  sinter serve 3456');
+  console.log('  sinter list');
+  console.log('');
+}
+
+// Handle --help flag (global)
+if (flags.help) {
+  printHelp();
+  process.exit(0);
+}
+
+// Handle --version flag
+if (flags.version) {
+  console.log(`Sinter v${packageJson.version}`);
+  process.exit(0);
+}
+
+if (cmd === 'provider') {
+  const subCmd = cmdArgs[0] || 'help';
+  if (subCmd === 'help' || subCmd === '--help' || subCmd === '-h') {
+    printProviderHelp();
+    process.exit(0);
+  }
+  if (subCmd === 'list') {
+    printProviderList();
+    process.exit(0);
+  }
+  if (subCmd === 'status') {
+    printProviderStatus();
+    process.exit(0);
+  }
+  if (subCmd === 'set-key') {
+    // cmdArgs[0] is 'set-key'; --use/--model/--base-url are parsed into flags.
+    const providerKey = resolveCliProvider(cmdArgs[1]);
+    const apiKey = cmdArgs[2];
+    const model = flags.model;
+    const baseUrl = flags.baseUrl;
+    const activate = !!flags.use;
+    // Local servers (ollama/lmstudio) need no key; cloud providers do.
+    const keyRequired = providerKey ? CLI_PROVIDER_DEFAULTS[providerKey].requiresKey : true;
+    if (!providerKey || (keyRequired && !apiKey)) {
+      console.error('Usage: sinter provider set-key <provider> [<API_KEY>] [--base-url <url>] [--model <id>] [--use]');
+      console.error(`Providers: ${CLI_PROVIDER_NAMES.join(', ')}`);
+      console.error('  Cloud:  sinter provider set-key minimax sk-... --use');
+      console.error('  Local:  sinter provider set-key ollama --base-url http://192.168.1.50:11434/v1 --model qwen2.5-coder --use');
+      process.exit(1);
+    }
+    try {
+      const r = setProviderKey(providerKey, apiKey, { model, baseUrl, activate });
+      console.log('');
+      console.log(`✅ Saved ${CLI_PROVIDER_DEFAULTS[providerKey].label} provider to ${r.cfgPath}`);
+      console.log(`   endpoint: ${r.baseUrl}`);
+      console.log(`   model:    ${r.model}`);
+      console.log(`   active:   ${r.activated ? 'yes (default — all roles inherit it)' : 'no (use --use to activate)'}`);
+      console.log('');
+      console.log(r.activated
+        ? '   Try: sinter --prompt "a glsl aurora shader" --max-iterations 1 -o output/test'
+        : `   Activate with: sinter provider set-key ${providerKey} ${keyRequired ? '<KEY> ' : ''}--use`);
+      console.log('');
+      process.exit(0);
+    } catch (e) {
+      console.error(`❌ ${e.message}`);
+      process.exit(1);
+    }
+  }
+
+  console.error(`Unknown provider subcommand: ${subCmd}`);
+  console.error('Usage: sinter provider <help|list|status|set-key>');
+  process.exit(1);
+}
+
+if (cmd === 'self-improve') {
+  const subCmd = cmdArgs[0] || 'gauntlet';
+  if (subCmd === 'gauntlet') {
+    const { runSelfImprovementGauntlet } = await import('../dist/runtime-core/SelfImprovementReflexes.js');
+    const report = runSelfImprovementGauntlet();
+    console.log('');
+    console.log('=== Self-improvement gauntlet ===');
+    console.log(`Level: ${report.level}`);
+    console.log(`Prompts: ${report.passed}/${report.total} passed`);
+    console.log(`Organs: ${report.organsTouched.join(', ')}`);
+    console.log('');
+    for (const result of report.results) {
+      console.log(`${result.status === 'pass' ? 'PASS' : 'FAIL'} ${result.id}`);
+      console.log(`  domain=${result.domain} focus=${result.fileHint}`);
+      console.log(`  reflex=${result.recommendedReflex.nextAction} organs=${result.organs.join(', ')}`);
+    }
+    if (flags.output) {
+      fs.writeFileSync(flags.output, `${JSON.stringify(report, null, 2)}\n`, 'utf-8');
+      console.log('');
+      console.log(`Wrote gauntlet report: ${flags.output}`);
+    }
+    console.log('');
+    process.exit(report.failed === 0 ? 0 : 1);
+  }
+  console.error('Usage: sinter self-improve gauntlet [--output report.json]');
+  process.exit(1);
+}
+
+if (cmd === 'domains') {
+  const subCmd = cmdArgs[0] || 'gauntlet';
+  if (subCmd === 'gauntlet') {
+    const { runCreativeDomainGauntlet } = await import('../dist/runtime-core/CreativeDomainGauntlet.js');
+    const report = runCreativeDomainGauntlet(repoRoot);
+    console.log('');
+    console.log('=== Creative domain gauntlet ===');
+    console.log(`Domains: ${report.passed}/${report.total} passed`);
+    for (const domain of report.domains) {
+      console.log(`${domain.status === 'pass' ? 'PASS' : 'FAIL'} ${domain.label}`);
+      console.log(`  prompt=${domain.prompt}`);
+      console.log(`  verification=${domain.verification}`);
+    }
+    if (flags.output) {
+      fs.writeFileSync(flags.output, `${JSON.stringify(report, null, 2)}\n`, 'utf-8');
+      console.log('');
+      console.log(`Wrote domain gauntlet report: ${flags.output}`);
+    }
+    console.log('');
+    process.exit(report.ready ? 0 : 1);
+  }
+  console.error('Usage: sinter domains gauntlet [--output report.json]');
+  process.exit(1);
+}
+
+if (cmd === 'model') {
+  const subCmd = cmdArgs[0] || 'audition';
+  if (subCmd === 'audition') {
+    const model = cmdArgs[1] || flags.model || 'dry-run-model';
+    const provider = flags.provider || (flags.dryRun ? 'dry-run' : 'dry-run');
+    const { runModelAssimilationGauntlet } = await import('../dist/runtime-core/ModelAssimilationGauntlet.js');
+    const report = runModelAssimilationGauntlet({ model, provider });
+    console.log('');
+    console.log('=== Model assimilation audition ===');
+    console.log(`Model: ${report.model}`);
+    console.log(`Provider: ${report.provider}`);
+    console.log(`Ready: ${report.ready ? 'YES' : 'NO'}`);
+    for (const check of report.checks) {
+      console.log(`${check.status === 'pass' ? 'PASS' : 'FAIL'} ${check.label}: ${check.evidence}`);
+    }
+    console.log(`Recommendation: ${report.recommendation}`);
+    if (flags.output) {
+      fs.writeFileSync(flags.output, `${JSON.stringify(report, null, 2)}\n`, 'utf-8');
+      console.log('');
+      console.log(`Wrote model audition report: ${flags.output}`);
+    }
+    console.log('');
+    process.exit(report.ready ? 0 : 1);
+  }
+  console.error('Usage: sinter model audition <model> [--provider name] [--output report.json]');
+  process.exit(1);
+}
+
+if (cmd === 'release') {
+  const subCmd = cmdArgs[0] || 'gate';
+  if (subCmd === 'gate') {
+    const { runLevel6ReleaseGate } = await import('../dist/runtime-core/Level6ReleaseGate.js');
+    const report = runLevel6ReleaseGate({
+      repoRoot,
+      candidate: flags.dryRun === true,
+      includeMarketReadiness: flags.dryRun === true ? false : undefined,
+    });
+    console.log('');
+    console.log('=== Level 6 release gate ===');
+    console.log(`Level: ${report.level}`);
+    console.log(`Ready: ${report.ready ? 'YES' : 'NO'}`);
+    for (const check of report.checks) {
+      console.log(`${check.status === 'pass' ? 'PASS' : 'FAIL'} ${check.label}: ${check.evidence}`);
+    }
+    if (report.blockers.length > 0) {
+      console.log('');
+      console.log('Blockers:');
+      for (const blocker of report.blockers) console.log(`- ${blocker}`);
+    }
+    if (flags.output) {
+      fs.writeFileSync(flags.output, `${JSON.stringify(report, null, 2)}\n`, 'utf-8');
+      console.log('');
+      console.log(`Wrote Level 6 release gate report: ${flags.output}`);
+    }
+    console.log('');
+    process.exit(report.ready ? 0 : 1);
+  }
+  console.error('Usage: sinter release gate [--output report.json]');
+  process.exit(1);
+}
+
+// Keep improvement scans on a narrow startup path. The general CLI initializes
+// provider config, guardrails, and the Meta-Harness; scan gates need to observe
+// the repo without inheriting those runtime side effects.
+if (cmd === 'improve') {
+  const subCmd = cmdArgs[0] || 'scan';
+  const {
+    collectRepositoryOpportunityEvidence,
+    formatOpportunityReport,
+    scanGreenSystemOpportunities,
+  } = await import('../dist/improvement/OpportunityScanner.js');
+  const evidence = collectRepositoryOpportunityEvidence(process.cwd());
+  if (flags.gatesPassed) {
+    evidence.gates = [
+      { name: 'build', status: 'pass', command: 'pnpm build', detail: 'caller asserted after running release gates' },
+      { name: 'lint', status: 'pass', command: 'pnpm lint', detail: 'caller asserted after running release gates' },
+      { name: 'fast tests', status: 'pass', command: 'pnpm test:ci:fast', detail: 'caller asserted after running release gates' },
+      { name: 'slow tests', status: 'pass', command: 'pnpm test:ci:slow', detail: 'caller asserted after running release gates' },
+      { name: 'go tests', status: 'pass', command: 'cd bubbletea && go test ./...', detail: 'caller asserted after running release gates' },
+    ];
+  }
+  const report = scanGreenSystemOpportunities(evidence);
+
+  if (subCmd === 'scan') {
+    const outputText = formatOpportunityReport(report);
+    console.log('');
+    console.log(outputText);
+    console.log('');
+    if (flags.output) {
+      fs.writeFileSync(flags.output, `${JSON.stringify(report, null, 2)}\n`, 'utf-8');
+      console.log(`Wrote improvement report: ${flags.output}`);
+    }
+    process.exit(0);
+  }
+
+  if (subCmd === 'run') {
+    const proposalId = cmdArgs[1];
+    if (!proposalId) {
+      console.error('Usage: sinter improve run <proposal-id>');
+      process.exit(1);
+    }
+
+    const proposal = report.proposals.find((item) => item.id === proposalId);
+    if (!proposal) {
+      console.error(`Unknown proposal: ${proposalId}`);
+      console.error('Run `sinter improve scan` to see current proposals.');
+      process.exit(1);
+    }
+
+    const inWorktree = isIsolatedWorktree();
+    if (!inWorktree && process.env.LIMINAL_ALLOW_MAIN_WORKTREE_IMPROVE !== '1') {
+      console.error('Refusing to mutate the main worktree. Create an isolated worktree, then rerun this command there.');
+      console.error('Override only for deliberate local experiments: LIMINAL_ALLOW_MAIN_WORKTREE_IMPROVE=1');
+      process.exit(2);
+    }
+
+    const { LLMModeSelfImprovementRuntime } = await import('../dist/runtime-core/SelfImprovementRuntime.js');
+    const { LLMClient } = await import('../dist/llm/LLMClient.js');
+    const runtime = new LLMModeSelfImprovementRuntime();
+    const llm = new LLMClient({ role: 'harness' });
+    const description = [
+      `Run type: ${report.runType}`,
+      `Proposal: ${proposal.title}`,
+      `Category: ${proposal.category}`,
+      `Evidence: ${proposal.evidence.join('; ')}`,
+      `Measurable target: ${proposal.measurableTarget}`,
+      `Expected verification: ${proposal.expectedVerification.join(' && ')}`,
+      'Produce a reviewable patch and verification report. Do not auto-merge.',
+    ].join('\n');
+    const result = await runtime.run({ llm, description });
+
+    console.log('');
+    console.log('=== Self-healing run complete ===');
+    console.log(`  Task: ${result.taskId}`);
+    console.log(`  Model: ${result.modelName}`);
+    console.log(`  Status: ${result.session.status}`);
+    console.log(`  Steps: ${result.session.stepCount}`);
+    console.log('');
+    process.exit(result.session.status === 'success' ? 0 : 1);
+  }
+
+  console.error('Usage: sinter improve <scan|run>');
+  process.exit(1);
+}
+
+
+if (cmd === 'report' && cmdArgs[0] === 'cognition') {
+  const { CognitiveArchitectureAtlas } = await import('../dist/reporting/index.js');
+  const atlas = new CognitiveArchitectureAtlas();
+  console.log('');
+  console.log(atlas.format(atlas.build()));
+  console.log('');
+  process.exit(0);
+}
+
+const [
+  { run, PreviewServer, generateMusic, generateVisuals, metaHarness },
+  { getEffectiveConfig, saveConfig, loadProjectConfig },
+  { PromptHistory },
+  { InteractiveMode },
+  { CompostMill },
+  { parseArgs, execute },
+  { handleGitCommand },
+  { LLMClient },
+  { ModelRouter },
+  { chatCommand },
+  { commandPrompt, inferNaturalLanguagePrompt, isSelfImprovementPrompt },
+  { writeCliCognitiveReceipt },
+  { collectRepositoryMarketReadinessStatus, formatMarketReadinessStatus },
+] = await Promise.all([
+  import('../dist/index.js'),
+  import('../dist/config/ConfigLoader.js'),
+  import('../dist/config/PromptHistory.js'),
+  import('../dist/tui/InteractiveMode.js'),
+  import('../dist/compost/CompostMill.js'),
+  import('../dist/compost/cli.js'),
+  import('../dist/git/index.js'),
+  import('../dist/llm/LLMClient.js'),
+  import('../dist/compost/ModelRouter.js'),
+  import('../dist/chat/commands/chat.js'),
+  import('../dist/cli/PromptArgs.js'),
+  import('../dist/cli/CognitiveReceiptReporter.js'),
+  import('../dist/market/MarketReadinessStatus.js'),
+]);
+
+// Initialize Meta-Harness only after cheap help/version fast paths have exited.
+metaHarness.initialize();
+
+// Initialize guardrail system (shadow mode + telemetry)
+const { initializeGuardrailSystem } = await import('../dist/guardrails/index.js');
+const guardrailSystem = initializeGuardrailSystem({ shadowMode: true, telemetry: true });
+
+// Load config and set env vars for LLMClient to pick up
+async function initializeConfig() {
+  const config = await getEffectiveConfig(undefined, process.cwd());
+
+  // Set env vars so LLMClient picks them up
+  // Note: provider is no longer used - we use baseUrl + model directly
+  // Only set if not already set in environment (respect user env vars)
+  if (config.baseUrl && !process.env.LIMINAL_LLM_BASE_URL) process.env.LIMINAL_LLM_BASE_URL = config.baseUrl;
+  // Propagate model — auto-detect from /v1/models only works for local LM Studio;
+  // remote providers (MiniMax, OpenRouter, etc.) need an explicit model name.
+  if (config.model && !process.env.LIMINAL_LLM_MODEL) process.env.LIMINAL_LLM_MODEL = config.model;
+  if (config.apiKey && !process.env.LIMINAL_LLM_API_KEY) process.env.LIMINAL_LLM_API_KEY = config.apiKey;
+
+  return config;
+}
+
+// Initialize prompt history
+const history = new PromptHistory();
+
+// Handle --configure flag
+if (flags.configure) {
+  const providerKey = resolveCliProvider(flags.provider) || 'lmstudio';
+  const providerDefaults = CLI_PROVIDER_DEFAULTS[providerKey];
+  console.log('');
+  console.log('🎨 Sinter Configuration');
+  console.log('');
+  console.log(`Setting up ${providerDefaults.label} config...`);
+  console.log('');
+
+  const config = {
+    defaultProvider: providerKey,
+    providers: {
+      [providerKey]: {
+        baseUrl: providerDefaults.baseUrl,
+        model: flags.model || providerDefaults.model
+      }
+    }
+  };
+
+  saveConfig(config).then(() => {
+    console.log('✅ Config saved to ~/.sinter/config.json');
+    console.log('');
+    console.log('You can now run:');
+    console.log('  sinter --prompt "your idea"');
+    if (providerDefaults.requiresKey && providerDefaults.apiKeyEnv) {
+      console.log('');
+      console.log(`Set ${providerDefaults.apiKeyEnv} before generating with ${providerDefaults.label}.`);
+    }
+    console.log('');
+    process.exit(0);
+  }).catch(err => {
+    console.error('❌ Error saving config:', err.message);
+    process.exit(1);
+  });
+
+  // Don't exit yet - wait for saveConfig
+}
+
+// Override config with CLI flags
+if (flags.provider) {
+  const providerKey = resolveCliProvider(flags.provider);
+  if (providerKey) {
+    const providerDefaults = CLI_PROVIDER_DEFAULTS[providerKey];
+    process.env.LIMINAL_LLM_PROVIDER = providerKey;
+    process.env.LIMINAL_LLM_BASE_URL = providerDefaults.baseUrl;
+    if (!process.env.LIMINAL_LLM_MODEL) process.env.LIMINAL_LLM_MODEL = providerDefaults.model;
+    console.log(`[CLI] Using ${providerDefaults.label} endpoint: ${providerDefaults.baseUrl}`);
+  } else {
+    console.warn(`[CLI] Unknown provider: ${flags.provider}. Use one of: ${CLI_PROVIDER_NAMES.join(', ')}, or set LIMINAL_LLM_BASE_URL.`);
+  }
+}
+if (flags.model) {
+  process.env.LIMINAL_LLM_MODEL = flags.model;
+}
+
+// Handle --interactive flag
+if (flags.interactive) {
+  const mode = new InteractiveMode(history);
+  try {
+    const { prompt: interactivePrompt, options } = await mode.run();
+    flags.prompt = interactivePrompt;
+    if (options.provider) {
+      process.env.LIMINAL_LLM_PROVIDER = options.provider;
+    }
+  } catch (err) {
+    console.error('Interactive mode cancelled');
+    process.exit(0);
+  }
+}
+
+// Handle --recent flag
+if (flags.recent) {
+  const recent = await history.getRecent(flags.recent);
+  console.log('');
+  console.log('🕐 Recent Prompts:');
+  console.log('');
+  if (recent.length === 0) {
+    console.log('  (none yet)');
+  } else {
+    recent.forEach((p, i) => console.log('  ' + (i + 1) + '. ' + p));
+  }
+  console.log('');
+  process.exit(0);
+}
+
+// Handle --favorites flag
+if (flags.favorites) {
+  const favorites = await history.getFavorites();
+  console.log('');
+  console.log('⭐ Favorite Prompts:');
+  console.log('');
+  if (favorites.length === 0) {
+    console.log('  (none yet)');
+  } else {
+    favorites.forEach((p, i) => console.log('  ' + (i + 1) + '. ' + p));
+  }
+  console.log('');
+  process.exit(0);
+}
+
+// Handle --favorite flag (add to favorites)
+if (flags.favorite) {
+  await history.addFavorite(flags.favorite);
+  console.log('');
+  console.log('⭐ Added to favorites: "' + flags.favorite + '"');
+  console.log('');
+  process.exit(0);
+}
+
+// Initialize config (loads from file or uses defaults)
+await initializeConfig();
+
+// Load role definitions for LLMClient
+await LLMClient.loadRoles();
+
+const naturalLanguagePrompt = inferNaturalLanguagePrompt(cmd, cmdArgs);
+if (naturalLanguagePrompt && flags.prompt === undefined) {
+  flags.prompt = naturalLanguagePrompt;
+}
+
+if (naturalLanguagePrompt && flags.prompt && isSelfImprovementPrompt(flags.prompt)) {
+  const { LLMModeSelfImprovementRuntime } = await import('../dist/runtime-core/SelfImprovementRuntime.js');
+  const outDir = flags.output || path.join('.omx', 'self-improvement', new Date().toISOString().replace(/[:.]/g, '-'));
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const runtime = new LLMModeSelfImprovementRuntime();
+  const llm = new LLMClient({ role: 'harness' });
+  const prepared = runtime.prepare({ llm, description: flags.prompt });
+  const taskJsonPath = path.join(outDir, 'self-improvement-task.json');
+  const taskMdPath = path.join(outDir, 'self-improvement-task.md');
+  fs.writeFileSync(taskJsonPath, `${JSON.stringify(prepared.task, null, 2)}\n`, 'utf-8');
+  fs.writeFileSync(taskMdPath, [
+    '# Sinter Self-Improvement Task Packet',
+    '',
+    `Task: ${prepared.task.title}`,
+    `Task ID: ${prepared.taskId}`,
+    `Model: ${prepared.modelName}`,
+    `Domain: ${prepared.task.domain}`,
+    `Focus file: ${prepared.task.fileHint}`,
+    '',
+    '## Working set',
+    ...prepared.task.workingSet.map((file) => `- ${file}`),
+    '',
+    '## Verification targets',
+    ...prepared.task.verificationTargets.map((target) => `- ${target.tool}${target.pattern ? ` (${target.pattern})` : ''}: ${target.reason}`),
+    '',
+    '## Description',
+    '',
+    prepared.task.description,
+    '',
+  ].join('\n'), 'utf-8');
+
+  console.log('');
+  console.log('🛠️ Sinter: Self-improvement request');
+  console.log('✅ Routed to self-improvement task preparation, not creative generation.');
+  console.log(`📁 Output: ${outDir}`);
+  console.log(`✅ Task JSON: ${taskJsonPath}`);
+  console.log(`✅ Task Markdown: ${taskMdPath}`);
+  console.log(`🎯 Focus file: ${prepared.task.fileHint}`);
+  console.log(`🧪 Verification: ${prepared.task.verificationTargets.map((target) => target.tool).join(', ')}`);
+
+  const executeRequested = flags.confirm === 'auto' || flags.force === true;
+  if (!executeRequested) {
+    console.log('ℹ️  Add --confirm auto to execute this bounded self-improvement task in an isolated worktree.');
+    console.log('');
+    process.exit(0);
+  }
+
+  if (!isIsolatedWorktree() && process.env.LIMINAL_ALLOW_MAIN_WORKTREE_IMPROVE !== '1') {
+    console.error('❌ Refusing to execute self-improvement in the main worktree.');
+    console.error('   Create an isolated worktree, then rerun with --confirm auto.');
+    process.exit(2);
+  }
+
+  prepared.task.requiresMutation = true;
+  console.log('🚀 Executing bounded self-improvement task...');
+  const result = await prepared.execute();
+  const sessionSummary = summarizeSession(result);
+  const sessionJsonPath = path.join(outDir, 'self-improvement-session.json');
+  const sessionMdPath = path.join(outDir, 'self-improvement-session.md');
+  fs.writeFileSync(sessionJsonPath, `${JSON.stringify(sessionSummary, null, 2)}\n`, 'utf-8');
+  fs.writeFileSync(sessionMdPath, [
+    '# Sinter Self-Improvement Session',
+    '',
+    `Status: ${sessionSummary.status}`,
+    `Exit reason: ${sessionSummary.exitReason || 'n/a'}`,
+    `Steps: ${sessionSummary.stepCount}`,
+    `Mutated files: ${sessionSummary.mutatedFiles.length > 0 ? sessionSummary.mutatedFiles.join(', ') : 'none'}`,
+    `Successful mutated files: ${sessionSummary.successfulMutatedFiles.length > 0 ? sessionSummary.successfulMutatedFiles.join(', ') : 'none'}`,
+    '',
+    `Session JSON: ${sessionJsonPath}`,
+    '',
+  ].join('\n'), 'utf-8');
+  console.log(`✅ Session JSON: ${sessionJsonPath}`);
+  console.log(`✅ Session Markdown: ${sessionMdPath}`);
+  console.log(`📊 Status: ${sessionSummary.status}`);
+  console.log(`📊 Steps: ${sessionSummary.stepCount}`);
+  console.log(`✏️  Mutated files: ${sessionSummary.mutatedFiles.length > 0 ? sessionSummary.mutatedFiles.join(', ') : 'none'}`);
+  console.log('');
+  process.exit(sessionSummary.status === 'success' ? 0 : 1);
+}
+
+const hasOutputFlag = flags.output !== undefined;
+const hasPromptFlag = flags.prompt !== undefined;
+const isLiveMusic = flags.mode === 'live-music' || cmd === 'live-music';
+
+if (hasOutputFlag && !hasPromptFlag && !cmd && !isLiveMusic) {
+  console.error('Error: --prompt is required');
+  process.exit(1);
+}
+
+// --- live-music mode: generateMusic + optional generateVisuals, write to --output, print paths ---
+if (isLiveMusic) {
+  const livePrompt = commandPrompt(flags.prompt, cmdArgs);
+  if (!livePrompt) {
+    console.error('Error: --prompt is required for live-music');
+    process.exit(1);
+  }
+  const liveOutDir = flags.output || path.join(process.env.HOME || '/tmp', '.sinter', 'output');
+  fs.mkdirSync(liveOutDir, { recursive: true });
+
+  // Load project config for live settings (MIDI, OSC, syncMode) - pass through only
+  let liveConfig = null;
+  try {
+    liveConfig = await loadProjectConfig(process.cwd());
+  } catch (_) {}
+  const liveOpts = liveConfig?.live || {};
+
+  console.log('');
+  console.log('🎵 Sinter: Live AV');
+  console.log('📝 Prompt: "' + livePrompt + '"');
+  console.log('📁 Output: ' + liveOutDir);
+  if (liveOpts.oscHost || liveOpts.syncMode) {
+    console.log('🔧 Live config: oscHost=' + (liveOpts.oscHost || '-') + ', syncMode=' + (liveOpts.syncMode || '-'));
+  }
+  console.log('');
+
+  try {
+    const musicResult = await generateMusic(livePrompt, { musicPlatform: 'strudel' });
+    const strudelPath = path.join(liveOutDir, 'strudel.js');
+    fs.writeFileSync(strudelPath, musicResult.code, 'utf-8');
+    console.log('✅ Music: ' + strudelPath);
+
+    const visualResult = await generateVisuals({ prompt: livePrompt, platform: 'hydra' });
+    const hydraPath = path.join(liveOutDir, 'hydra.js');
+    fs.writeFileSync(hydraPath, visualResult.code, 'utf-8');
+    console.log('✅ Visuals: ' + hydraPath);
+    console.log('');
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+    process.exit(1);
+  }
+  process.exit(0);
+}
+
+if (cmd === 'site') {
+  const { runSiteEvolve } = await import('../dist/cli/SiteCommand.js');
+  const subCmd = cmdArgs[0];
+
+  if (subCmd !== 'evolve') {
+    console.error('Usage: sinter site evolve [--once] [--dry-run] [--slot <id>]');
+    process.exit(1);
+  }
+
+  const options = {
+    once: cmdArgs.includes('--once'),
+    dryRun: cmdArgs.includes('--dry-run'),
+    slot: (() => { const idx = cmdArgs.indexOf('--slot'); return idx !== -1 ? cmdArgs[idx + 1] : undefined; })(),
+    interval: (() => { const idx = cmdArgs.indexOf('--interval'); return idx !== -1 ? parseInt(cmdArgs[idx + 1]) : undefined; })(),
+  };
+
+  await runSiteEvolve(options);
+  process.exit(0);
+}
+
+if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || (flags.prompt && (!cmd || naturalLanguagePrompt))) {
+  prompt = commandPrompt(flags.prompt, cmdArgs);
+  if (!prompt) {
+    console.error('Error: --prompt is required');
+    process.exit(1);
+  }
+  if (flags.maxIterations) maxIterations = flags.maxIterations;
+  if (flags.output) output = flags.output;
+
+  const outDir = output || path.join(process.env.HOME || '/tmp', '.sinter', 'output');
+  fs.mkdirSync(outDir, { recursive: true });
+
+  console.log('');
+  console.log('🎨 Sinter: Creative Coding Agent');
+  console.log('📝 Prompt: "' + prompt + '"');
+  console.log('🔄 Max iterations: ' + maxIterations);
+  if (output) console.log('📁 Output: ' + output);
+  console.log('');
+  console.log('Generating:', prompt);
+  console.log('');
+
+  // Route generation + validation to the domain the prompt asks for (else the
+  // loop defaults to p5 and a "GLSL shader" prompt fails p5 validation).
+  const { detectPromptDomain } = await import('../dist/core/detectPromptDomain.js');
+  const detectedDomain = await detectPromptDomain(prompt);
+  if (detectedDomain) console.log('🎯 Detected domain: ' + detectedDomain + '\n');
+
+  const aestheticConfig = {
+    ...(loadAestheticConfig(flags.aestheticConfig) || {}),
+    ...(flags.aesthetic ? { preset: flags.aesthetic } : {}),
+  };
+
+  run(prompt, {
+    maxIterations: maxIterations,
+    output: outDir,
+    project: 'cli-project',
+    collabDomain: detectedDomain,
+    useSwarm: flags.useSwarm,
+    swarmMode: flags.swarmMode,
+    swarmConfig: flags.swarmRounds ? { maxRounds: flags.swarmRounds } : undefined,
+    useAestheticGuardrails: !!(flags.aesthetic || flags.aestheticConfig),
+    aestheticConfig: (flags.aesthetic || flags.aestheticConfig) ? aestheticConfig : undefined,
+    useIntuition: !!flags.intuition,
+    voiceFile: flags.voiceFile,
+    voice: flags.voice,
+  }).then(async (result) => {
+    console.log('');
+    console.log('✅ Generation complete!');
+    console.log('📊 Iterations: ' + result.iterations);
+    console.log('⏱️ Time: ' + (result.duration / 1000).toFixed(1) + 's');
+    console.log('🎯 Reason: ' + result.reason);
+    console.log('⭐ Quality score: ' + result.finalScore.toFixed(2));
+    console.log('🤖 Model: ' + (result.model || 'unknown'));
+    // Track in history
+    await history.add(prompt);
+
+    console.log('✅ Saved: ' + result.jsPath);
+    if (result.htmlPath) console.log('✅ HTML: ' + result.htmlPath);
+    if (result.zipPath) console.log('✅ Archive: ' + result.zipPath);
+    try {
+      const receiptLines = await writeCliCognitiveReceipt({ prompt, result });
+      console.log('');
+      for (const line of receiptLines) console.log(line);
+    } catch (receiptErr) {
+      const message = receiptErr instanceof Error ? receiptErr.message : String(receiptErr);
+      console.log('');
+      console.log('🧠 What Sinter learned: unavailable — ' + message);
+    }
+    console.log('');
+    process.exit(0);
+  }).catch(err => {
+    console.error('');
+    console.error('❌ Error:', err.message);
+    console.error('');
+    process.exit(1);
+  });
+}
+else if (cmd === 'serve' || cmd === 's') {
+  const port = cmdArgs[0] || 3456;
+  const server = new PreviewServer();
+
+  function findLatestSketch(dirs) {
+    let latestSketch = null;
+    let latestTime = 0;
+
+    for (const dir of dirs) {
+      if (!fs.existsSync(dir)) continue;
+
+      const files = fs.readdirSync(dir, { recursive: true })
+        .filter(f => f.endsWith('.js'))
+        .map(f => ({ file: f, path: path.join(dir, f), stat: fs.statSync(path.join(dir, f)) }))
+        .filter(({ stat }) => stat.isFile());
+
+      for (const { file, path: fullPath, stat } of files) {
+        if (stat.mtimeMs > latestTime) {
+          latestTime = stat.mtimeMs;
+          latestSketch = { file, path: fullPath };
+        }
+      }
+    }
+    return latestSketch;
+  }
+
+  const searchDirs = [
+    path.join(process.env.HOME || '/tmp', '.sinter', 'output'),
+    path.join(process.cwd(), 'gallery'),
+  ];
+
+  const latestSketch = findLatestSketch(searchDirs);
+  let sketchCode = '';
+
+  if (latestSketch) {
+    sketchCode = fs.readFileSync(latestSketch.path, 'utf-8');
+    console.log('📄 Loading sketch:', latestSketch.file);
+  } else {
+    console.log('⚠️  No sketches found. Generate one first:');
+    console.log('   sinter --prompt "your idea"');
+  }
+
+  server.serveSketch(sketchCode);
+  server.start(port).then(() => {
+    console.log('✅ Server running on http://localhost:' + port);
+  }).catch(err => {
+    console.error('❌ Error starting server:', err.message);
+    process.exit(1);
+  });
+}
+else if (cmd === 'compost') {
+  // Check for dual-model configuration
+  let llm;
+  let fastLLM;
+  let modelRouter;
+
+  // Check if dual-model flags are provided
+  const hasDualModelFlags = flags.fastModel || flags.powerfulModel || flags.routingMode;
+
+  if (hasDualModelFlags) {
+    // Dual-model mode: create ModelRouter with two LLM clients
+    const fastModelName = flags.fastModel || 'qwen3.5:9b';
+    const powerfulModelName = flags.powerfulModel || 'qwen3:30b-a3b';
+    const routingMode = flags.routingMode || 'cascade';
+    const confidenceThreshold = flags.confidenceThreshold ?? 0.8;
+
+    console.log(`[Compost] Dual-model mode:`);
+    console.log(`  Fast model: ${fastModelName}`);
+    console.log(`  Powerful model: ${powerfulModelName}`);
+    console.log(`  Routing mode: ${routingMode}`);
+    console.log(`  Confidence threshold: ${confidenceThreshold}`);
+    console.log('');
+
+    // Create primary (fast) LLM client
+    const primaryLLM = new LLMClient({
+      role: 'generator',
+      provider: 'ollama',
+      baseUrl: process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434',
+      model: fastModelName,
+    });
+
+    // Create secondary (powerful) LLM client
+    const secondaryLLM = new LLMClient({
+      role: 'generator',
+      provider: 'ollama',
+      baseUrl: process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434',
+      model: powerfulModelName,
+    });
+
+    // Create ModelRouter
+    modelRouter = new ModelRouter(primaryLLM, secondaryLLM, {
+      primary: {
+        provider: 'ollama',
+        model: fastModelName,
+        temperature: 0.7,
+        maxTokens: 2000,
+      },
+      secondary: {
+        provider: 'ollama',
+        model: powerfulModelName,
+        temperature: 0.7,
+        maxTokens: 2000,
+      },
+      routing: {
+        mode: routingMode,
+        confidenceThreshold,
+        primaryConcurrency: 8,
+        secondaryConcurrency: 4,
+      },
+    });
+
+    // Use the router as the main LLM
+    llm = modelRouter;
+    fastLLM = primaryLLM; // For backward compatibility with fastLLM parameter
+  } else {
+    // Single-model mode (original behavior)
+    llm = new LLMClient({ role: 'generator' });
+    fastLLM = new LLMClient({ role: 'generator', provider: 'lmstudio' });
+  }
+
+  // Compost rehydrate subcommand — handled before parseArgs delegation
+  if (cmdArgs[0] === 'rehydrate') {
+    const { CompostRehydrator } = await import('../dist/compost/CompostRehydrator.js');
+    const { CompostHeap } = await import('../dist/compost/CompostHeap.js');
+    const { CompostShredder } = await import('../dist/compost/CompostShredder.js');
+
+    const heap = new CompostHeap({ heapDir: path.join(process.cwd(), '.sinter', 'compost', 'heap') });
+    const heapFiles = await heap.listFiles();
+    if (heapFiles.length === 0) {
+      console.log('No files in heap to rehydrate.');
+      process.exit(0);
+    }
+
+    // Read heap files and shred into fragments
+    const allFragments = [];
+    for (const relPath of heapFiles) {
+      const fullPath = path.join(process.cwd(), '.sinter', 'compost', 'heap', relPath);
+      try {
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        const frags = CompostShredder.shredSemantic(content, relPath, 'compost');
+        allFragments.push(...frags);
+      } catch (_) { /* skip unreadable files */ }
+    }
+
+    if (allFragments.length === 0) {
+      console.log('No fragments extracted from heap files.');
+      process.exit(0);
+    }
+
+    const rehydrator = new CompostRehydrator();
+    const rehydratable = rehydrator.findRehydratable(allFragments);
+    if (rehydratable.length === 0) {
+      console.log('No fragments meet the motif density threshold for rehydration.');
+      process.exit(0);
+    }
+
+    const candidates = rehydrator.rehydrate(rehydratable);
+    console.log('');
+    console.log(`Rehydrated ${candidates.length} candidates from ${rehydratable.length} fragments (${heapFiles.length} heap files):`);
+    for (const c of candidates) {
+      console.log(`  motifDensity=${c.motifDensity.toFixed(3)} complexity=${c.complexity.toFixed(3)} complete=${c.isComplete} sources=${c.sourceIds.length}`);
+    }
+    console.log('');
+    process.exit(0);
+  }
+
+  const action = parseArgs(process.argv.slice(2));
+
+  // Bootstrap metabolic entropy engine
+  const { EventStore } = await import('../dist/compost/EventStore.js');
+  const { MetabolicEntropyEngine } = await import('../dist/entropy/MetabolicEntropyEngine.js');
+  const { initializeTelemetry, getTelemetry } = await import('../dist/guardrails/observation/TelemetryCollector.js');
+
+  const eventStore = new EventStore({ projectRoot: process.cwd() });
+  eventStore.init();
+
+  let telemetry = getTelemetry();
+  if (!telemetry) {
+    telemetry = initializeTelemetry({ enabled: true, sampleRate: 1.0 });
+  }
+
+  const entropyEngine = new MetabolicEntropyEngine({
+    eventStore,
+    heap: { listFiles: async () => [] },
+    telemetry,
+  });
+
+  const mill = new CompostMill(llm, { soupEnabled: true, fastLLM, modelRouter, entropy: entropyEngine });
+  await execute(action, mill).catch(err => {
+    console.error('Compost error:', err.message);
+    process.exit(1);
+  });
+  process.exit(0);
+}
+else if (cmd === 'list' || cmd === 'ls') {
+  const outDir = path.join(process.env.HOME || '/tmp', '.sinter', 'output');
+  console.log('📁 Sketches:');
+  if (fs.existsSync(outDir)) {
+    fs.readdirSync(outDir).filter(f => f.endsWith('.js')).forEach(f => console.log('  ' + f));
+  } else {
+    console.log('  (none yet)');
+  }
+  process.exit(0);
+}
+else if (cmd === 'composite') {
+  const specPath = flags.spec;
+  if (!specPath) {
+    console.error('Usage: sinter composite --spec <spec.json> [--output <plan.json>]');
+    process.exit(1);
+  }
+
+  const { Compositor } = await import('../dist/composite/Compositor.js');
+  const { CompositionAnalyzer } = await import('../dist/composition/CompositionAnalyzer.js');
+  try {
+    const specJson = fs.readFileSync(specPath, 'utf-8');
+    const spec = JSON.parse(specJson);
+    const compositor = new Compositor();
+    compositor.validateSpec(spec);
+
+    console.log('Composition Spec Analysis');
+    console.log(`  Layers: ${spec.layers?.length ?? 0}`);
+
+    const analyzer = new CompositionAnalyzer();
+
+    // Map compositor layer types (video/image/audio) to composition domain hints
+    const typeToDomain = { video: 'p5', image: 'svg', audio: 'tone' };
+
+    for (const layer of spec.layers ?? []) {
+      const domainHint = typeToDomain[layer.type] || layer.type;
+      const recommendations = await analyzer.analyze(`Generate ${domainHint} visual`);
+      console.log(`  [${layer.type} -> ${domainHint}] confidence=${recommendations[0]?.confidence ?? 'n/a'} reason=${recommendations[0]?.reason ?? 'n/a'}`);
+    }
+
+    // Note: PromptEnhancer requires full composition Layer objects (with .type, .enabled,
+    // .metadata.prompt) which compositor stub layers don't provide. Skip enhancement here
+    // — it's available via the composition pipeline when layers are created through generators.
+
+    const outputPath = flags.output;
+    if (outputPath) {
+      const plan = { spec, analyzedAt: new Date().toISOString(), layers: spec.layers?.length ?? 0 };
+      fs.writeFileSync(outputPath, JSON.stringify(plan, null, 2));
+      console.log(`  Plan written to: ${outputPath}`);
+    }
+    console.log('Done.');
+    process.exit(0);
+  } catch (err) {
+    console.error('Composite analysis failed:', err.message);
+    process.exit(1);
+  }
+}
+else if (cmd === 'compose') {
+  // End-to-end layered work: generate every layer via the domain generators and
+  // assemble one standalone composite HTML (stacked, blended visual layers +
+  // audio). This is the "combine outputs" path — Sinter's core mixing capability.
+  const specPath = flags.spec;
+  const nlPrompt = flags.prompt || (cmdArgs.length ? cmdArgs.join(' ') : undefined);
+  if (!specPath && !nlPrompt) {
+    console.error('Usage: sinter compose (--prompt "<idea>" | --spec <spec.json>) [-o <dir>]');
+    console.error('  --prompt: an LLM decomposes the idea into layers, then composes them');
+    console.error('  --spec:   { "title", "background", "layers": [ { "domain", "prompt", "blendMode", "opacity" } ] }');
+    console.error('  domains: p5, three, shader, hydra, ascii, html, tone, strudel');
+    process.exit(1);
+  }
+  const outDir = flags.output || 'output';
+  const { CompositionOrchestrator } = await import('../dist/composition/CompositionOrchestrator.js');
+  const { harnessMemory } = await import('../dist/harness/HarnessMemory.js');
+  try {
+    let result;
+    if (specPath) {
+      const spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+      console.log('🎨 Composing ' + (spec.layers?.length ?? 0) + ' layers...');
+      console.log('');
+      result = await CompositionOrchestrator.compose(spec);
+    } else {
+      console.log('🧩 Decomposing idea into layers...');
+      console.log('');
+      result = await CompositionOrchestrator.composeFromPrompt(nlPrompt);
+    }
+    fs.mkdirSync(outDir, { recursive: true });
+    const htmlPath = path.join(outDir, 'composition.html');
+    fs.writeFileSync(htmlPath, result.html, 'utf-8');
+    for (const l of result.layers) {
+      console.log('  [' + l.domain + '] ' + (l.generated
+        ? 'ok — ' + l.codeLength + ' chars, blend=' + l.blendMode + ' opacity=' + l.opacity
+        : 'FAILED: ' + l.error));
+    }
+    console.log('');
+    console.log('✅ ' + result.successCount + '/' + result.layers.length + ' layers composed');
+    console.log('✅ Saved: ' + htmlPath);
+    // Feed self-improvement: record this composition as a generation episode.
+    try {
+      await harnessMemory.initialize();
+      harnessMemory.recordEpisode({
+        type: 'generation',
+        domain: 'composition',
+        prompt: result.title + ' :: ' + result.layers.map(l => l.domain + ':' + l.prompt).join(' | '),
+        code: result.html,
+        score: result.layers.length ? result.successCount / result.layers.length : 0,
+        tags: ['composition', ...result.layers.map(l => l.domain)],
+      });
+      await harnessMemory.save();
+      console.log('🧠 Recorded composition episode for self-improvement');
+    } catch (memErr) {
+      console.log('⚠️  Episode not recorded: ' + memErr.message);
+    }
+    process.exit(result.successCount > 0 ? 0 : 1);
+  } catch (err) {
+    console.error('Compose failed:', err.message);
+    process.exit(1);
+  }
+}
+else if (cmd === 'chat') {
+  // Chat command - conversational creative coding mode
+  chatCommand({ verbose: flags.verbose || false }).catch(err => {
+    console.error('Chat error:', err.message);
+    process.exit(1);
+  });
+}
+else if (cmd === 'git') {
+  handleGitCommand(cmdArgs[0], cmdArgs.slice(1)).then(() => {
+    process.exit(0);
+  }).catch(err => {
+    console.error('Git error:', err.message);
+    process.exit(1);
+  });
+}
+else if (cmd === 'consolidate' || flags.consolidate) {
+  // Memory consolidation — compress raw episodes into semantic patterns
+  const { MemoryConsolidator, ThompsonSampler, DomainPrototype, IntuitionCache } = await import('../dist/intuition/index.js');
+  const { HarnessMemory } = await import('../dist/harness/HarnessMemory.js');
+
+  console.log('');
+  console.log('🧠 Sinter Memory Consolidation');
+  console.log('');
+
+  const memory = new HarnessMemory();
+  await memory.initialize(); // load persisted episodes from disk before reading them
+  const modelSampler = new ThompsonSampler({ minPulls: 1, successThreshold: 0.7 });
+  const strategySampler = new ThompsonSampler({ minPulls: 1, successThreshold: 0.7 });
+  const prototype = new DomainPrototype();
+  const consolidator = new MemoryConsolidator(
+    { modelSampler, strategySampler, prototype },
+    { successThreshold: 0.7, minEpisodesForPattern: 2, maxPatterns: 200 },
+  );
+
+  // Convert HarnessMemory episodes to ConsolidationEpisodes
+  const rawEpisodes = memory.getRecentEpisodes(500);
+  const episodes = rawEpisodes
+    .filter(e => e.type === 'generation' && e.score !== undefined)
+    .map(e => ({
+      domain: e.domain ?? 'p5',
+      output: e.code ?? '',
+      qualityScore: e.score,
+      model: e.tags?.find(t => t.startsWith('model:'))?.replace('model:', ''),
+      strategy: e.tags?.find(t => t.startsWith('strategy:'))?.replace('strategy:', ''),
+      timestamp: e.timestamp,
+    }));
+
+  console.log(`  Raw episodes: ${episodes.length}`);
+
+  const result = consolidator.consolidate(episodes);
+
+  console.log(`  Patterns created: ${result.patternsCreated}`);
+  console.log(`  Patterns pruned: ${result.patternsPruned}`);
+  console.log(`  Prototype updates: ${result.prototypeUpdates}`);
+  console.log(`  Duration: ${result.durationMs}ms`);
+  console.log('');
+
+  if (Object.keys(result.byDomain).length > 0) {
+    console.log('  Domain breakdown:');
+    for (const [domain, stats] of Object.entries(result.byDomain)) {
+      console.log(`    ${domain}: ${stats.episodes} episodes, ${stats.patterns} patterns, avg quality ${stats.avgQuality.toFixed(3)}`);
+    }
+  }
+
+  console.log('');
+  console.log('✅ Consolidation complete');
+  console.log('');
+  process.exit(0);
+} else if (cmd === 'tui') {
+  const { spawn } = await import('child_process');
+  const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  console.log('Launching Bubble Tea operator cockpit...');
+  const tui = spawn(npmCmd, ['run', 'tui'], {
+    cwd: repoRoot,
+    stdio: 'inherit',
+    env: process.env,
+  });
+  tui.on('exit', (code) => process.exit(code ?? 0));
+  tui.on('error', (err) => {
+    console.error('TUI error:', err.message);
+    process.exit(1);
+  });
+}
+else if (cmd === 'bridge') {
+  // Standalone bridge server (no TUI launched)
+  const port = parseInt(cmdArgs[0]) || 3000;
+  import('../dist/tui-bridge/TuiBridgeServer.js').then(async ({ TuiBridgeServer }) => {
+    const { TuiBridgeService } = await import('../dist/tui-bridge/TuiBridgeService.js');
+    const bridge = new TuiBridgeService();
+
+    await LLMClient.loadRoles();
+    const llm = new LLMClient({ role: 'generator' });
+    const llmModel = process.env.LIMINAL_LLM_MODEL || 'auto';
+    const llmProvider = process.env.LIMINAL_LLM_BASE_URL || 'config';
+
+    const server = new TuiBridgeServer(bridge, { port, llm });
+    await server.start();
+    console.log('');
+    console.log('Sinter TUI Bridge');
+    console.log(`  Listening: ${server.address}`);
+    console.log(`  LLM: ${llmProvider} / ${llmModel}`);
+    console.log('');
+    console.log('  Connect Bubble Tea: LIMINAL_BRIDGE_URL=http://localhost:' + port + ' ./dist/bubbletea');
+    console.log('');
+    const shutdown = async () => {
+      console.log('\nShutting down bridge...');
+      await server.stop();
+      process.exit(0);
+    };
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+  }).catch(err => {
+    console.error('Bridge error:', err.message);
+    console.error('Make sure to run `pnpm build` first.');
+    process.exit(1);
+  });
+}
+else if (cmd === 'studio') {
+  // Studio is the GUI-first workbench: Express bridge/API plus Vite browser app.
+  const { spawn } = await import('child_process');
+  const apiPort = parseInt(cmdArgs[0]) || 5174;
+  const guiUrl = 'http://localhost:5173';
+  const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+
+  console.log('');
+  console.log('◆ Sinter Studio');
+  console.log(`  GUI: ${guiUrl}`);
+  console.log(`  API: http://localhost:${apiPort}`);
+  console.log('  Surface: GUI workbench with live preview and Improve lane');
+  console.log('');
+
+  const studio = spawn(npmCmd, ['run', 'gui'], {
+    cwd: repoRoot,
+    env: {
+      ...process.env,
+      PORT: String(apiPort),
+      VITE_API_TARGET: `http://localhost:${apiPort}`,
+    },
+    stdio: 'inherit',
+  });
+
+  studio.on('exit', (code) => {
+    process.exit(code ?? 0);
+  });
+
+  studio.on('error', (err) => {
+    console.error('Failed to launch Sinter Studio:', err.message);
+    process.exit(1);
+  });
+}
+else if (cmd === 'market' && (!cmdArgs[0] || cmdArgs[0] === 'status')) {
+  const status = collectRepositoryMarketReadinessStatus(repoRoot);
+  console.log('');
+  console.log(formatMarketReadinessStatus(status));
+  console.log('');
+  process.exit(status.ready ? 0 : 2);
+}
+else if (cmd === 'readiness' && (!cmdArgs[0] || cmdArgs[0] === 'status')) {
+  const status = collectRepositoryMarketReadinessStatus(repoRoot);
+  console.log('');
+  console.log(formatMarketReadinessStatus(status));
+  console.log('');
+  process.exit(status.ready ? 0 : 2);
+}
+else if (cmd === 'quality') {
+  const subCmd = cmdArgs[0];
+  if (!subCmd || (subCmd !== 'run' && subCmd !== 'gate')) {
+    console.error('Usage: sinter quality <run|gate>');
+    console.error('  run   --spec <path>   Run a golden suite');
+    console.error('  gate  --spec <path>   Block promotion on regression');
+    process.exit(1);
+  }
+
+  const { EvaluationFabric } = await import('../dist/evaluation/EvaluationFabric.js');
+  const { GoldenSuiteRunner } = await import('../dist/release/GoldenSuiteRunner.js');
+  const { PromotionGate } = await import('../dist/release/PromotionGate.js');
+
+  const suitePath = flags.spec;
+  if (!suitePath) {
+    console.error('Error: --spec <path> is required (path to golden suite JSON)');
+    process.exit(1);
+  }
+
+  const suiteJson = fs.readFileSync(suitePath, 'utf-8');
+  const suite = JSON.parse(suiteJson);
+
+  console.log('');
+  console.log('◆ Sinter Quality Gate');
+  console.log(`  Suite: ${suite.name} (${suite.cases.length} cases)`);
+  console.log('');
+
+  const runner = new GoldenSuiteRunner({
+    qualityThreshold: flags.confidenceThreshold,
+    onCaseComplete: (id, passed, score) => {
+      const icon = passed ? 'PASS' : 'FAIL';
+      console.log(`  ${icon} ${id}: ${score.toFixed(3)}`);
+    },
+  });
+
+  const result = await runner.run(suite);
+  console.log('');
+  console.log(`  Result: ${result.aggregate.passed}/${result.aggregate.total} passed`);
+  console.log(`  Average score: ${result.aggregate.averageScore.toFixed(3)}`);
+  console.log(`  Duration: ${result.durationMs}ms`);
+
+  if (subCmd === 'gate') {
+    console.log('');
+    const gate = new PromotionGate({ maxRegressions: 0 });
+    const gateResult = gate.check(result.aggregate);
+    console.log(gateResult.summary);
+    console.log('');
+    process.exit(gateResult.passed ? 0 : 1);
+  } else {
+    console.log(`  Suite passed: ${result.aggregate.suitePassed}`);
+    console.log('');
+    process.exit(result.aggregate.suitePassed ? 0 : 1);
+  }
+}
+else if (cmd === 'bubbletea' || cmd === 'operator') {
+  // All-in-one: start bridge server, then launch Go Bubble Tea TUI
+  const { spawn } = await import('child_process');
+  const port = parseInt(cmdArgs[0]) || 3000;
+
+  const { TuiBridgeServer } = await import('../dist/tui-bridge/TuiBridgeServer.js');
+  const { TuiBridgeService } = await import('../dist/tui-bridge/TuiBridgeService.js');
+  const bridge = new TuiBridgeService();
+
+  await LLMClient.loadRoles();
+  const llm = new LLMClient({ role: 'generator' });
+
+  const server = new TuiBridgeServer(bridge, { port, llm });
+  await server.start();
+
+  // Find the Bubble Tea binary
+  const binPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'bubbletea');
+  if (!fs.existsSync(binPath)) {
+    console.log('  Note: Bubble Tea TUI not built — bridge-only mode (HTTP API active)');
+    console.log('  Build TUI: cd bubbletea && go build -o ../dist/bubbletea .');
+    console.log('');
+    const shutdown = async () => { try { await server.stop(); } catch { /* already closing */ } process.exit(0); };
+    process.once('SIGINT', shutdown);
+    process.once('SIGTERM', shutdown);
+  } else {
+    const tui = spawn(binPath, [], {
+      env: { ...process.env, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
+      stdio: 'inherit',
+    });
+
+    tui.on('exit', async (code) => {
+      await server.stop();
+      process.exit(code ?? 0);
+    });
+
+    tui.on('error', async (err) => {
+      console.error('Failed to launch Bubble Tea:', err.message);
+      await server.stop();
+      process.exit(1);
+    });
+  }
+}
+else if (cmd === 'fix') {
+  // Fix command - auto-fix code issues with LLM assistance
+  const fixTarget = cmdArgs[0];
+
+  console.log('');
+  console.log('🔧 Sinter Fix');
+  console.log('');
+
+  // Validate and normalize confirm option
+  const confirmLevel = flags.confirm || 'ask';
+  if (!['auto', 'ask', 'never'].includes(confirmLevel)) {
+    console.error('Error: --confirm must be one of: auto, ask, never');
+    process.exit(1);
+  }
+
+  // Build fix configuration from parsed arguments
+  const fixConfig = {
+    target: fixTarget,
+    error: flags.error,
+    testFailures: flags.testFailures,
+    testFile: flags.testFile,
+    dryRun: flags.dryRun,
+    confirm: confirmLevel,
+  };
+
+  // Determine fix type based on arguments
+  let fixType = 'natural-language';
+  if (flags.testFailures) {
+    fixType = 'test-failures';
+  } else if (flags.testFile || flags.error || (fixTarget && fixTarget.match(/\.(ts|js|tsx|jsx)$/))) {
+    fixType = 'file-error';
+  }
+
+  // Import and use AutoFixOrchestrator
+  const { AutoFixOrchestrator } = await import('../dist/fix/index.js');
+  const llmClient = new LLMClient({ role: 'generator' });
+  const orchestrator = new AutoFixOrchestrator(llmClient);
+
+  // Build and execute the fix request
+  const fixRequest = {
+    type: fixType,
+    target: fixTarget || flags.testFile,
+    errorDescription: flags.error || fixTarget, // For natural language, use target as description
+    dryRun: flags.dryRun,
+    confirmLevel: confirmLevel,
+  };
+
+  console.log('Starting fix...');
+  console.log('  Type:', fixType);
+  console.log('  Target:', fixRequest.target || '(none)');
+  console.log('');
+
+  try {
+    const result = await orchestrator.executeFix(fixRequest);
+
+    console.log('');
+    if (result.success) {
+      console.log('✅ Fix completed successfully!');
+    } else {
+      console.log('❌ Fix failed');
+      if (result.error) {
+        console.log('   Error:', result.error);
+      }
+    }
+    console.log('   Task ID:', result.taskId);
+    console.log('   Changes:', result.changes.length);
+    console.log('   Build passed:', result.buildPassed);
+    console.log('   Tests passed:', result.testsPassed);
+    if (result.rolledBack) {
+      console.log('   ⚠️  Changes were rolled back');
+    }
+    console.log('');
+
+    process.exit(result.success ? 0 : 1);
+  } catch (error) {
+    console.error('❌ Fix execution error:', error.message);
+    process.exit(1);
+  }
+}
+else if (cmd === 'fs') {
+  const subCmd = cmdArgs[0];
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const sinterFs = SinterFS.open(process.cwd());
+
+  try {
+    if (subCmd === 'artifacts') {
+      // List all refs (which point to artifacts) from .sinter/refs/
+      const fs = await import('fs');
+      const refsDir = path.join(process.cwd(), '.sinter', 'refs');
+      if (!fs.existsSync(refsDir)) {
+        console.log('No artifacts found.');
+        process.exit(0);
+      }
+      const entries = fs.readdirSync(refsDir).filter(f => f.endsWith('.json'));
+      if (entries.length === 0) {
+        console.log('No artifacts found.');
+        process.exit(0);
+      }
+      console.log(`\n📦 Artifacts (${entries.length}):\n`);
+      for (const entry of entries) {
+        const ref = JSON.parse(fs.readFileSync(path.join(refsDir, entry), 'utf-8'));
+        const shortHash = ref.hash ? ref.hash.slice(0, 12) : '????';
+        console.log(`  ${entry.replace('.json', '')}  ${ref.kind}  ${shortHash}…`);
+      }
+      console.log('');
+    } else if (subCmd === 'refs') {
+      const refName = cmdArgs[1];
+      if (!refName) {
+        // List all refs
+        const fs = await import('fs');
+        const refsDir = path.join(process.cwd(), '.sinter', 'refs');
+        if (!fs.existsSync(refsDir)) {
+          console.log('No refs found.');
+          process.exit(0);
+        }
+        const entries = fs.readdirSync(refsDir).filter(f => f.endsWith('.json'));
+        console.log(`\n🔖 Refs (${entries.length}):\n`);
+        for (const entry of entries) {
+          console.log(`  ${entry.replace('.json', '')}`);
+        }
+        console.log('');
+      } else {
+        const ref = sinterFs.readRef(refName);
+        if (!ref) {
+          console.error(`Ref not found: ${refName}`);
+          process.exit(1);
+        }
+        console.log(JSON.stringify(ref, null, 2));
+      }
+    } else if (subCmd === 'runs') {
+      // Query EventStore for run_record events
+      const projectStore = sinterFs.getProjectStore();
+      const eventStore = projectStore.getEventStore();
+      // EventStore has queryEvents method — use it to filter run_record events
+      const events = eventStore.queryEvents({ type: 'run_record' });
+      if (!events || events.length === 0) {
+        console.log('No runs recorded.');
+        process.exit(0);
+      }
+      console.log(`\n🏃 Runs (${events.length}):\n`);
+      for (const event of events) {
+        const data = event.payload || event.data || event;
+        const runId = data.runId || 'unknown';
+        const status = data.status || 'unknown';
+        const project = data.project || '';
+        console.log(`  ${String(runId).slice(0, 12)}…  ${String(status).padEnd(10)}  ${project}`);
+      }
+      console.log('');
+    } else {
+      console.log('Usage: sinter fs <artifacts|refs|runs>');
+      console.log('  sinter fs artifacts          List all tracked artifacts');
+      console.log('  sinter fs refs [name]        List refs or show specific ref');
+      console.log('  sinter fs runs               List recorded runs');
+      process.exit(1);
+    }
+  } finally {
+    sinterFs.close();
+  }
+}
+else if (cmd === 'ledger') {
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { TaskLedger } = await import('../dist/ledger/index.js');
+  const { parseArgs, execute } = await import('../dist/ledger/cli.js');
+
+  const sinterFs = SinterFS.open(process.cwd());
+  const taskLedger = new TaskLedger(sinterFs);
+
+  try {
+    const action = parseArgs(cmdArgs);
+    await execute(action, taskLedger);
+    process.exit(0);
+  } finally {
+    sinterFs.close();
+  }
+}
+else if (cmd === 'archive') {
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks, LineageTracker, ArchivePlacement } = await import('../dist/emergence/index.js');
+
+  const subCmd = cmdArgs[0];
+  const artifactRef = cmdArgs[1];
+
+  const sinterFs = SinterFS.open(process.cwd());
+
+  try {
+    if (subCmd === 'inspect' && artifactRef) {
+      const hooks = new EmergenceHooks(sinterFs);
+      const cell = hooks.getArchive().findCellForArtifact(artifactRef);
+      if (!cell) {
+        console.error(`Artifact ${artifactRef} not found in archive.`);
+        process.exit(1);
+      }
+      const elite = cell.elite;
+      if (!elite) {
+        console.error(`No elite in cell for ${artifactRef}.`);
+        process.exit(1);
+      }
+      console.log('');
+      console.log(`Archive Entry: ${elite.id}`);
+      console.log(`  Cell: ${cell.cellId}`);
+      console.log(`  Quality: ${elite.qualityScore.toFixed(3)}`);
+      console.log(`  Provenance: ${elite.lineage.provenance}`);
+      console.log(`  Parents: ${elite.lineage.parentIds.length > 0 ? elite.lineage.parentIds.join(', ') : '(root)'}`);
+      console.log(`  Archived: ${elite.archivedAt}`);
+      console.log('');
+      console.log('  Descriptors:');
+      for (const dv of elite.descriptor.values) {
+        console.log(`    ${dv.axis}: ${dv.value.toFixed(3)}`);
+      }
+      console.log('');
+      console.log('  Emergence signals:');
+      console.log(`    Novelty: ${elite.signals.novelty.toFixed(3)}`);
+      console.log(`    Structure: ${elite.signals.structure.toFixed(3)}`);
+      console.log(`    Temporal richness: ${elite.signals.temporalRichness.toFixed(3)}`);
+      console.log(`    Fertility: ${elite.signals.fertility.toFixed(3)}`);
+      console.log(`    Aesthetic: ${elite.signals.aesthetic.toFixed(3)}`);
+      console.log('');
+    } else if (subCmd === 'lineage' && artifactRef) {
+      const tracker = new LineageTracker();
+      const ancestry = await tracker.getAncestry(artifactRef);
+      if (ancestry.length === 0) {
+        console.error(`No lineage found for ${artifactRef}.`);
+        process.exit(1);
+      }
+      console.log('');
+      console.log(`Lineage for ${artifactRef}:`);
+      for (const record of ancestry) {
+        const indent = '  ' + '  '.repeat(await tracker.getDepth(record.artifactId));
+        console.log(`${indent}${record.artifactId} [${record.provenance}] ${record.parentIds.length > 0 ? '<- ' + record.parentIds.join(', ') : '(root)'}`);
+      }
+      console.log('');
+    } else if (subCmd === 'branch' && artifactRef) {
+      console.log('');
+      console.log(`Branching from ${artifactRef}...`);
+      console.log('  (Branch action recorded. Use sinter gen with --parent to continue.)');
+      console.log('');
+    } else if (subCmd === 'list') {
+      const hooks = new EmergenceHooks(sinterFs);
+      const stats = hooks.getArchive().getStats();
+      const elites = hooks.getArchive().getAllElites();
+      console.log('');
+      console.log(`Archive: ${stats.totalCells} cells, ${stats.totalElites} elites, ${stats.totalNearElites} near-elites`);
+      console.log(`  Average quality: ${stats.avgQuality.toFixed(3)}`);
+      console.log('');
+      if (elites.length > 0) {
+        for (const e of elites.slice(0, 20)) {
+          console.log(`  ${e.id}  q=${e.qualityScore.toFixed(2)}  ${e.lineage.provenance}  novelty=${e.signals.novelty.toFixed(2)}`);
+        }
+        if (elites.length > 20) console.log(`  ... and ${elites.length - 20} more`);
+      }
+      console.log('');
+    } else {
+      console.error('Usage: sinter archive <inspect|lineage|branch|list> [artifactRef]');
+      process.exit(1);
+    }
+  } finally {
+    sinterFs.close();
+  }
+  process.exit(0);
+}
+else if (cmd === 'preferences') {
+  const { PreferenceEventLogger } = await import('../dist/learning/PreferenceEventLogger.js');
+
+  const subCmd = cmdArgs[0];
+  const logger = new PreferenceEventLogger();
+
+  if (subCmd === 'export') {
+    const sessionId = flags.prompt; // Reuse --prompt for --session
+    let records;
+    if (sessionId) {
+      records = await logger.exportSession(sessionId);
+      console.log('');
+      console.log(`Preference events for session ${sessionId}:`);
+    } else {
+      const dataset = await logger.exportDataset();
+      console.log('');
+      console.log('Preference Dataset Export:');
+      console.log(`  Total events: ${dataset.totalEvents}`);
+      console.log(`  Pairwise comparisons: ${dataset.pairwiseComparisons.length}`);
+      console.log(`  Positive feedback: ${dataset.positiveFeedback.length}`);
+      console.log(`  Negative feedback: ${dataset.negativeFeedback.length}`);
+      console.log('');
+      if (dataset.pairwiseComparisons.length > 0) {
+        console.log('  Pairwise:');
+        for (const c of dataset.pairwiseComparisons) {
+          console.log(`    winner: ${c.winner}  loser: ${c.loser}`);
+        }
+      }
+      console.log('');
+      process.exit(0);
+    }
+    if (records) {
+      for (const r of records) {
+        console.log(`  ${r.action} ${r.artifactId}${r.comparedTo ? ' vs ' + r.comparedTo : ''}  @${r.capturedAt}`);
+      }
+      console.log('');
+    }
+  } else if (subCmd === 'stats') {
+    const stats = await logger.getStats();
+    console.log('');
+    console.log('Preference Stats:');
+    console.log(`  Total events: ${stats.totalEvents}`);
+    console.log(`  Unique artifacts: ${stats.uniqueArtifacts}`);
+    console.log(`  Pairwise: ${stats.pairwiseCount}`);
+    console.log('');
+    if (Object.keys(stats.byAction).length > 0) {
+      console.log('  By action:');
+      for (const [action, count] of Object.entries(stats.byAction)) {
+        console.log(`    ${action}: ${count}`);
+      }
+    }
+    console.log('');
+  } else {
+    console.error('Usage: sinter preferences <export|stats> [--session <id>]');
+    process.exit(1);
+  }
+  process.exit(0);
+}
+else if (cmd === 'emergence') {
+  const subCmd = cmdArgs[0];
+
+  if (subCmd === 'score') {
+    const { EmergenceCritic, BehaviorDescriptorExtractor } = await import('../dist/emergence/index.js');
+    const { EmergenceScorecard } = await import('../dist/evaluation/EmergenceScorecard.js');
+
+    const output = cmdArgs[1] ? String(cmdArgs[1]) : null;
+    if (!output) {
+      console.error('Usage: sinter emergence score <text-or-file-path>');
+      process.exit(1);
+    }
+
+    // Check if it's a file path
+    let text = output;
+    try {
+      const { readFileSync } = await import('fs');
+      text = readFileSync(output, 'utf-8');
+    } catch { /* not a file path, use as raw text */ }
+
+    const extractor = new BehaviorDescriptorExtractor();
+    const critic = new EmergenceCritic();
+    const scorecard = new EmergenceScorecard();
+
+    const descriptor = extractor.extract(text);
+    const result = critic.evaluateQuick({
+      descriptor,
+      qualityScore: 0.5,
+      archive: [],
+      output: text,
+    });
+
+    const card = scorecard.score(result.signals, result.composite);
+    console.log('');
+    console.log(scorecard.format(card));
+  } else if (subCmd === 'probe') {
+    const { PerturbationProbe, BehaviorDescriptorExtractor } = await import('../dist/emergence/index.js');
+
+    const output = cmdArgs[1] ? String(cmdArgs[1]) : null;
+    if (!output) {
+      console.error('Usage: sinter emergence probe <text-or-file-path> [--magnitude 0.1]');
+      process.exit(1);
+    }
+
+    let text = output;
+    try {
+      const { readFileSync } = await import('fs');
+      text = readFileSync(output, 'utf-8');
+    } catch { /* not a file path, use as raw text */ }
+
+    const extractor = new BehaviorDescriptorExtractor();
+    const probe = new PerturbationProbe();
+
+    const descriptor = extractor.extract(text);
+    const result = probe.probe(text, descriptor, (t) => extractor.extract(t));
+
+    console.log('');
+    console.log(`Perturbation Resilience: ${result.resilience.toFixed(3)} [${result.classification}]`);
+    for (const p of result.perturbations) {
+      console.log(`  ${p.type}: ${p.score.toFixed(3)}`);
+    }
+    console.log('');
+  } else {
+    console.error('Usage: sinter emergence <score|probe> <text-or-file-path>');
+    process.exit(1);
+  }
+  process.exit(0);
+}
+else if (cmd === 'report' && cmdArgs[0] === 'provenance') {
+  const { ProvenanceNarrativeBuilder } = await import('../dist/reporting/index.js');
+  const { PolicyChangeManifest } = await import('../dist/release/PolicyChangeManifest.js');
+  const { CreativeWeaknessEmitter } = await import('../dist/autonomy/CreativeWeaknessEmitter.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const sinterFs = SinterFS.open(process.cwd());
+  try {
+    const manifest = new PolicyChangeManifest();
+    const changes = manifest.getByStatus('promoted');
+    const emitter = new CreativeWeaknessEmitter();
+    const builder = new ProvenanceNarrativeBuilder();
+
+    const weaknesses = emitter.getRecent ? [] : [];
+    const narrative = builder.build(changes, weaknesses);
+
+    console.log('');
+    console.log('=== Provenance Report ===');
+    console.log(`  ${narrative.title}`);
+    console.log(`  ${narrative.summary}`);
+    console.log(`  Generated: ${narrative.generatedAt}`);
+    if (narrative.sections.length > 0) {
+      console.log('');
+      for (const section of narrative.sections) {
+        console.log(`  ${section.heading}:`);
+        console.log(`    ${section.body}`);
+      }
+    }
+    console.log('');
+  } finally {
+    sinterFs.close();
+  }
+  process.exit(0);
+}
+else if (cmd === 'report' && cmdArgs[0] === 'archive') {
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+  const { EmergenceScorecard } = await import('../dist/evaluation/EmergenceScorecard.js');
+  const { NicheQuotaPolicy } = await import('../dist/autonomy/NicheQuotaPolicy.js');
+
+  const sinterFs = SinterFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(sinterFs);
+    const archive = hooks.getArchive();
+    const stats = archive.getStats();
+    const elites = archive.getAllElites();
+    const cells = archive.getAllCells();
+    const scorecard = new EmergenceScorecard();
+    const nichePolicy = new NicheQuotaPolicy();
+
+    console.log('');
+    console.log('=== Archive Report ===');
+    console.log(`  Cells: ${stats.totalCells}  Elites: ${stats.totalElites}  Near-elites: ${stats.totalNearElites}`);
+    console.log(`  Average quality: ${stats.avgQuality.toFixed(3)}`);
+
+    const balance = nichePolicy.getBalanceScore(cells);
+    console.log(`  Niche balance: ${(balance * 100).toFixed(1)}%`);
+
+    if (elites.length > 0) {
+      console.log('');
+      console.log('  Top artifacts by quality:');
+      const sorted = [...elites].sort((a, b) => b.qualityScore - a.qualityScore).slice(0, 5);
+      for (const e of sorted) {
+        const card = scorecard.score(e.signals);
+        console.log(`    ${e.id}  q=${e.qualityScore.toFixed(2)}  composite=${card.overall.score.toFixed(2)} [${card.overall.grade}]  ${e.lineage.provenance}`);
+      }
+
+      console.log('');
+      console.log('  Signal averages:');
+      const avgNovelty = elites.reduce((s, e) => s + e.signals.novelty, 0) / elites.length;
+      const avgStructure = elites.reduce((s, e) => s + e.signals.structure, 0) / elites.length;
+      const avgTemporal = elites.reduce((s, e) => s + e.signals.temporalRichness, 0) / elites.length;
+      const avgFertility = elites.reduce((s, e) => s + e.signals.fertility, 0) / elites.length;
+      console.log(`    Novelty: ${avgNovelty.toFixed(3)}  Structure: ${avgStructure.toFixed(3)}  Temporal: ${avgTemporal.toFixed(3)}  Fertility: ${avgFertility.toFixed(3)}`);
+    }
+    console.log('');
+  } finally {
+    sinterFs.close();
+  }
+  process.exit(0);
+}
+else if (cmd === 'taste' && cmdArgs[0] === 'train') {
+  const { PreferenceDatasetBuilder, TasteModelTrainer } = await import('../dist/learning/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const sinterFs = SinterFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(sinterFs);
+    const archive = hooks.getArchive();
+    const elites = archive.getAllElites();
+
+    if (elites.length < 2) {
+      console.error('Not enough archived entries for taste training (need ≥2).');
+      process.exit(1);
+    }
+
+    const builder = new PreferenceDatasetBuilder();
+    const dataset = builder.build(elites);
+
+    if (dataset.pairs.length === 0) {
+      console.error('No preference data available. Pin, favorite, or compare artifacts first.');
+      process.exit(1);
+    }
+
+    console.log(`Building taste model from ${dataset.pairs.length} preference pairs (${dataset.stats.uniqueArtifacts} artifacts)...`);
+
+    const trainer = new TasteModelTrainer();
+    const model = trainer.train(dataset.pairs);
+
+    console.log('');
+    console.log('=== Taste Model Training ===');
+    console.log(`  Pairs: ${model.pairCount}`);
+    console.log(`  Training agreement: ${(model.trainingAgreement * 100).toFixed(1)}%`);
+    console.log(`  Quality weight: ${model.qualityWeight.toFixed(3)}`);
+    console.log(`  Axis weights: ${model.axisWeights.map((w, i) => `[${i}]${w.toFixed(3)}`).join(' ')}`);
+    console.log('');
+  } finally {
+    sinterFs.close();
+  }
+  process.exit(0);
+}
+else if (cmd === 'taste' && cmdArgs[0] === 'eval') {
+  const { PreferenceDatasetBuilder, TasteModelTrainer, TasteModelEvaluator } = await import('../dist/learning/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const sinterFs = SinterFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(sinterFs);
+    const archive = hooks.getArchive();
+    const elites = archive.getAllElites();
+
+    if (elites.length < 4) {
+      console.error('Not enough data for evaluation (need ≥4 archived entries).');
+      process.exit(1);
+    }
+
+    const builder = new PreferenceDatasetBuilder();
+    const dataset = builder.build(elites);
+
+    const trainer = new TasteModelTrainer();
+    const model = trainer.train(dataset.pairs);
+
+    const evaluator = new TasteModelEvaluator();
+    const result = evaluator.evaluate(dataset.pairs, model);
+
+    console.log('');
+    console.log('=== Taste Model Evaluation ===');
+    console.log(`  Agreement: ${(result.agreement * 100).toFixed(1)}%`);
+    console.log(`  Kendall tau: ${result.kendallTau.toFixed(3)}`);
+    console.log(`  Calibration: ${(result.calibration * 100).toFixed(1)}%`);
+    console.log(`  Pairs evaluated: ${result.pairCount}`);
+    console.log(`  Beats baseline: ${result.beatsBaseline ? 'YES' : 'NO'}`);
+    console.log('');
+  } finally {
+    sinterFs.close();
+  }
+}
+else if (cmd === 'dream' && cmdArgs[0] === 'run') {
+  const { DreamPlanner, RecombinationEngine } = await import('../dist/dreaming/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const strategy = cmdArgs[1] || 'auto';
+
+  const sinterFs = SinterFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(sinterFs);
+    const archive = hooks.getArchive();
+    const cells = archive.getAllCells();
+    const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
+
+    const planner = new DreamPlanner();
+    const plan = planner.plan(cells, axes);
+
+    if (plan.tasks.length === 0) {
+      console.error('No dream tasks to plan — archive may be empty.');
+      process.exit(1);
+    }
+
+    const engine = new RecombinationEngine();
+
+    console.log('');
+    console.log(`=== Dream Run (strategy: ${strategy}) ===`);
+    console.log(`  Planned ${plan.tasks.length} dream tasks`);
+
+    for (const task of plan.tasks.slice(0, 5)) {
+      console.log(`  [${task.strategy}] priority=${task.priority.toFixed(1)} — ${task.reason}`);
+      if (task.sources.length >= 2) {
+        const result = engine.recombine(task.sources[0], task.sources[1]);
+        console.log(`    → novelty=${result.noveltyScore.toFixed(3)} strategy=${result.strategy}`);
+      }
+    }
+    console.log('');
+  } finally {
+    sinterFs.close();
+  }
+  process.exit(0);
+}
+else if (cmd === 'garden' && cmdArgs[0] === 'status') {
+  const { GardenPolicy } = await import('../dist/autonomy/GardenPolicy.js');
+  const { StagnationDetector } = await import('../dist/autonomy/StagnationDetector.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const sinterFs = SinterFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(sinterFs);
+    const archive = hooks.getArchive();
+    const cells = archive.getAllCells();
+    const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
+
+    const policy = new GardenPolicy();
+    const decisions = policy.decide(cells, axes);
+    const health = policy.getHealthMonitor().measure(cells);
+    const stag = new StagnationDetector().detect(policy.getHealthMonitor().getHistory());
+
+    console.log('');
+    console.log('=== Garden Status ===');
+    console.log(`  Health: ${(health.healthScore * 100).toFixed(1)}% [${health.healthLevel}]`);
+    console.log(`  Entries: ${health.archiveSize}  Occupancy: ${(health.nicheOccupancy * 100).toFixed(1)}%`);
+    console.log(`  Fertility: ${health.fertilityYield.toFixed(3)}  Lineage depth: ${health.avgLineageDepth.toFixed(1)}`);
+    console.log(`  Stagnation: ${stag.isStagnant ? `YES (${(stag.severity * 100).toFixed(0)}%)` : 'NO'}`);
+
+    if (decisions.length > 0) {
+      console.log('');
+      console.log('  Next actions:');
+      for (const d of decisions.slice(0, 5)) {
+        console.log(`    ${d.action} (priority ${d.priority.toFixed(1)}) — ${d.reason}`);
+      }
+    }
+    console.log('');
+  } finally {
+    sinterFs.close();
+  }
+  process.exit(0);
+}
+else if (cmd === 'garden' && cmdArgs[0] === 'rebalance') {
+  const { NicheQuotaPolicy } = await import('../dist/autonomy/NicheQuotaPolicy.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const sinterFs = SinterFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(sinterFs);
+    const archive = hooks.getArchive();
+    const cells = archive.getAllCells();
+    const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
+
+    const nichePolicy = new NicheQuotaPolicy();
+    const targets = nichePolicy.getTargetNiches(cells, axes, 10);
+    const balance = nichePolicy.getBalanceScore(cells);
+
+    console.log('');
+    console.log('=== Garden Rebalance ===');
+    console.log(`  Current balance: ${(balance * 100).toFixed(1)}%`);
+    console.log(`  Target niches: ${targets.length}`);
+
+    for (const t of targets) {
+      console.log(`    ${t.cellId}: ${t.reason} (priority ${t.priority.toFixed(2)})`);
+    }
+    console.log('');
+  } finally {
+    sinterFs.close();
+  }
+  process.exit(0);
+}
+else if (cmd === 'report' && cmdArgs[0] === 'garden') {
+  const { GardenHealthMonitor } = await import('../dist/autonomy/GardenHealthMonitor.js');
+  const { StagnationDetector } = await import('../dist/autonomy/StagnationDetector.js');
+  const { NicheQuotaPolicy } = await import('../dist/autonomy/NicheQuotaPolicy.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const sinterFs = SinterFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(sinterFs);
+    const archive = hooks.getArchive();
+    const cells = archive.getAllCells();
+    const healthMonitor = new GardenHealthMonitor();
+    const nichePolicy = new NicheQuotaPolicy();
+    const stagnation = new StagnationDetector();
+
+    console.log('');
+    console.log('=== Garden Report ===');
+
+    const health = healthMonitor.measure(cells);
+    console.log(`  Health: ${(health.healthScore * 100).toFixed(1)}% [${health.healthLevel}]`);
+    console.log(`  Archive: ${health.archiveSize} entries  Occupancy: ${(health.nicheOccupancy * 100).toFixed(1)}%`);
+    console.log(`  Avg lineage depth: ${health.avgLineageDepth.toFixed(1)}  Fertility yield: ${health.fertilityYield.toFixed(3)}`);
+    console.log(`  Taste alignment: ${(health.tasteAlignment * 100).toFixed(1)}%`);
+
+    const balance = nichePolicy.getBalanceScore(cells);
+    console.log(`  Niche balance: ${(balance * 100).toFixed(1)}%`);
+
+    // Gallery summary
+    const { GalleryBuilder } = await import('../dist/product/index.js');
+    const galleryBuilder = new GalleryBuilder();
+    const gallery = galleryBuilder.build(cells);
+    console.log(`  Gallery: ${gallery.totalItems} items in ${gallery.groups.length} groups`);
+
+    const stagResult = stagnation.detect(healthMonitor.getHistory());
+    if (stagResult.isStagnant) {
+      console.log('');
+      console.log(`  WARNING: Stagnation detected (severity: ${(stagResult.severity * 100).toFixed(0)}%)`);
+      for (const r of stagResult.recommendations) {
+        console.log(`    → ${r}`);
+      }
+    }
+
+    console.log('');
+  } finally {
+    sinterFs.close();
+  }
+  process.exit(0);
+}
+else if (cmd === 'report' && cmdArgs[0] === 'readiness') {
+  const { LaunchSummaryBuilder } = await import('../dist/reporting/index.js');
+  const { GardenHealthMonitor } = await import('../dist/autonomy/GardenHealthMonitor.js');
+  const { PolicyChangeManifest } = await import('../dist/release/PolicyChangeManifest.js');
+  const { CreativeWeaknessEmitter } = await import('../dist/autonomy/CreativeWeaknessEmitter.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const sinterFs = SinterFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(sinterFs);
+    const archive = hooks.getArchive();
+    const cells = archive.getAllCells();
+    const healthMonitor = new GardenHealthMonitor();
+    const health = healthMonitor.measure(cells);
+    const manifest = new PolicyChangeManifest();
+    const changes = manifest.getByStatus('promoted');
+    const emitter = new CreativeWeaknessEmitter();
+    const weaknesses = emitter.getRecent ? [] : [];
+
+    const builder = new LaunchSummaryBuilder();
+    const readiness = builder.assess(health, changes, weaknesses);
+
+    console.log('');
+    console.log('=== Launch Readiness Report ===');
+    console.log(`  Ready: ${readiness.ready ? 'YES' : 'NO'}`);
+    console.log(`  Score: ${(readiness.score * 100).toFixed(0)}%`);
+    console.log('');
+    console.log('  Checks:');
+    for (const check of readiness.checks) {
+      const icon = check.passed ? 'PASS' : 'FAIL';
+      console.log(`    ${icon} ${check.name}: ${check.detail}`);
+    }
+    if (readiness.blockers.length > 0) {
+      console.log('');
+      console.log('  Blockers:');
+      for (const b of readiness.blockers) console.log(`    - ${b}`);
+    }
+    console.log('');
+  } finally {
+    sinterFs.close();
+  }
+  process.exit(0);
+}
+else if (cmd === 'garden' && cmdArgs[0] === 'start') {
+  const mode = flags.mode || 'co-create';
+  if (!['assist', 'co-create', 'autopilot'].includes(mode)) {
+    console.error(`Error: Invalid mode "${mode}". Use assist, co-create, or autopilot.`);
+    process.exit(1);
+  }
+  const { AutonomousGardener } = await import('../dist/autonomy/AutonomousGardener.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const sinterFs = SinterFS.open(process.cwd());
+  const hooks = new EmergenceHooks(sinterFs);
+  const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
+
+  const gardener = new AutonomousGardener({ mode, totalBudget: 100 });
+  console.log('');
+  console.log(`=== Garden Started (mode: ${mode}) ===`);
+  console.log(`  Budget: 100 units  Press Ctrl+C to stop`);
+  console.log('');
+
+  let cycleCount = 0;
+  gardener.start(
+    () => { const a = hooks.getArchive(); return a.getAllCells(); },
+    () => axes,
+    (result) => {
+      cycleCount++;
+      const breakdown = result.taskBreakdown;
+      const parts = [`actions=${result.actions}`, `health=${(result.health.healthScore * 100).toFixed(0)}%`, `budget=${result.budgetRemaining}`];
+      if (breakdown) parts.push(`fresh=${breakdown.fresh} replay=${breakdown.replay} dream=${breakdown.dream}`);
+      if (result.dreamResults?.length) parts.push(`dreamDescs=${result.dreamResults.length}`);
+      if (result.tasteAlignedCount) parts.push(`tasteAligned=${result.tasteAlignedCount}`);
+      console.log(`  [Cycle ${result.cycle}] ${parts.join(' ')}`);
+      if (result.stagnation.isStagnant) {
+        console.log(`    ⚠ Stagnation: ${(result.stagnation.severity * 100).toFixed(0)}%`);
+      }
+    },
+  );
+
+  process.on('SIGINT', () => {
+    gardener.stop();
+    sinterFs.close();
+    console.log('');
+    console.log(`  Garden stopped after ${cycleCount} cycles.`);
+    process.exit(0);
+  });
+}
+else if (cmd === 'garden' && cmdArgs[0] === 'stop') {
+  console.log('No garden running in this process. Use Ctrl+C on the running garden start process.');
+  process.exit(0);
+}
+else if (cmd === 'ship' && cmdArgs[0] === 'garden') {
+  const candidateRef = flags.candidate;
+  const { PolicyChangeManifest } = await import('../dist/release/PolicyChangeManifest.js');
+  const { CreativeRuntimeCandidateBuilder } = await import('../dist/release/CreativeRuntimeCandidateBuilder.js');
+  const { GardenPromotionGate } = await import('../dist/release/GardenPromotionGate.js');
+  const { LaunchSummaryBuilder } = await import('../dist/reporting/index.js');
+  const { GardenHealthMonitor } = await import('../dist/autonomy/GardenHealthMonitor.js');
+  const { CreativeWeaknessEmitter } = await import('../dist/autonomy/CreativeWeaknessEmitter.js');
+
+  // Readiness gate check
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+  const healthMonitor = new GardenHealthMonitor();
+  const readinessBuilder = new LaunchSummaryBuilder();
+  const sinterFs = SinterFS.open(process.cwd());
+  const hooks = new EmergenceHooks(sinterFs);
+  const archive = hooks.getArchive();
+  const cells = archive.getAllCells();
+  const health = healthMonitor.measure(cells);
+  const preCheckManifest = new PolicyChangeManifest();
+  const preChanges = preCheckManifest.getByStatus('promoted');
+  const emitter = new CreativeWeaknessEmitter();
+  const weaknesses = emitter.getRecent ? [] : [];
+  const readiness = readinessBuilder.assess(health, preChanges, weaknesses);
+
+  if (!readiness.ready && !flags.force) {
+    console.log('');
+    console.log('=== Launch Readiness Gate ===');
+    console.log(`  NOT READY (score: ${(readiness.score * 100).toFixed(0)}%)`);
+    console.log('  Blockers:');
+    for (const b of readiness.blockers) console.log(`    - ${b}`);
+    console.log('');
+    console.log('  Use --force to proceed anyway.');
+    console.log('');
+    process.exit(1);
+  } else if (!readiness.ready && flags.force) {
+    console.log('');
+    console.log(`  WARNING: Launch not ready (score: ${(readiness.score * 100).toFixed(0)}%), but --force was specified.`);
+    console.log('');
+  }
+
+  const manifest = new PolicyChangeManifest();
+  const builder = new CreativeRuntimeCandidateBuilder();
+  const gate = new GardenPromotionGate();
+
+  const changes = manifest.getByStatus('promoted');
+  if (changes.length === 0) {
+    console.log('No promoted changes to ship.');
+    process.exit(0);
+  }
+
+  const candidate = builder.build(changes, candidateRef || 'garden-release');
+  const result = gate.check(candidate);
+
+  console.log('');
+  console.log('=== Ship Garden ===');
+  console.log(`  Candidate: ${candidate.id}`);
+  console.log(`  Changes: ${changes.length}`);
+  console.log(`  Validation: ${(candidate.validationScore * 100).toFixed(0)}%`);
+  console.log(`  Gate: ${result.passed ? 'PASSED' : 'BLOCKED'}`);
+
+  if (result.improvements.length > 0) {
+    console.log('  Improvements:');
+    for (const imp of result.improvements) console.log(`    + ${imp}`);
+  }
+  if (result.regressions.length > 0) {
+    console.log('  Regressions:');
+    for (const reg of result.regressions) console.log(`    - ${reg}`);
+  }
+  console.log('');
+  process.exit(0);
+}
+else if (cmd === 'ship' && cmdArgs[0] === 'rollback') {
+  const toRef = flags.to;
+  if (!toRef) {
+    console.error('Error: --to <releaseRef> is required');
+    process.exit(1);
+  }
+  const { PolicyChangeManifest } = await import('../dist/release/PolicyChangeManifest.js');
+  const { GardenRollbackController } = await import('../dist/release/GardenRollbackController.js');
+
+  const manifest = new PolicyChangeManifest();
+  const controller = new GardenRollbackController(manifest);
+
+  const rollbackResult = controller.rollback(toRef, 'Manual rollback');
+  console.log('');
+  console.log(`  Rollback ${rollbackResult.rolledBack ? 'succeeded' : 'failed'}: ${rollbackResult.reason}`);
+  console.log('');
+  process.exit(0);
+}
+else if (cmd === 'demo' && cmdArgs[0] === 'creative-codex') {
+  const { DemoScenarioRunner } = await import('../dist/product/DemoScenarioRunner.js');
+
+  const runner = new DemoScenarioRunner();
+  const result = runner.runCreativeCodex();
+
+  console.log('');
+  console.log('=== Creative Codex Demo ===');
+  console.log(`  Scenario: ${result.scenarioName}`);
+  console.log(`  Steps: ${result.totalSteps}  Passed: ${result.passed}  Duration: ${result.durationMs}ms`);
+  console.log('');
+
+  for (const step of result.steps) {
+    console.log(`  ${step.step}. ${step.label}`);
+    console.log(`     ${step.description}`);
+    const keys = Object.keys(step.data);
+    if (keys.length > 0) {
+      const summary = keys.map(k => `${k}=${JSON.stringify(step.data[k])}`).join(', ');
+      console.log(`     Data: ${summary}`);
+    }
+  }
+  console.log('');
+  process.exit(0);
+}
+else if (cmd === 'prompt' && cmdArgs[0] === 'synthesize') {
+  const inputPath = flags.input;
+  if (!inputPath) {
+    console.error('Usage: sinter prompt synthesize --input <graph.json> [--output <output.md>]');
+    process.exit(1);
+  }
+
+  const { synthesizePrompt } = await import('../dist/nodeprompt/index.js');
+
+  try {
+    const graphJson = fs.readFileSync(inputPath, 'utf-8');
+    const graph = JSON.parse(graphJson);
+    if (!graph.nodes || !graph.edges || !graph.originalPrompt) {
+      console.error('Graph JSON must contain: { nodes, edges, originalPrompt }');
+      process.exit(1);
+    }
+
+    const result = synthesizePrompt(graph.originalPrompt, graph.nodes, graph.edges);
+    const outputPath = flags.output;
+    if (outputPath) {
+      fs.writeFileSync(outputPath, result);
+      console.log(`Synthesized prompt written to: ${outputPath}`);
+    } else {
+      console.log(result);
+    }
+    process.exit(0);
+  } catch (err) {
+    console.error('Prompt synthesis failed:', err.message);
+    process.exit(1);
+  }
+}
+else {
+  console.error('');
+  if (cmd) {
+    console.error(`Unknown command or subcommand: ${[cmd, ...cmdArgs].join(' ')}`);
+    console.error('Run "sinter --help" to see available commands and subcommands.');
+  } else {
+    console.error('Run "sinter --help" for usage, or: sinter "your idea"');
+  }
+  process.exit(1);
+}

@@ -1,16 +1,16 @@
-# GitHub Repo Mining Plan for Liminal
+# GitHub Repo Mining Plan for Sinter
 
 > **Date**: 2026-03-29
 > **status**: PLANNING
-> **scope**: Mine 45 GitHub repos for algorithms, patterns, and features to integrate into Liminal
+> **scope**: Mine 45 GitHub repos for algorithms, patterns, and features to integrate into Sinter
 
 ---
 
 ## Context
 
-Liminal is a self-recursive creative coding agent (`src/` with 31 modules, 187 tests). Your GitHub has 45 non-fork repos containing battle-tested implementations of nearly every algorithm Liminal needs — from evolutionary systems to audio pipelines to multi-agent architectures. This plan maps specific source code from each repo to specific files and interfaces in Liminal, organized into 7 implementation phases.
+Sinter is a self-recursive creative coding agent (`src/` with 31 modules, 187 tests). Your GitHub has 45 non-fork repos containing battle-tested implementations of nearly every algorithm Sinter needs — from evolutionary systems to audio pipelines to multi-agent architectures. This plan maps specific source code from each repo to specific files and interfaces in Sinter, organized into 7 implementation phases.
 
-### Existing Liminal Infrastructure (Build On These)
+### Existing Sinter Infrastructure (Build On These)
 
 | Module | Key Files | What Exists |
 |--------|-----------|-------------|
@@ -489,14 +489,14 @@ Add optional board evaluation mode:
 
 ## Phase 6: MCP Server + Smart Routing
 
-> **Goal**: Expose Liminal as an MCP server + upgrade routing
+> **Goal**: Expose Sinter as an MCP server + upgrade routing
 > **Priority**: MEDIUM
 
-### 6.1 Implement Liminal MCP Server
+### 6.1 Implement Sinter MCP Server
 **source**: `mcp-video` MCP architecture pattern, `DialectOS/packages/mcp-server/` circuit breaker
 **target**: `src/mcp/` (NEW directory)
 
-Expose Liminal's pipeline as MCP tools:
+Expose Sinter's pipeline as MCP tools:
 
 **Tool Categories** (50+ tools):
 
@@ -679,10 +679,10 @@ Motivate creative exploration:
 ### Porting Strategy
 - **Python → TypeScript**: All algorithms from Python repos (hydra-creative-agent, lyrics-engine, mcp-video, FlowCLI, Print-OS, etc.) need TypeScript ports. Focus on algorithm fidelity, not line-by-line translation.
 - **Go → TypeScript**: noise.sh prosody engine, Prism.sh color theory, focus.sh themes. Convert Go structs to TypeScript interfaces.
-- **Reuse existing interfaces**: All new modules must integrate with Liminal's existing `LLMClient`, `Gallery`, `CompostMill`, `CreativeEvaluator`, and domain generator interfaces.
+- **Reuse existing interfaces**: All new modules must integrate with Sinter's existing `LLMClient`, `Gallery`, `CompostMill`, `CreativeEvaluator`, and domain generator interfaces.
 
 ### Testing Strategy
-- Port each algorithm with its original test suite adapted to Liminal's test framework
+- Port each algorithm with its original test suite adapted to Sinter's test framework
 - Add integration tests for each Phase's wiring into existing systems
 - Verify each Phase end-to-end: CLI command → pipeline → output
 
@@ -712,7 +712,7 @@ Motivate creative exploration:
 After each phase, verify:
 - [ ] `pnpm build` passes with no type errors
 - [ ] `pnpm test` passes with no regressions
-- [ ] New features accessible via CLI (`liminal --help` shows new commands)
+- [ ] New features accessible via CLI (`sinter --help` shows new commands)
 - [ ] New modules wired end-to-end (input → processing → output)
 - [ ] Gallery persistence works (save/load round-trip)
 - [ ] LLM integration works (mock or real provider)

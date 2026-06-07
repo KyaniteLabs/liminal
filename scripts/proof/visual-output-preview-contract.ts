@@ -114,7 +114,7 @@ function hyperframesFixture(): string {
   </style>
 </head>
 <body>
-  <div data-composition-id="liminal-promo" data-width="1920" data-height="1080">
+  <div data-composition-id="sinter-promo" data-width="1920" data-height="1080">
     <h1 class="clip hero" data-start="0" data-duration="4" data-track-index="0">Open the threshold</h1>
     <div class="clip panel" data-start="1" data-duration="3" data-track-index="1"></div>
   </div>
@@ -124,7 +124,7 @@ function hyperframesFixture(): string {
     tl.from(".hero", { opacity: 0, y: 70, duration: 1 }, 0);
     tl.to(".panel", { x: -80, scale: 1.08, duration: 2 }, 1);
     window.__timelines = window.__timelines || {};
-    window.__timelines["liminal-promo"] = tl;
+    window.__timelines["sinter-promo"] = tl;
   </script>
 </body>
 </html>`, { domain: 'hyperframes', title: 'Liminal HyperFrames Preview' });
@@ -349,7 +349,7 @@ async function main() {
         cssAnimationCount: document.getAnimations().length,
         strudelCodeVisible: Boolean(document.querySelector('[data-strudel-source-code]') && document.querySelector('[data-strudel-source-code]').textContent.trim()),
         revideoTimelinePreview: Boolean(document.querySelector('[data-revideo-timeline-preview]')),
-        tonePreviewShell: Boolean(document.querySelector('[data-tone-preview-shell], #visualizer, #liminal-tone-visualizer')),
+        tonePreviewShell: Boolean(document.querySelector('[data-tone-preview-shell], #visualizer, #sinter-tone-visualizer')),
         toneTempoSynced: Boolean(document.querySelector('[data-tone-tempo-sync="true"][data-tone-bpm]')),
         toneEmbeddedPlayableControl: Boolean(
           !document.querySelector('#tone-artifact-surface') ||

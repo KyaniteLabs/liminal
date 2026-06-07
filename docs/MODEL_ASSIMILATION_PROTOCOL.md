@@ -1,6 +1,6 @@
 # Model Assimilation Protocol
 
-Liminal does not promote a model because its name is newer. A model becomes part of the harness only after it proves a role with evidence.
+Sinter does not promote a model because its name is newer. A model becomes part of the harness only after it proves a role with evidence.
 
 ## Roles to Audition
 
@@ -9,7 +9,7 @@ Liminal does not promote a model because its name is newer. A model becomes part
 | Generator | Can create valid artifacts in target domains | SVG/p5/GLSL/Hydra/Three/Tone/Strudel/Revideo outputs validate and preview/export honestly |
 | Evaluator | Can judge actual artifacts without pretending unavailable modalities were scored | Visual/audio/video receipts name what was inspected and what remains unscored |
 | Planner | Can produce bounded implementation plans without swallowing provider errors or bloating prompts | Self-improvement planning stays below budget and preserves structured errors |
-| Repair Agent | Can patch Liminal itself in an isolated worktree with tests | Diff, focused tests, build/typecheck evidence |
+| Repair Agent | Can patch Sinter itself in an isolated worktree with tests | Diff, focused tests, build/typecheck evidence |
 | Dreamer | Can recombine prior artifacts into plausible variants without erasing lineage | Dream task receipts with parents, motifs, and next-run influence |
 
 ## Domain Battery

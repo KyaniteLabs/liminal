@@ -12,7 +12,7 @@ import path from 'node:path';
 import { RevideoRenderer } from '../../src/render/RevideoRenderer.js';
 
 interface Receipt {
-  contract: 'liminal-revideo-native-render-smoke-v1';
+  contract: 'sinter-revideo-native-render-smoke-v1';
   generatedAt: string;
   status: 'pass' | 'fail';
   outputPath: string;
@@ -137,7 +137,7 @@ try {
     throw new Error(`Rendered MP4 height mismatch: expected ${height}, got ${metadata.actualHeight}`);
   }
   receipt = {
-    contract: 'liminal-revideo-native-render-smoke-v1',
+    contract: 'sinter-revideo-native-render-smoke-v1',
     generatedAt: new Date().toISOString(),
     status: 'pass',
     outputPath,
@@ -151,7 +151,7 @@ try {
   };
 } catch (error) {
   receipt = {
-    contract: 'liminal-revideo-native-render-smoke-v1',
+    contract: 'sinter-revideo-native-render-smoke-v1',
     generatedAt: new Date().toISOString(),
     status: 'fail',
     outputPath,

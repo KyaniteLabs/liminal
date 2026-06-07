@@ -334,7 +334,7 @@ const previewResults = timePreviewCases();
 const failures = [...routeResults.failures, ...previewResults.failures];
 const result = {
   generatedAt: new Date().toISOString(),
-  contract: 'liminal-route-performance-budget-v1',
+  contract: 'sinter-route-performance-budget-v1',
   passed: failures.length === 0,
   budgets,
   routeResults,

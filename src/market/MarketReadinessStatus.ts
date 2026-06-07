@@ -43,8 +43,8 @@ export function collectRepositoryMarketReadinessStatus(repoRoot = process.cwd())
   const checks: MarketReadinessCheck[] = [
     sourceCheck('natural-cli', 'Natural CLI front door', bin, ['inferNaturalLanguagePrompt', 'liminal "natural language prompt"']),
     sourceCheck('creative-wrappers', 'Creative domain wrapper breadth', wrappers, ['strudel-editor', 'wrapRevideo', 'Hydra', 'Tone']),
-    sourceCheck('studio-cognition', 'Studio learning receipts', `${telemetry}\n${app}`, ['latestCognitiveReceipt', 'What Liminal learned', 'liminal-cognitive-receipt']),
-    sourceCheck('cli-cognition', 'CLI learning receipts', `${bin}\n${cliReceipt}`, ['writeCliCognitiveReceipt', 'What Liminal learned']),
+    sourceCheck('studio-cognition', 'Studio learning receipts', `${telemetry}\n${app}`, ['latestCognitiveReceipt', 'What Sinter learned', 'sinter-cognitive-receipt']),
+    sourceCheck('cli-cognition', 'CLI learning receipts', `${bin}\n${cliReceipt}`, ['writeCliCognitiveReceipt', 'What Sinter learned']),
     sourceCheck('studio-smoke-script', 'Studio smoke script', packageJson, ['proof:studio-smoke']),
     sourceCheck('level6-gate', 'Level 6 release gate', `${bin}\n${level6Gate}`, ['release gate', 'runLevel6ReleaseGate', 'self-improvement-gauntlet', 'creative-domain-gauntlet']),
     liveProviderSmokeCheck(repoRoot),

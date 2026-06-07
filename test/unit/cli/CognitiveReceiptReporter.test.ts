@@ -36,7 +36,7 @@ describe('writeCliCognitiveReceipt', () => {
       executionMode: 'prove',
     }));
     expect(lines).toEqual([
-      '🧠 What Liminal learned:',
+      '🧠 What Sinter learned:',
       '  memory: observed — Stored generation episode ep-cli-1 for future retrieval.',
       '  compost: observed — Added generated artifact to compost heap.',
       '  dreaming: observed — Queued dream recombination task dream-1 from episode ep-cli-1.',

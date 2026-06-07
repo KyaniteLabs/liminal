@@ -78,7 +78,7 @@ export class GitIntegration {
     if (!status.isClean()) {
       const stashMsg = sessionId
         ? `agent:${sessionId}:stash before run ${name}`
-        : `liminal: auto-stash before run ${name}`;
+        : `sinter: auto-stash before run ${name}`;
       await this.git.stash(stashMsg);
       this.stashedBeforeRun = true;
       Logger.info('GitIntegration', 'Stashed uncommitted changes before run');
@@ -214,7 +214,7 @@ export class GitIntegration {
       if (statusResult.isErr()) {
         Logger.warn('GitIntegration', `Failed to get status at end of run: ${statusResult.error.message}`);
       } else if (!statusResult.value.isClean()) {
-        await this.git.addAllAndCommit(`liminal: run complete — ${reason}`);
+        await this.git.addAllAndCommit(`sinter: run complete — ${reason}`);
         Logger.info('GitIntegration', 'Committed final changes before restoring branch');
       }
 

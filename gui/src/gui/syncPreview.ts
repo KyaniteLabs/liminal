@@ -32,7 +32,7 @@ window.__liminalAudio = window.__liminalAudio || {
 };
 window.addEventListener('message', (event) => {
   const data = event.data || {};
-  if (data.type !== 'liminal-audio-frame') return;
+  if (data.type !== 'sinter-audio-frame') return;
   const frame = data.frame || {};
   window.__liminalAudio = {
     rms: Number(frame.rms) || 0,
@@ -62,7 +62,7 @@ function p5CanvasPlacementBootstrap(): string {
     canvas.style.setProperty('object-fit', 'contain', 'important');
   }
   function adoptP5Canvases() {
-    const stage = document.querySelector('[data-liminal-sync-preview="p5"]');
+    const stage = document.querySelector('[data-sinter-sync-preview="p5"]');
     if (!stage) return;
     document.querySelectorAll('body > canvas').forEach((canvas) => stage.appendChild(canvas));
     stage.querySelectorAll('canvas').forEach(fit);
@@ -101,20 +101,20 @@ export function buildSyncPreviewHtml(code: string): string {
   if (domain === 'three') {
     const hasImport = /\bimport\b[\s\S]*?\bfrom\s+['"](?:three|https:\/\/(?:unpkg\.com|cdn\.jsdelivr\.net)\/(?:npm\/)?three)/m.test(code);
     const needsCanvas = needsThreeCanvasBinding(code);
-    const canvasBootstrap = needsCanvas ? `const canvas = document.getElementById('liminal-three-canvas');\n` : '';
+    const canvasBootstrap = needsCanvas ? `const canvas = document.getElementById('sinter-three-canvas');\n` : '';
     const moduleCode = hasImport ? code : `import * as THREE from 'three';\n${code}`;
     return `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Liminal Sync Stage</title>
+  <title>Sinter Sync Stage</title>
   <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}canvas{display:block}</style>
   <script>${audioBootstrap()}</script>
   <script type="importmap">{"imports":{"three":"${THREE_CDN}"}}</script>
 </head>
 <body>
-  ${needsCanvas ? '<canvas id="liminal-three-canvas"></canvas>' : ''}
+  ${needsCanvas ? '<canvas id="sinter-three-canvas"></canvas>' : ''}
   <script type="module">${canvasBootstrap}${moduleCode}</script>
 </body>
 </html>`;
@@ -125,14 +125,14 @@ export function buildSyncPreviewHtml(code: string): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Liminal Sync Stage</title>
+  <title>Sinter Sync Stage</title>
   <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070a}main{position:fixed;inset:0;display:grid;place-items:center}main > canvas,body > canvas{display:block;max-width:100vw;max-height:100vh;object-fit:contain}body > canvas{position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important}</style>
   <script>${sensorPolicyBootstrap()}</script>
   <script>${audioBootstrap()}</script>
   <script src="${P5_CDN}"></script>
 </head>
 <body>
-  <main data-liminal-sync-preview="p5"></main>
+  <main data-sinter-sync-preview="p5"></main>
   <script>${p5CanvasPlacementBootstrap()}</script>
   <script>${escapeScript(code)}</script>
 </body>

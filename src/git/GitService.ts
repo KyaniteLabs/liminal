@@ -7,7 +7,7 @@
  * - Branch create/list/delete/checkout
  * - Stash push/pop/list
  *
- * All operations are async and return Liminal-native types
+ * All operations are async and return Sinter-native types
  * (CommitInfo, BranchInfo, DiffResult) rather than raw simple-git responses.
  */
 

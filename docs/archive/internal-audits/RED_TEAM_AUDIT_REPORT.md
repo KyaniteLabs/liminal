@@ -1,5 +1,5 @@
 # 🔴 RED TEAM ADVERSARIAL SECURITY AUDIT REPORT
-## Liminal AI - Creative Coding Agent v1.0.0
+## Sinter AI - Creative Coding Agent v1.0.0
 
 **Audit Date:** 2026-03-30  
 **Remediation Date:** 2026-03-30  
@@ -329,7 +329,7 @@ this.app.use(csrfProtection);
 
 ## CONCLUSION
 
-The Liminal codebase security vulnerabilities have been successfully remediated:
+The Sinter codebase security vulnerabilities have been successfully remediated:
 
 1. **Prototype pollution** (CVSS 9.8) - ✅ FIXED via dependency updates
 2. **SSRF vulnerabilities** - ✅ FIXED via URL validation

@@ -58,7 +58,7 @@ function usage() {
 
 Examples:
   node scripts/qa-creative-domains.mjs --input .omx/proof/domain-gauntlet-live.json --open
-  node scripts/qa-creative-domains.mjs --input .omx/runtime-smoke/domain-sweep-final-11 --out /tmp/liminal-qa --no-serve
+  node scripts/qa-creative-domains.mjs --input .omx/runtime-smoke/domain-sweep-final-11 --out /tmp/sinter-qa --no-serve
 
 Purpose:
   Builds a disposable cockpit for manual browser/audio/video checks. It does not
@@ -275,11 +275,11 @@ function escapeJs(value) {
 
 function artifactMonitorScript(domain) {
   const safeDomain = escapeJs(domain);
-  return `<script data-liminal-qa-monitor="${safeDomain}">
+  return `<script data-sinter-qa-monitor="${safeDomain}">
 (() => {
   const domain = "${safeDomain}";
   const post = (type, data = {}) => {
-    try { parent.postMessage({ source: 'liminal-qa-artifact', domain, type, data }, location.origin); } catch {}
+    try { parent.postMessage({ source: 'sinter-qa-artifact', domain, type, data }, location.origin); } catch {}
   };
   for (const level of ['log', 'warn', 'error']) {
     const original = console[level]?.bind(console);
@@ -378,7 +378,7 @@ function renderCockpit(discovery) {
 const qaState = Object.fromEntries(${JSON.stringify(discovery.domains.map((item) => item.domain))}.map((domain) => [domain, { domain, loaded:false, errors:[], console:[], manual:false, notes:'', counts:{} }]));
 function setBadge(domain, status, cls){ const el=document.querySelector('[data-status-for="'+domain+'"]'); if(el){el.textContent=status; el.className='badge '+(cls||'');}}
 window.addEventListener('message', (event) => {
-  if (event.origin !== location.origin || event.data?.source !== 'liminal-qa-artifact') return;
+  if (event.origin !== location.origin || event.data?.source !== 'sinter-qa-artifact') return;
   const state = qaState[event.data.domain]; if (!state) return;
   if (event.data.type === 'ready') { state.loaded = true; state.counts = event.data.data || {}; setBadge(state.domain, 'loaded', 'ok'); }
   if (event.data.type === 'error') { state.errors.push(event.data.data); setBadge(state.domain, 'error', 'bad'); }

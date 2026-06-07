@@ -2,17 +2,17 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 import { TraceFSAdapter } from '../../../src/fs/adapters/TraceFSAdapter.js';
 
 describe('TraceFSAdapter', () => {
   let projectRoot: string;
-  let fs: LiminalFS;
+  let fs: SinterFS;
   let adapter: TraceFSAdapter;
 
   beforeEach(() => {
-    projectRoot = mkdtempSync(join(tmpdir(), 'liminal-trace-test-'));
-    fs = LiminalFS.open(projectRoot);
+    projectRoot = mkdtempSync(join(tmpdir(), 'sinter-trace-test-'));
+    fs = SinterFS.open(projectRoot);
     adapter = new TraceFSAdapter(fs);
   });
 
@@ -29,11 +29,11 @@ describe('TraceFSAdapter', () => {
     expect(result.artifactRefs).toHaveLength(1);
   });
 
-  it('linkReasoningTrace — creates artifact with liminal://artifact/ URI', () => {
+  it('linkReasoningTrace — creates artifact with sinter://artifact/ URI', () => {
     const result = adapter.linkReasoningTrace('trace-123', 'run-456');
 
     const ref = result.artifactRefs[0];
-    expect(ref.uri).toMatch(/^liminal:\/\/artifact\/[a-f0-9]{64}$/);
+    expect(ref.uri).toMatch(/^sinter:\/\/artifact\/[a-f0-9]{64}$/);
     expect(ref.kind).toBe('trace');
     expect(ref.hash).toHaveLength(64);
   });

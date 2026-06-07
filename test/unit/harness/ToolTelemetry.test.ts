@@ -189,10 +189,10 @@ describe('ToolTelemetry', () => {
       const tel = new ToolTelemetry('sess-1');
       tel.log({ tool: 'read', params: { x: 1 }, result: makeResult({ success: true }), duration: 5 });
 
-      const files = readdirSync(join(tempDir, '.liminal', 'tool-telemetry')).filter(f => f.endsWith('.json'));
+      const files = readdirSync(join(tempDir, '.sinter', 'tool-telemetry')).filter(f => f.endsWith('.json'));
       expect(files.length).toBe(1);
 
-      const parsed = JSON.parse(readFileSync(join(tempDir, '.liminal', 'tool-telemetry', files[0]), 'utf-8'));
+      const parsed = JSON.parse(readFileSync(join(tempDir, '.sinter', 'tool-telemetry', files[0]), 'utf-8'));
       expect(parsed.tool).toBe('read');
     });
   });

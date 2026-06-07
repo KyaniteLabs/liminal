@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeVoiceFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
+import { analyzeVoiceFrame } from '@sinter/audio-core/VoiceFeatureStream.js';
 
 const SR = 48000;
 const N = 2048;

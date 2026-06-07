@@ -69,7 +69,7 @@ export function buildCreativeBrief(answers: InterviewAnswers): CreativeBrief {
     constraints,
     references,
 
-    // Inferred by Liminal
+    // Inferred by Sinter
     domain,
     techniques,
     complexity,

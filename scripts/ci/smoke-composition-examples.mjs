@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const repoRoot = process.cwd();
-const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-composition-example-'));
+const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'sinter-composition-example-'));
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {

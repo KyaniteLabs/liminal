@@ -1,7 +1,7 @@
 /**
  * StudioAgent Module — Phase 11
  *
- * The foreground conversational agent for Liminal Studio.
+ * The foreground conversational agent for Sinter Studio.
  */
 
 // Types — the integration contract

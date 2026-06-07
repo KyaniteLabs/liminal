@@ -1,4 +1,4 @@
-# ADR 0001 - Liminal Product Shape
+# ADR 0001 - Sinter Product Shape
 
 ## Status
 
@@ -10,7 +10,7 @@ Accepted for this branch.
 
 ## Context
 
-Liminal has grown into several real product directions:
+Sinter has grown into several real product directions:
 
 - Core/Studio creative authoring
 - Sites aesthetic webpage evolution
@@ -23,16 +23,16 @@ singing widget.
 
 ## Decision
 
-Liminal has three product-level surfaces:
+Sinter has three product-level surfaces:
 
 ```text
-Liminal / Core / Studio
+Sinter / Core / Studio
 = conversational aesthetic authoring workshop
 
-Liminal Sites
+Sinter Sites
 = aesthetic webpage evolution sibling product
 
-Liminal Instrument
+Sinter Instrument
 = live performance sibling product
 ```
 
@@ -116,4 +116,4 @@ The sidecar may fail without damaging the performance.
 
 Do not create or split a future `liminal-instrument` repository until the local
 machine audit is complete. Current evidence supports keeping `packages/sing`
-inside Liminal while the preservation audit is incomplete.
+inside Sinter while the preservation audit is incomplete.

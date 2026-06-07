@@ -145,7 +145,7 @@ jcodemunch: search_text(query="console.error")
 
 ### 3.1 CLI completeness
 ```
-jcodemunch: get_file_outline(file="bin/liminal" or equivalent)
+jcodemunch: get_file_outline(file="bin/sinter" or equivalent)
 ```
 
 Manual review:

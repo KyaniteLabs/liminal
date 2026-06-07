@@ -6,7 +6,7 @@
  * and restores SessionGraph state when resuming.
  *
  * Session manifests are ephemeral (in-memory) for now.
- * Future: scan LiminalFS for persisted manifests.
+ * Future: scan SinterFS for persisted manifests.
  */
 
 import { SessionGraph } from './SessionGraph.js';

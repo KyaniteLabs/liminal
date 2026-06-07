@@ -1,5 +1,5 @@
 /**
- * Layer-based composition types for Liminal.
+ * Layer-based composition types for Sinter.
  *
  * Enables combining outputs from multiple generators into
  * editable, composable projects.
@@ -7,7 +7,7 @@
 
 import type { LLMResponse } from '../llm/LLMClient.js';
 
-/** Domain types supported by Liminal generators */
+/** Domain types supported by Sinter generators */
 export type DomainType =
   | 'p5'
   | 'three'
@@ -258,8 +258,8 @@ export interface Asset {
   data?: string;
 }
 
-/** Liminal project file format v2.0 */
-export interface LiminalProject {
+/** Sinter project file format v2.0 */
+export interface SinterProject {
   /** File format version */
   version: '2.0' | '1.0';
 
@@ -285,7 +285,7 @@ export interface LiminalProject {
 }
 
 /** Legacy v1.0 project format */
-export interface LiminalProjectV1 {
+export interface SinterProjectV1 {
   /** File format version */
   version: '1.0';
 
@@ -453,9 +453,9 @@ function generateCompositionId(): string {
 }
 
 /**
- * Export a composition to Liminal project format.
+ * Export a composition to Sinter project format.
  */
-export function exportProject(composition: Composition): LiminalProject {
+export function exportProject(composition: Composition): SinterProject {
   const now = new Date().toISOString();
   return {
     version: '1.0',

@@ -1,4 +1,4 @@
-# Liminal Consolidation Proposal - 2026-05-24
+# Sinter Consolidation Proposal - 2026-05-24
 
 ## Recommendation
 
@@ -11,7 +11,7 @@ Keep packages/sing temporarily, rename later.
 Use the existing sibling repo for Sites:
 
 ```text
-Keep Liminal Sites separate from Core/Studio.
+Keep Sinter Sites separate from Core/Studio.
 ```
 
 Do not create `KyaniteLabs/liminal-instrument` yet.
@@ -29,14 +29,14 @@ the existing workspace:
 The local-machine audit found one broken Desktop checkout:
 
 ```text
-/Users/simongonzalezdecruz/Desktop/OMC/liminal
+/Users/simongonzalezdecruz/Desktop/OMC/sinter
 ```
 
 That live path has now been repaired by preserving the broken tree at
 `/Users/simongonzalezdecruz/Desktop/OMC/liminal.broken-working-tree-20260524-201253`
 and rebuilding `/Users/simongonzalezdecruz/Desktop/OMC/liminal` from the
 verified current branch. The preserved old tree still contains the local-only
-`repo-pipeline-fix-20260420-liminal @ 14d39ec2` state, so a full history
+`repo-pipeline-fix-20260420-sinter @ 14d39ec2` state, so a full history
 carveout remains premature until that backup is classified.
 
 ## Pros
@@ -49,7 +49,7 @@ carveout remains premature until that backup is classified.
 
 ## Cons
 
-- Liminal remains a larger repo for now
+- Sinter remains a larger repo for now
 - Instrument package naming stays transitional
 - future Sites/Core/Instrument contracts must be kept explicit
 
@@ -101,7 +101,7 @@ If a split becomes necessary later:
 4. Use a history-preserving split tool such as `git filter-repo` in a temporary
    clone, not in the working repo.
 5. Compare file lists and commit counts before publishing.
-6. Keep the original package in Liminal until the new repo builds, tests, and
+6. Keep the original package in Sinter until the new repo builds, tests, and
    imports cleanly.
 
 ## Backport Strategy

@@ -1,7 +1,7 @@
 /**
  * Git Module — Barrel exports
  *
- * Provides version control integration for Liminal:
+ * Provides version control integration for Sinter:
  * - GitService: Core git operations (commit, branch, diff, log)
  * - GitIntegration: RalphLoop orchestrator (branch-per-run, commit-per-iteration)
  * - CompostBridge: Bridges git events into the compost EventStore timeline

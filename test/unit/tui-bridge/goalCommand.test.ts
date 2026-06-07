@@ -29,8 +29,8 @@ const {
   };
 });
 
-vi.mock('../../../src/fs/LiminalFS.js', () => ({
-  LiminalFS: { open: mockFsOpen },
+vi.mock('../../../src/fs/SinterFS.js', () => ({
+  SinterFS: { open: mockFsOpen },
 }));
 
 vi.mock('../../../src/cortex/GoalStore.js', () => ({
@@ -266,7 +266,7 @@ describe('TuiBridgeService /goal command handling', () => {
 
   // ── goal store unavailable ─────────────────────────────────────
 
-  it('reports unavailable for /goal add when LiminalFS.open fails', () => {
+  it('reports unavailable for /goal add when SinterFS.open fails', () => {
     mockFsOpen.mockImplementation(() => { throw new Error('no project'); });
     const svc = new TuiBridgeService();
 
@@ -275,7 +275,7 @@ describe('TuiBridgeService /goal command handling', () => {
     expect(mockAddGoal).not.toHaveBeenCalled();
   });
 
-  it('reports unavailable for /goal list when LiminalFS.open fails', () => {
+  it('reports unavailable for /goal list when SinterFS.open fails', () => {
     mockFsOpen.mockImplementation(() => { throw new Error('no project'); });
     const svc = new TuiBridgeService();
 

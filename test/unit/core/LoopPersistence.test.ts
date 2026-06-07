@@ -3,20 +3,20 @@ import { mkdtempSync, rmSync, existsSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { Gallery } from '../../../src/gallery/Gallery.js';
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 import { LoopPersistence } from '../../../src/core/LoopPersistence.js';
 
 describe('LoopPersistence', () => {
   let galleryDir: string;
   let projectRoot: string;
   let gallery: Gallery;
-  let fs: LiminalFS;
+  let fs: SinterFS;
 
   beforeEach(() => {
-    galleryDir = mkdtempSync(join(tmpdir(), 'liminal-gallery-test-'));
-    projectRoot = mkdtempSync(join(tmpdir(), 'liminal-fs-test-'));
+    galleryDir = mkdtempSync(join(tmpdir(), 'sinter-gallery-test-'));
+    projectRoot = mkdtempSync(join(tmpdir(), 'sinter-fs-test-'));
     gallery = new Gallery(galleryDir);
-    fs = LiminalFS.open(projectRoot);
+    fs = SinterFS.open(projectRoot);
   });
 
   afterEach(() => {
@@ -25,16 +25,16 @@ describe('LoopPersistence', () => {
     rmSync(projectRoot, { recursive: true, force: true });
   });
 
-  it('saveIteration with LiminalFS — writes artifact AND gallery file', async () => {
+  it('saveIteration with SinterFS — writes artifact AND gallery file', async () => {
     const persistence = new LoopPersistence(gallery, { project: 'my-project' } as any, fs);
     await persistence.saveIteration(1, 'const x = 1;');
 
     const history = await gallery.loadHistory('my-project');
     expect(history).toHaveLength(1);
-    expect(existsSync(join(projectRoot, '.liminal', 'objects'))).toBe(true);
+    expect(existsSync(join(projectRoot, '.sinter', 'objects'))).toBe(true);
   });
 
-  it('saveIteration with LiminalFS — writes refs at gallery/{project}/v{N} and gallery/{project}/latest', async () => {
+  it('saveIteration with SinterFS — writes refs at gallery/{project}/v{N} and gallery/{project}/latest', async () => {
     const persistence = new LoopPersistence(gallery, { project: 'my-project' } as any, fs);
     await persistence.saveIteration(1, 'const x = 1;');
 
@@ -45,7 +45,7 @@ describe('LoopPersistence', () => {
     expect(versionRef?.uri).toBe(latestRef?.uri);
   });
 
-  it('saveIteration with LiminalFS — artifact content matches code', async () => {
+  it('saveIteration with SinterFS — artifact content matches code', async () => {
     const code = 'function draw() { circle(50, 50, 20); }';
     const persistence = new LoopPersistence(gallery, { project: 'my-project' } as any, fs);
     await persistence.saveIteration(1, code);
@@ -55,7 +55,7 @@ describe('LoopPersistence', () => {
     expect(content?.toString('utf-8')).toBe(code);
   });
 
-  it('saveIteration without LiminalFS — works exactly as before (backward compat)', async () => {
+  it('saveIteration without SinterFS — works exactly as before (backward compat)', async () => {
     const persistence = new LoopPersistence(gallery, { project: 'my-project' } as any);
     await persistence.saveIteration(1, 'const x = 1;');
 
@@ -64,7 +64,7 @@ describe('LoopPersistence', () => {
     expect(fs.readRef('gallery/my-project/v1')).toBeNull();
   });
 
-  it('saveIteration LiminalFS error — Gallery still succeeds when LiminalFS throws', async () => {
+  it('saveIteration SinterFS error — Gallery still succeeds when SinterFS throws', async () => {
     const brokenFs = {
       writeArtifact: () => {
         throw new Error('disk full');
@@ -72,7 +72,7 @@ describe('LoopPersistence', () => {
       writeRef: () => {
         throw new Error('disk full');
       },
-    } as unknown as LiminalFS;
+    } as unknown as SinterFS;
 
     const persistence = new LoopPersistence(gallery, { project: 'my-project' } as any, brokenFs);
     await expect(persistence.saveIteration(1, 'const x = 1;')).resolves.not.toThrow();
@@ -81,8 +81,8 @@ describe('LoopPersistence', () => {
     expect(history).toHaveLength(1);
   });
 
-  it('saveIteration with LiminalFS propagates gallery write failures when tolerateErrors is false', async () => {
-    const blockedRoot = mkdtempSync(join(tmpdir(), 'liminal-blocked-gallery-test-'));
+  it('saveIteration with SinterFS propagates gallery write failures when tolerateErrors is false', async () => {
+    const blockedRoot = mkdtempSync(join(tmpdir(), 'sinter-blocked-gallery-test-'));
     const blockedGalleryPath = join(blockedRoot, 'not-a-directory');
     writeFileSync(blockedGalleryPath, 'blocking file');
 
@@ -100,7 +100,7 @@ describe('LoopPersistence', () => {
     }
   });
 
-  it('saveMergeStep with LiminalFS — writes artifact for merged code at iteration+1', async () => {
+  it('saveMergeStep with SinterFS — writes artifact for merged code at iteration+1', async () => {
     const { ContextAccumulation } = await import('../../../src/core/ContextAccumulation.js');
 
     await ContextAccumulation.runWithContext(async () => {

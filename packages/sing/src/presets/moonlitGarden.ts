@@ -1,4 +1,4 @@
-import { createSingPreset, type SingPresetArtifact } from '@liminal/audio-core/PresetSchema.js';
+import { createSingPreset, type SingPresetArtifact } from '@sinter/audio-core/PresetSchema.js';
 
 /**
  * Moonlit Garden — the showpiece preset for the voice→visual expression engine.

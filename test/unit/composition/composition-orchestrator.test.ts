@@ -47,7 +47,7 @@ describe('CompositionOrchestrator.compose', () => {
     expect(result.successCount).toBe(2);
     expect(result.layers).toHaveLength(2);
     // Two stacked layer iframes, with z-order increasing.
-    expect((result.html.match(/class="liminal-layer"/g) ?? []).length).toBe(2);
+    expect((result.html.match(/class="sinter-layer"/g) ?? []).length).toBe(2);
     expect(result.html).toContain('z-index:1');
     expect(result.html).toContain('z-index:2');
     // The screen blend + opacity from the second layer are applied.
@@ -56,7 +56,7 @@ describe('CompositionOrchestrator.compose', () => {
     // Title is reflected in the document.
     expect(result.html).toContain('Test Work');
     // No audio layer → no start overlay.
-    expect(result.html).not.toContain('liminal-start');
+    expect(result.html).not.toContain('sinter-start');
   });
 
   it('adds a start overlay and an invisible frame for audio layers', async () => {
@@ -67,7 +67,7 @@ describe('CompositionOrchestrator.compose', () => {
       ],
     });
     expect(result.successCount).toBe(2);
-    expect(result.html).toContain('liminal-start');
+    expect(result.html).toContain('sinter-start');
     // Audio frame is rendered 1px/invisible rather than full-stage.
     expect(result.html).toContain('width:1px;height:1px;opacity:0');
   });
@@ -87,7 +87,7 @@ describe('CompositionOrchestrator.compose', () => {
     expect(result.layers[1].generated).toBe(false);
     expect(result.layers[1].error).toBe('LLM unavailable');
     // Only the successful layer appears in the stack.
-    expect((result.html.match(/class="liminal-layer"/g) ?? []).length).toBe(1);
+    expect((result.html.match(/class="sinter-layer"/g) ?? []).length).toBe(1);
   });
 
   it('records an unsupported-domain error without crashing', async () => {

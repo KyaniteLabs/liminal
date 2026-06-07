@@ -2,7 +2,7 @@
  * Default configuration values for the Compost Mill.
  *
  * These defaults can be overridden via ProjectConfig.compost in
- * config/liminal.json, which is loaded by ConfigLoader.
+ * config/sinter.json, which is loaded by ConfigLoader.
  */
 
 import type { CompostConfig, LLMProviderConfig } from './types.js';

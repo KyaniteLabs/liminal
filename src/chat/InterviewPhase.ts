@@ -12,7 +12,7 @@ const QUESTIONS_BY_PHASE: Record<InterviewPhase, InterviewQuestion[]> = {
     {
       id: 'intent',
       phase: 'greeting',
-      question: "Welcome to Liminal! What would you like to create today?",
+      question: "Welcome to Sinter! What would you like to create today?",
       type: 'text',
       required: true
     }

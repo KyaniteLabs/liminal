@@ -67,7 +67,7 @@ function makeReceipt(tempRoot: string, domains = launchDomains, overrides: Recor
   mkdirSync(artifactDir, { recursive: true });
   const receiptPath = path.join(tempRoot, 'domain-gauntlet-live.json');
   const receipt = {
-    contract: 'liminal-live-creative-domain-execution-v1',
+    contract: 'sinter-live-creative-domain-execution-v1',
     status: domains.length === launchDomains.length ? 'pass' : 'fail',
     ready: domains.length === launchDomains.length,
     mode: 'live-execution',
@@ -101,7 +101,7 @@ describe('final QA surface gate', () => {
   });
 
   it('passes with a complete all-domain live receipt and classified pending/skipped tests', () => {
-    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-final-qa-surface-'));
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'sinter-final-qa-surface-'));
     try {
       const receiptPath = makeReceipt(tempRoot);
       const output = execFileSync(process.execPath, [
@@ -128,7 +128,7 @@ describe('final QA surface gate', () => {
   });
 
   it('fails when any test file remains under test/pending', () => {
-    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-final-qa-surface-pending-'));
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'sinter-final-qa-surface-pending-'));
     const sentinelPath = path.join(repoRoot, 'test/pending/final-qa-gate-sentinel.test.ts');
     try {
       mkdirSync(path.dirname(sentinelPath), { recursive: true });
@@ -156,7 +156,7 @@ describe('final QA surface gate', () => {
   }, 30000);
 
   it('fails when a launch-scoped creative domain is missing from the live receipt', () => {
-    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-final-qa-surface-missing-'));
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'sinter-final-qa-surface-missing-'));
     try {
       const receiptPath = makeReceipt(tempRoot, launchDomains.filter((domain) => domain !== 'glsl'));
       const result = spawnSync(process.execPath, [
@@ -180,7 +180,7 @@ describe('final QA surface gate', () => {
   });
 
   it('fails when a complete live receipt is not bound to the current commit', () => {
-    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-final-qa-surface-stale-commit-'));
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'sinter-final-qa-surface-stale-commit-'));
     try {
       const receiptPath = makeReceipt(tempRoot, launchDomains, { gitCommit: '0'.repeat(40) });
       const result = spawnSync(process.execPath, [
@@ -205,7 +205,7 @@ describe('final QA surface gate', () => {
   });
 
   it('fails when a complete live receipt is stale', () => {
-    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-final-qa-surface-stale-time-'));
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'sinter-final-qa-surface-stale-time-'));
     try {
       const receiptPath = makeReceipt(tempRoot, launchDomains, { generatedAt: '2020-01-01T00:00:00.000Z' });
       const result = spawnSync(process.execPath, [
@@ -229,7 +229,7 @@ describe('final QA surface gate', () => {
   });
 
   it('fails when a complete receipt points at non-empty junk instead of domain artifacts', () => {
-    const tempRoot = mkdtempSync(path.join(tmpdir(), 'liminal-final-qa-surface-junk-artifacts-'));
+    const tempRoot = mkdtempSync(path.join(tmpdir(), 'sinter-final-qa-surface-junk-artifacts-'));
     try {
       const artifactDir = path.join(tempRoot, 'artifacts');
       mkdirSync(artifactDir, { recursive: true });
@@ -246,7 +246,7 @@ describe('final QA surface gate', () => {
         };
       });
       writeFileSync(receiptPath, JSON.stringify({
-        contract: 'liminal-live-creative-domain-execution-v1',
+        contract: 'sinter-live-creative-domain-execution-v1',
         status: 'pass',
         ready: true,
         mode: 'live-execution',

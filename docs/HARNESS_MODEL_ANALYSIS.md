@@ -4,7 +4,7 @@
 
 ## What a Harness Agent Actually Does
 
-Based on Liminal's Meta-Harness architecture:
+Based on Sinter's Meta-Harness architecture:
 
 1. **Failure Analysis**
    - Read failure logs from generators

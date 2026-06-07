@@ -43,7 +43,7 @@ function buildAssetInjectionScript(assets: AssetDescriptor[]): string {
   }
 
   return [
-    '<div id="liminal-injected-assets" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;">',
+    '<div id="sinter-injected-assets" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;">',
     ...elements,
     '</div>',
   ].join('\n');

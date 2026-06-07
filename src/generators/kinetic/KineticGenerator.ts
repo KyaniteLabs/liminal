@@ -112,11 +112,11 @@ body{display:grid;place-items:center}
 <main class="scene" aria-label="${title}">
 <div class="threshold"></div>
 <div class="word">${title}</div>
-<div class="word">Liminal</div>
+<div class="word">Sinter</div>
 <div class="word">Motion</div>
 <div class="word">Threshold</div>
 </main>
-<!-- Liminal recovery: provider timed out before returning CSS kinetic HTML, so this prompt-derived scaffold preserves a visible animated operator path. -->
+<!-- Sinter recovery: provider timed out before returning CSS kinetic HTML, so this prompt-derived scaffold preserves a visible animated operator path. -->
 </body>
 </html>`;
   }

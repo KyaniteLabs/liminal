@@ -24,7 +24,7 @@ Status: first-pass white-box review complete. This cluster found release-blockin
 - Evidence: `package.json:6`, `package.json:7`, `package.json:18`, `package.json:26`
 - Failure mode: `dist` is ignored/untracked and `postinstall` skips the build under `CI=true`, so git installs or CI-like consumers can miss `dist/index.js`.
 - Customer impact: users can install a package that cannot be imported or run.
-- Recommended proof: clean temp git dependency install with `CI=1`, then import `liminal-ai` and run `liminal --version`.
+- Recommended proof: clean temp git dependency install with `CI=1`, then import `liminal-ai` and run `sinter --version`.
 
 ### CC-003: Streaming fallback error can become an empty completed assistant response
 

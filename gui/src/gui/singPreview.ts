@@ -38,7 +38,7 @@ function p5CanvasPlacementBootstrap(): string {
     canvas.style.setProperty('object-fit', 'contain', 'important');
   }
   function adoptP5Canvases() {
-    const stage = document.querySelector('[data-liminal-sing-preview="p5"]');
+    const stage = document.querySelector('[data-sinter-sing-preview="p5"]');
     if (!stage) return;
     document.querySelectorAll('body > canvas').forEach((canvas) => stage.appendChild(canvas));
     stage.querySelectorAll('canvas').forEach(fit);
@@ -75,7 +75,7 @@ function needsThreeCanvasBinding(code: string): boolean {
 function defaultVisualizationScript(): string {
   return `
 (function(){
-  var c=document.getElementById('liminal-layer-0'),ctx=c.getContext('2d'),dpr=window.devicePixelRatio||1;
+  var c=document.getElementById('sinter-layer-0'),ctx=c.getContext('2d'),dpr=window.devicePixelRatio||1;
   function resize(){c.width=window.innerWidth*dpr;c.height=window.innerHeight*dpr;ctx.setTransform(dpr,0,0,dpr,0,0)}
   resize();window.addEventListener('resize',resize);
   var w,h;
@@ -236,7 +236,7 @@ function layerManagerBootstrap(): string {
   return `
 (function liminalLayerManager(){
   var MAX_LAYERS = 8;
-  var container = document.getElementById('liminal-layers');
+  var container = document.getElementById('sinter-layers');
   if (!container) return;
 
   window.__liminalLayers = window.__liminalLayers || {
@@ -251,7 +251,7 @@ function layerManagerBootstrap(): string {
 
       var wrapper = document.createElement('div');
       wrapper.id = id;
-      wrapper.className = 'liminal-sing-layer';
+      wrapper.className = 'sinter-sing-layer';
       wrapper.style.cssText = 'position:absolute;inset:0;pointer-events:none;mix-blend-mode:' + blendMode + ';opacity:' + opacity + ';transition:opacity 0.6s ease';
 
       var iframe = document.createElement('iframe');
@@ -321,14 +321,14 @@ function buildGeneratedLayerHtml(code: string): string {
   if (domain === 'three') {
     const hasImport = /\bimport\b[\s\S]*?\bfrom\s+['"](?:three|https:\/\/(?:unpkg\.com|cdn\.jsdelivr\.net)\/(?:npm\/)?three)/m.test(code);
     const needsCanvas = needsThreeCanvasBinding(code);
-    const canvasBootstrap = needsCanvas ? `const canvas = document.getElementById('liminal-three-canvas');\n` : '';
+    const canvasBootstrap = needsCanvas ? `const canvas = document.getElementById('sinter-three-canvas');\n` : '';
     const moduleCode = hasImport ? code : `import * as THREE from 'three';\n${code}`;
     return `<!doctype html>
 <html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}canvas{display:block}</style>
 <script>${audioBootstrapScript()}</script>
 <script type="importmap">{"imports":{"three":"${THREE_CDN}"}}</script>
-</head><body>${needsCanvas ? '<canvas id="liminal-three-canvas"></canvas>' : ''}
+</head><body>${needsCanvas ? '<canvas id="sinter-three-canvas"></canvas>' : ''}
 <script type="module">${canvasBootstrap}${moduleCode}</script>
 </body></html>`;
   }
@@ -339,7 +339,7 @@ function buildGeneratedLayerHtml(code: string): string {
 <script>${sensorPolicyBootstrap()}</script>
 <script>${audioBootstrapScript()}</script>
 <script src="${P5_CDN}"></script>
-</head><body><main data-liminal-sing-preview="p5"></main>
+</head><body><main data-sinter-sing-preview="p5"></main>
 <script>${p5CanvasPlacementBootstrap()}</script>
 <script>${escapeScript(code)}</script>
 </body></html>`;
@@ -355,18 +355,18 @@ export function buildDefaultSingPreviewHtml(): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Liminal Live Audio</title>
+  <title>Sinter Live Audio</title>
   <style>
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#030508}
-    #liminal-layer-0{position:absolute;inset:0;z-index:0}
-    #liminal-layers{position:absolute;inset:0;z-index:1}
+    #sinter-layer-0{position:absolute;inset:0;z-index:0}
+    #sinter-layers{position:absolute;inset:0;z-index:1}
     canvas{display:block;width:100%;height:100%}
   </style>
   <script>${audioBootstrapScript()}</script>
 </head>
 <body>
-  <canvas id="liminal-layer-0"></canvas>
-  <div id="liminal-layers"></div>
+  <canvas id="sinter-layer-0"></canvas>
+  <div id="sinter-layers"></div>
   <script>${layerManagerBootstrap()}</script>
   <script>${defaultVisualizationScript()}</script>
 </body>

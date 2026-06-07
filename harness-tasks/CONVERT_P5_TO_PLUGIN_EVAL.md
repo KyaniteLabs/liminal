@@ -44,7 +44,7 @@ head -20 src/generators/P5Generator/index.ts
 
 | Test | Points | Command/Check |
 |------|--------|---------------|
-| Basic generation works | 10 | `./bin/liminal generate "circle" --output test.html` |
+| Basic generation works | 10 | `./bin/sinter generate "circle" --output test.html` |
 | Sound detection works | 10 | Check console for "Sound detected" message |
 | Abort signal works | 10 | Generation cancels when signal triggered |
 | Bypass cache works | 10 | `bypassCache: true` respected |

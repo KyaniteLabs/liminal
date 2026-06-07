@@ -19,7 +19,7 @@ describe('RevideoValidator', () => {
 
       export default makeScene2D("TitleCard", function* (view) {
         const title = createRef<Txt>();
-        view.add(<Rect width={1920} height={1080} fill={'#050816'}><Txt ref={title} text={'Liminal'} /></Rect>);
+        view.add(<Rect width={1920} height={1080} fill={'#050816'}><Txt ref={title} text={'Sinter'} /></Rect>);
         yield* title().opacity(1, 0.5);
         yield* waitFor(1);
       });

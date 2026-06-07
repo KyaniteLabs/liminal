@@ -56,7 +56,7 @@ export function resolveBridgeProviderConfig(): BridgeProviderConfig {
 
   if (providerRequiresApiKey(provider) && !config.apiKey) {
     throw new Error(
-      `Missing API key for ${provider}. Set the provider key in ~/.liminal/config.json or environment variables.`,
+      `Missing API key for ${provider}. Set the provider key in ~/.sinter/config.json or environment variables.`,
     );
   }
 
@@ -203,7 +203,7 @@ function hasAnyEnv(env: NodeJS.ProcessEnv, keys: string[]): boolean {
 
 function loadPersistedBridgeRoles(): Partial<Record<BridgeRoleName, PersistedBridgeRoleConfig>> {
   try {
-    const configPath = process.env.LIMINAL_CONFIG_PATH || path.join(os.homedir(), '.liminal', 'config.json');
+    const configPath = process.env.LIMINAL_CONFIG_PATH || path.join(os.homedir(), '.sinter', 'config.json');
     const parsed = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as {
       roles?: Partial<Record<BridgeRoleName, PersistedBridgeRoleConfig>>;
     };

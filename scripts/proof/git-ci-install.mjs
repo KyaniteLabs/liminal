@@ -7,7 +7,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const tempRoot = await mkdtemp(path.join(tmpdir(), 'liminal-git-ci-install-'));
+const tempRoot = await mkdtemp(path.join(tmpdir(), 'sinter-git-ci-install-'));
 const sourceRoot = path.join(tempRoot, 'source');
 const consumerRoot = path.join(tempRoot, 'consumer');
 
@@ -74,7 +74,7 @@ run('npm', [
   `git+${pathToFileURL(sourceRoot).href}`,
 ], { cwd: consumerRoot, env: cleanEnv, stdio: 'pipe' });
 
-const installedRoot = path.join(consumerRoot, 'node_modules', 'liminal-ai');
+const installedRoot = path.join(consumerRoot, 'node_modules', 'sinter');
 const distIndex = path.join(installedRoot, 'dist', 'index.js');
 if (!existsSync(distIndex)) {
   throw new Error(`Installed package is missing ${path.relative(consumerRoot, distIndex)}`);
@@ -83,7 +83,7 @@ if (!existsSync(distIndex)) {
 run('node', [
   '--input-type=module',
   '-e',
-  "const mod = await import('liminal-ai'); if (!mod) throw new Error('import returned empty module');",
+  "const mod = await import('sinter'); if (!mod) throw new Error('import returned empty module');",
 ], { cwd: consumerRoot });
 
 const version = run('node', [path.join(consumerRoot, 'node_modules', '.bin', 'liminal'), '--version'], {

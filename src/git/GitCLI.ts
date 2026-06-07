@@ -15,7 +15,7 @@ import { GitService } from './GitService.js';
 import { Logger } from '../utils/Logger.js';
 
 const HELP_TEXT = `
-Git integration for Liminal
+Git integration for Sinter
 
 USAGE:
   liminal git <subcommand> [options]

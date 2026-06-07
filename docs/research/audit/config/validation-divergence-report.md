@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This report analyzes mismatches between validation logic (`isConfigured()`, `isXxx()` functions) and actual usage patterns in the Liminal codebase. The core anti-pattern found is **"Check Early, Initialize Late"** - validation happens at call sites with different logic than constructors use for initialization.
+This report analyzes mismatches between validation logic (`isConfigured()`, `isXxx()` functions) and actual usage patterns in the Sinter codebase. The core anti-pattern found is **"Check Early, Initialize Late"** - validation happens at call sites with different logic than constructors use for initialization.
 
 ---
 

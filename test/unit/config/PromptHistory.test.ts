@@ -4,7 +4,7 @@ import path from 'path';
 import os from 'os';
 import { PromptHistory } from '../../../src/config/PromptHistory.js';
 
-const TMP_DIR = path.join(os.tmpdir(), 'liminal-prompt-history-test-' + process.pid);
+const TMP_DIR = path.join(os.tmpdir(), 'sinter-prompt-history-test-' + process.pid);
 const HISTORY_FILE = path.join(TMP_DIR, 'history.json');
 
 describe('PromptHistory', () => {

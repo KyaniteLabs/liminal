@@ -1,4 +1,4 @@
-# Liminal Consolidation Phase 0 Audit
+# Sinter Consolidation Phase 0 Audit
 
 > Historical note (2026-05-26): This file is a point-in-time audit from before the final KyaniteLabs public consolidation. Current live routing is `KyaniteLabs/liminal` for core and `KyaniteLabs/liminal-sites` for sites. Personal, duplicate Mac, and Pushing-Squares references below are evidence from that audit, not current operating instructions.
 
@@ -71,10 +71,10 @@ Remote heads read from the laptop:
 
 | Repo/ref | HEAD |
 | --- | --- |
-| `KyaniteLabs/liminal main` | `94ceb80a58521e4a1d033ffa8a801a36aa0d4808` |
-| `KyaniteLabs/liminal codex/studio-conversation-ux-20260524` | `1216760334401215a2fed25346e0f4c82e335e02` |
-| `simongonzalezdc/liminal main` | `129bfb0699ecfc90941e4317edf6b939d1ea7c2b` |
-| `simongonzalezdc/liminal codex/studio-conversation-ux-20260524` | `1216760334401215a2fed25346e0f4c82e335e02` |
+| `KyaniteLabs/sinter main` | `94ceb80a58521e4a1d033ffa8a801a36aa0d4808` |
+| `KyaniteLabs/sinter codex/studio-conversation-ux-20260524` | `1216760334401215a2fed25346e0f4c82e335e02` |
+| `simongonzalezdc/sinter main` | `129bfb0699ecfc90941e4317edf6b939d1ea7c2b` |
+| `simongonzalezdc/sinter codex/studio-conversation-ux-20260524` | `1216760334401215a2fed25346e0f4c82e335e02` |
 | `KyaniteLabs/liminal-sites main` | `0077659a879dfd9559b42fbb54631986f2a8164f` |
 
 Open PR:
@@ -108,8 +108,8 @@ Pack contents include executive summary, repo-risk audit, machine-fragmentation 
 
 | Surface | Classification | Next safe action |
 | --- | --- | --- |
-| `KyaniteLabs/liminal main` `94ceb80a` | Canonical baseline | Build consolidation PRs from this base |
-| Personal `simongonzalezdc/liminal main` `129bfb06` | Import source | Diff into focused PRs; do not promote wholesale |
+| `KyaniteLabs/sinter main` `94ceb80a` | Canonical baseline | Build consolidation PRs from this base |
+| Personal `simongonzalezdc/sinter main` `129bfb06` | Import source | Diff into focused PRs; do not promote wholesale |
 | PR #552 `12167603` | Active PR lane | Resolve conflicts against `kyanite/main`; review before merge |
 | Mac mini stale `KyaniteLabs-liminal` `912e2fde` | Stale duplicate | Keep until explicit cleanup approval; no unique dirty state found |
 | Mac mini `liminal-sites` dirty workflow | Dirty sibling-repo state | Preserve patch before any cleanup or repo sync |
@@ -121,7 +121,7 @@ Pack contents include executive summary, repo-risk audit, machine-fragmentation 
 - `origin/main` and `kyanite/main` are both plausible-looking "main" branches but have 33/31 divergent commits. Treating either as automatically dominant would lose work.
 - PR #552 is open but `DIRTY`; it should not be merged until conflict and proof review are complete.
 - The Mac mini stale duplicate is clean but may still matter as forensic evidence until the baseline decision is fully accepted.
-- The dirty `liminal-sites` workflow file is outside core Liminal but still part of the sibling-product consolidation story.
+- The dirty `liminal-sites` workflow file is outside core Sinter but still part of the sibling-product consolidation story.
 - Bulk-importing the Downloads pack would create documentation sprawl; it should be mined into curated ADR/spec/audit artifacts.
 
 ## Phase 0 Result

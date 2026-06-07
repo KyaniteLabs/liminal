@@ -452,7 +452,7 @@ export default function App() {
           };
           micFramesRef.current.push(frame);
           syncFrameRef.current?.contentWindow?.postMessage({
-            type: 'liminal-audio-frame',
+            type: 'sinter-audio-frame',
             frame,
           }, '*');
           drawSyncOverlay(frame.rms, frame.centroid, timestamp);
@@ -932,14 +932,14 @@ export default function App() {
   };
 
   const runRecourseSlot = activeMode.id === 'generate' && (runFailedBeforePreview || runStoppedBeforePreview) ? (
-    <section className="liminal-recourse-card" role="alert" aria-label={runReceipt?.outcome === 'stopped' ? 'Generation stopped' : 'Generation recovery'}>
-      <div className="liminal-recourse-card__copy">
+    <section className="sinter-recourse-card" role="alert" aria-label={runReceipt?.outcome === 'stopped' ? 'Generation stopped' : 'Generation recovery'}>
+      <div className="sinter-recourse-card__copy">
         <span>{runReceipt?.outcome === 'stopped' ? 'Stopped' : 'Needs recovery'}</span>
         <strong>{runReceipt?.outcome === 'stopped' ? 'Generation stopped' : 'That run did not finish.'}</strong>
         <small>{runReceipt?.outcome === 'stopped' ? 'Generation stopped by operator.' : runReceipt?.failure?.message || failureRecoveryText}</small>
         <small>Medium: {runReceipt.creativeDomain} · Model: {runReceipt.providerModel}</small>
       </div>
-      <div className="liminal-recourse-card__actions" aria-label={runReceipt?.outcome === 'stopped' ? 'Stopped run actions' : 'Recovery actions'}>
+      <div className="sinter-recourse-card__actions" aria-label={runReceipt?.outcome === 'stopped' ? 'Stopped run actions' : 'Recovery actions'}>
         <button type="button" onClick={handleRetryFailedRun} disabled={bridge.submitting || !createPrompt.trim()}>
           Try again
         </button>
@@ -956,13 +956,13 @@ export default function App() {
   ) : null;
 
   const improveSlot = (
-    <div className="liminal-improve-lane">
-      <div className="liminal-improve-lane__header">
+    <div className="sinter-improve-lane">
+      <div className="sinter-improve-lane__header">
         <span>{improveReport?.runType || 'improve'}</span>
         <strong>{improveLoading ? 'Scanning system' : `${improveReport?.proposals.length ?? 0} proposals`}</strong>
         <small>{improveError || improveReport?.summary || 'Green systems can still improve.'}</small>
       </div>
-      <div className="liminal-improve-proposals">
+      <div className="sinter-improve-proposals">
         {improveError && <div className="atelier-alert atelier-alert--error">{improveError}</div>}
         {!improveError && !improveReport && !improveLoading && (
           <button type="button" className="atelier-btn atelier-btn--primary" onClick={() => void scanImproveOpportunities()}>
@@ -970,7 +970,7 @@ export default function App() {
           </button>
         )}
         {improveReport?.proposals.map((proposal) => (
-          <article className="liminal-improve-proposal" key={proposal.id}>
+          <article className="sinter-improve-proposal" key={proposal.id}>
             <div>
               <span>{proposal.category}</span>
               <strong>{proposal.title}</strong>
@@ -985,7 +985,7 @@ export default function App() {
   );
 
   const stageSlot = activeMode.id === 'improve' ? improveSlot : (
-    <div className="liminal-stage-frame">
+    <div className="sinter-stage-frame">
       {previewUrl ? (
         <iframe title="Live preview" src={previewUrl} allow={SENSOR_PERMISSION_POLICY} sandbox="allow-scripts" />
       ) : syncPreviewHtml ? (
@@ -997,9 +997,9 @@ export default function App() {
           sandbox="allow-scripts"
         />
       ) : bridgeImagePreview ? (
-        <figure className={bridgeImagePreviewFailed ? 'liminal-stage-preview liminal-stage-preview--failed' : 'liminal-stage-preview'}>
+        <figure className={bridgeImagePreviewFailed ? 'sinter-stage-preview sinter-stage-preview--failed' : 'sinter-stage-preview'}>
           {bridgeImagePreviewFailed ? (
-            <div className="liminal-stage-preview-error" role="alert">
+            <div className="sinter-stage-preview-error" role="alert">
               <span>Preview</span>
               <strong>Image preview failed to load</strong>
               <small>{bridgeImagePreview.label}</small>
@@ -1020,7 +1020,7 @@ export default function App() {
           <figcaption>{bridgeImagePreview.label}</figcaption>
         </figure>
       ) : (bridgePreview?.type === 'html' || bridgePreview?.type === 'music') && bridgePreview.content ? (
-        <figure className={`liminal-stage-embed liminal-stage-embed--${bridgePreview.type}`}>
+        <figure className={`sinter-stage-embed sinter-stage-embed--${bridgePreview.type}`}>
           <iframe
             title={bridgePreview.type === 'music' ? 'Inline music preview' : 'Inline HTML preview'}
             srcDoc={bridgePreview.content}
@@ -1030,23 +1030,23 @@ export default function App() {
           <figcaption>{bridgePreview.label}</figcaption>
         </figure>
       ) : bridgePreview?.type === 'code' ? (
-        <pre className="liminal-stage-code">{bridgePreview.code}</pre>
+        <pre className="sinter-stage-code">{bridgePreview.code}</pre>
       ) : (
-        <div className={stageBlocked ? 'liminal-stage-empty liminal-stage-empty--blocked' : bridgeSummary.active ? 'liminal-stage-empty liminal-stage-empty--active' : 'liminal-stage-empty'}>
-          {bridgeSummary.active && <i className="liminal-stage-pulse" aria-hidden="true" />}
+        <div className={stageBlocked ? 'sinter-stage-empty sinter-stage-empty--blocked' : bridgeSummary.active ? 'sinter-stage-empty sinter-stage-empty--active' : 'sinter-stage-empty'}>
+          {bridgeSummary.active && <i className="sinter-stage-pulse" aria-hidden="true" />}
           <span>{stageEmptyKicker}</span>
           <strong>{stageEmptyHeading}</strong>
           <small>{stageEmptyDetail}</small>
           {bridgeSummary.liveRun && (
             <div
-              className={bridgeSummary.liveRun.showSlowNotice ? 'liminal-live-run liminal-live-run--slow' : 'liminal-live-run'}
+              className={bridgeSummary.liveRun.showSlowNotice ? 'sinter-live-run sinter-live-run--slow' : 'sinter-live-run'}
               aria-label="Live generation status"
             >
               <span>{bridgeSummary.liveRun.statusLabel}</span>
               <strong>{bridgeSummary.liveRun.elapsedLabel} elapsed</strong>
               <small>{bridgeSummary.liveRun.detail}</small>
               <small>{bridgeSummary.liveRun.attemptLabel} · {bridgeSummary.liveRun.timeoutLabel} · {bridgeSummary.liveRun.etaLabel}</small>
-              <button type="button" className="liminal-live-run__stop" onClick={() => void bridge.cancelCurrent()}>
+              <button type="button" className="sinter-live-run__stop" onClick={() => void bridge.cancelCurrent()}>
                 Stop
               </button>
               <em>{bridgeSummary.liveRun.reassurance}</em>
@@ -1054,12 +1054,12 @@ export default function App() {
           )}
         </div>
       )}
-      {hasSyncTarget && !hasDirectSyncTarget && <canvas ref={syncCanvasRef} className="liminal-sync-overlay" aria-hidden="true" />}
+      {hasSyncTarget && !hasDirectSyncTarget && <canvas ref={syncCanvasRef} className="sinter-sync-overlay" aria-hidden="true" />}
     </div>
   );
 
   const inspectorSlot = (
-    <div className="liminal-inspector-grid">
+    <div className="sinter-inspector-grid">
       <div>
         <span>Generator</span>
         <strong>{providerLabel}</strong>
@@ -1087,7 +1087,7 @@ export default function App() {
         <strong>{createMaxIterations}</strong>
       </div>
       {runReceipt && (
-        <div className="liminal-run-receipt">
+        <div className="sinter-run-receipt">
           <span>{runReceipt.heading}</span>
           <strong>{runReceipt.creativeDomain} · {runReceipt.phase}</strong>
           <small>Provider/model: {runReceipt.providerModel}</small>
@@ -1098,7 +1098,7 @@ export default function App() {
         </div>
       )}
       {cognitiveReceipt && (
-        <div className="liminal-cognitive-receipt">
+        <div className="sinter-cognitive-receipt">
           <span>{cognitiveReceipt.heading}</span>
           <strong>{cognitiveReceipt.loop} · write-back {cognitiveReceipt.writeBackStatus}</strong>
           <small>{cognitiveReceipt.writeBackSummary}</small>
@@ -1114,7 +1114,7 @@ export default function App() {
         </div>
       )}
       {activeMode.id === 'generate' && (
-        <div className={`liminal-review-panel liminal-review-panel--${bridgeSummary.humanReview.status}`}>
+        <div className={`sinter-review-panel sinter-review-panel--${bridgeSummary.humanReview.status}`}>
           <span>Manual Review Pack</span>
           <strong>{bridgeSummary.humanReview.status === 'ready' ? 'human-only checks' : bridgeSummary.humanReview.status}</strong>
           {bridgeSummary.humanReview.checks.map((check) => (
@@ -1123,14 +1123,14 @@ export default function App() {
         </div>
       )}
       {activeTab === 'create' && (
-        <div className="liminal-control-panel">
+        <div className="sinter-control-panel">
           {bridge.error && <div className="atelier-alert atelier-alert--error">{bridge.error}</div>}
           {bridge.session?.pendingAction && (
-            <div className="liminal-pending-action-card" role="group" aria-label="Pending action review">
+            <div className="sinter-pending-action-card" role="group" aria-label="Pending action review">
               <span>Pending review</span>
               <strong>{bridge.session.pendingAction.title}</strong>
               {bridge.session.pendingAction.description && <small>{bridge.session.pendingAction.description}</small>}
-              <div className="liminal-control-row">
+              <div className="sinter-control-row">
                 <button type="button" className="atelier-btn atelier-btn--primary" onClick={() => void bridge.confirmPending()}>
                   Confirm
                 </button>
@@ -1183,7 +1183,7 @@ export default function App() {
             </small>
           </label>
           {usesOrganismApi(effectiveCreateMode) && (
-            <div className="liminal-control-row">
+            <div className="sinter-control-row">
               <label>
                 <span>BPM</span>
                 <input
@@ -1214,19 +1214,19 @@ export default function App() {
 
   const timelineSlot = (
     <div>
-      <div className="liminal-timeline-row">
+      <div className="sinter-timeline-row">
         <span>{activeMode.id === 'improve' ? (improveLoading ? 'scanning' : improveReport?.runType || 'ready') : bridgeSummary.active ? bridgeSummary.timelineStatus : runStatus || 'idle'}</span>
         <strong>{activeMode.id === 'improve' ? `proposals ${improveReport?.proposals.length ?? 0}` : bridgeSummary.active ? bridgeSummary.timelinePrimary : runResult?.result ? `score ${runResult.result.finalScore?.toFixed(2)}` : activeMode.label}</strong>
         <small>{activeMode.id === 'improve' ? improveError || improveReport?.summary || 'No scan yet' : bridgeSummary.active ? bridgeSummary.timelineSecondary : createRunError || bridge.error || runError || selectedProject || 'No artifact selected'}</small>
       </div>
       {activeMode.id === 'generate' && (
-        <div className="liminal-process-meter" aria-label={`Generation progress ${Math.round(bridgeSummary.progressPercent * 100)} percent`}>
-          <div className="liminal-process-meter__track">
-            <div className="liminal-process-meter__fill" style={{ width: `${Math.max(3, Math.round(bridgeSummary.progressPercent * 100))}%` }} />
+        <div className="sinter-process-meter" aria-label={`Generation progress ${Math.round(bridgeSummary.progressPercent * 100)} percent`}>
+          <div className="sinter-process-meter__track">
+            <div className="sinter-process-meter__fill" style={{ width: `${Math.max(3, Math.round(bridgeSummary.progressPercent * 100))}%` }} />
           </div>
-          <div className="liminal-process-rail">
+          <div className="sinter-process-rail">
             {bridgeSummary.processSteps.map((step) => (
-              <div className={`liminal-process-step liminal-process-step--${step.status}`} key={step.id}>
+              <div className={`sinter-process-step sinter-process-step--${step.status}`} key={step.id}>
                 <span>{step.label}</span>
                 <small>{step.detail}</small>
               </div>
@@ -1235,9 +1235,9 @@ export default function App() {
         </div>
       )}
       {bridgeSummary.recentActivity.length > 0 && (
-        <div className="liminal-timeline-events">
+        <div className="sinter-timeline-events">
           {bridgeSummary.recentActivity.map((item, index) => (
-            <div className={`liminal-timeline-event liminal-timeline-event--${item.status || 'info'}`} key={`${item.label}-${index}`}>
+            <div className={`sinter-timeline-event sinter-timeline-event--${item.status || 'info'}`} key={`${item.label}-${index}`}>
               <span>{item.label}</span>
               <small>{item.detail}</small>
             </div>
@@ -1246,7 +1246,7 @@ export default function App() {
       )}
       {activeMode.id === 'generate' && clarificationRequest && (
         <form
-          className="liminal-clarification"
+          className="sinter-clarification"
           onSubmit={(event) => {
             event.preventDefault();
             handleClarificationSubmit();
@@ -1270,7 +1270,7 @@ export default function App() {
       )}
       {activeMode.id === 'generate' && draftReady && !clarificationRequest && (
         <form
-          className="liminal-draft-actions"
+          className="sinter-draft-actions"
           onSubmit={(event) => {
             event.preventDefault();
             handleDraftAdjustment();
@@ -1307,9 +1307,9 @@ export default function App() {
         </form>
       )}
       {bridgeSummary.stageTimings.length > 0 && (
-        <div className="liminal-timeline-events">
+        <div className="sinter-timeline-events">
           {bridgeSummary.stageTimings.map((item) => (
-            <div className="liminal-timeline-event liminal-timeline-event--ok" key={`${item.label}-${item.durationLabel}`}>
+            <div className="sinter-timeline-event sinter-timeline-event--ok" key={`${item.label}-${item.durationLabel}`}>
               <span>{item.label}</span>
               <small>{item.durationLabel}</small>
             </div>
@@ -1320,7 +1320,7 @@ export default function App() {
   );
 
   const leftSlot = (
-    <div className="liminal-rail-meta">
+    <div className="sinter-rail-meta">
       {activeMode.id === 'improve' ? (
         <>
           <span>Proposals</span>
@@ -1340,10 +1340,10 @@ export default function App() {
   );
 
   const audioSlot = (
-    <div className="liminal-audio-input">
+    <div className="sinter-audio-input">
       <button
         type="button"
-        className={micStatus === 'recording' ? 'liminal-audio-button liminal-audio-button--recording' : 'liminal-audio-button'}
+        className={micStatus === 'recording' ? 'sinter-audio-button sinter-audio-button--recording' : 'sinter-audio-button'}
         disabled={!hasSyncTarget && micStatus !== 'recording'}
         onClick={() => void startMicCapture()}
       >

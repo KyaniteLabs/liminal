@@ -722,7 +722,7 @@ describe('workbenchTelemetry', () => {
     }));
   });
 
-  it('extracts detailed cognitive receipt cards for what Liminal learned', () => {
+  it('extracts detailed cognitive receipt cards for what Sinter learned', () => {
     const receipt = latestCognitiveReceipt([
       {
         type: 'generation.cognitive_receipt',
@@ -735,7 +735,7 @@ describe('workbenchTelemetry', () => {
       },
     ]);
 
-    expect(receipt?.heading).toBe('What Liminal learned');
+    expect(receipt?.heading).toBe('What Sinter learned');
     expect(receipt?.items).toEqual([
       { organ: 'memory', status: 'observed', detail: 'Stored generation episode ep-123 for future retrieval.' },
       { organ: 'compost', status: 'observed', detail: 'Added generated artifact to compost heap.' },

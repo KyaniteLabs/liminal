@@ -15,7 +15,7 @@ Key patterns identified:
 4. **Noise filtering with state storage** — append PR links to monitor descriptions so subsequent agents stand down (deduplication without coordination layer)
 5. **Monitor density metric** — ~1 monitor per 75 lines of code, treating observability like test coverage
 
-Liminal already has partial implementations: `TaskVerifier` runs build + semantic scoring, `HarnessAgent` runs build + verify command, `MetaHarnessIntegration` captures failures and detects patterns. But agents can self-approve changes, verification is not separated from execution, and there is no structured evidence proof.
+Sinter already has partial implementations: `TaskVerifier` runs build + semantic scoring, `HarnessAgent` runs build + verify command, `MetaHarnessIntegration` captures failures and detects patterns. But agents can self-approve changes, verification is not separated from execution, and there is no structured evidence proof.
 
 ## Decision
 
@@ -47,7 +47,7 @@ Implementation: Add `lastHandledAt` to pattern records in `HarnessMemory`. Skip 
 
 ### Deferred (documented as requirements)
 
-**4. Monitor-driven triage** — Requires a production monitoring system that Liminal does not yet have. Document as a requirement for when Liminal ships to production users.
+**4. Monitor-driven triage** — Requires a production monitoring system that Sinter does not yet have. Document as a requirement for when Sinter ships to production users.
 
 **5. Monitor density metric** — Depends on production monitoring. Document as a target metric: "what percentage of code surface is monitored?"
 

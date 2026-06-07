@@ -204,7 +204,7 @@ describe('ShaderGenerator', () => {
     const code = await gen.generate('Create a GLSL violet nebula shader');
     const validation = GLSLValidator.validate(code);
 
-    expect(code).toContain('Liminal provider recovery');
+    expect(code).toContain('Sinter provider recovery');
     expect(code).toContain('gl_FragColor');
     expect(code).toContain('u_time');
     expect(validation.errors).toEqual([]);

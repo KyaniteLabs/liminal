@@ -17,7 +17,7 @@ import { tmpdir } from "node:os";
 function makeVariant(overrides: Partial<SlotVariant> = {}): SlotVariant {
 	return {
 		htmlPath: "/tmp/test-variant.html",
-		experimentId: "liminal-test",
+		experimentId: "sinter-test",
 		fitness: 0.7,
 		deployedAt: new Date().toISOString(),
 		model: "test-model",
@@ -42,7 +42,7 @@ describe("LivingSiteDaemon", () => {
 	let statePath: string;
 
 	beforeEach(() => {
-		tmpDir = mkdtempSync(join(tmpdir(), "liminal-daemon-test-"));
+		tmpDir = mkdtempSync(join(tmpdir(), "sinter-daemon-test-"));
 		statePath = join(tmpDir, "slots.json");
 		process.env.LIMINAL_POSTHOG_KEY = "phc_test_daemon";
 	});
@@ -82,7 +82,7 @@ describe("LivingSiteDaemon", () => {
 				async (slot: SiteSlot, _dryRun: boolean) => {
 					sm.setChallenger(slot.id, {
 						htmlPath: "/tmp/test-challenger.html",
-						experimentId: `liminal-${slot.id}-abc123`,
+						experimentId: `sinter-${slot.id}-abc123`,
 						fitness: 0.5,
 						deployedAt: new Date().toISOString(),
 						model: "mock-model",
@@ -93,7 +93,7 @@ describe("LivingSiteDaemon", () => {
 
 				await daemon.runCycle();
 				expect(sm.getSlot("home-hero")!.challenger).toMatchObject({
-					experimentId: "liminal-home-hero-abc123",
+					experimentId: "sinter-home-hero-abc123",
 					fitness: 0.5,
 					model: "mock-model",
 					domain: Domain.P5,
@@ -115,7 +115,7 @@ describe("LivingSiteDaemon", () => {
 				async (slot: SiteSlot, _dryRun: boolean) => {
 					sm.setChallenger(slot.id, {
 						htmlPath: "/tmp/test-challenger.html",
-						experimentId: `liminal-${slot.id}-abc123`,
+						experimentId: `sinter-${slot.id}-abc123`,
 						fitness: 0.5,
 						deployedAt: new Date().toISOString(),
 						model: "mock-model",
@@ -127,7 +127,7 @@ describe("LivingSiteDaemon", () => {
 				await daemon.runCycle(true); // dry-run
 				// Challenger should be set in memory but file not written
 				expect(sm.getSlot("home-hero")!.challenger).toMatchObject({
-					experimentId: "liminal-home-hero-abc123",
+					experimentId: "sinter-home-hero-abc123",
 					fitness: 0.5,
 				});
 				cleanup();
@@ -219,14 +219,14 @@ describe("LivingSiteDaemon", () => {
 			const html = daemon.injectVariantEngagementTracking(
 				"<html><head></head><body><main>visual</main></body></html>",
 				makeSlot(),
-				"liminal-home-hero-abc123",
+				"sinter-home-hero-abc123",
 			);
 
 			expect(html).toContain("liminal_slot_view");
 			expect(html).toContain("liminal_slot_interaction");
 			expect(html).toContain("liminal_slot_bounce");
 			expect(html).toContain("liminal_variant_id");
-			expect(html).toContain("liminal-home-hero-abc123");
+			expect(html).toContain("sinter-home-hero-abc123");
 			cleanup();
 		});
 	});

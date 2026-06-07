@@ -1,4 +1,4 @@
-# Liminal Composition System API
+# Sinter Composition System API
 
 > Multi-layer composition system for combining outputs from different generators (p5, Tone, Three.js, etc.)
 
@@ -17,7 +17,7 @@
 
 ## Overview
 
-The Composition System enables you to combine outputs from multiple Liminal generators into editable, composable projects. Think of it like a Photoshop or After Effects for creative coding — each generator output becomes a layer that can be positioned, animated, and blended with others.
+The Composition System enables you to combine outputs from multiple Sinter generators into editable, composable projects. Think of it like a Photoshop or After Effects for creative coding — each generator output becomes a layer that can be positioned, animated, and blended with others.
 
 ### Key Concepts
 
@@ -36,7 +36,7 @@ A **Layer** represents a single generator output (e.g., a p5.js sketch, a Tone.j
 - Clean up resources
 
 #### Compositions
-A **Composition** is a collection of layers with shared global settings (canvas size, frame rate, audio settings). Compositions can be exported to the Liminal project format (`.liminal`) and reimported later.
+A **Composition** is a collection of layers with shared global settings (canvas size, frame rate, audio settings). Compositions can be exported to the Sinter project format (`.liminal`) and reimported later.
 
 ### When to Use the Composition System
 
@@ -54,7 +54,7 @@ Use the Composition System when you need to:
 
 ### `DomainType`
 
-All supported domain types in Liminal:
+All supported domain types in Sinter:
 
 ```typescript
 type DomainType =
@@ -394,7 +394,7 @@ cleanup(): void
 
 ### `exportProject()` / `importProject()`
 
-Export/import to Liminal project format. **Note:** These methods are deprecated; use `ProjectSerializer` instead.
+Export/import to Sinter project format. **Note:** These methods are deprecated; use `ProjectSerializer` instead.
 
 ```typescript
 // Deprecated - use ProjectSerializer
@@ -772,7 +772,7 @@ interface Import {
 
 ### Built-in Adapters
 
-Liminal includes 9 built-in adapters:
+Sinter includes 9 built-in adapters:
 
 | Adapter | Domain | Description |
 |---------|--------|-------------|

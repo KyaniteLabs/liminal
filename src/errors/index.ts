@@ -1,11 +1,11 @@
 /**
- * Error types for Liminal
+ * Error types for Sinter
  *
  * Provides domain-specific error classes for better error handling
  * and debugging across the codebase.
  */
 
-export { LiminalError } from './base.js';
+export { SinterError } from './base.js';
 export { ConfigError } from './ConfigError.js';
 export { ValidationError } from './ValidationError.js';
 export { GenerationError } from './GenerationError.js';

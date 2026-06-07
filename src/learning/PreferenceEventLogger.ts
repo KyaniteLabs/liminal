@@ -3,7 +3,7 @@
  *
  * Captures user preference actions (pin, favorite, branch, compost,
  * more-like-this, less-like-this, pairwise) as structured data persisted
- * through LiminalFS. This is the taste-learning signal pipeline.
+ * through SinterFS. This is the taste-learning signal pipeline.
  */
 
 import { promises as fs } from 'fs';
@@ -12,11 +12,11 @@ import { Logger } from '../utils/Logger.js';
 import type { PreferenceAction, PreferenceRecord } from '../emergence/types.js';
 
 export interface PreferenceEventLoggerConfig {
-  /** Directory for preference event logs (default: ~/.liminal/preferences/) */
+  /** Directory for preference event logs (default: ~/.sinter/preferences/) */
   prefDir?: string;
 }
 
-const DEFAULT_PREF_DIR = `${process.env.HOME}/.liminal/preferences`;
+const DEFAULT_PREF_DIR = `${process.env.HOME}/.sinter/preferences`;
 
 export class PreferenceEventLogger {
   private readonly prefDir: string;

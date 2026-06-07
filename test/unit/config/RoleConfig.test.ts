@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
-const _userConfigPath = path.join(os.homedir(), '.liminal', 'config.json');
+const _userConfigPath = path.join(os.homedir(), '.sinter', 'config.json');
 
 // Injectable user-config content for tests. Default null → the read rejects
 // (no user config), matching the original behavior for all existing tests.
@@ -11,7 +11,7 @@ const _hoisted = vi.hoisted(() => ({ userConfig: null as string | null }));
 
 // Mock fs/promises.readFile to block the real user config from loading.
 // RoleConfig imports { readFile } from 'fs/promises' — this mock intercepts
-// only the ~/.liminal/config.json read and lets everything else through.
+// only the ~/.sinter/config.json read and lets everything else through.
 // Tests can inject a user config by setting _hoisted.userConfig.
 vi.mock('fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs/promises')>();
@@ -128,7 +128,7 @@ describe('loadRoleConfig with env vars', () => {
     vi.stubEnv('LIMINAL_LLM_MODEL', 'test-gen-model');
     vi.stubEnv('LIMINAL_LLM_API_KEY', 'gen-key-123');
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     expect(config.generator.baseUrl).toBe('http://gen-host:8080/v1');
     expect(config.generator.model).toBe('test-gen-model');
@@ -141,7 +141,7 @@ describe('loadRoleConfig with env vars', () => {
     vi.stubEnv('LIMINAL_LLM_BASE_URL', 'http://generic-host:8080/v1');
     vi.stubEnv('LIMINAL_LLM_MODEL', 'generic-model');
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     expect(config.harness.baseUrl).toBe('http://harness-host:9090/v1');
     expect(config.harness.model).toBe('test-harness-model');
@@ -151,7 +151,7 @@ describe('loadRoleConfig with env vars', () => {
     vi.stubEnv('LIMINAL_LLM_BASE_URL', 'http://generic-host:8080/v1');
     vi.stubEnv('LIMINAL_LLM_MODEL', 'generic-model');
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     expect(config.harness.baseUrl).toBe('http://generic-host:8080/v1');
     expect(config.harness.model).toBe('generic-model');
@@ -162,7 +162,7 @@ describe('loadRoleConfig with env vars', () => {
     vi.stubEnv('LIMINAL_EVALUATOR_MODEL', 'eval-specific-model');
     vi.stubEnv('LIMINAL_EVALUATOR_API_KEY', 'eval-specific-key');
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     expect(config.evaluator.baseUrl).toBe('http://eval-specific:7070/v1');
     expect(config.evaluator.model).toBe('eval-specific-model');
@@ -173,7 +173,7 @@ describe('loadRoleConfig with env vars', () => {
     vi.stubEnv('LIMINAL_LLM_BASE_URL', 'http://llm-fallback:8080/v1');
     vi.stubEnv('LIMINAL_LLM_MODEL', 'llm-fallback-model');
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     expect(config.evaluator.baseUrl).toBe('http://llm-fallback:8080/v1');
     expect(config.evaluator.model).toBe('llm-fallback-model');
@@ -184,7 +184,7 @@ describe('loadRoleConfig with env vars', () => {
     vi.stubEnv('LIMINAL_HARNESS_MODEL', 'harness-specific-model');
     vi.stubEnv('LIMINAL_HARNESS_API_KEY', 'harness-specific-key');
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     expect(config.harness.baseUrl).toBe('http://harness-specific:9090/v1');
     expect(config.harness.model).toBe('harness-specific-model');
@@ -196,7 +196,7 @@ describe('loadRoleConfig with env vars', () => {
     vi.stubEnv('LIMINAL_HARNESS_MODEL', 'gpt-5.4');
     vi.stubEnv('MINIMAX_API_KEY', 'minimax-key');
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     expect(config.harness.provider).toBe('openai');
     expect(config.harness.apiKey).toBeUndefined();
@@ -207,7 +207,7 @@ describe('loadRoleConfig with env vars', () => {
     vi.stubEnv('LIMINAL_HARNESS_MODEL', 'gpt-5.4');
     vi.stubEnv('LIMINAL_HARNESS_API_KEY', 'harness-openai-key');
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     expect(config.harness.provider).toBe('openai');
     expect(config.harness.apiKey).toBe('harness-openai-key');
@@ -220,7 +220,7 @@ describe('loadRoleConfig with env vars', () => {
     vi.stubEnv('MINIMAX_API_KEY', 'minimax-key');
     vi.stubEnv('LIMINAL_LLM_API_KEY', 'generic-key');
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     expect(config.harness.provider).toBe('anthropic');
     expect(config.harness.apiKey).toBe('glm-key');
@@ -231,7 +231,7 @@ describe('loadRoleConfig with env vars', () => {
     vi.stubEnv('LIMINAL_EVALUATOR_MODEL', 'test-eval-model');
     vi.stubEnv('LIMINAL_EVALUATOR_API_KEY', 'eval-key-456');
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     expect(config.evaluator.baseUrl).toBe('http://eval-host:7070/v1');
     expect(config.evaluator.model).toBe('test-eval-model');
@@ -242,7 +242,7 @@ describe('loadRoleConfig with env vars', () => {
     vi.stubEnv('LIMINAL_LLM_BASE_URL', 'https://api.anthropic.com/v1');
     vi.stubEnv('LIMINAL_LLM_MODEL', 'claude-test');
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     expect(config.generator.provider).toBe('anthropic');
   });
@@ -265,7 +265,7 @@ describe('role defaults', () => {
   });
 
   it('generator defaults to temperature 0.7, streaming false, timeout 120000', async () => {
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
     expect(config.generator.temperature).toBe(0.7);
     expect(config.generator.streaming).toBe(false);
     expect(config.generator.timeout).toBe(120000);
@@ -274,26 +274,26 @@ describe('role defaults', () => {
   });
 
   it('evaluator defaults to temperature 0.2, streaming false', async () => {
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
     expect(config.evaluator.temperature).toBe(0.2);
     expect(config.evaluator.streaming).toBe(false);
   });
 
   it('harness defaults to temperature 0.5, streaming true', async () => {
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
     expect(config.harness.temperature).toBe(0.5);
     expect(config.harness.streaming).toBe(true);
   });
 
   it('returns a valid baseUrl string when no config found', async () => {
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
     // May be user config default (e.g. minimax) or hardcoded default
     expect(typeof config.generator.baseUrl).toBe('string');
     expect(config.generator.baseUrl.length).toBeGreaterThan(0);
   });
 
   it('returns a valid model string when no config found', async () => {
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
     // May be user config default (e.g. MiniMax-M2.7) or fallback "unknown"
     expect(typeof config.generator.model).toBe('string');
     expect(config.generator.model.length).toBeGreaterThan(0);
@@ -452,7 +452,7 @@ describe('getFallbacks', () => {
 // saveRoleConfig
 // ---------------------------------------------------------------------------
 describe('saveRoleConfig', () => {
-  const tmpDir = path.join(os.tmpdir(), 'liminal-roleconfig-test-' + process.pid);
+  const tmpDir = path.join(os.tmpdir(), 'sinter-roleconfig-test-' + process.pid);
 
   afterEach(async () => {
     try {
@@ -522,7 +522,7 @@ describe('loadRoleConfig role inheritance', () => {
       roles: { generator: { baseUrl: 'https://api.anthropic.com/v1', model: 'claude-test', apiKey: 'gen-key-xyz' } },
     });
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     for (const role of ['evaluator', 'harness', 'studio'] as const) {
       expect(config[role].baseUrl).toBe('https://api.anthropic.com/v1');
@@ -547,7 +547,7 @@ describe('loadRoleConfig role inheritance', () => {
       },
     });
 
-    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+    const config = await loadRoleConfig('/tmp/nonexistent-sinter-test');
 
     expect(config.evaluator.model).toBe('eval-model'); // explicit wins
     expect(config.evaluator.baseUrl).toBe('http://eval-host:7070/v1');

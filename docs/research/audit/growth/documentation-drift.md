@@ -28,8 +28,8 @@
 |-------|---------|----------|
 | `npm start` not mentioned (uses `pnpm install`) | No `start` script in package.json | ✅ OK |
 | `npm run tui` command | ✅ Script exists: `"tui": "npx tsx src/tui/HarnessTUI.tsx"` | ✅ Accurate |
-| `liminal --configure` CLI | ✅ Binary exists in `bin/liminal` | ✅ Accurate |
-| `liminal chat` command | ✅ Referenced in AGENTS.md, CLI exists | ✅ Accurate |
+| `sinter --configure` CLI | ✅ Binary exists in `bin/sinter` | ✅ Accurate |
+| `sinter chat` command | ✅ Referenced in AGENTS.md, CLI exists | ✅ Accurate |
 | "2500+ tests passing" | Tests running but timeout; actual count unclear | 🟡 MEDIUM |
 | "132 test files" | Many test files exist but exact count varies | 🟡 MEDIUM |
 | Meta-Harness with 6 patterns | PatternDetector.ts exists, actual patterns unknown | 🟡 MEDIUM |
@@ -129,7 +129,7 @@ From `docs/archive/internal-audits/AUDIT_FULL.md`:
 ### ✅ Consistent Areas
 
 5. **Version Numbers** - All files consistent at 2.1.0
-6. **CLI Commands** - `npm run tui`, `liminal --configure` exist
+6. **CLI Commands** - `npm run tui`, `sinter --configure` exist
 7. **File Locations** - Core harness files exist where documented
 8. **Architecture** - Major components exist as described
 

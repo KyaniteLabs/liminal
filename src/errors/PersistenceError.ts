@@ -1,6 +1,6 @@
-import { LiminalError } from './base.js';
+import { SinterError } from './base.js';
 
-export class PersistenceError extends LiminalError {
+export class PersistenceError extends SinterError {
   constructor(
     message: string,
     opts?: { cause?: Error; retryable?: boolean; context?: Record<string, unknown> },

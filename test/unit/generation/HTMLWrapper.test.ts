@@ -69,7 +69,7 @@ describe("HTMLWrapper", () => {
 			const result = HTMLWrapper.wrap(html, { domain: "tone" });
 
 			expect(result).toContain("data-tone-preview-shell");
-			expect(result).toContain('id="liminal-tone-visualizer"');
+			expect(result).toContain('id="sinter-tone-visualizer"');
 			expect(result).toContain('id="startButton"');
 		});
 

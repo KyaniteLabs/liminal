@@ -1,4 +1,4 @@
-# Liminal — Creative Coding Agent
+# Sinter — Creative Coding Agent
 
 > "The code evolves. You curate. The system learns."
 
@@ -10,22 +10,22 @@ A sophisticated generative art system with an internal Ralph-Wiggum Loop for sel
 pnpm install
 
 # Configure an LLM backend (required for generation)
-liminal --configure          # Sets up LM Studio at localhost:1234
+sinter --configure          # Sets up LM Studio at localhost:1234
 
 # Or set env vars directly
 export LIMINAL_LLM_PROVIDER=lmstudio
 export LIMINAL_LLM_MODEL=qwen2.5-coder-7b-instruct
 
 # Generate art
-liminal --prompt "Create a calming blue particle system"
+sinter --prompt "Create a calming blue particle system"
 
 # Start creative chat session
-liminal chat
+sinter chat
 ```
 
-## How Liminal Works
+## How Sinter Works
 
-Liminal generates emergent generative art through self-recursive iteration with intelligent context enhancement. The same prompt runs repeatedly, but the "world" (files, context, artistic knowledge, guidance) changes each time, creating a sophisticated feedback loop where the agent critiques and improves its own output.
+Sinter generates emergent generative art through self-recursive iteration with intelligent context enhancement. The same prompt runs repeatedly, but the "world" (files, context, artistic knowledge, guidance) changes each time, creating a sophisticated feedback loop where the agent critiques and improves its own output.
 
 ### The Creative Loop
 
@@ -86,7 +86,7 @@ Enhanced Prompt → Better Generation → Improved Quality
 
 ### Chat Mode with Intelligent Guidance
 
-The chat mode (`liminal chat`) provides an interview-driven creative session:
+The chat mode (`sinter chat`) provides an interview-driven creative session:
 
 1. **Interview Phase** (7 questions)
    - What do you want to create?
@@ -115,7 +115,7 @@ The chat mode (`liminal chat`) provides an interview-driven creative session:
 
 ## Architecture Overview
 
-Liminal uses a sophisticated multi-layered architecture:
+Sinter uses a sophisticated multi-layered architecture:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -213,7 +213,7 @@ Repeats until convergence (threshold 0.90) or max phases (default 4). Supports d
 
 ## Compost Mill
 
-A living digestion system for creative material. Feed it files, directories, or previous Liminal outputs — it extracts, shreds, scores, and evolves fragments into reusable seeds.
+A living digestion system for creative material. Feed it files, directories, or previous Sinter outputs — it extracts, shreds, scores, and evolves fragments into reusable seeds.
 
 **Pipeline:** Feed → Extract (3 layers) → Shred → Mix (cross-domain collisions) → Mine (score + promote) → Digest → Prune
 
@@ -225,7 +225,7 @@ A living digestion system for creative material. Feed it files, directories, or 
 - **Soup**: continuous evolutionary loop — merge random fragments, score offspring, replace worst
 - **DNA Extraction**: ProjectDNA (domain, style patterns, techniques) extracted from promoted seeds
 
-### LIR (Liminal Intermediate Representation)
+### LIR (Sinter Intermediate Representation)
 
 Structured metadata for all seeds:
 - `[code]` badges for code fragments
@@ -237,14 +237,14 @@ Structured metadata for all seeds:
 ### Compost CLI
 
 ```bash
-liminal compost add <path>        # Add material to heap
-liminal compost digest             # Run digestion pipeline
-liminal compost soup start         # Start evolutionary soup loop
-liminal compost soup stop          # Stop soup loop
-liminal compost soup status        # Check soup status
-liminal compost seeds list         # List promoted seeds (with LIR badges)
-liminal compost seeds show <id>    # Show full seed details (with LIR structure)
-liminal compost status             # Heap/seed/soup overview
+sinter compost add <path>        # Add material to heap
+sinter compost digest             # Run digestion pipeline
+sinter compost soup start         # Start evolutionary soup loop
+sinter compost soup stop          # Stop soup loop
+sinter compost soup status        # Check soup status
+sinter compost seeds list         # List promoted seeds (with LIR badges)
+sinter compost seeds show <id>    # Show full seed details (with LIR structure)
+sinter compost status             # Heap/seed/soup overview
 ```
 
 ## Chat Mode Commands
@@ -252,7 +252,7 @@ liminal compost status             # Heap/seed/soup overview
 ### Interactive Session
 
 ```bash
-liminal chat
+sinter chat
 ```
 
 **Interview Questions:**
@@ -438,7 +438,7 @@ Every generation includes live HTML preview rendering:
 Generate live code for Strudel (TidalCycles), Hydra (audio-reactive visuals), and more.
 
 ```bash
-liminal --prompt "ambient glitch set" --mode live-music --output ./set
+sinter --prompt "ambient glitch set" --mode live-music --output ./set
 # Writes: ./set/strudel.js, ./set/hydra.js
 ```
 
@@ -459,31 +459,31 @@ The web GUI has full support for all features:
 
 ```bash
 # Generation
-liminal --prompt "Create a particle system"              # Basic generation
-liminal -p "sketch" -m 10 -o ./output                    # Short flags
-liminal --prompt "idea" --use-swarm --swarm-mode hybrid   # Swarm mode
-liminal --prompt "music" --mode live-music                # Live music
+sinter --prompt "Create a particle system"              # Basic generation
+sinter -p "sketch" -m 10 -o ./output                    # Short flags
+sinter --prompt "idea" --use-swarm --swarm-mode hybrid   # Swarm mode
+sinter --prompt "music" --mode live-music                # Live music
 
 # Chat Mode
-liminal chat                                            # Interview-driven creative session
+sinter chat                                            # Interview-driven creative session
 
 # Compost System
-liminal compost add <path>                                # Add material to heap
-liminal compost digest                                   # Run digestion pipeline
-liminal compost soup start                                # Start evolutionary soup loop
-liminal compost soup stop                                 # Stop soup loop
-liminal compost soup status                               # Check soup status
-liminal compost seeds list                                # List promoted seeds (with LIR badges)
-liminal compost seeds show <id>                           # Show seed details
-liminal compost status                                    # Heap/seed/soup overview
+sinter compost add <path>                                # Add material to heap
+sinter compost digest                                   # Run digestion pipeline
+sinter compost soup start                                # Start evolutionary soup loop
+sinter compost soup stop                                 # Stop soup loop
+sinter compost soup status                               # Check soup status
+sinter compost seeds list                                # List promoted seeds (with LIR badges)
+sinter compost seeds show <id>                           # Show seed details
+sinter compost status                                    # Heap/seed/soup overview
 
 # Project Management
-liminal list                                               # List saved sketches
-liminal serve 3456                                        # Preview server
-liminal --recent 10                                        # Recent prompts
-liminal --interactive                                      # TUI mode
-liminal --configure                                        # Setup config
-liminal --favorites                                        # List favorites
+sinter list                                               # List saved sketches
+sinter serve 3456                                        # Preview server
+sinter --recent 10                                        # Recent prompts
+sinter --interactive                                      # TUI mode
+sinter --configure                                        # Setup config
+sinter --favorites                                        # List favorites
 ```
 
 ## Programmatic API
@@ -750,7 +750,7 @@ const code = GlitchEffects.generate({ scanlines: true, chromaticAberration: true
 - **Unit tests**: Individual component testing with mocks
 - **Test suites**: 170+ test files covering every subsystem
 
-## What Liminal Can Do
+## What Sinter Can Do
 
 ### 🎨 Generate Art
 - **p5.js sketches**: Particle systems, flow fields, fractals, cellular automata, terrain generation
@@ -810,7 +810,7 @@ const code = GlitchEffects.generate({ scanlines: true, chromaticAberration: true
 - **Score tracking**: Iteration-by-iteration progress
 - **Performance metrics**: Model routing optimization
 
-## Why Liminal Is Different
+## Why Sinter Is Different
 
 **Not just another AI art tool:**
 
@@ -825,7 +825,7 @@ const code = GlitchEffects.generate({ scanlines: true, chromaticAberration: true
 
 **The difference:**
 
-Most AI art tools generate once. Liminal generates, evaluates, critiques, learns, and improves — until the work is complete or it discovers something new.
+Most AI art tools generate once. Sinter generates, evaluates, critiques, learns, and improves — until the work is complete or it discovers something new.
 
 ## Development Status
 
@@ -910,4 +910,4 @@ MIT
 
 ---
 
-**Liminal v1.0** — "The code evolves. You curate. The system learns."
+**Sinter v1.0** — "The code evolves. You curate. The system learns."

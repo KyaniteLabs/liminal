@@ -2,7 +2,7 @@
  * TuiDebugger — Verbose debug capture for the TUI.
  *
  * Subscribes to EventBus events, stores them in a ring buffer,
- * writes to a timestamped log file in ~/.liminal/debug/, and
+ * writes to a timestamped log file in ~/.sinter/debug/, and
  * provides formatted output for the TUI's DebugPanel.
  *
  * NEVER writes to stdout (that would corrupt Ink's rendering).
@@ -20,7 +20,7 @@ import { eventBus, type BusEvent } from '../core/EventBus.js';
 import { Logger } from '../utils/Logger.js';
 import { sanitizeTerminalText } from './sanitizeTerminalText.js';
 
-const LIMINAL_HOME = path.join(os.homedir(), '.liminal');
+const LIMINAL_HOME = path.join(os.homedir(), '.sinter');
 const DEBUG_DIR = path.join(LIMINAL_HOME, 'debug');
 const RING_BUFFER_SIZE = 200;
 const FLUSH_INTERVAL_MS = 500; // flush file buffer every 500ms
@@ -52,7 +52,7 @@ class TuiDebugger {
     if (process.env.LIMINAL_VERBOSE === '0' || process.env.LIMINAL_LOG_LEVEL === 'off') {
       return;
     }
-    // Also check ~/.liminal/config.json for debug.verbose
+    // Also check ~/.sinter/config.json for debug.verbose
     try {
       const configPath = path.join(LIMINAL_HOME, 'config.json');
       if (fs.existsSync(configPath)) {
@@ -260,7 +260,7 @@ class TuiDebugger {
     if (!this.fileStream) return;
     const header = [
       '='.repeat(80),
-      `Liminal TUI Debug Log`,
+      `Sinter TUI Debug Log`,
       `Started: ${new Date().toISOString()}`,
       `PID: ${process.pid}`,
       `Node: ${process.version}`,

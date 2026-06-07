@@ -1,16 +1,16 @@
-# Liminal Cognitive Finish Line Implementation Plan
+# Sinter Cognitive Finish Line Implementation Plan
 
-**Goal:** Turn Liminal from a collection of impressive subsystems into a visibly self-improving creative cognition system whose domains, cognitive organs, and self-improvement loops are tracked, exposed, and verified.
+**Goal:** Turn Sinter from a collection of impressive subsystems into a visibly self-improving creative cognition system whose domains, cognitive organs, and self-improvement loops are tracked, exposed, and verified.
 
 **Architecture:** Start with a source-controlled finish-line contract and a machine-readable cognitive architecture atlas. Then wire Studio/CLI reporting, capability maturity gates, model-assimilation gates, and proof scripts so every creative domain and cognitive organ must prove its role in the closed loop: perception -> memory -> compost -> dreaming -> intuition -> creation -> evaluation -> self-improvement.
 
-**Tech Stack:** TypeScript, Vitest, existing `bin/liminal` CLI, existing `src/reporting`, existing cognitive subsystems under `src/compost`, `src/brain`, `src/intuition`, `src/dreaming`, `src/cortex`, `src/autonomy`, `src/learning`, `src/evolution`, and docs under `docs/`.
+**Tech Stack:** TypeScript, Vitest, existing `bin/sinter` CLI, existing `src/reporting`, existing cognitive subsystems under `src/compost`, `src/brain`, `src/intuition`, `src/dreaming`, `src/cortex`, `src/autonomy`, `src/learning`, `src/evolution`, and docs under `docs/`.
 
 ---
 
 ## Non-negotiable Product Contract
 
-Liminal V1 is not a four-generator proof. It is a creative cognitive system with:
+Sinter V1 is not a four-generator proof. It is a creative cognitive system with:
 
 1. **Creative body:** SVG, p5.js, GLSL, Hydra, Three.js, Tone.js, Strudel, Revideo, HTML, ASCII, Kinetic Typography, TextGen.
 2. **Cognitive organs:** perception, memory, compost, dreaming, intuition, cortex, garden/evolution, immune/truth system, model assimilation.
@@ -33,9 +33,9 @@ Liminal V1 is not a four-generator proof. It is a creative cognitive system with
 
 ### Task 0.3: Expose atlas through CLI
 
-**Files:** `bin/liminal`, `test/integration/cognitive-architecture-cli-contract.test.ts`
+**Files:** `bin/sinter`, `test/integration/cognitive-architecture-cli-contract.test.ts`
 
-**Verification:** `pnpm build && node bin/liminal report cognition`
+**Verification:** `pnpm build && node bin/sinter report cognition`
 
 ### Task 0.4: Add deterministic cognitive-loop proof
 

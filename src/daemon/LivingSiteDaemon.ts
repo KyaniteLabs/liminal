@@ -45,7 +45,7 @@ export interface DaemonConfig {
 }
 
 export const DEFAULT_DAEMON_CONFIG: DaemonConfig = {
-	assetDir: "/var/www/kyanitelabs/liminal-asset",
+	assetDir: "/var/www/kyanitelabs/sinter-asset",
 	minSampleSize: 200,
 	cycleIntervalMs: 21_600_000, // 6 hours
 	wildcardIntervalDays: 7,
@@ -188,7 +188,7 @@ export class LivingSiteDaemon {
 		const hash = randomBytes(6).toString("hex");
 		const filename = `${slot.id}-${hash}.html`;
 		const htmlPath = join(this.config.assetDir, filename);
-		const experimentId = `liminal-${slot.id}-${hash}`;
+		const experimentId = `sinter-${slot.id}-${hash}`;
 
 		// Build a brand-specific creative prompt for this slot.
 		const isWildcard = this.isWildcardDay();

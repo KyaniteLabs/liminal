@@ -1,15 +1,15 @@
-# Liminal Local Runtime Workflow + Targeted Fix Plan
+# Sinter Local Runtime Workflow + Targeted Fix Plan
 
 Date: 2026-04-11
 Status: approved working model
-Purpose: give Liminal a local-only autonomous lane plus a prioritized queue of high-leverage, low-risk fixes
+Purpose: give Sinter a local-only autonomous lane plus a prioritized queue of high-leverage, low-risk fixes
 
 ---
 
 ## 1. Local-only runtime lane
 
 ### Objective
-Give Liminal a safe local branch/worktree where it can:
+Give Sinter a safe local branch/worktree where it can:
 - checkpoint often
 - preserve intermediate work
 - avoid losing verified progress
@@ -38,7 +38,7 @@ Suggested branch names:
 From repo root:
 
 ```bash
-cd /Users/simongonzalezdecruz/workspaces/liminal
+cd /Users/simongonzalezdecruz/workspaces/sinter
 
 git fetch origin
 
@@ -47,7 +47,7 @@ git worktree add .worktrees/liminal-promote -b fix/liminal-promote origin/main
 ```
 
 ### Rules
-- Liminal autonomous work happens in `.worktrees/liminal-runtime`
+- Sinter autonomous work happens in `.worktrees/liminal-runtime`
 - frequent local commits are encouraged
 - no automatic push from runtime lane
 - only promoted commits/diffs go to `fix/*`
@@ -85,7 +85,7 @@ Benefits:
 
 ## 2. Targeted high-leverage / low-risk fix queue
 
-This is the queue Liminal should work through in priority order.
+This is the queue Sinter should work through in priority order.
 
 ### Priority 1 — language-aware verification selection
 
@@ -215,12 +215,12 @@ Standalone workflow helper.
 
 ---
 
-## 3. Delegate-ready prompt for Liminal runtime lane
+## 3. Delegate-ready prompt for Sinter runtime lane
 
-Use this exact prompt with Liminal in the local-only runtime worktree:
+Use this exact prompt with Sinter in the local-only runtime worktree:
 
 ```text
-You are working in the local-only Liminal runtime lane.
+You are working in the local-only Sinter runtime lane.
 
 Mission:
 Focus only on the highest-leverage, lowest-risk control-plane fixes for the Meta-Harness and Bubble Tea operator surface.
@@ -269,12 +269,12 @@ Start with Priority 1 unless current evidence shows a different blocker is more 
 
 ### Create runtime lane
 ```bash
-cd /Users/simongonzalezdecruz/workspaces/liminal
+cd /Users/simongonzalezdecruz/workspaces/sinter
 git fetch origin
 git worktree add .worktrees/liminal-runtime -b local/liminal-runtime origin/main
 ```
 
-### Run Liminal there
+### Run Sinter there
 ```bash
 cd /Users/simongonzalezdecruz/workspaces/liminal/.worktrees/liminal-runtime
 pnpm tui
@@ -282,7 +282,7 @@ pnpm tui
 
 ### Promote later
 ```bash
-cd /Users/simongonzalezdecruz/workspaces/liminal
+cd /Users/simongonzalezdecruz/workspaces/sinter
 git worktree add .worktrees/liminal-promote -b fix/liminal-promote origin/main
 cd .worktrees/liminal-promote
 git cherry-pick <good-runtime-commit>
@@ -293,7 +293,7 @@ git cherry-pick <good-runtime-commit>
 ## 5. Success condition
 
 This workflow is successful when:
-- Liminal can autonomously make local commits without losing work
+- Sinter can autonomously make local commits without losing work
 - only good verified fixes are promoted to remote PR branches
 - branch/PR noise is reduced
 - targeted control-plane quality improves steadily

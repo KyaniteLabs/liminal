@@ -388,7 +388,7 @@ export class LLMClient {
       const { readFile } = await import('fs/promises');
       const { join } = await import('path');
       const { homedir } = await import('os');
-      const userPath = join(homedir(), '.liminal', 'config.json');
+      const userPath = join(homedir(), '.sinter', 'config.json');
       const content = await readFile(userPath, 'utf-8');
       rawFile = JSON.parse(content) as RoleConfigFile;
     } catch (err) {

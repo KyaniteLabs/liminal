@@ -32,7 +32,7 @@ describe('ProjectStore', () => {
   let store: ProjectStore;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'liminal-project-test-'));
+    tempDir = mkdtempSync(join(tmpdir(), 'sinter-project-test-'));
     store = new ProjectStore({ projectRoot: tempDir });
   });
 
@@ -48,7 +48,7 @@ describe('ProjectStore', () => {
       const result = store.init();
 
       expect(result.isNew).toBe(true);
-      expect(result.dbPath).toContain('project.liminal');
+      expect(result.dbPath).toContain('project.sinter');
       expect(result.stats.totalEvents).toBe(0);
     });
 

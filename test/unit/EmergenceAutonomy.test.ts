@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { ReplayBudgetPolicy } from '../../src/autonomy/ReplayBudgetPolicy.js';
 import { PromisingStateSelector } from '../../src/autonomy/PromisingStateSelector.js';
 import type { ArchiveEntry, PromisingState, EmergenceSignals } from '../../src/emergence/types.js';
-import type { LiminalObjectRef } from '../../src/fs/types.js';
+import type { SinterObjectRef } from '../../src/fs/types.js';
 
 // ── ReplayBudgetPolicy ──
 
@@ -83,7 +83,7 @@ describe('ReplayBudgetPolicy', () => {
 function makeArchiveEntry(id: string, signals: Partial<EmergenceSignals>, parentCount = 0): ArchiveEntry {
   return {
     id,
-    artifactRef: { uri: `test://${id}`, kind: 'generated-code' } as LiminalObjectRef,
+    artifactRef: { uri: `test://${id}`, kind: 'generated-code' } as SinterObjectRef,
     descriptor: {
       values: [{ axis: 'order-chaos', value: 0.5 }],
       source: 'test',

@@ -6,7 +6,7 @@
 
 ## Problem
 
-Singing into Liminal Sing today feels shallow and rough. Symptoms (owner-reported): the visuals "only get bigger and smaller," respond in a "stupid" one-dimensional way, and are jittery/laggy with cheap-looking output. A voice carries far more information than the system uses.
+Singing into Sinter Sing today feels shallow and rough. Symptoms (owner-reported): the visuals "only get bigger and smaller," respond in a "stupid" one-dimensional way, and are jittery/laggy with cheap-looking output. A voice carries far more information than the system uses.
 
 ### Root cause (verified in code)
 - The Sing performance runtime uses a thin pipeline: `packages/audio-core/VoiceFeatureStream` extracts ~5 crude scalars (rms, pitch, centroid, spectralFlux, onset) and the shader receives ~12 raw scalar uniforms, mapped as "scale this uniform."
@@ -78,7 +78,7 @@ In the `audio-core` worklet path:
 
 ## Section 5 — Consolidation
 
-`packages/audio-core` becomes the single source for rich extraction (reusing the pure-math logic already present). Sing consumes it. Full dedup of the `src/audio/` copies is a **follow-up**, not forced in v1 (avoids destabilizing the main liminal world).
+`packages/audio-core` becomes the single source for rich extraction (reusing the pure-math logic already present). Sing consumes it. Full dedup of the `src/audio/` copies is a **follow-up**, not forced in v1 (avoids destabilizing the main sinter world).
 
 ## Section 6 — Phased build plan
 

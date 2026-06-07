@@ -1,4 +1,4 @@
-# Week 1 Content Calendar — Liminal Building in Public
+# Week 1 Content Calendar — Sinter Building in Public
 
 **Theme: The Reveal**
 
@@ -76,7 +76,7 @@
 | Time (PT) | Platform | Content | Asset |
 |-----------|----------|---------|-------|
 | 10:00 AM | Twitter | Weekly recap thread | Best outputs + stats |
-| 12:00 PM | Newsletter/Blog | "Week 1 of building Liminal in public" | Longer write-up |
+| 12:00 PM | Newsletter/Blog | "Week 1 of building Sinter in public" | Longer write-up |
 | Rest of day | — | Plan Week 2, batch create content | — |
 
 ---

@@ -2,11 +2,11 @@
 
 ## Summary
 
-Replace ad-hoc `Math.random()` usage in Liminal's creative pipeline with a centralized, constructor-injected entropy generator that harvests randomness from the system's own metabolic state (EventStore, CompostHeap, TelemetryCollector) via intentional destructive compression. The engine closes the creative loop: compost produces fragments, fragments feed entropy, entropy drives the next creative cycle.
+Replace ad-hoc `Math.random()` usage in Sinter's creative pipeline with a centralized, constructor-injected entropy generator that harvests randomness from the system's own metabolic state (EventStore, CompostHeap, TelemetryCollector) via intentional destructive compression. The engine closes the creative loop: compost produces fragments, fragments feed entropy, entropy drives the next creative cycle.
 
 ## Motivation
 
-Liminal currently uses `Math.random()` throughout its creative systems (`CompostSoup`, `MarkovChain`, `DreamEngine`, `GeneratorHarnessTools`). This randomness is white noise — statistically uniform, devoid of history, and easy for downstream systems to ignore. By generating entropy from the system's own metabolism, we make randomness **interesting**, **observable**, and **un-ignorable**.
+Sinter currently uses `Math.random()` throughout its creative systems (`CompostSoup`, `MarkovChain`, `DreamEngine`, `GeneratorHarnessTools`). This randomness is white noise — statistically uniform, devoid of history, and easy for downstream systems to ignore. By generating entropy from the system's own metabolism, we make randomness **interesting**, **observable**, and **un-ignorable**.
 
 ## Architecture
 
@@ -75,7 +75,7 @@ The harvester mixes three sources in a fixed format:
 
 ### Genesis Mode (Primordial Soup)
 
-When live metabolic data is insufficient (< 5 events and < 1 fragment), the harvester falls back to **genesis mode**, using Liminal's own git history as the primordial entropy source.
+When live metabolic data is insufficient (< 5 events and < 1 fragment), the harvester falls back to **genesis mode**, using Sinter's own git history as the primordial entropy source.
 
 **Runtime sourcing:**
 ```ts

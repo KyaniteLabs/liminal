@@ -1,6 +1,6 @@
 import { createServer } from 'node:http';
 
-export const INTEGRATION_PROOF_MODEL = 'liminal-integration-proof-model';
+export const INTEGRATION_PROOF_MODEL = 'sinter-integration-proof-model';
 
 const ENV_KEYS = [
   'LIMINAL_LLM_PROVIDER',
@@ -148,7 +148,7 @@ export function startIntegrationProofLLMServer() {
         const prompt = promptFromBody(body);
         const content = contentForPrompt(prompt, requests.length);
         writeJson(res, 200, {
-          id: `chatcmpl-liminal-integration-${requests.length}`,
+          id: `chatcmpl-sinter-integration-${requests.length}`,
           object: 'chat.completion',
           created: Math.floor(Date.now() / 1000),
           model: INTEGRATION_PROOF_MODEL,
@@ -189,10 +189,10 @@ export async function installIntegrationProofLLMEnv() {
   process.env.LIMINAL_LLM_PROVIDER = 'openai';
   process.env.LIMINAL_LLM_BASE_URL = proof.baseUrl;
   process.env.LIMINAL_LLM_MODEL = INTEGRATION_PROOF_MODEL;
-  process.env.LIMINAL_LLM_API_KEY = 'liminal-integration-proof-key';
+  process.env.LIMINAL_LLM_API_KEY = 'sinter-integration-proof-key';
   process.env.LLM_BASE_URL = proof.baseUrl;
   process.env.LLM_MODEL = INTEGRATION_PROOF_MODEL;
-  process.env.LLM_API_KEY = 'liminal-integration-proof-key';
+  process.env.LLM_API_KEY = 'sinter-integration-proof-key';
 
   return async () => {
     await proof.close();

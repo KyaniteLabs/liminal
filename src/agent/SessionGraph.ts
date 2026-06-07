@@ -2,15 +2,15 @@
  * SessionGraph — Phase 11 Increment 3
  *
  * Persists every chat turn, delegation decision, and artifact reference
- * as LiminalFS manifests. Sessions are resumable: each session stores
+ * as SinterFS manifests. Sessions are resumable: each session stores
  * a manifest and individual turn records.
  *
- * Design: accepts LiminalFS optionally. When no FS is provided,
+ * Design: accepts SinterFS optionally. When no FS is provided,
  * operates in memory-only mode (graceful degradation for tests
  * and environments without a project root).
  */
 
-import type { LiminalFS } from '../fs/index.js';
+import type { SinterFS } from '../fs/index.js';
 
 // ── Types ──
 
@@ -46,7 +46,7 @@ export class SessionGraph {
 
   constructor(
     private readonly sessionId: string,
-    private readonly fs?: LiminalFS,
+    private readonly fs?: SinterFS,
   ) {
     const now = new Date().toISOString();
     this.manifest = {
@@ -59,7 +59,7 @@ export class SessionGraph {
 
   /**
    * Record a completed turn.
-   * Persists to LiminalFS if available, otherwise stores in memory.
+   * Persists to SinterFS if available, otherwise stores in memory.
    */
   recordTurn(turn: Omit<SessionTurnRecord, 'timestamp'>): SessionTurnRecord {
     const fullTurn: SessionTurnRecord = {
@@ -75,7 +75,7 @@ export class SessionGraph {
     this.manifest.lastIntent = fullTurn.intent;
     this.manifest.lastDelegatedTo = fullTurn.delegatedTo;
 
-    // Persist to LiminalFS if available
+    // Persist to SinterFS if available
     if (this.fs) {
       this.persistTurn(fullTurn);
       this.persistManifest();

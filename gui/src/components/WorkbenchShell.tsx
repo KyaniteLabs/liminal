@@ -68,7 +68,7 @@ export function WorkbenchShell({
   const showStopped = recourseState === 'stopped';
   const showGeneratePreviewReady = activeMode === 'generate' && artifactReady;
   const artifactHeading = stageBusy
-    ? 'Liminal is generating…'
+    ? 'Sinter is generating…'
     : showRecovery
       ? showStopped ? 'Generation stopped' : 'No preview was produced'
     : showGeneratePreviewReady
@@ -98,22 +98,22 @@ export function WorkbenchShell({
   }, [activeMode, primaryMode.id]);
 
   return (
-    <div className="liminal-workbench liminal-workbench--chat-first">
-      <a className="liminal-skip-link" href="#main-content">Skip to main content</a>
-      <header className="liminal-commandbar">
-        <div className="liminal-brand">
-          <span className="liminal-brand__mark">L</span>
+    <div className="sinter-workbench sinter-workbench--chat-first">
+      <a className="sinter-skip-link" href="#main-content">Skip to main content</a>
+      <header className="sinter-commandbar">
+        <div className="sinter-brand">
+          <span className="sinter-brand__mark">L</span>
           <div>
-            <h1>Liminal Studio</h1>
+            <h1>Sinter Studio</h1>
             <p>Codex for creative coding</p>
           </div>
         </div>
-        <details className="liminal-runtime-details">
+        <details className="sinter-runtime-details">
           <summary aria-label="Runtime details">
             <span>Model</span>
             <strong>{providerLabel}</strong>
           </summary>
-          <div className="liminal-runtime-details__body" aria-label="Runtime status">
+          <div className="sinter-runtime-details__body" aria-label="Runtime status">
             <span><b>Agent</b>{providerLabel}</span>
             <span><b>Judge</b>{evaluatorLabel}</span>
             <span><b>Details</b>{inspectorLabel}</span>
@@ -121,26 +121,26 @@ export function WorkbenchShell({
         </details>
       </header>
 
-      <aside className="liminal-left-rail">
+      <aside className="sinter-left-rail">
         <nav aria-label="Workbench modes">
-          <div className="liminal-rail-group">
+          <div className="sinter-rail-group">
             <button
               type="button"
-              className={primaryMode.id === activeMode ? 'liminal-primary-mode liminal-rail-button liminal-rail-button--active' : 'liminal-primary-mode liminal-rail-button'}
+              className={primaryMode.id === activeMode ? 'sinter-primary-mode sinter-rail-button sinter-rail-button--active' : 'sinter-primary-mode sinter-rail-button'}
               aria-current={primaryMode.id === activeMode ? 'page' : undefined}
               onClick={() => onModeChange(primaryMode)}
             >
               {primaryMode.label}
             </button>
             {generateTabs.length > 1 && (
-              <details className="liminal-subnav liminal-subnav--drawer">
+              <details className="sinter-subnav sinter-subnav--drawer">
                 <summary aria-label="More Generate tools">Create tools</summary>
-                <div className="liminal-subnav__body">
+                <div className="sinter-subnav__body">
                   {generateTabs.map((tab) => (
                     <button
                       key={tab}
                       type="button"
-                      className={tab === activeTab ? 'liminal-subnav-button liminal-subnav-button--active' : 'liminal-subnav-button'}
+                      className={tab === activeTab ? 'sinter-subnav-button sinter-subnav-button--active' : 'sinter-subnav-button'}
                       aria-current={tab === activeTab ? 'page' : undefined}
                       onClick={() => {
                         if (activeMode !== primaryMode.id) onModeChange(primaryMode);
@@ -156,17 +156,17 @@ export function WorkbenchShell({
           </div>
           {secondaryModes.length > 0 && (
             <details
-              className="liminal-secondary-tools"
+              className="sinter-secondary-tools"
               open={secondaryToolsOpen}
               onToggle={(event) => setSecondaryToolsOpen(event.currentTarget.open)}
             >
               <summary aria-label="More tools">More</summary>
-              <div className="liminal-secondary-tools__body">
+              <div className="sinter-secondary-tools__body">
                 {secondaryModes.map((mode) => (
                   <button
                     key={mode.id}
                     type="button"
-                    className={mode.id === activeMode ? 'liminal-rail-button liminal-rail-button--active' : 'liminal-rail-button'}
+                    className={mode.id === activeMode ? 'sinter-rail-button sinter-rail-button--active' : 'sinter-rail-button'}
                     aria-current={mode.id === activeMode ? 'page' : undefined}
                     onClick={() => onModeChange(mode)}
                   >
@@ -177,14 +177,14 @@ export function WorkbenchShell({
             </details>
           )}
           {activeModeObject.id !== primaryMode.id && activeModeObject.legacyTabs.length > 1 && (
-            <details className="liminal-subnav liminal-subnav--drawer" open>
+            <details className="sinter-subnav sinter-subnav--drawer" open>
               <summary>{activeModeLabel} views</summary>
-              <div className="liminal-subnav__body">
+              <div className="sinter-subnav__body">
                 {activeModeObject.legacyTabs.map((tab) => (
                   <button
                     key={tab}
                     type="button"
-                    className={tab === activeTab ? 'liminal-subnav-button liminal-subnav-button--active' : 'liminal-subnav-button'}
+                    className={tab === activeTab ? 'sinter-subnav-button sinter-subnav-button--active' : 'sinter-subnav-button'}
                     aria-current={tab === activeTab ? 'page' : undefined}
                     onClick={() => onTabChange(tab)}
                   >
@@ -195,22 +195,22 @@ export function WorkbenchShell({
             </details>
           )}
         </nav>
-        <details className="liminal-left-rail__content liminal-rail-meta-details">
+        <details className="sinter-left-rail__content sinter-rail-meta-details">
           <summary>Session</summary>
           {leftSlot}
         </details>
       </aside>
 
-      <main id="main-content" className="liminal-chat-surface" aria-label="Creative coding conversation">
-        <div className="liminal-chat-timeline" aria-live="polite">
-          <article className="liminal-chat-message liminal-chat-message--assistant">
-            <span className="liminal-chat-kicker">AI creative coding agent</span>
+      <main id="main-content" className="sinter-chat-surface" aria-label="Creative coding conversation">
+        <div className="sinter-chat-timeline" aria-live="polite">
+          <article className="sinter-chat-message sinter-chat-message--assistant">
+            <span className="sinter-chat-kicker">AI creative coding agent</span>
             <h2>What should we make?</h2>
             <p>
               Describe a sketch, scene, shader, sound, or visual system. I’ll ask for missing details
               when useful, generate the artifact, then help you revise or polish it.
             </p>
-            <div className="liminal-chat-chips" aria-label="Preserved capabilities">
+            <div className="sinter-chat-chips" aria-label="Preserved capabilities">
               <span>Generate</span>
               <span>Preview</span>
               <span>Revise</span>
@@ -219,46 +219,46 @@ export function WorkbenchShell({
           </article>
 
           {userPrompt ? (
-            <article className="liminal-chat-message liminal-chat-message--user" aria-label="Current prompt draft">
+            <article className="sinter-chat-message sinter-chat-message--user" aria-label="Current prompt draft">
               <span>You</span>
               <p>{userPrompt}</p>
             </article>
           ) : null}
 
-          <article className="liminal-artifact-card" aria-label="Artifact preview card">
+          <article className="sinter-artifact-card" aria-label="Artifact preview card">
             <div>
               <span>{stageBusy ? 'Working artifact' : 'Artifact preview'}</span>
               <strong>{artifactHeading}</strong>
               <small>{artifactDetail}</small>
             </div>
-            <a href="#liminal-preview-panel">View preview</a>
+            <a href="#sinter-preview-panel">View preview</a>
           </article>
 
           {recourseSlot}
 
           {children ? (
-            <section className="liminal-legacy-panel" aria-label="Supplemental panel">
+            <section className="sinter-legacy-panel" aria-label="Supplemental panel">
               {children}
             </section>
           ) : null}
 
-          <details className="liminal-receipt-details" open={stageBusy || Boolean(recourseSlot)}>
+          <details className="sinter-receipt-details" open={stageBusy || Boolean(recourseSlot)}>
             <summary>
               <span>Work log</span>
               <strong>{stageBusy ? 'live' : showRecovery ? showStopped ? 'stopped' : 'needs recovery' : 'collapsed'}</strong>
             </summary>
-            <section className="liminal-timeline" aria-label="Generation timeline" role="status" aria-live="polite">
+            <section className="sinter-timeline" aria-label="Generation timeline" role="status" aria-live="polite">
               {timelineSlot}
             </section>
           </details>
 
-          <details className="liminal-advanced-drawer">
+          <details className="sinter-advanced-drawer">
             <summary>
               <span>Details</span>
               <strong>{activeModeLabel} · {activeSurfaceLabel}</strong>
             </summary>
-            <aside className="liminal-inspector" aria-label="Details">
-              <div className="liminal-inspector__header">
+            <aside className="sinter-inspector" aria-label="Details">
+              <div className="sinter-inspector__header">
                 <span>Behind the scenes</span>
                 <small>{inspectorLabel}</small>
               </div>
@@ -267,9 +267,9 @@ export function WorkbenchShell({
           </details>
         </div>
 
-        <section className="liminal-chat-composer" aria-label="Message composer">
-          <div className="liminal-composer-head">
-            <label className="liminal-composer-label" htmlFor="workbench-prompt">Message Liminal</label>
+        <section className="sinter-chat-composer" aria-label="Message composer">
+          <div className="sinter-composer-head">
+            <label className="sinter-composer-label" htmlFor="workbench-prompt">Message Sinter</label>
             <span>{stageBusy ? 'Working' : 'Ready'}</span>
           </div>
           <textarea
@@ -281,21 +281,21 @@ export function WorkbenchShell({
             aria-describedby="workbench-run-status"
           />
           {conversationNotice ? (
-            <p className="liminal-composer-notice" role="status">{conversationNotice}</p>
+            <p className="sinter-composer-notice" role="status">{conversationNotice}</p>
           ) : null}
-          <div className="liminal-composer-actions">
+          <div className="sinter-composer-actions">
             {audioSlot ? (
-              <details className="liminal-composer-options">
+              <details className="sinter-composer-options">
                 <summary>Options</summary>
                 <div>{audioSlot}</div>
               </details>
             ) : null}
             {stageBusy && onCancelRun ? (
-              <button className="liminal-stop-button" type="button" onClick={onCancelRun} aria-label="Stop active generation">
+              <button className="sinter-stop-button" type="button" onClick={onCancelRun} aria-label="Stop active generation">
                 Stop
               </button>
             ) : null}
-            <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled} aria-busy={stageBusy}>
+            <button className="sinter-run-button" type="button" onClick={onRun} disabled={runDisabled} aria-busy={stageBusy}>
               {runLabel}
             </button>
             <p id="workbench-run-status" className="sr-only" aria-live="polite">{runStatusText}</p>
@@ -303,13 +303,13 @@ export function WorkbenchShell({
         </section>
       </main>
 
-      <aside id="liminal-preview-panel" className="liminal-preview-panel" aria-label="Live preview and artifact panel" aria-busy={stageBusy}>
-        <div className="liminal-preview-panel__header">
+      <aside id="sinter-preview-panel" className="sinter-preview-panel" aria-label="Live preview and artifact panel" aria-busy={stageBusy}>
+        <div className="sinter-preview-panel__header">
           <span>Preview</span>
           <strong>Your artifact</strong>
           <small>Generated sketches, shaders, images, motion, and playable sound open here.</small>
         </div>
-        <div className="liminal-preview-panel__stage liminal-stage">
+        <div className="sinter-preview-panel__stage sinter-stage">
           {stageSlot}
         </div>
       </aside>

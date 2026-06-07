@@ -63,7 +63,7 @@ describe('E2E full loop (cloud LLM)', () => {
 
     const stamp = Date.now();
     const projectName = `e2e-cloud-${stamp}`;
-    const runRoot = await createIsolatedRunRoot('liminal-e2e-full-loop-cloud');
+    const runRoot = await createIsolatedRunRoot('sinter-e2e-full-loop-cloud');
     const outputDir = path.join('tmp-e2e', projectName);
 
     const { run } = await import('../../dist/index.js');

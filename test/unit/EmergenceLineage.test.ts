@@ -11,7 +11,7 @@ describe('LineageTracker', () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    tmpDir = join(tmpdir(), `liminal-test-lineage-${Date.now()}`);
+    tmpDir = join(tmpdir(), `sinter-test-lineage-${Date.now()}`);
     await fs.mkdir(tmpDir, { recursive: true });
   });
 
@@ -122,7 +122,7 @@ describe('PreferenceEventLogger', () => {
   let tmpDir: string;
 
   beforeEach(async () => {
-    tmpDir = join(tmpdir(), `liminal-test-pref-${Date.now()}`);
+    tmpDir = join(tmpdir(), `sinter-test-pref-${Date.now()}`);
     await fs.mkdir(tmpDir, { recursive: true });
   });
 

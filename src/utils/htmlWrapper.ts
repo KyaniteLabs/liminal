@@ -1,5 +1,5 @@
 /**
- * Centralized HTML wrapping utility for Liminal outputs
+ * Centralized HTML wrapping utility for Sinter outputs
  * Routes to domain-specific wrappers
  *
  * Supported domains:

@@ -114,7 +114,7 @@ All knowledge lives in markdown files. The Generator reads these dynamically:
 ### 1. SOUL.md → Personality & Voice
 ```typescript
 const soulContext = await loadMarkdown('SOUL.md');
-// Injects: "You are Liminal, a creative coding agent..."
+// Injects: "You are Sinter, a creative coding agent..."
 ```
 
 ### 2. PROJECT_RULES.md → Constraints

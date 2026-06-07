@@ -1,16 +1,16 @@
 /**
- * ProjectStore — High-level creative history API for Liminal.
+ * ProjectStore — High-level creative history API for Sinter.
  *
  * Wraps EventStore (timeline/versioning) and AssetStore (binary storage)
  * into a single facade that CompostMill and the CLI can use without
  * knowing about SQLite or content-addressable storage internals.
  *
- * This is the public interface for Liminal's "creative memory." Every
+ * This is the public interface for Sinter's "creative memory." Every
  * significant compost operation should flow through here so that the
  * event timeline is always complete.
  *
  * Lifecycle:
- * 1. `ProjectStore.init(projectRoot)` — creates .liminal/ and project.liminal
+ * 1. `ProjectStore.init(projectRoot)` — creates .sinter/ and project.sinter
  * 2. Pass the ProjectStore to CompostMill (or use it directly from CLI)
  * 3. Call recording methods on each pipeline stage
  * 4. Call `close()` when shutting down
@@ -31,9 +31,9 @@ import { Logger } from '../utils/Logger.js';
 export interface ProjectStoreConfig {
   /** Path to the project root directory. */
   projectRoot: string;
-  /** Subdirectory name (default: '.liminal'). */
+  /** Subdirectory name (default: '.sinter'). */
   dataDir?: string;
-  /** Database filename (default: 'project.liminal'). */
+  /** Database filename (default: 'project.sinter'). */
   dbFilename?: string;
   /** Snapshot every N events (default: 50). */
   snapshotInterval?: number;
@@ -59,7 +59,7 @@ export interface FormattedTimeline {
 }
 
 /**
- * The main interface for Liminal's creative history system.
+ * The main interface for Sinter's creative history system.
  *
  * Usage from CompostMill:
  * ```ts
@@ -94,8 +94,8 @@ export class ProjectStore {
     this.projectRoot = config.projectRoot;
 
     // Check if DB exists BEFORE constructing EventStore (constructor creates the file)
-    const dirName = config.dataDir ?? '.liminal';
-    const dbPath = join(config.projectRoot, dirName, config.dbFilename ?? 'project.liminal');
+    const dirName = config.dataDir ?? '.sinter';
+    const dbPath = join(config.projectRoot, dirName, config.dbFilename ?? 'project.sinter');
     this.wasNew = !existsSync(dbPath);
 
     this.eventStore = new EventStore({
@@ -115,7 +115,7 @@ export class ProjectStore {
   }
 
   /**
-   * Initialize the project store. Creates .liminal/ directory and database
+   * Initialize the project store. Creates .sinter/ directory and database
    * if they don't exist. Safe to call multiple times.
    *
    * @returns Information about the initialized project.

@@ -112,7 +112,7 @@ export class NaturalInterface {
       this.session.soul = await loadSoul();
     } catch (err) {
       Logger.debug('NaturalInterface', 'Failed to load SOUL.md, using default:', err);
-      this.session.soul = 'You are Liminal, a creative coding partner.';
+      this.session.soul = 'You are Sinter, a creative coding partner.';
     }
   }
 
@@ -360,7 +360,7 @@ export class NaturalInterface {
 
   private handleHelp(): NaturalInputResult {
     const response = [
-      'I\'m Liminal, your creative coding partner.',
+      'I\'m Sinter, your creative coding partner.',
       '',
       'You can talk to me naturally:',
       '  \u2022 "Fix the Tone.js validation" - I\'ll make code changes',

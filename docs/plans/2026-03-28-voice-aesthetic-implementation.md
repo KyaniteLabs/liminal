@@ -20,7 +20,7 @@ Key integration points:
 - **LoopConfig.ts:20-95** — `LoopOptions` needs new fields for audio + aesthetic config
 - **ContextBuilder.ts:16-72** — `buildContextForInjection()` needs to append audio-derived context
 - **prompts/index.ts:4-16** — side-effect import pattern for new prompt registrations
-- **bin/liminal:36-97** — flag parsing loop for new CLI flags
+- **bin/sinter:36-97** — flag parsing loop for new CLI flags
 - **src/index.ts** — barrel exports for new public APIs
 
 Existing patterns:
@@ -596,7 +596,7 @@ Audio-derived visual parameters:
 ## Task 19: Wire Audio + Aesthetic into CLI Flags
 
 **Files:**
-- Modify: `bin/liminal` (lines 36-97 flag parsing, lines 317-364 generate command)
+- Modify: `bin/sinter` (lines 36-97 flag parsing, lines 317-364 generate command)
 
 **Depends on:** Tasks 16, 17
 
@@ -725,5 +725,5 @@ After all tasks complete, verify end-to-end:
 2. **Aesthetic gate test:** Run `RalphLoop.run()` with `useAestheticGuardrails: true` and a code sample with 15+ colors — verify violations detected and score penalty applied
 3. **Audio analysis test:** Create a 440Hz sine wave `Float32Array`, run through `AudioAnalyzer`, verify pitch detected near A4 and visual params generated
 4. **Prompt validation:** `npx vitest run test/prompts/` — all 38 IDs registered (36 existing + 2 new)
-5. **CLI smoke test:** `node bin/liminal --help` shows new `--voice`, `--aesthetic` flags
+5. **CLI smoke test:** `node bin/sinter --help` shows new `--voice`, `--aesthetic` flags
 6. **TypeScript compilation:** `npx tsc --noEmit` — no type errors

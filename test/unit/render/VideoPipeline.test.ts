@@ -81,7 +81,7 @@ describe('VideoPipeline', () => {
 
   it('chains Revideo output as HyperFrames asset', async () => {
     const outputPath = path.join(tempDir, 'final.mp4');
-    const revideoOutput = '/tmp/liminal-pipeline-revideo-0.mp4';
+    const revideoOutput = '/tmp/sinter-pipeline-revideo-0.mp4';
 
     mockRevideoRender.mockResolvedValue({
       outputPath: revideoOutput,

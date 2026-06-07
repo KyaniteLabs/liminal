@@ -1,4 +1,4 @@
-# ADR 0004: Liminal Product Boundaries
+# ADR 0004: Sinter Product Boundaries
 
 Date: 2026-05-25
 Status: Accepted for consolidation Phase 1
@@ -11,9 +11,9 @@ Sing/Instrument surfaces without first naming the product boundaries.
 
 The document pack and local audit show three real product directions:
 
-- Liminal Core/Studio.
-- Liminal Sites.
-- Liminal Instrument.
+- Sinter Core/Studio.
+- Sinter Sites.
+- Sinter Instrument.
 
 Those directions should not be collapsed into one catch-all app. They should also
 not be split before the contracts and preservation criteria exist.
@@ -23,13 +23,13 @@ not be split before the contracts and preservation criteria exist.
 Use these product boundaries:
 
 ```text
-Liminal Core/Studio
+Sinter Core/Studio
 = conversational aesthetic authoring workshop
 
-Liminal Sites
+Sinter Sites
 = aesthetic webpage evolution sibling product
 
-Liminal Instrument
+Sinter Instrument
 = live performance sibling product
 ```
 

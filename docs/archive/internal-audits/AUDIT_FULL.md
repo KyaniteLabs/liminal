@@ -1,4 +1,4 @@
-# Liminal — Full Repository Audit
+# Sinter — Full Repository Audit
 
 **Date:** 2026-03-31 | **Scope:** All source, tests, CI, security, docs, presentation, platform, operations
 **Total findings: 38 categories, ~250 individual issues across 6 severity tiers**
@@ -704,7 +704,7 @@ The critical `loader-utils` issue comes through `@remotion/bundler > loader-util
 | 2 | `src/compost/CompostHeap.ts:96` | Hardcoded `'/'` in path construction |
 | 3 | `src/core/lir/CompatibilityAdapter.ts:170,211` | Hardcoded `'/'` in `split('/')` |
 | 4 | `src/routing/RoutingData.ts:37`, `src/learning/QualityArchive.ts:93`, `src/core/RalphLoop.ts:122,127` | `` `${process.env.HOME}/...` `` — `HOME` undefined on Windows |
-| 5 | `bin/liminal` | Falls back to `/tmp` on missing HOME — Unix-only |
+| 5 | `bin/sinter` | Falls back to `/tmp` on missing HOME — Unix-only |
 | 6 | `src/export/VideoExporter.ts:22`, `src/composite/Compositor.ts:222` | `ffmpeg` invoked without cross-platform resolution |
 | 7 | Zero `process.platform` checks | Entire codebase assumes Unix |
 
@@ -748,7 +748,7 @@ The critical `loader-utils` issue comes through `@remotion/bundler > loader-util
 | 2 | **No `files` field, no `.npmignore`** — 4,519 files / 13.1 MB published | Bloated package |
 | 3 | **~40 internal docs would be published** — audit reports, remediation plans, dogfood results | Embarrassing |
 | 4 | **No LICENSE file** despite `"license": "MIT"` | Legal risk |
-| 5 | **`bin/liminal` depends on `dist/`** existing at runtime | Circular dependency with postinstall |
+| 5 | **`bin/sinter` depends on `dist/`** existing at runtime | Circular dependency with postinstall |
 
 ---
 
@@ -850,7 +850,7 @@ The Meta-Harness is a self-improving infrastructure that logs failures, detects 
 
 | # | Issue | Severity |
 |---|-------|----------|
-| 1 | **Nothing imports the harness** — zero references outside `src/harness/`. Not in `src/index.ts`, not in `bin/liminal`, not in any generator. | CRITICAL |
+| 1 | **Nothing imports the harness** — zero references outside `src/harness/`. Not in `src/index.ts`, not in `bin/sinter`, not in any generator. | CRITICAL |
 | 2 | **HarnessUpdater is performative no-op** — all `apply*` methods log `applied: true` but don't modify any prompts or configs. The "adaptations" are theater. | HIGH |
 | 3 | **PatternDetector.analyzeRecentFailures() is misleading async** — declared `async` but does no async work | LOW |
 | 4 | **FailureLogger.getRecentFailures() crashes on corrupted JSON** — `JSON.parse` without try/catch. One bad `.json` file prevents reading all failures. | HIGH |

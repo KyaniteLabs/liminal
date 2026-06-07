@@ -20,7 +20,7 @@ describe('VotingEngine', () => {
     mode: SwarmMode.COMPETITIVE,
     personas: DEFAULT_PERSONAS,
     refinementConstraints: ['constraint1'],
-    streamDir: path.join(os.tmpdir(), 'liminal-test-stream'),
+    streamDir: path.join(os.tmpdir(), 'sinter-test-stream'),
   };
 
   describe('parseVote', () => {

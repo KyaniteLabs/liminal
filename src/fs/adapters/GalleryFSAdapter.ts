@@ -1,12 +1,12 @@
 import { Gallery } from '../../gallery/Gallery.js';
-import { LiminalFS } from '../LiminalFS.js';
-import type { LiminalObjectRef } from '../types.js';
+import { SinterFS } from '../SinterFS.js';
+import type { SinterObjectRef } from '../types.js';
 
 export class GalleryFSAdapter {
   private gallery: Gallery;
-  private fs: LiminalFS;
+  private fs: SinterFS;
 
-  constructor(gallery: Gallery, fs: LiminalFS) {
+  constructor(gallery: Gallery, fs: SinterFS) {
     this.gallery = gallery;
     this.fs = fs;
   }
@@ -15,7 +15,7 @@ export class GalleryFSAdapter {
     project: string,
     version: number,
     code: string,
-  ): Promise<LiminalObjectRef> {
+  ): Promise<SinterObjectRef> {
     await this.gallery.saveIteration(project, version, code);
     return this.writeGalleryVersionRef(project, version, code);
   }
@@ -24,7 +24,7 @@ export class GalleryFSAdapter {
     project: string,
     version: number,
     code: string,
-  ): LiminalObjectRef {
+  ): SinterObjectRef {
     const ref = this.fs.writeArtifact({
       kind: 'gallery-version',
       content: code,
@@ -43,7 +43,7 @@ export class GalleryFSAdapter {
     version: number,
     musicCode: string,
     visualCode: string,
-  ): Promise<LiminalObjectRef> {
+  ): Promise<SinterObjectRef> {
     await this.gallery.saveOrganism(project, version, musicCode, visualCode);
 
     const payload = {

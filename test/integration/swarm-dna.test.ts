@@ -13,7 +13,7 @@ import type { SwarmPersona, MinedFragment } from '../../src/swarm/types.js';
 import os from 'os';
 import path from 'path';
 
-const TEST_STREAM_DIR = path.join(os.tmpdir(), 'liminal-swarm-dna-test');
+const TEST_STREAM_DIR = path.join(os.tmpdir(), 'sinter-swarm-dna-test');
 
 // Minimal persona set for fast tests
 const MINI_PERSONAS: SwarmPersona[] = [

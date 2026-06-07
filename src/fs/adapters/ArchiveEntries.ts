@@ -1,21 +1,21 @@
 /**
  * ArchiveEntries FS adapter — Phase 13E
  *
- * Persists archive entries (elites + near-elites) through LiminalFS.
+ * Persists archive entries (elites + near-elites) through SinterFS.
  */
 
-import type { LiminalFS } from '../LiminalFS.js';
-import type { LiminalObjectRef } from '../types.js';
+import type { SinterFS } from '../SinterFS.js';
+import type { SinterObjectRef } from '../types.js';
 import type { ArchiveEntry } from '../../emergence/types.js';
 
 export class ArchiveEntriesFSAdapter {
-  private fs: LiminalFS;
+  private fs: SinterFS;
 
-  constructor(fs: LiminalFS) {
+  constructor(fs: SinterFS) {
     this.fs = fs;
   }
 
-  writeArchiveEntry(entry: ArchiveEntry): LiminalObjectRef {
+  writeArchiveEntry(entry: ArchiveEntry): SinterObjectRef {
     const content = JSON.stringify(entry, null, 2);
 
     const ref = this.fs.writeArtifact({
@@ -34,7 +34,7 @@ export class ArchiveEntriesFSAdapter {
     return ref;
   }
 
-  writeArchiveState(cellId: string, entries: ArchiveEntry[]): LiminalObjectRef {
+  writeArchiveState(cellId: string, entries: ArchiveEntry[]): SinterObjectRef {
     const content = JSON.stringify({ cellId, entries, exportedAt: new Date().toISOString() }, null, 2);
 
     const ref = this.fs.writeArtifact({

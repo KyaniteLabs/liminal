@@ -10,7 +10,7 @@ import { ContextAccumulation } from '../../src/core/ContextAccumulation.js';
 import path from 'path';
 import os from 'os';
 
-const TEST_GALLERY_DIR = path.join(os.tmpdir(), 'liminal-thinking-test');
+const TEST_GALLERY_DIR = path.join(os.tmpdir(), 'sinter-thinking-test');
 
 // Track metaHarness calls for verification
 const metaHarnessCalls: Array<{
@@ -106,6 +106,18 @@ vi.mock('../../src/generators/GeneratorRegistry.js', () => {
 
 vi.mock('../../src/generators/registerGenerators.js', () => ({
   registerAllGenerators: vi.fn(),
+}));
+
+// Hermetic role config: model 'auto' means the loop seeds no provenance model,
+// so a plain-string generator (Test 2) yields result.model undefined regardless
+// of the developer's real ~/.sinter config.
+vi.mock('../../src/config/RoleConfig.js', () => ({
+  loadRoleConfig: vi.fn(async () => ({
+    generator: { baseUrl: '', model: 'auto', temperature: 0.7 },
+    evaluator: { baseUrl: '', model: 'auto', temperature: 0.2 },
+    harness: { baseUrl: '', model: 'auto', temperature: 0.5 },
+    studio: { baseUrl: '', model: 'auto', temperature: 0.6 },
+  })),
 }));
 
 // Mock P5GeneratorLLM for fallback when no generator matches

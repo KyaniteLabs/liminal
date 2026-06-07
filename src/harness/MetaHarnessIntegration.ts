@@ -329,7 +329,7 @@ Respond with a JSON object:
 
           // Persist insight to disk for observability and external analysis
           try {
-            const tracesDir = path.join(process.env.HOME || '/tmp', '.liminal', 'thinking-traces', 'harness');
+            const tracesDir = path.join(process.env.HOME || '/tmp', '.sinter', 'thinking-traces', 'harness');
             await fs.mkdir(tracesDir, { recursive: true });
             const randomSuffix = Math.random().toString(36).slice(2, 8);
             const traceFile = path.join(tracesDir, `harness-insight-${Date.now()}-${randomSuffix}.json`);
@@ -457,8 +457,8 @@ Respond with a JSON object:
         entry: 'index.js',
         domains: [generatorName.toLowerCase()],
         keywords: [generatorName.toLowerCase()],
-        author: 'Liminal Harness',
-        minLiminalVersion: '2.0.0',
+        author: 'Sinter Harness',
+        minSinterVersion: '2.0.0',
       };
 
       await fs.writeFile(

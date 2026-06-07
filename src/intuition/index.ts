@@ -1,5 +1,5 @@
 /**
- * @module intuition — Intuition system for Liminal
+ * @module intuition — Intuition system for Sinter
  *
  * Provides compressed-experience-based quality signals:
  * - ThompsonSampler: Generic parameterized Thompson Sampling for any decision point

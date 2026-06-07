@@ -1,5 +1,5 @@
 /**
- * HarnessAgent - Self-Improving Agent for Liminal
+ * HarnessAgent - Self-Improving Agent for Sinter
  * 
  * Architecture inspired by:
  * - Karpathy Autoresearch: program.md (human) + agent execution

@@ -33,7 +33,7 @@
  *     ╚══════════════════╝
  *
  * @since 2.2.0
- * @author Liminal Team
+ * @author Sinter Team
  */
 
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';

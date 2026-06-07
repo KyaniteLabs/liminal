@@ -1,6 +1,6 @@
-# Liminal Filesystem Implementation Plan
+# Sinter Filesystem Implementation Plan
 
-**Goal:** Give Liminal a coherent project-owned filesystem abstraction that unifies artifacts, gallery versions, seeds, compost fragments, run records, traces, and evaluations without breaking existing flows.
+**Goal:** Give Sinter a coherent project-owned filesystem abstraction that unifies artifacts, gallery versions, seeds, compost fragments, run records, traces, and evaluations without breaking existing flows.
 
 **Architecture:** Start with a facade over the storage systems that already exist: `ProjectStore`, `EventStore`, `AssetStore`, `Gallery`, `SeedArchive`, and `RunStateStore`. Do not create a competing storage layer first. Establish stable object IDs and refs, then gradually route new writes through the facade while preserving old readers.
 
@@ -10,7 +10,7 @@
 
 ## Why This Exists
 
-Liminal already has filesystem-backed memory, but it is fragmented:
+Sinter already has filesystem-backed memory, but it is fragmented:
 
 - project-local `.liminal/`
 - `ProjectStore`
@@ -28,7 +28,7 @@ Liminal already has filesystem-backed memory, but it is fragmented:
 
 The result is many memory organs, but no single nervous system.
 
-Liminal should have a coherent creative object filesystem.
+Sinter should have a coherent creative object filesystem.
 
 ## Current Reality
 
@@ -106,7 +106,7 @@ Project-local storage:
 
 ```txt
 .liminal/
-  project.liminal          # SQLite event index / metadata / timeline
+  project.sinter          # SQLite event index / metadata / timeline
   objects/                 # content-addressed blobs
     ab/cdef...             # artifact bytes
   refs/                    # named pointers

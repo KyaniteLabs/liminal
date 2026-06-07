@@ -2,7 +2,7 @@
 
 This folder adds public-source retrieval seeds for the temporary Factory artist guidance.
 
-It is reference-only source manifests. It is not Liminal runtime configuration, not a runtime RAG index, not an audit procedure, and not an ingestion pipeline. These files are not `SKILL.md` skills and are not loaded by `SkillLoader`.
+It is reference-only source manifests. It is not Sinter runtime configuration, not a runtime RAG index, not an audit procedure, and not an ingestion pipeline. These files are not `SKILL.md` skills and are not loaded by `SkillLoader`.
 
 ## How To Use
 

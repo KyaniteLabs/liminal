@@ -5,7 +5,7 @@
  * and exports to various formats.
  */
 
-import { Layer, Composition, DomainType, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, LiminalProject, Animation, LayerMask } from './types.js';
+import { Layer, Composition, DomainType, GlobalSettings, DEFAULT_GLOBAL_SETTINGS, SinterProject, Animation, LayerMask } from './types.js';
 import { LayerManager } from './LayerManager.js';
 import { LayerAdapter, Import } from './adapters/index.js';
 import { LayerMaskManager } from './LayerMask.js';
@@ -284,10 +284,10 @@ export class CompositionEngine {
   }
 
   /**
-   * Export composition to Liminal project format.
+   * Export composition to Sinter project format.
    * @deprecated Use ProjectSerializer.exportProject() instead
    */
-  exportProject(name: string): LiminalProject {
+  exportProject(name: string): SinterProject {
     const serializer = new ProjectSerializer();
     const project = serializer.exportProject(this, { includeAssets: true });
     if (name.trim().length > 0) {
@@ -297,10 +297,10 @@ export class CompositionEngine {
   }
 
   /**
-   * Import from Liminal project format.
+   * Import from Sinter project format.
    * @deprecated Use ProjectSerializer.importProject() instead
    */
-  async importProject(project: LiminalProject): Promise<void> {
+  async importProject(project: SinterProject): Promise<void> {
     const serializer = new ProjectSerializer();
     await serializer.importProject(project, this);
   }
@@ -352,7 +352,7 @@ export class CompositionEngine {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Liminal Composition</title>
+  <title>Sinter Composition</title>
   <style>
     body {
       margin: 0;

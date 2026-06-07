@@ -1,7 +1,7 @@
 /**
  * Integration test: Ledger CLI lifecycle
  *
- * Tests the full dispatch path: parseArgs → execute against real LiminalFS.
+ * Tests the full dispatch path: parseArgs → execute against real SinterFS.
  * Exercises load, list, show, accept, and status subcommands with
  * actual TaskLedger persistence (tmpdir, no mocks).
  */
@@ -11,18 +11,18 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { LiminalFS } from '../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../src/fs/SinterFS.js';
 import { TaskLedger } from '../../src/ledger/TaskLedger.js';
 import { parseArgs, execute } from '../../src/ledger/cli.js';
 
 describe('Ledger CLI integration', () => {
   let tempDir: string;
-  let liminalFs: LiminalFS;
+  let liminalFs: SinterFS;
   let ledger: TaskLedger;
 
   beforeEach(() => {
-    tempDir = mkdtempSync(join(tmpdir(), 'liminal-cli-integ-'));
-    liminalFs = LiminalFS.open(tempDir);
+    tempDir = mkdtempSync(join(tmpdir(), 'sinter-cli-integ-'));
+    liminalFs = SinterFS.open(tempDir);
     ledger = new TaskLedger(liminalFs);
   });
 

@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace ad-hoc `Math.random()` in Liminal's creative pipeline with a centralized, constructor-injected entropy generator that harvests randomness from the system's own metabolic state.
+**Goal:** Replace ad-hoc `Math.random()` in Sinter's creative pipeline with a centralized, constructor-injected entropy generator that harvests randomness from the system's own metabolic state.
 
 **Architecture:** Four new files in `src/entropy/` define the engine (`MetabolicEntropyEngine`), compressor (`EntropyCompressor`), harvester (`EntropyHarvester`), and types. Existing creative consumers (`CompostSoup`, `GeneratorHarnessTools`, `MarkovChain`, `DreamEngine`) receive the engine via constructor/options. `CompostMill` triggers a harvest at the end of every digest. The CLI bootstraps the engine with live `EventStore`, `CompostHeap`, and `TelemetryCollector` references.
 
@@ -27,7 +27,7 @@
 | `src/music/MarkovChain.ts` | Add optional `rng?: () => number` parameter to `generateMarkovMelody` options |
 | `src/intuition/DreamEngine.ts` | Accept `entropy` in constructor deps; replace `Math.random()` calls |
 | `src/compost/cli.ts` | Wire entropy engine creation into CLI bootstrap |
-| `bin/liminal` | Create `EventStore` + `TelemetryCollector` + `MetabolicEntropyEngine`, inject into `CompostMill` |
+| `bin/sinter` | Create `EventStore` + `TelemetryCollector` + `MetabolicEntropyEngine`, inject into `CompostMill` |
 
 ---
 
@@ -1120,12 +1120,12 @@ git commit -m "feat(entropy): require entropy engine in DreamEngine and replace 
 ### Task 12: CLI Bootstrap Wiring
 
 **Files:**
-- Modify: `bin/liminal`
+- Modify: `bin/sinter`
 - Modify: `src/compost/cli.ts` (if needed for type-only import)
 
-- [ ] **Step 1: Update bin/liminal compost bootstrap**
+- [ ] **Step 1: Update bin/sinter compost bootstrap**
 
-In `bin/liminal`, find the compost command block (around line 567). After the `llm` and `fastLLM` setup, add:
+In `bin/sinter`, find the compost command block (around line 567). After the `llm` and `fastLLM` setup, add:
 
 ```ts
   const action = parseArgs(process.argv.slice(2));
@@ -1225,7 +1225,7 @@ Then in `CompostMill.ts` constructor:
     this.entropy?.setGetTopSeeds(this.getTopSeeds.bind(this));
 ```
 
-Good. Now back to `bin/liminal`:
+Good. Now back to `bin/sinter`:
 
 ```ts
   const entropyEngine = new MetabolicEntropyEngine({
@@ -1240,7 +1240,7 @@ Good. Now back to `bin/liminal`:
 - [ ] **Step 2: Commit**
 
 ```bash
-git add bin/liminal
+git add bin/sinter
 git commit -m "feat(entropy): bootstrap MetabolicEntropyEngine in CLI"
 ```
 

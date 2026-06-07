@@ -2,7 +2,7 @@
 # Quick Pre-Flight Audit Script
 # Run this to verify harness readiness
 
-echo "🔍 Liminal Harness Pre-Flight Audit"
+echo "🔍 Sinter Harness Pre-Flight Audit"
 echo "===================================="
 echo ""
 

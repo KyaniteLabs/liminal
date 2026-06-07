@@ -2,7 +2,7 @@
 
 ## Repository State
 
-- Scope: Liminal only.
+- Scope: Sinter only.
 - Canonical worktree used for audit execution: `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal/.worktrees/final-qa-persona-cluster-audit-20260506`
 - Branch: `docs/final-qa-persona-cluster-audit-20260506`
 - Starting commit: `d4cddb12104141fca57971690c60bba9b5659356`

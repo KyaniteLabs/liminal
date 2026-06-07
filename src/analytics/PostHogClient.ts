@@ -1,5 +1,5 @@
 /**
- * PostHogClient — server-side PostHog integration for Liminal.
+ * PostHogClient — server-side PostHog integration for Sinter.
  *
  * Wraps posthog-node to send custom events and query experiment results.
  * Gated on LIMINAL_POSTHOG_KEY env var — does nothing when absent.
@@ -75,10 +75,10 @@ export class PostHogClient {
 
 		try {
 			this.client.capture({
-				distinctId: "liminal-daemon",
+				distinctId: "sinter-daemon",
 				event,
 				properties: {
-					source: "liminal-server",
+					source: "sinter-server",
 					...properties,
 				},
 			});
@@ -143,12 +143,12 @@ export class PostHogClient {
 		return `
 SELECT
 	uniq(distinct_id) AS visitors,
-	avg(if(toFloat(properties.liminal_dwell_seconds) >= 10, 1, 0)) AS dwell_rate,
-	avg(least(greatest(toFloat(properties.liminal_scroll_depth), 0), 1)) AS scroll_depth,
+	avg(if(toFloat(properties.sinter_dwell_seconds) >= 10, 1, 0)) AS dwell_rate,
+	avg(least(greatest(toFloat(properties.sinter_scroll_depth), 0), 1)) AS scroll_depth,
 	avg(if(event = 'liminal_slot_interaction', 1, 0)) AS interaction_rate,
 	avg(if(event = 'liminal_slot_bounce', 0, 1)) AS retention_score
 FROM events
-WHERE properties.liminal_variant_id = {variantId}
+WHERE properties.sinter_variant_id = {variantId}
 	AND event IN ('liminal_slot_view', 'liminal_slot_interaction', 'liminal_slot_bounce')
 `;
 	}

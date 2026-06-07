@@ -33,7 +33,7 @@ export class FailureLogger {
   private sessionId: string;
 
   constructor() {
-    this.logDir = join(homedir(), '.liminal', 'failures');
+    this.logDir = join(homedir(), '.sinter', 'failures');
     this.sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     this.ensureDir();
   }

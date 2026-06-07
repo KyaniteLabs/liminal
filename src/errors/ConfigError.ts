@@ -1,10 +1,10 @@
-import { LiminalError } from './base.js';
+import { SinterError } from './base.js';
 
 /**
  * Error for configuration-related issues.
  * Used when configuration files are invalid, missing, or contain errors.
  */
-export class ConfigError extends LiminalError {
+export class ConfigError extends SinterError {
   constructor(
     message: string,
     context?: Record<string, unknown> & { code?: string }

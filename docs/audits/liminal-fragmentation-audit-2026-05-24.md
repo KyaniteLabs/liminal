@@ -1,10 +1,10 @@
-# Liminal Fragmentation Audit - 2026-05-24
+# Sinter Fragmentation Audit - 2026-05-24
 
 > Historical note (2026-05-26): This audit captured the fragmented pre-consolidation state. Current source-of-truth routing is `KyaniteLabs/liminal` and `KyaniteLabs/liminal-sites`; old personal, local duplicate, and Pushing-Squares references below are preserved only as forensic evidence.
 
 ## Purpose
 
-The document pack required a read-only audit of local and remote Liminal,
+The document pack required a read-only audit of local and remote Sinter,
 Sites, and Instrument/Sing work before moving or splitting anything.
 
 ## Safety
@@ -18,7 +18,7 @@ directory deletion.
 The full package script and a bounded retry both stalled while inspecting:
 
 ```text
-/Users/simongonzalezdecruz/Desktop/OMC/liminal
+/Users/simongonzalezdecruz/Desktop/OMC/sinter
 ```
 
 The stalled processes were stopped. The partial raw file outside the repo was:
@@ -38,8 +38,8 @@ verified current branch:
 
 ```text
 preserved old tree: /Users/simongonzalezdecruz/Desktop/OMC/liminal.broken-working-tree-20260524-201253
-old branch/head: repo-pipeline-fix-20260420-liminal @ 14d39ec2
-repaired live path: /Users/simongonzalezdecruz/Desktop/OMC/liminal
+old branch/head: repo-pipeline-fix-20260420-sinter @ 14d39ec2
+repaired live path: /Users/simongonzalezdecruz/Desktop/OMC/sinter
 repaired branch/head: codex/studio-conversation-ux-20260524 @ d1ce6144
 ```
 
@@ -64,20 +64,20 @@ checkout.
 | `/Users/simongonzalezdecruz/workspaces/liminal/.claude/worktrees/rescue-sing-20260524` | `codex/rescue-sing-into-current-20260524` | `35e4164c` | `origin=https://github.com/simongonzalezdc/liminal.git` | Contains the Mac mini cadence fix and pre-teleprompter Sing rescue state. |
 | `/Users/simongonzalezdecruz/workspaces/kyanite-labs/liminal` | `main` | `1acd69e7` | `origin=https://github.com/KyaniteLabs/liminal.git`, `personal=https://github.com/simongonzalezdc/liminal.git` | No tracked `packages/sing` or `packages/audio-core` files found by the bounded scan. |
 | `/Users/simongonzalezdecruz/workspaces/personal/liminal-sites` | `main` | `988052b35` | `origin=https://github.com/Pushing-Squares/liminal-sites.git`, `upstream=https://github.com/KyaniteLabs/liminal.git` | No Sing/audio files found. This is the Sites sibling work surface. |
-| `/Users/simongonzalezdecruz/Desktop/OMC/liminal` | `codex/studio-conversation-ux-20260524` | `d1ce6144` | `origin=https://github.com/KyaniteLabs/liminal.git` | Rebuilt from the verified current branch after the old Desktop checkout stalled. `git status`, `git diff --name-status`, and `git ls-files -m` now complete. The old local-only `repo-pipeline-fix-20260420-liminal @ 14d39ec2` tree is preserved at `/Users/simongonzalezdecruz/Desktop/OMC/liminal.broken-working-tree-20260524-201253`. |
+| `/Users/simongonzalezdecruz/Desktop/OMC/liminal` | `codex/studio-conversation-ux-20260524` | `d1ce6144` | `origin=https://github.com/KyaniteLabs/liminal.git` | Rebuilt from the verified current branch after the old Desktop checkout stalled. `git status`, `git diff --name-status`, and `git ls-files -m` now complete. The old local-only `repo-pipeline-fix-20260420-sinter @ 14d39ec2` tree is preserved at `/Users/simongonzalezdecruz/Desktop/OMC/liminal.broken-working-tree-20260524-201253`. |
 | `/Users/simongonzalezdecruz/actions-runner/simongonzalezdc-liminal/_work/liminal/liminal` | detached HEAD | `b9dd856` | `origin=https://github.com/simongonzalezdc/liminal` | CI runner checkout with the older Sing/audio package surface. |
 
 Additional candidate directories found by local path search included:
 
 ```text
-/Users/simongonzalezdecruz/actions-runner/simongonzalezdc-liminal/_work/liminal
-/Users/simongonzalezdecruz/Desktop/OMC/projects/liminal
-/Users/simongonzalezdecruz/Desktop/liam-private/clawd/liminal
-/Users/simongonzalezdecruz/Desktop/liam-private/liminal
-/Users/simongonzalezdecruz/workspaces/dev-archaeology-review/projects/liminal
-/Users/simongonzalezdecruz/workspaces/.worktrees/ceo-agents-council-chamber/liminal
-/Users/simongonzalezdecruz/liminal
-/Users/simongonzalezdecruz/.codex/worktrees/3669/workspaces/liminal
+/Users/simongonzalezdecruz/actions-runner/simongonzalezdc-liminal/_work/sinter
+/Users/simongonzalezdecruz/Desktop/OMC/projects/sinter
+/Users/simongonzalezdecruz/Desktop/liam-private/clawd/sinter
+/Users/simongonzalezdecruz/Desktop/liam-private/sinter
+/Users/simongonzalezdecruz/workspaces/dev-archaeology-review/projects/sinter
+/Users/simongonzalezdecruz/workspaces/.worktrees/ceo-agents-council-chamber/sinter
+/Users/simongonzalezdecruz/sinter
+/Users/simongonzalezdecruz/.codex/worktrees/3669/workspaces/sinter
 ```
 
 Those paths were not all promoted to verified repo rows in this branch because
@@ -97,7 +97,7 @@ https://github.com/simongonzalezdc/liminal.git
 The package also references:
 
 ```text
-https://github.com/KyaniteLabs/liminal
+https://github.com/KyaniteLabs/sinter
 https://github.com/KyaniteLabs/liminal-sites
 ```
 
@@ -136,7 +136,7 @@ docs/audits/sing-lfm2_5-mlx-local-benchmark-2026-05-24.*
 
 Do not split or rename Instrument/Sing yet.
 
-Keep `packages/sing` and `packages/audio-core` inside the current Liminal repo
+Keep `packages/sing` and `packages/audio-core` inside the current Sinter repo
 until the preserved old OMC tree and any remaining candidate paths are
 classified cleanly. A future `KyaniteLabs/liminal-instrument` repo may still be
 justified, but only as a full-history carveout after the machine audit is

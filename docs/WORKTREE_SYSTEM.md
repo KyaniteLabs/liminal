@@ -150,7 +150,7 @@ PS1='$(__git_worktree_prompt)'$PS1
 
 ```bash
 # Normal repo
-~/projects/liminal (main) $
+~/projects/sinter (main) $
 
 # In worktree
 [feature-login] ~/projects/liminal/.worktrees/feature-login (feature-login) $

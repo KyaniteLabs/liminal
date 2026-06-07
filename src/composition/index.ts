@@ -1,5 +1,5 @@
 /**
- * Liminal Composition Engine
+ * Sinter Composition Engine
  *
  * Multi-layer composition system for combining outputs from
  * different generators (p5, Tone, Three.js, etc.).
@@ -60,8 +60,8 @@ export type {
   GlobalSettings,
   AudioSettings,
   CompositionMetadata,
-  LiminalProject,
-  LiminalProjectV1,
+  SinterProject,
+  SinterProjectV1,
   Asset,
   Animation,
 } from './types.js';

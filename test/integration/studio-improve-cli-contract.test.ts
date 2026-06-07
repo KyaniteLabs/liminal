@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('studio and improve CLI contract', () => {
   const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-  const bin = () => fs.readFileSync(path.join(repoRoot, 'bin/liminal'), 'utf8');
+  const bin = () => fs.readFileSync(path.join(repoRoot, 'bin/sinter'), 'utf8');
   const studioStart = () => fs.readFileSync(path.join(repoRoot, 'gui/start.js'), 'utf8');
   const pkg = () => JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')) as { version: string; scripts: Record<string, string> };
 
@@ -25,7 +25,7 @@ describe('studio and improve CLI contract', () => {
     const packageJson = pkg();
 
     expect(content).toContain('packageJson.version');
-    expect(content).not.toContain("console.log('Liminal v1.0.0')");
+    expect(content).not.toContain("console.log('Sinter v1.0.0')");
     expect(packageJson.version).toBe('2.1.0');
   });
 

@@ -2,9 +2,9 @@
 
 **Goal:** Make living-site challengers brand-aligned and conservative enough that low-quality generated visuals do not deploy.
 
-**Architecture:** Keep the existing daemon/generator/PostHog wiring, but add a local KyaniteLabs creative brief, route every challenger prompt through that brief, and render-score the generated code before writing it to the served asset directory. PostHog remains engagement feedback after deployment; inference still comes from the configured Liminal generator/LLM provider.
+**Architecture:** Keep the existing daemon/generator/PostHog wiring, but add a local KyaniteLabs creative brief, route every challenger prompt through that brief, and render-score the generated code before writing it to the served asset directory. PostHog remains engagement feedback after deployment; inference still comes from the configured Sinter generator/LLM provider.
 
-**Tech Stack:** TypeScript, Vitest, Liminal GeneratorRegistry, HTMLWrapper, RenderAndScorePipeline.
+**Tech Stack:** TypeScript, Vitest, Sinter GeneratorRegistry, HTMLWrapper, RenderAndScorePipeline.
 
 ---
 
@@ -49,12 +49,12 @@
 
 The living website daemon does **not** get its creative inference from PostHog. PostHog is only the measurement layer after a challenger exists.
 
-When `liminal site evolve` runs with `LIMINAL_POSTHOG_KEY` configured, the path is:
+When `sinter site evolve` runs with `LIMINAL_POSTHOG_KEY` configured, the path is:
 
 1. `LivingSiteDaemon.runCycle()` selects a site slot that needs a challenger.
 2. `buildCreativePrompt(slot, wildcard)` creates a KyaniteLabs-specific brief: page, slot, domain, palette, motion rules, anti-generic constraints, and technical constraints.
 3. `RalphLoop.run(prompt, buildRalphLoopOptions(slot))` performs the actual generation loop.
-4. Inside RalphLoop, Liminal's existing generation orchestration calls the configured generator/LLM stack. The exact provider/model comes from normal Liminal provider configuration (`--provider`, env/config defaults, role config), not from this daemon.
+4. Inside RalphLoop, Sinter's existing generation orchestration calls the configured generator/LLM stack. The exact provider/model comes from normal Sinter provider configuration (`--provider`, env/config defaults, role config), not from this daemon.
 5. RalphLoop iterates up to 5 times with a minimum quality score of 0.78, render scoring enabled, aesthetic/human-perception guardrails enabled, and criteria for aesthetic, technical, novelty, emergence, and interestingness.
 6. The daemon then independently render-scores the final code with `RenderAndScorePipeline` and requires `minVisualScore >= 0.65` before writing anything to the nginx-served asset directory.
 7. If the render fails or score is too low, the daemon tracks `liminal_variant_rejected` and deploys nothing.

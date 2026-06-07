@@ -3,21 +3,21 @@ import { mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { SeedArchive } from '../../../src/gallery/SeedArchive.js';
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 import { SeedFSAdapter } from '../../../src/fs/adapters/SeedFSAdapter.js';
 
 describe('SeedFSAdapter', () => {
   let archiveDir: string;
   let projectRoot: string;
   let archive: SeedArchive;
-  let fs: LiminalFS;
+  let fs: SinterFS;
   let adapter: SeedFSAdapter;
 
   beforeEach(() => {
-    archiveDir = mkdtempSync(join(tmpdir(), 'liminal-seed-test-'));
-    projectRoot = mkdtempSync(join(tmpdir(), 'liminal-fs-test-'));
+    archiveDir = mkdtempSync(join(tmpdir(), 'sinter-seed-test-'));
+    projectRoot = mkdtempSync(join(tmpdir(), 'sinter-fs-test-'));
     archive = new SeedArchive(archiveDir);
-    fs = LiminalFS.open(projectRoot);
+    fs = SinterFS.open(projectRoot);
     adapter = new SeedFSAdapter(archive, fs);
   });
 
@@ -35,10 +35,10 @@ describe('SeedFSAdapter', () => {
     expect(seedData?.seed).toBe('seed-abc');
   });
 
-  it('saveSeed — returns LiminalObjectRef with liminal://artifact/ URI', async () => {
+  it('saveSeed — returns SinterObjectRef with sinter://artifact/ URI', async () => {
     const ref = await adapter.saveSeed('seed-xyz', {});
 
-    expect(ref.uri).toMatch(/^liminal:\/\/artifact\/[a-f0-9]{64}$/);
+    expect(ref.uri).toMatch(/^sinter:\/\/artifact\/[a-f0-9]{64}$/);
     expect(ref.kind).toBe('seed');
     expect(ref.hash).toHaveLength(64);
   });

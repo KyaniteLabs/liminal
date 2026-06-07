@@ -4,9 +4,9 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add video generation (Remotion), video export (FFmpeg), and cross-domain compositing so Liminal can generate, combine, and layer any output type into a cohesive video.
+**Goal:** Add video generation (Remotion), video export (FFmpeg), and cross-domain compositing so Sinter can generate, combine, and layer any output type into a cohesive video.
 
-**Architecture:** Three new capabilities: (1) a `remotion` domain that generates React/Remotion video compositions, (2) a video export pipeline that converts any Liminal output (p5, shader, three) to video via Puppeteer + FFmpeg, and (3) a compositor that layers multiple Liminal outputs (visual + audio) into a single polished piece using FFmpeg filter graphs and Remotion multi-track composition.
+**Architecture:** Three new capabilities: (1) a `remotion` domain that generates React/Remotion video compositions, (2) a video export pipeline that converts any Sinter output (p5, shader, three) to video via Puppeteer + FFmpeg, and (3) a compositor that layers multiple Sinter outputs (visual + audio) into a single polished piece using FFmpeg filter graphs and Remotion multi-track composition.
 
 **Tech Stack:** Remotion (`@remotion/renderer`, `@remotion/bundler`), FFmpeg (subprocess), React, Puppeteer (existing)
 
@@ -594,7 +594,7 @@ git commit -m "feat: add exportVideo method supporting both Remotion and canvas 
 - Create: `src/composite/Compositor.ts`
 - Test: `test/unit/composite/Compositor.test.ts`
 
-This is the key component that combines and layers different Liminal outputs into one cohesive piece.
+This is the key component that combines and layers different Sinter outputs into one cohesive piece.
 
 **Step 1: Write the failing test**
 
@@ -709,7 +709,7 @@ For code layers, the Compositor either: (a) pre-renders each code layer via Canv
 
 ```bash
 git add src/composite/Compositor.ts test/unit/composite/Compositor.test.ts
-git commit -m "feat: add Compositor for layering multiple Liminal outputs into video"
+git commit -m "feat: add Compositor for layering multiple Sinter outputs into video"
 ```
 
 ---
@@ -720,7 +720,7 @@ git commit -m "feat: add Compositor for layering multiple Liminal outputs into v
 - Modify: `src/cli/index.ts` (or wherever CLI commands are registered)
 - Create: `src/composite/cli.ts`
 
-**Step 1: Add `liminal composite` command**
+**Step 1: Add `sinter composite` command**
 
 Wire a CLI command that:
 1. Takes a composition spec JSON file as input
@@ -735,7 +735,7 @@ Wire a CLI command that:
 
 ```bash
 git add src/composite/cli.ts src/cli/
-git commit -m "feat: add liminal composite CLI command"
+git commit -m "feat: add sinter composite CLI command"
 ```
 
 ---
@@ -775,21 +775,21 @@ git commit -m "feat: wire video rendering into Ralph Loop for remotion domain an
 
 ```bash
 # Generate a Remotion composition (offline/template fallback)
-echo "create a remotion particle animation" | liminal chat --domain remotion --no-llm
+echo "create a remotion particle animation" | sinter chat --domain remotion --no-llm
 ```
 
 **Step 2: Test video export for existing domain**
 
 ```bash
 # Export a p5.js sketch as video
-liminal export --input sketch.js --output video.mp4 --fps 30 --duration 10
+sinter export --input sketch.js --output video.mp4 --fps 30 --duration 10
 ```
 
 **Step 3: Test compositing**
 
 ```bash
 # Composite multiple outputs
-liminal composite --spec composition.json --output final.mp4
+sinter composite --spec composition.json --output final.mp4
 ```
 
 **Step 4: Run full test suite**
@@ -811,6 +811,6 @@ git commit -m "feat: video generation, export, and cross-domain compositing"
 - [ ] `npx tsc --noEmit` — compiles clean
 - [ ] `npx vitest run` — all tests pass
 - [ ] `npx eslint src/` — no lint errors
-- [ ] `liminal chat --domain remotion` — generates Remotion code
-- [ ] `liminal export --output video.mp4` — exports p5/shader/three as video
-- [ ] `liminal composite --spec spec.json` — layers multiple outputs into one video
+- [ ] `sinter chat --domain remotion` — generates Remotion code
+- [ ] `sinter export --output video.mp4` — exports p5/shader/three as video
+- [ ] `sinter composite --spec spec.json` — layers multiple outputs into one video

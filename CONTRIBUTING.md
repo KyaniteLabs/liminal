@@ -1,13 +1,13 @@
-# Contributing to Liminal
+# Contributing to Sinter
 
-Thank you for your interest in contributing to Liminal!
+Thank you for your interest in contributing to Sinter!
 
 ## Development Setup
 
 ```bash
 # Clone and install
 git clone https://github.com/Pastorsimon1798/liminal.git
-cd liminal
+cd sinter
 pnpm install
 
 # Build

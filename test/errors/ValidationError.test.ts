@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ValidationError } from '../../src/errors/ValidationError';
-import { LiminalError } from '../../src/errors/base';
+import { SinterError } from '../../src/errors/base';
 
 describe('ValidationError', () => {
   it('should create a ValidationError with message and code', () => {
@@ -20,10 +20,10 @@ describe('ValidationError', () => {
     expect(error.context).toEqual({ errors });
   });
 
-  it('should be an instance of LiminalError and Error', () => {
+  it('should be an instance of SinterError and Error', () => {
     const error = new ValidationError('Test');
 
-    expect(error).toBeInstanceOf(LiminalError);
+    expect(error).toBeInstanceOf(SinterError);
     expect(error).toBeInstanceOf(Error);
     expect(error).toBeInstanceOf(ValidationError);
   });

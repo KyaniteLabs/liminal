@@ -1,10 +1,10 @@
-import { LiminalError } from './base.js';
+import { SinterError } from './base.js';
 
 /**
  * Error for server operation failures.
  * Used when preview server fails to start, stop, or handle requests.
  */
-export class ServerError extends LiminalError {
+export class ServerError extends SinterError {
   public readonly port?: number;
   public readonly endpoint?: string;
 

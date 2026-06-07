@@ -1,5 +1,5 @@
 /**
- * EventBus — central event bus for all Liminal processes.
+ * EventBus — central event bus for all Sinter processes.
  *
  * Every long-running process (RalphLoop, CompostMill, CompostSoup, SwarmOrchestrator,
  * LLMClient, Renderer) emits typed events here. PreviewServer streams these to the

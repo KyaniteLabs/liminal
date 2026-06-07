@@ -1,7 +1,7 @@
 /**
  * Phase 9: Self-Hosting Task Ledger
  *
- * A thin workflow layer that composes LiminalFS (persistence),
+ * A thin workflow layer that composes SinterFS (persistence),
  * RalphLoop (execution), and ScoringEngine (verification) to enable
  * bounded self-hosting task execution with full lineage tracking.
  */

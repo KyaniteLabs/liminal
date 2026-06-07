@@ -16,10 +16,10 @@ describe('Sing package split', () => {
     const singPackage = readJson('packages/sing/package.json');
 
     expect(workspace).toContain('packages/*');
-    expect((rootPackage.dependencies as Record<string, string>)['@liminal/audio-core']).toBe('workspace:*');
-    expect(audioPackage.name).toBe('@liminal/audio-core');
+    expect((rootPackage.dependencies as Record<string, string>)['@sinter/audio-core']).toBe('workspace:*');
+    expect(audioPackage.name).toBe('@sinter/audio-core');
     expect(singPackage.name).toBe('sing');
-    expect((singPackage.dependencies as Record<string, string>)['@liminal/audio-core']).toBe('workspace:*');
+    expect((singPackage.dependencies as Record<string, string>)['@sinter/audio-core']).toBe('workspace:*');
   });
 
   it('serves Sing with cross-origin isolation for SharedArrayBuffer', () => {

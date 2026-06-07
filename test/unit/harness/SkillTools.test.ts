@@ -65,12 +65,12 @@ describe('SearchCodeTool', () => {
     }));
     const tool = new SearchCodeTool(runner);
 
-    const result = await tool.execute({ pattern: 'package.json', repo: 'local/liminal-7a159bbb' });
+    const result = await tool.execute({ pattern: 'package.json', repo: 'local/sinter-7a159bbb' });
 
     expect(result.success).toBe(true);
     expect(runner).toHaveBeenCalledWith(
       'python3',
-      expect.arrayContaining(['local/liminal-7a159bbb', 'package.json']),
+      expect.arrayContaining(['local/sinter-7a159bbb', 'package.json']),
       expect.any(Object),
     );
   });
@@ -82,7 +82,7 @@ describe('SearchCodeTool', () => {
     }));
     const tool = new SearchCodeTool(runner);
 
-    const result = await tool.execute({ query: 'needle', repo: 'local/liminal-7a159bbb' });
+    const result = await tool.execute({ query: 'needle', repo: 'local/sinter-7a159bbb' });
 
     expect(result.success).toBe(true);
     expect(result.data?.resultCount).toBe(1);

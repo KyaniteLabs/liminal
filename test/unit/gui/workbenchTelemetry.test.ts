@@ -24,7 +24,7 @@ describe('workbench cognitive receipt source contract', () => {
 
     expect(telemetrySource).toContain("['memory', 'compost', 'dreaming']");
     expect(telemetrySource).toContain('writeBackSummary');
-    expect(appSource).toContain('liminal-cognitive-receipt');
+    expect(appSource).toContain('sinter-cognitive-receipt');
     expect(appSource).toContain('write-back {cognitiveReceipt.writeBackStatus}');
     expect(cockpitSource).toContain('Cognitive Loop Receipt');
     expect(cockpitSource).toContain('cognitiveReceipt.writeBackItems');

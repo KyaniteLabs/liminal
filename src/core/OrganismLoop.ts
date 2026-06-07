@@ -17,8 +17,8 @@ import type { LoopResult, NormalizedLoopOptions } from './LoopConfig.js';
 import { formatSeedForPrompt } from './lir/LIRPromptFormatter.js';
 import { Logger } from '../utils/Logger.js';
 import { GalleryFSAdapter } from '../fs/adapters/GalleryFSAdapter.js';
-import type { LiminalFS } from '../fs/LiminalFS.js';
-import type { LiminalObjectRef } from '../fs/types.js';
+import type { SinterFS } from '../fs/SinterFS.js';
+import type { SinterObjectRef } from '../fs/types.js';
 
 /**
  * Run the Ralph-Wiggum Loop in organism mode.
@@ -29,12 +29,12 @@ export async function runOrganismMode(
   prompt: string,
   options: NormalizedLoopOptions,
   startTime: number,
-  liminalFs?: LiminalFS,
+  liminalFs?: SinterFS,
   sessionId?: string,
 ): Promise<LoopResult> {
   const gallery = new Gallery(options.galleryDir);
   const adapter = liminalFs ? new GalleryFSAdapter(gallery, liminalFs) : undefined;
-  let runArtifact: LiminalObjectRef | undefined;
+  let runArtifact: SinterObjectRef | undefined;
   const runId = sessionId ?? `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   eventBus.emit(EventTypes.PROCESS_START, 'RalphLoop', { process: 'ralph-loop', mode: 'organism' });
@@ -68,7 +68,7 @@ export async function runOrganismMode(
             metadata: { mode: 'organism', iterations: iteration, finalScore: bestScore, reason: 'aborted by user' },
           });
         } catch {
-          // LiminalFS failure must not affect loop operation
+          // SinterFS failure must not affect loop operation
         }
       }
       return result;
@@ -165,7 +165,7 @@ export async function runOrganismMode(
         metadata: { mode: 'organism', iterations: iteration, finalScore: bestScore },
       });
     } catch {
-      // LiminalFS failure must not affect loop operation
+      // SinterFS failure must not affect loop operation
     }
   }
 

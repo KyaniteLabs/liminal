@@ -19,7 +19,7 @@ describe('ParsingCache', () => {
 
   beforeEach(async () => {
     // Create a temporary directory for each test
-    cacheDir = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-cache-test-'));
+    cacheDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-cache-test-'));
     cache = new ParsingCache(cacheDir);
     testFilePath = path.join(cacheDir, 'test-file.ts');
   });
@@ -549,7 +549,7 @@ describe('ParsingCache', () => {
 
   describe('cache directory management', () => {
     it('should create cache directory if it does not exist', async () => {
-      const nonExistentDir = path.join(os.tmpdir(), `liminal-test-${Date.now()}`);
+      const nonExistentDir = path.join(os.tmpdir(), `sinter-test-${Date.now()}`);
       const newCache = new ParsingCache(nonExistentDir);
 
       // Should not throw when setting

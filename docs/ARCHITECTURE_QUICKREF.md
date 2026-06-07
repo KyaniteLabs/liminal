@@ -1,6 +1,6 @@
 # Architecture Quick Reference
 
-This quick reference is the lightweight map for people trying to understand Liminal without reading the full philosophy document first.
+This quick reference is the lightweight map for people trying to understand Sinter without reading the full philosophy document first.
 
 ## User Surfaces
 

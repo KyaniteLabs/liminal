@@ -866,7 +866,7 @@ ${safeCommentCode}
         let liminalToneBpm = ${bpm};
         let liminalToneBeatSeconds = 60 / liminalToneBpm;
         let toneArtifactError = null;
-        function syncLiminalToneTempo() {
+        function syncSinterToneTempo() {
             const authoredBpm = Number(window.Tone?.Transport?.bpm?.value);
             liminalToneBpm = Number.isFinite(authoredBpm) && authoredBpm >= 30 && authoredBpm <= 300
                 ? authoredBpm
@@ -905,12 +905,12 @@ ${safeCommentCode}
             statusEl.className = 'ready';
             statusEl.textContent = 'Tone runtime issue: ' + err.message;
         } finally {
-            syncLiminalToneTempo();
+            syncSinterToneTempo();
         }
 
         playBtn.addEventListener('click', async () => {
             await Tone.start();
-            syncLiminalToneTempo();
+            syncSinterToneTempo();
             if (window.Tone?.Transport?.start) Tone.Transport.start();
             isPlaying = true;
             statusEl.className = 'playing';
@@ -960,11 +960,11 @@ ${safeCommentCode}
         h1 { margin: 0; font-size: clamp(36px, 6vw, 72px); line-height: .9; letter-spacing: -.06em; }
         .hint { color: #cbd5e1; line-height: 1.55; max-width: 46ch; }
         .controls { display: flex; gap: 12px; flex-wrap: wrap; }
-        #liminal-tone-start, #liminal-tone-stop { border: 0; border-radius: 999px; padding: 12px 18px; color: #08111f; font-weight: 800; cursor: pointer; }
-        #liminal-tone-start { background: linear-gradient(135deg, #facc15, #fb7185); }
-        #liminal-tone-stop { background: #cbd5e1; }
-        #liminal-tone-status { color: #fef3c7; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
-        #liminal-tone-visualizer { width: 100%; height: 160px; border-radius: 18px; background: linear-gradient(180deg, rgba(2,6,23,.98), rgba(30,41,59,.86)); border: 1px solid rgba(148,163,184,.22); }
+        #sinter-tone-start, #sinter-tone-stop { border: 0; border-radius: 999px; padding: 12px 18px; color: #08111f; font-weight: 800; cursor: pointer; }
+        #sinter-tone-start { background: linear-gradient(135deg, #facc15, #fb7185); }
+        #sinter-tone-stop { background: #cbd5e1; }
+        #sinter-tone-status { color: #fef3c7; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+        #sinter-tone-visualizer { width: 100%; height: 160px; border-radius: 18px; background: linear-gradient(180deg, rgba(2,6,23,.98), rgba(30,41,59,.86)); border: 1px solid rgba(148,163,184,.22); }
         .tone-artifact { padding: 18px; display: flex; flex-direction: column; gap: 12px; }
         .tone-artifact h2 { margin: 0; color: #fed7aa; font-size: 13px; letter-spacing: .16em; text-transform: uppercase; }
         #tone-artifact-surface { min-height: 220px; display: grid; place-items: center; border-radius: 18px; background: rgba(2,6,23,.62); border: 1px solid rgba(148,163,184,.18); padding: 20px; }
@@ -981,12 +981,12 @@ ${safeCommentCode}
             <div class="eyebrow">Tone.js artifact</div>
             <h1>Audio preview</h1>
             <p class="hint">A polished wrapper around the generated Tone HTML. Start the preview here, or use the embedded controls preserved on the right.</p>
-            <canvas id="liminal-tone-visualizer" width="640" height="240"></canvas>
+            <canvas id="sinter-tone-visualizer" width="640" height="240"></canvas>
             <div class="controls">
-                <button id="liminal-tone-start" type="button">▶ Start preview</button>
-                <button id="liminal-tone-stop" type="button">⏹ Stop</button>
+                <button id="sinter-tone-start" type="button">▶ Start preview</button>
+                <button id="sinter-tone-stop" type="button">⏹ Stop</button>
             </div>
-            <div id="liminal-tone-status">Ready — browser audio starts after a click.</div>
+            <div id="sinter-tone-status">Ready — browser audio starts after a click.</div>
         </section>
         <section class="tone-artifact" aria-label="Embedded Tone artifact">
             <h2>Embedded Tone artifact</h2>
@@ -998,14 +998,14 @@ ${safeCommentCode}
         </section>
     </main>
     <script>
-        const liminalToneStatus = document.getElementById('liminal-tone-status');
-        const liminalToneCanvas = document.getElementById('liminal-tone-visualizer');
+        const liminalToneStatus = document.getElementById('sinter-tone-status');
+        const liminalToneCanvas = document.getElementById('sinter-tone-visualizer');
         const liminalToneCtx = liminalToneCanvas.getContext('2d');
         const liminalToneFallbackBpm = ${bpm};
         let liminalToneBpm = ${bpm};
         let liminalToneBeatSeconds = 60 / liminalToneBpm;
         let liminalTonePlaying = false;
-        function syncLiminalToneTempo() {
+        function syncSinterToneTempo() {
             const authoredBpm = Number(window.Tone?.Transport?.bpm?.value);
             liminalToneBpm = Number.isFinite(authoredBpm) && authoredBpm >= 30 && authoredBpm <= 300
                 ? authoredBpm
@@ -1041,26 +1041,26 @@ ${safeCommentCode}
             console.warn('Tone artifact script error:', error);
             liminalToneStatus.textContent = 'Tone artifact script error: ' + error.message;
         } finally {
-            syncLiminalToneTempo();
+            syncSinterToneTempo();
         }
-        document.getElementById('liminal-tone-start').addEventListener('click', async () => {
+        document.getElementById('sinter-tone-start').addEventListener('click', async () => {
             try {
                 if (window.Tone?.start) await Tone.start();
-                syncLiminalToneTempo();
+                syncSinterToneTempo();
                 liminalTonePlaying = true;
                 liminalToneStatus.textContent = 'Playing — embedded artifact controls are preserved.';
                 const artifactButton = document.querySelector('#tone-artifact-surface button:not([disabled]), #tone-artifact-surface [role="button"]:not([aria-disabled="true"])');
                 if (artifactButton) artifactButton.click();
                 else if (typeof play === 'function') play();
-                syncLiminalToneTempo();
-                setTimeout(syncLiminalToneTempo, 120);
+                syncSinterToneTempo();
+                setTimeout(syncSinterToneTempo, 120);
                 if (window.Tone?.Transport?.start && Tone.Transport.state !== 'started') Tone.Transport.start();
             } catch (error) {
                 console.warn('Tone preview start error:', error);
                 liminalToneStatus.textContent = 'Start error: ' + error.message;
             }
         });
-        document.getElementById('liminal-tone-stop').addEventListener('click', () => {
+        document.getElementById('sinter-tone-stop').addEventListener('click', () => {
             liminalTonePlaying = false;
             if (window.Tone?.Transport) {
                 Tone.Transport.stop();

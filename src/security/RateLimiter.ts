@@ -1,5 +1,5 @@
 /**
- * Rate limiting configuration for Liminal API endpoints
+ * Rate limiting configuration for Sinter API endpoints
  */
 
 import rateLimit from 'express-rate-limit';

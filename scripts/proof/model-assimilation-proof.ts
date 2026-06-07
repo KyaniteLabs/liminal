@@ -37,7 +37,7 @@ interface RecommendedAssignment {
 }
 
 interface ModelAssimilationReport {
-  contract: 'liminal-model-assimilation-v1';
+  contract: 'sinter-model-assimilation-v1';
   generatedAt: string;
   gitCommit: string | null;
   mode: Mode;
@@ -198,7 +198,7 @@ async function buildReport(mode: Mode): Promise<ModelAssimilationReport> {
   const liveProvider = live.evidence[0]?.provider;
   const liveModel = live.evidence[0]?.model;
   return {
-    contract: 'liminal-model-assimilation-v1',
+    contract: 'sinter-model-assimilation-v1',
     generatedAt: new Date().toISOString(),
     gitCommit: readCurrentGitCommit(process.cwd()),
     mode,

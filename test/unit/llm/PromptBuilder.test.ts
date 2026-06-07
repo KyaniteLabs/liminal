@@ -49,7 +49,7 @@ import type { LLMConfig } from '../../../src/llm/LLMClient.js';
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FULL_CONTEXT: PromptContext = {
-  soul: 'You are Liminal, a creative spirit.',
+  soul: 'You are Sinter, a creative spirit.',
   rules: 'Always output valid code.',
   domainDocs: 'p5.js is a JavaScript library for creative coding.',
   recentAdaptations: ['adaptation-1', 'adaptation-2'],
@@ -117,7 +117,7 @@ describe('PromptBuilder.build() — flagship tier', () => {
 
     const result = builder.build(FULL_CONTEXT);
 
-    expect(result.system).toContain('You are Liminal, a creative spirit.');
+    expect(result.system).toContain('You are Sinter, a creative spirit.');
   });
 
   it('wraps rules in XML <rules> tags', () => {
@@ -231,7 +231,7 @@ describe('PromptBuilder.build() — medium tier', () => {
 
     const result = builder.build(FULL_CONTEXT);
 
-    expect(result.system).toContain('You are Liminal, a creative spirit.');
+    expect(result.system).toContain('You are Sinter, a creative spirit.');
   });
 
   it('uses numbered rules format', () => {
@@ -593,7 +593,7 @@ describe('summarizeDocs() via local tier build', () => {
 describe('PromptBuilder.loadContext()', () => {
   it('loads all files successfully when they exist', async () => {
     mockReadFile.mockImplementation((path: string) => {
-      if (path.includes('SOUL.md')) return Promise.resolve('I am Liminal soul text.');
+      if (path.includes('SOUL.md')) return Promise.resolve('I am Sinter soul text.');
       if (path.includes('PROJECT_RULES.md')) return Promise.resolve('Rule: be creative.');
       if (path.includes('docs')) return Promise.resolve('p5 domain documentation.');
       return Promise.reject(new Error('not found'));
@@ -601,7 +601,7 @@ describe('PromptBuilder.loadContext()', () => {
 
     const ctx = await PromptBuilder.loadContext('p5', 'draw a circle');
 
-    expect(ctx.soul).toBe('I am Liminal soul text.');
+    expect(ctx.soul).toBe('I am Sinter soul text.');
     expect(ctx.rules).toBe('Rule: be creative.');
     expect(ctx.domainDocs).toBe('p5 domain documentation.');
     expect(ctx.userRequest).toBe('draw a circle');
@@ -618,7 +618,7 @@ describe('PromptBuilder.loadContext()', () => {
 
     const ctx = await PromptBuilder.loadContext('p5', 'test request');
 
-    expect(ctx.soul).toBe('You are Liminal, a creative coding assistant.');
+    expect(ctx.soul).toBe('You are Sinter, a creative coding assistant.');
     expect(mockLoggerDebug).toHaveBeenCalledWith(
       'PromptBuilder',
       expect.stringContaining('SOUL.md not found'),

@@ -8,7 +8,7 @@ describe('CognitiveArchitectureAtlas', () => {
     expect(domains).toEqual(['svg', 'p5', 'glsl', 'hydra', 'three', 'tone', 'strudel', 'revideo', 'hyperframes', 'ascii', 'kinetic', 'textgen']);
   });
 
-  it('names the cognitive organs that make Liminal a learning-inspired organism', () => {
+  it('names the cognitive organs that make Sinter a learning-inspired organism', () => {
     const atlas = new CognitiveArchitectureAtlas().build();
     expect(atlas.organs.map(organ => organ.id)).toEqual(['perception', 'memory', 'compost', 'dreaming', 'intuition', 'cortex', 'garden-evolution', 'immune-truth', 'model-assimilation']);
   });
@@ -16,7 +16,7 @@ describe('CognitiveArchitectureAtlas', () => {
   it('formats the creative, self-improvement, and model-assimilation loops for CLI receipts', () => {
     const formatter = new CognitiveArchitectureAtlas();
     const output = formatter.format(formatter.build());
-    expect(output).toContain('Liminal Cognitive Architecture');
+    expect(output).toContain('Sinter Cognitive Architecture');
     expect(output).toContain('Creative Loop');
     expect(output).toContain('Self-Improvement Loop');
     expect(output).toContain('Model Assimilation Loop');

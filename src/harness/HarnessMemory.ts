@@ -8,7 +8,7 @@
  * - Pattern history (detected patterns, their frequency)
  * - Calibration data (scoring weights per domain)
  * 
- * Location: ~/.liminal/memory/
+ * Location: ~/.sinter/memory/
  */
 
 import { promises as fs } from 'fs';
@@ -130,7 +130,7 @@ export class HarnessMemory {
   private saveInterval?: NodeJS.Timeout;
 
   constructor() {
-    this.memoryDir = join(homedir(), '.liminal', 'memory');
+    this.memoryDir = join(homedir(), '.sinter', 'memory');
     this.memoryFile = join(this.memoryDir, 'harness-memory.json');
     // this.calibrationFile = join(this.memoryDir, 'calibration-data.json'); // Reserved for future use
     this.state = { ...DEFAULT_STATE };

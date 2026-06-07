@@ -1,4 +1,4 @@
-# Liminal Instrument Consolidation Proposal
+# Sinter Instrument Consolidation Proposal
 
 Last updated: 2026-05-25
 

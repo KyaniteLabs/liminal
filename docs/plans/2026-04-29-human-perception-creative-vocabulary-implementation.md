@@ -1,10 +1,10 @@
 # Human Perception Guardrails and Creative Vocabulary Engines Implementation Plan
 
-**Goal:** Reframe Liminal's aesthetic system so hard guardrails protect human sensory ergonomics while optional creative vocabulary engines help users steer color, music, motion, video, and writing preferences.
+**Goal:** Reframe Sinter's aesthetic system so hard guardrails protect human sensory ergonomics while optional creative vocabulary engines help users steer color, music, motion, video, and writing preferences.
 
 **Architecture:** Add a small domain-neutral perception/vocabulary layer, preserve existing validators/evaluators, and migrate misleading aesthetic naming through compatibility wrappers. The first implementation should be metadata- and tests-first: make CLI/docs truthful, add perception guardrail contracts, then wire advisory vocabulary engines without forcing subjective beauty rules.
 
-**Tech Stack:** TypeScript/ESM, Vitest, existing `src/aesthetic`, `src/music`, `src/core`, `src/guardrails`, `src/render`, CLI `bin/liminal`, docs under `docs/`.
+**Tech Stack:** TypeScript/ESM, Vitest, existing `src/aesthetic`, `src/music`, `src/core`, `src/guardrails`, `src/render`, CLI `bin/sinter`, docs under `docs/`.
 
 ---
 
@@ -497,7 +497,7 @@ git commit -m "Register creative vocabulary engines"
 ## Task 9: Make CLI aesthetic flags truthful and non-misleading
 
 **Files:**
-- Modify: `bin/liminal`
+- Modify: `bin/sinter`
 - Modify: `docs/cli-reference.html`
 - Modify: `docs/internal/USER_TESTING_READINESS_REPORT.md` only if still claiming stale preset behavior.
 - Create or modify: `test/unit/canonical-surface-launch.test.ts` if it already checks CLI/package contracts; otherwise create `test/unit/cli-aesthetic-flags.test.ts`.
@@ -548,7 +548,7 @@ Expected: PASS.
 **Step 5: Commit**
 
 ```bash
-git add bin/liminal docs/cli-reference.html test/unit/cli-aesthetic-flags.test.ts
+git add bin/sinter docs/cli-reference.html test/unit/cli-aesthetic-flags.test.ts
 git commit -m "Make aesthetic CLI flags truthful"
 ```
 

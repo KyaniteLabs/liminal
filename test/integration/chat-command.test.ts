@@ -57,7 +57,7 @@ describe('chat command', () => {
 
 describe('chat command help text', () => {
   it('help text includes chat command', () => {
-    // This will be tested by checking the bin/liminal help output
+    // This will be tested by checking the bin/sinter help output
     // For now, we just verify the command exists
     expect(typeof chatCommand).toBe('function');
   });

@@ -1,4 +1,4 @@
-# Loose Ends Audit - Liminal Repository
+# Loose Ends Audit - Sinter Repository
 
 **Generated:** 2026-04-02
 **Branch:** narrative/liminal-archaeology

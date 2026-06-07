@@ -1,4 +1,4 @@
-# Liminal Workbench Redesign Design
+# Sinter Workbench Redesign Design
 
 **Goal:** Replace the current merged-app GUI shell with a professional creative coding workbench that makes generation, preview, evaluation, and system state feel like one instrument.
 
@@ -19,7 +19,7 @@
 
 ## Product Target
 
-The GUI should become **Liminal Studio**, a professional creative coding workbench. It should feel closer to a creative tool than a web form: canvas first, dense but readable controls, visible progress, and an operator-grade system model. The interface should convey that Liminal is generating code, rendering artifacts, evaluating the result, and learning from the process.
+The GUI should become **Sinter Studio**, a professional creative coding workbench. It should feel closer to a creative tool than a web form: canvas first, dense but readable controls, visible progress, and an operator-grade system model. The interface should convey that Sinter is generating code, rendering artifacts, evaluating the result, and learning from the process.
 
 ## Layout Model
 

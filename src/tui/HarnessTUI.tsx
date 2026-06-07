@@ -210,8 +210,8 @@ const Input = ({ value, onChange, onSubmit, onCopy, onToggleDebug }: {
 
 function App() {
   const [history, setHistory] = useState<HistoryLine[]>([
-    { type: 'system', content: 'Liminal initialized.' },
-    { type: 'assistant', content: 'Hi! I\'m Liminal, your creative coding partner.\n\nJust talk to me naturally:\n  • "Fix the Tone.js validation"\n  • "What\'s the status?"\n  • "Tell me about p5.js noise()"\n\nShortcuts: Ctrl+V=paste, Ctrl+C=copy last response, Ctrl+D=toggle debug\nType "/help" for explicit commands.' },
+    { type: 'system', content: 'Sinter initialized.' },
+    { type: 'assistant', content: 'Hi! I\'m Sinter, your creative coding partner.\n\nJust talk to me naturally:\n  • "Fix the Tone.js validation"\n  • "What\'s the status?"\n  • "Tell me about p5.js noise()"\n\nShortcuts: Ctrl+V=paste, Ctrl+C=copy last response, Ctrl+D=toggle debug\nType "/help" for explicit commands.' },
   ]);
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<any>(null);

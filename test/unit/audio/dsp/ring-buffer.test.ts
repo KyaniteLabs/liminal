@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AnalysisRingBuffer } from '@liminal/audio-core/dsp/RingBuffer.js';
+import { AnalysisRingBuffer } from '@sinter/audio-core/dsp/RingBuffer.js';
 
 const SIZE = 2048;
 const HOP = 256;

@@ -15,7 +15,7 @@
 
 ## Summary
 
-At the time of this snapshot, 21 Liminal subsystems were verified as operational. This does not imply current production readiness; newer launch proof gates distinguish proven slices, paused media surfaces, manual gates, and remaining blockers.
+At the time of this snapshot, 21 Sinter subsystems were verified as operational. This does not imply current production readiness; newer launch proof gates distinguish proven slices, paused media surfaces, manual gates, and remaining blockers.
 
 | Metric | Result | Status |
 |--------|--------|--------|
@@ -141,7 +141,7 @@ Duration:    59.05s
 
 **All Systems Status: ONLINE ✅ (Historical — see launch scorecard for current status)**
 
-The Liminal system was fully operational at snapshot date with:
+The Sinter system was fully operational at snapshot date with:
 - ✅ 21 subsystems verified
 - ✅ 346 test files passing
 - ✅ All generators wired to harness

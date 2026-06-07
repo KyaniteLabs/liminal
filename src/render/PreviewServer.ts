@@ -15,7 +15,7 @@ import helmet from 'helmet';
 import { doubleCsrf } from 'csrf-csrf';
 import cookieParser from 'cookie-parser';
 import { Gallery, parseVersionContent, type GalleryIteration } from '../gallery/Gallery.js';
-import { LiminalFS } from '../fs/LiminalFS.js';
+import { SinterFS } from '../fs/SinterFS.js';
 import { Exporter } from '../export/Exporter.js';
 import { normalizePath, assertSafeSegment } from '../utils/normalizePath.js';
 import { SERVICE_DEFAULTS } from '../constants.js';
@@ -51,7 +51,7 @@ export class PreviewServer {
   private readonly DEFAULT_PORT = SERVICE_DEFAULTS.PREVIEW_PORT;
   private readonly galleryDir: string | null;
   private sseClients: Set<import('express').Response> = new Set();
-  private liminalFsInstance: LiminalFS | null = null;
+  private liminalFsInstance: SinterFS | null = null;
 
   constructor(options: PreviewServerOptions | string | null = null) {
     this.app = express();
@@ -61,9 +61,9 @@ export class PreviewServer {
     this.setupEventBus();
   }
 
-  /** Lazily open a singleton LiminalFS instance (avoids per-request open/close). */
-  private getLiminalFS(): LiminalFS {
-    if (!this.liminalFsInstance) this.liminalFsInstance = LiminalFS.open(process.cwd());
+  /** Lazily open a singleton SinterFS instance (avoids per-request open/close). */
+  private getSinterFS(): SinterFS {
+    if (!this.liminalFsInstance) this.liminalFsInstance = SinterFS.open(process.cwd());
     return this.liminalFsInstance;
   }
 
@@ -167,7 +167,7 @@ export class PreviewServer {
 
     const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
       getSecret: () => csrfSecret || (isTestEnv ? 'test-secret' : ''),
-      getSessionIdentifier: () => 'liminal-preview',
+      getSessionIdentifier: () => 'sinter-preview',
       cookieName: 'x-csrf-token',
       cookieOptions: {
         sameSite: 'strict' as const,
@@ -248,7 +248,7 @@ export class PreviewServer {
       }
     });
 
-    // ── LiminalFS-backed gallery endpoints ────────────────────────────
+    // ── SinterFS-backed gallery endpoints ────────────────────────────
 
     this.app.get('/api/liminal/gallery/:project', async (req, res) => {
       const project = decodeURIComponent(req.params.project);
@@ -258,8 +258,8 @@ export class PreviewServer {
         return res.status(400).json({ error: 'Invalid project name' });
       }
       try {
-        const liminalFs = this.getLiminalFS();
-        const refsDir = path.join(process.cwd(), '.liminal', 'refs', 'gallery', project);
+        const liminalFs = this.getSinterFS();
+        const refsDir = path.join(process.cwd(), '.sinter', 'refs', 'gallery', project);
 
         // Return empty if refs directory doesn't exist (graceful for new projects)
         if (!existsSync(refsDir)) {
@@ -288,7 +288,7 @@ export class PreviewServer {
         iterations.sort((a, b) => a.version - b.version);
         return res.json({ iterations });
       } catch (err) {
-        Logger.error('PreviewServer', 'Failed to load LiminalFS gallery:', err);
+        Logger.error('PreviewServer', 'Failed to load SinterFS gallery:', err);
         return res.status(500).json({ error: 'Failed to load gallery' });
       }
     });
@@ -309,7 +309,7 @@ export class PreviewServer {
         return res.status(400).json({ error: 'Invalid project name' });
       }
       try {
-        const liminalFs = this.getLiminalFS();
+        const liminalFs = this.getSinterFS();
         const ref = liminalFs.readRef(`gallery/${project}/v${version}`);
         if (!ref) {
           return res.status(404).json({ error: 'Version not found' });
@@ -320,7 +320,7 @@ export class PreviewServer {
         }
         return res.setHeader('Content-Type', 'text/plain').send(content.toString('utf-8'));
       } catch (err) {
-        Logger.error('PreviewServer', 'Failed to load LiminalFS version:', err);
+        Logger.error('PreviewServer', 'Failed to load SinterFS version:', err);
         return res.status(500).json({ error: 'Failed to load version' });
       }
     });

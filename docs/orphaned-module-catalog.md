@@ -17,7 +17,7 @@ Fabrication constraints for creative output — enforces boundaries like max lin
 Wires LLM events from EventBus into TelemetryAggregator. Bridges the gap between creative generation events and the observability layer. Should connect when guardrails are activated.
 
 ### `src/core/StagnationDetector.ts` (165 lines) — **partial wiring exists**
-Detects when the creative loop stops making progress. Already referenced 4x in bin/liminal (garden commands). Not fully consumed by src/ modules but partially wired via CLI.
+Detects when the creative loop stops making progress. Already referenced 4x in bin/sinter (garden commands). Not fully consumed by src/ modules but partially wired via CLI.
 
 ### `src/core/SuccessRateTracker.ts` (180 lines)
 Rolling success rate tracker for adaptive exploration. Tracks whether recent generations are improving or declining. Natural fit for the garden loop's adaptive behavior.
@@ -41,7 +41,7 @@ Seeded permutation-based Perlin noise generator for procedural generation. Can d
 ## TUI & Interactive
 
 ### `src/tui/NaturalInterface.ts` (508 lines) — **partial wiring exists**
-Natural language interface inspired by Claude Code. Routes slash commands, agent patterns, and free-text to appropriate handlers. Referenced in bin/liminal. Full integration pending TUI launch.
+Natural language interface inspired by Claude Code. Routes slash commands, agent patterns, and free-text to appropriate handlers. Referenced in bin/sinter. Full integration pending TUI launch.
 
 ### `src/tui/PendingActionStore.ts` (47 lines)
 Stores pending user confirmation actions (approve/reject) for destructive operations. Needed when TUI interactive mode asks "really delete this?"

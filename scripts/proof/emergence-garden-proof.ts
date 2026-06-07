@@ -27,7 +27,7 @@ const isolatedHome = path.join(outDir, 'home');
 await fs.mkdir(isolatedHome, { recursive: true });
 process.env.HOME = isolatedHome;
 
-const { LiminalFS } = await import('../../src/fs/LiminalFS.js');
+const { SinterFS } = await import('../../src/fs/SinterFS.js');
 const { EmergenceHooks } = await import('../../src/emergence/EmergenceHooks.js');
 
 const cases: GardenCase[] = [
@@ -55,8 +55,8 @@ function draw(){background(5,12,28);for(let i=0;i<90;i++){circle(sin(frameCount*
   },
 ];
 
-const liminalFs = LiminalFS.open(path.join(outDir, 'liminalfs'));
-const hooks = new EmergenceHooks(liminalFs, { minQuality: 0.3, binsPerAxis: 6 });
+const sinterFs = SinterFS.open(path.join(outDir, 'liminalfs'));
+const hooks = new EmergenceHooks(sinterFs, { minQuality: 0.3, binsPerAxis: 6 });
 const results = [];
 const parentIds: string[] = [];
 
@@ -82,7 +82,7 @@ try {
     });
   }
 } finally {
-  liminalFs.close();
+  sinterFs.close();
 }
 
 const archiveStats = hooks.getArchive().getStats();

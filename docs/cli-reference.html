@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liminal — CLI Reference</title>
+    <title>Sinter — CLI Reference</title>
     <link rel="stylesheet" href="styles/docs.css">
 </head>
 <body>
 
 <nav class="navbar">
-    <a href="index.html" class="navbar-brand"><h1>Liminal</h1></a>
+    <a href="index.html" class="navbar-brand"><h1>Sinter</h1></a>
     <div class="navbar-nav">
         <a href="index.html">Home</a>
         <a href="architecture.html">Architecture</a>
@@ -26,7 +26,7 @@
 
 <section class="hero">
     <h1>CLI Reference</h1>
-    <p>All commands, flags, and configuration options for the Liminal CLI.</p>
+    <p>All commands, flags, and configuration options for the Sinter CLI.</p>
 </section>
 
 <div class="container">
@@ -37,19 +37,19 @@
     <table>
         <thead><tr><th>Command</th><th>Description</th></tr></thead>
         <tbody>
-            <tr><td><code>liminal -p "prompt"</code></td><td>Generate with a prompt</td></tr>
-            <tr><td><code>liminal -p "idea" -m 10 -o ./output</code></td><td>Custom iterations + output directory</td></tr>
-            <tr><td><code>liminal -p "idea" --use-swarm --swarm-mode hybrid</code></td><td>Swarm generation</td></tr>
-            <tr><td><code>liminal -p "ambient glitch" --mode live-music</code></td><td>Live music mode</td></tr>
+            <tr><td><code>sinter -p "prompt"</code></td><td>Generate with a prompt</td></tr>
+            <tr><td><code>sinter -p "idea" -m 10 -o ./output</code></td><td>Custom iterations + output directory</td></tr>
+            <tr><td><code>sinter -p "idea" --use-swarm --swarm-mode hybrid</code></td><td>Swarm generation</td></tr>
+            <tr><td><code>sinter -p "ambient glitch" --mode live-music</code></td><td>Live music mode</td></tr>
             <tr><td><code>pnpm gui</code></td><td>Launch Studio, the chat-first GUI with same-screen preview</td></tr>
-            <tr><td><code>liminal chat</code></td><td>Conversational creative session</td></tr>
-            <tr><td><code>liminal bubbletea</code></td><td>Operator TUI for deeper local workflows (requires pre-built Go binary)</td></tr>
+            <tr><td><code>sinter chat</code></td><td>Conversational creative session</td></tr>
+            <tr><td><code>sinter bubbletea</code></td><td>Operator TUI for deeper local workflows (requires pre-built Go binary)</td></tr>
             <tr><td><code>pnpm run tui</code></td><td>Build + launch Bubble Tea TUI (auto-compiles Go)</td></tr>
-            <tr><td><code>liminal fix &lt;file|desc&gt;</code></td><td>Auto-fix code with LLM</td></tr>
-            <tr><td><code>liminal consolidate</code></td><td>Memory consolidation</td></tr>
-            <tr><td><code>liminal list</code></td><td>List saved sketches</td></tr>
-            <tr><td><code>liminal serve 3456</code></td><td>Preview server on port</td></tr>
-            <tr><td><code>liminal --configure</code></td><td>Interactive configuration setup</td></tr>
+            <tr><td><code>sinter fix &lt;file|desc&gt;</code></td><td>Auto-fix code with LLM</td></tr>
+            <tr><td><code>sinter consolidate</code></td><td>Memory consolidation</td></tr>
+            <tr><td><code>sinter list</code></td><td>List saved sketches</td></tr>
+            <tr><td><code>sinter serve 3456</code></td><td>Preview server on port</td></tr>
+            <tr><td><code>sinter --configure</code></td><td>Interactive configuration setup</td></tr>
         </tbody>
     </table>
 </section>
@@ -61,13 +61,13 @@
     <table>
         <thead><tr><th>Command</th><th>Description</th></tr></thead>
         <tbody>
-            <tr><td><code>liminal compost add &lt;path&gt;</code></td><td>Feed material to the heap</td></tr>
-            <tr><td><code>liminal compost digest</code></td><td>Run full digestion pipeline (extract &rarr; shred &rarr; collide &rarr; score &rarr; promote)</td></tr>
-            <tr><td><code>liminal compost soup start</code></td><td>Start evolutionary soup on seeds</td></tr>
-            <tr><td><code>liminal compost soup stop</code></td><td>Stop the soup</td></tr>
-            <tr><td><code>liminal compost seeds list</code></td><td>Browse promoted creative seeds</td></tr>
-            <tr><td><code>liminal compost seeds show &lt;id&gt;</code></td><td>Show seed details</td></tr>
-            <tr><td><code>liminal compost status</code></td><td>Overview of heap, seeds, and soup</td></tr>
+            <tr><td><code>sinter compost add &lt;path&gt;</code></td><td>Feed material to the heap</td></tr>
+            <tr><td><code>sinter compost digest</code></td><td>Run full digestion pipeline (extract &rarr; shred &rarr; collide &rarr; score &rarr; promote)</td></tr>
+            <tr><td><code>sinter compost soup start</code></td><td>Start evolutionary soup on seeds</td></tr>
+            <tr><td><code>sinter compost soup stop</code></td><td>Stop the soup</td></tr>
+            <tr><td><code>sinter compost seeds list</code></td><td>Browse promoted creative seeds</td></tr>
+            <tr><td><code>sinter compost seeds show &lt;id&gt;</code></td><td>Show seed details</td></tr>
+            <tr><td><code>sinter compost status</code></td><td>Overview of heap, seeds, and soup</td></tr>
         </tbody>
     </table>
 </section>
@@ -79,11 +79,11 @@
     <table>
         <thead><tr><th>Command</th><th>Description</th></tr></thead>
         <tbody>
-            <tr><td><code>liminal ledger list</code></td><td>List all tasks in the corpus</td></tr>
-            <tr><td><code>liminal ledger show &lt;id&gt;</code></td><td>Show task details and requirements</td></tr>
-            <tr><td><code>liminal ledger run &lt;id&gt;</code></td><td>Execute a task</td></tr>
-            <tr><td><code>liminal ledger verify &lt;id&gt;</code></td><td>Verify task result</td></tr>
-            <tr><td><code>liminal ledger status</code></td><td>Ledger overview and statistics</td></tr>
+            <tr><td><code>sinter ledger list</code></td><td>List all tasks in the corpus</td></tr>
+            <tr><td><code>sinter ledger show &lt;id&gt;</code></td><td>Show task details and requirements</td></tr>
+            <tr><td><code>sinter ledger run &lt;id&gt;</code></td><td>Execute a task</td></tr>
+            <tr><td><code>sinter ledger verify &lt;id&gt;</code></td><td>Verify task result</td></tr>
+            <tr><td><code>sinter ledger status</code></td><td>Ledger overview and statistics</td></tr>
         </tbody>
     </table>
 </section>
@@ -117,7 +117,7 @@
     <div class="two-col">
         <div>
             <h3>Config File</h3>
-            <p style="font-size:0.9rem;">Located at <code>~/.liminal/config.json</code>. Created via <code>liminal --configure</code>.</p>
+            <p style="font-size:0.9rem;">Located at <code>~/.liminal/config.json</code>. Created via <code>sinter --configure</code>.</p>
             <pre><code>{
   "llm": {
     "baseUrl": "https://api.minimax.io/anthropic",
@@ -188,7 +188,7 @@
 <!-- TUI Commands -->
 <section class="section">
     <h2 class="section-title">TUI Slash Commands</h2>
-    <p class="section-subtitle">Interactive commands available in <code>liminal chat</code> and Bubble Tea TUI.</p>
+    <p class="section-subtitle">Interactive commands available in <code>sinter chat</code> and Bubble Tea TUI.</p>
     <table>
         <thead><tr><th>Command</th><th>Action</th></tr></thead>
         <tbody>
@@ -227,7 +227,7 @@
 </div>
 
 <footer class="footer">
-    <p>Liminal &mdash; Creative Coding Agent &bull; <a href="https://github.com/KyaniteLabs/liminal">GitHub</a> &bull; BSL 1.1 License</p>
+    <p>Sinter &mdash; Creative Coding Agent &bull; <a href="https://github.com/KyaniteLabs/liminal">GitHub</a> &bull; BSL 1.1 License</p>
 </footer>
 
 </body>

@@ -4,7 +4,7 @@ import {
   createSampleRingViews,
   writeSamplesToRing,
   readWindowFromRing,
-} from '@liminal/audio-core/dsp/SampleRingShared.js';
+} from '@sinter/audio-core/dsp/SampleRingShared.js';
 
 function freshRing(capacity: number) {
   const buf = new ArrayBuffer(sampleRingByteLength(capacity));

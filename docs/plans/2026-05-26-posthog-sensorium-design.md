@@ -7,7 +7,7 @@
 
 ## Goal
 
-Reframe the Liminal × KyaniteLabs website integration from a literal PostHog A/B optimization loop into a mission-safe aesthetic sensorium: PostHog provides raw behavioral signals, Liminal transforms those signals into bounded decorative atmosphere, and the existing KyaniteLabs site analytics and conversion surfaces remain untouched.
+Reframe the Sinter × KyaniteLabs website integration from a literal PostHog A/B optimization loop into a mission-safe aesthetic sensorium: PostHog provides raw behavioral signals, Sinter transforms those signals into bounded decorative atmosphere, and the existing KyaniteLabs site analytics and conversion surfaces remain untouched.
 
 ---
 
@@ -17,7 +17,7 @@ Reframe the Liminal × KyaniteLabs website integration from a literal PostHog A/
 
 PostHog may influence mood, texture, rhythm, palette, atmosphere, and decorative motion. It must not directly control layout, copy, CTA placement, navigation, page hierarchy, link destinations, SEO metadata, existing analytics behavior, or conversion-critical interactions.
 
-The Liminal layer must amplify the site's intent, never compete with it.
+The Sinter layer must amplify the site's intent, never compete with it.
 
 ---
 
@@ -34,7 +34,7 @@ That is too literal and depends on traffic volume that KyaniteLabs does not yet 
 The approved model is metabolic:
 
 ```txt
-PostHog raw activity → signal extraction → aesthetic intent → mission guardrails → Liminal layer parameters/variants
+PostHog raw activity → signal extraction → aesthetic intent → mission guardrails → Sinter layer parameters/variants
 ```
 
 A pageview is not a vote. A scroll is not a conversion mandate. A bounce is not automatically failure. These are raw gestures that can be transformed into restrained aesthetic material.
@@ -45,22 +45,22 @@ A pageview is not a vote. A scroll is not a conversion mandate. A bounce is not 
 
 The existing KyaniteLabs PostHog setup remains the normal analytics layer. It continues to track traditional analytics, funnels, clicks, conversions, and session behavior.
 
-The Liminal layer is added on top as a separate aesthetic system.
+The Sinter layer is added on top as a separate aesthetic system.
 
 Rules:
 
 - Do not remove or rewrite existing PostHog initialization.
 - Do not change existing event names or dashboards.
-- Prefix all new Liminal events with `liminal_`.
-- Namespace Liminal properties with `liminal_*` keys.
+- Prefix all new Sinter events with `liminal_`.
+- Namespace Sinter properties with `liminal_*` keys.
 - Use separate feature flag names if flags are needed, e.g. `liminal_aesthetic_home_hero`.
-- The Liminal layer can read raw analytics data, but it must not become the canonical analytics taxonomy.
+- The Sinter layer can read raw analytics data, but it must not become the canonical analytics taxonomy.
 
 ---
 
 ## Aesthetic Layer Scope
 
-The Liminal layer is decorative and constrained.
+The Sinter layer is decorative and constrained.
 
 Allowed surfaces:
 
@@ -199,7 +199,7 @@ This creates continuous aliveness without replacing the artifact.
 Runs daily, weekly, or manually at first.
 
 ```txt
-signal history → Liminal generation/mutation → guardrail checks → deploy approved aesthetic layer
+signal history → Sinter generation/mutation → guardrail checks → deploy approved aesthetic layer
 ```
 
 This creates larger aesthetic evolution, but only after validation.
@@ -282,7 +282,7 @@ Add:
 The system is successful when:
 
 1. Existing KyaniteLabs PostHog behavior remains untouched.
-2. Liminal events and properties are separately namespaced.
+2. Sinter events and properties are separately namespaced.
 3. Low traffic still produces meaningful but quiet aesthetic motion.
 4. High traffic produces more clarity/composure, not more noise.
 5. High-intent or high-friction signals reduce distraction.
@@ -293,4 +293,4 @@ The system is successful when:
 
 ## Summary
 
-The living website is not an optimizer that lets analytics redesign the business site. It is a mission-safe atmospheric system. PostHog senses the site's recent behavioral weather; Liminal translates that weather into bounded aesthetic expression; guardrails ensure the commercial purpose of KyaniteLabs remains stable and clear.
+The living website is not an optimizer that lets analytics redesign the business site. It is a mission-safe atmospheric system. PostHog senses the site's recent behavioral weather; Sinter translates that weather into bounded aesthetic expression; guardrails ensure the commercial purpose of KyaniteLabs remains stable and clear.

@@ -116,7 +116,7 @@ export interface CreativeBrief {
   constraints: string[];
   references: Reference[];
 
-  // Inferred by Liminal
+  // Inferred by Sinter
   domain: Domain;
   techniques: Technique[];
   complexity: 'simple' | 'medium' | 'complex';

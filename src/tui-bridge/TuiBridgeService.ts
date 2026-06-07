@@ -28,11 +28,11 @@ import { STUDIO_SYSTEM_PROMPT } from '../agent/StudioAgent.js';
 import { SessionGraph } from '../agent/SessionGraph.js';
 import { CortexPerceptionBus } from '../cortex/CortexPerceptionBus.js';
 import { GoalStore } from '../cortex/GoalStore.js';
-import { LiminalCortex } from '../cortex/LiminalCortex.js';
+import { SinterCortex } from '../cortex/SinterCortex.js';
 import { CortexExplainer } from '../cortex/CortexExplainer.js';
 import type { CortexConfig } from '../cortex/types.js';
 import { AutonomousGardener, type GardenerCycleResult } from '../autonomy/AutonomousGardener.js';
-import { LiminalFS } from '../fs/LiminalFS.js';
+import { SinterFS } from '../fs/SinterFS.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
 import { buildCreativePreferencePromptHints, createCreativePreferenceSuggestion } from '../chat/CreativePreferenceGuide.js';
@@ -58,10 +58,10 @@ import {
   formatStatusRiskLine,
 } from '../types/status.js';
 
-export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
+export const TUI_SYSTEM_PROMPT = `You are Sinter's Meta-Harness operator interface.
 
 Primary role:
-- Help inspect, debug, repair, and improve the Liminal codebase and harness.
+- Help inspect, debug, repair, and improve the Sinter codebase and harness.
 - Treat self-improvement, CI fixes, dogfood diagnostics, TUI fixes, generator hardening, and repo maintenance as first-class tasks.
 - You are allowed and expected to discuss how the system should improve itself.
 
@@ -175,10 +175,10 @@ export class TuiBridgeService {
   private autonomyController = new AutonomyController();
   // Cortex perception bus: aggregates live system state from EventBus
   private cortexBus = new CortexPerceptionBus(eventBus);
-  // Cortex goal store: persists user goals via LiminalFS
+  // Cortex goal store: persists user goals via SinterFS
   private goalStore: GoalStore | null = null;
   // Cortex loop: background executive that fuses perception + goals into actions
-  private cortexLoop: LiminalCortex | null = null;
+  private cortexLoop: SinterCortex | null = null;
   // Autonomous gardener: coordinates taste learning, dream recombination, emergence cycles
   private gardener: AutonomousGardener | null = null;
   // Cognitive write-back: memory, compost, and dreaming receipts for Studio generation
@@ -225,7 +225,7 @@ export class TuiBridgeService {
     // Start the Cortex background executive loop.
     // Fuses perception + goals into priority-ranked actions, emitting
     // cortex.loop_tick, cortex.decision, and cortex.action_proposed events.
-    this.cortexLoop = new LiminalCortex({
+    this.cortexLoop = new SinterCortex({
       perceptionBus: this.cortexBus,
       goalStore: {
         getActiveGoals: () => this.getGoalStore()?.getActiveGoals() ?? [],
@@ -1430,16 +1430,16 @@ export class TuiBridgeService {
   }
 
   /**
-   * Lazy-initialize the GoalStore with LiminalFS.
-   * Returns null if LiminalFS cannot be opened (e.g. not in a project directory).
+   * Lazy-initialize the GoalStore with SinterFS.
+   * Returns null if SinterFS cannot be opened (e.g. not in a project directory).
    */
   private getGoalStore(): GoalStore | null {
     if (!this.goalStore) {
       try {
-        const fs = LiminalFS.open(process.cwd());
+        const fs = SinterFS.open(process.cwd());
         this.goalStore = new GoalStore(fs);
       } catch (err) {
-        Logger.debug('TuiBridgeService', 'GoalStore unavailable — LiminalFS could not be opened:', err);
+        Logger.debug('TuiBridgeService', 'GoalStore unavailable — SinterFS could not be opened:', err);
         return null;
       }
     }
@@ -3244,11 +3244,11 @@ export class TuiBridgeService {
     const trimmed = code.trim();
     if (/^(?:<!DOCTYPE\s+html|<html\b)/i.test(trimmed)) {
       if (previewDomain === 'tone') {
-        return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Liminal ${previewDomain} Preview` });
+        return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Sinter ${previewDomain} Preview` });
       }
       return trimmed;
     }
-    return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Liminal ${previewDomain} Preview` });
+    return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Sinter ${previewDomain} Preview` });
   }
 
   private async renderHtmlScreenshot(htmlPath: string, pngPath: string, previewDomain: string): Promise<void> {

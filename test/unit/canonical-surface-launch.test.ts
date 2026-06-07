@@ -17,7 +17,7 @@ describe('canonical user-surface launch contract', () => {
   });
 
   it('routes CLI studio/tui surfaces to Studio and Bubble Tea, not legacy Ink', () => {
-    const cli = read('bin/liminal');
+    const cli = read('bin/sinter');
 
     expect(cli).toContain('tui                         Launch Bubble Tea operator cockpit');
     expect(cli).toContain("spawn(npmCmd, ['run', 'gui']");

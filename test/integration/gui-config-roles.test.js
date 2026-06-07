@@ -47,7 +47,7 @@ describe('GUI role config API', () => {
   let baseUrl;
 
   beforeEach(async () => {
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-gui-roles-'));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-gui-roles-'));
     configPath = path.join(tmpDir, 'config.json');
     await fs.writeFile(configPath, JSON.stringify({
       defaultProvider: 'ollama',

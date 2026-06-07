@@ -11,7 +11,7 @@ pnpm build
 pnpm proof:live-provider-smoke -- --timeout-ms=120000
 pnpm proof:live-model-assimilation
 pnpm proof:live-creative-domains -- --all --timeout-ms=180000
-node bin/liminal release gate --output .omx/final-release-gate-all-domains.json
+node bin/sinter release gate --output .omx/final-release-gate-all-domains.json
 pnpm qa:creative-domains -- --input .omx/proof/domain-gauntlet-live.json --open
 ```
 

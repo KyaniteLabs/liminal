@@ -40,7 +40,7 @@ describe('IntentRouter', () => {
 
       const result = await loadSoul();
       // DEFAULT_SOUL is the inline constant from IntentRouter.ts
-      expect(result).toContain('Liminal, a creative coding partner');
+      expect(result).toContain('Sinter, a creative coding partner');
       expect(result).toContain('TypeScript');
       expect(mockReadFile).toHaveBeenCalledTimes(1);
     });

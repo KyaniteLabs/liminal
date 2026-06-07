@@ -4,7 +4,7 @@
  * Stores parsed LIR tokens keyed by file SHA256. When a file is modified,
  * its hash changes and the cache entry becomes invalid.
  *
- * Cache directory: ~/.liminal/parsing-cache/
+ * Cache directory: ~/.sinter/parsing-cache/
  *
  * Usage:
  *   const cache = new ParsingCache(cacheDir);

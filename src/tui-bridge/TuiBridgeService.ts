@@ -33,6 +33,7 @@ import { CortexExplainer } from '../cortex/CortexExplainer.js';
 import type { CortexConfig } from '../cortex/types.js';
 import { AutonomousGardener, type GardenerCycleResult } from '../autonomy/AutonomousGardener.js';
 import { SinterFS } from '../fs/SinterFS.js';
+import { resolveSinterProjectRoot } from '../fs/projectRoot.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
 import { buildCreativePreferencePromptHints, createCreativePreferenceSuggestion } from '../chat/CreativePreferenceGuide.js';
@@ -1436,7 +1437,7 @@ export class TuiBridgeService {
   private getGoalStore(): GoalStore | null {
     if (!this.goalStore) {
       try {
-        const fs = SinterFS.open(process.cwd());
+        const fs = SinterFS.open(resolveSinterProjectRoot());
         this.goalStore = new GoalStore(fs);
       } catch (err) {
         Logger.debug('TuiBridgeService', 'GoalStore unavailable — SinterFS could not be opened:', err);

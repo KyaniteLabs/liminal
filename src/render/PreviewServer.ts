@@ -16,6 +16,7 @@ import { doubleCsrf } from 'csrf-csrf';
 import cookieParser from 'cookie-parser';
 import { Gallery, parseVersionContent, type GalleryIteration } from '../gallery/Gallery.js';
 import { SinterFS } from '../fs/SinterFS.js';
+import { resolveSinterProjectRoot } from '../fs/projectRoot.js';
 import { Exporter } from '../export/Exporter.js';
 import { normalizePath, assertSafeSegment } from '../utils/normalizePath.js';
 import { SERVICE_DEFAULTS } from '../constants.js';
@@ -63,7 +64,7 @@ export class PreviewServer {
 
   /** Lazily open a singleton SinterFS instance (avoids per-request open/close). */
   private getSinterFS(): SinterFS {
-    if (!this.liminalFsInstance) this.liminalFsInstance = SinterFS.open(process.cwd());
+    if (!this.liminalFsInstance) this.liminalFsInstance = SinterFS.open(resolveSinterProjectRoot());
     return this.liminalFsInstance;
   }
 
@@ -259,7 +260,9 @@ export class PreviewServer {
       }
       try {
         const liminalFs = this.getSinterFS();
-        const refsDir = path.join(process.cwd(), '.sinter', 'refs', 'gallery', project);
+        // Resolve the refs directory from the same root SinterFS reads from, so
+        // the directory listing and the ref/artifact reads below never diverge.
+        const refsDir = path.join(liminalFs.getProjectRoot(), '.sinter', 'refs', 'gallery', project);
 
         // Return empty if refs directory doesn't exist (graceful for new projects)
         if (!existsSync(refsDir)) {
@@ -379,7 +382,7 @@ export class PreviewServer {
     });
 
     this.app.get('/api/status', async (_req, res) => {
-      const projectStore = new ProjectStore({ projectRoot: process.cwd() });
+      const projectStore = new ProjectStore({ projectRoot: resolveSinterProjectRoot() });
       projectStore.init();
       try {
         const { CompostMill } = await import('../compost/CompostMill.js');
@@ -407,7 +410,7 @@ export class PreviewServer {
     });
 
     this.app.get('/api/compost/seeds', async (_req, res) => {
-      const projectStore = new ProjectStore({ projectRoot: process.cwd() });
+      const projectStore = new ProjectStore({ projectRoot: resolveSinterProjectRoot() });
       projectStore.init();
       try {
         const { CompostMill } = await import('../compost/CompostMill.js');

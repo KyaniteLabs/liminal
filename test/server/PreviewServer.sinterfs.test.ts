@@ -16,11 +16,17 @@ describe('PreviewServer SinterFS endpoints', () => {
   let server: PreviewServer;
   let projectRoot: string;
   let originalCwd: typeof process.cwd;
+  let originalSinterRoot: string | undefined;
 
   beforeEach(() => {
     projectRoot = mkdtempSync(join(tmpdir(), 'sinter-preview-test-'));
     originalCwd = process.cwd;
     process.cwd = () => projectRoot;
+    // PreviewServer resolves its SinterFS root via SINTER_PROJECT_ROOT (set by
+    // the global test setup). Point it at this test's projectRoot so the
+    // gallery endpoints read the fixtures written below.
+    originalSinterRoot = process.env.SINTER_PROJECT_ROOT;
+    process.env.SINTER_PROJECT_ROOT = projectRoot;
     server = new PreviewServer();
   });
 
@@ -31,6 +37,11 @@ describe('PreviewServer SinterFS endpoints', () => {
       // ignore
     }
     process.cwd = originalCwd;
+    if (originalSinterRoot !== undefined) {
+      process.env.SINTER_PROJECT_ROOT = originalSinterRoot;
+    } else {
+      delete process.env.SINTER_PROJECT_ROOT;
+    }
     rmSync(projectRoot, { recursive: true, force: true });
   });
 

@@ -32,6 +32,7 @@ import { ScoringEngine } from './ScoringEngine.js';
 import { PromiseDetector } from './PromiseDetector.js';
 import { Gallery } from '../gallery/Gallery.js';
 import { SinterFS } from '../fs/SinterFS.js';
+import { resolveSinterProjectRoot } from '../fs/projectRoot.js';
 import { SafetyGuardrails } from './SafetyGuardrails.js';
 import { CompostHeap } from '../compost/CompostHeap.js';
 import { formatError } from '../utils/errors.js';
@@ -192,7 +193,7 @@ export class RalphLoop {
     }
 
     // Initialize SinterFS once per run (used by all modes)
-    const liminalFs = SinterFS.open(process.cwd());
+    const liminalFs = SinterFS.open(resolveSinterProjectRoot());
 
     try {
       liminalFs.recordRun({

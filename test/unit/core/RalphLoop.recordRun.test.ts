@@ -13,6 +13,7 @@ describe('RalphLoop recordRun SinterFS integration', () => {
   let galleryDir: string;
   let originalApiKey: string | undefined;
   let originalCwd: typeof process.cwd;
+  let originalSinterRoot: string | undefined;
   let scoreSpy: ReturnType<typeof vi.spyOn>;
   let saveIterationSpy: ReturnType<typeof vi.spyOn>;
 
@@ -28,6 +29,11 @@ describe('RalphLoop recordRun SinterFS integration', () => {
       JSON.stringify({ llm: { provider: 'lmstudio', baseUrl: 'http://localhost:1234/v1', model: 'test-model' } }),
     );
     process.cwd = () => projectRoot;
+    // RalphLoop resolves its SinterFS root via SINTER_PROJECT_ROOT (set by the
+    // global test setup). Point it at this test's projectRoot so the run's
+    // persisted artifacts/records land where we re-open and assert below.
+    originalSinterRoot = process.env.SINTER_PROJECT_ROOT;
+    process.env.SINTER_PROJECT_ROOT = projectRoot;
     generatorRegistry.clear();
 
     generatorRegistry.register({
@@ -61,6 +67,11 @@ describe('RalphLoop recordRun SinterFS integration', () => {
     saveIterationSpy.mockRestore();
     process.env.OPENAI_API_KEY = originalApiKey;
     process.cwd = originalCwd;
+    if (originalSinterRoot !== undefined) {
+      process.env.SINTER_PROJECT_ROOT = originalSinterRoot;
+    } else {
+      delete process.env.SINTER_PROJECT_ROOT;
+    }
     rmSync(projectRoot, { recursive: true, force: true });
     rmSync(galleryDir, { recursive: true, force: true });
   });

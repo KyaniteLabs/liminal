@@ -18,7 +18,7 @@ export function audioBootstrapScript(): string {
     var isSandboxed = window.location.origin === 'null';
     if (!isSandboxed && event.origin !== window.location.origin) return;
     const data = event.data || {};
-    if (data.type !== 'liminal-audio-frame') return;
+    if (data.type !== 'sinter-audio-frame') return;
     const frame = data.frame || {};
     window.__liminalAudio = {
       rms: Number(frame.rms) || 0,

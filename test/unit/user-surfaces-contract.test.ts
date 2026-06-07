@@ -57,7 +57,7 @@ describe('user-facing TUI/GUI surface contract', () => {
     expect(shell).toContain('aria-current');
     expect(shell).toContain('aria-live="polite"');
     expect(shell).toContain('aria-busy');
-    expect(css).toContain('.liminal-skip-link');
+    expect(css).toContain('.sinter-skip-link');
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
   });
 });

@@ -9,7 +9,7 @@ const bridgeHook = fs.readFileSync('gui/src/gui/useTuiBridgeSession.ts', 'utf8')
 
 describe('GUI workbench accessibility contract', () => {
   it('keeps the workbench navigable and announced for assistive technology', () => {
-    expect(shell).toContain('liminal-skip-link');
+    expect(shell).toContain('sinter-skip-link');
     expect(shell).toContain('id="workbench-prompt"');
     expect(shell).toContain('htmlFor="workbench-prompt"');
     expect(shell).toContain('aria-describedby="workbench-run-status"');
@@ -32,13 +32,13 @@ describe('GUI workbench accessibility contract', () => {
   it('keeps the active-run stop control beside the composer instead of hiding it in details', () => {
     expect(shell).toContain('onCancelRun');
     expect(shell).toContain('Stop active generation');
-    expect(shell).toContain('liminal-stop-button');
+    expect(shell).toContain('sinter-stop-button');
     expect(app).toContain('onCancelRun={bridgeSummary.active ? () => void bridge.cancelCurrent() : undefined}');
   });
 
   it('keeps secondary modes available without making the default surface a dashboard', () => {
-    expect(shell).toContain('liminal-primary-mode');
-    expect(shell).toContain('liminal-secondary-tools');
+    expect(shell).toContain('sinter-primary-mode');
+    expect(shell).toContain('sinter-secondary-tools');
     expect(shell).toContain('More tools');
     expect(shell).toContain('More Generate tools');
   });
@@ -50,14 +50,14 @@ describe('GUI workbench accessibility contract', () => {
   });
 
   it('keeps closed navigation drawers from overlapping visible rail controls', () => {
-    expect(css).toContain('.liminal-secondary-tools:not([open]) > .liminal-secondary-tools__body');
-    expect(css).toContain('.liminal-subnav--drawer:not([open]) > .liminal-subnav__body');
+    expect(css).toContain('.sinter-secondary-tools:not([open]) > .sinter-secondary-tools__body');
+    expect(css).toContain('.sinter-subnav--drawer:not([open]) > .sinter-subnav__body');
     expect(css).toContain('display: none');
   });
 
   it('keeps internal process receipts out of the default preview panel', () => {
-    expect(app).not.toContain('liminal-stage-process');
-    expect(app).not.toContain('liminal-human-review-strip');
+    expect(app).not.toContain('sinter-stage-process');
+    expect(app).not.toContain('sinter-human-review-strip');
     expect(app).toContain('Manual Review Pack');
   });
 
@@ -69,8 +69,8 @@ describe('GUI workbench accessibility contract', () => {
   });
 
   it('wraps long inspector receipts and review details inside the right rail', () => {
-    expect(css).toContain('.liminal-inspector-grid small,');
-    expect(css).toContain('.liminal-review-panel small');
+    expect(css).toContain('.sinter-inspector-grid small,');
+    expect(css).toContain('.sinter-review-panel small');
     expect(css).toContain('overflow-wrap: anywhere');
     expect(css).toContain('grid-template-columns: minmax(0, 0.7fr) auto');
   });
@@ -83,7 +83,7 @@ describe('GUI workbench accessibility contract', () => {
 
   it('shows a visible recovery state when an inline image preview fails to load', () => {
     expect(app).toContain('failedPreviewSrc');
-    expect(app).toContain('liminal-stage-preview-error');
+    expect(app).toContain('sinter-stage-preview-error');
     expect(app).toContain('role="alert"');
     expect(app).toContain('Image preview failed to load');
     expect(app).not.toContain("event.currentTarget.style.display = 'none'");
@@ -94,14 +94,14 @@ describe('GUI workbench accessibility contract', () => {
     expect(shell).toContain('open={stageBusy || Boolean(recourseSlot)}');
     expect(shell).toContain('No preview was produced');
     expect(shell).toContain('needs recovery');
-    expect(app).toContain('liminal-recourse-card');
+    expect(app).toContain('sinter-recourse-card');
     expect(app).toContain('runFailedBeforePreview');
     expect(app).toContain('That run did not finish.');
     expect(app).toContain('Try again');
     expect(app).toContain('Polish safely');
     expect(app).toContain('Switch medium');
     expect(app).toContain('browser visual(?:\\s+browser visual)+');
-    expect(css).toContain('.liminal-recourse-card');
+    expect(css).toContain('.sinter-recourse-card');
     expect(css).toContain('overflow-wrap: anywhere');
   });
 
@@ -129,6 +129,6 @@ describe('GUI workbench accessibility contract', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)');
     expect(css).toContain('animation: none');
     expect(css).toContain('scroll-behavior: auto');
-    expect(css).toContain('liminal-stage-empty--blocked');
+    expect(css).toContain('sinter-stage-empty--blocked');
   });
 });

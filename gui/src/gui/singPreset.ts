@@ -48,7 +48,7 @@ export function buildStudioSingPreset(input: { source: string; prompt: string; n
     },
     mappings: STUDIO_SING_MAPPINGS.map((mapping) => ({ ...mapping })),
     metadata: {
-      origin: 'liminal-studio',
+      origin: 'sinter-studio',
       prompt: input.prompt,
     },
   };

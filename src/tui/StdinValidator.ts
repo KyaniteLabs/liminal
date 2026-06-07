@@ -50,10 +50,10 @@ export async function validateStdin(): Promise<void> {
       'TUI Error: stdin is not a TTY (interactive terminal required).\n' +
       'Common causes:\n' +
       '  - Running in CI/CD pipeline\n' +
-      '  - Piping input: echo "cmd" | liminal tui\n' +
-      '  - Redirecting stdin: liminal tui < /dev/null\n' +
+      '  - Piping input: echo "cmd" | sinter tui\n' +
+      '  - Redirecting stdin: sinter tui < /dev/null\n' +
       '  - Detached process (nohup, disown)\n' +
-      'Suggestion: Run directly in an interactive terminal: liminal tui'
+      'Suggestion: Run directly in an interactive terminal: sinter tui'
     );
   }
 }

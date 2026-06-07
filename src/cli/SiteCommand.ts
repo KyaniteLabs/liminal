@@ -2,10 +2,10 @@
  * SiteCommand — CLI interface for the living website daemon.
  *
  * Usage:
- *   liminal site evolve            # Run daemon continuously
- *   liminal site evolve --once     # Run single cycle
- *   liminal site evolve --dry-run  # Generate but don't deploy
- *   liminal site evolve --slot home-hero  # Target specific slot
+ *   sinter site evolve            # Run daemon continuously
+ *   sinter site evolve --once     # Run single cycle
+ *   sinter site evolve --dry-run  # Generate but don't deploy
+ *   sinter site evolve --slot home-hero  # Target specific slot
  */
 
 import {

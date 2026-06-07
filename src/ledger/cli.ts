@@ -2,7 +2,7 @@
 /**
  * Phase 9 Lane 2: Task Ledger CLI
  *
- * Provides the `liminal ledger` command surface.
+ * Provides the `sinter ledger` command surface.
  * parseArgs() returns a LedgerCLIAction discriminated union.
  * execute() dispatches against a TaskLedger instance.
  *

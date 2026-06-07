@@ -1,5 +1,5 @@
 {
-  "schema": "liminal.shared-site-artifact",
+  "schema": "sinter.shared-site-artifact",
   "schemaVersion": "2026-05-25.phase1",
   "id": "site_artifact_moon_garden_skin_001",
   "baseArtifactId": "artifact_studio_moon_garden_001",

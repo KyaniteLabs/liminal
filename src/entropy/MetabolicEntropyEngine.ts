@@ -81,7 +81,7 @@ export class MetabolicEntropyEngine {
       // Build-time fallback or package metadata
       try {
         const pkg = JSON.parse(readFileSync('package.json', 'utf-8'));
-        raw = `${pkg.name ?? 'liminal'} ${pkg.version ?? '0.0.0'} ${process.hrtime.bigint()}`;
+        raw = `${pkg.name ?? 'sinter'} ${pkg.version ?? '0.0.0'} ${process.hrtime.bigint()}`;
       } catch {
         raw = `${process.hrtime.bigint()}`;
       }

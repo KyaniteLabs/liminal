@@ -91,7 +91,7 @@ const version = run('node', [path.join(consumerRoot, 'node_modules', '.bin', 'li
 }).stdout.trim();
 const versionLine = version.split(/\r?\n/).find(line => /\bSinter v\d+\.\d+\.\d+/.test(line));
 if (!versionLine) {
-  throw new Error(`Unexpected liminal --version output: ${version}`);
+  throw new Error(`Unexpected sinter --version output: ${version}`);
 }
 
 console.log(`Git CI install proof passed: ${versionLine}`);

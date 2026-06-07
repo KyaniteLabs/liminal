@@ -12,7 +12,7 @@
  *
  * Each pattern gets a specific message explaining why it's weak and what to use instead.
  *
- * @author liminal test quality enforcement
+ * @author sinter test quality enforcement
  */
 
 'use strict';
@@ -24,7 +24,7 @@ module.exports = {
     docs: {
       description: 'Detect weak test assertions that indicate PADDING/WEAK quality tests',
       recommended: true,
-      url: 'https://github.com/liminal/liminal/blob/main/scripts/testing/eslint-rules/no-weak-test-assertions.js',
+      url: 'https://github.com/sinter/sinter/blob/main/scripts/testing/eslint-rules/no-weak-test-assertions.js',
     },
     messages: {
       toBeDefined:

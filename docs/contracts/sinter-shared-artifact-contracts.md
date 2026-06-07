@@ -251,7 +251,7 @@ export interface InstrumentSession {
 
 ```ts
 export interface ReviewAction {
-  schema: "liminal.review-action";
+  schema: "sinter.review-action";
   schemaVersion: "2026-05-25.phase1";
   id: string;
   kind:
@@ -423,7 +423,7 @@ before execution. `executionReceiptId` should be attached after the action runs.
 ```json
 [
   {
-    "schema": "liminal.review-action",
+    "schema": "sinter.review-action",
     "schemaVersion": "2026-05-25.phase1",
     "id": "review_open_site_pr_001",
     "kind": "open_site_pr",
@@ -440,7 +440,7 @@ before execution. `executionReceiptId` should be attached after the action runs.
     "reviewedAt": "2026-05-25T05:50:25Z"
   },
   {
-    "schema": "liminal.review-action",
+    "schema": "sinter.review-action",
     "schemaVersion": "2026-05-25.phase1",
     "id": "review_export_instrument_preset_001",
     "kind": "export_instrument_preset",
@@ -456,7 +456,7 @@ before execution. `executionReceiptId` should be attached after the action runs.
     "reviewedAt": "2026-05-25T05:51:25Z"
   },
   {
-    "schema": "liminal.review-action",
+    "schema": "sinter.review-action",
     "schemaVersion": "2026-05-25.phase1",
     "id": "review_ingest_session_001",
     "kind": "ingest_session",

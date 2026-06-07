@@ -1,14 +1,14 @@
 /**
- * GitCLI — CLI handler for `liminal git <subcommand>`
+ * GitCLI — CLI handler for `sinter git <subcommand>`
  *
  * Routes subcommands to GitService:
- *   liminal git status              — Working tree status
- *   liminal git log [N]             — Last N commits
- *   liminal git diff [from] [to]    — Diff between refs
- *   liminal git branch [name]       — List or create branches
- *   liminal git commit <message>    — Manual commit
- *   liminal git init                — Initialize repo
- *   liminal git timeline [project]  — Unified git+compost timeline
+ *   sinter git status              — Working tree status
+ *   sinter git log [N]             — Last N commits
+ *   sinter git diff [from] [to]    — Diff between refs
+ *   sinter git branch [name]       — List or create branches
+ *   sinter git commit <message>    — Manual commit
+ *   sinter git init                — Initialize repo
+ *   sinter git timeline [project]  — Unified git+compost timeline
  */
 
 import { GitService } from './GitService.js';
@@ -18,7 +18,7 @@ const HELP_TEXT = `
 Git integration for Sinter
 
 USAGE:
-  liminal git <subcommand> [options]
+  sinter git <subcommand> [options]
 
 SUBCOMMANDS:
   status                  Show working tree status
@@ -30,12 +30,12 @@ SUBCOMMANDS:
   timeline [project]      Unified git + compost timeline
 
 EXAMPLES:
-  liminal git status
-  liminal git log 5
-  liminal git diff HEAD~3 HEAD
-  liminal git branch liminal/experiment-1
-  liminal git commit "save iteration 3"
-  liminal git init
+  sinter git status
+  sinter git log 5
+  sinter git diff HEAD~3 HEAD
+  sinter git branch liminal/experiment-1
+  sinter git commit "save iteration 3"
+  sinter git init
 `.trim();
 
 export async function handleGitCommand(subcmd: string | undefined, args: string[]): Promise<void> {
@@ -50,7 +50,7 @@ export async function handleGitCommand(subcmd: string | undefined, args: string[
   if (subcmd !== 'init') {
     const isRepo = await git.isRepo();
     if (!isRepo) {
-      Logger.error('GitCLI', 'Not a git repository. Run `liminal git init` first.');
+      Logger.error('GitCLI', 'Not a git repository. Run `sinter git init` first.');
       process.exit(1);
     }
   }
@@ -188,7 +188,7 @@ async function handleBranch(git: GitService, args: string[]): Promise<void> {
 async function handleCommit(git: GitService, args: string[]): Promise<void> {
   const message = args[0];
   if (!message) {
-    Logger.error('GitCLI', 'Commit message required: liminal git commit "your message"');
+    Logger.error('GitCLI', 'Commit message required: sinter git commit "your message"');
     process.exit(1);
   }
 

@@ -1,7 +1,7 @@
 /**
  * Public exports for the AutoFixOrchestrator module.
  *
- * This module provides the `liminal fix` command functionality
+ * This module provides the `sinter fix` command functionality
  * for self-healing code fixes.
  */
 

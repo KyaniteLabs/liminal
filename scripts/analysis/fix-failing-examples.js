@@ -134,4 +134,4 @@ console.log('\n=== SUMMARY ===');
 console.log('Hydra examples: Fixed with HTML wrappers');
 console.log('GLSL/Three.js: Need regeneration with improved loop');
 console.log('\nTo regenerate with improved loop:');
-console.log('  npx liminal -p "your prompt" --max-iterations 6');
+console.log('  npx sinter -p "your prompt" --max-iterations 6');

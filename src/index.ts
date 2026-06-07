@@ -63,7 +63,7 @@ import path from 'path';
 import { normalizePath, assertSafeSegment } from './utils/normalizePath.js';
 import { SERVICE_DEFAULTS } from './constants.js';
 
-export const LIMINAL_VERSION = '2.1.0';
+export const SINTER_VERSION = '2.1.0';
 
 export interface SinterConfig {
   name: string;
@@ -89,8 +89,8 @@ export interface SinterConfig {
 }
 
 export const defaultConfig: SinterConfig = {
-  name: 'liminal',
-  version: LIMINAL_VERSION,
+  name: 'sinter',
+  version: SINTER_VERSION,
   loop: {
     maxIterations: 20,
     timeoutMinutes: 30,
@@ -591,7 +591,7 @@ export default {
   generateMusic,
 
   // Configuration
-  LIMINAL_VERSION,
+  SINTER_VERSION,
   defaultConfig
 };
 

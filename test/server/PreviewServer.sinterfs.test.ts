@@ -34,7 +34,7 @@ describe('PreviewServer SinterFS endpoints', () => {
     rmSync(projectRoot, { recursive: true, force: true });
   });
 
-  it('GET /api/liminal/gallery/:project returns iterations from SinterFS refs', async () => {
+  it('GET /api/sinter/gallery/:project returns iterations from SinterFS refs', async () => {
     const fs = SinterFS.open(projectRoot);
     const ref1 = fs.writeArtifact({
       kind: 'gallery-version',
@@ -54,7 +54,7 @@ describe('PreviewServer SinterFS endpoints', () => {
 
     const port = await startOnEphemeralPort(server);
 
-    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo`);
+    const res = await fetch(`http://localhost:${port}/api/sinter/gallery/demo`);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.iterations).toHaveLength(2);
@@ -64,7 +64,7 @@ describe('PreviewServer SinterFS endpoints', () => {
     expect(body.iterations[1].code).toBe('function draw() {}');
   });
 
-  it('GET /api/liminal/gallery/:project returns organism iterations', async () => {
+  it('GET /api/sinter/gallery/:project returns organism iterations', async () => {
     const fs = SinterFS.open(projectRoot);
     const ref = fs.writeArtifact({
       kind: 'organism',
@@ -77,7 +77,7 @@ describe('PreviewServer SinterFS endpoints', () => {
 
     const port = await startOnEphemeralPort(server);
 
-    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/organism-demo`);
+    const res = await fetch(`http://localhost:${port}/api/sinter/gallery/organism-demo`);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.iterations).toHaveLength(1);
@@ -87,7 +87,7 @@ describe('PreviewServer SinterFS endpoints', () => {
     expect(body.iterations[0].visualCode).toBe('osc(10)');
   });
 
-  it('GET /api/liminal/gallery/:project/:version returns artifact content', async () => {
+  it('GET /api/sinter/gallery/:project/:version returns artifact content', async () => {
     const fs = SinterFS.open(projectRoot);
     const ref = fs.writeArtifact({
       kind: 'gallery-version',
@@ -100,16 +100,16 @@ describe('PreviewServer SinterFS endpoints', () => {
 
     const port = await startOnEphemeralPort(server);
 
-    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo/3`);
+    const res = await fetch(`http://localhost:${port}/api/sinter/gallery/demo/3`);
     expect(res.status).toBe(200);
     const text = await res.text();
     expect(text).toBe('ellipse(50, 50, 20, 20);');
   });
 
-  it('GET /api/liminal/gallery/:project/:version returns 404 for missing version', async () => {
+  it('GET /api/sinter/gallery/:project/:version returns 404 for missing version', async () => {
     const port = await startOnEphemeralPort(server);
 
-    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo/99`);
+    const res = await fetch(`http://localhost:${port}/api/sinter/gallery/demo/99`);
     expect(res.status).toBe(404);
   });
 
@@ -118,35 +118,35 @@ describe('PreviewServer SinterFS endpoints', () => {
   it('rejects path traversal in project name', async () => {
     const port = await startOnEphemeralPort(server);
 
-    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/..%2Fsecret`);
+    const res = await fetch(`http://localhost:${port}/api/sinter/gallery/..%2Fsecret`);
     expect(res.status).toBe(400);
   });
 
   it('rejects slash in project name', async () => {
     const port = await startOnEphemeralPort(server);
 
-    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/a%2Fb`);
+    const res = await fetch(`http://localhost:${port}/api/sinter/gallery/a%2Fb`);
     expect(res.status).toBe(400);
   });
 
   it('rejects non-numeric version', async () => {
     const port = await startOnEphemeralPort(server);
 
-    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo/abc`);
+    const res = await fetch(`http://localhost:${port}/api/sinter/gallery/demo/abc`);
     expect(res.status).toBe(400);
   });
 
   it('rejects negative version', async () => {
     const port = await startOnEphemeralPort(server);
 
-    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo/-1`);
+    const res = await fetch(`http://localhost:${port}/api/sinter/gallery/demo/-1`);
     expect(res.status).toBe(400);
   });
 
   it('returns empty iterations for nonexistent project', async () => {
     const port = await startOnEphemeralPort(server);
 
-    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/nonexistent`);
+    const res = await fetch(`http://localhost:${port}/api/sinter/gallery/nonexistent`);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.iterations).toEqual([]);

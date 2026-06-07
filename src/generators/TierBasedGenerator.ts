@@ -76,7 +76,7 @@ export abstract class TierBasedGenerator {
   /**
    * Resolve LLM config from getEffectiveConfig() if no explicit config was provided.
    * Called lazily on first generation to ensure providers like MiniMax (from
-   * ~/.liminal/config.json) are properly wired without requiring env vars.
+   * ~/.sinter/config.json) are properly wired without requiring env vars.
    * Uses a promise to prevent race conditions during concurrent calls.
    */
   private async resolveConfigIfNeeded(): Promise<void> {

@@ -155,11 +155,11 @@ describe('BridgeLauncherConfig', () => {
     expect(summary.evaluation.multimodal).toBe('yes');
   });
 
-  it('applies persisted evaluator role config from ~/.liminal/config.json', () => {
+  it('applies persisted evaluator role config from ~/.sinter/config.json', () => {
     const home = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-role-config-'));
     homedirSpy.mockReturnValue(home);
-    fs.mkdirSync(path.join(home, '.liminal'), { recursive: true });
-    fs.writeFileSync(path.join(home, '.liminal', 'config.json'), JSON.stringify({
+    fs.mkdirSync(path.join(home, '.sinter'), { recursive: true });
+    fs.writeFileSync(path.join(home, '.sinter', 'config.json'), JSON.stringify({
       defaultProvider: 'glm',
       providers: {
         glm: {
@@ -193,8 +193,8 @@ describe('BridgeLauncherConfig', () => {
   it('does not let evaluator role keys overwrite provider-global generator keys', () => {
     const home = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-role-keys-'));
     homedirSpy.mockReturnValue(home);
-    fs.mkdirSync(path.join(home, '.liminal'), { recursive: true });
-    fs.writeFileSync(path.join(home, '.liminal', 'config.json'), JSON.stringify({
+    fs.mkdirSync(path.join(home, '.sinter'), { recursive: true });
+    fs.writeFileSync(path.join(home, '.sinter', 'config.json'), JSON.stringify({
       defaultProvider: 'openrouter',
       providers: {
         openrouter: {

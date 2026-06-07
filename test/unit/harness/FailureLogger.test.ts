@@ -65,7 +65,7 @@ describe('FailureLogger', () => {
 
   describe('constructor', () => {
     it('creates log directory via ensureDir', () => {
-      expect(mockEnsureDir).toHaveBeenCalledWith('/home/testuser/.liminal/failures');
+      expect(mockEnsureDir).toHaveBeenCalledWith('/home/testuser/.sinter/failures');
     });
 
     it('generates a unique sessionId', () => {
@@ -87,7 +87,7 @@ describe('FailureLogger', () => {
 
       expect(mockWriteFileSync).toHaveBeenCalledTimes(1);
       const [filepath, content] = mockWriteFileSync.mock.calls[0];
-      expect(filepath).toContain('/home/testuser/.liminal/failures/');
+      expect(filepath).toContain('/home/testuser/.sinter/failures/');
       expect(filepath).toMatch(/\.json$/);
 
       const parsed: FailureRecord = JSON.parse(content as string);

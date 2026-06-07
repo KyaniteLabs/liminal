@@ -89,7 +89,7 @@ export interface LoopOptions {
   swarm?: SwarmOptions;
   /** Enable archive learning — store high-quality outputs for few-shot improvement */
   useArchiveLearning?: boolean;
-  /** Path for quality archive JSON (default: ~/.liminal/archive/quality_archive.json) */
+  /** Path for quality archive JSON (default: ~/.sinter/archive/quality_archive.json) */
   archivePath?: string;
   /** Enable aesthetic model — predict quality based on behavior vectors */
   useAestheticModel?: boolean;

@@ -77,7 +77,7 @@ describe('OnboardingWizard', () => {
   });
 
   it('writes config when overrides provide both baseUrl and apiKey', async () => {
-    const configDir = path.join(os.homedir(), '.liminal');
+    const configDir = path.join(os.homedir(), '.sinter');
     const configPath = path.join(configDir, 'config.json');
 
     const result = await wizard.run({

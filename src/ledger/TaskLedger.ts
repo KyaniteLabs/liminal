@@ -5,11 +5,11 @@
  * and decisions via LiminalFS manifests, refs, and artifacts.
  *
  * Storage layout:
- *   .liminal/manifests/task/<id>/manifest.json          — task manifest
- *   .liminal/manifests/task/<id>/attempt/<attempt-id>.json — attempt record
- *   .liminal/refs/task/<id>/attempt/<attempt-id>.json    — attempt ref
- *   .liminal/refs/task/<id>/candidate/<cand-id>.json     — candidate ref
- *   .liminal/manifests/task/<id>/decision/<dec-id>.json  — decision record
+ *   .sinter/manifests/task/<id>/manifest.json          — task manifest
+ *   .sinter/manifests/task/<id>/attempt/<attempt-id>.json — attempt record
+ *   .sinter/refs/task/<id>/attempt/<attempt-id>.json    — attempt ref
+ *   .sinter/refs/task/<id>/candidate/<cand-id>.json     — candidate ref
+ *   .sinter/manifests/task/<id>/decision/<dec-id>.json  — decision record
  */
 
 import { existsSync, readdirSync } from 'node:fs';
@@ -62,7 +62,7 @@ export class TaskLedger {
 
   /** List all tasks, optionally filtered by lane or status. */
   listTasks(filter?: { lane?: number; status?: TaskStatus }): TaskManifest[] {
-    const manifestsDir = join(this.fs.getProjectRoot(), '.liminal', 'manifests', TASK_PREFIX);
+    const manifestsDir = join(this.fs.getProjectRoot(), '.sinter', 'manifests', TASK_PREFIX);
     if (!existsSync(manifestsDir)) {
       return [];
     }
@@ -128,7 +128,7 @@ export class TaskLedger {
 
   /** Load all attempts for a task, ordered by start time. */
   loadAttempts(taskId: string): TaskAttempt[] {
-    const attemptsDir = join(this.fs.getProjectRoot(), '.liminal', 'manifests', TASK_PREFIX, taskId, 'attempt');
+    const attemptsDir = join(this.fs.getProjectRoot(), '.sinter', 'manifests', TASK_PREFIX, taskId, 'attempt');
     if (!existsSync(attemptsDir)) {
       return [];
     }
@@ -179,7 +179,7 @@ export class TaskLedger {
 
   /** Load all candidates for a task. Reads from manifests (which contain metadata). */
   loadCandidates(taskId: string): TaskCandidate[] {
-    const candidatesDir = join(this.fs.getProjectRoot(), '.liminal', 'manifests', TASK_PREFIX, taskId, 'candidate');
+    const candidatesDir = join(this.fs.getProjectRoot(), '.sinter', 'manifests', TASK_PREFIX, taskId, 'candidate');
     if (!existsSync(candidatesDir)) {
       return [];
     }
@@ -226,7 +226,7 @@ export class TaskLedger {
 
   /** Load the latest decision for a task. */
   loadLatestDecision(taskId: string): TaskDecision | null {
-    const decisionsDir = join(this.fs.getProjectRoot(), '.liminal', 'manifests', TASK_PREFIX, taskId, 'decision');
+    const decisionsDir = join(this.fs.getProjectRoot(), '.sinter', 'manifests', TASK_PREFIX, taskId, 'decision');
     if (!existsSync(decisionsDir)) {
       return null;
     }

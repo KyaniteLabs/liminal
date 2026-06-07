@@ -25,7 +25,7 @@ export interface SiteEvolveOptions {
 	interval?: number;
 }
 
-const DEFAULT_STATE_DIR = join(homedir(), ".liminal", "site");
+const DEFAULT_STATE_DIR = join(homedir(), ".sinter", "site");
 
 export async function runSiteEvolve(
 	options: SiteEvolveOptions = {},

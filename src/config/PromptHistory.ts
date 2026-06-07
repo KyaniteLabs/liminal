@@ -13,7 +13,7 @@ interface HistoryData {
   favorites: string[];
 }
 
-const DEFAULT_HISTORY_PATH = path.join(os.homedir(), '.liminal', 'history.json');
+const DEFAULT_HISTORY_PATH = path.join(os.homedir(), '.sinter', 'history.json');
 const MAX_RECENT = 50;
 
 export class PromptHistory {

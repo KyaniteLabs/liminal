@@ -89,13 +89,13 @@ export class EnvironmentValidator {
     const fs = await import('fs/promises');
     const path = await import('path');
     const os = await import('os');
-    const configPath = path.join(os.homedir(), '.liminal', 'config.json');
+    const configPath = path.join(os.homedir(), '.sinter', 'config.json');
 
     try {
       await fs.access(configPath);
       return { name: 'Config', status: 'pass', message: `Config found at ${configPath}` };
     } catch {
-      return { name: 'Config', status: 'warn', message: 'No ~/.liminal/config.json — run /setup to configure' };
+      return { name: 'Config', status: 'warn', message: 'No ~/.sinter/config.json — run /setup to configure' };
     }
   }
 

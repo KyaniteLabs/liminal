@@ -18,13 +18,13 @@ describe('LiminalFS', () => {
     rmSync(tempDir, { recursive: true, force: true });
   });
 
-  it('open — creates .liminal/ dir and project.liminal SQLite DB', () => {
-    expect(existsSync(join(tempDir, '.liminal'))).toBe(true);
-    expect(existsSync(join(tempDir, '.liminal', 'project.liminal'))).toBe(true);
+  it('open — creates .sinter/ dir and project.sinter SQLite DB', () => {
+    expect(existsSync(join(tempDir, '.sinter'))).toBe(true);
+    expect(existsSync(join(tempDir, '.sinter', 'project.sinter'))).toBe(true);
   });
 
-  it('open — creates .liminal/objects/ dir', () => {
-    expect(existsSync(join(tempDir, '.liminal', 'objects'))).toBe(true);
+  it('open — creates .sinter/objects/ dir', () => {
+    expect(existsSync(join(tempDir, '.sinter', 'objects'))).toBe(true);
   });
 
   it('writeArtifact — stores content and returns ref with liminal://artifact/ URI', () => {
@@ -139,7 +139,7 @@ describe('LiminalFS', () => {
     expect(() => liminalFs.close()).not.toThrow();
   });
 
-  it('writeRef — writes a ref and the file exists at .liminal/refs/<name>.json', () => {
+  it('writeRef — writes a ref and the file exists at .sinter/refs/<name>.json', () => {
     const ref = {
       uri: 'liminal://artifact/abc123',
       hash: 'abc123',
@@ -147,7 +147,7 @@ describe('LiminalFS', () => {
     };
     liminalFs.writeRef('latest', ref);
 
-    expect(existsSync(join(tempDir, '.liminal', 'refs', 'latest.json'))).toBe(true);
+    expect(existsSync(join(tempDir, '.sinter', 'refs', 'latest.json'))).toBe(true);
   });
 
   it('writeRef — can read the ref back with matching uri, hash, kind', () => {
@@ -183,7 +183,7 @@ describe('LiminalFS', () => {
     };
     liminalFs.writeRef('gallery/latest', ref);
 
-    expect(existsSync(join(tempDir, '.liminal', 'refs', 'gallery', 'latest.json'))).toBe(true);
+    expect(existsSync(join(tempDir, '.sinter', 'refs', 'gallery', 'latest.json'))).toBe(true);
     expect(liminalFs.readRef('gallery/latest')).toEqual(ref);
   });
 
@@ -199,10 +199,10 @@ describe('LiminalFS', () => {
     expect(liminalFs.readRef('does-not-exist')).toBeNull();
   });
 
-  it('writeManifest — writes a manifest and the file exists at .liminal/manifests/<name>.json', () => {
+  it('writeManifest — writes a manifest and the file exists at .sinter/manifests/<name>.json', () => {
     liminalFs.writeManifest('project', { name: 'Test', version: '1.0.0' });
 
-    expect(existsSync(join(tempDir, '.liminal', 'manifests', 'project.json'))).toBe(true);
+    expect(existsSync(join(tempDir, '.sinter', 'manifests', 'project.json'))).toBe(true);
   });
 
   it('writeManifest — can read the manifest back with matching data', () => {

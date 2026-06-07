@@ -150,7 +150,7 @@ export class ThinkingRepository {
   private miner: ThinkingMiner;
 
   constructor() {
-    this.baseDir = join(homedir(), '.liminal', 'thinking-traces');
+    this.baseDir = join(homedir(), '.sinter', 'thinking-traces');
     this.miner = new ThinkingMiner();
     this.ensureDirs();
   }

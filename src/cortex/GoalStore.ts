@@ -2,7 +2,7 @@
  * GoalStore — Phase 13 Increment 2
  *
  * CRUD persistence for CortexGoal objects via LiminalFS manifests.
- * Storage layout: .liminal/manifests/cortex/goal/<id>/manifest.json
+ * Storage layout: .sinter/manifests/cortex/goal/<id>/manifest.json
  *
  * Follows the same pattern as TaskLedger (src/ledger/TaskLedger.ts).
  *
@@ -58,7 +58,7 @@ export class GoalStore {
    * List all goals, optionally filtered by status.
    */
   listGoals(filter?: { status?: GoalStatus }): CortexGoal[] {
-    const manifestsDir = join(this.fs.getProjectRoot(), '.liminal', 'manifests', 'cortex', 'goal');
+    const manifestsDir = join(this.fs.getProjectRoot(), '.sinter', 'manifests', 'cortex', 'goal');
     if (!existsSync(manifestsDir)) {
       return [];
     }

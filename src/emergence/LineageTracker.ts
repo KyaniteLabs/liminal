@@ -12,11 +12,11 @@ import { Logger } from '../utils/Logger.js';
 import type { LineageRecord, Provenance } from './types.js';
 
 export interface LineageTrackerConfig {
-  /** Directory for lineage records (default: ~/.liminal/lineage/) */
+  /** Directory for lineage records (default: ~/.sinter/lineage/) */
   lineageDir?: string;
 }
 
-const DEFAULT_LINEAGE_DIR = `${process.env.HOME}/.liminal/lineage`;
+const DEFAULT_LINEAGE_DIR = `${process.env.HOME}/.sinter/lineage`;
 
 export class LineageTracker {
   private readonly lineageDir: string;

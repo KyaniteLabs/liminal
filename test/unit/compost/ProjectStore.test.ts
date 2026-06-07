@@ -48,7 +48,7 @@ describe('ProjectStore', () => {
       const result = store.init();
 
       expect(result.isNew).toBe(true);
-      expect(result.dbPath).toContain('project.liminal');
+      expect(result.dbPath).toContain('project.sinter');
       expect(result.stats.totalEvents).toBe(0);
     });
 

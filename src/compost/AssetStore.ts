@@ -2,13 +2,13 @@
  * AssetStore — Content-addressable binary storage for creative artifacts.
  *
  * Stores files by their SHA256 hash in a flat directory structure under
- * `.liminal/objects/`. Two identical files share the same storage (automatic
+ * `.sinter/objects/`. Two identical files share the same storage (automatic
  * deduplication). Each asset is registered in the EventStore's assets table
  * for fast metadata queries.
  *
  * Directory layout:
  * ```
- * .liminal/objects/
+ * .sinter/objects/
  *   ab/cdef1234...   (SHA256 hash, first 2 chars = subdirectory)
  *   3f/a8b9c012...
  * ```
@@ -54,14 +54,14 @@ export interface StoredAsset {
 /**
  * Content-addressable store for binary creative assets.
  *
- * Assets are stored by hash in `.liminal/objects/` and registered in the
+ * Assets are stored by hash in `.sinter/objects/` and registered in the
  * EventStore's SQLite database for metadata queries.
  *
  * Usage:
  * ```ts
  * const store = new AssetStore(eventStore);
  *
- * // Store a file (copies it into .liminal/objects/)
+ * // Store a file (copies it into .sinter/objects/)
  * const result = store.storeFile('/path/to/sketch.js');
  * console.log(result.hash);  // "a1b2c3..."
  * console.log(result.isNew); // true (first time)

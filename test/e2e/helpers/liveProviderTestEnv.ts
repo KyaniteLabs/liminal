@@ -132,7 +132,7 @@ export async function createIsolatedRunRoot(prefix: string): Promise<IsolatedRun
   const galleryDir = 'gallery';
   await fs.mkdir(path.join(root, galleryDir), { recursive: true });
 
-  // run() persists .liminal/project.liminal under process.cwd(); isolate the
+  // run() persists .sinter/project.sinter under process.cwd(); isolate the
   // root per e2e file so parallel provider suites cannot lock one database.
   process.chdir(root);
 

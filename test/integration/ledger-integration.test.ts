@@ -104,7 +104,7 @@ describe('TaskLedger integration — full lifecycle', () => {
     const task = ledger.createTask(l001Def());
 
     // Step 2: Verify manifest file exists on disk
-    const manifestPath = join(tempDir, '.liminal', 'manifests', 'task', 'L001', 'manifest.json');
+    const manifestPath = join(tempDir, '.sinter', 'manifests', 'task', 'L001', 'manifest.json');
     expect(existsSync(manifestPath)).toBe(true);
 
     const onDisk = JSON.parse(readFileSync(manifestPath, 'utf-8'));
@@ -121,7 +121,7 @@ describe('TaskLedger integration — full lifecycle', () => {
 
     // Step 4: Verify attempt manifest exists
     const attemptManifest = join(
-      tempDir, '.liminal', 'manifests', 'task', 'L001', 'attempt', 'att-test.json',
+      tempDir, '.sinter', 'manifests', 'task', 'L001', 'attempt', 'att-test.json',
     );
     expect(existsSync(attemptManifest)).toBe(true);
 
@@ -131,7 +131,7 @@ describe('TaskLedger integration — full lifecycle', () => {
     expect(attemptOnDisk.finalScore).toBe(0.85);
 
     // Step 5: Verify attempt ref exists
-    const attemptRef = join(tempDir, '.liminal', 'refs', 'task', 'L001', 'attempt', 'att-test.json');
+    const attemptRef = join(tempDir, '.sinter', 'refs', 'task', 'L001', 'attempt', 'att-test.json');
     expect(existsSync(attemptRef)).toBe(true);
 
     // Step 6: Verify task status advanced to in-progress
@@ -145,7 +145,7 @@ describe('TaskLedger integration — full lifecycle', () => {
 
     // Step 8: Verify candidate manifest exists
     const candidateManifest = join(
-      tempDir, '.liminal', 'manifests', 'task', 'L001', 'candidate', 'cand-test.json',
+      tempDir, '.sinter', 'manifests', 'task', 'L001', 'candidate', 'cand-test.json',
     );
     expect(existsSync(candidateManifest)).toBe(true);
 
@@ -155,7 +155,7 @@ describe('TaskLedger integration — full lifecycle', () => {
     expect(candidateOnDisk.testPassed).toBe(true);
 
     // Step 9: Verify candidate ref exists
-    const candidateRef = join(tempDir, '.liminal', 'refs', 'task', 'L001', 'candidate', 'cand-test.json');
+    const candidateRef = join(tempDir, '.sinter', 'refs', 'task', 'L001', 'candidate', 'cand-test.json');
     expect(existsSync(candidateRef)).toBe(true);
 
     // Step 10: Record a decision (accept)
@@ -164,7 +164,7 @@ describe('TaskLedger integration — full lifecycle', () => {
 
     // Step 11: Verify decision manifest exists
     const decisionManifest = join(
-      tempDir, '.liminal', 'manifests', 'task', 'L001', 'decision', 'dec-test.json',
+      tempDir, '.sinter', 'manifests', 'task', 'L001', 'decision', 'dec-test.json',
     );
     expect(existsSync(decisionManifest)).toBe(true);
 

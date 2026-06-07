@@ -36,7 +36,7 @@ export interface RollingPerformance {
 }
 
 const PERFORMANCE_WINDOW = 50; // Keep last 50 records per domain
-const PERF_DIR = `${process.env.HOME}/.liminal/routing`;
+const PERF_DIR = `${process.env.HOME}/.sinter/routing`;
 
 /**
  * Record a generation outcome for dynamic routing.

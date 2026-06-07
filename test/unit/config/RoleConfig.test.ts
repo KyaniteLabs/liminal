@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
-const _userConfigPath = path.join(os.homedir(), '.liminal', 'config.json');
+const _userConfigPath = path.join(os.homedir(), '.sinter', 'config.json');
 
 // Injectable user-config content for tests. Default null → the read rejects
 // (no user config), matching the original behavior for all existing tests.
@@ -11,7 +11,7 @@ const _hoisted = vi.hoisted(() => ({ userConfig: null as string | null }));
 
 // Mock fs/promises.readFile to block the real user config from loading.
 // RoleConfig imports { readFile } from 'fs/promises' — this mock intercepts
-// only the ~/.liminal/config.json read and lets everything else through.
+// only the ~/.sinter/config.json read and lets everything else through.
 // Tests can inject a user config by setting _hoisted.userConfig.
 vi.mock('fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs/promises')>();

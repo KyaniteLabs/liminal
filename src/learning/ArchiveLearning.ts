@@ -78,7 +78,7 @@ export class ArchiveLearning {
     this.config = {
       minQuality: config.minQuality ?? ArchiveLearning.DEFAULT_MIN_QUALITY,
       maxExamplesPerDomain: config.maxExamplesPerDomain ?? ArchiveLearning.DEFAULT_MAX_EXAMPLES,
-      archivePath: config.archivePath ?? `${process.env.HOME}/.liminal/archive/quality_archive.json`,
+      archivePath: config.archivePath ?? `${process.env.HOME}/.sinter/archive/quality_archive.json`,
       useExamples: config.useExamples ?? true,
       examplesPerGeneration: config.examplesPerGeneration ?? 3,
     };

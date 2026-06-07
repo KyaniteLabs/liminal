@@ -259,7 +259,7 @@ export class PreviewServer {
       }
       try {
         const liminalFs = this.getLiminalFS();
-        const refsDir = path.join(process.cwd(), '.liminal', 'refs', 'gallery', project);
+        const refsDir = path.join(process.cwd(), '.sinter', 'refs', 'gallery', project);
 
         // Return empty if refs directory doesn't exist (graceful for new projects)
         if (!existsSync(refsDir)) {

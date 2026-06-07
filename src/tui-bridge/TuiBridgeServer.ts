@@ -311,7 +311,7 @@ data: ${JSON.stringify(stored.event)}
     });
 
     if (runtime.requiresKey && !runtime.apiKey) {
-      this.bridge.emitCommandResponse(sessionId, `${runtime.label} API key not found. Set providers.${resolved.provider}.apiKey in ~/.liminal/config.json before switching.`);
+      this.bridge.emitCommandResponse(sessionId, `${runtime.label} API key not found. Set providers.${resolved.provider}.apiKey in ~/.sinter/config.json before switching.`);
       return true;
     }
 

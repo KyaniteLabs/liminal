@@ -3,7 +3,7 @@
  *
  * Each role (Generator, Evaluator, Harness) is independently configurable
  * with its own provider, model, and parameters. Config is loaded from:
- *   1. ~/.liminal/config.json (user-level)
+ *   1. ~/.sinter/config.json (user-level)
  *   2. ./config/liminal.json (project-level)
  *   3. Environment variables (backward compatible)
  *   4. Conservative defaults
@@ -100,7 +100,7 @@ const DEFAULT_TIMEOUT = 120000;
 
 // ── Config Loading ──
 
-const CONFIG_DIR = join(homedir(), '.liminal');
+const CONFIG_DIR = join(homedir(), '.sinter');
 const USER_CONFIG_PATH = join(CONFIG_DIR, 'config.json');
 
 /**
@@ -108,7 +108,7 @@ const USER_CONFIG_PATH = join(CONFIG_DIR, 'config.json');
  *
  * Resolution order per role:
  *   1. Project config (config/liminal.json) `roles.<role>`
- *   2. User config (~/.liminal/config.json) `roles.<role>`
+ *   2. User config (~/.sinter/config.json) `roles.<role>`
  *   3. Environment variables (role-specific then generic)
  *   4. Conservative defaults
  *

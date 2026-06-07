@@ -30,7 +30,7 @@ describe('E2E: seed and quality gate', () => {
     e2eGalleryDir = 'gallery';
     await fs.mkdir(path.join(e2eProjectRoot, e2eGalleryDir), { recursive: true });
 
-    // run() opens .liminal/project.liminal under process.cwd(); give this
+    // run() opens .sinter/project.sinter under process.cwd(); give this
     // e2e file its own project root so parallel CI workers cannot lock it.
     process.chdir(e2eProjectRoot);
   });

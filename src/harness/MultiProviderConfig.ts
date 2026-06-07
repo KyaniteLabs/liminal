@@ -39,7 +39,7 @@ import {
   type RuntimeProviderKey,
 } from '../config/ProviderRuntime.js';
 
-/** Read defaultProvider from ~/.liminal/config.json (sync, cached) */
+/** Read defaultProvider from ~/.sinter/config.json (sync, cached) */
 let _cachedDefault: string | null = null;
 type ProviderFileConfig = Record<string, { apiKey?: string; baseUrl?: string; model?: string }>;
 let _cachedConfig: ProviderFileConfig | null = null;
@@ -48,7 +48,7 @@ let _configLoaded = false;
 function loadConfigFile(): ProviderFileConfig | null {
   if (_configLoaded) return _cachedConfig;
   try {
-    const configPath = path.join(os.homedir(), '.liminal', 'config.json');
+    const configPath = path.join(os.homedir(), '.sinter', 'config.json');
     const raw = fs.readFileSync(configPath, 'utf-8');
     const parsed = JSON.parse(raw);
     _cachedConfig = parsed.providers || null;

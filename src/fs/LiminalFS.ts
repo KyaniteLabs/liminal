@@ -63,7 +63,7 @@ export class LiminalFS {
 
   writeRef(name: string, ref: LiminalObjectRef): void {
     this.validateRefName(name);
-    const path = join(this.projectRoot, '.liminal', 'refs', `${name}.json`);
+    const path = join(this.projectRoot, '.sinter', 'refs', `${name}.json`);
     const dir = dirname(path);
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
@@ -80,7 +80,7 @@ export class LiminalFS {
 
   readRef(name: string): LiminalObjectRef | null {
     this.validateRefName(name);
-    const path = join(this.projectRoot, '.liminal', 'refs', `${name}.json`);
+    const path = join(this.projectRoot, '.sinter', 'refs', `${name}.json`);
     if (!existsSync(path)) {
       return null;
     }
@@ -90,7 +90,7 @@ export class LiminalFS {
 
   writeManifest(name: string, data: Record<string, unknown>): void {
     this.validateRefName(name);
-    const path = join(this.projectRoot, '.liminal', 'manifests', `${name}.json`);
+    const path = join(this.projectRoot, '.sinter', 'manifests', `${name}.json`);
     const dir = dirname(path);
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
@@ -100,7 +100,7 @@ export class LiminalFS {
 
   readManifest(name: string): Record<string, unknown> | null {
     this.validateRefName(name);
-    const path = join(this.projectRoot, '.liminal', 'manifests', `${name}.json`);
+    const path = join(this.projectRoot, '.sinter', 'manifests', `${name}.json`);
     if (!existsSync(path)) {
       return null;
     }

@@ -27,7 +27,7 @@ describe('WHAT_TO_EXPECT first-run guide', () => {
     expect(doc).not.toContain('/run M1');
     expect(doc).not.toContain('HarnessAgent');
     expect(doc).not.toContain('harness-tasks');
-    expect(doc).not.toContain('.liminal/backups');
+    expect(doc).not.toContain('.sinter/backups');
     expect(doc).not.toContain('npm run tui');
   });
 });

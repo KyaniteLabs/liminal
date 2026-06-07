@@ -328,12 +328,12 @@ export class RalphLoop {
 
     if (normalizedOptions.useAestheticModel) {
       aestheticModel = new AestheticModel();
-      const aestheticPath = `${process.env.HOME}/.liminal/aesthetic_model.json`;
+      const aestheticPath = `${process.env.HOME}/.sinter/aesthetic_model.json`;
       await aestheticModel.load(aestheticPath).catch((err) => { Logger.warn('RalphLoop', 'Failed to load aesthetic model:', err); });
     }
 
     if (normalizedOptions.useMapElites) {
-      const mapElitesPath = `${process.env.HOME}/.liminal/map_elites.json`;
+      const mapElitesPath = `${process.env.HOME}/.sinter/map_elites.json`;
       const mapElites = normalizedOptions._mapElites;
       if (mapElites) {
         await mapElites.load(mapElitesPath).catch((err) => { Logger.warn('RalphLoop', 'Failed to load MAP-Elites archive:', err); });
@@ -1587,7 +1587,7 @@ export class RalphLoop {
 
       // Persist MAP-Elites and AestheticModel across runs
       if (normalizedOptions.useMapElites) {
-        const mapElitesPath = `${process.env.HOME}/.liminal/map_elites.json`;
+        const mapElitesPath = `${process.env.HOME}/.sinter/map_elites.json`;
         const mapElites = normalizedOptions._mapElites;
         if (mapElites) {
           await mapElites.save(mapElitesPath).catch((err) => {
@@ -1596,7 +1596,7 @@ export class RalphLoop {
         }
       }
       if (aestheticModel) {
-        const aestheticPath = `${process.env.HOME}/.liminal/aesthetic_model.json`;
+        const aestheticPath = `${process.env.HOME}/.sinter/aesthetic_model.json`;
         await aestheticModel.save(aestheticPath).catch((err) => {
           Logger.warn('RalphLoop', 'Failed to save aesthetic model:', err instanceof Error ? err.message : err);
         });

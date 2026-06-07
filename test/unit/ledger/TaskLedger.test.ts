@@ -59,10 +59,10 @@ describe('TaskLedger', () => {
     expect(task.updatedAt).toBeTruthy();
   });
 
-  it('createTask — persists manifest to .liminal/manifests/task/<id>/manifest.json', () => {
+  it('createTask — persists manifest to .sinter/manifests/task/<id>/manifest.json', () => {
     ledger.createTask(makeTaskDef());
 
-    const manifestPath = join(tempDir, '.liminal', 'manifests', 'task', 'L001', 'manifest.json');
+    const manifestPath = join(tempDir, '.sinter', 'manifests', 'task', 'L001', 'manifest.json');
     expect(existsSync(manifestPath)).toBe(true);
 
     const stored = JSON.parse(readFileSync(manifestPath, 'utf-8'));
@@ -159,11 +159,11 @@ describe('TaskLedger', () => {
     ledger.recordAttempt(attempt);
 
     // Verify manifest exists
-    const manifestPath = join(tempDir, '.liminal', 'manifests', 'task', 'L001', 'attempt', 'att-001.json');
+    const manifestPath = join(tempDir, '.sinter', 'manifests', 'task', 'L001', 'attempt', 'att-001.json');
     expect(existsSync(manifestPath)).toBe(true);
 
     // Verify ref exists
-    const refPath = join(tempDir, '.liminal', 'refs', 'task', 'L001', 'attempt', 'att-001.json');
+    const refPath = join(tempDir, '.sinter', 'refs', 'task', 'L001', 'attempt', 'att-001.json');
     expect(existsSync(refPath)).toBe(true);
 
     const stored = JSON.parse(readFileSync(manifestPath, 'utf-8'));
@@ -242,11 +242,11 @@ describe('TaskLedger', () => {
     ledger.recordCandidate(candidate);
 
     // Verify manifest exists (metadata)
-    const manifestPath = join(tempDir, '.liminal', 'manifests', 'task', 'L001', 'candidate', 'cand-001.json');
+    const manifestPath = join(tempDir, '.sinter', 'manifests', 'task', 'L001', 'candidate', 'cand-001.json');
     expect(existsSync(manifestPath)).toBe(true);
 
     // Verify ref exists (pointer to artifact)
-    const refPath = join(tempDir, '.liminal', 'refs', 'task', 'L001', 'candidate', 'cand-001.json');
+    const refPath = join(tempDir, '.sinter', 'refs', 'task', 'L001', 'candidate', 'cand-001.json');
     expect(existsSync(refPath)).toBe(true);
 
     const stored = JSON.parse(readFileSync(manifestPath, 'utf-8'));
@@ -299,7 +299,7 @@ describe('TaskLedger', () => {
 
     ledger.recordDecision(decision);
 
-    const manifestPath = join(tempDir, '.liminal', 'manifests', 'task', 'L001', 'decision', 'dec-001.json');
+    const manifestPath = join(tempDir, '.sinter', 'manifests', 'task', 'L001', 'decision', 'dec-001.json');
     expect(existsSync(manifestPath)).toBe(true);
 
     const stored = JSON.parse(readFileSync(manifestPath, 'utf-8'));

@@ -11,6 +11,28 @@ const repoRoot = path.join(binDir, '..');
 const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8'));
 const args = process.argv.slice(2);
 
+// One-time config-home migration: if the new ~/.sinter home doesn't exist yet
+// but a legacy ~/.sinter (or ~/.atelier) does, move it wholesale so existing
+// keys/config/memory/gallery carry over. Runs before any config read.
+(function migrateConfigHome() {
+  const home = process.env.HOME || process.env.USERPROFILE;
+  if (!home) return;
+  const newDir = path.join(home, '.sinter');
+  if (fs.existsSync(newDir)) return;
+  for (const legacy of ['.liminal', '.atelier']) {
+    const oldDir = path.join(home, legacy);
+    if (!fs.existsSync(oldDir)) continue;
+    try { fs.renameSync(oldDir, newDir); }
+    catch {
+      try {
+        fs.mkdirSync(newDir, { recursive: true });
+        fs.copyFileSync(path.join(oldDir, 'config.json'), path.join(newDir, 'config.json'));
+      } catch { /* nothing to carry over */ }
+    }
+    break;
+  }
+})();
+
 const CLI_PROVIDER_DEFAULTS = {
   lmstudio: {
     label: 'LM Studio',
@@ -76,10 +98,10 @@ function resolveCliProvider(value) {
 }
 
 function liminalConfigPath() {
-  return path.join(process.env.HOME || process.env.USERPROFILE || '.', '.liminal', 'config.json');
+  return path.join(process.env.HOME || process.env.USERPROFILE || '.', '.sinter', 'config.json');
 }
 
-// Write an API key (and provider block) into ~/.liminal/config.json, merging with
+// Write an API key (and provider block) into ~/.sinter/config.json, merging with
 // whatever is already there. With `activate`, also point the generator+evaluator
 // roles + defaultProvider at this provider so the next run uses it immediately.
 function setProviderKey(providerKey, apiKey, { model, baseUrl, activate } = {}) {
@@ -118,11 +140,11 @@ function printProviderHelp() {
   console.log('🔌 Sinter Provider Setup');
   console.log('');
   console.log('USAGE:');
-  console.log('  liminal provider help');
-  console.log('  liminal provider list');
-  console.log('  liminal provider status');
-  console.log('  liminal provider set-key <name> [<API_KEY>] [--base-url <url>] [--model <id>] [--use]');
-  console.log('  liminal --configure --provider <name>');
+  console.log('  sinter provider help');
+  console.log('  sinter provider list');
+  console.log('  sinter provider status');
+  console.log('  sinter provider set-key <name> [<API_KEY>] [--base-url <url>] [--model <id>] [--use]');
+  console.log('  sinter --configure --provider <name>');
   console.log('');
   console.log('PROVIDERS:');
   for (const [name, provider] of Object.entries(CLI_PROVIDER_DEFAULTS)) {
@@ -133,10 +155,10 @@ function printProviderHelp() {
   }
   console.log('');
   console.log('EXAMPLES:');
-  console.log('  liminal --configure --provider lmstudio');
-  console.log('  liminal provider set-key minimax sk-... --use   # MiniMax-M3, international endpoint, made active');
-  console.log('  GLM_API_KEY=... liminal --provider glm "make a p5 sketch"');
-  console.log('  liminal provider status');
+  console.log('  sinter --configure --provider lmstudio');
+  console.log('  sinter provider set-key minimax sk-... --use   # MiniMax-M3, international endpoint, made active');
+  console.log('  GLM_API_KEY=... sinter --provider glm "make a p5 sketch"');
+  console.log('  sinter provider status');
   console.log('');
 }
 
@@ -175,12 +197,12 @@ function printProviderStatus() {
     // Ready if no key needed, or a key is present in env OR the saved config.
     const hasKey = Boolean(process.env[provider.apiKeyEnv]) || savedKeyFor(name, config);
     const configured = !provider.requiresKey || hasKey;
-    const status = configured ? 'ready' : `missing key (set with: liminal provider set-key ${name} <KEY>)`;
+    const status = configured ? 'ready' : `missing key (set with: sinter provider set-key ${name} <KEY>)`;
     const activeMark = name === active ? ' (active)' : '';
     console.log(`  ${name.padEnd(10)} ${status}${activeMark}`);
   }
   console.log('');
-  console.log('Set a key with `liminal provider set-key <name> <KEY> --use`.');
+  console.log('Set a key with `sinter provider set-key <name> <KEY> --use`.');
   console.log('');
 }
 
@@ -333,8 +355,8 @@ function printHelp() {
   console.log('🎨 Sinter: Creative Coding Agent');
   console.log('');
   console.log('USAGE:');
-  console.log('  liminal [options] <command> [args]');
-  console.log('  liminal "natural language prompt"');
+  console.log('  sinter [options] <command> [args]');
+  console.log('  sinter "natural language prompt"');
   console.log('');
   console.log('COMMANDS:');
   console.log('  <prompt>                    Natural-language creative request (no magic verb required)');
@@ -404,12 +426,12 @@ function printHelp() {
   console.log('  --version                   Show version');
   console.log('');
   console.log('EXAMPLES:');
-  console.log('  liminal "icebergs dancing in the sky"');
-  console.log('  liminal --prompt "blue particles"');
-  console.log('  liminal --prompt "red circles" --provider lmstudio');
-  console.log('  liminal --configure');
-  console.log('  liminal serve 3456');
-  console.log('  liminal list');
+  console.log('  sinter "icebergs dancing in the sky"');
+  console.log('  sinter --prompt "blue particles"');
+  console.log('  sinter --prompt "red circles" --provider lmstudio');
+  console.log('  sinter --configure');
+  console.log('  sinter serve 3456');
+  console.log('  sinter list');
   console.log('');
 }
 
@@ -449,10 +471,10 @@ if (cmd === 'provider') {
     // Local servers (ollama/lmstudio) need no key; cloud providers do.
     const keyRequired = providerKey ? CLI_PROVIDER_DEFAULTS[providerKey].requiresKey : true;
     if (!providerKey || (keyRequired && !apiKey)) {
-      console.error('Usage: liminal provider set-key <provider> [<API_KEY>] [--base-url <url>] [--model <id>] [--use]');
+      console.error('Usage: sinter provider set-key <provider> [<API_KEY>] [--base-url <url>] [--model <id>] [--use]');
       console.error(`Providers: ${CLI_PROVIDER_NAMES.join(', ')}`);
-      console.error('  Cloud:  liminal provider set-key minimax sk-... --use');
-      console.error('  Local:  liminal provider set-key ollama --base-url http://192.168.1.50:11434/v1 --model qwen2.5-coder --use');
+      console.error('  Cloud:  sinter provider set-key minimax sk-... --use');
+      console.error('  Local:  sinter provider set-key ollama --base-url http://192.168.1.50:11434/v1 --model qwen2.5-coder --use');
       process.exit(1);
     }
     try {
@@ -464,8 +486,8 @@ if (cmd === 'provider') {
       console.log(`   active:   ${r.activated ? 'yes (default — all roles inherit it)' : 'no (use --use to activate)'}`);
       console.log('');
       console.log(r.activated
-        ? '   Try: liminal --prompt "a glsl aurora shader" --max-iterations 1 -o output/test'
-        : `   Activate with: liminal provider set-key ${providerKey} ${keyRequired ? '<KEY> ' : ''}--use`);
+        ? '   Try: sinter --prompt "a glsl aurora shader" --max-iterations 1 -o output/test'
+        : `   Activate with: sinter provider set-key ${providerKey} ${keyRequired ? '<KEY> ' : ''}--use`);
       console.log('');
       process.exit(0);
     } catch (e) {
@@ -475,7 +497,7 @@ if (cmd === 'provider') {
   }
 
   console.error(`Unknown provider subcommand: ${subCmd}`);
-  console.error('Usage: liminal provider <help|list|status|set-key>');
+  console.error('Usage: sinter provider <help|list|status|set-key>');
   process.exit(1);
 }
 
@@ -503,7 +525,7 @@ if (cmd === 'self-improve') {
     console.log('');
     process.exit(report.failed === 0 ? 0 : 1);
   }
-  console.error('Usage: liminal self-improve gauntlet [--output report.json]');
+  console.error('Usage: sinter self-improve gauntlet [--output report.json]');
   process.exit(1);
 }
 
@@ -528,7 +550,7 @@ if (cmd === 'domains') {
     console.log('');
     process.exit(report.ready ? 0 : 1);
   }
-  console.error('Usage: liminal domains gauntlet [--output report.json]');
+  console.error('Usage: sinter domains gauntlet [--output report.json]');
   process.exit(1);
 }
 
@@ -556,7 +578,7 @@ if (cmd === 'model') {
     console.log('');
     process.exit(report.ready ? 0 : 1);
   }
-  console.error('Usage: liminal model audition <model> [--provider name] [--output report.json]');
+  console.error('Usage: sinter model audition <model> [--provider name] [--output report.json]');
   process.exit(1);
 }
 
@@ -589,7 +611,7 @@ if (cmd === 'release') {
     console.log('');
     process.exit(report.ready ? 0 : 1);
   }
-  console.error('Usage: liminal release gate [--output report.json]');
+  console.error('Usage: sinter release gate [--output report.json]');
   process.exit(1);
 }
 
@@ -630,14 +652,14 @@ if (cmd === 'improve') {
   if (subCmd === 'run') {
     const proposalId = cmdArgs[1];
     if (!proposalId) {
-      console.error('Usage: liminal improve run <proposal-id>');
+      console.error('Usage: sinter improve run <proposal-id>');
       process.exit(1);
     }
 
     const proposal = report.proposals.find((item) => item.id === proposalId);
     if (!proposal) {
       console.error(`Unknown proposal: ${proposalId}`);
-      console.error('Run `liminal improve scan` to see current proposals.');
+      console.error('Run `sinter improve scan` to see current proposals.');
       process.exit(1);
     }
 
@@ -673,7 +695,7 @@ if (cmd === 'improve') {
     process.exit(result.session.status === 'success' ? 0 : 1);
   }
 
-  console.error('Usage: liminal improve <scan|run>');
+  console.error('Usage: sinter improve <scan|run>');
   process.exit(1);
 }
 
@@ -764,10 +786,10 @@ if (flags.configure) {
   };
 
   saveConfig(config).then(() => {
-    console.log('✅ Config saved to ~/.liminal/config.json');
+    console.log('✅ Config saved to ~/.sinter/config.json');
     console.log('');
     console.log('You can now run:');
-    console.log('  liminal --prompt "your idea"');
+    console.log('  sinter --prompt "your idea"');
     if (providerDefaults.requiresKey && providerDefaults.apiKeyEnv) {
       console.log('');
       console.log(`Set ${providerDefaults.apiKeyEnv} before generating with ${providerDefaults.label}.`);
@@ -962,7 +984,7 @@ if (isLiveMusic) {
     console.error('Error: --prompt is required for live-music');
     process.exit(1);
   }
-  const liveOutDir = flags.output || path.join(process.env.HOME || '/tmp', '.liminal', 'output');
+  const liveOutDir = flags.output || path.join(process.env.HOME || '/tmp', '.sinter', 'output');
   fs.mkdirSync(liveOutDir, { recursive: true });
 
   // Load project config for live settings (MIDI, OSC, syncMode) - pass through only
@@ -1004,7 +1026,7 @@ if (cmd === 'site') {
   const subCmd = cmdArgs[0];
 
   if (subCmd !== 'evolve') {
-    console.error('Usage: liminal site evolve [--once] [--dry-run] [--slot <id>]');
+    console.error('Usage: sinter site evolve [--once] [--dry-run] [--slot <id>]');
     process.exit(1);
   }
 
@@ -1028,7 +1050,7 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || (flags.prompt && (!cmd
   if (flags.maxIterations) maxIterations = flags.maxIterations;
   if (flags.output) output = flags.output;
 
-  const outDir = output || path.join(process.env.HOME || '/tmp', '.liminal', 'output');
+  const outDir = output || path.join(process.env.HOME || '/tmp', '.sinter', 'output');
   fs.mkdirSync(outDir, { recursive: true });
 
   console.log('');
@@ -1123,7 +1145,7 @@ else if (cmd === 'serve' || cmd === 's') {
   }
 
   const searchDirs = [
-    path.join(process.env.HOME || '/tmp', '.liminal', 'output'),
+    path.join(process.env.HOME || '/tmp', '.sinter', 'output'),
     path.join(process.cwd(), 'gallery'),
   ];
 
@@ -1135,7 +1157,7 @@ else if (cmd === 'serve' || cmd === 's') {
     console.log('📄 Loading sketch:', latestSketch.file);
   } else {
     console.log('⚠️  No sketches found. Generate one first:');
-    console.log('   liminal --prompt "your idea"');
+    console.log('   sinter --prompt "your idea"');
   }
 
   server.serveSketch(sketchCode);
@@ -1222,7 +1244,7 @@ else if (cmd === 'compost') {
     const { CompostHeap } = await import('../dist/compost/CompostHeap.js');
     const { CompostShredder } = await import('../dist/compost/CompostShredder.js');
 
-    const heap = new CompostHeap({ heapDir: path.join(process.cwd(), '.liminal', 'compost', 'heap') });
+    const heap = new CompostHeap({ heapDir: path.join(process.cwd(), '.sinter', 'compost', 'heap') });
     const heapFiles = await heap.listFiles();
     if (heapFiles.length === 0) {
       console.log('No files in heap to rehydrate.');
@@ -1232,7 +1254,7 @@ else if (cmd === 'compost') {
     // Read heap files and shred into fragments
     const allFragments = [];
     for (const relPath of heapFiles) {
-      const fullPath = path.join(process.cwd(), '.liminal', 'compost', 'heap', relPath);
+      const fullPath = path.join(process.cwd(), '.sinter', 'compost', 'heap', relPath);
       try {
         const content = fs.readFileSync(fullPath, 'utf-8');
         const frags = CompostShredder.shredSemantic(content, relPath, 'compost');
@@ -1291,7 +1313,7 @@ else if (cmd === 'compost') {
   process.exit(0);
 }
 else if (cmd === 'list' || cmd === 'ls') {
-  const outDir = path.join(process.env.HOME || '/tmp', '.liminal', 'output');
+  const outDir = path.join(process.env.HOME || '/tmp', '.sinter', 'output');
   console.log('📁 Sketches:');
   if (fs.existsSync(outDir)) {
     fs.readdirSync(outDir).filter(f => f.endsWith('.js')).forEach(f => console.log('  ' + f));
@@ -1303,7 +1325,7 @@ else if (cmd === 'list' || cmd === 'ls') {
 else if (cmd === 'composite') {
   const specPath = flags.spec;
   if (!specPath) {
-    console.error('Usage: liminal composite --spec <spec.json> [--output <plan.json>]');
+    console.error('Usage: sinter composite --spec <spec.json> [--output <plan.json>]');
     process.exit(1);
   }
 
@@ -1353,7 +1375,7 @@ else if (cmd === 'compose') {
   const specPath = flags.spec;
   const nlPrompt = flags.prompt || (cmdArgs.length ? cmdArgs.join(' ') : undefined);
   if (!specPath && !nlPrompt) {
-    console.error('Usage: liminal compose (--prompt "<idea>" | --spec <spec.json>) [-o <dir>]');
+    console.error('Usage: sinter compose (--prompt "<idea>" | --spec <spec.json>) [-o <dir>]');
     console.error('  --prompt: an LLM decomposes the idea into layers, then composes them');
     console.error('  --spec:   { "title", "background", "layers": [ { "domain", "prompt", "blendMode", "opacity" } ] }');
     console.error('  domains: p5, three, shader, hydra, ascii, html, tone, strudel');
@@ -1574,7 +1596,7 @@ else if (cmd === 'readiness' && (!cmdArgs[0] || cmdArgs[0] === 'status')) {
 else if (cmd === 'quality') {
   const subCmd = cmdArgs[0];
   if (!subCmd || (subCmd !== 'run' && subCmd !== 'gate')) {
-    console.error('Usage: liminal quality <run|gate>');
+    console.error('Usage: sinter quality <run|gate>');
     console.error('  run   --spec <path>   Run a golden suite');
     console.error('  gate  --spec <path>   Block promotion on regression');
     process.exit(1);
@@ -1753,9 +1775,9 @@ else if (cmd === 'fs') {
 
   try {
     if (subCmd === 'artifacts') {
-      // List all refs (which point to artifacts) from .liminal/refs/
+      // List all refs (which point to artifacts) from .sinter/refs/
       const fs = await import('fs');
-      const refsDir = path.join(process.cwd(), '.liminal', 'refs');
+      const refsDir = path.join(process.cwd(), '.sinter', 'refs');
       if (!fs.existsSync(refsDir)) {
         console.log('No artifacts found.');
         process.exit(0);
@@ -1777,7 +1799,7 @@ else if (cmd === 'fs') {
       if (!refName) {
         // List all refs
         const fs = await import('fs');
-        const refsDir = path.join(process.cwd(), '.liminal', 'refs');
+        const refsDir = path.join(process.cwd(), '.sinter', 'refs');
         if (!fs.existsSync(refsDir)) {
           console.log('No refs found.');
           process.exit(0);
@@ -1816,10 +1838,10 @@ else if (cmd === 'fs') {
       }
       console.log('');
     } else {
-      console.log('Usage: liminal fs <artifacts|refs|runs>');
-      console.log('  liminal fs artifacts          List all tracked artifacts');
-      console.log('  liminal fs refs [name]        List refs or show specific ref');
-      console.log('  liminal fs runs               List recorded runs');
+      console.log('Usage: sinter fs <artifacts|refs|runs>');
+      console.log('  sinter fs artifacts          List all tracked artifacts');
+      console.log('  sinter fs refs [name]        List refs or show specific ref');
+      console.log('  sinter fs runs               List recorded runs');
       process.exit(1);
     }
   } finally {
@@ -1901,7 +1923,7 @@ else if (cmd === 'archive') {
     } else if (subCmd === 'branch' && artifactRef) {
       console.log('');
       console.log(`Branching from ${artifactRef}...`);
-      console.log('  (Branch action recorded. Use liminal gen with --parent to continue.)');
+      console.log('  (Branch action recorded. Use sinter gen with --parent to continue.)');
       console.log('');
     } else if (subCmd === 'list') {
       const hooks = new EmergenceHooks(liminalFs);
@@ -1919,7 +1941,7 @@ else if (cmd === 'archive') {
       }
       console.log('');
     } else {
-      console.error('Usage: liminal archive <inspect|lineage|branch|list> [artifactRef]');
+      console.error('Usage: sinter archive <inspect|lineage|branch|list> [artifactRef]');
       process.exit(1);
     }
   } finally {
@@ -1980,7 +2002,7 @@ else if (cmd === 'preferences') {
     }
     console.log('');
   } else {
-    console.error('Usage: liminal preferences <export|stats> [--session <id>]');
+    console.error('Usage: sinter preferences <export|stats> [--session <id>]');
     process.exit(1);
   }
   process.exit(0);
@@ -1994,7 +2016,7 @@ else if (cmd === 'emergence') {
 
     const output = cmdArgs[1] ? String(cmdArgs[1]) : null;
     if (!output) {
-      console.error('Usage: liminal emergence score <text-or-file-path>');
+      console.error('Usage: sinter emergence score <text-or-file-path>');
       process.exit(1);
     }
 
@@ -2025,7 +2047,7 @@ else if (cmd === 'emergence') {
 
     const output = cmdArgs[1] ? String(cmdArgs[1]) : null;
     if (!output) {
-      console.error('Usage: liminal emergence probe <text-or-file-path> [--magnitude 0.1]');
+      console.error('Usage: sinter emergence probe <text-or-file-path> [--magnitude 0.1]');
       process.exit(1);
     }
 
@@ -2048,7 +2070,7 @@ else if (cmd === 'emergence') {
     }
     console.log('');
   } else {
-    console.error('Usage: liminal emergence <score|probe> <text-or-file-path>');
+    console.error('Usage: sinter emergence <score|probe> <text-or-file-path>');
     process.exit(1);
   }
   process.exit(0);
@@ -2582,7 +2604,7 @@ else if (cmd === 'demo' && cmdArgs[0] === 'creative-codex') {
 else if (cmd === 'prompt' && cmdArgs[0] === 'synthesize') {
   const inputPath = flags.input;
   if (!inputPath) {
-    console.error('Usage: liminal prompt synthesize --input <graph.json> [--output <output.md>]');
+    console.error('Usage: sinter prompt synthesize --input <graph.json> [--output <output.md>]');
     process.exit(1);
   }
 
@@ -2614,9 +2636,9 @@ else {
   console.error('');
   if (cmd) {
     console.error(`Unknown command or subcommand: ${[cmd, ...cmdArgs].join(' ')}`);
-    console.error('Run "liminal --help" to see available commands and subcommands.');
+    console.error('Run "sinter --help" to see available commands and subcommands.');
   } else {
-    console.error('Run "liminal --help" for usage, or: liminal "your idea"');
+    console.error('Run "sinter --help" for usage, or: sinter "your idea"');
   }
   process.exit(1);
 }

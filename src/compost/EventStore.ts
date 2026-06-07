@@ -12,7 +12,7 @@
  *
  * Architecture
  * ────────────
- * The store is a single SQLite database per project (project.liminal).
+ * The store is a single SQLite database per project (project.sinter).
  * Tables:
  *
  *   events     — append-only log of all compost operations
@@ -105,9 +105,9 @@ export interface Branch {
 export interface EventStoreConfig {
   /** Path to the project root directory. */
   projectRoot: string;
-  /** Subdirectory name for Sinter data (default: '.liminal'). */
+  /** Subdirectory name for Sinter data (default: '.sinter'). */
   dataDir?: string;
-  /** Database filename (default: 'project.liminal'). */
+  /** Database filename (default: 'project.sinter'). */
   dbFilename?: string;
   /** Take a snapshot every N events (default: 50). */
   snapshotInterval?: number;
@@ -236,9 +236,9 @@ export class EventStore {
   private initialized = false;
 
   constructor(config: EventStoreConfig) {
-    const dirName = config.dataDir ?? '.liminal';
+    const dirName = config.dataDir ?? '.sinter';
     this.dataDir = join(config.projectRoot, dirName);
-    this.dbPath = join(this.dataDir, config.dbFilename ?? 'project.liminal');
+    this.dbPath = join(this.dataDir, config.dbFilename ?? 'project.sinter');
     this.snapshotInterval = config.snapshotInterval ?? 50;
 
     // Ensure data directory exists
@@ -708,7 +708,7 @@ export class EventStore {
 
   /**
    * Register a binary asset (image, audio, shader, etc.) by its SHA256 hash.
-   * Assets are stored in .liminal/objects/<hash-prefix>/<hash> on disk.
+   * Assets are stored in .sinter/objects/<hash-prefix>/<hash> on disk.
    * This registry maps hashes to human-readable metadata.
    */
   registerAsset(info: {

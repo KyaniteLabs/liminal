@@ -31,7 +31,7 @@ describe('LoopPersistence', () => {
 
     const history = await gallery.loadHistory('my-project');
     expect(history).toHaveLength(1);
-    expect(existsSync(join(projectRoot, '.liminal', 'objects'))).toBe(true);
+    expect(existsSync(join(projectRoot, '.sinter', 'objects'))).toBe(true);
   });
 
   it('saveIteration with LiminalFS — writes refs at gallery/{project}/v{N} and gallery/{project}/latest', async () => {

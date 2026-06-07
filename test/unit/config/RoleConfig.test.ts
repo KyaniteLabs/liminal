@@ -5,16 +5,23 @@ import os from 'os';
 
 const _userConfigPath = path.join(os.homedir(), '.liminal', 'config.json');
 
+// Injectable user-config content for tests. Default null → the read rejects
+// (no user config), matching the original behavior for all existing tests.
+const _hoisted = vi.hoisted(() => ({ userConfig: null as string | null }));
+
 // Mock fs/promises.readFile to block the real user config from loading.
 // RoleConfig imports { readFile } from 'fs/promises' — this mock intercepts
 // only the ~/.liminal/config.json read and lets everything else through.
+// Tests can inject a user config by setting _hoisted.userConfig.
 vi.mock('fs/promises', async (importOriginal) => {
   const actual = await importOriginal<typeof import('fs/promises')>();
   return {
     ...actual,
     readFile: vi.fn(((...args: [string, ...unknown[]]) => {
       if (args[0] === _userConfigPath) {
-        return Promise.reject(new Error('mock: no user config for tests'));
+        return _hoisted.userConfig != null
+          ? Promise.resolve(_hoisted.userConfig)
+          : Promise.reject(new Error('mock: no user config for tests'));
       }
       return actual.readFile(...args);
     }) as unknown as typeof actual.readFile),
@@ -488,5 +495,63 @@ describe('saveRoleConfig', () => {
     const content = await fs.readFile(configPath, 'utf-8');
     const parsed = JSON.parse(content);
     expect(parsed.roles.generator.model).toBe('second-model');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Role inheritance: configuring only the generator must make every role usable
+// (previously unset roles silently fell back to local LM Studio / "unknown").
+// ---------------------------------------------------------------------------
+describe('loadRoleConfig role inheritance', () => {
+  const setUserConfig = (cfg: unknown) => {
+    _hoisted.userConfig = JSON.stringify(cfg);
+  };
+
+  beforeEach(() => {
+    CapabilityRegistry.clearOverrides();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    CapabilityRegistry.clearOverrides();
+    _hoisted.userConfig = null; // restore default (no user config)
+  });
+
+  it('unset roles inherit the generator provider/model/key, keeping role temperatures', async () => {
+    setUserConfig({
+      roles: { generator: { baseUrl: 'https://api.anthropic.com/v1', model: 'claude-test', apiKey: 'gen-key-xyz' } },
+    });
+
+    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+
+    for (const role of ['evaluator', 'harness', 'studio'] as const) {
+      expect(config[role].baseUrl).toBe('https://api.anthropic.com/v1');
+      expect(config[role].model).toBe('claude-test');
+      expect(config[role].apiKey).toBe('gen-key-xyz');
+      // Must NOT fall back to the local default / unknown model.
+      expect(config[role].baseUrl).not.toContain('localhost');
+      expect(config[role].model).not.toBe('unknown');
+    }
+    // Role-specific sampling is preserved despite inheriting the model.
+    expect(config.generator.temperature).toBe(0.7);
+    expect(config.evaluator.temperature).toBe(0.2);
+    expect(config.harness.temperature).toBe(0.5);
+    expect(config.studio.temperature).toBe(0.6);
+  });
+
+  it('an explicitly configured role overrides inheritance; others still inherit', async () => {
+    setUserConfig({
+      roles: {
+        generator: { baseUrl: 'https://api.anthropic.com/v1', model: 'claude-test', apiKey: 'gen-key' },
+        evaluator: { baseUrl: 'http://eval-host:7070/v1', model: 'eval-model', apiKey: 'eval-key' },
+      },
+    });
+
+    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+
+    expect(config.evaluator.model).toBe('eval-model'); // explicit wins
+    expect(config.evaluator.baseUrl).toBe('http://eval-host:7070/v1');
+    expect(config.harness.model).toBe('claude-test'); // still inherits generator
+    expect(config.studio.model).toBe('claude-test');
   });
 });

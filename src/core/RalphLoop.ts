@@ -376,6 +376,14 @@ export class RalphLoop {
     let finalScore = 0;
     let lastThinking: string | undefined;
     let lastModel: string | undefined;
+    // Best VALID candidate across iterations. The loop must return its best
+    // result, not merely the last one: a later iteration can regress, and the
+    // final validation gate would otherwise reject a good earlier result and
+    // throw away usable work. bestScore < 0 means no valid candidate yet.
+    let bestScore = -1;
+    let bestCode = '';
+    let bestThinking: string | undefined;
+    let bestModel: string | undefined;
 
     // Convergence tracking: score history for detecting plateau
     const scoreHistory: number[] = [];
@@ -1234,6 +1242,18 @@ export class RalphLoop {
         ContextAccumulation.save(iterationContext);
         normalizedOptions.onIteration?.(iterationContext);
         finalScore = evaluation.score;
+        // Remember the highest-scoring candidate that also passes the final
+        // validation gate, so a later regression or an invalid last iteration
+        // can't discard earlier good work.
+        if (evaluation.score > bestScore) {
+          const domainForValidation = String(normalizedOptions.collabDomain || normalizedOptions.mode || 'p5');
+          if (CodeValidator.validate(currentCode, domainForValidation).valid) {
+            bestScore = evaluation.score;
+            bestCode = currentCode;
+            bestThinking = lastThinking;
+            bestModel = lastModel;
+          }
+        }
         let persistedCurrentIteration = false;
         const promiseDetected = PromiseDetector.detect(currentCode);
 
@@ -1621,17 +1641,26 @@ export class RalphLoop {
         // LiminalFS failure must not affect loop operation
       }
 
+      // Prefer the best valid candidate over the last iteration. best-tracking
+      // only stores the highest-scoring candidate that passes validation, so if
+      // any valid candidate was seen we return it — this rescues a good earlier
+      // result when a later iteration regresses or produces invalid code (which
+      // the final gate would otherwise reject, throwing away usable work).
+      const returnBest = bestScore >= 0;
+      const swappedForBest = returnBest && bestCode !== currentCode;
       return {
-        code: currentCode,
+        code: returnBest ? bestCode : currentCode,
         iterations: iteration,
         completed,
-        reason,
+        reason: swappedForBest
+          ? `${reason} (returned best valid candidate, score ${bestScore.toFixed(2)})`
+          : reason,
         timestamp: new Date().toISOString(),
         duration,
-        finalScore,
+        finalScore: returnBest ? bestScore : finalScore,
         project: normalizedOptions.project,
-        thinking: lastThinking,
-        model: lastModel,
+        thinking: returnBest ? bestThinking : lastThinking,
+        model: returnBest ? bestModel : lastModel,
       };
     } finally {
       try {

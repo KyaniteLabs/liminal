@@ -316,6 +316,28 @@ describe('RalphLoop Best-of-N', () => {
     expect(result.finalScore).toBe(0.8);
   });
 
+  it('returns the best valid candidate across iterations, not the last (regression)', async () => {
+    // iter1 scores high, iter2 regresses; with a threshold neither meets, the
+    // loop runs both iterations and must return iter1's better result.
+    generateSequence = [
+      { code: 'High quality iteration one' },
+      { code: 'Regressed iteration two' },
+    ];
+    scoreSequence = [
+      { score: 0.9 },
+      { score: 0.4 },
+    ];
+
+    const result = await RalphLoop.run('test prompt', {
+      maxIterations: 2,
+      minQualityScore: 0.99,
+      _disableIterationExtension: true,
+    });
+
+    expect(result.code).toBe('High quality iteration one');
+    expect(result.finalScore).toBe(0.9);
+  });
+
   it('should fail explicitly when all candidates fail validation', async () => {
     generateSequence = [
       { code: 'Invalid 1' },

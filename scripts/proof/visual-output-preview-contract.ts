@@ -127,7 +127,7 @@ function hyperframesFixture(): string {
     window.__timelines["sinter-promo"] = tl;
   </script>
 </body>
-</html>`, { domain: 'hyperframes', title: 'Liminal HyperFrames Preview' });
+</html>`, { domain: 'hyperframes', title: 'Sinter HyperFrames Preview' });
 }
 
 function fixtureItems(): RenderItem[] {
@@ -138,7 +138,7 @@ function fixtureItems(): RenderItem[] {
     { domain: 'glsl', sourceLabel: 'fixture glsl', html: GenericWrapper.wrap('precision highp float; uniform vec2 u_resolution; uniform float u_time; void main(){ vec2 uv=gl_FragCoord.xy/u_resolution.xy; gl_FragColor=vec4(uv,abs(sin(u_time)),1.0); }', { domain: 'shader' }) },
     { domain: 'hydra', sourceLabel: 'fixture hydra', html: GenericWrapper.wrap('osc(8, 0.1, 1.2).kaleid(4).out()', { domain: 'hydra' }) },
     { domain: 'strudel', sourceLabel: 'fixture strudel', html: GenericWrapper.wrap('s("bd sd hh*2").slow(2)', { domain: 'strudel' }) },
-    { domain: 'tone', sourceLabel: 'fixture tone raw html', html: HTMLWrapper.wrap('<!DOCTYPE html><html><body><button id="startButton">Start Ambient Sequence</button><script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script><script>const synth = new Tone.Synth().toDestination(); document.getElementById("startButton").addEventListener("click", () => synth.triggerAttackRelease("C4", "8n"));</script></body></html>', { domain: 'tone', title: 'Liminal Tone Preview' }) },
+    { domain: 'tone', sourceLabel: 'fixture tone raw html', html: HTMLWrapper.wrap('<!DOCTYPE html><html><body><button id="startButton">Start Ambient Sequence</button><script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script><script>const synth = new Tone.Synth().toDestination(); document.getElementById("startButton").addEventListener("click", () => synth.triggerAttackRelease("C4", "8n"));</script></body></html>', { domain: 'tone', title: 'Sinter Tone Preview' }) },
     { domain: 'revideo', sourceLabel: 'fixture revideo', html: GenericWrapper.wrap('import { makeScene } from "@revideo/core"; export default makeScene("x", function* () {});', { domain: 'revideo' }) },
     { domain: 'hyperframes', sourceLabel: 'fixture hyperframes', html: hyperframesFixture() },
     { domain: 'ascii', sourceLabel: 'fixture ascii', html: GenericWrapper.wrap(['        /\\\\', '       /  \\\\', '  ____/____\\\\____', ' /  moonlit ridge \\\\', '/__stars__stars___\\\\'].join('\n'), { domain: 'ascii' }) },
@@ -154,9 +154,9 @@ function domainHtml(domain: string, filePath: string): string {
   if (domain === 'glsl') return GenericWrapper.wrap(code, { domain: 'shader' });
   if (domain === 'hydra') return GenericWrapper.wrap(code, { domain: 'hydra' });
   if (domain === 'strudel') return GenericWrapper.wrap(code, { domain: 'strudel' });
-  if (domain === 'tone') return HTMLWrapper.wrap(code, { domain: 'tone', title: 'Liminal Tone Preview' });
+  if (domain === 'tone') return HTMLWrapper.wrap(code, { domain: 'tone', title: 'Sinter Tone Preview' });
   if (domain === 'revideo') return GenericWrapper.wrap(code, { domain: 'revideo' });
-  if (domain === 'hyperframes') return HTMLWrapper.wrap(code, { domain: 'hyperframes', title: 'Liminal HyperFrames Preview' });
+  if (domain === 'hyperframes') return HTMLWrapper.wrap(code, { domain: 'hyperframes', title: 'Sinter HyperFrames Preview' });
   if (domain === 'ascii') return GenericWrapper.wrap(code, { domain: 'ascii' });
   if (domain === 'html' || domain === 'kinetic') return code;
   return textPreview(domain, code);
@@ -223,9 +223,9 @@ function contractErrorsForDomain(domain: string, metrics: VisualProofMetrics): s
 
 async function writeGalleryAssets(outDir: string, results: Array<{ domain: string; screenshot: string; source: string }>, page: Page): Promise<void> {
   const gallery = [
-    '<!doctype html><html><head><meta charset="utf-8"><title>Liminal output proof gallery</title>',
+    '<!doctype html><html><head><meta charset="utf-8"><title>Sinter output proof gallery</title>',
     '<style>:root{color-scheme:dark}body{margin:0;background:#05070d;color:#eaf2ff;font-family:Inter,system-ui,sans-serif;padding:28px}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}figure{margin:0;border:1px solid rgba(148,163,184,.32);border-radius:18px;background:#0b1220;overflow:hidden}img{width:100%;display:block}figcaption{padding:12px 14px;font-weight:800}.source{display:block;color:#94a3b8;font:11px ui-monospace,monospace;margin-top:4px;word-break:break-word}</style></head><body>',
-    '<h1>Liminal full output visual proof</h1><main>',
+    '<h1>Sinter full output visual proof</h1><main>',
     ...results.map((result) => {
       const relativeShot = path.relative(outDir, path.resolve(result.screenshot));
       return `<figure><img src="${escapeHtml(relativeShot)}" alt="${escapeHtml(result.domain)} screenshot"><figcaption>${escapeHtml(result.domain.toUpperCase())}<span class="source">${escapeHtml(result.source)}</span></figcaption></figure>`;

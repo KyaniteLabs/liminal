@@ -119,7 +119,7 @@ function startStudio(root, launch) {
   studioProcess.stdout?.on('data', (data) => process.stdout.write(`[studio] ${data}`));
   studioProcess.stderr?.on('data', (data) => process.stderr.write(`[studio] ${data}`));
   studioProcess.on('error', (err) => {
-    console.error('Liminal Studio failed to start:', err);
+    console.error('Sinter Studio failed to start:', err);
   });
   studioProcess.on('exit', (code, signal) => {
     studioProcess = null;
@@ -195,7 +195,7 @@ async function createWindow() {
   installPermissionPolicy(currentStudioOrigin);
 
   mainWindow = new BrowserWindow({
-    title: 'Liminal Studio',
+    title: 'Sinter Studio',
     width: 1440,
     height: 960,
     minWidth: 960,

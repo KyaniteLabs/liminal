@@ -16,7 +16,7 @@ for i in $(seq -w 0 149); do
     -gravity center \
     -pointsize 120 \
     -font Arial-Black \
-    "label:LIMINAL" \
+    "label:SINTER" \
     -blur 0x5 \
     temp-frames/frame_$i.png 2>/dev/null || \
   echo "Frame $i" > temp-frames/frame_$i.txt
@@ -24,7 +24,7 @@ done
 
 # Try to use ffmpeg with testsrc if imagemagick fails
 ffmpeg -f lavfi -i testsrc=duration=5:size=1920x1080:rate=30 \
-  -vf "format=yuv420p, drawtext=text='LIMINAL':fontfile=/System/Library/Fonts/Helvetica.ttc:fontsize=120:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2" \
+  -vf "format=yuv420p, drawtext=text='SINTER':fontfile=/System/Library/Fonts/Helvetica.ttc:fontsize=120:fontcolor=white:x=(w-text_w)/2:y=(h-text_h)/2" \
   -pix_fmt yuv420p dogfood-remotion-title.mp4 -y 2>/dev/null || \
 echo "Video creation requires manual rendering"
 

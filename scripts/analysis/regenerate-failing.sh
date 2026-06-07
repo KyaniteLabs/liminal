@@ -1,5 +1,5 @@
 #!/bin/bash
-# Regenerate all failing examples through improved Liminal pipeline
+# Regenerate all failing examples through improved Sinter pipeline
 
 cd /Users/simongonzalezdecruz/workspaces/liminal
 

@@ -1,5 +1,5 @@
 /**
- * HarnessMemory - Persistent Memory for LIMINAL Meta-Harness
+ * HarnessMemory - Persistent Memory for SINTER Meta-Harness
  * 
  * Stores across sessions:
  * - Tasks attempted (M1-M8 and beyond)

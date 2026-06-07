@@ -8,7 +8,7 @@ import { run } from '../src/index.js';
 import fs from 'fs';
 import path from 'path';
 
-// Handle unhandled promise rejections from the Liminal library
+// Handle unhandled promise rejections from the Sinter library
 process.on('unhandledRejection', (reason, promise) => {
   console.error('⚠️  Unhandled Rejection:', reason);
 });

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Regenerate all failing examples through improved Liminal pipeline
+ * Regenerate all failing examples through improved Sinter pipeline
  * Uses RuntimeValidator + iteration extension (3→6)
  */
 
@@ -81,7 +81,7 @@ for (const example of examples) {
   }
   
   try {
-    // Run Liminal with improved pipeline
+    // Run Sinter with improved pipeline
     const cmd = `npx tsx src/cli.ts generate \
       -p "${example.prompt}" \
       ${example.options} \

@@ -9,7 +9,12 @@ import (
 )
 
 func main() {
-	bridgeURL := os.Getenv("LIMINAL_BRIDGE_URL")
+	// Canonical SINTER_BRIDGE_URL, with the legacy LIMINAL_BRIDGE_URL honored for
+	// back-compat (the Node env-mirror can't reach this separate Go process).
+	bridgeURL := os.Getenv("SINTER_BRIDGE_URL")
+	if bridgeURL == "" {
+		bridgeURL = os.Getenv("LIMINAL_BRIDGE_URL")
+	}
 	if bridgeURL == "" {
 		bridgeURL = "http://localhost:3000"
 	}

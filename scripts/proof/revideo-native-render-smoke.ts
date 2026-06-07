@@ -113,7 +113,7 @@ export default makeScene2D('NativeSmokeScene', function* (view) {
   const title = createRef<Txt>();
   view.add(
     <Rect width={${width}} height={${height}} fill={'#050816'}>
-      <Txt ref={title} text={'Liminal Revideo'} fill={'#ffffff'} fontSize={72} />
+      <Txt ref={title} text={'Sinter Revideo'} fill={'#ffffff'} fontSize={72} />
     </Rect>
   );
   yield* title().opacity(1, 0.2);

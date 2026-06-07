@@ -62,7 +62,7 @@ Examples:
 
 Purpose:
   Builds a disposable cockpit for manual browser/audio/video checks. It does not
-  modify the Liminal app, generation runtime, package scripts, or product UI.`;
+  modify the Sinter app, generation runtime, package scripts, or product UI.`;
 }
 
 function parseArgs(argv) {
@@ -346,7 +346,7 @@ function renderCockpit(discovery) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Liminal Creative Domain QA Cockpit</title>
+<title>Sinter Creative Domain QA Cockpit</title>
 <style>
 :root{color-scheme:dark;--bg:#0b0d12;--panel:#151a24;--muted:#8d98ad;--line:#2b3446;--ok:#5ee38b;--warn:#ffd166;--bad:#ff6b6b;--text:#eef4ff;--accent:#8ab4ff}
 *{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#090b10,#101520);color:var(--text);font:14px/1.45 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.top{position:sticky;top:0;z-index:2;background:rgba(11,13,18,.94);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:18px 22px}.top h1{margin:0 0 4px;font-size:22px}.top p{margin:0;color:var(--muted)}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}button,a.button{border:1px solid var(--line);background:#20283a;color:var(--text);border-radius:10px;padding:9px 12px;cursor:pointer;text-decoration:none}button:hover,a.button:hover{border-color:var(--accent)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;padding:16px}.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;min-height:420px;overflow:hidden}.card header{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}.card h2{text-transform:uppercase;font-size:14px;letter-spacing:.12em;margin:0}.badge{font-size:12px;color:#101520;border-radius:999px;padding:4px 8px;background:var(--warn)}.badge.ok{background:var(--ok)}.badge.bad{background:var(--bad)}.expected,.source{padding:0 14px;margin:10px 0;color:var(--muted)}.source{font-family:ui-monospace,monospace;font-size:12px}iframe{width:100%;height:260px;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff}.missing{height:260px;display:grid;place-items:center;color:var(--bad);border-block:1px solid var(--line)}.manual{display:block;padding:12px 14px}.manual input{transform:scale(1.2);margin-right:8px}details{padding:0 14px 14px}textarea{width:100%;min-height:70px;border-radius:10px;border:1px solid var(--line);background:#0e121b;color:var(--text);padding:8px}.panel{margin:0 16px 16px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:16px}.panel h2{margin-top:0}.panel li{margin:6px 0}.report{white-space:pre-wrap;background:#080b10;border:1px solid var(--line);border-radius:12px;padding:12px;max-height:320px;overflow:auto;color:#d7e2f5}.warn{color:var(--warn)}
@@ -354,8 +354,8 @@ function renderCockpit(discovery) {
 </head>
 <body>
 <header class="top">
-  <h1>Liminal Creative Domain QA Cockpit</h1>
-  <p>This is a disposable manual-test cockpit for generated artifacts only. It is not the Liminal app and should not become product surface.</p>
+  <h1>Sinter Creative Domain QA Cockpit</h1>
+  <p>This is a disposable manual-test cockpit for generated artifacts only. It is not the Sinter app and should not become product surface.</p>
   <p><strong>Input:</strong> ${escapeHtml(discovery.inputDir)}</p>
   <div class="actions">
     <button id="runChecks">Run machine checks</button>
@@ -402,7 +402,7 @@ function inspectFrame(domain){
   }
 }
 function renderReport(){
-  const lines = ['# Liminal creative-domain QA report', '', 'Generated: '+new Date().toISOString(), ''];
+  const lines = ['# Sinter creative-domain QA report', '', 'Generated: '+new Date().toISOString(), ''];
   for (const state of Object.values(qaState)) {
     lines.push('## '+state.domain);
     lines.push('- loaded: '+state.loaded);
@@ -425,7 +425,7 @@ renderReport();
 
 function renderChecklist(discovery) {
   const lines = [
-    '# Liminal creative-domain manual QA checklist',
+    '# Sinter creative-domain manual QA checklist',
     '',
     `Input: ${discovery.inputDir}`,
     '',
@@ -450,7 +450,7 @@ function renderChecklist(discovery) {
 }
 
 function renderBugReport(discovery) {
-  return `# Liminal creative-domain QA bug report
+  return `# Sinter creative-domain QA bug report
 
 Input: ${discovery.inputDir}
 
@@ -554,7 +554,7 @@ function serveCockpit({ outDir, discovery, port, open }) {
       const address = server.address();
       const actualPort = typeof address === 'object' && address ? address.port : port;
       const url = `http://127.0.0.1:${actualPort}/`;
-      console.log(`Liminal QA cockpit: ${url}`);
+      console.log(`Sinter QA cockpit: ${url}`);
       console.log(`Bundle: ${outDir}`);
       console.log('Press Ctrl+C to stop.');
       if (open) openUrl(url);

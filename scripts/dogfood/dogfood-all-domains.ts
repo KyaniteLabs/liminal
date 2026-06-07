@@ -2,7 +2,7 @@
 /**
  * 100% Dogfood Test - All Domains × All Models
  * 
- * Runs every domain through Liminal with every available LLM provider.
+ * Runs every domain through Sinter with every available LLM provider.
  * One by one, sequential execution.
  */
 

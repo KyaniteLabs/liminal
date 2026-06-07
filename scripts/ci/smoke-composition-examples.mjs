@@ -46,7 +46,7 @@ try {
     },
   });
 
-  requireFile('composition-programmatic.html', 'Liminal Composition');
+  requireFile('composition-programmatic.html', 'Sinter Composition');
   requireFile('composition-programmatic.json', 'Programmatic Demo');
 
   console.log(`Composition example smoke passed: ${outputDir}`);

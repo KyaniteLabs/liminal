@@ -240,6 +240,8 @@ for (let i = 0; i < args.length; i++) {
     flags.maxIterations = parseInt(args[++i]);
   } else if (arg === '--output' || arg === '-o') {
     flags.output = args[++i];
+  } else if (arg === '--gallery') {
+    flags.gallery = args[++i];
   } else if (arg === '--input' || arg === '-f') {
     flags.input = args[++i];
   } else if (arg === '--provider') {
@@ -1134,7 +1136,9 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || (flags.prompt && (!cmd
 }
 else if (cmd === 'serve' || cmd === 's') {
   const port = cmdArgs[0] || 3456;
-  const server = new PreviewServer();
+  // Wire the gallery dir so /api/gallery surfaces saved works (generations +
+  // compositions). Defaults to cwd/gallery — the same dir generate/compose write to.
+  const server = new PreviewServer(path.resolve(flags.gallery || 'gallery'));
 
   function findLatestSketch(dirs) {
     let latestSketch = null;
@@ -1564,7 +1568,7 @@ else if (cmd === 'bridge') {
     console.log(`  Listening: ${server.address}`);
     console.log(`  LLM: ${llmProvider} / ${llmModel}`);
     console.log('');
-    console.log('  Connect Bubble Tea: LIMINAL_BRIDGE_URL=http://localhost:' + port + ' ./dist/bubbletea');
+    console.log('  Connect Bubble Tea: SINTER_BRIDGE_URL=http://localhost:' + port + ' ./dist/bubbletea');
     console.log('');
     const shutdown = async () => {
       console.log('\nShutting down bridge...');
@@ -1706,7 +1710,7 @@ else if (cmd === 'bubbletea' || cmd === 'operator') {
     process.once('SIGTERM', shutdown);
   } else {
     const tui = spawn(binPath, [], {
-      env: { ...process.env, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
+      env: { ...process.env, SINTER_BRIDGE_URL: `http://localhost:${port}`, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
       stdio: 'inherit',
     });
 

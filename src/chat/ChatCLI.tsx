@@ -64,7 +64,7 @@ export class ChatCLI {
         <Box flexDirection="column" padding={1}>
           {/* Header */}
           <Box borderStyle="double" borderColor="cyan" paddingX={1} marginBottom={1}>
-            <Text bold color="cyan">LIMINAL CHAT</Text>
+            <Text bold color="cyan">SINTER CHAT</Text>
             <Spacer />
             <Text color="gray">Phase 1: Foundation</Text>
           </Box>

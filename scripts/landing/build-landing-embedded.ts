@@ -113,7 +113,7 @@ const html = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liminal - 48 Example Dogfood QA</title>
+    <title>Sinter - 48 Example Dogfood QA</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root { --bg: #0a0a0f; --card: #12121a; --text: #fff; --text2: #a0a0b0; --border: #2a2a3a; --pink: #ec4899; --cyan: #06b6d4; --blue: #3b82f6; --yellow: #f59e0b; --green: #22c55e; --orange: #f97316; --purple: #8b5cf6; }

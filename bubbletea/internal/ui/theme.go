@@ -54,7 +54,7 @@ var (
 			Foreground(FgText).
 			Padding(0, 1)
 
-	// Brand — "◆ LIMINAL" logo
+	// Brand — "◆ SINTER" logo
 	BrandStyle = lipgloss.NewStyle().
 			Foreground(AccentPurple).
 			Bold(true)

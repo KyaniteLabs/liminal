@@ -58,7 +58,7 @@ try {
   });
   const generator = new P5GeneratorV2(llm);
   const code = await generator.generate(
-    'Create a concise p5.js sketch of a luminous market-ready Liminal signal: flowing blue-green particles, visible motion, and a dark background. Return raw p5.js code only with setup() and createCanvas().',
+    'Create a concise p5.js sketch of a luminous market-ready Sinter signal: flowing blue-green particles, visible motion, and a dark background. Return raw p5.js code only with setup() and createCanvas().',
     { signal: controller.signal },
   );
   fs.mkdirSync(outDir, { recursive: true });

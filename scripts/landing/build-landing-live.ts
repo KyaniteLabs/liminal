@@ -282,7 +282,7 @@ const landingHTML = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liminal - 48 Live Examples</title>
+    <title>Sinter - 48 Live Examples</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root { --bg: #0a0a0f; --card: #12121a; --text: #fff; --text2: #a0a0b0; --border: #2a2a3a; 

@@ -32,7 +32,7 @@ export function buildMarketReadinessStatus(input: { checks: MarketReadinessCheck
 }
 
 export function collectRepositoryMarketReadinessStatus(repoRoot = process.cwd()): MarketReadinessStatus {
-  const bin = read(path.join(repoRoot, 'bin', 'liminal'));
+  const bin = read(path.join(repoRoot, 'bin', 'sinter'));
   const telemetry = read(path.join(repoRoot, 'gui', 'src', 'gui', 'workbenchTelemetry.ts'));
   const app = read(path.join(repoRoot, 'gui', 'src', 'App.tsx'));
   const cliReceipt = read(path.join(repoRoot, 'src', 'cli', 'CognitiveReceiptReporter.ts'));
@@ -41,7 +41,7 @@ export function collectRepositoryMarketReadinessStatus(repoRoot = process.cwd())
   const packageJson = read(path.join(repoRoot, 'package.json'));
 
   const checks: MarketReadinessCheck[] = [
-    sourceCheck('natural-cli', 'Natural CLI front door', bin, ['inferNaturalLanguagePrompt', 'liminal "natural language prompt"']),
+    sourceCheck('natural-cli', 'Natural CLI front door', bin, ['inferNaturalLanguagePrompt', 'sinter "natural language prompt"']),
     sourceCheck('creative-wrappers', 'Creative domain wrapper breadth', wrappers, ['strudel-editor', 'wrapRevideo', 'Hydra', 'Tone']),
     sourceCheck('studio-cognition', 'Studio learning receipts', `${telemetry}\n${app}`, ['latestCognitiveReceipt', 'What Sinter learned', 'sinter-cognitive-receipt']),
     sourceCheck('cli-cognition', 'CLI learning receipts', `${bin}\n${cliReceipt}`, ['writeCliCognitiveReceipt', 'What Sinter learned']),

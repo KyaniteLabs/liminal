@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Start Liminal Studio: GUI backend plus Vite frontend.
+ * Start Sinter Studio: GUI backend plus Vite frontend.
  * Canonical repo command: pnpm gui
  */
 import { spawn } from 'node:child_process';
@@ -64,7 +64,7 @@ backend.on('exit', (code) => {
 
 try {
   await waitFor(`http://localhost:${apiPort}/api/health`);
-  console.log(`Liminal Studio frontend: http://localhost:${guiPort}`);
+  console.log(`Sinter Studio frontend: http://localhost:${guiPort}`);
   frontend = spawn(npmCmd, ['run', 'dev', '--', '--host', 'localhost', '--port', String(guiPort)], {
     cwd: path.join(root, 'gui'),
     stdio: 'inherit',

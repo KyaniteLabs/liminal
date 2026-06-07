@@ -55,6 +55,15 @@ Final residual brand scan across all code dirs: **0** non-intentional `liminal/L
 `--version` · `--help` · `provider status`/`list` · `list` · `report cognition` · `git status` · `compost status`/`seeds` · `ledger status`/`list` · `archive list` · `preferences stats`/`export` · `improve scan` · `model audition auto --dry-run` · `garden status` · `fs artifacts` · `consolidate` — all ✅.
 By-design non-zero (proper messages, not crashes): `market status` (NOT/READY) · `release gate` (not-level-6) · `ship garden` (NOT READY 33%) · `dream run` (archive empty) · `taste train` (need ≥2) · `composite`/`quality gate`/`live-music`/`emergence`/`fs`/`garden` bare (usage requiring args).
 
+## Niche paths exercised
+
+| Path | Status | Evidence |
+|---|---|---|
+| `fix "<desc>" --dry-run` | ✅ | real LLM; "Fix completed successfully! Build passed: true, Tests passed: true" (dry-run, 0 writes) |
+| `quality run --spec <suite>` | ⚠️ runs, stub generation | executes a golden suite (2 cases) but `GoldenSuiteRunner` scores **placeholder candidate code** (`// Generated for: <prompt>`), not real generation — its own source notes "In production, you'd generate". Pre-existing incomplete implementation (not a rename regression); flagged, not fixed (wiring real generation is a feature, out of scope for this verification pass). |
+
+Not exercised (require owner/TTY or specific external state): `chat` full turn (TTY readline), `tui` interactive Go UI (build+bridge proven), `site evolve` (living-site offshoot), `operator`.
+
 ## Toolchain
 
 ✅ `pnpm build` (tsc) 0 errors · ✅ `sing:build`/`sing:typecheck` 0 · ✅ Go `build`+`test ./...` ok · ✅ full suite `test:ci:fast` **10828 passed** — only the 4 known pre-existing/environmental failures (`sandbox.test.ts` ×3 flaky, `proof-llm-server.test.js` ×1 needs a local LLM at :1234).

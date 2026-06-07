@@ -1,5 +1,5 @@
 {
-  "schema": "liminal.shared-artifact",
+  "schema": "sinter.shared-artifact",
   "schemaVersion": "2026-05-25.phase1",
   "id": "artifact_studio_moon_garden_001",
   "title": "Moon Garden",

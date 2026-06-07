@@ -75,10 +75,10 @@ export class PostHogClient {
 
 		try {
 			this.client.capture({
-				distinctId: "liminal-daemon",
+				distinctId: "sinter-daemon",
 				event,
 				properties: {
-					source: "liminal-server",
+					source: "sinter-server",
 					...properties,
 				},
 			});

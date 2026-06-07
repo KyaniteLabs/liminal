@@ -218,7 +218,7 @@ export class KeyframeAnimation {
    */
   generateCSS(animation: Animation): string {
     const { id, duration, loop, keyframes } = animation;
-    const animationName = `liminal-${id}`;
+    const animationName = `sinter-${id}`;
 
     // Generate keyframes
     let keyframesCSS = `@keyframes ${animationName} {\n`;

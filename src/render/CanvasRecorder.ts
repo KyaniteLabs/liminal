@@ -52,7 +52,7 @@ export class CanvasRecorder {
     // Dynamic import to avoid loading Puppeteer at module level
     const puppeteer = await import('puppeteer');
 
-    const framesDir = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-frames-'));
+    const framesDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-frames-'));
 
     try {
       const browser = await puppeteer.default.launch({ headless: true });

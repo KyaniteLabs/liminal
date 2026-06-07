@@ -1,6 +1,6 @@
 {
   "version": "2.1.0",
-  "name": "liminal-ai",
+  "name": "sinter",
   "description": "Creative coding agent configuration",
   "settings": {
     "logLevel": "info",

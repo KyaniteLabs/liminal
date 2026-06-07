@@ -2,7 +2,7 @@
  * FragmentArchive — Loads and queries the curated fragment archive.
  *
  * The archive is a hand-curated JSON of the most valuable insights,
- * personas, prompts, and techniques mined from the liminal-archive/
+ * personas, prompts, and techniques mined from the sinter-archive/
  * inbox (247 files from the Token Mill and Atelier era).
  *
  * Usage:

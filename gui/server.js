@@ -721,7 +721,7 @@ export function createApp(configPath, port = 5174) {
   ${P5_SENSOR_POLICY_SCRIPT}
   <script src="${P5_CDN}" integrity="sha384-bOv+b6RV+dlZvdQAx6+cJ+FK9ab8JCSVWyJ1JPhMVQjPW+4C8V2cOKK+qZDfnRnx" crossorigin="anonymous"></script>
 </head>
-<body data-liminal-p5-preview-shell>
+<body data-sinter-p5-preview-shell>
   <script>
     // Wave 3 isolation: strip network access before running generated code
     window.fetch = undefined;

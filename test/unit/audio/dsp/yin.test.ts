@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectPitchYin } from '@liminal/audio-core/dsp/yin.js';
+import { detectPitchYin } from '@sinter/audio-core/dsp/yin.js';
 
 function sine(freq: number, n: number, sampleRate: number): Float32Array {
   const s = new Float32Array(n);

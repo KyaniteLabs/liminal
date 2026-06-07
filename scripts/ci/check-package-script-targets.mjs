@@ -44,7 +44,7 @@ const targets = extractLocalScriptTargets(pkg.scripts ?? {});
 const missingTargets = targets.filter((target) => !target.exists);
 const result = {
   generatedAt: new Date().toISOString(),
-  contract: 'liminal-package-script-target-integrity-v1',
+  contract: 'sinter-package-script-target-integrity-v1',
   passed: missingTargets.length === 0,
   checkedTargetCount: targets.length,
   targets,

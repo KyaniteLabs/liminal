@@ -1,7 +1,7 @@
-import type { SingPresetArtifact, SingRawMapping, SemanticChannel, SingMappingCurve, SingVoiceFeature } from '@liminal/audio-core/PresetSchema.js';
-import type { SemanticVisualState } from '@liminal/audio-core/SemanticMapper.js';
-import { DEFAULT_SEMANTIC_MAPPINGS } from '@liminal/audio-core/defaultMapping.js';
-import { OneEuroFilter } from '@liminal/audio-core/dsp/OneEuroFilter.js';
+import type { SingPresetArtifact, SingRawMapping, SemanticChannel, SingMappingCurve, SingVoiceFeature } from '@sinter/audio-core/PresetSchema.js';
+import type { SemanticVisualState } from '@sinter/audio-core/SemanticMapper.js';
+import { DEFAULT_SEMANTIC_MAPPINGS } from '@sinter/audio-core/defaultMapping.js';
+import { OneEuroFilter } from '@sinter/audio-core/dsp/OneEuroFilter.js';
 
 export interface SingUniformFrame {
   rms: number;

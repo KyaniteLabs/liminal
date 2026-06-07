@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { mapVoiceToSemantic, type SemanticVisualState } from '@liminal/audio-core/SemanticMapper.js';
-import type { VoiceFeatureFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
-import type { FormantData } from '@liminal/audio-core/FormantAnalyzer.js';
+import { mapVoiceToSemantic, type SemanticVisualState } from '@sinter/audio-core/SemanticMapper.js';
+import type { VoiceFeatureFrame } from '@sinter/audio-core/VoiceFeatureStream.js';
+import type { FormantData } from '@sinter/audio-core/FormantAnalyzer.js';
 
 const formants: FormantData = {
   f1: 500,

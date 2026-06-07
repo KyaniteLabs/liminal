@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hannWindow, applyWindow } from '@liminal/audio-core/dsp/window.js';
+import { hannWindow, applyWindow } from '@sinter/audio-core/dsp/window.js';
 
 describe('hannWindow', () => {
   it('is 0 at edges and 1 at center for odd length', () => {

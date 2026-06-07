@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { OneEuroFilter } from '@liminal/audio-core/dsp/OneEuroFilter.js';
+import { OneEuroFilter } from '@sinter/audio-core/dsp/OneEuroFilter.js';
 
 function variance(xs: number[]): number {
   const mean = xs.reduce((a, b) => a + b, 0) / xs.length;

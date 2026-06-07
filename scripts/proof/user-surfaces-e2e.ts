@@ -57,7 +57,7 @@ function eventId(block: string): number {
   return match ? Number(match[1]) : 0;
 }
 
-const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-user-surfaces-proof-'));
+const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-user-surfaces-proof-'));
 const oldConfigPath = process.env.LIMINAL_CONFIG_PATH;
 let bridgeServer: TuiBridgeServer | undefined;
 let guiServer: Server | undefined;

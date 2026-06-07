@@ -1,7 +1,7 @@
 # Sinter Shared Artifact Contracts
 
 Status: Phase 1 baseline
-Schema: `liminal.shared-artifact`
+Schema: `sinter.shared-artifact`
 Schema version: `2026-05-25.phase1`
 
 ## Purpose
@@ -17,13 +17,13 @@ Core/Studio.
 Run the Phase 1 validator:
 
 ```bash
-pnpm check:liminal-contracts
+pnpm check:sinter-contracts
 ```
 
 The validator checks the fixtures in `docs/contracts/fixtures/`, compares the
 domain map against the current runtime unions in `src/composition/types.ts` and
 `src/core/validators/types.ts`, and writes proof to
-`.omx/proof/liminal-shared-artifact-contracts.json`.
+`.omx/proof/sinter-shared-artifact-contracts.json`.
 
 This contract is not yet a generated TypeScript package. It is still a merge gate
 for imports that claim shared artifact compatibility.
@@ -64,7 +64,7 @@ than pretending the vocabularies already match.
 ## Shared Provenance
 
 ```ts
-export interface LiminalProvenance {
+export interface SinterProvenance {
   artifactId: string;
   parentArtifactId?: string;
   repo?: string;
@@ -74,10 +74,10 @@ export interface LiminalProvenance {
   modelName?: string;
   generatedAt: string;
   generatedBy: "studio" | "sites" | "instrument" | "codex" | "manual";
-  receipts: LiminalReceipt[];
+  receipts: SinterReceipt[];
 }
 
-export interface LiminalReceipt {
+export interface SinterReceipt {
   id: string;
   kind:
     | "generation"
@@ -97,21 +97,21 @@ export interface LiminalReceipt {
 ## Base Artifact
 
 ```ts
-export interface LiminalArtifact {
-  schema: "liminal.shared-artifact";
+export interface SinterArtifact {
+  schema: "sinter.shared-artifact";
   schemaVersion: "2026-05-25.phase1";
   id: string;
   title: string;
-  domain: LiminalDomain;
-  files: LiminalFile[];
+  domain: SinterDomain;
+  files: SinterFile[];
   preview?: PreviewTarget;
-  controls?: LiminalControlPort[];
-  provenance: LiminalProvenance;
+  controls?: SinterControlPort[];
+  provenance: SinterProvenance;
   createdAt: string;
   updatedAt: string;
 }
 
-export type LiminalDomain =
+export type SinterDomain =
   | "p5"
   | "svg"
   | "glsl"
@@ -127,7 +127,7 @@ export type LiminalDomain =
   | "site"
   | "instrument";
 
-export interface LiminalFile {
+export interface SinterFile {
   path: string;
   role: "source" | "style" | "script" | "asset" | "manifest" | "receipt";
   mimeType?: string;
@@ -147,7 +147,7 @@ Control ports are shared because Sites and Instrument both need controllable
 aesthetic systems.
 
 ```ts
-export interface LiminalControlPort {
+export interface SinterControlPort {
   id: string;
   label: string;
   type: "number" | "boolean" | "trigger" | "color" | "vector2" | "vector3" | "text";
@@ -164,8 +164,8 @@ export interface LiminalControlPort {
 ## Site Artifact
 
 ```ts
-export interface LiminalSiteArtifact {
-  schema: "liminal.shared-site-artifact";
+export interface SinterSiteArtifact {
+  schema: "sinter.shared-site-artifact";
   schemaVersion: "2026-05-25.phase1";
   id: string;
   baseArtifactId?: string;
@@ -173,8 +173,8 @@ export interface LiminalSiteArtifact {
   skinSpec?: SkinSpec;
   patchPlan?: SitePatchPlan;
   aestheticTags: string[];
-  previewReceipt?: LiminalReceipt;
-  provenance: LiminalProvenance;
+  previewReceipt?: SinterReceipt;
+  provenance: SinterProvenance;
 }
 
 export interface SkinSpec {
@@ -182,8 +182,8 @@ export interface SkinSpec {
   name: string;
   paletteId?: string;
   motionProfile?: "still" | "subtle" | "expressive";
-  cssFiles?: LiminalFile[];
-  scriptFiles?: LiminalFile[];
+  cssFiles?: SinterFile[];
+  scriptFiles?: SinterFile[];
 }
 
 export interface SitePatchPlan {
@@ -191,7 +191,7 @@ export interface SitePatchPlan {
   repo: string;
   targetBranch?: string;
   summary: string;
-  files: LiminalFile[];
+  files: SinterFile[];
   reviewActionId: string;
 }
 ```
@@ -199,18 +199,18 @@ export interface SitePatchPlan {
 ## Instrument Preset
 
 ```ts
-export interface LiminalInstrumentPreset {
-  schema: "liminal.shared-instrument-preset";
+export interface SinterInstrumentPreset {
+  schema: "sinter.shared-instrument-preset";
   schemaVersion: "2026-05-25.phase1";
   id: string;
   baseArtifactId?: string;
   name: string;
   renderer: "glsl" | "p5" | "three" | "hydra" | "canvas";
-  files: LiminalFile[];
-  controls: LiminalControlPort[];
+  files: SinterFile[];
+  controls: SinterControlPort[];
   mappings: InstrumentMapping[];
   lyricSidecar?: LyricSidecarConfig;
-  provenance: LiminalProvenance;
+  provenance: SinterProvenance;
 }
 
 export interface InstrumentMapping {
@@ -232,7 +232,7 @@ export interface LyricSidecarConfig {
 
 ```ts
 export interface InstrumentSession {
-  schema: "liminal.shared-instrument-session";
+  schema: "sinter.shared-instrument-session";
   schemaVersion: "2026-05-25.phase1";
   id: string;
   presetIds: string[];
@@ -243,7 +243,7 @@ export interface InstrumentSession {
   telemetryFile: string;
   phraseEventsFile?: string;
   performerNotes?: string;
-  provenance: LiminalProvenance;
+  provenance: SinterProvenance;
 }
 ```
 
@@ -292,7 +292,7 @@ before execution. `executionReceiptId` should be attached after the action runs.
 
 ```json
 {
-  "schema": "liminal.shared-artifact",
+  "schema": "sinter.shared-artifact",
   "schemaVersion": "2026-05-25.phase1",
   "id": "artifact_studio_moon_garden_001",
   "title": "Moon Garden",
@@ -339,7 +339,7 @@ before execution. `executionReceiptId` should be attached after the action runs.
 
 ```json
 {
-  "schema": "liminal.shared-site-artifact",
+  "schema": "sinter.shared-site-artifact",
   "schemaVersion": "2026-05-25.phase1",
   "id": "site_artifact_moon_garden_skin_001",
   "baseArtifactId": "artifact_studio_moon_garden_001",
@@ -373,7 +373,7 @@ before execution. `executionReceiptId` should be attached after the action runs.
 
 ```json
 {
-  "schema": "liminal.shared-instrument-preset",
+  "schema": "sinter.shared-instrument-preset",
   "schemaVersion": "2026-05-25.phase1",
   "id": "instrument_preset_moon_garden_001",
   "baseArtifactId": "artifact_studio_moon_garden_001",

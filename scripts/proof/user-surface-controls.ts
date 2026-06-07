@@ -60,7 +60,7 @@ async function readSseEvents(url: string, expectedTypes: string[], headers: Reco
   }
 }
 
-const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-user-surface-controls-'));
+const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-user-surface-controls-'));
 const oldConfigPath = process.env.LIMINAL_CONFIG_PATH;
 const oldRuntimeEnv = {
   LIMINAL_LLM_PROVIDER: process.env.LIMINAL_LLM_PROVIDER,

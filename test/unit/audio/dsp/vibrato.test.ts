@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { VibratoTracker } from '@liminal/audio-core/dsp/VibratoTracker.js';
+import { VibratoTracker } from '@sinter/audio-core/dsp/VibratoTracker.js';
 
 /** Feed a vibrato-modulated pitch around 330 Hz; returns the final estimate. */
 function feed(tracker: VibratoTracker, rateHz: number, depthCents: number, durSec: number, fps = 60) {

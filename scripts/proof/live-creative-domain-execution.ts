@@ -72,7 +72,7 @@ interface DomainResult {
 }
 
 interface LiveCreativeDomainReceipt {
-  contract: 'liminal-live-creative-domain-execution-v1';
+  contract: 'sinter-live-creative-domain-execution-v1';
   generatedAt: string;
   status: 'pass' | 'fail';
   ready: boolean;
@@ -206,7 +206,7 @@ async function main(): Promise<void> {
   const passedDomains = new Set(results.filter(result => result.status === 'pass').map(result => result.domain));
   const missingDomains = LAUNCH_CREATIVE_DOMAINS.filter(domain => !passedDomains.has(domain));
   const receipt: LiveCreativeDomainReceipt = {
-    contract: 'liminal-live-creative-domain-execution-v1',
+    contract: 'sinter-live-creative-domain-execution-v1',
     generatedAt: new Date().toISOString(),
     status: failed.length === 0 && missingDomains.length === 0 ? 'pass' : 'fail',
     ready: failed.length === 0 && missingDomains.length === 0,

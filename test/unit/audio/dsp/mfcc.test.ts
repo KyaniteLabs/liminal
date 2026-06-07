@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeMfcc } from '@liminal/audio-core/dsp/mfcc.js';
+import { computeMfcc } from '@sinter/audio-core/dsp/mfcc.js';
 
 const SR = 48000;
 

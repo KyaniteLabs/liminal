@@ -8,7 +8,7 @@ import os from 'node:os';
 import { Logger } from '../../utils/Logger.js';
 import { formatErrorWithFallback } from '../../utils/errors.js';
 
-const BACKUP_DIR = path.join(os.tmpdir(), 'liminal-harness-backups');
+const BACKUP_DIR = path.join(os.tmpdir(), 'sinter-harness-backups');
 
 export interface BackupResult {
   success: boolean;

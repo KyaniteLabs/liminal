@@ -167,7 +167,7 @@ export class PreviewServer {
 
     const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
       getSecret: () => csrfSecret || (isTestEnv ? 'test-secret' : ''),
-      getSessionIdentifier: () => 'liminal-preview',
+      getSessionIdentifier: () => 'sinter-preview',
       cookieName: 'x-csrf-token',
       cookieOptions: {
         sameSite: 'strict' as const,

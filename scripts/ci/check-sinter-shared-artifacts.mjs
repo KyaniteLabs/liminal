@@ -5,7 +5,7 @@ import path from 'node:path';
 const root = process.cwd();
 const fixtureDir = path.join(root, 'docs/contracts/fixtures');
 const outDir = path.join(root, '.omx/proof');
-const outPath = path.join(outDir, 'liminal-shared-artifact-contracts.json');
+const outPath = path.join(outDir, 'sinter-shared-artifact-contracts.json');
 const schemaVersion = '2026-05-25.phase1';
 
 const fileRoles = new Set(['source', 'style', 'script', 'asset', 'manifest', 'receipt']);
@@ -155,12 +155,12 @@ function main() {
   const compositionDomains = extractUnionLiterals('src/composition/types.ts', 'DomainType');
   const validatorDomains = extractUnionLiterals('src/core/validators/types.ts', 'Domain');
   const contractDomains = extractUnionLiterals(
-    'docs/contracts/liminal-shared-artifact-contracts.md',
+    'docs/contracts/sinter-shared-artifact-contracts.md',
     'SinterDomain',
   );
 
   const domainMap = readJson('docs/contracts/fixtures/domain-map.json');
-  validateSchema(failures, 'domain-map.json', domainMap, 'liminal.shared-artifact.domain-map');
+  validateSchema(failures, 'domain-map.json', domainMap, 'sinter.shared-artifact.domain-map');
   const entries = Array.isArray(domainMap.domains) ? domainMap.domains : [];
   const sharedDomains = entries.map((entry) => entry.shared).sort();
   const expectedDomains = [...contractDomains].sort();
@@ -189,7 +189,7 @@ function main() {
   }
 
   const studioArtifact = readJson('docs/contracts/fixtures/studio-artifact.json');
-  validateSchema(failures, 'studio-artifact.json', studioArtifact, 'liminal.shared-artifact');
+  validateSchema(failures, 'studio-artifact.json', studioArtifact, 'sinter.shared-artifact');
   requireString(failures, 'studio-artifact.json', studioArtifact.id, 'id');
   requireString(failures, 'studio-artifact.json', studioArtifact.title, 'title');
   if (!allowedSharedDomains.has(studioArtifact.domain)) {
@@ -237,7 +237,7 @@ function main() {
 
   const result = {
     generatedAt: new Date().toISOString(),
-    contract: 'liminal-shared-artifact-contracts',
+    contract: 'sinter-shared-artifact-contracts',
     schemaVersion,
     passed: failures.length === 0,
     checked: {
@@ -253,12 +253,12 @@ function main() {
   fs.writeFileSync(outPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
 
   if (failures.length > 0) {
-    console.error(`Liminal shared artifact contract check failed. See ${outPath}`);
+    console.error(`Sinter shared artifact contract check failed. See ${outPath}`);
     for (const failure of failures) console.error(`- ${failure}`);
     process.exit(1);
   }
 
-  console.log(`Liminal shared artifact contract check passed: ${outPath}`);
+  console.log(`Sinter shared artifact contract check passed: ${outPath}`);
 }
 
 main();

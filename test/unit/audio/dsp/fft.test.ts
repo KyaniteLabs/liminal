@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { magnitudeSpectrum } from '@liminal/audio-core/dsp/fft.js';
+import { magnitudeSpectrum } from '@sinter/audio-core/dsp/fft.js';
 
 function sine(freq: number, n: number, sampleRate: number): Float32Array {
   const s = new Float32Array(n);

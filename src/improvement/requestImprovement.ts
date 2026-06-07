@@ -9,7 +9,7 @@ import { LLMClient } from '../llm/LLMClient.js';
 import { Logger } from '../utils/Logger.js';
 
 export interface RequestImprovementState {
-  /** Optional project directory or path to config/liminal.json for project LLM config */
+  /** Optional project directory or path to config/sinter.json for project LLM config */
   projectConfigPath?: string;
   /** Optional pre-configured LLMClient instance for dependency injection */
   llm?: LLMClient;

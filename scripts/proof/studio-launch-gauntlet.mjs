@@ -251,30 +251,30 @@ async function runCase(page, testCase, cycleDir, caseIndex, cycleIndex, popupUrl
   };
 
   try {
-    await page.waitForSelector('.liminal-workbench', { timeout: 45_000 });
+    await page.waitForSelector('.sinter-workbench', { timeout: 45_000 });
     await page.screenshot({ path: path.join(caseDir, '01-home.png'), fullPage: true });
     result.screenshots.home = path.join(caseDir, '01-home.png');
     await page.fill('#workbench-prompt', testCase.prompt);
     await page.screenshot({ path: path.join(caseDir, '02-prompt-entered.png'), fullPage: true });
     result.screenshots.promptEntered = path.join(caseDir, '02-prompt-entered.png');
     await page.waitForFunction(() => {
-      const btn = document.querySelector('.liminal-run-button');
+      const btn = document.querySelector('.sinter-run-button');
       return btn && !btn.disabled;
     }, null, { timeout: 45_000 });
-    await page.click('.liminal-run-button');
+    await page.click('.sinter-run-button');
 
     const states = [];
     let terminalState;
     let status = 'timeout';
     while (Date.now() - started < maxCaseMs) {
       const state = await page.evaluate(() => {
-        const stage = document.querySelector('.liminal-preview-panel__stage');
+        const stage = document.querySelector('.sinter-preview-panel__stage');
         const img = stage?.querySelector('img');
         const iframe = stage?.querySelector('iframe');
         const pre = stage?.querySelector('pre');
         const bodyText = document.body.innerText;
         return {
-          panelVisible: Boolean(document.querySelector('.liminal-preview-panel')),
+          panelVisible: Boolean(document.querySelector('.sinter-preview-panel')),
           imageCount: stage?.querySelectorAll('img').length || 0,
           iframeCount: stage?.querySelectorAll('iframe').length || 0,
           preCount: stage?.querySelectorAll('pre').length || 0,
@@ -464,7 +464,7 @@ function updateSummary(final = false) {
   const commandChecks = allCycles.flatMap(c => (c.commandChecks || []).map(check => ({ ...check, cycleIndex: c.cycleIndex })));
   const commandFailures = commandChecks.filter(check => !check.ok);
   const summary = {
-    contract: 'liminal-overnight-studio-gauntlet-v1',
+    contract: 'sinter-overnight-studio-gauntlet-v1',
     startedAt: startedAt.toISOString(),
     updatedAt: new Date().toISOString(),
     deadline: deadline.toISOString(),

@@ -212,7 +212,7 @@ export class TuiBridgeServer {
 
       // Health check
       if (path === '/health') {
-        this.json(res, 200, { status: 'ok', bridge: 'liminal-tui' });
+        this.json(res, 200, { status: 'ok', bridge: 'sinter-tui' });
         return;
       }
 

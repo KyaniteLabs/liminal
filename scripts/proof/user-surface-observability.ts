@@ -13,7 +13,7 @@ const repoRoot = process.cwd();
 const outDir = path.join(repoRoot, '.omx', 'proof');
 const outPath = path.join(outDir, 'user-surface-observability.json');
 const prompt = 'Create a Tone.js browser synth drone with a visible start button';
-const proofModelName = 'liminal-observability-proof-model';
+const proofModelName = 'sinter-observability-proof-model';
 const proofToneHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -72,7 +72,7 @@ function startProofModel(): Promise<{ server: Server; port: number; baseUrl: str
 
         requests.push(await readJsonBody(req));
         writeJson(res, 200, {
-          id: 'chatcmpl-liminal-observability-proof',
+          id: 'chatcmpl-sinter-observability-proof',
           object: 'chat.completion',
           created: Math.floor(Date.now() / 1000),
           model: proofModelName,
@@ -154,7 +154,7 @@ function eventOrder(events: Array<{ event: TuiBridgeEvent }>, types: string[]): 
   return true;
 }
 
-const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'liminal-surface-observability-'));
+const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-surface-observability-'));
 const oldEnv = {
   configPath: process.env.LIMINAL_CONFIG_PATH,
   llmBaseUrl: process.env.LIMINAL_LLM_BASE_URL,
@@ -170,13 +170,13 @@ try {
   process.env.LIMINAL_CONFIG_PATH = path.join(tmpDir, 'config.json');
   process.env.LIMINAL_LLM_BASE_URL = proofModel.baseUrl;
   process.env.LIMINAL_LLM_MODEL = proofModelName;
-  process.env.LIMINAL_LLM_API_KEY = 'liminal-local-proof-key';
+  process.env.LIMINAL_LLM_API_KEY = 'sinter-local-proof-key';
 
   const bridge = new TuiBridgeService();
   const llm = new LLMClient({
     baseUrl: proofModel.baseUrl,
     model: proofModelName,
-    apiKey: 'liminal-local-proof-key',
+    apiKey: 'sinter-local-proof-key',
   });
   bridgeServer = new TuiBridgeServer(bridge, { port: 0, host: '127.0.0.1', llm });
   await bridgeServer.start();

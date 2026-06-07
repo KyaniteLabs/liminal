@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSingPreset, validateSingPreset } from '@liminal/audio-core/PresetSchema.js';
+import { createSingPreset, validateSingPreset } from '@sinter/audio-core/PresetSchema.js';
 
 const shader = 'void main() { gl_FragColor = vec4(1.0); }';
 

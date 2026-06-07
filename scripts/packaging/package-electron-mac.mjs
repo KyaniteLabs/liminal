@@ -51,7 +51,7 @@ async function writeElectronPackageJson() {
   const packageJsonPath = path.join(root, 'package.json');
   const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
   const desktopPackageJson = {
-    name: 'liminal-studio-desktop',
+    name: 'sinter-studio-desktop',
     version: packageJson.version,
     private: true,
     type: packageJson.type,

@@ -890,7 +890,7 @@ window.DOMAIN_META = window.GALLERY_DATA.DOMAIN_META;
   /* ==============================
      Constants
      ============================== */
-  var STORAGE_KEY = 'liminal-ratings';
+  var STORAGE_KEY = 'sinter-ratings';
   var VISIBLE_CLASS = 'visible';
   var REVEAL_THRESHOLD = 0.08;
   var REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
@@ -1066,7 +1066,7 @@ window.DOMAIN_META = window.GALLERY_DATA.DOMAIN_META;
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = 'liminal-ratings-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.download = 'sinter-ratings-' + new Date().toISOString().slice(0, 10) + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

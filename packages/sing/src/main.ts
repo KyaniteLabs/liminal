@@ -1,8 +1,8 @@
-import { validateSingPreset, type SingPresetArtifact } from '@liminal/audio-core/PresetSchema.js';
-import { analyzeVoiceFrame, type VoiceFeatureFrame } from '@liminal/audio-core/VoiceFeatureStream.js';
-import { sampleRingByteLength, createSampleRingViews, readWindowFromRing } from '@liminal/audio-core/dsp/SampleRingShared.js';
-import { mapVoiceToSemantic } from '@liminal/audio-core/SemanticMapper.js';
-import { VibratoTracker } from '@liminal/audio-core/dsp/VibratoTracker.js';
+import { validateSingPreset, type SingPresetArtifact } from '@sinter/audio-core/PresetSchema.js';
+import { analyzeVoiceFrame, type VoiceFeatureFrame } from '@sinter/audio-core/VoiceFeatureStream.js';
+import { sampleRingByteLength, createSampleRingViews, readWindowFromRing } from '@sinter/audio-core/dsp/SampleRingShared.js';
+import { mapVoiceToSemantic } from '@sinter/audio-core/SemanticMapper.js';
+import { VibratoTracker } from '@sinter/audio-core/dsp/VibratoTracker.js';
 import { moonlitGardenPreset } from './presets/moonlitGarden';
 import {
   DEFAULT_LYRIC_RUNTIME_CONFIG,

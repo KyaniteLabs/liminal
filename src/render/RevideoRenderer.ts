@@ -44,7 +44,7 @@ export class RevideoRenderer implements VideoRenderer {
         "import { makeProject } from '@revideo/core';",
         "import scene from './scenes/scene?scene';",
         'export default makeProject({',
-        "  name: 'liminal-render',",
+        "  name: 'sinter-render',",
         '  scenes: [scene],',
         '  settings: {',
         `    shared: { size: { x: ${width}, y: ${height} } },`,
@@ -59,7 +59,7 @@ export class RevideoRenderer implements VideoRenderer {
       path.join(projectDir, 'package.json'),
       JSON.stringify(
         {
-          name: 'liminal-render-project',
+          name: 'sinter-render-project',
           type: 'module',
           dependencies: {
             '@revideo/core': '^0.10.4',

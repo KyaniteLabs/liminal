@@ -23,23 +23,23 @@ async function snapshot(name) {
 async function readState() {
   return await page.evaluate(() => {
     const body = document.body.innerText;
-    const iframe = document.querySelector('.liminal-preview-panel iframe');
+    const iframe = document.querySelector('.sinter-preview-panel iframe');
     const srcdoc = iframe?.getAttribute('srcdoc') || '';
-    const img = document.querySelector('.liminal-preview-panel img');
-    const code = document.querySelector('.liminal-stage-code');
+    const img = document.querySelector('.sinter-preview-panel img');
+    const code = document.querySelector('.sinter-stage-code');
     return {
       body: body.slice(0, 12000),
       hasPreviewIframe: Boolean(iframe),
       hasPreviewImage: Boolean(img),
       hasCodePreview: Boolean(code),
       srcdocLength: srcdoc.length,
-      srcdocHasP5: /p5\.min\.js|createCanvas|data-liminal-sync-preview="p5"/i.test(srcdoc),
-      srcdocHasThree: /THREE\.|three\.module|data-liminal-sync-preview="three"/i.test(srcdoc),
+      srcdocHasP5: /p5\.min\.js|createCanvas|data-sinter-sync-preview="p5"/i.test(srcdoc),
+      srcdocHasThree: /THREE\.|three\.module|data-sinter-sync-preview="three"/i.test(srcdoc),
       hasClarification: /Answer needed|Answer and generate/i.test(body),
       hasRevision: /Preview ready|Adjust direction|New variation|Polish/i.test(body),
       hasError: /Preview unavailable|error|failed|disconnected/i.test(body),
-      runButtonText: document.querySelector('.liminal-run-button')?.textContent?.trim() || '',
-      runButtonDisabled: Boolean(document.querySelector('.liminal-run-button')?.disabled),
+      runButtonText: document.querySelector('.sinter-run-button')?.textContent?.trim() || '',
+      runButtonDisabled: Boolean(document.querySelector('.sinter-run-button')?.disabled),
     };
   });
 }
@@ -51,7 +51,7 @@ async function waitForPreview(label, timeoutMs = 240000) {
     last = await readState();
     fs.writeFileSync(path.join(outDir, `${label}-latest.json`), JSON.stringify(last, null, 2));
     if (last.hasClarification) {
-      const input = page.locator('.liminal-clarification input');
+      const input = page.locator('.sinter-clarification input');
       if (await input.count()) {
         await input.fill('A calm nocturne: dark pond, blue-green fireflies, slow orbital movement, minimal text, no harsh flashes.');
         await page.getByRole('button', { name: 'Answer and generate' }).click();
@@ -66,16 +66,16 @@ async function waitForPreview(label, timeoutMs = 240000) {
 
 try {
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  await page.waitForSelector('.liminal-workbench', { timeout: 30000 });
+  await page.waitForSelector('.sinter-workbench', { timeout: 30000 });
   await snapshot('01-home');
 
   await page.fill('#workbench-prompt', prompt);
   await page.waitForFunction(() => {
-    const button = document.querySelector('.liminal-run-button');
+    const button = document.querySelector('.sinter-run-button');
     return button && !button.disabled;
   }, null, { timeout: 30000 });
   await snapshot('02-prompt-filled');
-  await page.click('.liminal-run-button');
+  await page.click('.sinter-run-button');
   const first = await waitForPreview('first');
   await page.waitForTimeout(2000);
   await snapshot('03-first-preview');
@@ -84,11 +84,11 @@ try {
   if (first.hasPreviewIframe || first.hasPreviewImage || first.hasCodePreview) {
     await page.fill('#workbench-prompt', revision);
     await page.waitForFunction(() => {
-      const button = document.querySelector('.liminal-run-button');
+      const button = document.querySelector('.sinter-run-button');
       return button && !button.disabled;
     }, null, { timeout: 30000 });
     await snapshot('04-revision-prompt-filled');
-    await page.click('.liminal-run-button');
+    await page.click('.sinter-run-button');
     second = await waitForPreview('revision');
     await page.waitForTimeout(2000);
     await snapshot('05-revision-preview');

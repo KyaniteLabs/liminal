@@ -4,7 +4,7 @@
  * Each role (Generator, Evaluator, Harness) is independently configurable
  * with its own provider, model, and parameters. Config is loaded from:
  *   1. ~/.sinter/config.json (user-level)
- *   2. ./config/liminal.json (project-level)
+ *   2. ./config/sinter.json (project-level)
  *   3. Environment variables (backward compatible)
  *   4. Conservative defaults
  *
@@ -107,7 +107,7 @@ const USER_CONFIG_PATH = join(CONFIG_DIR, 'config.json');
  * Load and resolve role-based configuration from all sources.
  *
  * Resolution order per role:
- *   1. Project config (config/liminal.json) `roles.<role>`
+ *   1. Project config (config/sinter.json) `roles.<role>`
  *   2. User config (~/.sinter/config.json) `roles.<role>`
  *   3. Environment variables (role-specific then generic)
  *   4. Conservative defaults
@@ -245,18 +245,22 @@ async function loadProjectConfig(projectDir?: string): Promise<RoleConfigFile | 
     projectDir = process.cwd();
   }
 
-  const configPath = join(projectDir, 'config', 'liminal.json');
-
-  try {
-    const content = await readFile(configPath, 'utf-8');
-    const parsed = JSON.parse(content);
-
-    // Project config uses different shape — extract role info from it
-    return projectToRoleConfig(parsed);
-  } catch (err) {
-    Logger.debug('RoleConfig', `Failed to load role config from ${configPath}:`, err);
-    return null;
+  // Canonical sinter.json, with back-compat fallbacks to legacy filenames.
+  const candidates = ['sinter.json', 'liminal.json', 'atelier.json'];
+  let lastErr: unknown = null;
+  for (const filename of candidates) {
+    const configPath = join(projectDir, 'config', filename);
+    try {
+      const content = await readFile(configPath, 'utf-8');
+      const parsed = JSON.parse(content);
+      // Project config uses different shape — extract role info from it
+      return projectToRoleConfig(parsed);
+    } catch (err) {
+      lastErr = err;
+    }
   }
+  Logger.debug('RoleConfig', `Failed to load role config from config/{${candidates.join(',')}}:`, lastErr);
+  return null;
 }
 
 interface ProjectConfigLike {

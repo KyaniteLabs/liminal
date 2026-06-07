@@ -449,7 +449,7 @@ function main(argv = process.argv.slice(2)) {
   printReport({ ledgerResult, receiptResult });
 
   const proof = {
-    contract: 'liminal-final-qa-surface-gate-v1',
+    contract: 'sinter-final-qa-surface-gate-v1',
     generatedAt: new Date().toISOString(),
     passed,
     includedSurfaces: INCLUDED_SURFACES.map(([label, command]) => ({ label, command })),

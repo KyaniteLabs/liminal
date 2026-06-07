@@ -126,7 +126,7 @@ export function createSingRenderer(canvas: HTMLCanvasElement, preset: SingPreset
   for (const target of mappedTargets) {
     uniformLocations.set(target, gl.getUniformLocation(program, target));
   }
-  let previousUniformValues = new Map<string, number>();
+  const uniformSmoothers = new Map<string, OneEuroFilter>();
 
   const buffer = gl.createBuffer();
   if (!buffer) throw new Error('Unable to create Sing vertex buffer');
@@ -152,12 +152,11 @@ export function createSingRenderer(canvas: HTMLCanvasElement, preset: SingPreset
     gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
     gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
     gl.uniform1f(timeLocation, frame.elapsedSeconds);
-    const uniformValues = mapSingPresetUniforms(preset, frame, previousUniformValues);
+    const uniformValues = mapSingPresetUniforms(preset, frame, undefined, uniformSmoothers);
     for (const [target, value] of uniformValues) {
       const location = uniformLocations.get(target);
       if (location) gl.uniform1f(location, value);
     }
-    previousUniformValues = uniformValues;
     gl.drawArrays(gl.TRIANGLES, 0, 6);
   }
 
@@ -174,6 +173,7 @@ export function mapSingPresetUniforms(
   preset: Pick<SingPresetArtifact, 'mappings'>,
   frame: SingUniformFrame,
   previousValues: ReadonlyMap<string, number> = new Map(),
+  smoothers?: Map<string, OneEuroFilter>,
 ): Map<string, number> {
   const values = new Map<string, number>();
   for (const [target, readValue] of Object.entries(DEFAULT_UNIFORM_VALUES)) {
@@ -196,8 +196,17 @@ export function mapSingPresetUniforms(
       mapped = applyMappingCurve(featureValue(frame, mapping.feature), mapping);
       smoothing = mapping.smoothing ?? DEFAULT_MAPPING_SMOOTHING[mapping.feature];
     }
-    const previous = previousValues.get(mapping.target);
-    values.set(mapping.target, smoothUniformValue(mapped, previous, smoothing));
+    if (smoothers) {
+      let filter = smoothers.get(mapping.target);
+      if (!filter) {
+        filter = new OneEuroFilter({ minCutoff: 1.0, beta: 0.02 });
+        smoothers.set(mapping.target, filter);
+      }
+      values.set(mapping.target, filter.filter(mapped, frame.elapsedSeconds * 1000));
+    } else {
+      const previous = previousValues.get(mapping.target);
+      values.set(mapping.target, smoothUniformValue(mapped, previous, smoothing));
+    }
   }
   return values;
 }

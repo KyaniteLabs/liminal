@@ -101,9 +101,12 @@ function setProviderKey(providerKey, apiKey, { model, baseUrl, activate } = {}) 
   config.providers = { ...(config.providers || {}), [providerKey]: block };
   if (activate) {
     config.defaultProvider = providerKey;
-    // Only the generator role is written; evaluator/harness/studio inherit it.
+    // Switching the active provider resets roles to a single generator entry;
+    // evaluator/harness/studio inherit it. Replacing (not merging) avoids leaving
+    // stale per-role overrides pointing at the previous provider. Power users who
+    // want a different model per role set roles.* in config.json directly.
     const roleBlock = { provider: providerKey, ...block };
-    config.roles = { ...(config.roles || {}), generator: { ...roleBlock } };
+    config.roles = { generator: { ...roleBlock } };
   }
   fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
   fs.writeFileSync(cfgPath, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });

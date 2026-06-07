@@ -235,8 +235,11 @@ export async function run(prompt: string, options: {
     // Initialize Exporter
     const exporter = new Exporter();
 
-    // Final validation gate before saving
-    const finalValidation = CodeValidator.validate(loopResult.code);
+    // Final validation gate before saving. Pass the known domain so the gate
+    // validates against it instead of re-detecting from content — otherwise a
+    // valid non-p5 artifact (e.g. a short Strudel pattern) can be misdetected
+    // as another domain (ASCII) and wrongly rejected.
+    const finalValidation = CodeValidator.validate(loopResult.code, options.collabDomain);
     if (!finalValidation.valid) {
       throw new ValidationError('Generation failed validation', finalValidation.errors, {
           reason: loopResult.reason

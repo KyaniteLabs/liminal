@@ -642,7 +642,7 @@ export class RalphLoop {
                 }
 
                 let genEval: GenerationEvaluation;
-                if (evalMode === 'auto' || evalMode === 'strict-browser') {
+                if ((evalMode === 'auto' || evalMode === 'strict-browser') && !isAudioDomain(normalizedOptions.collabDomain)) {
                   const { HeadlessRenderer } = await import('../render/HeadlessRenderer.js');
                   const renderer = HeadlessRenderer.getInstance();
                   const renderEvidence = await renderer.renderWithEvidence(candidate.code, {
@@ -835,7 +835,7 @@ export class RalphLoop {
           }
 
           // DF3 Phase 1: eval-mode-aware scoring with browser-render evidence
-          if (evalMode === 'auto' || evalMode === 'strict-browser') {
+          if ((evalMode === 'auto' || evalMode === 'strict-browser') && !isAudioDomain(normalizedOptions.collabDomain)) {
             const { HeadlessRenderer } = await import('../render/HeadlessRenderer.js');
             const renderer = HeadlessRenderer.getInstance();
             const renderEvidence = await renderer.renderWithEvidence(currentCode, {
@@ -963,7 +963,7 @@ export class RalphLoop {
                     }
                   }
 
-                  if (evalMode === 'auto' || evalMode === 'strict-browser') {
+                  if ((evalMode === 'auto' || evalMode === 'strict-browser') && !isAudioDomain(normalizedOptions.collabDomain)) {
                     const { HeadlessRenderer } = await import('../render/HeadlessRenderer.js');
                     const renderer = HeadlessRenderer.getInstance();
                     const renderEvidence = await renderer.renderWithEvidence(repairCode, {
@@ -1714,6 +1714,16 @@ export class RalphLoop {
            !endsMidFunction &&
            !endsMidClass;
   }
+}
+
+/**
+ * Audio domains have no meaningful visual output, so headless browser-render
+ * scoring captures only silence and scores valid code 0. They must be scored
+ * from the code itself (scoreReliable) instead of rendered evidence.
+ */
+const AUDIO_DOMAINS = new Set(['tone', 'strudel']);
+function isAudioDomain(domain?: string): boolean {
+  return AUDIO_DOMAINS.has(String(domain || '').toLowerCase());
 }
 
 /**

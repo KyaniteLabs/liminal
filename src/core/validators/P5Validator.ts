@@ -36,6 +36,44 @@ export class P5Validator {
     'Float32Array', 'Float64Array', 'Int32Array', 'Uint8Array', 'Uint32Array', 'ArrayBuffer',
     // Browser globals
     'navigator', 'setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'requestAnimationFrame',
+    // --- Additional standard p5.js globals (the allowlist above was partial and
+    //     rejected valid sketches, e.g. clear(); expand to the common surface). ---
+    // Canvas / drawing
+    'clear', 'arc', 'quad', 'square', 'ellipseMode', 'imageMode', 'strokeCap', 'strokeJoin',
+    'smooth', 'noSmooth', 'erase', 'noErase', 'curve', 'curveTightness', 'bezierDetail',
+    'beginContour', 'endContour', 'normalMaterial', 'applyMatrix', 'resetMatrix', 'shearX', 'shearY',
+    // Color helpers
+    'tint', 'noTint', 'hue', 'saturation', 'brightness', 'alpha', 'lightness',
+    // Math / trig / conversion
+    'tan', 'log', 'sq', 'fract', 'mag', 'norm', 'degrees', 'int', 'float', 'str', 'boolean', 'byte', 'char',
+    'randomSeed', 'noiseSeed', 'noiseDetail', 'randomGaussian',
+    // Environment / system
+    'deltaTime', 'displayWidth', 'displayHeight', 'displayDensity', 'cursor', 'noCursor', 'fullscreen',
+    'focused', 'windowResized', 'getTargetFrameRate', 'getURL', 'getURLPath', 'getURLParams',
+    // Input events + state
+    'mouseClicked', 'mousePressed', 'mouseReleased', 'mouseMoved', 'mouseDragged', 'mouseWheel',
+    'doubleClicked', 'keyPressed', 'keyReleased', 'keyTyped', 'keyIsDown', 'touches', 'touchStarted',
+    'touchMoved', 'touchEnded', 'movedX', 'movedY', 'winMouseX', 'winMouseY', 'requestPointerLock',
+    // 3D / WEBGL
+    'box', 'sphere', 'cylinder', 'cone', 'torus', 'plane', 'ellipsoid', 'rotateX', 'rotateY', 'rotateZ',
+    'camera', 'perspective', 'ortho', 'frustum', 'ambientLight', 'directionalLight', 'pointLight',
+    'spotLight', 'lights', 'noLights', 'ambientMaterial', 'specularMaterial', 'emissiveMaterial',
+    'shininess', 'texture', 'textureMode', 'textureWrap', 'createShader', 'loadShader', 'resetShader',
+    'orbitControl', 'model', 'loadModel', 'normal', 'lightFalloff',
+    // Typography / DOM
+    'textWidth', 'textAscent', 'textDescent', 'textLeading', 'textWrap', 'loadFont',
+    'createInput', 'createButton', 'createSlider', 'createDiv', 'createP', 'createElement', 'select', 'selectAll',
+    // Image / pixels
+    'loadImage', 'createImage', 'get', 'set', 'copy', 'blend', 'filter', 'save', 'saveCanvas', 'saveGif',
+    // Array / string utilities
+    'append', 'arrayCopy', 'concat', 'reverse', 'shorten', 'shuffle', 'sort', 'splice', 'subset',
+    'join', 'match', 'matchAll', 'nfc', 'nfp', 'nfs', 'split', 'splitTokens', 'trim', 'storeItem', 'getItem',
+    // Constants
+    'WEBGL', 'P2D', 'TAU', 'HSL', 'CORNERS', 'RADIUS', 'ROUND', 'SQUARE', 'PROJECT', 'BEVEL', 'MITER',
+    'TOP', 'BOTTOM', 'CHORD', 'PIE', 'OPEN', 'ARROW', 'CROSS', 'HAND', 'MOVE', 'TEXT', 'WAIT', 'AUTO',
+    'LANDSCAPE', 'PORTRAIT', 'THRESHOLD', 'GRAY', 'OPAQUE', 'INVERT', 'POSTERIZE', 'BLUR', 'ERODE', 'DILATE',
+    'DARKEST', 'LIGHTEST', 'DIFFERENCE', 'SUBTRACT', 'EXCLUSION', 'SCREEN', 'REPLACE', 'OVERLAY',
+    'HARD_LIGHT', 'SOFT_LIGHT', 'DODGE', 'BURN', 'LINEAR', 'CLAMP', 'MIRROR', 'REPEAT', 'IMMEDIATE',
   ]);
 
 

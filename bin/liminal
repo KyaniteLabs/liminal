@@ -1263,6 +1263,7 @@ else if (cmd === 'consolidate' || flags.consolidate) {
   console.log('');
 
   const memory = new HarnessMemory();
+  await memory.initialize(); // load persisted episodes from disk (else consolidation runs on empty state)
   const modelSampler = new ThompsonSampler({ minPulls: 1, successThreshold: 0.7 });
   const strategySampler = new ThompsonSampler({ minPulls: 1, successThreshold: 0.7 });
   const prototype = new DomainPrototype();

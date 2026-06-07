@@ -144,16 +144,37 @@ function printProviderList() {
   console.log('');
 }
 
+function readLiminalConfig() {
+  try {
+    const p = liminalConfigPath();
+    if (fs.existsSync(p)) return JSON.parse(fs.readFileSync(p, 'utf-8'));
+  } catch { /* ignore unreadable/invalid config */ }
+  return {};
+}
+
+function savedKeyFor(name, config) {
+  const fromProvider = config.providers?.[name]?.apiKey;
+  const fromRole = ['generator', 'evaluator', 'harness']
+    .map((r) => config.roles?.[r])
+    .find((role) => role?.provider === name && role?.apiKey)?.apiKey;
+  return Boolean(fromProvider || fromRole);
+}
+
 function printProviderStatus() {
+  const config = readLiminalConfig();
+  const active = config.defaultProvider;
   console.log('');
   console.log('Liminal provider readiness:');
   for (const [name, provider] of Object.entries(CLI_PROVIDER_DEFAULTS)) {
-    const configured = !provider.requiresKey || Boolean(process.env[provider.apiKeyEnv]);
-    const status = configured ? 'ready' : `missing ${provider.apiKeyEnv}`;
-    console.log(`  ${name.padEnd(10)} ${status}`);
+    // Ready if no key needed, or a key is present in env OR the saved config.
+    const hasKey = Boolean(process.env[provider.apiKeyEnv]) || savedKeyFor(name, config);
+    const configured = !provider.requiresKey || hasKey;
+    const status = configured ? 'ready' : `missing key (set with: liminal provider set-key ${name} <KEY>)`;
+    const activeMark = name === active ? ' (active)' : '';
+    console.log(`  ${name.padEnd(10)} ${status}${activeMark}`);
   }
   console.log('');
-  console.log('Use `liminal --configure --provider <name>` to write ~/.liminal/config.json.');
+  console.log('Set a key with `liminal provider set-key <name> <KEY> --use`.');
   console.log('');
 }
 

@@ -14,16 +14,28 @@ export interface RevideoValidationResult {
 }
 
 export class RevideoValidator {
+  // Commonly-generated @revideo/core exports. The full surface is large; this
+  // covers what generators actually emit. The easing family (ease*) is matched
+  // by EASING_PATTERN below instead of being enumerated here.
   private static readonly VALID_REVIDEO_CORE_IMPORTS = new Set([
-    'makeScene', 'useTime', 'createSignal', 'createRef', 'waitFor',
-    'interpolate', 'spring', 'Easing',
-    'OffthreadVideo', 'staticFile'
+    'makeScene', 'useTime', 'useScene', 'usePlayback', 'useLogger', 'useDuration', 'useRandom',
+    'createSignal', 'createRef', 'createRefArray', 'createRefMap', 'createComputed', 'makeRef', 'makeRefs',
+    'waitFor', 'waitUntil', 'all', 'any', 'chain', 'delay', 'loop', 'loopFor', 'sequence', 'run', 'every', 'join', 'cancel',
+    'interpolate', 'spring', 'tween', 'map', 'remap', 'clamp', 'clampRemap', 'linear', 'Easing',
+    'Vector2', 'Color', 'Spacing', 'BBox', 'Matrix2D', 'Random', 'Logger', 'DEFAULT',
+    'fadeTransition', 'OffthreadVideo', 'staticFile', 'loadImage', 'loadAnimation'
   ]);
 
   private static readonly VALID_REVIDEO_2D_IMPORTS = new Set([
-    'makeScene2D', 'Circle', 'Img', 'Layout', 'Line', 'Node', 'Path',
-    'Ray', 'Rect', 'Spline', 'Txt', 'Video'
+    'makeScene2D', 'View2D', 'Scene2D', 'Node', 'Shape', 'Layout',
+    'Circle', 'Rect', 'Txt', 'Img', 'Video', 'Audio', 'Line', 'Path', 'Ray', 'Spline', 'Polygon', 'Curve',
+    'Bezier', 'CubicBezier', 'QuadBezier', 'Knot', 'Grid', 'Code', 'Latex', 'Icon', 'SVG',
+    'Gradient', 'LinearGradient', 'RadialGradient', 'Pattern', 'Filter'
   ]);
+
+  // The @revideo/core easing family (easeInCubic, easeOutExpo, easeInOutBack, …)
+  // is a stable, large set — match by shape rather than enumerating all ~30.
+  private static readonly EASING_PATTERN = /^ease(In|Out|InOut)[A-Z][A-Za-z]+$/;
 
   static validate(code: string): RevideoValidationResult {
     const errors: string[] = [];
@@ -111,7 +123,7 @@ export class RevideoValidator {
     for (const match of code.matchAll(pattern)) {
       const imports = match[1].split(',').map(s => s.trim().split(/\s+as\s+/)[0].trim());
       for (const imp of imports) {
-        if (imp && !allowed.has(imp)) {
+        if (imp && !allowed.has(imp) && !this.EASING_PATTERN.test(imp)) {
           errors.push(`Unknown Revideo import: ${imp}`);
         }
       }

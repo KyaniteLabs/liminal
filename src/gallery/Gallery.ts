@@ -39,8 +39,23 @@ export interface VideoIteration {
   timestamp: string;
 }
 
-/** Union: p5 (code), organism (musicCode + visualCode), or video. */
-export type GalleryIteration = Iteration | OrganismIteration | VideoIteration;
+/**
+ * Composition iteration: an assembled standalone layered HTML work (the output
+ * of `sinter compose`). `code` carries the full standalone HTML document so that
+ * generic consumers (`'code' in iter`, ZIP export, serve) treat it uniformly;
+ * `title` and `layers` are display metadata.
+ */
+export interface CompositionIteration {
+  version: number;
+  type: 'composition';
+  code: string;
+  title: string;
+  layers: string[];
+  timestamp: string;
+}
+
+/** Union: p5 (code), organism (musicCode + visualCode), video, or composition (layered HTML). */
+export type GalleryIteration = Iteration | OrganismIteration | VideoIteration | CompositionIteration;
 
 /**
  * Parse raw file content: if valid JSON with type 'organism', return OrganismIteration; else p5 Iteration.
@@ -67,6 +82,16 @@ export function parseVersionContent(raw: string, version: number, timestamp: str
           code: String(data.code ?? ''),
           videoPath: String(data.videoPath),
           domain: data.domain,
+          timestamp,
+        };
+      }
+      if (data.type === 'composition' && (data.code != null || data.html != null)) {
+        return {
+          version,
+          type: 'composition',
+          code: String(data.code ?? data.html ?? ''),
+          title: String(data.title ?? 'Composition'),
+          layers: Array.isArray(data.layers) ? data.layers.map(String) : [],
           timestamp,
         };
       }
@@ -261,6 +286,43 @@ export class Gallery {
       type: 'organism',
       musicCode: musicCode.trim() || musicCode,
       visualCode: visualCode.trim() || visualCode,
+    };
+    const filepath = normalizePath(projectDir, `v${version}.js`);
+    await fs.writeFile(filepath, JSON.stringify(payload), 'utf-8');
+  }
+
+  /**
+   * Save a composition (assembled standalone layered HTML) to the gallery so
+   * composed works are first-class citizens alongside single-domain iterations.
+   * Stored as a JSON payload in v{version}.js (same envelope as organism/video).
+   * @param project - Project name (must be non-empty string)
+   * @param version - Version number (must be positive integer)
+   * @param html - The full standalone composite HTML document (non-empty)
+   * @param meta - Display metadata: title and the composed layer domains
+   */
+  async saveComposition(
+    project: string,
+    version: number,
+    html: string,
+    meta: { title?: string; layers?: string[] } = {},
+  ): Promise<void> {
+    if (!project || typeof project !== 'string' || project.trim() === '') {
+      throw new Error('Project name is required and must be a non-empty string');
+    }
+    assertSafeSegment(project.trim(), 'Project name');
+    if (!version || typeof version !== 'number' || version <= 0 || !Number.isInteger(version)) {
+      throw new Error('Version must be a positive integer');
+    }
+    if (!html || typeof html !== 'string' || html.trim() === '') {
+      throw new Error('Composition html is required and must be a non-empty string');
+    }
+
+    const projectDir = await this.ensureProjectDir(project);
+    const payload = {
+      type: 'composition',
+      code: html.trim() || html,
+      title: meta.title?.trim() || 'Composition',
+      layers: Array.isArray(meta.layers) ? meta.layers.map(String) : [],
     };
     const filepath = normalizePath(projectDir, `v${version}.js`);
     await fs.writeFile(filepath, JSON.stringify(payload), 'utf-8');

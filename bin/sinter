@@ -1421,6 +1421,25 @@ else if (cmd === 'compose') {
     console.log('');
     console.log('✅ ' + result.successCount + '/' + result.layers.length + ' layers composed');
     console.log('✅ Saved: ' + htmlPath);
+    // Persist to the gallery so composed works are first-class citizens — browsable
+    // and versioned alongside single-domain generations (e.g. via `sinter serve`).
+    if (result.successCount > 0) {
+      try {
+        const { Gallery } = await import('../dist/gallery/Gallery.js');
+        const galleryDir = path.resolve(flags.gallery || 'gallery');
+        const gallery = new Gallery(galleryDir);
+        const slug = (result.title || 'composition')
+          .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'composition';
+        const version = (await gallery.getLatestVersion(slug)) + 1;
+        await gallery.saveComposition(slug, version, result.html, {
+          title: result.title,
+          layers: result.layers.filter(l => l.generated).map(l => l.domain),
+        });
+        console.log('🖼️  Gallery: ' + slug + ' v' + version);
+      } catch (galErr) {
+        console.log('⚠️  Gallery save skipped: ' + galErr.message);
+      }
+    }
     // Feed self-improvement: record this composition as a generation episode.
     try {
       await harnessMemory.initialize();

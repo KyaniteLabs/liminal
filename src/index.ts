@@ -151,6 +151,11 @@ export async function run(prompt: string, options: {
   swarm?: import('./types/options/SwarmOptions.js').SwarmOptions;
   /** Enable intuition-based quality scoring dimension */
   useIntuition?: boolean;
+  /** Enable cross-run archive learning: high-scoring outputs enrich a persistent
+   *  QualityArchive that enhances future prompts (the self-improvement loop). */
+  useArchiveLearning?: boolean;
+  /** Path to the persistent quality archive (defaults to ~/.sinter/archive/quality_archive.json). */
+  archivePath?: string;
   /** Creative domain to route generation + validation to (else defaults to p5). */
   collabDomain?: import('./types/domains.js').Domain;
 } = {}): Promise<{
@@ -229,6 +234,8 @@ export async function run(prompt: string, options: {
       swarmMode: options.swarmMode as import('./swarm/types.js').SwarmMode,
       swarmConfig: options.swarmConfig as Partial<import('./swarm/types.js').SwarmConfig>,
       useIntuition: options.useIntuition,
+      useArchiveLearning: options.useArchiveLearning,
+      archivePath: options.archivePath,
       collabDomain: options.collabDomain,
     });
 

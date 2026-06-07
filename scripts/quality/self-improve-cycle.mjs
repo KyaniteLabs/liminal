@@ -1,0 +1,103 @@
+// Recursive self-improvement CYCLE driver.
+//
+// Runs N real generations with the archive-learning loop ON (--learn), so each
+// high-scoring output enriches the persistent QualityArchive, which in turn
+// enhances the prompt of later generations. Captures before/after metrics
+// (archive size, per-gen quality scores, mean/trend) and appends one record per
+// cycle to a persistent ledger so progress is measurable across runs/sessions.
+//
+// Usage:  node scripts/quality/self-improve-cycle.mjs [count]
+// Paced + resumable: safe to run repeatedly (e.g. from cron); the QualityArchive
+// and ledger accumulate. Honest fitness signal = Sinter's own evaluator score;
+// guard against Goodhart with periodic human/vision audits of the gallery.
+
+import { execSync } from 'child_process';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+
+const COUNT = Math.max(1, parseInt(process.argv[2] || '6', 10));
+const ARCHIVE = path.join(os.homedir(), '.sinter', 'archive', 'quality_archive.json');
+const LEDGER = 'docs/validation/self-improve-ledger.jsonl';
+const OUTROOT = '.quality/rsi';
+fs.mkdirSync(OUTROOT, { recursive: true });
+fs.mkdirSync(path.dirname(LEDGER), { recursive: true });
+
+// Novel creative ideas across domains/aesthetics. The cycle index + timestamp are
+// appended so prompts are NEVER reused (avoids LLM cache returning stale art).
+const IDEAS = [
+  'a tide pool of bioluminescent anemones breathing with the cursor',
+  'brass clockwork constellations that wind and unwind on a slate sky',
+  'a meadow of paper wildflowers bending under procedural wind',
+  'molten glass ribbons folding into impossible knots, warm on cool',
+  'a migration of origami birds across a high-key dawn gradient',
+  'crystalline frost spreading across a dark pane, then thawing',
+  'a market of floating lanterns drifting over an indigo canal',
+  'sand mandala grains self-assembling and scattering on touch',
+  'neon koi circling a still pond under falling cherry petals',
+  'a topographic map breathing like a slow tide, earthy contours',
+];
+
+const readArchive = () => {
+  try {
+    const d = JSON.parse(fs.readFileSync(ARCHIVE, 'utf-8'));
+    // QualityArchive schema: { archives: { <domain>: ArchiveEntry[] }, lastUpdated }
+    if (d.archives && typeof d.archives === 'object') {
+      return Object.values(d.archives).reduce((n, arr) => n + (Array.isArray(arr) ? arr.length : 0), 0);
+    }
+    return (d.outputs || d.entries || []).length;
+  } catch { return 0; }
+};
+const gardenHealth = () => {
+  try {
+    const out = execSync('node bin/sinter garden status', { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] });
+    const m = out.match(/Health:\s*([\d.]+)%/); return m ? parseFloat(m[1]) : null;
+  } catch { return null; }
+};
+
+const stamp = new Date().toISOString();
+const before = { archive: readArchive(), health: gardenHealth() };
+console.log(`=== self-improve cycle (${COUNT} gens) @ ${stamp} ===`);
+console.log(`before: archive=${before.archive} health=${before.health}%`);
+
+const scores = [];
+for (let i = 0; i < COUNT; i++) {
+  const idea = IDEAS[(before.archive + i) % IDEAS.length];
+  const prompt = `${idea} — cycle ${stamp} #${i + 1}`; // novel every time
+  const tag = `${OUTROOT}/g_${Date.now()}_${i + 1}`;
+  try {
+    const out = execSync(
+      `node bin/sinter --prompt ${JSON.stringify(prompt)} --learn --intuition -o ${JSON.stringify(tag)}`,
+      { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 240000 },
+    );
+    const m = out.match(/Quality score:\s*([\d.]+)/);
+    const s = m ? parseFloat(m[1]) : null;
+    if (s != null) scores.push(s);
+    console.log(`  [${i + 1}/${COUNT}] score=${s ?? 'n/a'}  "${idea.slice(0, 40)}…"`);
+  } catch (e) {
+    const msg = String(e.stdout || e.message || '').slice(-200);
+    console.log(`  [${i + 1}/${COUNT}] FAILED: ${/429|rate.?limit|usage limit/i.test(msg) ? 'RATE-LIMITED — stopping cycle early' : msg.slice(0, 120)}`);
+    if (/429|rate.?limit|usage limit/i.test(msg)) break;
+  }
+}
+
+const after = { archive: readArchive(), health: gardenHealth() };
+const mean = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+// trend = mean(second half) - mean(first half): positive ⇒ later gens scoring higher
+let trend = null;
+if (scores.length >= 4) {
+  const h = Math.floor(scores.length / 2);
+  const a = scores.slice(0, h), b = scores.slice(h);
+  trend = (b.reduce((x, y) => x + y, 0) / b.length) - (a.reduce((x, y) => x + y, 0) / a.length);
+}
+const record = {
+  ts: stamp, requested: COUNT, completed: scores.length,
+  before, after,
+  archiveDelta: after.archive - before.archive,
+  scores, meanScore: mean, intraCycleTrend: trend,
+};
+fs.appendFileSync(LEDGER, JSON.stringify(record) + '\n');
+
+console.log(`after:  archive=${after.archive} (Δ+${record.archiveDelta}) health=${after.health}%`);
+console.log(`scores: [${scores.map(s => s.toFixed(2)).join(', ')}]  mean=${mean?.toFixed(3) ?? 'n/a'}  intra-trend=${trend?.toFixed(3) ?? 'n/a'}`);
+console.log(`ledger: appended to ${LEDGER} (${fs.readFileSync(LEDGER, 'utf-8').trim().split('\n').length} cycles total)`);

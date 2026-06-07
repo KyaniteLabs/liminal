@@ -1336,7 +1336,7 @@ export class RalphLoop {
 
         // Archive learning: store high-quality outputs
         if (archiveLearning && evaluation.score >= 0.65) {
-          archiveLearning.addOutput(
+          await archiveLearning.addOutput(
             loadedPrompt, currentCode,
             normalizedOptions.collabDomain || 'p5',
             evaluation.score,
@@ -1658,6 +1658,32 @@ export class RalphLoop {
       // the final gate would otherwise reject, throwing away usable work).
       const returnBest = bestScore >= 0;
       const swappedForBest = returnBest && bestCode !== currentCode;
+
+      // Phase 5B: record this generation as emergence/garden experience so the
+      // autonomy (garden), dreaming (recombination), taste and lineage systems can
+      // learn from REAL runs — this closes the recursive self-improvement loop
+      // (without it the emergence archive stays empty and the garden can never
+      // learn). Guarded: must never affect loop operation; skipped under test.
+      if (process.env.NODE_ENV !== 'test' && currentCode) {
+        try {
+          const { EmergenceHooks } = await import('../emergence/EmergenceHooks.js');
+          await new EmergenceHooks(liminalFs).onCreativeRun({
+            output: returnBest && bestCode ? bestCode : currentCode,
+            qualityScore: returnBest ? bestScore : finalScore,
+            provenance: 'fresh-generation',
+            seed: sessionId,
+            runId: sessionId,
+            runParams: {
+              project: normalizedOptions.project,
+              domain: normalizedOptions.collabDomain ?? 'p5',
+              model: returnBest ? bestModel : lastModel,
+            },
+          });
+        } catch {
+          // Emergence recording must not affect loop operation
+        }
+      }
+
       return {
         code: returnBest ? bestCode : currentCode,
         iterations: iteration,

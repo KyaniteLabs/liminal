@@ -297,6 +297,8 @@ for (let i = 0; i < args.length; i++) {
     flags.aesthetic = args[++i];
   } else if (arg === '--aesthetic-config') {
     flags.aestheticConfig = args[++i];
+  } else if (arg === '--learn') {
+    flags.learn = true;
   } else if (arg === '--intuition') {
     flags.intuition = true;
   } else if (arg === '--consolidate') {
@@ -1100,6 +1102,8 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || (flags.prompt && (!cmd
     useAestheticGuardrails: !!(flags.aesthetic || flags.aestheticConfig),
     aestheticConfig: (flags.aesthetic || flags.aestheticConfig) ? aestheticConfig : undefined,
     useIntuition: !!flags.intuition,
+    useArchiveLearning: !!flags.learn,
+    archivePath: flags.learn ? path.join(process.env.HOME || '/tmp', '.sinter', 'archive', 'quality_archive.json') : undefined,
     voiceFile: flags.voiceFile,
     voice: flags.voice,
   }).then(async (result) => {

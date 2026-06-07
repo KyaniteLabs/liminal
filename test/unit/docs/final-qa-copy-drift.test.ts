@@ -37,7 +37,7 @@ describe('final QA copy drift guardrails', () => {
     expect(readme).toContain('5 default runtime personas (Kai / Nova / Rex / Sam / Max)');
     expect(readme).toContain('Five default personas (Kai, Nova, Rex, Sam, Max) generate in parallel');
     expect(features).toContain('Five default personas (Kai, Nova, Rex, Sam, Max) generate in parallel');
-    expect(cli).toContain('Use Liminal swarm (5 default personas) for generation');
+    expect(cli).toContain('Use Sinter swarm (5 default personas) for generation');
     expect(cli).not.toContain('7-persona');
   });
 
@@ -49,7 +49,7 @@ describe('final QA copy drift guardrails', () => {
     expect(appSource).toContain('Live AV');
     expect(appSource).toContain('Hydra — read-only video synth code');
     expect(features).toContain('<strong>Live AV</strong>');
-    expect(cli).toContain('Liminal: Live AV');
+    expect(cli).toContain('Sinter: Live AV');
     expect(appSource).not.toContain('sandbox-pending');
     expect(appSource).not.toContain('until an isolated Hydra runtime is available');
   });

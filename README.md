@@ -1,5 +1,7 @@
 # Sinter
 
+*To sinter:* to fire many separate particles into one solid, durable form — the way a kiln fuses grains of clay into a single vessel. That's the idea: generate across many creative-coding domains, then fuse them into one layered work.
+
 [![CI](https://github.com/KyaniteLabs/liminal/actions/workflows/ci.yml/badge.svg)](https://github.com/KyaniteLabs/liminal/actions/workflows/ci.yml)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](./LICENSE)
 

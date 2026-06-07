@@ -72,7 +72,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle builds with the composer stop affordance. | Vite built 35 modules. |
 | 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the cancellation regression tests. | 663 files scanned; all checks passed. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after cancellation remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | Cancellation remediation diff has no whitespace errors. | Exit 0. |
 | 2026-05-06 remediation | `pnpm vitest run test/unit/gui-create-modes.test.ts --coverage=false --testNamePattern "video and timeline"` | pass | Common video/timeline prompts route to Revideo and get the Revideo prompt hint. | Red-first proof failed with `null`, then passed; 1 file passed, 1 test passed, 5 skipped. |
 | 2026-05-06 remediation | `pnpm vitest run test/unit/gui-workbench-accessibility.test.ts --coverage=false --testNamePattern "image preview fails"` | pass | Broken inline image previews expose a visible error and do not hide the image without recovery. | Red-first proof failed on missing `failedPreviewSrc`, then passed; 1 file passed, 1 test passed, 10 skipped. |
@@ -83,7 +83,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle builds with Revideo routing and visible preview failure state. | Vite built 35 modules. |
 | 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the Revideo/preview regression tests. | 663 files scanned; all checks passed. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after Revideo/preview remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after Revideo/preview remediation. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after Revideo/preview remediation. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | Revideo/preview remediation diff has no whitespace errors. | Exit 0. |
 | 2026-05-06 remediation | `pnpm vitest run test/unit/docs/what-to-expect-current-surface.test.ts --coverage=false` | pass | `docs/WHAT_TO_EXPECT.md` describes the current Studio/workbench first-run path and rejects retired harness task-runner wording. | Red-first proof failed on the old harness title, then passed; 1 file passed, 1 test passed. |
 | 2026-05-06 remediation | `pnpm vitest run test/unit/docs/what-to-expect-current-surface.test.ts test/unit/docs/market-quickstart.test.ts test/unit/docs/visual-bible-consistency.test.ts test/unit/launch-claim-ledger.test.ts --coverage=false` | pass | Neighboring docs and launch-claim contracts pass with the first-run rewrite. | 4 files passed; 7 tests passed. |
@@ -95,7 +95,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after first-run docs remediation. | Exit 0. |
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production build still succeeds after first-run docs remediation. | Vite built 35 modules. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after first-run docs remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after first-run docs remediation. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after first-run docs remediation. | Exit 0. |
 | 2026-05-06 remediation | `pnpm vitest run test/unit/llm/provider-adapters.test.ts --coverage=false --testNamePattern "does not double-prefix"` | pass | AnthropicProvider uses one effective `/v1/messages` path even when base URL already includes `/v1`. | Red-first proof failed with `/v1/v1/messages`, then passed; 1 file passed, 1 test passed, 56 skipped. |
 | 2026-05-06 remediation | `pnpm vitest run test/unit/llm/LLMClientExtended.test.ts --coverage=false --testNamePattern "Anthropic-compatible provenance"` | pass | LLM provenance reports the same `/v1/messages` path used by Anthropic-compatible adapter calls. | Red-first proof failed with `/messages`, then passed; 1 file passed, 1 test passed, 80 skipped. |
 | 2026-05-06 remediation | `pnpm vitest run test/unit/llm/provider-adapters.test.ts test/unit/llm/LLMClientExtended.test.ts test/unit/llm/ProviderFactory.test.ts test/unit/config/ProviderRuntime.test.ts --coverage=false` | pass | Provider adapter, factory, runtime detection, and LLM provenance suites pass together. | 4 files passed; 175 tests passed. |
@@ -104,7 +104,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm build` | pass | Root build succeeds after Anthropic endpoint/provenance remediation. | Exit 0. |
 | 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the Anthropic endpoint/provenance regression tests. | 664 files scanned; all checks passed. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after Anthropic endpoint/provenance remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after Anthropic endpoint/provenance remediation. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after Anthropic endpoint/provenance remediation. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | Anthropic endpoint/provenance remediation diff has no whitespace errors. | Exit 0. |
 | 2026-05-06 remediation | `pnpm check:examples` | fail, red-first | New example gate caught the composition examples being outside the verified public API contract. | First red failed on unused imports in `examples/composition-programmatic.ts`; after example cleanup, second red failed on ESM runtime `require()` in `CompositionEngine.exportProject()`; third red failed because the requested project name was discarded. |
 | 2026-05-06 remediation | `pnpm check:examples` | pass | Composition examples compile against the public root API and the no-provider programmatic example runs to real HTML/JSON output in a temp directory. | Smoke checked `composition-programmatic.html` contains `Sinter Composition` and `composition-programmatic.json` contains `Programmatic Demo`. |
@@ -114,7 +114,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm build` | pass | Root package builds after replacing composition runtime `require()` and adding example checks. | Exit 0. |
 | 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after FQA-021 remediation. | Exit 0. |
 | 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the FQA-021 regression surface. | 664 files scanned; all checks passed. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-021 remediation. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after FQA-021 remediation. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-021 remediation diff has no whitespace errors after final verification-log append. | Exit 0. |
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-021 remediation. | Vite built 35 modules. |
 | 2026-05-06 remediation | `pnpm vitest run test/unit/agent/ResponseComposer.test.ts test/unit/agent/StudioAgent.test.ts --coverage=false --testNamePattern "engineering"` | fail, red-first | New Studio provenance assertions caught the stale `conveyor` delegation label. | Red failed with `delegatedTo: "conveyor"` and no executor provenance; after the first fix it also caught the missing `engineering-delegate` execution switch arm. |
@@ -128,7 +128,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after FQA-022 remediation. | Exit 0. |
 | 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the FQA-022 regression tests. | 664 files scanned; all checks passed. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after FQA-022 remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-022 remediation. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after FQA-022 remediation. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-022 remediation diff has no whitespace errors after final verification-log append. | Exit 0. |
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-022 remediation. | Vite built 35 modules. |
 | 2026-05-06 remediation | `pnpm vitest run test/unit/prompts/system-prompt-audit.test.ts test/prompts/prompt-validation.test.ts --coverage=false --testNamePattern "three"` | fail, red-first | New prompt contract tests caught the stale Three prompt asking for full HTML/import-map output and metadata `0.172.0`. | Red failed on stale full-HTML/raw-scene/version expectations before the prompt contract was corrected. |
@@ -142,7 +142,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after FQA-028 remediation. | Exit 0. |
 | 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the FQA-028 regression tests. | 664 test files scanned; all checks passed. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after FQA-028 remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-028 remediation. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after FQA-028 remediation. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-028 code diff has no whitespace errors before doc append. | Exit 0. |
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-028 remediation. | Vite built 35 modules. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-028 final diff, including audit-doc updates, has no whitespace errors. | Exit 0. |
@@ -155,7 +155,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after FQA-026 replay retention. | Exit 0. |
 | 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the FQA-026 regression test. | 664 test files scanned; all checks passed. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after FQA-026 replay retention. | Receipt: `.omx/proof/package-script-targets.json`. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-026 replay retention. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after FQA-026 replay retention. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-026 final diff, including audit-doc updates, has no whitespace errors. | Exit 0. |
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-026 replay retention. | Vite built 35 modules. |
 | 2026-05-06 remediation | `pnpm vitest run test/scripts/user-surface-observability-proof-script.test.ts --coverage=false` | fail, red-first | New proof-script contract caught that the observability proof still had no local proof model and manually injected bridge events. | Red failed because the script did not contain `startProofModel` / `proofModelCalled` and still contained `bridge.publishEvent(session.sessionId`. |
@@ -167,7 +167,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after FQA-025 observability proof remediation. | Exit 0. |
 | 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the FQA-025 proof-script contract. | 664 test files scanned; all checks passed. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after FQA-025 observability proof remediation. | Receipt: `.omx/proof/package-script-targets.json`. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-025 observability proof remediation. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after FQA-025 observability proof remediation. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-025 final diff, including audit-doc updates, has no whitespace errors. | Exit 0. |
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-025 observability proof remediation. | Vite built 35 modules. |
 | 2026-05-06 remediation | `pnpm vitest run test/unit/docs/factory-persona-boundary.test.ts --coverage=false --reporter verbose` | fail, red-first | New Factory persona boundary contract caught missing explicit `SKILL.md` / `SkillLoader` language in the imported guidance docs. | Red failed because `docs/agents/factory-artists/README.md` did not contain `not \`SKILL.md\` skills`. |
@@ -179,7 +179,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after FQA-020 docs boundary test. | Exit 0. |
 | 2026-05-06 remediation | `pnpm test:quality` | pass | Test quality scanner accepts the strengthened FQA-020 boundary test. | 665 test files scanned; all checks passed. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after FQA-020 boundary docs. | Receipt: `.omx/proof/package-script-targets.json`. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-020 boundary docs. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after FQA-020 boundary docs. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-020 final diff, including audit-doc updates, has no whitespace errors. | Exit 0. |
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-020 boundary docs. | Vite built 35 modules. |
 | 2026-05-06 remediation | `pnpm vitest run test/scripts/test-quality-check-script.test.ts --coverage=false` | fail, red-first | New checker fixture caught that strict mode did not reject weak assertion fixtures and package scripts had no strict final-QA quality entrypoint. | Red failed with `result.status` 0 instead of 1 and missing `test:quality:strict`. |
@@ -192,7 +192,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm typecheck` | pass | Root TypeScript gate passes after FQA-015 scanner and fixture tests. | Exit 0. |
 | 2026-05-06 remediation | `pnpm build` | pass | Root package builds after FQA-015 scanner and fixture tests. | Exit 0. |
 | 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after FQA-015 scanner and fixture tests. | Exit 0. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-015 remediation. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after FQA-015 remediation. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-015 code diff has no whitespace errors before audit-doc append. | Exit 0. |
 | 2026-05-06 remediation | `pnpm --dir gui build` | pass | GUI production bundle still builds after FQA-015 remediation. | Vite built 35 modules. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-015 final diff, including audit-doc updates, has no whitespace errors. | Exit 0. |
@@ -214,7 +214,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm bubbletea:test` | pass | Bubble Tea Go tests are now explicitly wired and pass. | `internal/app` and `internal/bridge` passed; root/internal/ui had no test files. |
 | 2026-05-06 remediation | `pnpm check:examples` | pass | Public composition examples remain executable through the final-QA surface gate. | Composition example smoke passed into a temp output dir. |
 | 2026-05-06 remediation | `pnpm check:orphans` | pass | Orphan source scan remains clean after new final-QA scripts/docs. | No orphaned files found. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-013/FQA-034 remediation. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after FQA-013/FQA-034 remediation. | Exit 0. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-013/FQA-034 code diff has no whitespace errors before audit-doc append. | Exit 0. |
 | 2026-05-06 remediation | `pnpm vitest run test/unit/tui-bridge/tui-bridge-event-contract.test.ts test/unit/chat/ConversationManager-public-history.test.ts --coverage=false` | fail, red-first | New FQA-014 contract tests caught GUI wildcard event contracts, missing public conversation-history APIs, and TUI bridge private conversation reach-through. | Red failed on missing `bridgeEvents` imports, `manager.appendMessage is not a function`, and `conversation['recordMessage']` still present in `TuiBridgeService`. |
 | 2026-05-06 remediation | `pnpm vitest run test/unit/tui-bridge/tui-bridge-event-contract.test.ts test/unit/chat/ConversationManager-public-history.test.ts --coverage=false` | pass | GUI cockpit/telemetry accepts canonical `TuiBridgeEvent` payloads, GUI event types come from the shared shim, and conversation history is exposed through defensive public APIs. | 2 files passed; 5 tests passed. |
@@ -228,7 +228,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm lint` | pass | Configured root lint gate passes after FQA-014 remediation. | Exit 0. |
 | 2026-05-06 remediation | `pnpm final-qa:test-quality` | pass | Strict baseline-aware test-quality gate accepts the FQA-014 regression tests. | 669 test files scanned; 841 known baseline warnings; 0 new warnings. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan still passes after FQA-014 remediation. | Receipt `.omx/proof/package-script-targets.json`. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-014 remediation. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after FQA-014 remediation. | Exit 0. |
 | 2026-05-06 remediation | `pnpm check:orphans` | pass | New GUI event shim is referenced and the orphan scan remains clean after FQA-014 remediation. | No orphaned files found. |
 | 2026-05-06 remediation | `pnpm final-qa:surface` | pass | Final-QA surface gate remains green after FQA-014 documentation and code updates. | 12/12 creative domains covered; 36/36 pending tests classified; 18/18 skipped/gated test files classified. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-014 code and audit-doc diff has no whitespace errors. | Exit 0. |
@@ -242,7 +242,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm gui:build` | pass | GUI production bundle still builds after the API server changes. | Vite built 35 modules. |
 | 2026-05-06 remediation | `pnpm final-qa:test-quality` | pass | Strict test-quality gate accepts the stronger integration API tests. | 669 test files scanned; 841 known baseline warnings; 0 new warnings. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan remains green after the FQA-033 API slice. | Receipt `.omx/proof/package-script-targets.json`. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after the FQA-033 API slice. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after the FQA-033 API slice. | Exit 0. |
 | 2026-05-06 remediation | `pnpm check:orphans` | pass | No new orphaned files were introduced by the FQA-033 API slice. | No orphaned files found. |
 | 2026-05-06 remediation | `pnpm final-qa:surface` | pass | Final-QA surface gate remains green after the FQA-033 API slice. | 12/12 creative domains covered; 36/36 pending tests classified; 18/18 skipped/gated test files classified. |
 | 2026-05-06 remediation | `pnpm verify:integration` | fail, residual FQA-033 | Focused run/merge/approve API failures are removed from the integration suite, but broader generator failures remain material. | 3 files failed, 29 passed; 79 tests failed, 247 passed, 1 skipped. Failures are in `full-loop`, `ralph-loop`, and `generator-renderer`, dominated by empty-code generation, timeouts, and p5 validator/global issues. |
@@ -265,7 +265,7 @@ Commands are logged here with the claim they prove, not broader launch claims th
 | 2026-05-06 remediation | `pnpm final-qa:test-quality` | pass | Strict baseline-aware quality gate accepts the FQA-033 regression tests after tightening weak assertions. | 669 test files scanned; all checks passed. |
 | 2026-05-06 remediation | `pnpm check:script-targets` | pass | Package script target scan remains green after FQA-033 remediation. | Receipt `.omx/proof/package-script-targets.json`. |
 | 2026-05-06 remediation | `node --check test/integration/helpers/proof-llm-server.js` | pass | Integration proof-model helper syntax is valid. | Exit 0. |
-| 2026-05-06 remediation | `node --check bin/liminal` | pass | CLI entrypoint syntax remains valid after FQA-033 remediation. | Exit 0. |
+| 2026-05-06 remediation | `node --check bin/sinter` | pass | CLI entrypoint syntax remains valid after FQA-033 remediation. | Exit 0. |
 | 2026-05-06 remediation | `pnpm check:orphans` | pass | No new orphaned files were introduced by the FQA-033 generator/integration remediation. | No orphaned files found. |
 | 2026-05-06 remediation | `pnpm final-qa:surface` | pass | Final-QA surface gate remains green after FQA-033 remediation. | 12/12 creative domains covered; 36/36 pending tests classified; 18/18 skipped/gated tests classified. |
 | 2026-05-06 remediation | `git diff --check` | pass | FQA-033 generator/integration diff has no whitespace errors before audit-doc append. | Exit 0. |

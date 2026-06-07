@@ -1,4 +1,4 @@
-// Every command that bin/liminal dispatches. Anything NOT here is treated as a
+// Every command that bin/sinter dispatches. Anything NOT here is treated as a
 // natural-language creative prompt — so a missing command would be silently
 // swallowed by the generate path instead of routing to its handler.
 const KNOWN_COMMANDS = new Set([

@@ -55,7 +55,7 @@ Merged into `security/redteam-salvage-20260415`:
 Explicit rejections:
 - The stale branch's `new Function` "sandbox" pattern was not adopted as a real sandbox.
 - DOMPurify/jsdom were not added because new dependencies require explicit approval.
-- `bin/liminal` changes in that branch were TUI log redirection, not a current command-injection fix.
+- `bin/sinter` changes in that branch were TUI log redirection, not a current command-injection fix.
 
 ---
 

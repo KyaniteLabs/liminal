@@ -1,5 +1,5 @@
 test/pending/generators/TierBasedGenerator.test.ts:251:    it('should create placeholder when no config provided', () => {
-bin/liminal:1070:    // .metadata.prompt) which compositor stub layers don't provide. Skip enhancement here
+bin/sinter:1070:    // .metadata.prompt) which compositor stub layers don't provide. Skip enhancement here
 test/learning/ArchiveLearning.test.ts:16:    // Create a temporary file for each test
 test/learning/QualityArchive.test.ts:16:    // Create a temporary file for each test
 docs/internal/LOOSE_ENDS.md:22:| `extractAudio()` - placeholder | `src/compost/SemanticExtractor.ts:87` | @deprecated stub |
@@ -142,7 +142,7 @@ test/consolidation/redundancy.test.ts:132:      expect(scoringEngine.hasStrategy
 test/consolidation/redundancy.test.ts:134:      scoringEngine.unregister('temporary-strategy');
 test/consolidation/redundancy.test.ts:135:      expect(scoringEngine.hasStrategy('temporary-strategy')).toBe(false);
 docs/archive/DOCS_VS_CODE.md:21:| **--project, -j** | README: "--project, -j: Project name for gallery (default: auto-generated)". | No `--project` or `-j` in bin/atelier. Generate command uses hardcoded `project: 'cli-project'`. | **No** — option and short flag are not implemented. |
-docs/archive/DOCS_VS_CODE.md:41:| **Feature** | README/PRD: "Live Music Coding" — Strudel, Hydra, Sonic Pi, FoxDot, p5.js + Web Audio. Example: `liminal --prompt "…" --mode live-music --output ./set`. | No `--mode` flag in bin/liminal. No live-music mode. | **No** — feature not implemented. |
+docs/archive/DOCS_VS_CODE.md:41:| **Feature** | README/PRD: "Live Music Coding" — Strudel, Hydra, Sonic Pi, FoxDot, p5.js + Web Audio. Example: `liminal --prompt "…" --mode live-music --output ./set`. | No `--mode` flag in bin/sinter. No live-music mode. | **No** — feature not implemented. |
 docs/archive/DOCS_VS_CODE.md:44:| **Music-to-visual bridge** | README: "Generate synchronized audio and visual outputs" with the above APIs. | Not implemented. | **No** — entire subsection is unimplemented. |
 docs/archive/DOCS_VS_CODE.md:76:| **Live Music** | — | Entire feature (--mode live-music, generateMusic, generateVisuals) not implemented |
 src/generators/p5/P5GeneratorV2.ts:51:        error: 'Generated code contains placeholder ellipses; return complete executable p5.js',

@@ -20,7 +20,7 @@ Key integration points:
 - **LoopConfig.ts:20-95** — `LoopOptions` needs new fields for audio + aesthetic config
 - **ContextBuilder.ts:16-72** — `buildContextForInjection()` needs to append audio-derived context
 - **prompts/index.ts:4-16** — side-effect import pattern for new prompt registrations
-- **bin/liminal:36-97** — flag parsing loop for new CLI flags
+- **bin/sinter:36-97** — flag parsing loop for new CLI flags
 - **src/index.ts** — barrel exports for new public APIs
 
 Existing patterns:
@@ -596,7 +596,7 @@ Audio-derived visual parameters:
 ## Task 19: Wire Audio + Aesthetic into CLI Flags
 
 **Files:**
-- Modify: `bin/liminal` (lines 36-97 flag parsing, lines 317-364 generate command)
+- Modify: `bin/sinter` (lines 36-97 flag parsing, lines 317-364 generate command)
 
 **Depends on:** Tasks 16, 17
 

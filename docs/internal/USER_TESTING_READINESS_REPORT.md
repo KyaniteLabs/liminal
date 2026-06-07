@@ -80,7 +80,7 @@ Minor: an async method that doesn't actually await anything. No user-visible imp
 
 ## 3. CLI Readiness
 
-`bin/liminal` (and alias `bin/lim`) is a fully functional Node ESM script.
+`bin/sinter` (and alias `bin/lim`) is a fully functional Node ESM script.
 
 ### Commands available:
 
@@ -205,7 +205,7 @@ export LIMINAL_LLM_MODEL=qwen2.5-coder-7b-instruct
 
 1. **No Chromium in test environment** — sandbox visual tests require a real browser. Not blocking for CLI/TUI use.
 2. **GUI frontend not pre-built** — user needs to run `pnpm gui:dev` to get the React frontend. No one-liner "just open a browser" experience.
-3. **`--version` reports v1.0.0** but `package.json` says `2.1.0` — minor cosmetic bug in `bin/liminal`.
+3. **`--version` reports v1.0.0** but `package.json` says `2.1.0` — minor cosmetic bug in `bin/sinter`.
 4. **LLM backend is required** — the tool does nothing useful without a running LLM. First-run experience depends on `sinter --configure` being discoverable.
 5. **Lint warning in IntuitionStrategy.ts:113** — async method with no await; harmless.
 6. **`dual-llm.test.ts` skip guard too narrow** — Ollama test falls through to assertion when LLM client returns an unexpected error shape. Not user-facing.

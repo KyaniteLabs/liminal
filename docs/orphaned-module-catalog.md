@@ -41,7 +41,7 @@ Seeded permutation-based Perlin noise generator for procedural generation. Can d
 ## TUI & Interactive
 
 ### `src/tui/NaturalInterface.ts` (508 lines) — **partial wiring exists**
-Natural language interface inspired by Claude Code. Routes slash commands, agent patterns, and free-text to appropriate handlers. Referenced in bin/liminal. Full integration pending TUI launch.
+Natural language interface inspired by Claude Code. Routes slash commands, agent patterns, and free-text to appropriate handlers. Referenced in bin/sinter. Full integration pending TUI launch.
 
 ### `src/tui/PendingActionStore.ts` (47 lines)
 Stores pending user confirmation actions (approve/reject) for destructive operations. Needed when TUI interactive mode asks "really delete this?"

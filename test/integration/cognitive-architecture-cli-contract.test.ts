@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 describe('cognitive architecture CLI contract', () => {
   const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-  const bin = () => fs.readFileSync(path.join(repoRoot, 'bin/liminal'), 'utf8');
+  const bin = () => fs.readFileSync(path.join(repoRoot, 'bin/sinter'), 'utf8');
 
   it('advertises the cognition report as the finish-line contract receipt', () => {
     const content = bin();

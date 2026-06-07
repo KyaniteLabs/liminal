@@ -4,7 +4,7 @@
 
 **Architecture:** Treat the branch as a salvage source, not a merge source. Split it into narrow security PRs by trust boundary: adapter sandboxing, CLI/command execution, and regression tests. Each PR starts from fresh `origin/main`, cherry-picks or reapplies only one security behavior, proves it with focused tests, then updates the docs bible.
 
-**Tech Stack:** TypeScript, Vitest, composition adapters, Tone/HTML/Hydra/P5/Three adapter surfaces, `bin/liminal`, `RalphLoop`, `HeadlessRenderer`, `TestFailureDetector`, project docs.
+**Tech Stack:** TypeScript, Vitest, composition adapters, Tone/HTML/Hydra/P5/Three adapter surfaces, `bin/sinter`, `RalphLoop`, `HeadlessRenderer`, `TestFailureDetector`, project docs.
 
 ---
 
@@ -210,7 +210,7 @@ Expected:
 ## Task 4: Salvage CLI Command Injection Fix
 
 **Files:**
-- Modify: `bin/liminal`
+- Modify: `bin/sinter`
 - Test: identify or add focused CLI/unit test if existing test harness supports it.
 
 **Step 1: Inspect source diff**
@@ -231,14 +231,14 @@ rg -n "exec\\(|spawn\\(|shell: true|\\$\\(|child_process|open " bin/sinter src s
 ```
 
 Expected:
-- If current `bin/liminal` no longer contains the vulnerable path, mark this slice `SUPERSEDED`.
+- If current `bin/sinter` no longer contains the vulnerable path, mark this slice `SUPERSEDED`.
 - If vulnerable, apply the minimal quoting/argument-array fix.
 
 **Step 3: Add or update a focused test**
 
 If no test exists, create the smallest test that proves malicious input is passed as data, not shell:
 - Prefer testing a helper function if one exists.
-- If `bin/liminal` is not testable, extract a tiny parser/helper only if necessary.
+- If `bin/sinter` is not testable, extract a tiny parser/helper only if necessary.
 
 **Step 4: Verify**
 

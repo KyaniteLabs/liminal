@@ -28,7 +28,7 @@
 |-------|---------|----------|
 | `npm start` not mentioned (uses `pnpm install`) | No `start` script in package.json | ✅ OK |
 | `npm run tui` command | ✅ Script exists: `"tui": "npx tsx src/tui/HarnessTUI.tsx"` | ✅ Accurate |
-| `sinter --configure` CLI | ✅ Binary exists in `bin/liminal` | ✅ Accurate |
+| `sinter --configure` CLI | ✅ Binary exists in `bin/sinter` | ✅ Accurate |
 | `sinter chat` command | ✅ Referenced in AGENTS.md, CLI exists | ✅ Accurate |
 | "2500+ tests passing" | Tests running but timeout; actual count unclear | 🟡 MEDIUM |
 | "132 test files" | Many test files exist but exact count varies | 🟡 MEDIUM |

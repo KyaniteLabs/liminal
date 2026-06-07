@@ -4,7 +4,7 @@ import { AestheticCritic } from '../../../src/aesthetic/AestheticCritic.js';
 
 describe('aesthetic config contract', () => {
   it('documents --aesthetic as creative preference presets and --aesthetic-config as a JSON path', () => {
-    const cli = readFileSync('bin/liminal', 'utf8');
+    const cli = readFileSync('bin/sinter', 'utf8');
 
     expect(cli).toContain('--aesthetic <preset>        Creative preference preset (minimalist|vibrant|cinematic|playful|free)');
     expect(cli).toContain('--aesthetic-config <path>  Path to aesthetic/perception config JSON');

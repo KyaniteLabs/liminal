@@ -176,7 +176,7 @@
 {"path":"artifacts/test-simple/cli-project-archive.zip","primaryCluster":"production_flow","secondaryCluster":"customer_fury","tertiaryCluster":null,"highRisk":false}
 {"path":"artifacts/test-simple/cli-project-final.html","primaryCluster":"production_flow","secondaryCluster":"customer_fury","tertiaryCluster":null,"highRisk":false}
 {"path":"artifacts/test-simple/cli-project-final.js","primaryCluster":"production_flow","secondaryCluster":"customer_fury","tertiaryCluster":null,"highRisk":false}
-{"path":"bin/liminal","primaryCluster":"codecraft","secondaryCluster":"customer_fury","tertiaryCluster":null,"highRisk":false}
+{"path":"bin/sinter","primaryCluster":"codecraft","secondaryCluster":"customer_fury","tertiaryCluster":null,"highRisk":false}
 {"path":"bubbletea/README.md","primaryCluster":"codecraft","secondaryCluster":"customer_fury","tertiaryCluster":"production_flow","highRisk":true}
 {"path":"bubbletea/go.mod","primaryCluster":"codecraft","secondaryCluster":"customer_fury","tertiaryCluster":"production_flow","highRisk":true}
 {"path":"bubbletea/go.sum","primaryCluster":"codecraft","secondaryCluster":"customer_fury","tertiaryCluster":"production_flow","highRisk":true}

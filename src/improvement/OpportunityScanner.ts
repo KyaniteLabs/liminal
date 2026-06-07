@@ -152,7 +152,7 @@ export function scanGreenSystemOpportunities(evidence: ImprovementOpportunityEvi
     category: 'integration cleanup',
     evidence: evidence.duplicatedLaunchPaths ?? [],
     measurableTarget: 'One documented GUI command starts backend plus workbench, with Bubble Tea kept as operator cockpit',
-    expectedVerification: ['node bin/liminal --help', 'pnpm test -- studio-improve-cli-contract'],
+    expectedVerification: ['node bin/sinter --help', 'pnpm test -- studio-improve-cli-contract'],
     impact: 5,
     confidence: 5,
     effort: 2,

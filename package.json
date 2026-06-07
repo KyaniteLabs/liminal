@@ -171,9 +171,9 @@
     "ws": "8.20.1"
   },
   "bin": {
-    "sinter": "bin/liminal",
-    "liminal": "bin/liminal",
-    "lim": "bin/liminal"
+    "sinter": "bin/sinter",
+    "liminal": "bin/sinter",
+    "lim": "bin/sinter"
   },
   "optionalDependencies": {
     "@hyperframes/producer": "^0.4.3",

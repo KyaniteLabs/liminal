@@ -56,58 +56,58 @@ src/tui-bridge/PostGenerationCognitiveWriter.ts:169:        digestDir: path.join
 src/tui-bridge/PostGenerationCognitiveWriter.ts:170:        seedDir: path.join(process.cwd(), '.omx', 'compost', 'seeds'),
 src/tui-bridge/PostGenerationCognitiveWriter.ts:180:    const dir = path.join(this.artifactRoot, safeSession);
 src/tui-bridge/PostGenerationCognitiveWriter.ts:181:    const filePath = path.join(dir, `${context.domain}-${stamp}${ext}`);
-bin/liminal:10:const repoRoot = path.join(binDir, '..');
-bin/liminal:11:const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8'));
-bin/liminal:524:        baseUrl: 'http://localhost:1234/v1',
-bin/liminal:550:    'lmstudio': 'http://localhost:1234/v1',
-bin/liminal:551:    'inception': 'http://localhost:5000/v1',
-bin/liminal:552:    'ollama': 'http://localhost:11434/v1',  // Note: Ollama OpenAI-compatible endpoint
-bin/liminal:634:  const outDir = flags.output || path.join('.omx', 'self-improvement', new Date().toISOString().replace(/[:.]/g, '-'));
-bin/liminal:640:  const taskJsonPath = path.join(outDir, 'self-improvement-task.json');
-bin/liminal:641:  const taskMdPath = path.join(outDir, 'self-improvement-task.md');
-bin/liminal:690:  const sessionJsonPath = path.join(outDir, 'self-improvement-session.json');
-bin/liminal:691:  const sessionMdPath = path.join(outDir, 'self-improvement-session.md');
-bin/liminal:730:  const liveOutDir = flags.output || path.join(process.env.HOME || '/tmp', '.liminal', 'output');
-bin/liminal:751:    const strudelPath = path.join(liveOutDir, 'strudel.js');
-bin/liminal:756:    const hydraPath = path.join(liveOutDir, 'hydra.js');
-bin/liminal:776:  const outDir = output || path.join(process.env.HOME || '/tmp', '.liminal', 'output');
-bin/liminal:849:        .map(f => ({ file: f, path: path.join(dir, f), stat: fs.statSync(path.join(dir, f)) }))
-bin/liminal:863:    path.join(process.env.HOME || '/tmp', '.liminal', 'output'),
-bin/liminal:864:    path.join(process.cwd(), 'gallery'),
-bin/liminal:880:    console.log('✅ Server running on http://localhost:' + port);
-bin/liminal:913:      baseUrl: process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434',
-bin/liminal:921:      baseUrl: process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434',
-bin/liminal:962:    const heap = new CompostHeap({ heapDir: path.join(process.cwd(), '.liminal', 'compost', 'heap') });
-bin/liminal:972:      const fullPath = path.join(process.cwd(), '.liminal', 'compost', 'heap', relPath);
-bin/liminal:1031:  const outDir = path.join(process.env.HOME || '/tmp', '.liminal', 'output');
-bin/liminal:1154:  const { spawn } = await import('child_process');
-bin/liminal:1157:  const tui = spawn(npmCmd, ['run', 'tui'], {
-bin/liminal:1187:    console.log('  Connect Bubble Tea: LIMINAL_BRIDGE_URL=http://localhost:' + port + ' ./dist/bubbletea');
-bin/liminal:1204:  const { spawn } = await import('child_process');
-bin/liminal:1206:  const guiUrl = 'http://localhost:5173';
-bin/liminal:1212:  console.log(`  API: http://localhost:${apiPort}`);
-bin/liminal:1216:  const studio = spawn(npmCmd, ['run', 'gui'], {
-bin/liminal:1221:      VITE_API_TARGET: `http://localhost:${apiPort}`,
-bin/liminal:1305:  const { spawn } = await import('child_process');
-bin/liminal:1319:  const binPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'bubbletea');
-bin/liminal:1328:    const tui = spawn(binPath, [], {
-bin/liminal:1329:      env: { ...process.env, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
-bin/liminal:1427:  const liminalFs = LiminalFS.open(process.cwd());
-bin/liminal:1433:      const refsDir = path.join(process.cwd(), '.liminal', 'refs');
-bin/liminal:1445:        const ref = JSON.parse(fs.readFileSync(path.join(refsDir, entry), 'utf-8'));
-bin/liminal:1455:        const refsDir = path.join(process.cwd(), '.liminal', 'refs');
-bin/liminal:1509:  const liminalFs = LiminalFS.open(process.cwd());
-bin/liminal:1527:  const liminalFs = LiminalFS.open(process.cwd());
-bin/liminal:1738:  const liminalFs = LiminalFS.open(process.cwd());
-bin/liminal:1772:  const liminalFs = LiminalFS.open(process.cwd());
-bin/liminal:1818:  const liminalFs = LiminalFS.open(process.cwd());
-bin/liminal:1859:  const liminalFs = LiminalFS.open(process.cwd());
-bin/liminal:1898:  const liminalFs = LiminalFS.open(process.cwd());
-bin/liminal:1938:  const liminalFs = LiminalFS.open(process.cwd());
-bin/liminal:1975:  const liminalFs = LiminalFS.open(process.cwd());
-bin/liminal:2007:  const liminalFs = LiminalFS.open(process.cwd());
-bin/liminal:2057:  const liminalFs = LiminalFS.open(process.cwd());
-bin/liminal:2103:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:10:const repoRoot = path.join(binDir, '..');
+bin/sinter:11:const packageJson = JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf-8'));
+bin/sinter:524:        baseUrl: 'http://localhost:1234/v1',
+bin/sinter:550:    'lmstudio': 'http://localhost:1234/v1',
+bin/sinter:551:    'inception': 'http://localhost:5000/v1',
+bin/sinter:552:    'ollama': 'http://localhost:11434/v1',  // Note: Ollama OpenAI-compatible endpoint
+bin/sinter:634:  const outDir = flags.output || path.join('.omx', 'self-improvement', new Date().toISOString().replace(/[:.]/g, '-'));
+bin/sinter:640:  const taskJsonPath = path.join(outDir, 'self-improvement-task.json');
+bin/sinter:641:  const taskMdPath = path.join(outDir, 'self-improvement-task.md');
+bin/sinter:690:  const sessionJsonPath = path.join(outDir, 'self-improvement-session.json');
+bin/sinter:691:  const sessionMdPath = path.join(outDir, 'self-improvement-session.md');
+bin/sinter:730:  const liveOutDir = flags.output || path.join(process.env.HOME || '/tmp', '.liminal', 'output');
+bin/sinter:751:    const strudelPath = path.join(liveOutDir, 'strudel.js');
+bin/sinter:756:    const hydraPath = path.join(liveOutDir, 'hydra.js');
+bin/sinter:776:  const outDir = output || path.join(process.env.HOME || '/tmp', '.liminal', 'output');
+bin/sinter:849:        .map(f => ({ file: f, path: path.join(dir, f), stat: fs.statSync(path.join(dir, f)) }))
+bin/sinter:863:    path.join(process.env.HOME || '/tmp', '.liminal', 'output'),
+bin/sinter:864:    path.join(process.cwd(), 'gallery'),
+bin/sinter:880:    console.log('✅ Server running on http://localhost:' + port);
+bin/sinter:913:      baseUrl: process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434',
+bin/sinter:921:      baseUrl: process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434',
+bin/sinter:962:    const heap = new CompostHeap({ heapDir: path.join(process.cwd(), '.liminal', 'compost', 'heap') });
+bin/sinter:972:      const fullPath = path.join(process.cwd(), '.liminal', 'compost', 'heap', relPath);
+bin/sinter:1031:  const outDir = path.join(process.env.HOME || '/tmp', '.liminal', 'output');
+bin/sinter:1154:  const { spawn } = await import('child_process');
+bin/sinter:1157:  const tui = spawn(npmCmd, ['run', 'tui'], {
+bin/sinter:1187:    console.log('  Connect Bubble Tea: LIMINAL_BRIDGE_URL=http://localhost:' + port + ' ./dist/bubbletea');
+bin/sinter:1204:  const { spawn } = await import('child_process');
+bin/sinter:1206:  const guiUrl = 'http://localhost:5173';
+bin/sinter:1212:  console.log(`  API: http://localhost:${apiPort}`);
+bin/sinter:1216:  const studio = spawn(npmCmd, ['run', 'gui'], {
+bin/sinter:1221:      VITE_API_TARGET: `http://localhost:${apiPort}`,
+bin/sinter:1305:  const { spawn } = await import('child_process');
+bin/sinter:1319:  const binPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'bubbletea');
+bin/sinter:1328:    const tui = spawn(binPath, [], {
+bin/sinter:1329:      env: { ...process.env, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
+bin/sinter:1427:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:1433:      const refsDir = path.join(process.cwd(), '.liminal', 'refs');
+bin/sinter:1445:        const ref = JSON.parse(fs.readFileSync(path.join(refsDir, entry), 'utf-8'));
+bin/sinter:1455:        const refsDir = path.join(process.cwd(), '.liminal', 'refs');
+bin/sinter:1509:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:1527:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:1738:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:1772:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:1818:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:1859:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:1898:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:1938:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:1975:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:2007:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:2057:  const liminalFs = LiminalFS.open(process.cwd());
+bin/sinter:2103:  const liminalFs = LiminalFS.open(process.cwd());
 test/pending/unit/generators/P5GeneratorLLM.test.ts:75:      const gen = new P5GeneratorLLM({ baseUrl: 'http://localhost:1234' });
 test/pending/unit/soup-loop.test.ts:9:const TEST_GALLERY_DIR = path.join(os.tmpdir(), 'atelier-soup-loop-test');
 bubbletea/main.go:14:		bridgeURL = "http://localhost:3000"
@@ -957,7 +957,7 @@ test/integration/ledger-cli.test.ts:25:    liminalFs = LiminalFS.open(tempDir);
 test/collab/types.test.ts:56:        localBaseUrl: 'http://localhost:1234/v1',
 src/fix/TestFailureDetector.ts:6:import { execSync } from 'child_process';
 test/integration/cli.test.js:6:import { spawn } from 'child_process';
-test/integration/cli.test.js:10:const cliPath = path.join(process.cwd(), 'bin/liminal');
+test/integration/cli.test.js:10:const cliPath = path.join(process.cwd(), 'bin/sinter');
 test/integration/cli.test.js:20:    const res = await fetch('http://localhost:1234/v1/models', { signal: AbortSignal.timeout(1000) });
 test/integration/cli.test.js:32:    testOutputDir = path.join(process.cwd(), 'test-cli-output');
 test/integration/cli.test.js:55:        console.log('[SKIP] No LLM available at localhost:1234');
@@ -1198,8 +1198,8 @@ test/e2e/full-loop-local.test.ts:1:// Allow localhost for tests
 test/e2e/full-loop-local.test.ts:81:    process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434';
 test/e2e/full-loop-local.test.ts:102:    const outputDir = path.join(os.tmpdir(), uniqueId);
 src/guardrails/compliance/SupplyChainGuardrail.ts:7:import { execFile } from 'child_process';
-test/integration/cognitive-architecture-cli-contract.test.ts:8:  const bin = () => fs.readFileSync(path.join(repoRoot, 'bin/liminal'), 'utf8');
-test/integration/studio-improve-cli-contract.test.ts:8:  const bin = () => fs.readFileSync(path.join(repoRoot, 'bin/liminal'), 'utf8');
+test/integration/cognitive-architecture-cli-contract.test.ts:8:  const bin = () => fs.readFileSync(path.join(repoRoot, 'bin/sinter'), 'utf8');
+test/integration/studio-improve-cli-contract.test.ts:8:  const bin = () => fs.readFileSync(path.join(repoRoot, 'bin/sinter'), 'utf8');
 test/integration/studio-improve-cli-contract.test.ts:9:  const pkg = () => JSON.parse(fs.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')) as { version: string; scripts: Record<string, string> };
 test/integration/studio-improve-cli-contract.test.ts:44:    expect(fs.existsSync(path.join(repoRoot, 'docs/launch/skipped-test-ledger.md'))).toBe(true);
 test/integration/studio-improve-cli-contract.test.ts:45:    expect(fs.existsSync(path.join(repoRoot, 'docs/launch/ml-feature-value-matrix.md'))).toBe(true);

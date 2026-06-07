@@ -13,7 +13,7 @@ Sinter is a self-recursive creative coding agent at `/Users/simongonzalezdecruz/
 
 **Stack**: TypeScript, Node.js, ESM, `tsc` build to `dist/`, pnpm, 187 test files, MIT license.
 
-**Entry points**: CLI (`bin/liminal`), Node library (`src/index.ts`), HTTP API, GUI (`gui/`).
+**Entry points**: CLI (`bin/sinter`), Node library (`src/index.ts`), HTTP API, GUI (`gui/`).
 
 **Current domains**: p5.js (2D art), GLSL shaders, Three.js (3D), Strudel (live music), Hydra (audio-reactive visuals), Remotion (video).
 
@@ -607,7 +607,7 @@ Polish and enrichment.
 2. All new modules must use `Gallery` for persistence (never write custom file I/O except for module-specific data)
 3. All new modules must follow Sinter's TypeScript conventions (ESM, strict mode, no `any`)
 4. All new modules must have corresponding test files in `test/`
-5. All new CLI commands must be wired into `bin/liminal` and `src/compost/cli.ts` as appropriate
+5. All new CLI commands must be wired into `bin/sinter` and `src/compost/cli.ts` as appropriate
 
 ### Testing Requirements
 - Port test suites from source repos where they exist

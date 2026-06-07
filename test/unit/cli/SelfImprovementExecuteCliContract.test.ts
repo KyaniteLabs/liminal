@@ -12,7 +12,7 @@ function readRepoFile(relativePath: string): string {
 
 describe('self-improvement CLI execution contract', () => {
   it('keeps packet creation default and executes only with explicit auto-confirm in an isolated worktree', () => {
-    const bin = readRepoFile('bin/liminal');
+    const bin = readRepoFile('bin/sinter');
 
     expect(bin).toContain("flags.confirm === 'auto' || flags.force === true");
     expect(bin).toContain('Routed to self-improvement task preparation, not creative generation.');
@@ -24,7 +24,7 @@ describe('self-improvement CLI execution contract', () => {
   });
 
   it('exposes a headless gauntlet command for self-improvement reflex reliability', () => {
-    const bin = readRepoFile('bin/liminal');
+    const bin = readRepoFile('bin/sinter');
 
     expect(bin).toContain("cmd === 'self-improve'");
     expect(bin).toContain("subCmd === 'gauntlet'");
@@ -34,7 +34,7 @@ describe('self-improvement CLI execution contract', () => {
   });
 
   it('exposes Level 6 product gates from the real CLI', () => {
-    const bin = readRepoFile('bin/liminal');
+    const bin = readRepoFile('bin/sinter');
 
     expect(bin).toContain("cmd === 'domains'");
     expect(bin).toContain('runCreativeDomainGauntlet');

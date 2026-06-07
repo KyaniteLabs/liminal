@@ -35,7 +35,7 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 
 | Entry point | File | Invocation | Config source | Call graph |
 |-------------|------|------------|---------------|------------|
-| **CLI** | `bin/liminal` | `liminal` (npm bin) or `node bin/liminal` | ConfigLoader → `~/.liminal/config.json` + env; bin sets `process.env.LIMINAL_LLM_*`; flags override | dotenv → initializeConfig → getEffectiveConfig → set env; generate → `run(prompt, opts)`; serve → PreviewServer; list → read ~/.liminal/output; configure → saveConfig; interactive → InteractiveMode.run() → run(); completions → generateCompletions(shell) |
+| **CLI** | `bin/sinter` | `liminal` (npm bin) or `node bin/sinter` | ConfigLoader → `~/.liminal/config.json` + env; bin sets `process.env.LIMINAL_LLM_*`; flags override | dotenv → initializeConfig → getEffectiveConfig → set env; generate → `run(prompt, opts)`; serve → PreviewServer; list → read ~/.liminal/output; configure → saveConfig; interactive → InteractiveMode.run() → run(); completions → generateCompletions(shell) |
 | **run / Sinter** | `src/index.ts` | Programmatic only | In-code `defaultConfig` + options; no ConfigLoader; LLM from process.env when LLMClient is created | run() → RalphLoop.run() → P5GeneratorLLM → LLMClient(env); run() → Exporter (HTML/JS/ZIP), Gallery.loadHistory(); Sinter.run() → same run() with merged config |
 | **TUI** | `src/tui/index.tsx` | `npm run tui` → `node --import tsx src/tui/index.tsx` | Env only (dotenv); no ConfigLoader; run options hardcoded in handleGenerate | main() → loadGallery() → render(App); handleGenerate → import(dist/index.js) → run(prompt, { maxIterations: 10, ... }) |
 | **Benchmark** | `scripts/benchmark.js` | `npm run benchmark` → `node scripts/benchmark.js` | Env only; no dotenv, no ConfigLoader | runBenchmarks() → benchmarkIteration(prompt) → run(prompt, { output: './benchmark-output', project: benchmark-${Date.now()} }) |
@@ -69,7 +69,7 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 
 ### 3.3 Two config systems
 
-1. **LLM config:** ~/.liminal/config.json + env (ConfigLoader). Used only by **bin/liminal**; it merges and sets process.env so LLMClient sees it. TUI and benchmark do not call ConfigLoader — they rely on env (and TUI on dotenv).
+1. **LLM config:** ~/.liminal/config.json + env (ConfigLoader). Used only by **bin/sinter**; it merges and sets process.env so LLMClient sees it. TUI and benchmark do not call ConfigLoader — they rely on env (and TUI on dotenv).
 2. **Loop/creative/gallery/renderer:** In-code defaults in `src/index.ts` (defaultConfig) + options passed to run() / Sinter. No file or env for these keys.
 
 ---
@@ -195,7 +195,7 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 
 ## 8. Gaps and blindspots (explicit)
 
-1. **config/liminal.json** — ConfigLoader has loadProjectConfig(); project config path may not be passed from all entry points (e.g. bin/liminal). File: config/liminal.json; document when it is loaded.
+1. **config/liminal.json** — ConfigLoader has loadProjectConfig(); project config path may not be passed from all entry points (e.g. bin/sinter). File: config/liminal.json; document when it is loaded.
 2. **Coverage from src** — jest collectCoverageFrom is src/**/*.ts (and .tsx); coverage reflects source. File: jest.config.js.
 3. **ESLint** — .eslintrc.cjs present at repo root; lint runs on src/.
 4. **P5GeneratorLLM** — Covered by test/generators/p5-generator-llm.test.js and integration tests.
@@ -208,7 +208,7 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 ## 9. Summary
 
 - **Index:** Workspace indexed with jcodemunch (39 files, 249 symbols); optional future runs can use incremental: true.
-- **Entry points:** Four (bin/liminal, src/index.ts, src/tui/index.tsx, scripts/benchmark.js); config flow differs (only CLI uses ConfigLoader).
+- **Entry points:** Four (bin/sinter, src/index.ts, src/tui/index.tsx, scripts/benchmark.js); config flow differs (only CLI uses ConfigLoader).
 - **Config:** Two systems (LLM from file+env; loop/creative/gallery/renderer from in-code defaults); config/liminal.json is documented but never loaded.
 - **Source:** Clear src tree and public API; dependency graph centered on index.ts and RalphLoop → P5GeneratorLLM → LLMClient, plus TUI branch.
 - **Tests:** 28 files; coverage from dist at 80% thresholds; P5GeneratorLLM and TUI entry/components lack direct or component-level tests.

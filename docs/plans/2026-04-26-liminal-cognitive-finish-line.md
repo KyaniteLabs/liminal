@@ -4,7 +4,7 @@
 
 **Architecture:** Start with a source-controlled finish-line contract and a machine-readable cognitive architecture atlas. Then wire Studio/CLI reporting, capability maturity gates, model-assimilation gates, and proof scripts so every creative domain and cognitive organ must prove its role in the closed loop: perception -> memory -> compost -> dreaming -> intuition -> creation -> evaluation -> self-improvement.
 
-**Tech Stack:** TypeScript, Vitest, existing `bin/liminal` CLI, existing `src/reporting`, existing cognitive subsystems under `src/compost`, `src/brain`, `src/intuition`, `src/dreaming`, `src/cortex`, `src/autonomy`, `src/learning`, `src/evolution`, and docs under `docs/`.
+**Tech Stack:** TypeScript, Vitest, existing `bin/sinter` CLI, existing `src/reporting`, existing cognitive subsystems under `src/compost`, `src/brain`, `src/intuition`, `src/dreaming`, `src/cortex`, `src/autonomy`, `src/learning`, `src/evolution`, and docs under `docs/`.
 
 ---
 
@@ -33,7 +33,7 @@ Sinter V1 is not a four-generator proof. It is a creative cognitive system with:
 
 ### Task 0.3: Expose atlas through CLI
 
-**Files:** `bin/liminal`, `test/integration/cognitive-architecture-cli-contract.test.ts`
+**Files:** `bin/sinter`, `test/integration/cognitive-architecture-cli-contract.test.ts`
 
 **Verification:** `pnpm build && node bin/sinter report cognition`
 

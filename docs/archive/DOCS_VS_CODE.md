@@ -38,7 +38,7 @@ This document compares the main documentation (README.md, PRD.md) to the current
 
 | Topic | Doc | Code | Match? |
 |-------|-----|------|--------|
-| **Feature** | README/PRD: "Live Music Coding" — Strudel, Hydra, Sonic Pi, FoxDot, p5.js + Web Audio. Example: `sinter --prompt "…" --mode live-music --output ./set`. | No `--mode` flag in bin/liminal. No live-music mode. | **No** — feature not implemented. |
+| **Feature** | README/PRD: "Live Music Coding" — Strudel, Hydra, Sonic Pi, FoxDot, p5.js + Web Audio. Example: `sinter --prompt "…" --mode live-music --output ./set`. | No `--mode` flag in bin/sinter. No live-music mode. | **No** — feature not implemented. |
 | **generateMusic()** | README/PRD: `atelier.generateMusic({ prompt, bpm, duration, platform: "strudel" })`. | No `generateMusic` on export or default export in index.ts. | **No** — API does not exist. |
 | **generateVisuals()** | README/PRD: `atelier.generateVisuals({ prompt, audioInput, platform: "hydra" })`. | No `generateVisuals` in codebase. | **No** — API does not exist. |
 | **Music-to-visual bridge** | README: "Generate synchronized audio and visual outputs" with the above APIs. | Not implemented. | **No** — entire subsection is unimplemented. |

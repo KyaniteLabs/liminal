@@ -169,7 +169,7 @@ Add an `engagement` fitness axis to the existing evolution system, a `PostHogCli
   - `--slot <id>`: target specific slot
   - `--interval <ms>`: override cycle interval (default: 6h = 21600000ms)
 - [ ] Wire into CLI entry point (check how `ledger`, `compost` commands are registered in `src/index.ts`)
-- Verify: `pnpm build && node bin/liminal site evolve --help`
+- Verify: `pnpm build && node bin/sinter site evolve --help`
 
 ### Step 10: Run full test suite
 - [ ] `pnpm build`
@@ -202,7 +202,7 @@ pnpm vitest run test/unit/generation/HTMLWrapper.test.ts
 pnpm vitest run test/unit/daemon/LivingSiteDaemon.test.ts
 
 # Step 9
-pnpm build && node bin/liminal site evolve --help
+pnpm build && node bin/sinter site evolve --help
 
 # Step 10
 pnpm build && pnpm test

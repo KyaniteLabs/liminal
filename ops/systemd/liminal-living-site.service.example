@@ -10,7 +10,7 @@ Group=liminal
 WorkingDirectory=/opt/liminal
 Environment=NODE_ENV=production
 EnvironmentFile=/etc/liminal/living-site.env
-ExecStart=/usr/bin/env node /opt/liminal/bin/liminal site evolve
+ExecStart=/usr/bin/env node /opt/liminal/bin/sinter site evolve
 Restart=on-failure
 RestartSec=30
 NoNewPrivileges=true

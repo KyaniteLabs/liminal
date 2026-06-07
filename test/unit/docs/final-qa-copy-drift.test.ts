@@ -30,7 +30,7 @@ describe('final QA copy drift guardrails', () => {
   it('separates CreativeBoard terminology from five-persona swarm terminology', () => {
     const readme = readRepoFile('README.md');
     const features = readRepoFile('docs/features.html');
-    const cli = readRepoFile('bin/liminal');
+    const cli = readRepoFile('bin/sinter');
 
     expect(readme).toContain('CreativeBoard critique');
     expect(readme).toContain('3-agent board (Minimalist / Expressionist / Technician)');
@@ -44,7 +44,7 @@ describe('final QA copy drift guardrails', () => {
   it('does not describe the Live AV utility as a disabled Hydra preview surface', () => {
     const appSource = readRepoFile('gui/src/App.tsx');
     const features = readRepoFile('docs/features.html');
-    const cli = readRepoFile('bin/liminal');
+    const cli = readRepoFile('bin/sinter');
 
     expect(appSource).toContain('Live AV');
     expect(appSource).toContain('Hydra — read-only video synth code');

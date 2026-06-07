@@ -24,7 +24,7 @@ Preserve unique, low-conflict value from `stash@{0}` without touching the live
 
 ## Rescued Now
 
-- `bin/liminal`
+- `bin/sinter`
 - `bubbletea/go.mod`
 - `bubbletea/internal/app/model.go`
 - `bubbletea/internal/app/view.go`

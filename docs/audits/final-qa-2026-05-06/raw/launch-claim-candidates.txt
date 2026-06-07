@@ -876,8 +876,8 @@ scripts/utils/git-hygiene.sh:103:    done
 scripts/utils/git-hygiene.sh:104:done
 scripts/utils/git-hygiene.sh:120:done
 scripts/utils/git-hygiene.sh:132:done
-docs/orphaned-module-catalog.md:20:Detects when the creative loop stops making progress. Already referenced 4x in bin/liminal (garden commands). Not fully consumed by src/ modules but partially wired via CLI.
-docs/orphaned-module-catalog.md:44:Natural language interface inspired by Claude Code. Routes slash commands, agent patterns, and free-text to appropriate handlers. Referenced in bin/liminal. Full integration pending TUI launch.
+docs/orphaned-module-catalog.md:20:Detects when the creative loop stops making progress. Already referenced 4x in bin/sinter (garden commands). Not fully consumed by src/ modules but partially wired via CLI.
+docs/orphaned-module-catalog.md:44:Natural language interface inspired by Claude Code. Routes slash commands, agent patterns, and free-text to appropriate handlers. Referenced in bin/sinter. Full integration pending TUI launch.
 docs/orphaned-module-catalog.md:56:Detects if stdin is suitable for interactive TUI (checks for TTY, pipes, etc.). Used to decide whether to launch interactive mode or fall back to batch.
 docs/orphaned-module-catalog.md:59:Configuration for the TUI bridge server (port, host, SSE settings). Needed when launching the bridge from CLI or programmatically.
 src/fs/types.ts:35:  status: 'started' | 'completed' | 'failed' | 'suspended';
@@ -3493,34 +3493,34 @@ docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:52:sc
 docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:60:scripts/dogfood/true-dogfood-generation.js:157:console.log('\n🐕 TRUE DOGFOOD complete - no fixes, just facts.');
 docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:122:test/e2e/provider-pipeline.test.ts:561:    const thinkContent = '<think type="reasoning">reasoning here</think' + '>' + '\nconsole.log("done")';
 docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:123:test/e2e/provider-pipeline.test.ts:563:    expect(result.code).toContain('console.log("done")');
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:222:bin/liminal:209:  console.log('  --gates-passed              For improve scan: report improve mode after external gates pass');
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:253:bin/liminal:256:    console.log(`Prompts: ${report.passed}/${report.total} passed`);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:267:bin/liminal:283:    console.log(`Domains: ${report.passed}/${report.total} passed`);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:274:bin/liminal:295:    process.exit(report.ready ? 0 : 1);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:281:bin/liminal:312:    console.log(`Ready: ${report.ready ? 'YES' : 'NO'}`);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:287:bin/liminal:323:    process.exit(report.ready ? 0 : 1);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:293:bin/liminal:341:    console.log(`Ready: ${report.ready ? 'YES' : 'NO'}`);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:301:bin/liminal:356:    process.exit(report.ready ? 0 : 1);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:318:bin/liminal:433:    console.log('=== Self-healing run complete ===');
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:415:bin/liminal:807:    console.log('✅ Generation complete!');
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:453:bin/liminal:996:      console.log(`  motifDensity=${c.motifDensity.toFixed(3)} complexity=${c.complexity.toFixed(3)} complete=${c.isComplete} sources=${c.sourceIds.length}`);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:490:bin/liminal:1150:  console.log('✅ Consolidation complete');
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:516:bin/liminal:1231:    console.error('Failed to launch Sinter Studio:', err.message);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:521:bin/liminal:1240:  process.exit(status.ready ? 0 : 2);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:525:bin/liminal:1247:  process.exit(status.ready ? 0 : 2);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:538:bin/liminal:1286:  console.log(`  Result: ${result.aggregate.passed}/${result.aggregate.total} passed`);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:544:bin/liminal:1296:    process.exit(gateResult.passed ? 0 : 1);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:545:bin/liminal:1298:    console.log(`  Suite passed: ${result.aggregate.suitePassed}`);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:551:bin/liminal:1324:    const shutdown = async () => { try { await server.stop(); } catch { /* already closing */ } process.exit(0); };
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:553:bin/liminal:1339:      console.error('Failed to launch Bubble Tea:', err.message);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:565:bin/liminal:1402:      console.log('✅ Fix completed successfully!');
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:570:bin/liminal:1411:    console.log('   Build passed:', result.buildPassed);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:571:bin/liminal:1412:    console.log('   Tests passed:', result.testsPassed);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:773:bin/liminal:2074:    console.log(`  Ready: ${readiness.ready ? 'YES' : 'NO'}`);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:806:bin/liminal:2176:    console.log(`  WARNING: Launch not ready (score: ${(readiness.score * 100).toFixed(0)}%), but --force was specified.`);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:808:bin/liminal:2186:    console.log('No promoted changes to ship.');
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:815:bin/liminal:2198:  console.log(`  Gate: ${result.passed ? 'PASSED' : 'BLOCKED'}`);
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:831:bin/liminal:2238:  console.log(`  Steps: ${result.totalSteps}  Passed: ${result.passed}  Duration: ${result.durationMs}ms`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:222:bin/sinter:209:  console.log('  --gates-passed              For improve scan: report improve mode after external gates pass');
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:253:bin/sinter:256:    console.log(`Prompts: ${report.passed}/${report.total} passed`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:267:bin/sinter:283:    console.log(`Domains: ${report.passed}/${report.total} passed`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:274:bin/sinter:295:    process.exit(report.ready ? 0 : 1);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:281:bin/sinter:312:    console.log(`Ready: ${report.ready ? 'YES' : 'NO'}`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:287:bin/sinter:323:    process.exit(report.ready ? 0 : 1);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:293:bin/sinter:341:    console.log(`Ready: ${report.ready ? 'YES' : 'NO'}`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:301:bin/sinter:356:    process.exit(report.ready ? 0 : 1);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:318:bin/sinter:433:    console.log('=== Self-healing run complete ===');
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:415:bin/sinter:807:    console.log('✅ Generation complete!');
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:453:bin/sinter:996:      console.log(`  motifDensity=${c.motifDensity.toFixed(3)} complexity=${c.complexity.toFixed(3)} complete=${c.isComplete} sources=${c.sourceIds.length}`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:490:bin/sinter:1150:  console.log('✅ Consolidation complete');
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:516:bin/sinter:1231:    console.error('Failed to launch Sinter Studio:', err.message);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:521:bin/sinter:1240:  process.exit(status.ready ? 0 : 2);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:525:bin/sinter:1247:  process.exit(status.ready ? 0 : 2);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:538:bin/sinter:1286:  console.log(`  Result: ${result.aggregate.passed}/${result.aggregate.total} passed`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:544:bin/sinter:1296:    process.exit(gateResult.passed ? 0 : 1);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:545:bin/sinter:1298:    console.log(`  Suite passed: ${result.aggregate.suitePassed}`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:551:bin/sinter:1324:    const shutdown = async () => { try { await server.stop(); } catch { /* already closing */ } process.exit(0); };
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:553:bin/sinter:1339:      console.error('Failed to launch Bubble Tea:', err.message);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:565:bin/sinter:1402:      console.log('✅ Fix completed successfully!');
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:570:bin/sinter:1411:    console.log('   Build passed:', result.buildPassed);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:571:bin/sinter:1412:    console.log('   Tests passed:', result.testsPassed);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:773:bin/sinter:2074:    console.log(`  Ready: ${readiness.ready ? 'YES' : 'NO'}`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:806:bin/sinter:2176:    console.log(`  WARNING: Launch not ready (score: ${(readiness.score * 100).toFixed(0)}%), but --force was specified.`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:808:bin/sinter:2186:    console.log('No promoted changes to ship.');
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:815:bin/sinter:2198:  console.log(`  Gate: ${result.passed ? 'PASSED' : 'BLOCKED'}`);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:831:bin/sinter:2238:  console.log(`  Steps: ${result.totalSteps}  Passed: ${result.passed}  Duration: ${result.durationMs}ms`);
 docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:1019:scripts/dogfood/dogfood-minimax-m27.ts:254:  console.log(`Passed: ${passed} ✅`);
 docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:1021:scripts/dogfood/dogfood-minimax-m27.ts:256:  console.log(`Success Rate: ${((passed / STRESS_TESTS.length) * 100).toFixed(1)}%`);
 docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:1048:scripts/dogfood/evaluate-real-dogfood.js:206:console.log(`Passed (≥0.70): ${passed}`);
@@ -3746,7 +3746,7 @@ docs/io-catalog.html:180:            <div class="stat"><span class="stat-num" st
 docs/io-catalog.html:195:                    <tr><td>1</td><td>Text</td><td>Prompts via <code>--prompt</code>, TUI, chat mode</td><td><code>src/index.ts</code>, <code>src/tui/</code></td><td><span class="badge badge-done">Done</span></td></tr>
 docs/io-catalog.html:196:                    <tr><td>2</td><td>JSON</td><td>Config files (<code>~/.liminal/config.json</code>)</td><td><code>src/config/ConfigLoader.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
 docs/io-catalog.html:197:                    <tr><td>3</td><td>JSON (legacy)</td><td><code>~/.atelier/config.json</code> — auto-migrated</td><td><code>ConfigLoader.migrateLegacyConfig()</code></td><td><span class="badge badge-done">Done</span></td></tr>
-docs/io-catalog.html:198:                    <tr><td>4</td><td>.env</td><td>Key-value environment variables</td><td><code>dotenv</code> in <code>bin/liminal</code></td><td><span class="badge badge-done">Done</span></td></tr>
+docs/io-catalog.html:198:                    <tr><td>4</td><td>.env</td><td>Key-value environment variables</td><td><code>dotenv</code> in <code>bin/sinter</code></td><td><span class="badge badge-done">Done</span></td></tr>
 docs/io-catalog.html:199:                    <tr><td>5</td><td>JSON (spec)</td><td>Composition layer specs</td><td><code>src/composite/Compositor.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
 docs/io-catalog.html:202:                    <tr><td>8</td><td>Markdown</td><td>Narrative video scripts</td><td><code>src/narrative/BlogToVideoPipeline.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
 docs/io-catalog.html:203:                    <tr><td>9</td><td>Multi-format</td><td>Compost heap: code, images, audio, video, 3D, text</td><td><code>src/compost/</code></td><td><span class="badge badge-done">Done</span></td></tr>
@@ -3842,7 +3842,7 @@ docs/research/audit/growth/stringly-typed.json:587:      "recommendation": "Use 
 docs/research/audit/growth/stringly-typed.json:595:      "recommendation": "Use HarnessTaskStatus enum: 'pending' | 'in_progress' | 'completed' | 'failed' | 'skipped'"
 docs/research/audit/growth/stringly-typed.json:656:      "strings": ["pending", "running", "completed", "failed", "success", "active", "paused", "rolled_back", "in_progress", "skipped"],
 docs/research/audit/growth/stringly-typed.json:725:      "values": "'flagship' | 'medium' | 'local' | 'tiny'",
-docs/archive/DOCS_VS_CODE.md:24:| **Commands** | README: --prompt, --max-iterations, --output, --project; examples use liminal --prompt "…". | bin/liminal also has: generate/gen/g, serve/s, list/ls, --provider, --model, --configure, --recent, --favorite, --favorites, --interactive/-i, --completions. | Doc **incomplete** — many CLI features (serve, list, configure, interactive, completions, recent, favorites) not in README. |
+docs/archive/DOCS_VS_CODE.md:24:| **Commands** | README: --prompt, --max-iterations, --output, --project; examples use liminal --prompt "…". | bin/sinter also has: generate/gen/g, serve/s, list/ls, --provider, --model, --configure, --recent, --favorite, --favorites, --interactive/-i, --completions. | Doc **incomplete** — many CLI features (serve, list, configure, interactive, completions, recent, favorites) not in README. |
 docs/archive/DOCS_VS_CODE.md:32:| **run() options** | README example: `run('…', { maxIterations: 10, output: './my-art', project: 'my-experiment', tolerateErrors: true, minQualityScore: 0.8 })`. | `run()` in index.ts accepts: maxIterations, timeoutMinutes, output, project, minQualityScore, galleryDir. It does **not** accept `tolerateErrors`; it always passes `tolerateErrors: false` to RalphLoop (line 135). | **No** — `tolerateErrors` is documented but not part of the public `run()` options and has no effect. |
 docs/archive/DOCS_VS_CODE.md:33:| **Return shape** | README: result has iterations, finalScore, completed, reason. | Code returns code, iterations, completed, reason, timestamp, duration, finalScore, project, outputDir, prompt, htmlPath, jsPath, zipPath. | **Yes** — documented fields exist; code adds more. |
 docs/archive/DOCS_VS_CODE.md:53:| **Project structure** | README: src/core, generators, render, gallery, export; test; config; gallery; output. | Code also has src/config, src/cli, src/tui, src/llm; config/ and config/liminal.json in repo. README omits config, cli, tui, llm under src. | Doc **incomplete** — src tree is missing directories. |
@@ -8581,7 +8581,7 @@ docs/research/ignored-unregistered-artifacts-manifest-2026-04-14.json:889:      
 docs/research/ignored-unregistered-artifacts-manifest-2026-04-14.json:895:      "path": ".claude/worktrees/launch-plan/artifacts/test-simple/cli-project-archive.zip",
 docs/research/ignored-unregistered-artifacts-manifest-2026-04-14.json:901:      "path": ".claude/worktrees/launch-plan/artifacts/test-simple/cli-project-final.html",
 docs/research/ignored-unregistered-artifacts-manifest-2026-04-14.json:907:      "path": ".claude/worktrees/launch-plan/artifacts/test-simple/cli-project-final.js",
-docs/research/ignored-unregistered-artifacts-manifest-2026-04-14.json:913:      "path": ".claude/worktrees/launch-plan/bin/liminal",
+docs/research/ignored-unregistered-artifacts-manifest-2026-04-14.json:913:      "path": ".claude/worktrees/launch-plan/bin/sinter",
 docs/research/ignored-unregistered-artifacts-manifest-2026-04-14.json:919:      "path": ".claude/worktrees/launch-plan/bubbletea/README.md",
 docs/research/ignored-unregistered-artifacts-manifest-2026-04-14.json:925:      "path": ".claude/worktrees/launch-plan/bubbletea/go.mod",
 docs/research/ignored-unregistered-artifacts-manifest-2026-04-14.json:931:      "path": ".claude/worktrees/launch-plan/bubbletea/go.sum",
@@ -9697,7 +9697,7 @@ docs/archive/internal-audits/PUBLIC_AUDIT_REPORT.md:150:2. Complete `package.jso
 docs/archive/internal-audits/PUBLIC_AUDIT_REPORT.md:164:**Rationale:** Core engineering quality is solid, but repository presentation and public hygiene need cleanup before broad external visibility.
 docs/archive/internal-audits/PUBLIC_AUDIT_REPORT.md:166:Once critical and high items are closed, this repo should be publicly presentable and professionally aligned with 2026 open-source norms.
 docs/archive/SYSTEM_AUDIT_REPORT.md:73:2. **Loop/creative/gallery/renderer:** In-code defaults in `src/index.ts` (defaultConfig) + options passed to run() / Sinter. No file or env for these keys.
-docs/archive/SYSTEM_AUDIT_REPORT.md:198:1. **config/liminal.json** — ConfigLoader has loadProjectConfig(); project config path may not be passed from all entry points (e.g. bin/liminal). File: config/liminal.json; document when it is loaded.
+docs/archive/SYSTEM_AUDIT_REPORT.md:198:1. **config/liminal.json** — ConfigLoader has loadProjectConfig(); project config path may not be passed from all entry points (e.g. bin/sinter). File: config/liminal.json; document when it is loaded.
 docs/archive/SYSTEM_AUDIT_REPORT.md:213:- **Source:** Clear src tree and public API; dependency graph centered on index.ts and RalphLoop → P5GeneratorLLM → LLMClient, plus TUI branch.
 docs/archive/internal-audits/GAPS_AND_IMPROVEMENTS.md:33:| **5.3** | tolerateErrors not in run() | **tolerateErrors** added to run() and Atelier.run() options; passed through to RalphLoop. |
 docs/archive/internal-audits/GAPS_AND_IMPROVEMENTS.md:57:| 12 | Soup produces garbage (no LLM) | LLM reference stored and passed to soup | `CompostMill.ts` |

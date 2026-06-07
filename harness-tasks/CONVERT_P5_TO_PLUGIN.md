@@ -307,13 +307,13 @@ export class P5GeneratorV2 {
 
 1. **Basic Generation:**
    ```bash
-   ./bin/liminal generate "blue circle on canvas" --output test-p5.html
+   ./bin/sinter generate "blue circle on canvas" --output test-p5.html
    ```
    **Pass:** Output contains valid p5.js code with setup() and draw()
 
 2. **Sound Detection:**
    ```bash
-   ./bin/liminal generate "circle with sound" --output test-sound.html
+   ./bin/sinter generate "circle with sound" --output test-sound.html
    ```
    **Pass:** Console log shows "Sound detected in prompt"
 
@@ -412,7 +412,7 @@ npm test
 
 # 3. Manual generation test
 export LIMINAL_LLM_BASE_URL=http://localhost:1234/v1
-./bin/liminal generate "blue circle" --output test-output.html
+./bin/sinter generate "blue circle" --output test-output.html
 
 # 4. Check plugin loaded
 node -e "

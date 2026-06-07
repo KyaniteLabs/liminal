@@ -34,8 +34,8 @@ describe('fix command integration', () => {
   // ── CLI help and documentation ─────────────────────────────────────
   describe('CLI help', () => {
     it('help text includes fix command options', () => {
-      // Verify the bin/liminal file contains fix command help
-      const binPath = join(process.cwd(), 'bin/liminal');
+      // Verify the bin/sinter file contains fix command help
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('--error');
@@ -48,7 +48,7 @@ describe('fix command integration', () => {
 
     it('fix command is recognized in CLI', () => {
       // The CLI should recognize 'fix' as a valid command
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain("cmd === 'fix'");
@@ -58,7 +58,7 @@ describe('fix command integration', () => {
   // ── Fix type detection ─────────────────────────────────────────────
   describe('fix type detection', () => {
     it('detects file-error type for .ts files', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       // Verify the regex pattern for TypeScript files exists
@@ -66,7 +66,7 @@ describe('fix command integration', () => {
     });
 
     it('detects test-failures type from --test-failures flag', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain("flags.testFailures");
@@ -74,7 +74,7 @@ describe('fix command integration', () => {
     });
 
     it('defaults to natural-language type', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain("fixType = 'natural-language'");
@@ -84,7 +84,7 @@ describe('fix command integration', () => {
   // ── Confirmation level validation ──────────────────────────────────
   describe('confirmation level validation', () => {
     it('validates confirm option values', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       // Check that validation includes all three levels
@@ -93,7 +93,7 @@ describe('fix command integration', () => {
     });
 
     it('defaults to ask confirmation level', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain("flags.confirm || 'ask'");
@@ -103,7 +103,7 @@ describe('fix command integration', () => {
   // ── Fix configuration building ─────────────────────────────────────
   describe('fix configuration', () => {
     it('builds fix config from parsed arguments', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('fixConfig');
@@ -113,7 +113,7 @@ describe('fix command integration', () => {
     });
 
     it('builds fix request with all parameters', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('fixRequest');
@@ -128,7 +128,7 @@ describe('fix command integration', () => {
   // ── Orchestrator integration ───────────────────────────────────────
   describe('orchestrator integration', () => {
     it('imports AutoFixOrchestrator from dist', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain("import('../dist/fix/index.js')");
@@ -136,7 +136,7 @@ describe('fix command integration', () => {
     });
 
     it('creates LLMClient with generator role', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('new LLMClient');
@@ -144,14 +144,14 @@ describe('fix command integration', () => {
     });
 
     it('creates orchestrator with LLM client', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('new AutoFixOrchestrator(llmClient)');
     });
 
     it('calls executeFix with the fix request', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('orchestrator.executeFix(fixRequest)');
@@ -161,7 +161,7 @@ describe('fix command integration', () => {
   // ── Output formatting ──────────────────────────────────────────────
   describe('output formatting', () => {
     it('displays success message on successful fix', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('Fix completed successfully!');
@@ -169,7 +169,7 @@ describe('fix command integration', () => {
     });
 
     it('displays failure message on failed fix', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('Fix failed');
@@ -177,7 +177,7 @@ describe('fix command integration', () => {
     });
 
     it('displays task details in output', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('Task ID:');
@@ -189,7 +189,7 @@ describe('fix command integration', () => {
     });
 
     it('displays rollback warning when applicable', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('Changes were rolled back');
@@ -201,14 +201,14 @@ describe('fix command integration', () => {
   // ── Exit codes ─────────────────────────────────────────────────────
   describe('exit codes', () => {
     it('exits with 0 on success', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('process.exit(result.success ? 0 : 1)');
     });
 
     it('exits with 1 on failure', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       // Verify error handling exits with code 1
@@ -216,7 +216,7 @@ describe('fix command integration', () => {
     });
 
     it('exits with 1 on invalid confirm option', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       // The validation block should exit with 1
@@ -227,7 +227,7 @@ describe('fix command integration', () => {
   // ── Error display ──────────────────────────────────────────────────
   describe('error display', () => {
     it('displays error message from result', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('result.error');
@@ -235,7 +235,7 @@ describe('fix command integration', () => {
     });
 
     it('displays execution errors', () => {
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 
       expect(binContent).toContain('Fix execution error:');
@@ -288,7 +288,7 @@ describe('fix command module integration', () => {
 
     it('FixResult fields match CLI output expectations', () => {
       const typesPath = join(process.cwd(), 'src/fix/types.ts');
-      const binPath = join(process.cwd(), 'bin/liminal');
+      const binPath = join(process.cwd(), 'bin/sinter');
       const typesContent = execSync(`cat "${typesPath}"`, { encoding: 'utf-8' });
       const binContent = execSync(`cat "${binPath}"`, { encoding: 'utf-8' });
 

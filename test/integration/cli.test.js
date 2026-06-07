@@ -7,7 +7,7 @@ import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
 
-const cliPath = path.join(process.cwd(), 'bin/liminal');
+const cliPath = path.join(process.cwd(), 'bin/sinter');
 
 // Check if LM Studio is available and responsive enough for E2E tests
 async function isLLMAvailable() {

@@ -4,7 +4,7 @@
 
 **Architecture:** Do not add another cockpit or proof island. Build one product spine: natural-language workbench -> domain runtime gauntlets -> cognitive learning receipts -> model assimilation -> package/release smoke. The existing Level 3.5 self-improvement gauntlet becomes the regression gate for autonomy; Level 6 adds human-facing product reliability and creative-domain completeness.
 
-**Tech Stack:** TypeScript CLI/runtime, existing Sinter generators, `bin/liminal`, `src/runtime-core`, `src/reporting`, `src/generators`, `src/tui-bridge`, `gui/`, Vitest, pnpm build/lint, GitHub PR checks.
+**Tech Stack:** TypeScript CLI/runtime, existing Sinter generators, `bin/sinter`, `src/runtime-core`, `src/reporting`, `src/generators`, `src/tui-bridge`, `gui/`, Vitest, pnpm build/lint, GitHub PR checks.
 
 ---
 
@@ -25,7 +25,7 @@ This is the shortest path because it converts the existing architecture into a p
 **Objective:** A normal human can open one surface, type a natural-language creative or self-improvement request, and see what Sinter did.
 
 **Files:**
-- Modify: `bin/liminal`
+- Modify: `bin/sinter`
 - Modify: `src/tui-bridge/TuiBridgeService.ts`
 - Modify: `gui/` workbench routes/components as applicable
 - Test: existing TUI/bridge/unit tests plus new focused workbench-routing tests
@@ -51,7 +51,7 @@ node bin/sinter market status
 **Files:**
 - Create: `src/runtime-core/CreativeDomainGauntlet.ts`
 - Create: `test/unit/runtime-core/CreativeDomainGauntlet.test.ts`
-- Modify: `bin/liminal` to add `sinter domains gauntlet`
+- Modify: `bin/sinter` to add `sinter domains gauntlet`
 - Touch domain files only when tests expose real gaps.
 
 **Acceptance:**
@@ -100,7 +100,7 @@ pnpm exec vitest run test/unit/runtime-core/CognitiveRunReceipt.test.ts --covera
 
 **Files:**
 - Create: `src/runtime-core/ModelAssimilationGauntlet.ts`
-- Modify: `bin/liminal` to add `sinter model audition <provider/model>`
+- Modify: `bin/sinter` to add `sinter model audition <provider/model>`
 - Test: `test/unit/runtime-core/ModelAssimilationGauntlet.test.ts`
 
 **Acceptance:**
@@ -125,7 +125,7 @@ pnpm exec vitest run test/unit/runtime-core/ModelAssimilationGauntlet.test.ts --
 
 **Files:**
 - Create: `src/runtime-core/Level6ReleaseGate.ts`
-- Modify: `bin/liminal` to add `sinter release gate`
+- Modify: `bin/sinter` to add `sinter release gate`
 - Modify: `node bin/sinter market status` to include Level 6 gate summary
 - Test: `test/unit/runtime-core/Level6ReleaseGate.test.ts`
 

@@ -11,6 +11,9 @@ import type { ProviderCapabilities } from './ProviderTypes.js';
 export interface ModelCapabilities extends ProviderCapabilities {
   thinkingStyle: 'budget_tokens' | 'effort_level' | 'think_tags' | 'reasoning_content' | 'none';
   streamingStyle: 'sse' | 'json_lines' | 'tag_based';
+  /** Accepts image input (multimodal). Used to decide whether to send rendered
+   *  screenshots to an evaluator model. Text-only models must score from code. */
+  vision?: boolean;
 }
 
 const DEFAULT_CAPABILITIES: ModelCapabilities = {
@@ -21,7 +24,18 @@ const DEFAULT_CAPABILITIES: ModelCapabilities = {
   maxContextTokens: 4096,
   thinkingStyle: 'none',
   streamingStyle: 'sse',
+  vision: false,
 };
+
+// Multimodal model families that accept image input. Kept separate from the main
+// capability table so vision support is declared in one place rather than spread
+// across ~30 entries. Text-only local models (qwen, deepseek, glm-5.1, llama, …)
+// deliberately do not match and so never receive rendered screenshots.
+const VISION_MODEL_PATTERNS: string[] = [
+  'claude-*', 'gpt-5*', 'gpt-4o*', 'o3*', 'o4*',
+  'gemini*', 'glm-5v*', 'glm-4v*', 'glm-4.1v*',
+  'minimax-m3*', '*-vl*', '*-vision*', '*vl-*',
+];
 
 // Static model database — update with new model releases
 const MODEL_CAPABILITIES: Record<string, Partial<ModelCapabilities>> = {
@@ -134,6 +148,18 @@ export class CapabilityRegistry {
 
     // Conservative default: no thinking, basic streaming
     return { ...DEFAULT_CAPABILITIES };
+  }
+
+  /**
+   * Whether a model accepts image input. A config/user override's `vision`
+   * field wins; otherwise the model name is matched against the multimodal
+   * families. Unknown models are treated as text-only (no image input).
+   */
+  static supportsVision(model: string): boolean {
+    const override = userOverrides.get(model);
+    if (override && typeof override.vision === 'boolean') return override.vision;
+    const m = (model || '').toLowerCase();
+    return VISION_MODEL_PATTERNS.some((p) => matchesPattern(m, p.toLowerCase()));
   }
 
   /**

@@ -236,4 +236,25 @@ describe('CapabilityRegistry', () => {
       expect(caps.maxContextTokens).toBe(4096); // from defaults
     });
   });
+
+  describe('supportsVision', () => {
+    it('returns true for known multimodal families', () => {
+      for (const m of ['glm-5v-turbo', 'MiniMax-M3', 'claude-opus-4-1', 'gpt-5.4', 'gemini-2.5-flash']) {
+        expect(CapabilityRegistry.supportsVision(m)).toBe(true);
+      }
+    });
+
+    it('returns false for text-only models (local open-source incl. the NUCBOX route)', () => {
+      for (const m of ['qwen3.6-35b-a3b-mtp', 'qwen2.5-coder:14b', 'glm-5.1', 'deepseek-r1', 'llama3.2', 'unknown-model']) {
+        expect(CapabilityRegistry.supportsVision(m)).toBe(false);
+      }
+    });
+
+    it('honors a config override of the vision flag', () => {
+      CapabilityRegistry.override('qwen3.6-35b-a3b-mtp', { vision: true });
+      expect(CapabilityRegistry.supportsVision('qwen3.6-35b-a3b-mtp')).toBe(true);
+      CapabilityRegistry.override('glm-5v-turbo', { vision: false });
+      expect(CapabilityRegistry.supportsVision('glm-5v-turbo')).toBe(false);
+    });
+  });
 });

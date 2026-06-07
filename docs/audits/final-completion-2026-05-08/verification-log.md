@@ -203,7 +203,7 @@ Links:   operator-journey-matrix.md
 
 ```
 Date:    2026-05-08
-Command: node bin/liminal --help && node bin/liminal provider status
+Command: node bin/sinter --help && node bin/sinter provider status
 Exit:    0
 Result:  CLI runs cleanly. Full TUI/bridge command set exposed. Config reads from local provider config.
 Links:   operator-journey-matrix.md

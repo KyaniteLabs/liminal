@@ -4,7 +4,7 @@
 
 ## Executive Summary
 
-The documentation decay patterns discovered in liminal exist in **every codebase everywhere**. This document provides a systematic approach to implement documentation validation across all projects globally.
+The documentation decay patterns discovered in sinter exist in **every codebase everywhere**. This document provides a systematic approach to implement documentation validation across all projects globally.
 
 ## Core Principles
 

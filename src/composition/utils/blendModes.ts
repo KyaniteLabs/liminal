@@ -1,7 +1,7 @@
 /**
  * Blend Mode Utilities
  *
- * Provides mapping from Liminal blend modes to platform-specific
+ * Provides mapping from Sinter blend modes to platform-specific
  * blend mode implementations:
  * - CSS mix-blend-mode for DOM layers
  * - Canvas globalCompositeOperation for 2D canvas

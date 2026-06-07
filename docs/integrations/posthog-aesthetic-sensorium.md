@@ -4,21 +4,21 @@ Status: Phase 1 integration note
 
 ## Purpose
 
-PostHog may be used by Liminal Sites only as an optional source of aesthetic
+PostHog may be used by Sinter Sites only as an optional source of aesthetic
 telemetry. It can help identify which visual directions feel resonant, confusing,
 too busy, too slow, or uncomfortable.
 
-PostHog must not become the objective function for Liminal Sites.
+PostHog must not become the objective function for Sinter Sites.
 
 ```text
 PostHog = optional aesthetic sensorium
-Liminal Sites = aesthetic interpreter and generator
+Sinter Sites = aesthetic interpreter and generator
 human = curator and approver
 ```
 
 ## Non-Goals
 
-Do not optimize Liminal Sites for:
+Do not optimize Sinter Sites for:
 
 - conversion rate
 - revenue
@@ -31,11 +31,11 @@ Do not optimize Liminal Sites for:
 - addictive engagement
 
 These signals may exist in a host website's normal analytics, but they are not
-the goal of the Liminal Sites aesthetic loop.
+the goal of the Sinter Sites aesthetic loop.
 
 ## Useful PostHog Primitives
 
-| PostHog primitive | Liminal Sites use |
+| PostHog primitive | Sinter Sites use |
 | --- | --- |
 | Feature flags | Safely show aesthetic variants |
 | Multivariate flags | Compare aesthetic directions |
@@ -132,11 +132,11 @@ the goal of the Liminal Sites aesthetic loop.
 ## Digest Flow
 
 ```text
-Liminal Sites artifact
+Sinter Sites artifact
 -> variant id, skin id, and aesthetic tags
 -> PostHog event capture
 -> aesthetic telemetry export
--> Liminal Sites digest
+-> Sinter Sites digest
 -> proposed aesthetic direction
 -> human review action
 ```

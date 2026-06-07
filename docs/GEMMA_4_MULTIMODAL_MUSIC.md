@@ -1,6 +1,6 @@
 # Gemma 4 - Full Multimodal for Creative Coding (Music Focus)
 
-**Why This Changes Everything for Liminal**
+**Why This Changes Everything for Sinter**
 
 ## The Breakthrough: Native Audio I/O
 
@@ -124,7 +124,7 @@ Focus on the particle system and color gradients.
 5. Can feed output back as input (feedback loop)
 ```
 
-## Use Cases for Liminal
+## Use Cases for Sinter
 
 ### 1. Sound Palette Extraction
 Upload any audio → Get code that generates that "sound palette"
@@ -182,7 +182,7 @@ Upload album → Get code that generates variations of the visual style
 
 ## The Vision
 
-Liminal becomes **truly multimodal**:
+Sinter becomes **truly multimodal**:
 - Upload a song → Get generative visuals that react to it
 - Upload a video → Get code that recreates the aesthetic
 - Upload a painting + Upload music → Get synesthetic experience

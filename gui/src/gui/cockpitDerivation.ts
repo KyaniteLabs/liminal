@@ -347,7 +347,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       { label: 'Cognitive context', status: receipts.length > 0 ? 'ready' : 'waiting', detail: receipts.length > 0 ? receipts.map((item) => `${item.organ}:${item.status}`).join(', ') : 'Waiting for memory/compost/dreaming/intuition receipt.' },
     ],
     issueReport: [
-      '# Liminal run review report',
+      '# Sinter run review report',
       '',
       `phase: ${phase}`,
       `domains: ${attemptedDomains.join(' -> ') || 'unknown'}`,

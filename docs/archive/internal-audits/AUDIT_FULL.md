@@ -1,4 +1,4 @@
-# Liminal — Full Repository Audit
+# Sinter — Full Repository Audit
 
 **Date:** 2026-03-31 | **Scope:** All source, tests, CI, security, docs, presentation, platform, operations
 **Total findings: 38 categories, ~250 individual issues across 6 severity tiers**

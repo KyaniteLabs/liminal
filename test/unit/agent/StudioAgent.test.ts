@@ -5,7 +5,7 @@ import type { CreativeResult, EngineeringResult } from '../../../src/agent/Studi
 describe('StudioAgent', () => {
   describe('system prompt', () => {
     it('provides a creative-first personality', () => {
-      expect(STUDIO_SYSTEM_PROMPT).toContain('Liminal Studio');
+      expect(STUDIO_SYSTEM_PROMPT).toContain('Sinter Studio');
       expect(STUDIO_SYSTEM_PROMPT).toContain('creative');
     });
   });

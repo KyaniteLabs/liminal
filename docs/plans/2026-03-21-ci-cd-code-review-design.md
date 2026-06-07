@@ -279,7 +279,7 @@ git commit -m "feat(ci): add GLM PR review workflow"
 
 Run:
 ```bash
-gh secret set GLM_API_KEY --repo KyaniteLabs/liminal
+gh secret set GLM_API_KEY --repo KyaniteLabs/sinter
 ```
 Then paste the API key when prompted.
 

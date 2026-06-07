@@ -1,7 +1,7 @@
 /**
  * CompositionOrchestrator — the end-to-end "combine outputs" path.
  *
- * Liminal's core is not just generating single-domain pieces; it is *layering*
+ * Sinter's core is not just generating single-domain pieces; it is *layering*
  * them into mixed works. The pieces existed (per-domain generators + the
  * composition engine/adapters/blendModes) but nothing connected them: there was
  * no way to take a layer spec, generate each layer, and assemble one runnable
@@ -106,7 +106,7 @@ export class CompositionOrchestrator {
     }
     await registerAllGenerators();
 
-    const title = spec.title ?? 'Liminal Composition';
+    const title = spec.title ?? 'Sinter Composition';
     const results = await Promise.all(
       spec.layers.map((layer, index) => this.generateLayer(layer, index)),
     );
@@ -193,7 +193,7 @@ export class CompositionOrchestrator {
       layers.push({ domain: 'p5', prompt: originalPrompt, blendMode: 'normal', opacity: 1 });
     }
     return {
-      title: typeof obj.title === 'string' && obj.title.trim() ? obj.title.trim() : 'Liminal Composition',
+      title: typeof obj.title === 'string' && obj.title.trim() ? obj.title.trim() : 'Sinter Composition',
       background: typeof obj.background === 'string' && obj.background.trim() ? obj.background.trim() : '#05070f',
       layers,
     };

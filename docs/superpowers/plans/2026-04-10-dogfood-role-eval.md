@@ -843,7 +843,7 @@ Place this at the very start of `main()`, before the full matrix print.
 - [ ] **Step 2: Run smoke test**
 
 ```bash
-cd /Users/simongonzalezdecruz/workspaces/liminal
+cd /Users/simongonzalezdecruz/workspaces/sinter
 node scripts/dogfood-role-eval.ts --smoke
 ```
 
@@ -870,7 +870,7 @@ node scripts/dogfood-role-eval.ts
 This will take a long time (36 runs × up to 10 min timeout each = potentially 6 hours). Run in background:
 
 ```bash
-cd /Users/simongonzalezdecruz/workspaces/liminal
+cd /Users/simongonzalezdecruz/workspaces/sinter
 nohup node scripts/dogfood-role-eval.ts > dogfood-role-eval.log 2>&1 &
 echo "PID: $!"
 ```

@@ -1,4 +1,4 @@
-# What to Expect When Running Liminal Studio
+# What to Expect When Running Sinter Studio
 
 **First-Time User Guide**
 
@@ -16,8 +16,8 @@ The command builds the local package and starts the Studio backend. Open the loc
 
 You should see:
 
-- **Liminal Studio** at the top of the workbench.
-- A **Message Liminal** composer.
+- **Sinter Studio** at the top of the workbench.
+- A **Message Sinter** composer.
 - A right-side preview panel for generated sketches, shaders, images, motion, and playable sound.
 - Generate tools for choosing Auto, p5.js, Three.js, SVG, GLSL, Hydra, Strudel, Tone.js, HyperFrames, Kinetic, ASCII, Text, Revideo, or Organism output.
 - Secondary tools such as Improve, Review, Evolve, Observe, and Settings behind the workbench navigation.
@@ -35,12 +35,12 @@ The setup paths are provider-specific:
 For a quick local sanity check:
 
 ```bash
-liminal provider help
+sinter provider help
 ```
 
 ## Generate Your First Artifact
 
-In the **Message Liminal** box, write a normal creative request, for example:
+In the **Message Sinter** box, write a normal creative request, for example:
 
 ```text
 Create a p5.js sketch of luminous blue-green particles orbiting a dark center.
@@ -98,7 +98,7 @@ These commands do not prove live model quality, but they tell you whether the lo
 If you want the quickest non-GUI smoke, use the natural-language CLI:
 
 ```bash
-liminal "a luminous blue-green particle garden"
+sinter "a luminous blue-green particle garden"
 ```
 
 Use Studio when you want the product experience: prompt, timeline, stop control, preview, revision, and polish in one place.
@@ -108,7 +108,7 @@ Use Studio when you want the product experience: prompt, timeline, stop control,
 You have completed a healthy first run when:
 
 - Studio starts with `pnpm gui`.
-- The **Message Liminal** composer accepts a creative prompt.
+- The **Message Sinter** composer accepts a creative prompt.
 - **Generate** starts a run and shows a visible Stop control.
 - A same-screen preview appears, or a visible error explains why it could not.
 - A follow-up prompt can revise the artifact.
@@ -119,7 +119,7 @@ You have completed a healthy first run when:
 
 ```bash
 pnpm gui                  # Start Studio
-liminal provider help     # Check provider setup guidance
+sinter provider help     # Check provider setup guidance
 pnpm typecheck            # Root TypeScript check
 pnpm --dir gui build      # Studio production build
 pnpm test:quality         # Test quality scan

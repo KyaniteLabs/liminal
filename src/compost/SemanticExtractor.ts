@@ -193,7 +193,7 @@ export class SemanticExtractor {
   }
 
   /**
-   * Extract LIR (Liminal Intermediate Representation) from a file
+   * Extract LIR (Sinter Intermediate Representation) from a file
    *
    * When config.lirEnabled is true, attempts to parse the file using CompostParser
    * to extract structured LIR tokens. Falls back to null on parse failure.

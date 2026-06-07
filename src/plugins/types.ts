@@ -35,7 +35,7 @@ export interface PluginManifest {
   /** Optional: Dependencies on other plugins */
   dependencies?: string[];
   
-  /** Optional: Minimum Liminal version */
+  /** Optional: Minimum Sinter version */
   minLiminalVersion?: string;
 }
 

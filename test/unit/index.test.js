@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, it, expect } from 'vitest';
 /**
- * Tests for Liminal main entry point
+ * Tests for Sinter main entry point
  * Tests the run() and runFromArgs() functions
  */
 
@@ -9,7 +9,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-describe('Liminal Main Entry Point', () => {
+describe('Sinter Main Entry Point', () => {
   let originalHome;
   let tempHome;
   let originalGlmKey;
@@ -46,7 +46,7 @@ describe('Liminal Main Entry Point', () => {
 
     it('should throw when no LLM is configured', async () => {
       await expect(run('test prompt', { output: './test-output' })).rejects.toThrow(
-        /No LLM configured|Liminal run failed/
+        /No LLM configured|Sinter run failed/
       );
     }, 15000);
   });
@@ -55,7 +55,7 @@ describe('Liminal Main Entry Point', () => {
     it('should throw when no LLM is configured', async () => {
       await expect(
         runFromArgs({ prompt: 'test prompt', maxIterations: 10, output: './test-output', project: 'cli-test' })
-      ).rejects.toThrow(/No LLM configured|Liminal run failed/);
+      ).rejects.toThrow(/No LLM configured|Sinter run failed/);
     });
   });
 });

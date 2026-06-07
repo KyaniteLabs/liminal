@@ -1,7 +1,7 @@
 /**
  * EnvironmentValidator — Phase 12 Increment 4
  *
- * Validates the runtime environment for Liminal Studio:
+ * Validates the runtime environment for Sinter Studio:
  *   - Node.js version
  *   - Go toolchain presence
  *   - LiminalFS writability

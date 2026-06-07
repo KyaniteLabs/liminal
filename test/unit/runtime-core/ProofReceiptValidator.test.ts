@@ -21,7 +21,7 @@ function commit(repoRoot: string, message: string): string {
 function createRepo(): string {
   const repoRoot = mkdtempSync(join(tmpdir(), 'liminal-proof-receipt-'));
   git(repoRoot, ['init', '-q']);
-  git(repoRoot, ['config', 'user.name', 'Liminal Test']);
+  git(repoRoot, ['config', 'user.name', 'Sinter Test']);
   git(repoRoot, ['config', 'user.email', 'liminal@example.test']);
   mkdirSync(join(repoRoot, 'src'), { recursive: true });
   writeFileSync(join(repoRoot, 'src', 'app.ts'), 'export const value = 1;\n');

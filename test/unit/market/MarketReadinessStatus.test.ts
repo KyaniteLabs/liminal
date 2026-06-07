@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { buildMarketReadinessStatus, collectRepositoryMarketReadinessStatus, formatMarketReadinessStatus } from '../../../src/market/MarketReadinessStatus.js';
 
 describe('MarketReadinessStatus', () => {
-  it('answers plainly whether Liminal is market ready and lists blocking gaps', () => {
+  it('answers plainly whether Sinter is market ready and lists blocking gaps', () => {
     const status = buildMarketReadinessStatus({
       checks: [
         { id: 'natural-cli', label: 'Natural CLI front door', status: 'pass', evidence: 'PR #366' },

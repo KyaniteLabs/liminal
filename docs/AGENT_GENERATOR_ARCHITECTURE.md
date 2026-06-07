@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-This document proposes a **Meta-Harness architecture** for Liminal, inspired by three converging ideas:
+This document proposes a **Meta-Harness architecture** for Sinter, inspired by three converging ideas:
 
 1. **Ralph Wiggum**: "Sit on the loop, not in it" — design validation upfront, observe, tune
 2. **Meta-Harness (arXiv 2603.28052)**: Outer-loop system that searches over harness code, richer access to prior experience enables automated harness engineering
@@ -106,7 +106,7 @@ This document proposes a **Meta-Harness architecture** for Liminal, inspired by 
 **Meta-Harness insight (arXiv 2603.28052):**
 > "Richer access to prior experience can enable automated harness engineering."
 
-**Application to Liminal:**
+**Application to Sinter:**
 - Agent observes all 63 dogfood iterations
 - Detects patterns: "Qwen timeouts with complex prompts"
 - Updates harness: adds `isQwenModel()` check, simplified prompts
@@ -117,7 +117,7 @@ This document proposes a **Meta-Harness architecture** for Liminal, inspired by 
 Karpathy's design:
 > "Training always runs for exactly 5 minutes... approx 12 experiments/hour"
 
-Liminal equivalent:
+Sinter equivalent:
 > "Each iteration has fixed max time... RalphLoop iterates until promise or limit"
 
 **Why:** Comparable experiments regardless of what changes (model, prompt, domain)
@@ -126,14 +126,14 @@ Liminal equivalent:
 
 **Critical Rule:**
 
-> "The only thing you are allowed to do with a broken dogfood test output, is feed it into liminal again as is, for liminal to catch it and fix it by themself."
+> "The only thing you are allowed to do with a broken dogfood test output, is feed it into sinter again as is, for sinter to catch it and fix it by themself."
 
 **This IS the Meta-Harness principle:**
 
 ```
 Broken Output (e.g., Qwen timeout)
         ↓
-Feed back into Liminal unchanged
+Feed back into Sinter unchanged
         ↓
 Meta-Harness (Agent) observes pattern
         ↓
@@ -187,7 +187,7 @@ Dogfood Test: Qwen3.5-0.8b × p5
   ↓
 TIMEOUT (130s)
   ↓
-Feed output back into Liminal as-is
+Feed output back into Sinter as-is
   ↓
 Meta-Harness (Agent) analyzes:
   • Response empty, thinking field 7000+ chars
@@ -214,7 +214,7 @@ SUCCESS (55s) — Harness learned
 ```typescript
 // liminal.config.ts — "program.md" for the Meta-Harness
 export default {
-  // Meta-Harness (Agent Model) — runs Liminal internally
+  // Meta-Harness (Agent Model) — runs Sinter internally
   agent: {
     baseUrl: 'http://localhost:11434',
     model: 'phi4-mini',  // Stable, good at reasoning
@@ -340,7 +340,7 @@ class HarnessRegistry {
 ```typescript
 // src/core/MetaHarness.ts
 class MetaHarness {
-  private agent: LLMClient;        // Agent Model (runs Liminal)
+  private agent: LLMClient;        // Agent Model (runs Sinter)
   private harness: HarnessRegistry; // Evolved rules
   private experimentLog: Experiment[]; // All prior iterations
   
@@ -377,7 +377,7 @@ class MetaHarness {
 | Benefit | Explanation | Source |
 |---------|-------------|--------|
 | **Automated Improvement** | Harness learns from failures without manual intervention | Meta-Harness paper: "automated harness engineering" |
-| **Predictability** | Agent model stable = consistent Liminal behavior | Ralph: monolithic process |
+| **Predictability** | Agent model stable = consistent Sinter behavior | Ralph: monolithic process |
 | **Domain Optimization** | Each domain uses best model for that domain | Dogfood evidence |
 | **Cost Control** | Small models for generation, one good agent | Autoresearch: fixed-time experiments |
 | **Scalable Learning** | 100 iterations overnight → harness improves | Autoresearch: "approx 100 experiments while you sleep" |
@@ -386,7 +386,7 @@ class MetaHarness {
 
 ## Summary: The Three Pillars
 
-| Pillar | Concept | Implementation in Liminal |
+| Pillar | Concept | Implementation in Sinter |
 |--------|---------|---------------------------|
 | **Ralph Wiggum** | "Sit on the loop, not in it" | Agent Model orchestrates, observes, tunes; does not micromanage iterations |
 | **Meta-Harness** | Outer-loop searches over harness code | Agent detects patterns, updates validators/prompts/model selection |
@@ -398,4 +398,4 @@ class MetaHarness {
 
 ---
 
-*This architecture enables Liminal to become self-improving: the more dogfood tests run, the better the harness becomes at selecting models, crafting prompts, and validating outputs.*
+*This architecture enables Sinter to become self-improving: the more dogfood tests run, the better the harness becomes at selecting models, crafting prompts, and validating outputs.*

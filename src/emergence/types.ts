@@ -3,7 +3,7 @@
  *
  * Core interfaces for the quality-diversity archive, behavior descriptors,
  * lineage tracking, and emergence signals. These form the foundation for
- * Liminal's transition from "best candidate wins" to creative search.
+ * Sinter's transition from "best candidate wins" to creative search.
  */
 
 import type { LiminalObjectRef } from '../fs/types.js';

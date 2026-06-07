@@ -283,7 +283,7 @@ export class KeyframeAnimation {
       easing: k.easing || 'linear',
     }));
 
-    const js = `// Liminal Animation: ${id}
+    const js = `// Sinter Animation: ${id}
 // Target layer: ${layerId}
 // Duration: ${duration}ms
 

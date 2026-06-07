@@ -1,4 +1,4 @@
-# Recovery Ledger — Liminal Crash Recovery (2026-04-06)
+# Recovery Ledger — Sinter Crash Recovery (2026-04-06)
 
 **Date:** 2026-04-06
 **Status:** Atomic recovery COMPLETE. Broader integration work remains.
@@ -47,31 +47,31 @@
 
 ### 7. `agent/kimicode/recover-liminal-paths-failure-logger-20260406` — LANDABLE
 - **Commits:** 1 unique above main (09b15fca)
-- **Contents:** Failure logger honors `liminal home` config path instead of hardcoded paths
+- **Contents:** Failure logger honors `sinter home` config path instead of hardcoded paths
 - **Landing priority:** MEDIUM — config correctness
 - **Risk:** Low.
 
 ### 8. `agent/kimicode/recover-liminal-paths-harness-memory-20260406` — LANDABLE
 - **Commits:** 1 unique above main (629425cb)
-- **Contents:** Harness memory honors `liminal home` config path
+- **Contents:** Harness memory honors `sinter home` config path
 - **Landing priority:** MEDIUM — config correctness
 - **Risk:** Low.
 
 ### 9. `agent/kimicode/recover-liminal-paths-reasoning-capture-20260406` — LANDABLE
 - **Commits:** 1 unique above main (bba81488)
-- **Contents:** Reasoning capture honors `liminal home` config path
+- **Contents:** Reasoning capture honors `sinter home` config path
 - **Landing priority:** MEDIUM — config correctness
 - **Risk:** Low.
 
 ### 10. `agent/kimicode/recover-liminal-paths-routing-data-20260406` — LANDABLE
 - **Commits:** 1 unique above main (80be7d34)
-- **Contents:** Routing data honors `liminal home` config path
+- **Contents:** Routing data honors `sinter home` config path
 - **Landing priority:** MEDIUM — config correctness
 - **Risk:** Low.
 
 ### 11. `agent/kimicode/recover-liminal-paths-tool-telemetry-20260406` — LANDABLE
 - **Commits:** 1 unique above main (5b9cce79)
-- **Contents:** Tool telemetry honors `liminal home` config path
+- **Contents:** Tool telemetry honors `sinter home` config path
 - **Landing priority:** MEDIUM — config correctness
 - **Risk:** Low.
 
@@ -106,7 +106,7 @@
 2. **`recover-hermetic-test-home`** — hermetic vitest (test reliability)
 3. **`recover-vitest-capability-lanes`** — capability gating (test reliability)
 4. **`recover-git-hygiene-safety`** — worktree orphan fix (data loss prevention)
-5. **`recover-liminal-paths-*`** (all 5 branches) — liminal home config fixes (can be batched)
+5. **`recover-liminal-paths-*`** (all 5 branches) — sinter home config fixes (can be batched)
 6. **`recover-tier-hydra-tests`** — generator coverage
 7. **`recover-landing-gallery`** — landing page (largest, land last after infra is stable)
 8. **`worktree-agent-a4aebc90`** — shader scoring (independent, any time)

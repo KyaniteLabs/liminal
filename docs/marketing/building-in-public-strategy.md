@@ -1,7 +1,7 @@
-# Liminal: Building in Public — Strategy & Scripts
+# Sinter: Building in Public — Strategy & Scripts
 
 **Created:** 2026-04-20
-**Purpose:** Social media strategy and ready-to-film scripts for launching Liminal's public presence.
+**Purpose:** Social media strategy and ready-to-film scripts for launching Sinter's public presence.
 
 ---
 
@@ -137,9 +137,9 @@ One sentence becomes a GLSL shader, a generative music loop, a 3D scene, a video
 ### Week 4: The Future
 | Day | Content | Platform |
 |-----|---------|----------|
-| 22 | Roadmap reveal: what's next for Liminal | Twitter thread |
+| 22 | Roadmap reveal: what's next for Sinter | Twitter thread |
 | 23 | "Open sourcing the dogfood framework" announcement | All |
-| 24 | Tutorial: "How to run Liminal locally" | YouTube |
+| 24 | Tutorial: "How to run Sinter locally" | YouTube |
 | 25 | Community vote: next domain to support | Twitter |
 | 26 | "Month 1 stats: what I learned from building in public" | Twitter/LI |
 | 27 | Best-of compilation video | TikTok/YouTube |
@@ -287,7 +287,7 @@ I'll show the score too. Even if it's bad.
 "I told an AI to make bioluminescent jellyfish..."
 
 **[0:03-0:05] Typing:**
-Show terminal typing: `liminal -p "bioluminescent jellyfish drifting in the deep ocean with glowing tendrils"`
+Show terminal typing: `sinter -p "bioluminescent jellyfish drifting in the deep ocean with glowing tendrils"`
 
 **[0:05-0:08] Processing:**
 Fast-forward terminal output. Lines of code scrolling. "Generating..." "Validating..." "Scoring..."
@@ -574,7 +574,7 @@ You already have these. Just curate them.
 ## Next Steps
 
 1. [ ] Pick 5 best visual outputs for the launch video
-2. [ ] Record screen capture of `liminal -p "..."` in action
+2. [ ] Record screen capture of `sinter -p "..."` in action
 3. [ ] Screenshot the landing page, gallery, and dogfood dashboard
 4. [ ] Schedule Thread 1 for launch day
 5. [ ] Create TikTok account and post the "jellyfish" video

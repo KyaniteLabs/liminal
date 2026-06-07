@@ -1,4 +1,4 @@
-# Liminal Codebase - Full Forensic Red Team Audit Report
+# Sinter Codebase - Full Forensic Red Team Audit Report
 
 > **HISTORICAL DOCUMENT — 2026-04-07.** The critical findings in this report (100% dogfood failure rate, non-functional self-improvement loop, and most launch blockers) were resolved in the weeks following this audit. See `LOOSE_ENDS.md` and `.omx/proof/` for current status. This document is retained as an audit trail, not as a current risk assessment.
 

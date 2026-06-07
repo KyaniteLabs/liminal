@@ -344,7 +344,7 @@ After each generation iteration:
 ### Example 1: Live singing → p5.js visual
 
 ```bash
-$ liminal --voice --prompt "flowing particles" --aesthetic cinematic
+$ sinter --voice --prompt "flowing particles" --aesthetic cinematic
 ```
 
 1. Mic opens, user sings a descending melody
@@ -358,7 +358,7 @@ $ liminal --voice --prompt "flowing particles" --aesthetic cinematic
 ### Example 2: Upload recording → shader
 
 ```bash
-$ liminal --voice-file singing.wav --prompt "glsl aurora" --aesthetic vibrant
+$ sinter --voice-file singing.wav --prompt "glsl aurora" --aesthetic vibrant
 ```
 
 1. WAV file loaded, full offline analysis: BPM=120, key=E minor, chroma distribution, spectral envelope
@@ -371,23 +371,23 @@ $ liminal --voice-file singing.wav --prompt "glsl aurora" --aesthetic vibrant
 ### Example 3: Chat mode with guardrails
 
 ```
-> liminal chat
+> sinter chat
 
-Liminal: What would you like to create?
+Sinter: What would you like to create?
 You: A abstract generative landscape
 
-Liminal: Any aesthetic preferences?
+Sinter: Any aesthetic preferences?
   [Minimalist] [Vibrant] [Cinematic] [Playful] [Custom] [Surprise me]
 You: Cinematic
 
-Liminal: Would you like to sing or hum to influence it?
+Sinter: Would you like to sing or hum to influence it?
 You: [Yes]
 
 [Recording... waveform shown in TUI]
 User sings for 10 seconds
 [Analyzing audio...]
 
-Liminal: Generating cinematic landscape...
+Sinter: Generating cinematic landscape...
   Iteration 1: aesthetic score 0.65 (violations: contrast too low, no clear focal point)
   Iteration 2: aesthetic score 0.87 (all clear)
   Done!

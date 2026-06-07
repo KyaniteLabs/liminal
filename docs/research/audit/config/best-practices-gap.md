@@ -21,7 +21,7 @@
 | Secret Management | ❌ Missing | LOW | High |
 | Audit & Observability | ⚠️ Partial | LOW | Low |
 
-**Overall Assessment:** Liminal is **significantly behind** April 2026 industry standards in configuration management. Critical gaps in schema validation, startup validation, and centralized configuration create runtime risks and maintenance burden.
+**Overall Assessment:** Sinter is **significantly behind** April 2026 industry standards in configuration management. Critical gaps in schema validation, startup validation, and centralized configuration create runtime risks and maintenance burden.
 
 ---
 
@@ -162,7 +162,7 @@ async function main() {
   }
   
   // App only starts if config is valid
-  const app = new Liminal(validatedConfig.data);
+  const app = new Sinter(validatedConfig.data);
   await app.start();
 }
 ```
@@ -539,8 +539,8 @@ config.onChange((event: ConfigAuditEvent) => {
 
 | Tool | Schema | Centralized | Startup Validate | Secrets | Isolation |
 |------|--------|-------------|------------------|---------|-----------|
-| **Liminal (current)** | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Liminal (target)** | ✅ | ✅ | ✅ | ⚠️ | ✅ |
+| **Sinter (current)** | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Sinter (target)** | ✅ | ✅ | ✅ | ⚠️ | ✅ |
 | Vercel CLI | ✅ | ✅ | ✅ | ❌ | ✅ |
 | Supabase CLI | ✅ | ✅ | ✅ | ⚠️ | ✅ |
 | Linear CLI | ⚠️ | ✅ | ✅ | ❌ | ✅ |
@@ -567,7 +567,7 @@ config.onChange((event: ConfigAuditEvent) => {
 
 ## Conclusion
 
-Liminal is **significantly behind** industry standards in configuration management. The analysis reveals:
+Sinter is **significantly behind** industry standards in configuration management. The analysis reveals:
 
 1. **3 duplicate env() helpers** causing maintenance burden
 2. **54 hardcoded defaults** making changes error-prone  
@@ -575,7 +575,7 @@ Liminal is **significantly behind** industry standards in configuration manageme
 4. **17 files with test pollution risk** causing flaky tests
 5. **No schema validation** allowing invalid configs at runtime
 
-The fixes identified in Waves 1-2 will bring Liminal to parity with modern CLI tools. Critical priorities:
+The fixes identified in Waves 1-2 will bring Sinter to parity with modern CLI tools. Critical priorities:
 
 1. **Schema validation (Zod)** - Foundation for type safety
 2. **Centralized config module** - Eliminate duplication

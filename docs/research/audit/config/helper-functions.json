@@ -185,7 +185,7 @@
       "implementation": "return this.config;",
       "used_by": [],
       "usage_count": 0,
-      "note": "Liminal class config getter"
+      "note": "Sinter class config getter"
     },
     {
       "file": "src/render/CanvasRecorder.ts",
@@ -316,7 +316,7 @@
     {
       "file": "src/index.ts",
       "line": 335,
-      "class": "Liminal",
+      "class": "Sinter",
       "signature": "constructor(config: Partial<LiminalConfig> = {})",
       "config_merges_with": ["defaultConfig"]
     },
@@ -423,7 +423,7 @@
       "description": "Similar config getter functions have different naming patterns",
       "locations": [
         "LLMClient.getConfig()",
-        "Liminal.getConfig()",
+        "Sinter.getConfig()",
         "CanvasRecorder.getConfig()"
       ],
       "note": "All follow getConfig() pattern consistently - not an issue"

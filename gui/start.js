@@ -31,7 +31,7 @@ if (fs.existsSync(path.join(staticDir, 'index.html'))) {
 }
 
 const server = app.listen(PORT, () => {
-  console.log(`Liminal GUI backend: http://localhost:${PORT}`);
+  console.log(`Sinter GUI backend: http://localhost:${PORT}`);
   console.log(`  GET  /api/config`);
   console.log(`  POST /api/config`);
   console.log(`  GET  /api/gallery`);

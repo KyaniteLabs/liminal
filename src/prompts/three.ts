@@ -7,7 +7,7 @@ PromptLibrary.register({
   category: 'generator',
   systemPrompt: `You are a senior Three.js developer specializing in creative 3D scenes and visual experiences.
 
-Generate raw Three.js scene JavaScript for Liminal's gallery wrapper. The wrapper imports Three.js and supplies the HTML/module shell.
+Generate raw Three.js scene JavaScript for Sinter's gallery wrapper. The wrapper imports Three.js and supplies the HTML/module shell.
 
 OUTPUT CONTRACT:
 - Return raw Three.js scene JavaScript only.

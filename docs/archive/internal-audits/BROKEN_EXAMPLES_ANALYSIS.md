@@ -1,14 +1,14 @@
-# Broken Examples Analysis - Liminal Improvement Insights
+# Broken Examples Analysis - Sinter Improvement Insights
 
 **Analysis Date:** 2026-03-31
-**Analyst:** Liminal Self-Analysis
-**Scope:** DO NOT fix examples manually - only extract insights for Liminal harness improvements
+**Analyst:** Sinter Self-Analysis
+**Scope:** DO NOT fix examples manually - only extract insights for Sinter harness improvements
 
 ---
 
 ## Summary of Broken Examples
 
-| Domain | Count | Root Cause | Liminal Fix Needed |
+| Domain | Count | Root Cause | Sinter Fix Needed |
 |--------|-------|------------|-------------------|
 | HTML | 6/6 | LLM 404 Not Found | Generator needs LLM-less fallback |
 | ASCII | 6/6 | LLM 404 Not Found | Generator needs LLM-less fallback |
@@ -29,9 +29,9 @@ for(int i = 0; i`;  // <-- CODE CUTS OFF MID-LINE
 // Missing: rest of fbm(), main(), gl_FragColor
 ```
 
-**Root Cause:** LLM output truncated but Liminal accepted it as complete.
+**Root Cause:** LLM output truncated but Sinter accepted it as complete.
 
-**Liminal Harness Fix Needed:**
+**Sinter Harness Fix Needed:**
 - Add completion detection for GLSL (must end with `}` and contain `gl_FragColor`)
 - Detect truncated loops/functions
 - Auto-retry with "complete the code" prompt
@@ -49,9 +49,9 @@ stack(s("bd*4"), note("c4"))
 sound("bd*4") |> gain(1.2) |> shape(0.3)
 ```
 
-**Root Cause:** Strudel v2 introduced pipe operator `|>`. Liminal's validator doesn't recognize it.
+**Root Cause:** Strudel v2 introduced pipe operator `|>`. Sinter's validator doesn't recognize it.
 
-**Liminal Harness Fix Needed:**
+**Sinter Harness Fix Needed:**
 - Update Strudel pattern detection: add `|>` operator
 - Update prompt templates to mention both syntaxes
 - Add syntax version detection
@@ -67,7 +67,7 @@ sound("bd*4") |> gain(1.2) |> shape(0.3)
 
 **Root Cause:** LLMClient timeout aborts entire operation, no partial result saved.
 
-**Liminal Harness Fix Needed:**
+**Sinter Harness Fix Needed:**
 - Stream partial results during generation
 - On timeout: return what we have + mark as incomplete
 - Retry strategy for timeouts (shorter chunks)
@@ -83,14 +83,14 @@ LLM generation failed: LLM API error: 404 Not Found
 
 **Root Cause:** HTMLWebGenerator and ASCIIArtGenerator require LLM with no graceful degradation.
 
-**Liminal Harness Fix Needed:**
+**Sinter Harness Fix Needed:**
 - Pre-flight check: LLM availability
 - Template-based fallbacks that work without LLM
 - Circuit breaker pattern for 404s
 
 ---
 
-## Required Liminal Improvements
+## Required Sinter Improvements
 
 ### I1: Truncation Detection System
 
@@ -168,7 +168,7 @@ LLM generation failed: LLM API error: 404 Not Found
 
 ## Verification Plan
 
-After each fix, regenerate examples through Liminal:
+After each fix, regenerate examples through Sinter:
 1. Regenerate HTML examples → should have 0 LLM errors
 2. Regenerate ASCII examples → should have 0 LLM errors
 3. Regenerate GLSL examples → should be complete (no truncation)

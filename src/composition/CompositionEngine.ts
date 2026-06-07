@@ -284,7 +284,7 @@ export class CompositionEngine {
   }
 
   /**
-   * Export composition to Liminal project format.
+   * Export composition to Sinter project format.
    * @deprecated Use ProjectSerializer.exportProject() instead
    */
   exportProject(name: string): LiminalProject {
@@ -297,7 +297,7 @@ export class CompositionEngine {
   }
 
   /**
-   * Import from Liminal project format.
+   * Import from Sinter project format.
    * @deprecated Use ProjectSerializer.importProject() instead
    */
   async importProject(project: LiminalProject): Promise<void> {
@@ -352,7 +352,7 @@ export class CompositionEngine {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Liminal Composition</title>
+  <title>Sinter Composition</title>
   <style>
     body {
       margin: 0;

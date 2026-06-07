@@ -46,7 +46,7 @@
 - **Visual agentic** (can operate UI, click buttons)
 - **Largest model** (397B vs 31B)
 
-## For Liminal's Use Case
+## For Sinter's Use Case
 
 ### Current Setup
 | Role | Model | Why |

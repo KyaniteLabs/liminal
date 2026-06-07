@@ -3,7 +3,7 @@
  *
  * GitConfig controls the RalphLoop integration behavior.
  * CommitInfo, BranchInfo, DiffResult wrap simple-git responses
- * into Liminal-native shapes.
+ * into Sinter-native shapes.
  */
 
 /** Configuration for git integration in RalphLoop */

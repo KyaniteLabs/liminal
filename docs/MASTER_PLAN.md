@@ -1,4 +1,4 @@
-# Liminal Master Plan
+# Sinter Master Plan
 
 ## Philosophy
 
@@ -145,10 +145,10 @@ Current: 11 domains (p5, GLSL, Three, Strudel, Hydra, Tone.js, Revideo, HTML, AS
 
 ## Integration Points
 
-### SEED → Liminal
+### SEED → Sinter
 ```typescript
 // SEED produces PLANNING.md for PAUL
-// Liminal adaptation:
+// Sinter adaptation:
 const brief = await seedIdeator.ideate("Kid A vibes");
 // Produces CREATIVE_BRIEF.md for RalphLoop
 ```
@@ -197,7 +197,7 @@ See phase status summary above. All 14 phases are complete. Future work:
 - **TaskLedger** — JSON-backed task store with CRUD operations
 - **TaskRunner** — Executes tasks with timeout and output capture
 - **TaskVerifier** — Uses `execFileSync` (shell-free) with metacharacter guard and prefix whitelist
-- **CLI**: `liminal ledger list|show|run|verify|accept|reject|status`
+- **CLI**: `sinter ledger list|show|run|verify|accept|reject|status`
 
 ### Security
 - TaskVerifier rejects commands containing shell metacharacters (`;`, `|`, `$`, backticks, etc.)
@@ -266,8 +266,8 @@ The bridge runs standalone without the Go binary (bridge-only mode), enabling HT
 - **ArchiveTaskPlanner** — Plans archive maintenance tasks
 
 ### CLI
-- `liminal emergence score <file>` — Score all emergence dimensions
-- `liminal emergence probe <file>` — Run perturbation probes
+- `sinter emergence score <file>` — Score all emergence dimensions
+- `sinter emergence probe <file>` — Run perturbation probes
 
 ---
 

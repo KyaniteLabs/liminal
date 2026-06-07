@@ -1,4 +1,4 @@
-# ADR 0002 - Liminal Sites Aesthetic Evolution
+# ADR 0002 - Sinter Sites Aesthetic Evolution
 
 ## Status
 
@@ -10,10 +10,10 @@ Accepted for this branch.
 
 ## Context
 
-The document pack corrected the product definition for Liminal Sites:
+The document pack corrected the product definition for Sinter Sites:
 
 ```text
-Liminal Sites = Liminal tuned for living aesthetic webpages.
+Sinter Sites = Sinter tuned for living aesthetic webpages.
 ```
 
 Sites is a sibling product, not a downstream gallery and not a generic website
@@ -21,7 +21,7 @@ builder optimized for business metrics.
 
 ## Decision
 
-Liminal Sites exists to deepen a webpage's aesthetic life through generated,
+Sinter Sites exists to deepen a webpage's aesthetic life through generated,
 previewed, reversible, human-reviewed visual evolution.
 
 It specializes in:
@@ -40,7 +40,7 @@ It specializes in:
 
 ## Explicit Non-Goals
 
-Liminal Sites is not:
+Sinter Sites is not:
 
 - SEO software
 - conversion optimization software

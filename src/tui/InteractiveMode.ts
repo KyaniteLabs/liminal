@@ -95,7 +95,7 @@ export class InteractiveMode {
    */
   async run(): Promise<{ prompt: string; options: InteractiveOptions }> {
     Logger.info('InteractiveMode', '');
-    Logger.info('InteractiveMode', 'Liminal - Interactive Mode');
+    Logger.info('InteractiveMode', 'Sinter - Interactive Mode');
     Logger.info('InteractiveMode', '==========================');
     Logger.info('InteractiveMode', '');
 

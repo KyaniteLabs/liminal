@@ -25,7 +25,7 @@ describe('studio and improve CLI contract', () => {
     const packageJson = pkg();
 
     expect(content).toContain('packageJson.version');
-    expect(content).not.toContain("console.log('Liminal v1.0.0')");
+    expect(content).not.toContain("console.log('Sinter v1.0.0')");
     expect(packageJson.version).toBe('2.1.0');
   });
 

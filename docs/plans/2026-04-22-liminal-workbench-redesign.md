@@ -1,6 +1,6 @@
-# Liminal Workbench Redesign Implementation Plan
+# Sinter Workbench Redesign Implementation Plan
 
-**Goal:** Build the first professional Liminal Studio workbench slice that replaces the tab-first GUI shell with a canvas-first creation workspace.
+**Goal:** Build the first professional Sinter Studio workbench slice that replaces the tab-first GUI shell with a canvas-first creation workspace.
 
 **Architecture:** Keep existing backend routes and bridge events. Refactor the React GUI into a workbench shell with command bar, left rail, center stage, right inspector, and bottom timeline. Start with a static/integrated shell using existing state, then move existing panels into the new layout incrementally.
 
@@ -78,7 +78,7 @@ git add gui/src/gui/workbenchState.ts test/unit/gui-workbench-state.test.ts
 git commit -m "Define unified GUI workbench modes"
 ```
 
-### Task 2: Introduce The Liminal Design Tokens
+### Task 2: Introduce The Sinter Design Tokens
 
 **Files:**
 - Modify: `gui/src/index.css`
@@ -131,7 +131,7 @@ Expected: PASS.
 
 ```bash
 git add gui/src/index.css
-git commit -m "Refresh GUI design tokens for Liminal Studio"
+git commit -m "Refresh GUI design tokens for Sinter Studio"
 ```
 
 ### Task 3: Build The Workbench Shell
@@ -143,7 +143,7 @@ git commit -m "Refresh GUI design tokens for Liminal Studio"
 
 **Step 1: Write a smoke test if practical**
 
-If React component testing is available, assert that `WorkbenchShell` renders `Liminal Studio`, `Generate`, `Review`, `Evolve`, `Observe`, `Settings`, and `Stage`.
+If React component testing is available, assert that `WorkbenchShell` renders `Sinter Studio`, `Generate`, `Review`, `Evolve`, `Observe`, `Settings`, and `Stage`.
 
 **Step 2: Create `WorkbenchShell.tsx`**
 

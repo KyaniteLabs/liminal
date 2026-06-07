@@ -1,4 +1,4 @@
-# Liminal Repository Improvement Roadmap
+# Sinter Repository Improvement Roadmap
 
 **Date:** 2026-05-01
 **Parent PRD:** [#444](https://github.com/KyaniteLabs/liminal/issues/444)
@@ -7,7 +7,7 @@
 
 ## Purpose
 
-This is the durable execution map for improving the whole Liminal repository without random next steps. It starts from current user-surface truth, provider/runtime truth, existing architecture docs, largest modules, stale-doc evidence, and the launch-candidate proof contract.
+This is the durable execution map for improving the whole Sinter repository without random next steps. It starts from current user-surface truth, provider/runtime truth, existing architecture docs, largest modules, stale-doc evidence, and the launch-candidate proof contract.
 
 ## Current accepted architecture constraint
 
@@ -20,7 +20,7 @@ ADR-0001 is accepted: provider/runtime truth belongs in `ProviderRuntime`. Futur
 | 0 | [#445 Roadmap baseline](https://github.com/KyaniteLabs/liminal/issues/445) | AFK | Prevents future agents from redoing discovery or trusting stale docs. | None | **DONE** |
 | 1 | [#446 Studio run receipts](https://github.com/KyaniteLabs/liminal/issues/446) | AFK | Highest product trust return: one prompt-to-preview path with real receipts. | #445 | **DONE** |
 | 2 | [#447 Run truth continuity](https://github.com/KyaniteLabs/liminal/issues/447) | AFK | Makes cancellation, failure, and revision honest across surfaces. | #446 | **DONE** |
-| 3 | [#448 Cognitive loop receipts](https://github.com/KyaniteLabs/liminal/issues/448) | AFK | Proves Liminal's memory/compost/dream organism claim after a real generation. | #446 | **DONE** |
+| 3 | [#448 Cognitive loop receipts](https://github.com/KyaniteLabs/liminal/issues/448) | AFK | Proves Sinter's memory/compost/dream organism claim after a real generation. | #446 | **DONE** |
 | 4 | [#449 TUI bridge event seam](https://github.com/KyaniteLabs/liminal/issues/449) | AFK | Deepens the biggest user-surface coordinator around replayable run events. | #447 | **DONE** |
 | 5 | [#450 TUI bridge endpoint seams](https://github.com/KyaniteLabs/liminal/issues/450) | AFK | Converts endpoint families into testable modules instead of one giant bridge file. | #449 | **DONE** |
 | 6 | [#451 RalphLoop deepening](https://github.com/KyaniteLabs/liminal/issues/451) | AFK | Makes the core creative iteration loop stage-testable before deeper changes. | #445 | **DONE** |
@@ -37,7 +37,7 @@ ADR-0001 is accepted: provider/runtime truth belongs in `ProviderRuntime`. Futur
 - **Strong architecture/product hardening pass:** 6-8 weeks.
 - **Full public-grade repository cleanup:** 8-12 weeks.
 
-The wide range exists because the highest-risk work is not writing code; it is proving behavior through real Studio/TUI routes, provider/runtime paths, and creative-loop receipts without shrinking Liminal's product scope.
+The wide range exists because the highest-risk work is not writing code; it is proving behavior through real Studio/TUI routes, provider/runtime paths, and creative-loop receipts without shrinking Sinter's product scope.
 
 ## Operating rules for each issue
 

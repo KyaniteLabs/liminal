@@ -449,7 +449,7 @@ for (const layer of layers) {
 
 Supported blend modes across different rendering contexts:
 
-| Liminal Mode | CSS | Canvas | WebGL |
+| Sinter Mode | CSS | Canvas | WebGL |
 |--------------|-----|--------|-------|
 | `normal` | `normal` | `source-over` | `SRC_ALPHA, ONE_MINUS_SRC_ALPHA` |
 | `multiply` | `multiply` | `multiply` | `DST_COLOR, ZERO` |

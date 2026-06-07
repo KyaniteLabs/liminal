@@ -1,4 +1,4 @@
-# Liminal Workspace — Full System Audit Report
+# Sinter Workspace — Full System Audit Report
 
 **Date:** 2026-03-07  
 **Scope:** Index with jcodemunch + full system audit (no gaps, no blindspots)  
@@ -36,7 +36,7 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 | Entry point | File | Invocation | Config source | Call graph |
 |-------------|------|------------|---------------|------------|
 | **CLI** | `bin/liminal` | `liminal` (npm bin) or `node bin/liminal` | ConfigLoader → `~/.liminal/config.json` + env; bin sets `process.env.LIMINAL_LLM_*`; flags override | dotenv → initializeConfig → getEffectiveConfig → set env; generate → `run(prompt, opts)`; serve → PreviewServer; list → read ~/.liminal/output; configure → saveConfig; interactive → InteractiveMode.run() → run(); completions → generateCompletions(shell) |
-| **run / Liminal** | `src/index.ts` | Programmatic only | In-code `defaultConfig` + options; no ConfigLoader; LLM from process.env when LLMClient is created | run() → RalphLoop.run() → P5GeneratorLLM → LLMClient(env); run() → Exporter (HTML/JS/ZIP), Gallery.loadHistory(); Liminal.run() → same run() with merged config |
+| **run / Sinter** | `src/index.ts` | Programmatic only | In-code `defaultConfig` + options; no ConfigLoader; LLM from process.env when LLMClient is created | run() → RalphLoop.run() → P5GeneratorLLM → LLMClient(env); run() → Exporter (HTML/JS/ZIP), Gallery.loadHistory(); Sinter.run() → same run() with merged config |
 | **TUI** | `src/tui/index.tsx` | `npm run tui` → `node --import tsx src/tui/index.tsx` | Env only (dotenv); no ConfigLoader; run options hardcoded in handleGenerate | main() → loadGallery() → render(App); handleGenerate → import(dist/index.js) → run(prompt, { maxIterations: 10, ... }) |
 | **Benchmark** | `scripts/benchmark.js` | `npm run benchmark` → `node scripts/benchmark.js` | Env only; no dotenv, no ConfigLoader | runBenchmarks() → benchmarkIteration(prompt) → run(prompt, { output: './benchmark-output', project: benchmark-${Date.now()} }) |
 
@@ -56,7 +56,7 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 | Env: LIMINAL_LLM_MODEL | ConfigLoader.getEffectiveConfig(); LLMClient constructor |
 | Env: LIMINAL_LLM_API_KEY | ConfigLoader.getEffectiveConfig(); LLMClient constructor, isConfigured() |
 | Env: CLOUD_LLM_API_KEY | ConfigLoader.getEffectiveConfig() (apiKey fallback); LLMClient constructor, isConfigured() |
-| Env: HOME | bin/liminal (output dir, serve search dirs, list) — fallback `/tmp` |
+| Env: HOME | bin/sinter (output dir, serve search dirs, list) — fallback `/tmp` |
 
 ### 3.2 Is `config/liminal.json` loaded?
 
@@ -64,13 +64,13 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 
 - README (and PRD) say to create `config/liminal.json` for project-wide settings.
 - ConfigLoader only uses `DEFAULT_CONFIG_PATH` = `path.join(os.homedir(), '.liminal', 'config.json')`.
-- bin/liminal calls getEffectiveConfig() with no arguments → only user config is used.
+- bin/sinter calls getEffectiveConfig() with no arguments → only user config is used.
 - **Gap:** Documentation describes project-wide config (loop, creative, gallery, renderer, llm), but the app uses in-memory defaults in `src/index.ts` (defaultConfig) and user config from `~/.liminal/config.json`. ConfigLoader’s shape (defaultProvider, providers) differs from the project config shape.
 
 ### 3.3 Two config systems
 
 1. **LLM config:** ~/.liminal/config.json + env (ConfigLoader). Used only by **bin/liminal**; it merges and sets process.env so LLMClient sees it. TUI and benchmark do not call ConfigLoader — they rely on env (and TUI on dotenv).
-2. **Loop/creative/gallery/renderer:** In-code defaults in `src/index.ts` (defaultConfig) + options passed to run() / Liminal. No file or env for these keys.
+2. **Loop/creative/gallery/renderer:** In-code defaults in `src/index.ts` (defaultConfig) + options passed to run() / Sinter. No file or env for these keys.
 
 ---
 
@@ -93,7 +93,7 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 
 ### 4.2 Public API (src/index.ts)
 
-- **Defined in index.ts:** LIMINAL_VERSION, LiminalConfig, defaultConfig, run, runFromArgs, Liminal, default export.
+- **Defined in index.ts:** LIMINAL_VERSION, LiminalConfig, defaultConfig, run, runFromArgs, Sinter, default export.
 - **Re-exports:** RalphLoop, CreativeEvaluator, PromiseDetector, PromptStore, ContextAccumulation; P5Generator, ParticleSystem, CellularAutomata, P5GeneratorLLM; Renderer, PreviewServer; Exporter, Project; Gallery, Iteration; SeedArchive, SeedMetadata.
 
 ### 4.3 Internal dependency graph (high level)

@@ -10,7 +10,7 @@ This is the current truth map that future roadmap issues should read before redo
 ## Current product and architecture truth
 
 - **User-surface contract:** `docs/USER_SURFACE_CONTRACT.md` is the current product-surface contract. Studio is the artist-facing workbench; the Operator TUI is the diagnostics/control cockpit. Both must preserve the same run truth.
-- **Finish-line contract:** `docs/FINISH_LINE.md` is the current broad product contract. Liminal V1 is a creative cognitive system, not a narrowed four-generator proof.
+- **Finish-line contract:** `docs/FINISH_LINE.md` is the current broad product contract. Sinter V1 is a creative cognitive system, not a narrowed four-generator proof.
 - **Provider/runtime ADR:** `docs/adr/0001-provider-runtime-truth.md` is accepted. Provider facts belong in `src/config/ProviderRuntime.ts`; future provider work should deepen around that seam, not duplicate defaults elsewhere.
 - **Roadmap execution surface:** GitHub issues [#444](https://github.com/KyaniteLabs/liminal/issues/444)-[#457](https://github.com/KyaniteLabs/liminal/issues/457) plus `docs/plans/2026-05-01-repo-improvement-roadmap.md` are the durable execution system.
 - **Launch proof anchor:** `docs/launch/launch-candidate-2026-04-30.md` is the latest shareable launch-candidate proof summary. It records Studio p5 preview and microphone preview proof, with caveats.

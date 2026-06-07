@@ -2,7 +2,7 @@
 
 ## Substrate
 
-Liminal’s substrate is the fixed structure that drives each run: an optional prompt (which may include `{{context}}`), context injection from the accumulated world state, evaluation via the CreativeEvaluator, and termination via the promise string, max-iterations cap, and optional quality gate. Together these define how the agent sees the world and when it stops.
+Sinter’s substrate is the fixed structure that drives each run: an optional prompt (which may include `{{context}}`), context injection from the accumulated world state, evaluation via the CreativeEvaluator, and termination via the promise string, max-iterations cap, and optional quality gate. Together these define how the agent sees the world and when it stops.
 
 ## Loop start
 
@@ -14,17 +14,17 @@ Users curate rather than micromanage: they control visibility (what the agent se
 
 ## Primary interfaces
 
-Liminal has three primary interfaces:
+Sinter has three primary interfaces:
 
-1. **CLI** (`liminal -p "..."`, `liminal chat`, `liminal fix`, etc.) — the original interface for generation, compost, ledger, and utilities.
-2. **Studio** (`liminal studio`) — the GUI-first workbench. It starts the GUI backend plus browser app, uses the HTTP/SSE bridge for streamed generation and preview events, and exposes an Improve lane for repair, hardening, and optimization proposals.
-3. **Bubble Tea TUI** (`liminal bubbletea`) — the Go-based terminal operator cockpit with 50+ event handlers, streaming responses, and Ctrl+X Cortex panel.
+1. **CLI** (`sinter -p "..."`, `sinter chat`, `sinter fix`, etc.) — the original interface for generation, compost, ledger, and utilities.
+2. **Studio** (`sinter studio`) — the GUI-first workbench. It starts the GUI backend plus browser app, uses the HTTP/SSE bridge for streamed generation and preview events, and exposes an Improve lane for repair, hardening, and optimization proposals.
+3. **Bubble Tea TUI** (`sinter bubbletea`) — the Go-based terminal operator cockpit with 50+ event handlers, streaming responses, and Ctrl+X Cortex panel.
 
 CLI and programmatic API remain available for automation and integration.
 
 ## Self-improvement feedback loop (updated 2026-03-21)
 
-Liminal has closed-loop creative feedback systems plus a guarded self-healing loop. The self-healing loop has three modes: `repair` for failing behavior, `harden` for blind spots on a mostly green system, and `improve` for evidence-backed optimizations on a fully green system. In v1, self-written changes are reviewable and verification-gated rather than auto-merged.
+Sinter has closed-loop creative feedback systems plus a guarded self-healing loop. The self-healing loop has three modes: `repair` for failing behavior, `harden` for blind spots on a mostly green system, and `improve` for evidence-backed optimizations on a fully green system. In v1, self-written changes are reviewable and verification-gated rather than auto-merged.
 
 ```
 Generate → Evaluate → Store (archive + compost + MAP-Elites + novelty)
@@ -97,7 +97,7 @@ The loop is a sandbox for self-improving, recursive behavior: the same prompt ov
 
 ## Cloud and local LLMs
 
-Liminal supports both cloud and local LLM backends. Users can use a hosted API (e.g. Inception) for speed and quality or run fully local (e.g. Ollama) for privacy and offline use; the loop and substrate are backend-agnostic.
+Sinter supports both cloud and local LLM backends. Users can use a hosted API (e.g. Inception) for speed and quality or run fully local (e.g. Ollama) for privacy and offline use; the loop and substrate are backend-agnostic.
 
 ## Voice and audio pipeline (added 2026-03-29)
 
@@ -154,7 +154,7 @@ MAP-Elites grid and AestheticModel training data persist across runs via JSON fi
 
 ## StudioAgent architecture (Phase 11, added 2026-04-07)
 
-The StudioAgent is the chat-first TUI layer that makes Liminal feel like "Codex for creative generative art." It consists of 20+ modules in `src/agent/` that handle intent routing, autonomy modes, response composition, session persistence, and skill execution.
+The StudioAgent is the chat-first TUI layer that makes Sinter feel like "Codex for creative generative art." It consists of 20+ modules in `src/agent/` that handle intent routing, autonomy modes, response composition, session persistence, and skill execution.
 
 Key architectural decisions:
 - **Intent-based routing**: `IntentRouter` classifies user input by keyword detection into `direct` (simple chat), `generate` (creative generation), `command` (slash commands), or `agent` (structured workflows). Each intent routes to a dedicated handler.

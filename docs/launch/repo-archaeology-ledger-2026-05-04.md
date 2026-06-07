@@ -1,6 +1,6 @@
 # Repo Archaeology Ledger — 2026-05-04
 
-This ledger is the authoritative record of stale documentation reconciliation, zero-runtime-import file classification, and dormant cognitive organ integration status within the Liminal codebase. This ensures clear boundaries between active, future, test-only, and false-positive modules to guide subsequent development epochs.
+This ledger is the authoritative record of stale documentation reconciliation, zero-runtime-import file classification, and dormant cognitive organ integration status within the Sinter codebase. This ensures clear boundaries between active, future, test-only, and false-positive modules to guide subsequent development epochs.
 
 ---
 
@@ -49,7 +49,7 @@ To avoid dead-code bloat while respecting the **keep-all infrastructure policy**
 | **`src/prompts/*.ts`**<br>**`src/nodeprompt/**/*.ts`** | `false-positive` | 20 | **Dynamic Prompts & Layouts**: Prompt templates and graph structures loaded as raw text/templates or registered dynamically. Safe from tree-shaking, these serve as cognitive fuel. |
 | **`src/guardrails/**/*.ts`** | `false-positive` | 16 | **Guardrail Rule Assertions**: Auto-discovered and registered by `GuardrailRegistry` via dynamic hook/decorator scanning. Indirectly imported at the system boundaries. |
 | **`src/audio/*.ts`**<br>**`src/aesthetic/*.ts`** | `future` | 12 | **Sensory Substrates**: Real-time signal analysis (FFT, pitch-class maps, formants) and visual styling strategies kept for multi-modal expansion in the next epoch. |
-| **`src/tui/*.ts`**<br>**`src/tui-bridge/*.ts`** | `false-positive` | 4 | **Interactive Terminals**: Standalone bridge config, stdin detection, and shell launchers executed directly via `liminal bridge` or `pnpm gui` rather than runtime imports. |
+| **`src/tui/*.ts`**<br>**`src/tui-bridge/*.ts`** | `false-positive` | 4 | **Interactive Terminals**: Standalone bridge config, stdin detection, and shell launchers executed directly via `sinter bridge` or `pnpm gui` rather than runtime imports. |
 | **`src/quality/*.ts`**<br>**`src/fix/*.ts`** | `test-only` | 4 | **Regression & Self-Healing Checks**: Aux engines for analyzing test output, running regression gauntlets, and feeding repair suggestions into the auto-fix pipeline. |
 | **`src/core/BatchProcessor.ts`**<br>**`src/core/CreativeConstraints.ts`**<br>**`src/core/TelemetryBridge.ts`** | `wire` | 3 | **Partially Wired Core Infrastructure**: Wires events from the central loop into guardrails, batch processor queues, or telemetry aggregators. Retained to complete closed-loop architecture. |
 
@@ -127,7 +127,7 @@ graph TD
 
 ## 3. Dormant Cognitive Organ Status
 
-The integration mapping below outlines the current status and roadmap for the primary cognitive organs within the Liminal system:
+The integration mapping below outlines the current status and roadmap for the primary cognitive organs within the Sinter system:
 
 ```mermaid
 stateDiagram-v2
@@ -147,7 +147,7 @@ stateDiagram-v2
 
 2. **Emergence Scorer (`src/emergence/`)**
    * **Status:** `ACTIVE`. Provides NoveltyIndex scoring and Autocorrelation analysis.
-   * **Integration:** Direct CLI surface (`liminal emergence score`).
+   * **Integration:** Direct CLI surface (`sinter emergence score`).
 
 3. **Taste Learning (`src/learning/`)**
    * **Status:** `ACTIVE`. Taste model updates based on user accepts/rejects using lightweight SGD.

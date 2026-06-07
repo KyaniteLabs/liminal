@@ -417,7 +417,7 @@ export class LLMScoringStrategy implements ScoringStrategy {
 // ---------------------------------------------------------------------------
 
 /**
- * ScoringEngine — THE scoring system for Liminal.
+ * ScoringEngine — THE scoring system for Sinter.
  *
  * Consolidated as part of Fix 8: Consolidate Triple Redundancy.
  * Now serves as a plugin host with Strategy pattern, supporting:

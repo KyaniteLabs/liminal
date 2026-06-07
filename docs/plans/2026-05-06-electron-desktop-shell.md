@@ -1,6 +1,6 @@
 # Electron Desktop Shell Implementation Plan
 
-**Goal:** Give Liminal Studio a first-class Electron entrypoint that launches the existing Studio in a desktop window.
+**Goal:** Give Sinter Studio a first-class Electron entrypoint that launches the existing Studio in a desktop window.
 
 **Architecture:** The Electron main process supervises the existing Studio runtime instead of creating a second backend. Built GUI assets are served by the Studio backend for normal desktop launches; `--dev` keeps the current Vite-backed flow for local iteration.
 

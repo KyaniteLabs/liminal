@@ -12,7 +12,7 @@ Source issue: `#457`
 
 ## What to build
 
-Finish the repository-improvement program with a shareable launch proof: a new user can run Liminal, create or revise an artifact, see preview and receipts, inspect provider/model truth, and understand failures or caveats without internal archaeology.
+Finish the repository-improvement program with a shareable launch proof: a new user can run Sinter, create or revise an artifact, see preview and receipts, inspect provider/model truth, and understand failures or caveats without internal archaeology.
 
 ## Acceptance criteria
 

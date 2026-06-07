@@ -1,6 +1,6 @@
 # Bubble Tea Operator Cockpit
 
-Keyboard-first TUI for the Liminal bridge. It is the operator cockpit for the same sessions, event stream, review gates, and cancel controls that the GUI Studio cockpit uses.
+Keyboard-first TUI for the Sinter bridge. It is the operator cockpit for the same sessions, event stream, review gates, and cancel controls that the GUI Studio cockpit uses.
 
 ## Current scope
 

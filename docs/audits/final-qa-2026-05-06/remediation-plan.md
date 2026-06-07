@@ -37,7 +37,7 @@ Release risk: highest. These items prevent honest launch claims and false releas
 5. Repair git/CI packaging.
    - Findings: FQA-002
    - Action: ensure git dependency installs build package artifacts under `CI=1` and that installed consumers can import the package and run the CLI.
-   - Proof: clean temp git dependency install with `CI=1`, import package, and run `liminal --version`.
+   - Proof: clean temp git dependency install with `CI=1`, import package, and run `sinter --version`.
    - Remediation status: verified. `prepare` now builds missing `dist`, `postinstall` is a backstop instead of a CI blind spot, package file allowlisting keeps lifecycle helpers, the self `link:` dependency is removed, runtime `typescript` is installed for parser imports, and `pnpm proof:git-ci-install` verifies the full clean install path.
 
 ## Batch 1: Silent Failure And Evidence Integrity
@@ -100,7 +100,7 @@ Release risk: high. These items make customers angry even when the core code run
    - Findings: FQA-018
    - Action: replace harness-era commands with current Studio/workbench/CLI paths.
    - Proof: docs claim scan plus manual first-run smoke.
-   - Remediation status: verified. `docs/WHAT_TO_EXPECT.md` now describes `pnpm gui`, Message Liminal, Generate, Polish, same-screen preview, visible preview errors, provider setup, and current local verification commands; a focused docs contract rejects the retired harness task-runner path.
+   - Remediation status: verified. `docs/WHAT_TO_EXPECT.md` now describes `pnpm gui`, Message Sinter, Generate, Polish, same-screen preview, visible preview errors, provider setup, and current local verification commands; a focused docs contract rejects the retired harness task-runner path.
 
 ## Batch 3: Runtime Contracts And Examples
 

@@ -14,9 +14,9 @@ package.json:64:    "proof:gui-bundle-budget": "tsx scripts/proof/gui-bundle-bud
 package.json:67:    "proof:visual-output-previews": "tsx scripts/proof/visual-output-preview-contract.ts",
 package.json:68:    "proof:studio-launch-gauntlet": "node scripts/proof/studio-launch-gauntlet.mjs",
 package.json:69:    "proof:route-performance": "tsx scripts/proof/route-performance-budget.ts"
-README.md:8:> **Finish-line contract:** Liminal is a creative cognitive system, not a narrowed proof wedge. See [docs/FINISH_LINE.md](docs/FINISH_LINE.md) for the domain, cognitive-organ, self-improvement, and model-assimilation contract.
-README.md:10:Liminal is a model-agnostic creative coding system. You describe what you want — "a quiet moonlit garden with blue-green fireflies" or "glitch techno beats with feedback loops" — and Liminal helps choose a medium, generates the artifact, shows an inline/side-panel preview, and keeps the conversation open for revision. It works with any OpenAI-compatible API, Ollama, LM Studio, Anthropic-style providers, and GLM.
-README.md:61:Use this path when you want to try Liminal as a product instead of asking an agent to babysit a proof run. It keeps the full creative surface in scope: p5, GLSL, Three.js, SVG, Hydra, Strudel, Tone.js, Revideo, ASCII, Kinetic, and TextGen.
+README.md:8:> **Finish-line contract:** Sinter is a creative cognitive system, not a narrowed proof wedge. See [docs/FINISH_LINE.md](docs/FINISH_LINE.md) for the domain, cognitive-organ, self-improvement, and model-assimilation contract.
+README.md:10:Sinter is a model-agnostic creative coding system. You describe what you want — "a quiet moonlit garden with blue-green fireflies" or "glitch techno beats with feedback loops" — and Sinter helps choose a medium, generates the artifact, shows an inline/side-panel preview, and keeps the conversation open for revision. It works with any OpenAI-compatible API, Ollama, LM Studio, Anthropic-style providers, and GLM.
+README.md:61:Use this path when you want to try Sinter as a product instead of asking an agent to babysit a proof run. It keeps the full creative surface in scope: p5, GLSL, Three.js, SVG, Hydra, Strudel, Tone.js, Revideo, ASCII, Kinetic, and TextGen.
 README.md:73:liminal "a luminous blue-green particle garden"
 README.md:79:pnpm run proof:live-provider-smoke -- --provider=glm --timeout-ms=120000
 README.md:82:pnpm exec tsx scripts/proof/creative-copilot-proof.ts --provider=glm --all --timeout-ms=120000 --max-tokens=4096 --out=.omx/proof/market-all-domain-sweep
@@ -318,7 +318,7 @@ test/render/CanvasRecorder.error.test.ts:6:// Mock puppeteer to avoid launching 
 test/render/CanvasRecorder.error.test.ts:9:    launch: vi.fn().mockResolvedValue({
 docs/feature-viability-analysis.md:99:| Scores (visual/audio) | Already-rendered buffers | ~$0.001 | <1s |
 docs/feature-viability-analysis.md:192:**Key risk:** Enterprise sales cycle is long. API reliability must be production-grade.
-docs/feature-viability-analysis.md:229:| Technical Feasibility | 4 | Generation + explanation is LLM-native. Liminal already does this. |
+docs/feature-viability-analysis.md:229:| Technical Feasibility | 4 | Generation + explanation is LLM-native. Sinter already does this. |
 docs/feature-viability-analysis.md:275:> Full Revideo-based video production pipeline for marketing teams. Prompt → script → storyboard → rendered video.
 docs/feature-viability-analysis.md:362:| LLM APIs (OpenAI, Anthropic, MiniMax, etc.) | Code generation + evaluation | Each provider has usage terms. Generated code ownership varies by provider. |
 docs/feature-viability-analysis.md:373:3. **LLM output ownership** — Verify terms for each LLM provider. Most (OpenAI, Anthropic) grant ownership of outputs to the user. MiniMax terms need verification.
@@ -326,7 +326,7 @@ docs/feature-viability-analysis.md:382:- Alternative names if trademark is unava
 docs/feature-viability-analysis.md:393:| LLM API price increase | High | Medium | Multi-provider routing (already exists). Self-hosted model fallback (Ollama). |
 docs/feature-viability-analysis.md:394:| LLM API deprecation | High | Low | Provider abstraction layer (already exists). Rapid migration capability. |
 docs/feature-viability-analysis.md:414:| MIT fork competes with proprietary version | High | High | Re-license before launch. Add CLA for future contributions. |
-docs/feature-viability-analysis.md:416:| Trademark conflict on "Liminal" name | Medium | Medium | Trademark search. Alternative names ready. |
+docs/feature-viability-analysis.md:416:| Trademark conflict on "Sinter" name | Medium | Medium | Trademark search. Alternative names ready. |
 docs/feature-viability-analysis.md:417:| LLM-generated code copyright ambiguity | Medium | Medium | Clear ToS. Indemnification clause. Provider ownership grants. |
 docs/feature-viability-analysis.md:437:5. **Beta launch** — Free tier to 100 users. Collect feedback, calibrate quality.
 docs/feature-viability-analysis.md:442:2. **Validate quality scoring** — Partially done. EmergenceCritic + CreativeBoard + NoveltyIndex operational. Human rating collection still needed.
@@ -403,9 +403,9 @@ test/tui-bridge/tui-bridge-preview-runtime.test.ts:12:    launch: vi.fn(async ()
 docs/marketing/launch-day-checklist.md:4:**Goal:** First public launch-candidate reveal. Establish credibility through a real chat-first Studio demo, same-screen preview, and honest caveats.
 docs/marketing/launch-day-checklist.md:10:- [ ] **Post Tweet 1** of the launch thread
 docs/marketing/launch-day-checklist.md:12:- [ ] **Pin Tweet 1** to profile after thread completes
-docs/marketing/launch-day-checklist.md:74:> Liminal is closer to Codex for creative coding: chat, generate, preview, revise, and keep proof receipts available when something needs debugging.
+docs/marketing/launch-day-checklist.md:74:> Sinter is closer to Codex for creative coding: chat, generate, preview, revise, and keep proof receipts available when something needs debugging.
 scripts/analysis/regenerate-all-failing.js:65:console.log('- Code completeness check');
-docs/marketing/content-calendar-week-1.md:79:| 12:00 PM | Newsletter/Blog | "Week 1 of building Liminal in public" | Longer write-up |
+docs/marketing/content-calendar-week-1.md:79:| 12:00 PM | Newsletter/Blog | "Week 1 of building Sinter in public" | Longer write-up |
 scripts/analysis/agent-b-test-runner.ts:188:  const passed = RESULTS.filter(r => r.status === 'PASS').length;
 scripts/analysis/agent-b-test-runner.ts:193:  console.log(`Passed: ${passed}`);
 scripts/analysis/agent-b-test-runner.ts:215:    const passed = mr.filter(r => r.status === 'PASS').length;
@@ -804,7 +804,7 @@ src/composition/CompositionAnalyzer.ts:80:  video: ['video export', 'render', 'c
 test/unit/GeneratorRegistry.test.ts:102:      }).toThrow('already registered');
 docs/marketing/launch-thread-ready.md:3:**Positioning:** Codex for creative coding. Clean chat, same-screen preview, honest proof.
 docs/marketing/launch-thread-ready.md:5:Copy-paste each post, then attach fresh screenshots from the local proof bundle summarized in `docs/launch/launch-candidate-2026-04-30.md`.
-docs/marketing/launch-thread-ready.md:40:Liminal's launch-candidate smoke generated a p5.js moonlit garden, mounted the preview in Studio, then accepted a revision: darker, slower, more spacious.
+docs/marketing/launch-thread-ready.md:40:Sinter's launch-candidate smoke generated a p5.js moonlit garden, mounted the preview in Studio, then accepted a revision: darker, slower, more spacious.
 docs/marketing/launch-thread-ready.md:114:- [ ] `pnpm gui` launches Studio
 docs/marketing/launch-thread-ready.md:118:- [ ] screenshots copied from the local proof bundle summarized in `docs/launch/launch-candidate-2026-04-30.md`
 src/guardrails/observation/TelemetryCollector.ts:137:    passed: boolean,
@@ -818,7 +818,7 @@ src/composition/LayerSequencer.ts:223:      completedCount++;
 src/composition/LayerSequencer.ts:224:      opts.onProgress?.(completedCount, tasks.length);
 src/composition/LayerSequencer.ts:264:    // Wait for all to complete
 src/composition/LayerSequencer.ts:303:      // Check if already aborted
-docs/marketing/building-in-public-strategy.md:4:**Purpose:** Social media strategy and ready-to-film scripts for launching Liminal's public presence.
+docs/marketing/building-in-public-strategy.md:4:**Purpose:** Social media strategy and ready-to-film scripts for launching Sinter's public presence.
 docs/marketing/building-in-public-strategy.md:8:## Your Secret Weapon: You Already Have the Content
 docs/marketing/building-in-public-strategy.md:10:Most founders "build in public" by talking about what they *will* build. You have:
 docs/marketing/building-in-public-strategy.md:76:- **Frequency:** 2-3x/day during launch week, then 1x/day
@@ -962,7 +962,7 @@ test/unit/gui-bundle-budget.test.ts:18:    expect(pkg.scripts['proof:gui-bundle-
 src/compost/ModelRouter.ts:535:    const winnerModel = similarity > 0.85 ? 'primary (verified)' : 'secondary (corrected)';
 src/product/DemoScenarioRunner.ts:24:  passed: boolean;
 src/product/DemoScenarioRunner.ts:158:      passed: steps.length === 8 && finalAvg > 0.4,
-src/compost/ProjectStore.ts:8: * This is the public interface for Liminal's "creative memory." Every
+src/compost/ProjectStore.ts:8: * This is the public interface for Sinter's "creative memory." Every
 src/compost/ProjectStore.ts:10: * event timeline is always complete.
 src/compost/ProjectStore.ts:161:   * Record that a digestion pipeline completed with results.
 src/compost/ProjectStore.ts:410:   * Only creative operations (digest, seed, soup) can be undone —
@@ -1106,7 +1106,7 @@ scripts/proof/live-creative-domain-execution.ts:187:  const receiptPath = path.j
 scripts/ci/check-coverage-gaps.ts:6: * 1. Files with 0% statement coverage (completely untested)
 scripts/run-all-dogfood-parallel.sh:25:# Wait for all to complete
 scripts/proof/live-provider-smoke.ts:20:const outDir = path.join(repoRoot, '.omx', 'proof', 'live-provider-smoke');
-scripts/proof/live-provider-smoke.ts:59:    'Create a concise p5.js sketch of a luminous market-ready Liminal signal: flowing blue-green particles, visible motion, and a dark background. Return raw p5.js code only with setup() and createCanvas().',
+scripts/proof/live-provider-smoke.ts:59:    'Create a concise p5.js sketch of a luminous market-ready Sinter signal: flowing blue-green particles, visible motion, and a dark background. Return raw p5.js code only with setup() and createCanvas().',
 src/guardrails/correctness/TypeCheckGuardrail.ts:36:        passed: true,
 src/guardrails/correctness/TypeCheckGuardrail.ts:49:        passed: true,
 src/guardrails/correctness/TypeCheckGuardrail.ts:64:          passed: false,
@@ -1498,7 +1498,7 @@ test/unit/guardrails/compliance/InjectionGuardrail.test.ts:256:    expect(result
 test/unit/guardrails/compliance/InjectionGuardrail.test.ts:266:    expect(result.passed).toBe(false);
 test/unit/guardrails/compliance/InjectionGuardrail.test.ts:277:    expect(result.passed).toBe(true);
 test/unit/guardrails/compliance/InjectionGuardrail.test.ts:284:    expect(result.passed).toBe(true);
-docs/STUDIO_FULL_OUTPUT_GAUNTLET_REPORT.md:5:Liminal Studio is a chat-first creative coding agent. Artists should start from the conversation, choose or describe the medium in plain language, and immediately see the generated artifact as a real visual/audio/composition preview. Internal proof, harness, and receipt details remain available, but they are not the main visual object.
+docs/STUDIO_FULL_OUTPUT_GAUNTLET_REPORT.md:5:Sinter Studio is a chat-first creative coding agent. Artists should start from the conversation, choose or describe the medium in plain language, and immediately see the generated artifact as a real visual/audio/composition preview. Internal proof, harness, and receipt details remain available, but they are not the main visual object.
 docs/STUDIO_FULL_OUTPUT_GAUNTLET_REPORT.md:9:| Capability | Artist-facing placement | Preservation proof |
 docs/STUDIO_FULL_OUTPUT_GAUNTLET_REPORT.md:11:| p5.js sketches | Chat/create composer plus polished live preview stage | `data-liminal-p5-preview-shell`; centered canvas; real prompt proof screenshot |
 docs/STUDIO_FULL_OUTPUT_GAUNTLET_REPORT.md:19:| HyperFrames | Composer mode and rendered composition/timeline preview shell | Studio mode selector includes HyperFrames; visual proof requires composition shell |
@@ -1742,7 +1742,7 @@ src/prompts/collaboration.ts:186:3. Feature completeness — Does it fully addre
 src/prompts/collaboration.ts:229:3. Maintains what already works well
 src/prompts/collaboration.ts:232:Output the complete improved code.`;
 docs/agents/domain.md:19:  - task-specific files under `docs/plans/`, `docs/internal/`, or `docs/launch/`
-docs/agents/domain.md:25:When output names a domain concept, prefer Liminal's established terms: Meta-Harness, generator, evaluator, creative domain, Bubble Tea TUI, workbench, RalphLoop, thinking trace, ledger, compost, and provider/runtime truth. Avoid replacing artist-facing language with internal proof or harness jargon unless the task is explicitly about internals.
+docs/agents/domain.md:25:When output names a domain concept, prefer Sinter's established terms: Meta-Harness, generator, evaluator, creative domain, Bubble Tea TUI, workbench, RalphLoop, thinking trace, ledger, compost, and provider/runtime truth. Avoid replacing artist-facing language with internal proof or harness jargon unless the task is explicitly about internals.
 src/aesthetic/critics/TypographyCritic.ts:61:      passed: true,
 src/aesthetic/critics/TypographyCritic.ts:139:  const passed =
 src/aesthetic/critics/TypographyCritic.ts:146:    passed,
@@ -2077,8 +2077,8 @@ scripts/proof/visual-output-preview-contract.ts:51:  const args: Args = { out: p
 scripts/proof/visual-output-preview-contract.ts:57:      console.log('Usage: pnpm run proof:visual-output-previews -- [--input .omx/proof/domain-gauntlet-live.json] [--out .omx/proof/visual-output-preview-contract]');
 scripts/proof/visual-output-preview-contract.ts:70:window.__liminalVisualProof = { domain: ${JSON.stringify(domain)}, errors: [], ready: false };
 scripts/proof/visual-output-preview-contract.ts:80:window.addEventListener('load', () => setTimeout(() => { window.__liminalVisualProof.ready = true; }, 600));
-scripts/proof/visual-output-preview-contract.ts:226:    '<!doctype html><html><head><meta charset="utf-8"><title>Liminal output proof gallery</title>',
-scripts/proof/visual-output-preview-contract.ts:228:    '<h1>Liminal full output visual proof</h1><main>',
+scripts/proof/visual-output-preview-contract.ts:226:    '<!doctype html><html><head><meta charset="utf-8"><title>Sinter output proof gallery</title>',
+scripts/proof/visual-output-preview-contract.ts:228:    '<h1>Sinter full output visual proof</h1><main>',
 scripts/proof/visual-output-preview-contract.ts:247:      if (!address || typeof address === 'string') reject(new Error('Could not bind preview proof server'));
 scripts/proof/visual-output-preview-contract.ts:309:  const browser = await chromium.launch({ headless: true });
 src/core/parsing/CodeParser.ts:5: * Extracts symbols, computes metrics, and builds relationship graphs.
@@ -3357,7 +3357,7 @@ test/unit/chat/types.test.ts:437:    it('accepts complete brief with all fields'
 test/unit/intuition.test.ts:459:  it('should reset completely', () => {
 test/unit/intuition.test.ts:978:  it('should return null for timeToThreshold when already below', () => {
 test/unit/intuition.test.ts:1453:  it('should mark dream completed', () => {
-test/unit/market/MarketReadinessStatus.test.ts:8:  it('answers plainly whether Liminal is market ready and lists blocking gaps', () => {
+test/unit/market/MarketReadinessStatus.test.ts:8:  it('answers plainly whether Sinter is market ready and lists blocking gaps', () => {
 test/unit/market/MarketReadinessStatus.test.ts:17:    expect(status.ready).toBe(false);
 test/unit/market/MarketReadinessStatus.test.ts:18:    expect(status.verdict).toBe('not-ready');
 test/unit/market/MarketReadinessStatus.test.ts:50:  it('does not accept a stale or failed live-provider receipt as market-ready', () => {
@@ -3505,7 +3505,7 @@ docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:318:b
 docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:415:bin/liminal:807:    console.log('✅ Generation complete!');
 docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:453:bin/liminal:996:      console.log(`  motifDensity=${c.motifDensity.toFixed(3)} complexity=${c.complexity.toFixed(3)} complete=${c.isComplete} sources=${c.sourceIds.length}`);
 docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:490:bin/liminal:1150:  console.log('✅ Consolidation complete');
-docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:516:bin/liminal:1231:    console.error('Failed to launch Liminal Studio:', err.message);
+docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:516:bin/liminal:1231:    console.error('Failed to launch Sinter Studio:', err.message);
 docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:521:bin/liminal:1240:  process.exit(status.ready ? 0 : 2);
 docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:525:bin/liminal:1247:  process.exit(status.ready ? 0 : 2);
 docs/audits/final-qa-2026-05-06/raw/logging-and-termination-candidates.txt:538:bin/liminal:1286:  console.log(`  Result: ${result.aggregate.passed}/${result.aggregate.total} passed`);
@@ -3730,7 +3730,7 @@ docs/agents/factory-artists/rag/yannlecun/sources.json:44:      "notes": "Licens
 docs/agents/factory-artists/rag/yannlecun/sources.json:48:      "title": "Meta AI public search for Yann LeCun",
 docs/agents/factory-artists/rag/yannlecun/sources.json:51:      "access": "public",
 docs/agents/factory-artists/rag/yannlecun/sources.json:54:      "notes": "Use to locate current public Meta AI posts and research references."
-docs/ARCHITECTURE_AND_PHILOSOPHY.md:27:Liminal has closed-loop creative feedback systems plus a guarded self-healing loop. The self-healing loop has three modes: `repair` for failing behavior, `harden` for blind spots on a mostly green system, and `improve` for evidence-backed optimizations on a fully green system. In v1, self-written changes are reviewable and verification-gated rather than auto-merged.
+docs/ARCHITECTURE_AND_PHILOSOPHY.md:27:Sinter has closed-loop creative feedback systems plus a guarded self-healing loop. The self-healing loop has three modes: `repair` for failing behavior, `harden` for blind spots on a mostly green system, and `improve` for evidence-backed optimizations on a fully green system. In v1, self-written changes are reviewable and verification-gated rather than auto-merged.
 docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:25:docs/launch/repo-improvement-baseline-2026-05-01.md:71:- `describe.skip` / `describe.skipIf`: 17 occurrences.
 docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:26:docs/launch/repo-improvement-baseline-2026-05-01.md:72:- `it.skip` / `it.skipIf`: 6 occurrences.
 docs/audits/final-qa-2026-05-06/raw/skips-and-pending.txt:27:docs/launch/repo-improvement-baseline-2026-05-01.md:73:- `test.skip` / `test.skipIf`: 2 occurrences.
@@ -3793,7 +3793,7 @@ docs/PRELIMINARY_RESEARCH.md:59:**Relevance to Atelier:** `CellularAutomata.ts` 
 docs/research/audit/growth/abstractions.json:138:      "benefit": "Improved type safety, better IDE autocomplete, easier testing"
 docs/index.html:119:            <p>Terminal-ready ASCII art with character density mapping.</p>
 docs/index.html:316:            <p>Feature status, guardrails, and internal proof/diagnostic systems.</p>
-docs/audits/final-qa-2026-05-06/README.md:5:This folder records the final pre-publication QA campaign for Liminal.
+docs/audits/final-qa-2026-05-06/README.md:5:This folder records the final pre-publication QA campaign for Sinter.
 docs/audits/final-qa-2026-05-06/README.md:11:All material issues are release-blocking. Material means anything plausibly causing security risk, silent failure, swallowed errors, customer anger, launch-claim dishonesty, integration debt, broken UX, broken generation, serious bottlenecks, or future maintenance traps.
 docs/audits/final-qa-2026-05-06/README.md:27:- `verification/verification-log.md` records command and live proof runs.
 docs/audits/final-qa-2026-05-06/README.md:32:The audit can stop only after two independent saturation passes produce no new material findings, only duplicates, already-covered mitigations, or explicitly non-material nits.
@@ -8136,8 +8136,8 @@ src/nodeprompt/layout/SphereLayout.ts:370:  // Build parent-child relationships 
 src/nodeprompt/layout/SphereLayout.ts:395:  // Add implicit parent-child edges for hierarchical nodes not already covered
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:4:**Branch:** `fix/marketing-readiness-proof-gates`
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:6:**Purpose:** translate the post-completion strategy into repo-specific launch and marketing readiness work.
-docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:10:Liminal is architecturally strong, but the latest remote state was not marketing-ready when this audit began. The primary Bubble Tea launch path contained committed merge-conflict markers in `scripts/start-bubbletea-tui.mjs`, full Vitest was red, and docs overstated readiness relative to current proof.
-docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:12:This branch fixed the launch-path syntax failure, restored Bubble Tea Go compilation, added a regression test so launcher conflict markers are caught, and stabilized the full Vitest run. This does not make Liminal launch-ready by itself. It changes the status from "primary launcher cannot parse and full suite is red" to "candidate branch has a green full-suite gate and an explicit remaining proof queue."
+docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:10:Sinter is architecturally strong, but the latest remote state was not marketing-ready when this audit began. The primary Bubble Tea launch path contained committed merge-conflict markers in `scripts/start-bubbletea-tui.mjs`, full Vitest was red, and docs overstated readiness relative to current proof.
+docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:12:This branch fixed the launch-path syntax failure, restored Bubble Tea Go compilation, added a regression test so launcher conflict markers are caught, and stabilized the full Vitest run. This does not make Sinter launch-ready by itself. It changes the status from "primary launcher cannot parse and full suite is red" to "candidate branch has a green full-suite gate and an explicit remaining proof queue."
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:18:- `git fetch --all --prune --tags`: completed.
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:26:- `pnpm exec tsc --noEmit`: passed.
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:27:- `pnpm exec eslint src/ --no-cache`: passed with 94 warnings.
@@ -8164,7 +8164,7 @@ docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:69:3. Three proof flows must 
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:70:4. Documentation must stop saying "ready" where current evidence says "candidate."
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:71:5. Any UI "success" state must include verification evidence or an explicit "unverified" label.
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:76:2. ~~Audit stale Remotion/Revideo naming and public docs before marketing.~~ *(Done — PR #396 cleaned src/test, doc updates in progress.)*
-docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:82:Liminal has a music theory engine. It must also have a design/color theory engine for launch, but it must not encode proprietary artist styles or scrape living artists' work into prompts.
+docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:82:Sinter has a music theory engine. It must also have a design/color theory engine for launch, but it must not encode proprietary artist styles or scrape living artists' work into prompts.
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:86:- public-domain and textbook color theory,
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:102:- Add a `ColorTheoryEngine` / `DesignTheoryEngine` launch-scope module parallel in spirit to the music theory engine.
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:105:- Defer broad component renaming until after launch proof gates are stable.
@@ -8172,7 +8172,7 @@ docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:110:2. Remove noisy test outp
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:111:3. Create a machine-readable proof bundle shape for canonical demos.
 docs/internal/AGENTIC_DEVELOPMENT_AUDIT_2026_04.md:113:5. Draft a naming glossary after proof gates pass, not before.
 docs/internal/ISSUES_FOUND.txt:56:All intentional bare catches are already documented with comments or context.
-docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:14:This document records the complete remediation of the Liminal codebase, transforming it from an organically-grown system with significant technical debt into a well-structured, type-safe, maintainable codebase.
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:14:This document records the complete remediation of the Sinter codebase, transforming it from an organically-grown system with significant technical debt into a well-structured, type-safe, maintainable codebase.
 docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:112:  COMPLETED = 'completed', FAILED = 'failed',
 docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:507:- [ ] Document all remaining public APIs
 docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:563:**Result:** 88 commits, 271 new tests, 30+ dead exports removed, 3 god objects split, complete type safety.
@@ -8248,7 +8248,7 @@ docs/archive/internal-audits/activity.md:5:**Tasks completed:** 0/20
 docs/archive/internal-audits/activity.md:13:**Tasks completed:** 1/20
 docs/archive/internal-audits/activity.md:21:**Tasks completed:** 27/31
 docs/archive/internal-audits/activity.md:46:- Update src/index.js to use the Exporter.exportZIP() method that was already implemented and tested, instead of creating a text file as a mock archive.
-docs/archive/internal-audits/BROKEN_EXAMPLES_ANALYSIS.md:32:**Root Cause:** LLM output truncated but Liminal accepted it as complete.
+docs/archive/internal-audits/BROKEN_EXAMPLES_ANALYSIS.md:32:**Root Cause:** LLM output truncated but Sinter accepted it as complete.
 docs/archive/internal-audits/BROKEN_EXAMPLES_ANALYSIS.md:37:- Auto-retry with "complete the code" prompt
 docs/archive/internal-audits/BROKEN_EXAMPLES_ANALYSIS.md:72:- On timeout: return what we have + mark as incomplete
 docs/archive/internal-audits/BROKEN_EXAMPLES_ANALYSIS.md:99:- `src/generators/glsl/ShaderGenerator.ts` - check completeness
@@ -8340,7 +8340,7 @@ test/unit/composition/adapters/ThreeAdapter.security.test.ts:51:    constructor(
 test/unit/composition/adapters/ThreeAdapter.security.test.ts:62:        constructor(public params: unknown) {}
 test/unit/composition/adapters/ThreeAdapter.security.test.ts:66:        constructor(public color: string | number) {}
 docs/plans/2026-05-01-repo-improvement-roadmap.md:5:**Baseline truth map:** [docs/launch/repo-improvement-baseline-2026-05-01.md](../launch/repo-improvement-baseline-2026-05-01.md)
-docs/plans/2026-05-01-repo-improvement-roadmap.md:10:This is the durable execution map for improving the whole Liminal repository without random next steps. It starts from current user-surface truth, provider/runtime truth, existing architecture docs, largest modules, stale-doc evidence, and the launch-candidate proof contract.
+docs/plans/2026-05-01-repo-improvement-roadmap.md:10:This is the durable execution map for improving the whole Sinter repository without random next steps. It starts from current user-surface truth, provider/runtime truth, existing architecture docs, largest modules, stale-doc evidence, and the launch-candidate proof contract.
 docs/plans/2026-05-01-repo-improvement-roadmap.md:31:| 11 | [#456 Launch hardening](https://github.com/KyaniteLabs/liminal/issues/456) | AFK | Attaches security/performance proof to the user-facing routes that matter for launch. | #454 | **OPEN** |
 docs/plans/2026-05-01-repo-improvement-roadmap.md:32:| 12 | [#457 Launch polish proof](https://github.com/KyaniteLabs/liminal/issues/457) | HITL-light | Ends the improvement program in a shareable full creative-session proof. | #448, #456, #455 | **OPEN** |
 docs/plans/2026-05-01-repo-improvement-roadmap.md:38:- **Full public-grade repository cleanup:** 8-12 weeks.
@@ -8364,7 +8364,7 @@ docs/composition-api.md:1106:Export and import complete projects:
 docs/plans/2026-03-29-github-repo-mining.md:95:- Phylogenetic tree tracking (parent → child relationships)
 docs/plans/2026-03-29-github-repo-mining.md:692:  "tone": "^14.x",          // Phase 2: backing track generation (already in EvoLab/Generative-Score-Lab)
 docs/plans/2026-03-29-github-repo-mining.md:719:- [ ] No console.log leaks or TODO stubs in production code
-docs/research/manim-viability-analysis.md:22:**Bottom Line:** Adding "real" Manim breaks Liminal's core invariant that generated artifacts are self-contained and previewable without a server-side build step. A **manim-web** (TypeScript/WebGL) integration is the only viable path, but it trades the "real" Manim ecosystem for a community port with incomplete API coverage.
+docs/research/manim-viability-analysis.md:22:**Bottom Line:** Adding "real" Manim breaks Sinter's core invariant that generated artifacts are self-contained and previewable without a server-side build step. A **manim-web** (TypeScript/WebGL) integration is the only viable path, but it trades the "real" Manim ecosystem for a community port with incomplete API coverage.
 docs/research/manim-viability-analysis.md:99:**Keywords:** `manim`, `mathematical animation`, `math visualization`, `3blue1brown`, `latex animation`, `geometry proof`, `function graph animation`.
 docs/research/manim-viability-analysis.md:143:**Problem:** No stable CDN for `manim-web` was found during research. The project is npm-published but unpkg/jsdelivr coverage is unverified.
 docs/research/manim-viability-analysis.md:148:**Hypothesis:** Cloud models would outperform local models for Manim due to the niche API and need for precise LaTeX/animation reasoning. This is unverified.
@@ -8384,7 +8384,7 @@ docs/plans/2026-03-28-voice-aesthetic-implementation.md:722:After all tasks comp
 docs/research/ignored-unregistered-artifact-preservation-2026-04-14.md:19:- `.claude/worktrees/launch-plan`
 docs/research/ignored-unregistered-artifact-preservation-2026-04-14.md:29:| `.claude/worktrees/launch-plan` | 1099 |
 docs/research/ignored-unregistered-artifact-preservation-2026-04-14.md:60:The largest ignored/unregistered area was `.claude/worktrees/launch-plan`, which is not registered in `git worktree list` but contains dogfood, launch-plan, report, screenshot, gallery, and model-comparison artifacts. Because those artifacts may contain historical evaluation evidence, deleting them would destroy future mining value.
-docs/plans/2026-04-12-harness-skill-compat-design.md:12:Liminal already has:
+docs/plans/2026-04-12-harness-skill-compat-design.md:12:Sinter already has:
 docs/RALPH_WIGGUM_MODEL_ANALYSIS.md:12:while :; do cat PROMPT.md | claude ; done
 docs/RALPH_WIGGUM_MODEL_ANALYSIS.md:56:- Respect the system prompt completely on every iteration
 docs/RALPH_WIGGUM_MODEL_ANALYSIS.md:78:- No memory of "we tried this already" or "the user said"
@@ -8422,7 +8422,7 @@ docs/plans/2026-04-15-security-redteam-remediation.md:347:Do not rely on broad `
 docs/plans/2026-04-11-liminal-local-runtime-and-targeted-fixes.md:15:- avoid losing verified progress
 docs/plans/2026-04-11-liminal-local-runtime-and-targeted-fixes.md:31:For cherry-picked, verified, human-reviewable work.
 docs/plans/2026-04-11-liminal-local-runtime-and-targeted-fixes.md:143:- mutation + incomplete verification failure
-docs/plans/2026-04-11-liminal-local-runtime-and-targeted-fixes.md:218:## 3. Delegate-ready prompt for Liminal runtime lane
+docs/plans/2026-04-11-liminal-local-runtime-and-targeted-fixes.md:218:## 3. Delegate-ready prompt for Sinter runtime lane
 docs/plans/2026-04-11-liminal-local-runtime-and-targeted-fixes.md:248:- create atomic local commits after each verified fix
 docs/plans/2026-04-11-liminal-local-runtime-and-targeted-fixes.md:297:- only good verified fixes are promoted to remote PR branches
 docs/plans/2026-03-29-repo-mining-blueprint.md:24:The agent must understand what already exists before writing code. All paths relative to project root.
@@ -9552,7 +9552,7 @@ docs/archive/internal-audits/ATOMIC_TASKS.md:128:- [ ] **P1.3.3.2** — Verify i
 docs/archive/internal-audits/ATOMIC_TASKS.md:364:- [ ] **FV1** — All P0 items complete
 docs/archive/internal-audits/ATOMIC_TASKS.md:457:**Next Review:** Daily until P0 complete
 docs/launch/repo-improvement-baseline-2026-05-01.md:8:This is the current truth map that future roadmap issues should read before redoing discovery. It reconciles launch/product contract, ADRs, verification commands, proof scripts, stale docs, largest modules, and caveats.
-docs/launch/repo-improvement-baseline-2026-05-01.md:13:- **Finish-line contract:** `docs/FINISH_LINE.md` is the current broad product contract. Liminal V1 is a creative cognitive system, not a narrowed four-generator proof.
+docs/launch/repo-improvement-baseline-2026-05-01.md:13:- **Finish-line contract:** `docs/FINISH_LINE.md` is the current broad product contract. Sinter V1 is a creative cognitive system, not a narrowed four-generator proof.
 docs/launch/repo-improvement-baseline-2026-05-01.md:16:- **Launch proof anchor:** `docs/launch/launch-candidate-2026-04-30.md` is the latest shareable launch-candidate proof summary. It records Studio p5 preview and microphone preview proof, with caveats.
 docs/launch/repo-improvement-baseline-2026-05-01.md:30:| 7 | `src/core/wrappers/GenericWrapper.ts` | 1078 | #452 / #456: render and validation proof surfaces |
 docs/launch/repo-improvement-baseline-2026-05-01.md:33:| 10 | `src/swarm/SwarmOrchestrator.ts` | 944 | #455: dormant/hardening classification before launch claims |
@@ -9590,7 +9590,7 @@ docs/launch/repo-improvement-baseline-2026-05-01.md:124:- #448 should reuse the 
 docs/launch/repo-improvement-baseline-2026-05-01.md:129:- #455 produced a durable archaeology ledger at `docs/launch/repo-archaeology-ledger-2026-05-04.md` that supersedes the classification table below. Use the ledger as the authoritative classification source.
 docs/launch/repo-improvement-baseline-2026-05-01.md:130:- #456 and #457 should use the launch proof/caveat ledgers and must rerun live/browser proof before making public claims.
 test/unit/composition/adapters/HTMLAdapter.test.ts:5: * Follows TDD: red -> green -> refactor cycle.
-docs/FINISH_LINE.md:3:Liminal V1 is **not** a narrowed four-generator proof. Liminal V1 is a creative cognitive system: a Studio where artists create with code, plus a harness where every artifact, failure, preference, model, dream, and repair becomes part of the system's future intelligence.
+docs/FINISH_LINE.md:3:Sinter V1 is **not** a narrowed four-generator proof. Sinter V1 is a creative cognitive system: a Studio where artists create with code, plus a harness where every artifact, failure, preference, model, dream, and repair becomes part of the system's future intelligence.
 docs/FINISH_LINE.md:18:| GLSL | Shader and fragment-program visual generation | Beta until renderer/evaluator proof is strong |
 docs/FINISH_LINE.md:19:| Hydra | Live-coded video synthesis | Beta until route/preview proof is strong |
 docs/FINISH_LINE.md:20:| Three.js | 3D scenes and WebGL objects | Beta until preview/eval proof is strong |
@@ -9599,7 +9599,7 @@ docs/FINISH_LINE.md:35:| Compost | Digest discarded or completed material into r
 docs/FINISH_LINE.md:41:| Model Assimilation | Audition new models by role/domain, promote from evidence, preserve fallback provenance | `src/harness/MultiProviderConfig.ts`, proof scripts, role metadata |
 docs/FINISH_LINE.md:59:- Do not turn a narrow proof exclusion into product deletion.
 docs/FINISH_LINE.md:63:- Do not mark an organ complete because files exist; prove it participates in the closed loop.
-docs/FINISH_LINE.md:64:- Do not call Liminal finished until Studio, CLI reports, docs, proofs, and self-improvement runs use the same contract.
+docs/FINISH_LINE.md:64:- Do not call Sinter finished until Studio, CLI reports, docs, proofs, and self-improvement runs use the same contract.
 docs/FINISH_LINE.md:70:3. A proof bundle shows creative memory influencing a later generation; the live writer proof must also show Studio's post-generation memory, compost, and dream-queue write-back receipts.
 docs/FINISH_LINE.md:73:6. No domain or organ is silently omitted from launch truth.
 docs/launch/skipped-test-ledger.md:3:Launch label: demo-mitigated, owned before broad production claims.
@@ -9630,9 +9630,9 @@ docs/research/legacy-launch-artifact-mining-2026-04-14.md:142:- the active DF2 l
 docs/research/legacy-launch-artifact-mining-2026-04-14.md:144:- the mined launch-plan artifacts are historical and must not be blindly applied to current code.
 test/unit/composition/adapters.test.ts:497:    it('accepts complete Three.js code', () => {
 docs/plans/2026-04-07-tui-lipgloss-recovery-design.md:4:The Lip Gloss / Bubble Tea aesthetic plan that once lived under `docs/TUI_AESTHETIC_IMPROVEMENT_PLAN.md` and companion Bubble Tea planning artifacts disappeared from the current branch, leaving the TUI operator guidance incomplete. The 2026-04-06 Bubble Tea execution/migration/priority/remediation documents captured the safety-first path toward the operator-grade shell, so recovering them preserves the documented intent.
-docs/plans/2026-04-11-bubbletea-progress-polish-design.md:4:Liminal's Bubble Tea operator surface already exposed task cards, timelines, changed files, verification jobs, artifacts, and shortcut help, but it still lacked a strong sense of live motion and progress. The right column was informative yet visually flatter than the rest of Liminal's terminal identity.
+docs/plans/2026-04-11-bubbletea-progress-polish-design.md:4:Sinter's Bubble Tea operator surface already exposed task cards, timelines, changed files, verification jobs, artifacts, and shortcut help, but it still lacked a strong sense of live motion and progress. The right column was informative yet visually flatter than the rest of Sinter's terminal identity.
 docs/plans/2026-04-15-liminal-filesystem.md:5:**Architecture:** Start with a facade over the storage systems that already exist: `ProjectStore`, `EventStore`, `AssetStore`, `Gallery`, `SeedArchive`, and `RunStateStore`. Do not create a competing storage layer first. Establish stable object IDs and refs, then gradually route new writes through the facade while preserving old readers.
-docs/plans/2026-04-15-liminal-filesystem.md:13:Liminal already has filesystem-backed memory, but it is fragmented:
+docs/plans/2026-04-15-liminal-filesystem.md:13:Sinter already has filesystem-backed memory, but it is fragmented:
 docs/plans/2026-04-15-liminal-filesystem.md:184:  status: 'started' | 'completed' | 'failed' | 'suspended';
 docs/plans/2026-04-15-liminal-filesystem.md:542:  status: 'completed',
 docs/plans/2026-04-29-human-perception-creative-vocabulary-design.md:65:- `src/guardrails/AccessibilityGuardrails.ts` — closest existing match to human sensory ergonomics. It already covers photosensitivity, contrast, color-blindness, reduced motion, and audio safety.
@@ -9642,7 +9642,7 @@ docs/plans/2026-04-29-human-perception-creative-vocabulary-design.md:265:- chore
 docs/plans/2026-04-29-human-perception-creative-vocabulary-design.md:398:A completed implementation should make these statements true:
 docs/plans/2026-03-28-video-generation-design.md:127:Generate a complete React/Remotion composition based on the user's description.
 docs/plans/2026-03-28-video-generation-design.md:758:When a `--video` flag is passed for any domain:
-docs/plans/2026-05-06-factory-artist-rag-seeds-design.md:7:Create a docs-only RAG seed pack for every imported Factory artist so future agents can enrich the distillations from public, above-board source anchors without wiring anything into Liminal runtime behavior.
+docs/plans/2026-05-06-factory-artist-rag-seeds-design.md:7:Create a docs-only RAG seed pack for every imported Factory artist so future agents can enrich the distillations from public, above-board source anchors without wiring anything into Sinter runtime behavior.
 docs/plans/2026-05-06-factory-artist-rag-seeds-design.md:14:- Do not treat public-but-unlicensed code as reusable code.
 docs/plans/2026-05-06-factory-artist-rag-seeds-design.md:27:Open-source code sources require a visible license before reuse. Repositories with no detected license may be inspected for public context only.
 docs/plans/2026-05-06-factory-artist-rag-seeds-implementation.md:8:2. Capture public source anchors for code, blogs, video channels, transcripts, talks, and official archives where available.
@@ -9696,7 +9696,7 @@ docs/archive/internal-audits/PUBLIC_AUDIT_REPORT.md:117:- OSS metadata completen
 docs/archive/internal-audits/PUBLIC_AUDIT_REPORT.md:150:2. Complete `package.json` public metadata (`author`, `repository`, `homepage`, `bugs`).
 docs/archive/internal-audits/PUBLIC_AUDIT_REPORT.md:164:**Rationale:** Core engineering quality is solid, but repository presentation and public hygiene need cleanup before broad external visibility.
 docs/archive/internal-audits/PUBLIC_AUDIT_REPORT.md:166:Once critical and high items are closed, this repo should be publicly presentable and professionally aligned with 2026 open-source norms.
-docs/archive/SYSTEM_AUDIT_REPORT.md:73:2. **Loop/creative/gallery/renderer:** In-code defaults in `src/index.ts` (defaultConfig) + options passed to run() / Liminal. No file or env for these keys.
+docs/archive/SYSTEM_AUDIT_REPORT.md:73:2. **Loop/creative/gallery/renderer:** In-code defaults in `src/index.ts` (defaultConfig) + options passed to run() / Sinter. No file or env for these keys.
 docs/archive/SYSTEM_AUDIT_REPORT.md:198:1. **config/liminal.json** — ConfigLoader has loadProjectConfig(); project config path may not be passed from all entry points (e.g. bin/liminal). File: config/liminal.json; document when it is loaded.
 docs/archive/SYSTEM_AUDIT_REPORT.md:213:- **Source:** Clear src tree and public API; dependency graph centered on index.ts and RalphLoop → P5GeneratorLLM → LLMClient, plus TUI branch.
 docs/archive/internal-audits/GAPS_AND_IMPROVEMENTS.md:33:| **5.3** | tolerateErrors not in run() | **tolerateErrors** added to run() and Atelier.run() options; passed through to RalphLoop. |
@@ -9722,7 +9722,7 @@ docs/archive/internal-audits/FUNCTIONAL_ADVERSARIAL_AUDIT.md:293:The core Ralph-
 docs/archive/internal-audits/PRD.md:51:- Agent only outputs this when **actually complete**
 docs/archive/internal-audits/PRD.md:142:   - Growth, movement, reproduction
 docs/archive/internal-audits/PRD.md:148:   - Iterate until export-ready
-docs/archive/internal-audits/PRD.md:643:**Key point:** Liminal is completely independent. It can run:
+docs/archive/internal-audits/PRD.md:643:**Key point:** Sinter is completely independent. It can run:
 docs/archive/internal-audits/PRD.md:800:- [x] Internal Ralph-Wiggum Loop (completely independent)
 docs/archive/internal-audits/PRD.md:805:- [x] Super-testing passed (Liam verified)
 docs/archive/internal-audits/PRD.md:974:Preliminary research has been completed and written up in the repo. See:
@@ -9739,7 +9739,7 @@ docs/plans/2026-04-06-bubble-tea-tui-implementation.md:689:The Bubble Tea MVP is
 docs/launch/warning-budget.md:3:Current budget target: zero launch-blocking lint errors, explicit ownership for warnings.
 docs/launch/warning-budget.md:5:Public-demo disposition: demo-mitigated. The launch blocker is lint errors, not tracked warnings; warnings remain owned hardening debt and must not be described as fully cleaned up.
 docs/launch/warning-budget.md:12:| `@typescript-eslint/require-await` | 11 | Module owners | Harden after launch unless tied to a user-visible async contract. |
-docs/plans/2026-04-29-studio-chat-first-ux.md:9:Liminal Studio should feel like Codex for creative coding: the main surface is a clean conversation with an AI creative coding agent, with generated artifacts easy to preview on the side. Internal proof, harness, observability, and model details remain available, but they are no longer the dominant artist-facing object.
+docs/plans/2026-04-29-studio-chat-first-ux.md:9:Sinter Studio should feel like Codex for creative coding: the main surface is a clean conversation with an AI creative coding agent, with generated artifacts easy to preview on the side. Internal proof, harness, observability, and model details remain available, but they are no longer the dominant artist-facing object.
 docs/plans/2026-04-29-studio-chat-first-ux.md:40:| Improve proposals | Mode nav + Scan flow | Existing improve lane remains; smoke proof exercises it. |
 docs/plans/2026-04-29-studio-chat-first-ux.md:46:Captured locally under `.omx/proof/visual-inspection/`:
 docs/plans/2026-04-29-studio-chat-first-ux.md:50:- `final-03-prompt-ready.png`
@@ -9752,12 +9752,12 @@ docs/plans/2026-04-29-studio-chat-first-ux.md:72:Outcome: `preview-ready` in abo
 docs/plans/2026-04-29-studio-chat-first-ux.md:76:Aligned for the first high-ROI slice. The default Studio surface now reads as a chat-first creative coding agent with easy preview access, while proof/harness/observability and advanced controls are preserved behind progressive disclosure. Remaining UX work: richer inline artifact thumbnails, click-to-expand preview behavior, and a less dense advanced-detail taxonomy.
 docs/archive/internal-audits/GITHUB_GUARDIAN_AUDIT.md:18:- 64 passed, 1 failed
 docs/archive/internal-audits/GITHUB_GUARDIAN_AUDIT.md:34:- cerafica — all green
-docs/plans/2026-04-28-level-6-market-path.md:3:**Goal:** Move Liminal from Level 3.5 self-improvement capability to Level 6: a human-usable, shippable Codex-for-Art product with reliable creative domains, visible learning, model assimilation, and installable runtime trust.
+docs/plans/2026-04-28-level-6-market-path.md:3:**Goal:** Move Sinter from Level 3.5 self-improvement capability to Level 6: a human-usable, shippable Codex-for-Art product with reliable creative domains, visible learning, model assimilation, and installable runtime trust.
 docs/plans/2026-04-28-level-6-market-path.md:5:**Architecture:** Do not add another cockpit or proof island. Build one product spine: natural-language workbench -> domain runtime gauntlets -> cognitive learning receipts -> model assimilation -> package/release smoke. The existing Level 3.5 self-improvement gauntlet becomes the regression gate for autonomy; Level 6 adds human-facing product reliability and creative-domain completeness.
-docs/plans/2026-04-28-level-6-market-path.md:124:**Objective:** One command says whether Liminal is ready for a human to install/use, and why.
-docs/plans/2026-04-26-liminal-cognitive-finish-line.md:3:**Goal:** Turn Liminal from a collection of impressive subsystems into a visibly self-improving creative cognition system whose domains, cognitive organs, and self-improvement loops are tracked, exposed, and verified.
+docs/plans/2026-04-28-level-6-market-path.md:124:**Objective:** One command says whether Sinter is ready for a human to install/use, and why.
+docs/plans/2026-04-26-liminal-cognitive-finish-line.md:3:**Goal:** Turn Sinter from a collection of impressive subsystems into a visibly self-improving creative cognition system whose domains, cognitive organs, and self-improvement loops are tracked, exposed, and verified.
 docs/plans/2026-04-26-liminal-cognitive-finish-line.md:5:**Architecture:** Start with a source-controlled finish-line contract and a machine-readable cognitive architecture atlas. Then wire Studio/CLI reporting, capability maturity gates, model-assimilation gates, and proof scripts so every creative domain and cognitive organ must prove its role in the closed loop: perception -> memory -> compost -> dreaming -> intuition -> creation -> evaluation -> self-improvement.
-docs/plans/2026-04-26-liminal-cognitive-finish-line.md:13:Liminal V1 is not a four-generator proof. It is a creative cognitive system with:
+docs/plans/2026-04-26-liminal-cognitive-finish-line.md:13:Sinter V1 is not a four-generator proof. It is a creative cognitive system with:
 docs/plans/2026-04-26-liminal-cognitive-finish-line.md:40:### Task 0.4: Add deterministic cognitive-loop proof
 docs/plans/2026-04-26-liminal-cognitive-finish-line.md:42:**Files:** `scripts/proof/cognitive-loop-proof.ts`, `package.json`, `test/scripts/cognitive-loop-proof-script.test.ts`
 docs/plans/2026-04-26-liminal-cognitive-finish-line.md:44:**Verification:** `pnpm proof:cognitive-loop -- --out=.omx/proof/cognitive-loop-dev`; `pnpm proof:cognitive-loop -- --live --out=.omx/proof/cognitive-loop-live-dev`
@@ -9897,24 +9897,24 @@ docs/archive/internal-audits/AUDIT_FULL.md:956:| 1 | `docs/AGENT_GENERATOR_ARCHI
 docs/internal/SYNTHESIS.md:19:The starting point. A creative coding agent called "Atelier" lived in its own repository. The first commit (`b620e02`) on February 28 was just two files: a Product Requirements Document authored by "Liam (coordinator)" -- an AI persona inside OpenClaw, not the developer -- and an activity log. The developer was running three AI personas with distinct personalities and roles: **Liam** (coordinator/planner), **Kai** (production/builder), and **Teo** (researcher). Liam wrote the PRD. Kai built the code. Teo gathered information.
 docs/internal/SYNTHESIS.md:27:After Kai finished: silence. One commit on March 7 (workspace configuration). Twelve days of dormancy. During this dormancy, the ICM (Interpreted-Context-Methodology) repo was receiving commits (38 total, Feb 22 - Mar 14). The methodology that would unlock shipping was being forged while the creative tool rested.
 docs/internal/SYNTHESIS.md:56:           21:41  * Rename complete
-docs/internal/SYNTHESIS.md:78:The November labs were not abandoned experiments. They were **code donors** whose algorithms were ported into Liminal during Era 7's 7-phase mining blueprint:
-docs/internal/SYNTHESIS.md:86:After the November frenzy, the commit volume dropped sharply. December brought Print-OS (a TypeScript printing system). January saw Apex Vault and LifeOS. The lyrics-engine appeared February 5: a Python tool with rhyme engine, syllable counter, and AI generation -- a microcosm of the creative-engineering philosophy that would become Liminal's core. February 12: cerafica-site -- the ceramics portfolio going public. The creative portfolio and the software practice were converging.
-docs/internal/SYNTHESIS.md:90:The four days immediately before the Liminal Explosion are archaeologically significant. Fifty-six commits landed across ceramics repos: GlazeLab received 38 commits building a complete ceramic glaze chemistry system. The reverse-engineering repo got 17 commits. OpenGlaze was born as an open-source ceramic glaze SaaS. The Compost Mill metaphor that would emerge in Liminal Era 3 -- creative waste becomes creative fuel -- was already operating in the ceramics domain.
+docs/internal/SYNTHESIS.md:78:The November labs were not abandoned experiments. They were **code donors** whose algorithms were ported into Sinter during Era 7's 7-phase mining blueprint:
+docs/internal/SYNTHESIS.md:86:After the November frenzy, the commit volume dropped sharply. December brought Print-OS (a TypeScript printing system). January saw Apex Vault and LifeOS. The lyrics-engine appeared February 5: a Python tool with rhyme engine, syllable counter, and AI generation -- a microcosm of the creative-engineering philosophy that would become Sinter's core. February 12: cerafica-site -- the ceramics portfolio going public. The creative portfolio and the software practice were converging.
+docs/internal/SYNTHESIS.md:90:The four days immediately before the Sinter Explosion are archaeologically significant. Fifty-six commits landed across ceramics repos: GlazeLab received 38 commits building a complete ceramic glaze chemistry system. The reverse-engineering repo got 17 commits. OpenGlaze was born as an open-source ceramic glaze SaaS. The Compost Mill metaphor that would emerge in Sinter Era 3 -- creative waste becomes creative fuel -- was already operating in the ceramics domain.
 docs/internal/SYNTHESIS.md:96:**OpenClaw (Kai)** produced 29 commits in 2.8 hours -- an assembly-line worker executing a pre-computed task-job queue. Mechanically precise, substantively hollow. The generators were keyword matchers returning hardcoded templates. Three different prompts produced identical output. The system passed its own tests because the tests measured coverage, not creativity.
-docs/internal/SYNTHESIS.md:136:**ZERO Liminal commits. But not silent. This was a shipping moment for the developer's identity.**
+docs/internal/SYNTHESIS.md:136:**ZERO Sinter commits. But not silent. This was a shipping moment for the developer's identity.**
 docs/internal/SYNTHESIS.md:144:**March 26-27** was a production shipping sprint. PuenteWorks (the business website) received 14 commits -- full bilingual site with editorial dark aesthetic, red-team hardening, responsive remediation. The GitHub profile got its first README. mcp-video shipped v0.6.0 through v0.8.0, including Remotion integration (8 MCP tools for programmatic video generation). DialectOS was published to npm. Site-to-stitch was born.
-docs/internal/SYNTHESIS.md:148:This was not burnout. This was intentional consolidation: the developer assembling their professional identity and shipping infrastructure while Liminal's concepts incubated. The domain switches (ceramics -> code -> business -> back to code) are not random -- they're a rhythm.
-docs/internal/SYNTHESIS.md:179:**Era 6 "The Quiet" (Mar 24-27):** 25 commits across 6 repos. But the label is misleading -- March 24 had 148 messages across 2 sessions (highest per-session intensity). March 25 was the only true rest day. March 26-27 shipped PuenteWorks (bilingual, production-quality), GitHub profile README, mcp-video v0.6-v0.8 with Remotion integration, DialectOS to npm, site-to-stitch born. March 28: Liminal's video pipeline built directly on mcp-video's Remotion work. The quiet was intentional consolidation -- the developer assembling their professional identity while Liminal's concepts incubated.
+docs/internal/SYNTHESIS.md:148:This was not burnout. This was intentional consolidation: the developer assembling their professional identity and shipping infrastructure while Sinter's concepts incubated. The domain switches (ceramics -> code -> business -> back to code) are not random -- they're a rhythm.
+docs/internal/SYNTHESIS.md:179:**Era 6 "The Quiet" (Mar 24-27):** 25 commits across 6 repos. But the label is misleading -- March 24 had 148 messages across 2 sessions (highest per-session intensity). March 25 was the only true rest day. March 26-27 shipped PuenteWorks (bilingual, production-quality), GitHub profile README, mcp-video v0.6-v0.8 with Remotion integration, DialectOS to npm, site-to-stitch born. March 28: Sinter's video pipeline built directly on mcp-video's Remotion work. The quiet was intentional consolidation -- the developer assembling their professional identity while Sinter's concepts incubated.
 docs/internal/SYNTHESIS.md:193:The `liam-private` repo contains "APEX rules + Liam identity + custom content." Liam is an AI coordinator persona -- one of three agents the developer ran inside OpenClaw with distinct personalities and roles: **Liam** (coordinator/planner, now daily EF partner), **Kai** (production/builder, built Atelier's scaffolding), **Teo** (researcher). The PRD lists its author as "Liam (coordinator)." The developer did not write the PRD. Their AI coordinator did.
-docs/internal/SYNTHESIS.md:209:The Interpreted-Context-Methodology (ICM) repo received 38 commits, then went completely silent on March 19 -- the same day the Liminal Explosion happened. Its concept of "folder structure as agent architecture" directly informed Liminal's ContextBuilder, PromptEnhancer, and compost pipeline's layered extraction. More importantly, ICM was the conceptual framework that turned building into shipping. Before ICM, the developer built things that didn't ship. After ICM, the same velocity produced shippable outputs. The methodology didn't change the speed -- it changed the direction.
+docs/internal/SYNTHESIS.md:209:The Interpreted-Context-Methodology (ICM) repo received 38 commits, then went completely silent on March 19 -- the same day the Sinter Explosion happened. Its concept of "folder structure as agent architecture" directly informed Sinter's ContextBuilder, PromptEnhancer, and compost pipeline's layered extraction. More importantly, ICM was the conceptual framework that turned building into shipping. Before ICM, the developer built things that didn't ship. After ICM, the same velocity produced shippable outputs. The methodology didn't change the speed -- it changed the direction.
 docs/internal/SYNTHESIS.md:227:Feb 2026: ICM (methodological foundation — the shipping unlock)
 docs/internal/SYNTHESIS.md:234:Mar 24-27: The Quiet — shipping PuenteWorks, mcp-video v0.6-0.8, DialectOS, GitHub profile
 docs/internal/SYNTHESIS.md:246:**Core Framework:** Deterministic Guardrails Framework (DGF) -- 3-phase, 31 guardrails. M1-M11 complete.
 docs/internal/SYNTHESIS.md:248:**Generation & Creation:** 9 generators. Tier-based generation (flagship/medium/local/tiny). Swarm system with voting.
 docs/internal/SYNTHESIS.md:269:The codebase grew from 5,785 TypeScript LOC at Era 1 end to 101,991 at peak -- 17.6x growth in 32 days. Dependencies froze at 28 production + 18 development, signaling architectural maturity. RalphLoop.ts was modified 41 times -- the most-changed file, the system's beating heart.
 docs/internal/SYNTHESIS.md:283:The word "wire" appears 22 times in 1,148 messages. The developer keeps saying it because agents keep not doing it. Wiring is not just connecting modules -- it is the insistence that every piece actually works, end-to-end, verified, functional. Building scaffolding is fast (Kai did it in 2.8 hours). Wiring it into a working system took 32 days and 303 commits. The compost mill processes creative material. The wiring makes it real. "The hardest part of making art with machines is not the art or the machines. It is the wiring."
-docs/internal/SYNTHESIS.md:287:Dead code becomes fuel. Failed experiments become code donors (EvoLab, Generative-Score-Lab, voice-to-sculpture-app all mined into Liminal 5 months later). Frustration becomes hooks (26 enforcement tools from 8 frustration categories). Dormant periods become shipping infrastructure (the Quiet Period's PuenteWorks + mcp-video work enabled Liminal's multimedia expansion). The system eats its own waste and produces richer inputs.
-docs/internal/SYNTHESIS.md:291:The foundational metaphor. Ralph is a Bash loop: `while :; do cat PROMPT.md | claude-code ; done`. The agent "sits on the loop," watching for failure domains and engineering them away. Liminal adapted this: the RalphLoop iterates until creative quality is achieved, the developer watches and curates, and the Compost system provides filesystem-based persistence.
+docs/internal/SYNTHESIS.md:287:Dead code becomes fuel. Failed experiments become code donors (EvoLab, Generative-Score-Lab, voice-to-sculpture-app all mined into Sinter 5 months later). Frustration becomes hooks (26 enforcement tools from 8 frustration categories). Dormant periods become shipping infrastructure (the Quiet Period's PuenteWorks + mcp-video work enabled Sinter's multimedia expansion). The system eats its own waste and produces richer inputs.
+docs/internal/SYNTHESIS.md:291:The foundational metaphor. Ralph is a Bash loop: `while :; do cat PROMPT.md | claude-code ; done`. The agent "sits on the loop," watching for failure domains and engineering them away. Sinter adapted this: the RalphLoop iterates until creative quality is achieved, the developer watches and curates, and the Compost system provides filesystem-based persistence.
 docs/internal/SYNTHESIS.md:352:**104,281 lines of code in 32 days (3,250 LOC/day).** The industry benchmark for net committed production code is 50-100 LOC/day. The NDepend long-term solo developer average is 80 LOC/day. Brooks' *Mythical Man-Month* puts industrial teams at ~10 LOC/day. Simon's output is **32-65x the pre-AI solo developer average**. That 104K LOC would take a typical solo developer 4-8 years. No controlled study documents anything approaching this velocity. The largest measured AI productivity boost in any controlled setting is 55.8% (Peng et al., 2023, single focused task). Simon is operating at a 30-65x multiplier.
 docs/internal/SYNTHESIS.md:356:**100% of commits were AI-aided.** The 58.7% "Co-Authored-By: Claude Opus 4.6" figure only captures commits where Claude auto-appended its signature. The developer's first line of code was written in September 2025. Six months later: 104K LOC, 50 repos, production open-source tools. This is not a developer using AI to write code faster. This is a creative technologist who learned to build production software through AI collaboration as a fundamentally new creative medium.
 docs/internal/SYNTHESIS.md:370:Every commit in the repository was AI-aided. The "58.7% Co-Authored-By: Claude" figure only captures commits where Claude auto-appended its signature. The real collaboration rate is 100%. If it wasn't Claude, it was Cursor. If it wasn't Cursor, it was Kimi Code. This is not a developer who uses AI to write code faster. This is a creative technologist who learned to build production software through AI collaboration.

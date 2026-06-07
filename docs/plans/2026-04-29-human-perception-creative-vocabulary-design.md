@@ -8,7 +8,7 @@
 
 ## 1. Intent
 
-Liminal's "aesthetic guardrails" should not mean that the system judges beauty, taste, or artistic value. The product intent is more humane and more useful:
+Sinter's "aesthetic guardrails" should not mean that the system judges beauty, taste, or artistic value. The product intent is more humane and more useful:
 
 > Aesthetic guardrails are default-on, domain-specific human sensory ergonomics checks that keep generated creative artifacts perceivable, tolerable, legible, audible, and interpretable by humans.
 
@@ -50,9 +50,9 @@ Optional conversational helpers that expose domain-specific creative terms for u
 They answer:
 
 - What creative parameters can the user control?
-- How can Liminal ask about those parameters in plain language?
+- How can Sinter ask about those parameters in plain language?
 - How can a user preference become prompt/context constraints?
-- How can Liminal explain tradeoffs without imposing taste?
+- How can Sinter explain tradeoffs without imposing taste?
 
 They do **not** block generation by default.
 
@@ -345,7 +345,7 @@ Role:
 
 ## 6. User Conversation Model
 
-The workbench should not expose a pile of controls. Liminal should ask natural questions only when helpful.
+The workbench should not expose a pile of controls. Sinter should ask natural questions only when helpful.
 
 Examples:
 

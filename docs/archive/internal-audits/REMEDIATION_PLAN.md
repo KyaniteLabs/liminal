@@ -1,4 +1,4 @@
-# Liminal Remediation Plan
+# Sinter Remediation Plan
 
 **Version:** 1.0  
 **Date:** 2026-03-30  
@@ -215,7 +215,7 @@
   - Remove: In next major version
 
 - [ ] **P2.1.5** — Update README to reflect status
-  - Remove: From "What Liminal Can Do" if not wired
+  - Remove: From "What Sinter Can Do" if not wired
   - Add: To "Library API" section if keeping
 
 ### P2.2: Orphaned Features — MetaMode
@@ -528,7 +528,7 @@
 - [ ] CHANGELOG.md updated
 - [ ] Version bumped if needed
 - [ ] Full test run: `npm test`
-- [ ] Manual smoke test: `liminal --prompt "test"`
+- [ ] Manual smoke test: `sinter --prompt "test"`
 
 ---
 

@@ -4,7 +4,7 @@ Date: 2026-05-06
 
 ## Goal
 
-Create a docs-only RAG seed pack for every imported Factory artist so future agents can enrich the distillations from public, above-board source anchors without wiring anything into Liminal runtime behavior.
+Create a docs-only RAG seed pack for every imported Factory artist so future agents can enrich the distillations from public, above-board source anchors without wiring anything into Sinter runtime behavior.
 
 ## Non-Goals
 

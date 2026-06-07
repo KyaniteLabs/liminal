@@ -2,7 +2,7 @@
 
 ## Overview
 
-The GeneratorRegistry now supports dynamic domain registration at runtime. This allows you to extend Liminal's creative capabilities without modifying the core codebase.
+The GeneratorRegistry now supports dynamic domain registration at runtime. This allows you to extend Sinter's creative capabilities without modifying the core codebase.
 
 ## Features
 

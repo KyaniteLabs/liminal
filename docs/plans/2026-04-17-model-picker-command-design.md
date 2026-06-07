@@ -19,7 +19,7 @@ provider/model immediately.
 
 ## Provider Handling
 
-Recognized providers are the existing Liminal provider keys: `custom`,
+Recognized providers are the existing Sinter provider keys: `custom`,
 `minimax`, `glm`, `lmstudio`, `ollama`, `openrouter`, `kimi`, and `moonshot`.
 For direct OpenAI, `/model openai ...` maps to `custom` because the current
 provider resolver treats `https://api.openai.com/v1` as OpenAI-compatible

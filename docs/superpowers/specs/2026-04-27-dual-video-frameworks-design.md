@@ -11,7 +11,7 @@ Fix the broken Revideo rendering pipeline and add HyperFrames as a second video 
 ## Problem Statement
 
 1. **Revideo rendering is non-functional.** `RevideoRenderer.renderToVideo()` calls `npx revideo render` which does not exist (only `revideo serve` and `revideo editor`). The temp project never installs dependencies. `getCompositionConfig()` hardcodes 300 frames ignoring actual code.
-2. **No asset compositing domain.** Liminal can generate generative animations (Revideo) but cannot assemble images, clips, titles, and audio into polished videos. HyperFrames fills this gap.
+2. **No asset compositing domain.** Sinter can generate generative animations (Revideo) but cannot assemble images, clips, titles, and audio into polished videos. HyperFrames fills this gap.
 3. **No layering.** There is no way to render a generative animation then composite it with overlays.
 
 ## Architecture
@@ -361,7 +361,7 @@ Called once at startup. Logs available frameworks. The `Exporter` checks availab
 
 ## Out of Scope
 
-- **CLI subcommand** (`liminal render`) — deferred to follow-up
+- **CLI subcommand** (`sinter render`) — deferred to follow-up
 - **Distributed rendering** (Revideo Lambda, HyperFrames Docker) — future work
 - **RemotionAdapter rewrite** — done. Removed entirely in PR #396 along with all Remotion dead code.
 - **Live preview server** for HyperFrames compositions — follow-up

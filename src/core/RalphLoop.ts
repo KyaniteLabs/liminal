@@ -1,5 +1,5 @@
 /**
- * RalphLoop - Self-recursive iteration engine for Liminal
+ * RalphLoop - Self-recursive iteration engine for Sinter
  *
  * Implements the Ralph-Wiggum Loop pattern:
  * - Same prompt every iteration

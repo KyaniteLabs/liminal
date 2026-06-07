@@ -1,5 +1,5 @@
 /**
- * Core shared types for the Liminal creative coding system.
+ * Core shared types for the Sinter creative coding system.
  *
  * All subsystems (compost, swarm, scavenger) produce and consume
  * CreativeFragment instances. Subsystem-specific wrappers extend this

@@ -7,9 +7,9 @@
 
 ## Executive Summary
 
-Liminal is architecturally strong, but the latest remote state was not marketing-ready when this audit began. The primary Bubble Tea launch path contained committed merge-conflict markers in `scripts/start-bubbletea-tui.mjs`, full Vitest was red, and docs overstated readiness relative to current proof.
+Sinter is architecturally strong, but the latest remote state was not marketing-ready when this audit began. The primary Bubble Tea launch path contained committed merge-conflict markers in `scripts/start-bubbletea-tui.mjs`, full Vitest was red, and docs overstated readiness relative to current proof.
 
-This branch fixed the launch-path syntax failure, restored Bubble Tea Go compilation, added a regression test so launcher conflict markers are caught, and stabilized the full Vitest run. This does not make Liminal launch-ready by itself. It changes the status from "primary launcher cannot parse and full suite is red" to "candidate branch has a green full-suite gate and an explicit remaining proof queue."
+This branch fixed the launch-path syntax failure, restored Bubble Tea Go compilation, added a regression test so launcher conflict markers are caught, and stabilized the full Vitest run. This does not make Sinter launch-ready by itself. It changes the status from "primary launcher cannot parse and full suite is red" to "candidate branch has a green full-suite gate and an explicit remaining proof queue."
 
 ## Current Evidence
 
@@ -79,7 +79,7 @@ P1:
 
 ## Design And Color Theory Constraint
 
-Liminal has a music theory engine. It must also have a design/color theory engine for launch, but it must not encode proprietary artist styles or scrape living artists' work into prompts.
+Sinter has a music theory engine. It must also have a design/color theory engine for launch, but it must not encode proprietary artist styles or scrape living artists' work into prompts.
 
 Allowed source material:
 

@@ -1,10 +1,10 @@
 # Manim Domain Viability Analysis
 
-**Project:** Liminal Meta-Harness  
+**Project:** Sinter Meta-Harness  
 **Target Domain:** `manim` — Mathematical Animation Engine  
 **Analyst:** Kimi Code CLI  
 **Date:** 2026-04-13  
-**Verdict:** 🔴 **CONDITIONAL NO-GO** — Viable only if Liminal accepts a JS-port subset (manim-web TS). The canonical Python Manim path is architecturally incompatible with Liminal's browser-first, zero-backend-runtime generator philosophy.
+**Verdict:** 🔴 **CONDITIONAL NO-GO** — Viable only if Sinter accepts a JS-port subset (manim-web TS). The canonical Python Manim path is architecturally incompatible with Sinter's browser-first, zero-backend-runtime generator philosophy.
 
 ---
 
@@ -12,14 +12,14 @@
 
 | Dimension | Score | Rationale |
 |-----------|-------|-----------|
-| **Technical Fit** | 3/10 | Language/runtime mismatch. Canonical Manim = Python + FFmpeg. Liminal = browser-executable JS/HTML. |
+| **Technical Fit** | 3/10 | Language/runtime mismatch. Canonical Manim = Python + FFmpeg. Sinter = browser-executable JS/HTML. |
 | **LLM Familiarity** | 8/10 | Python Manim is heavily represented in training data (3Blue1Brown viral content). TS Manim-web is not. |
 | **User Demand** | 6/10 | Niche but passionate. Math edu/creative coding crossover is real but smaller than p5/Three.js. |
 | **Infrastructure Overhead** | 9/10 | Would require either a Python execution backend or adoption of an immature TS port. |
 | **Validation Ease** | 4/10 | Structural validation possible; semantic/runtime validation requires actual rendering engine. |
 | **Maintenance Burden** | 8/10 | High. Two ecosystems (Python packaging vs. immature JS bindings) both create long-tail support debt. |
 
-**Bottom Line:** Adding "real" Manim breaks Liminal's core invariant that generated artifacts are self-contained and previewable without a server-side build step. A **manim-web** (TypeScript/WebGL) integration is the only viable path, but it trades the "real" Manim ecosystem for a community port with incomplete API coverage.
+**Bottom Line:** Adding "real" Manim breaks Sinter's core invariant that generated artifacts are self-contained and previewable without a server-side build step. A **manim-web** (TypeScript/WebGL) integration is the only viable path, but it trades the "real" Manim ecosystem for a community port with incomplete API coverage.
 
 ---
 
@@ -32,7 +32,7 @@
 - **Runtime Requirements:** Python interpreter, LaTeX (for `MathTex`), Pango (for `Text`), FFmpeg, GPU optional but recommended.
 - **Key APIs:** `Scene`, `Mobject`, `VMobject`, `Circle`, `Square`, `MathTex`, `Create`, `Transform`, `FadeIn`, `self.play()`, `self.wait()`.
 
-### 2.2 Browser Ports (The Only Liminal-Compatible Options)
+### 2.2 Browser Ports (The Only Sinter-Compatible Options)
 
 | Port | Maturity | Tech Stack | API Fidelity | Notes |
 |------|----------|------------|--------------|-------|
@@ -43,9 +43,9 @@
 
 ---
 
-## 3. Liminal Domain Integration Checklist
+## 3. Sinter Domain Integration Checklist
 
-To add a new domain to Liminal, the following touchpoints must be modified or created:
+To add a new domain to Sinter, the following touchpoints must be modified or created:
 
 1. `src/types/domains.ts` — `Domain` enum + type guards + domain category arrays.
 2. `src/generators/manim/ManimGenerator.ts` — `TierBasedGenerator` subclass.
@@ -72,7 +72,7 @@ To add a new domain to Liminal, the following touchpoints must be modified or cr
 **Effort:** Low for scaffold; high for runtime integration.  
 **Blockers:** Severe.
 
-If targeting **Python Manim**, the generator would output Python code. This violates Liminal's assumption that `generatorRegistry.dispatch()` returns code that can be wrapped in HTML and dropped into an iframe. No other generator in Liminal produces non-browser-runnable code.
+If targeting **Python Manim**, the generator would output Python code. This violates Sinter's assumption that `generatorRegistry.dispatch()` returns code that can be wrapped in HTML and dropped into an iframe. No other generator in Sinter produces non-browser-runnable code.
 
 If targeting **manim-web TS**, the generator outputs TypeScript/JSX resembling:
 
@@ -151,7 +151,7 @@ The harness needs:
 **Effort:** Low for TS path; impossible for Python path.  
 **Blockers:** Python path requires server-side video render pipeline.
 
-For the **TS path**, `PreviewRouter` would detect `manim-web` imports and route to `browser` with `browserType: 'manim'`. However, Liminal's preview system would need a new HTML harness that initializes a WebGL canvas and mounts the Manim scene. This is similar to Three.js wrapping but with a more complex initialization sequence (async `scene.play()` loop).
+For the **TS path**, `PreviewRouter` would detect `manim-web` imports and route to `browser` with `browserType: 'manim'`. However, Sinter's preview system would need a new HTML harness that initializes a WebGL canvas and mounts the Manim scene. This is similar to Three.js wrapping but with a more complex initialization sequence (async `scene.play()` loop).
 
 ### 4.10 Domain Docs (`docs/domains/manim.md`)
 **Effort:** Medium.  
@@ -178,21 +178,21 @@ For the **TS path**, `PreviewRouter` would detect `manim-web` imports and route 
 | Local | ⚠️ Okay (syntax errors in LaTeX) | 🔴 Poor |
 | Tiny | 🔴 Poor | 🔴 Unusable |
 
-**Conclusion:** If Liminal uses its standard local-first routing, TS Manim-Web would have a terrible success rate. Python Manim succeeds at generation but fails at execution within Liminal's architecture.
+**Conclusion:** If Sinter uses its standard local-first routing, TS Manim-Web would have a terrible success rate. Python Manim succeeds at generation but fails at execution within Sinter's architecture.
 
 ---
 
 ## 6. The Runtime/Preview Infrastructure Gap (THE KILLER)
 
-Liminal's generator contract is implicitly:
+Sinter's generator contract is implicitly:
 > "Generated code + HTML wrapper = runnable artifact in browser iframe."
 
-Manim Python breaks this contract. To make it work, Liminal would need one of the following architectural changes:
+Manim Python breaks this contract. To make it work, Sinter would need one of the following architectural changes:
 
 ### Option A: Python Execution Backend
 - Spin up a Python environment with ManimCE, LaTeX, FFmpeg.
 - Accept generated Python, execute `manim -ql scene.py`, return `.mp4`.
-- **Verdict:** Catastrophic scope creep. Liminal is a creative coding CLI, not a video render farm. Security, latency, and cost explode.
+- **Verdict:** Catastrophic scope creep. Sinter is a creative coding CLI, not a video render farm. Security, latency, and cost explode.
 
 ### Option B: Pyodide/WASM in Browser
 - Wrap generated Python in a Pyodide runtime that `micropip.install("manim-web")`.
@@ -213,7 +213,7 @@ Manim Python breaks this contract. To make it work, Liminal would need one of th
 | **p5.js** | 2D generative art | p5 is frame-loop imperative. Manim is timeline-based scene animation with LaTeX. |
 | **HTML** | Can embed Manim | HTML is static layout. Manim is dynamic mathematical content. |
 
-**Insight:** Manim occupies a unique niche (mathematical explanatory animation) that no existing Liminal domain serves well. The niche is defensible, but small.
+**Insight:** Manim occupies a unique niche (mathematical explanatory animation) that no existing Sinter domain serves well. The niche is defensible, but small.
 
 ---
 
@@ -226,7 +226,7 @@ Manim Python breaks this contract. To make it work, Liminal would need one of th
 | **LaTeX rendering breakage** | Medium | High | Restrict to `MathTex` only; provide KaTeX-compatible LaTeX hints. |
 | **Misrouting to Three.js/p5** | Medium | Medium | Aggressive `canHandle` confidence (0.9+ for explicit "manim" keywords). |
 | **User expectation mismatch** | High | Medium | Clear messaging: "Browser-based Manim subset, not full Python Manim." |
-| **No stable CDN for manim-web** | Medium | High | Bundle library into Liminal's dist or self-host from npm tarball. |
+| **No stable CDN for manim-web** | Medium | High | Bundle library into Sinter's dist or self-host from npm tarball. |
 
 ---
 
@@ -262,7 +262,7 @@ Manim Python breaks this contract. To make it work, Liminal would need one of th
 ### 🔴 Primary Recommendation: DO NOT PROCEED with Manim as a first-class domain at this time.
 
 **Reasoning:**
-1. The canonical Manim experience (Python + LaTeX + FFmpeg) cannot be delivered within Liminal's current browser-first architecture without massive infrastructure investment.
+1. The canonical Manim experience (Python + LaTeX + FFmpeg) cannot be delivered within Sinter's current browser-first architecture without massive infrastructure investment.
 2. The only viable alternative (TS manim-web) is an immature port that would disappoint users expecting "real" Manim.
 3. The niche, while defensible, is smaller than several other domains (e.g., React/Next.js components, D3 dataviz, TouchDesigner) that would integrate more cleanly.
 
@@ -283,7 +283,7 @@ If there is strong stakeholder demand, implement Manim as a **plugin** rather th
 
 Reopen this analysis if any of the following occur:
 - `manim-web` (TS) reaches 1.0 stable with a reliable CDN.
-- Liminal adds a generic "backend execution" sandbox for Python (massive architecture shift).
+- Sinter adds a generic "backend execution" sandbox for Python (massive architecture shift).
 - A WebAssembly Manim port achieves <20MB payload and full ManimCE API parity.
 - User demand data shows >10% of prompts would benefit from math animation specifically.
 
@@ -305,7 +305,7 @@ async function squareToCircle(scene: Scene) {
 }
 ```
 
-**Wrapper harness required for Liminal preview:**
+**Wrapper harness required for Sinter preview:**
 
 ```html
 <!DOCTYPE html>

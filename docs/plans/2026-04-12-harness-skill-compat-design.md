@@ -5,11 +5,11 @@ Status: approved for implementation
 
 ## Goal
 
-Add a practical skill-compatibility layer for the Liminal harness so repo-local and installed skills can improve coding work without trying to emulate the full Claude/Codex runtime.
+Add a practical skill-compatibility layer for the Sinter harness so repo-local and installed skills can improve coding work without trying to emulate the full Claude/Codex runtime.
 
 ## Problem
 
-Liminal already has:
+Sinter already has:
 - repo guidance via `AGENTS.md` and `CLAUDE.md`
 - a typed harness tool system under `src/harness/tools/`
 - a generator plugin system under `plugins/`
@@ -107,7 +107,7 @@ Required runtime verification:
 ## Risks
 
 - Local MCP/CLI environments differ between machines.
-- Some globally installed skills may rely on runtime conventions not supported by Liminal.
+- Some globally installed skills may rely on runtime conventions not supported by Sinter.
 - `visual-bible.html` and `THE_BIBLE.md` must be updated with the new capability.
 
 ## Recommendation

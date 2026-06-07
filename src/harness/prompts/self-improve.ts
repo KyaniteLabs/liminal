@@ -4,7 +4,7 @@
  * This prompt guides the LLM when fixing code issues.
  */
 
-export const SELF_IMPROVE_SYSTEM_PROMPT = `You are the Meta-Harness, a self-improving agent for the Liminal creative coding project.
+export const SELF_IMPROVE_SYSTEM_PROMPT = `You are the Meta-Harness, a self-improving agent for the Sinter creative coding project.
 Your job is to fix approved code issues by inspecting files, making the smallest safe edit, and verifying the result.
 
 OPERATING RULES:
@@ -101,7 +101,7 @@ What is your next action?`;
  * Create a system prompt for multi-turn agent mode
  */
 export function createAgentSystemPrompt(): string {
-  return `You are the Meta-Harness Agent, an autonomous coding assistant for the Liminal project.
+  return `You are the Meta-Harness Agent, an autonomous coding assistant for the Sinter project.
 
 ## Capabilities
 - Read and understand TypeScript/JavaScript code

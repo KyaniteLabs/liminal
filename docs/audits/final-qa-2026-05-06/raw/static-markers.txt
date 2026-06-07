@@ -59,7 +59,7 @@ docs/THE_BIBLE.md:49:- Tone adapter: blocks browser escape hatches and string-ba
 docs/THE_BIBLE.md:51:- P5 adapter: blocks unsafe generated `setup()` and `draw()` bodies before the legacy function-constructor path.
 docs/THE_BIBLE.md:52:- Three adapter: blocks browser escape hatches before legacy Three code execution and cleans tracking globals in `finally`.
 docs/THE_BIBLE.md:53:- Hydra adapter: blocks browser escape hatches before legacy Hydra function-constructor execution.
-docs/THE_BIBLE.md:685:- Multiline operator composer: textarea input with Liminal-themed prompt/placeholder styling, `Enter` to send, and `Alt+Enter` to insert a newline
+docs/THE_BIBLE.md:685:- Multiline operator composer: textarea input with Sinter-themed prompt/placeholder styling, `Enter` to send, and `Alt+Enter` to insert a newline
 test/tui/StdinValidator.test.ts:24:    vi.unstubAllGlobals();
 src/swarm/VotingEngine.ts:233:    // If no Ollama caller provided, return placeholder (for testing)
 test/helpers/env.ts:7: * Run function with temporary environment variables
@@ -444,7 +444,7 @@ test/unit/config/ConfigLoader.test.ts:458:    // Verify the access was called to
 test/unit/config/ConfigLoader.test.ts:485:    const legacyConfig = JSON.stringify({ name: 'legacy-project' });
 test/unit/config/ConfigLoader.test.ts:488:      .mockResolvedValueOnce(legacyConfig);        // atelier.json found
 test/unit/config/ConfigLoader.test.ts:493:      expect(result.value.name).toBe('legacy-project');
-gui/server.js:349:    // ATELIER_CONFIG_PATH is legacy compatibility for pre-Liminal installs.
+gui/server.js:349:    // ATELIER_CONFIG_PATH is legacy compatibility for pre-Sinter installs.
 test/unit/CreativeEvaluator.test.ts:205:    it('should keep ascii error placeholders below the pass threshold', () => {
 test/unit/CreativeEvaluator.test.ts:232:    it('should keep obviously invalid Strudel placeholders below the pass threshold', () => {
 test/unit/CreativeEvaluator.test.ts:279:    it('should keep html error placeholders below the pass threshold', () => {

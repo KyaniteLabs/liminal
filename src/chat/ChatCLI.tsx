@@ -1,5 +1,5 @@
 /**
- * ChatCLI - Split-view terminal UI for Liminal Chat
+ * ChatCLI - Split-view terminal UI for Sinter Chat
  * Phase 2: Chat Integration - User Input Handling
  */
 

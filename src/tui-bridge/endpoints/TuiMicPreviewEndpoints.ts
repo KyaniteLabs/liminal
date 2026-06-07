@@ -12,10 +12,10 @@ const MIC_CAPTURE_ERROR_FORMATTER_SOURCE = formatMicCaptureError.toString();
 
 const MIC_PREVIEW_HTML = String.raw`<!doctype html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Liminal Mic Preview</title>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sinter Mic Preview</title>
 <style>body{margin:0;background:#07090f;color:#e5e7eb;font-family:Inter,system-ui,sans-serif}main{max-width:940px;margin:0 auto;padding:28px}button{border:1px solid #59e1ff;background:#11131a;color:#e5e7eb;border-radius:6px;padding:10px 14px;font:inherit;cursor:pointer;margin-right:8px}.meter{height:24px;background:#11131a;border:1px solid #334155;border-radius:6px;overflow:hidden;margin:16px 0}.bar{height:100%;width:0;background:linear-gradient(90deg,#58c777,#59e1ff,#f2b84b)}canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;border:1px solid #334155;border-radius:8px;background:#05070f;margin:16px 0}pre{white-space:pre-wrap;background:#11131a;border:1px solid #334155;border-radius:6px;padding:12px}.hint{color:#f2b84b}</style>
 </head>
-<body><main><h1>Liminal Mic Preview</h1><p class="hint">Click Start, then speak, sing, hum, or make noise. Words become prompt text; nonverbal sound becomes synesthetic visual direction.</p><button id="start">Start recording</button><button id="stop" disabled>Stop</button><div class="meter"><div id="bar" class="bar"></div></div><canvas id="scene" width="960" height="540"></canvas><pre id="out">idle</pre></main>
+<body><main><h1>Sinter Mic Preview</h1><p class="hint">Click Start, then speak, sing, hum, or make noise. Words become prompt text; nonverbal sound becomes synesthetic visual direction.</p><button id="start">Start recording</button><button id="stop" disabled>Stop</button><div class="meter"><div id="bar" class="bar"></div></div><canvas id="scene" width="960" height="540"></canvas><pre id="out">idle</pre></main>
 <script>
 let stream,ctx,analyser,timeData,freqData,raf,frames=[],lastSent=0,spokenPrompt='',recognition=null;
 const bar=document.getElementById('bar'),out=document.getElementById('out'),canvas=document.getElementById('scene'),drawCtx=canvas.getContext('2d');

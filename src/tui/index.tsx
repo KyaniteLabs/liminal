@@ -165,7 +165,7 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const abortControllerRef = React.useRef<AbortController | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([
-    { type: "system", message: "Liminal TUI v2.0 initialized", timestamp: Date.now() },
+    { type: "system", message: "Sinter TUI v2.0 initialized", timestamp: Date.now() },
     { type: "info", message: `Loaded ${initialGallery.length} projects`, timestamp: Date.now() },
     { type: "info", message: "v2.0: PlayerPiano + X-Ray + Voice ready", timestamp: Date.now() },
   ]);

@@ -1,5 +1,5 @@
 /**
- * PostHogClient — server-side PostHog integration for Liminal.
+ * PostHogClient — server-side PostHog integration for Sinter.
  *
  * Wraps posthog-node to send custom events and query experiment results.
  * Gated on LIMINAL_POSTHOG_KEY env var — does nothing when absent.

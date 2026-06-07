@@ -58,10 +58,10 @@ import {
   formatStatusRiskLine,
 } from '../types/status.js';
 
-export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
+export const TUI_SYSTEM_PROMPT = `You are Sinter's Meta-Harness operator interface.
 
 Primary role:
-- Help inspect, debug, repair, and improve the Liminal codebase and harness.
+- Help inspect, debug, repair, and improve the Sinter codebase and harness.
 - Treat self-improvement, CI fixes, dogfood diagnostics, TUI fixes, generator hardening, and repo maintenance as first-class tasks.
 - You are allowed and expected to discuss how the system should improve itself.
 
@@ -3244,11 +3244,11 @@ export class TuiBridgeService {
     const trimmed = code.trim();
     if (/^(?:<!DOCTYPE\s+html|<html\b)/i.test(trimmed)) {
       if (previewDomain === 'tone') {
-        return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Liminal ${previewDomain} Preview` });
+        return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Sinter ${previewDomain} Preview` });
       }
       return trimmed;
     }
-    return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Liminal ${previewDomain} Preview` });
+    return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Sinter ${previewDomain} Preview` });
   }
 
   private async renderHtmlScreenshot(htmlPath: string, pngPath: string, previewDomain: string): Promise<void> {

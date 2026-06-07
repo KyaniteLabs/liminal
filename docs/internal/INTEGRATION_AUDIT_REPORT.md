@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-The Liminal codebase shows **strong overall integration** with well-defined module boundaries and clear dependency flows. The TypeScript build passes successfully, and the vast majority of tests (6560/6642) pass. Two integration issues were identified and **FIXED** during the audit.
+The Sinter codebase shows **strong overall integration** with well-defined module boundaries and clear dependency flows. The TypeScript build passes successfully, and the vast majority of tests (6560/6642) pass. Two integration issues were identified and **FIXED** during the audit.
 
 ### Overall Health: 🟢 GOOD
 
@@ -29,7 +29,7 @@ The Liminal codebase shows **strong overall integration** with well-defined modu
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        ENTRY POINTS                              │
-│  src/index.ts (main exports)    bin/liminal (CLI)               │
+│  src/index.ts (main exports)    bin/sinter (CLI)               │
 └────────────────────┬────────────────────────────────────────────┘
                      │
     ┌────────────────┼────────────────┐
@@ -437,7 +437,7 @@ Multiple Generators → Layer objects → CompositionEngine
 
 ## Conclusion
 
-The Liminal application has **excellent overall integration**. All major components are properly wired together with clean separation of concerns. The architecture supports:
+The Sinter application has **excellent overall integration**. All major components are properly wired together with clean separation of concerns. The architecture supports:
 
 - ✅ 9 creative coding domains
 - ✅ 7 LLM providers

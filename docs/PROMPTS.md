@@ -2,7 +2,7 @@
 
 ## Overview
 
-Liminal uses a centralized `PromptLibrary` registry for all LLM prompts. Prompts are registered at module load time via side-effect imports in `src/prompts/index.ts`. Every prompt follows a structured format with role, constraints, output format, and domain rules.
+Sinter uses a centralized `PromptLibrary` registry for all LLM prompts. Prompts are registered at module load time via side-effect imports in `src/prompts/index.ts`. Every prompt follows a structured format with role, constraints, output format, and domain rules.
 
 ## Architecture
 
@@ -117,7 +117,7 @@ All prompts are currently at version `2.0.0` following the March 2026 prompt eng
 
 ## Model-Specific Adaptations
 
-Liminal adapts prompts based on the target model to handle known failure patterns:
+Sinter adapts prompts based on the target model to handle known failure patterns:
 
 ### Qwen Models (Thinking Trap)
 

@@ -1,4 +1,4 @@
-# Liminal Shared Artifact Contracts
+# Sinter Shared Artifact Contracts
 
 Status: Phase 1 baseline
 Schema: `liminal.shared-artifact`
@@ -6,7 +6,7 @@ Schema version: `2026-05-25.phase1`
 
 ## Purpose
 
-Liminal Core/Studio, Liminal Sites, and Liminal Instrument need a shared contract
+Sinter Core/Studio, Sinter Sites, and Sinter Instrument need a shared contract
 so they do not drift into incompatible systems. Core/Studio authors aesthetic
 artifacts. Sites specializes them for aesthetic webpage evolution. Instrument
 specializes them for live performance and can send session evidence back to

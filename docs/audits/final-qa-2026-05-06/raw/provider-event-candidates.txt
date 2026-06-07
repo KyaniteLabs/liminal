@@ -213,7 +213,7 @@ gui/src/gui/workbenchTelemetry.ts:668:      'error',
 gui/src/gui/workbenchTelemetry.ts:669:    ].includes(String(event.type))) {
 gui/src/gui/workbenchTelemetry.ts:673:    if (event.type === 'generation.clarification_needed') {
 gui/src/gui/workbenchTelemetry.ts:674:      const questions = Array.isArray(event.questions) ? event.questions : [];
-gui/src/gui/workbenchTelemetry.ts:676:        question: String(questions[0] || event.reason || 'What should Liminal generate?'),
+gui/src/gui/workbenchTelemetry.ts:676:        question: String(questions[0] || event.reason || 'What should Sinter generate?'),
 gui/src/gui/workbenchTelemetry.ts:677:        reason: String(event.reason || 'More detail is needed before generation.'),
 gui/src/gui/workbenchTelemetry.ts:685:export function summarizeImproveLane(events: WorkbenchBridgeEvent[]): ImproveLaneSummary {
 gui/src/gui/workbenchTelemetry.ts:686:  const proposals = events
@@ -3209,7 +3209,7 @@ scripts/proof/live-provider-smoke.ts:50:  const llm = new LLMClient({
 scripts/proof/live-provider-smoke.ts:51:    baseUrl: providerConfig.baseUrl,
 scripts/proof/live-provider-smoke.ts:52:    model: providerConfig.model,
 scripts/proof/live-provider-smoke.ts:53:    apiKey: providerConfig.apiKey,
-scripts/proof/live-provider-smoke.ts:59:    'Create a concise p5.js sketch of a luminous market-ready Liminal signal: flowing blue-green particles, visible motion, and a dark background. Return raw p5.js code only with setup() and createCanvas().',
+scripts/proof/live-provider-smoke.ts:59:    'Create a concise p5.js sketch of a luminous market-ready Sinter signal: flowing blue-green particles, visible motion, and a dark background. Return raw p5.js code only with setup() and createCanvas().',
 scripts/proof/live-provider-smoke.ts:60:    { signal: controller.signal },
 scripts/proof/live-provider-smoke.ts:64:  const receipt = buildLiveProviderSmokeReceipt({
 scripts/proof/live-provider-smoke.ts:65:    provider,
@@ -3667,7 +3667,7 @@ test/pending/core/RalphLoop.best-of-n.test.ts:135:  eventBus: { emit: vi.fn() },
 test/pending/core/RalphLoop.best-of-n.test.ts:160:  Logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
 test/pending/core/RalphLoop.best-of-n.test.ts:344:  it('should handle generation errors in some candidates gracefully', async () => {
 test/pending/core/RalphLoop.best-of-n.test.ts:347:      { code: '', error: true },  // Second fails
-src/core/EventBus.ts:2: * EventBus — central event bus for all Liminal processes.
+src/core/EventBus.ts:2: * EventBus — central event bus for all Sinter processes.
 src/core/EventBus.ts:5: * LLMClient, Renderer) emits typed events here. PreviewServer streams these to the
 src/core/EventBus.ts:9:import { EventEmitter } from 'node:events';
 src/core/EventBus.ts:22:// ── Typed event payloads ──
@@ -10335,9 +10335,9 @@ test/unit/index.test.js:34:    else process.env.LIMINAL_LLM_API_KEY = originalLi
 test/unit/index.test.js:39:    it('should throw error for empty prompt', async () => {
 test/unit/index.test.js:43:    it('should throw error for null prompt', async () => {
 test/unit/index.test.js:47:    it('should throw when no LLM is configured', async () => {
-test/unit/index.test.js:49:        /No LLM configured|Liminal run failed/
+test/unit/index.test.js:49:        /No LLM configured|Sinter run failed/
 test/unit/index.test.js:55:    it('should throw when no LLM is configured', async () => {
-test/unit/index.test.js:58:      ).rejects.toThrow(/No LLM configured|Liminal run failed/);
+test/unit/index.test.js:58:      ).rejects.toThrow(/No LLM configured|Sinter run failed/);
 test/unit/runtime-core/SelfImprovementReflexes.test.ts:22:    expect(reflex.retryPrompt).toContain('smallest safe edit');
 test/unit/runtime-core/SelfImprovementReflexes.test.ts:23:    expect(reflex.retryPrompt).toContain('writeFile/applyEdit');
 test/unit/runtime-core/SelfImprovementReflexes.test.ts:29:      lastPlanError: 'Failed to parse LLM response',
@@ -10743,11 +10743,11 @@ test/unit/gui-workbench-telemetry.test.ts:502:      { type: 'generation.attempt.
 test/unit/gui-workbench-telemetry.test.ts:513:      { type: 'generation.complete', finalScore: 0.84, duration: 2500, model: 'qwen', reason: 'accepted', qualityState: 'scored', executionMode: 'prove', receivedAt: Date.parse('2026-04-22T12:00:05.000Z') },
 test/unit/gui-workbench-telemetry.test.ts:536:  it('uses the newest preview event instead of an older image preview', () => {
 test/unit/gui-workbench-telemetry.test.ts:558:  it('summarizes self-healing improvement proposal events for the Improve lane', () => {
-test/unit/gui-workbench-telemetry.test.ts:584:  it('extracts detailed cognitive receipt cards for what Liminal learned', () => {
+test/unit/gui-workbench-telemetry.test.ts:584:  it('extracts detailed cognitive receipt cards for what Sinter learned', () => {
 test/unit/gui-workbench-telemetry.test.ts:585:    const receipt = latestCognitiveReceipt([
 test/unit/gui-workbench-telemetry.test.ts:587:        type: 'generation.cognitive_receipt',
 test/unit/gui-workbench-telemetry.test.ts:589:        receipts: [
-test/unit/gui-workbench-telemetry.test.ts:597:    expect(receipt?.heading).toBe('What Liminal learned');
+test/unit/gui-workbench-telemetry.test.ts:597:    expect(receipt?.heading).toBe('What Sinter learned');
 test/unit/gui-workbench-telemetry.test.ts:598:    expect(receipt?.items).toEqual([
 test/unit/gui-workbench-telemetry.test.ts:603:    expect(receipt?.writeBackStatus).toBe('partial');
 test/unit/gui-workbench-telemetry.test.ts:604:    expect(receipt?.writeBackItems).toEqual([

@@ -375,14 +375,14 @@ void main() { fragColor = vec4(1.0); }`;
     it('renders a browser-visible timeline preview before the source details', () => {
       const code = `import { makeScene2D, Txt } from "@revideo/2d";
 export default makeScene2D("PreviewScene", function* (view) {
-  yield view.add(<Txt text="Liminal title" />);
+  yield view.add(<Txt text="Sinter title" />);
 });`;
       const result = GenericWrapper.wrap(code, { domain: 'revideo' });
 
       expect(result).toContain('data-revideo-timeline-preview');
       expect(result).toContain('class="revideo-stage"');
       expect(result).toContain('class="timeline-playhead"');
-      expect(result).toContain('Liminal title');
+      expect(result).toContain('Sinter title');
       expect(result.indexOf('data-revideo-timeline-preview')).toBeLessThan(result.indexOf('<details'));
     });
   });

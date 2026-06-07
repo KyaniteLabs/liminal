@@ -1,4 +1,4 @@
-# Liminal — User Testing Readiness Report
+# Sinter — User Testing Readiness Report
 
 **Date:** 2026-04-07
 **Branch:** claude/testing-check-t0WYV (based on main @ 82dd498)
@@ -86,20 +86,20 @@ Minor: an async method that doesn't actually await anything. No user-visible imp
 
 | Command | What it does |
 |---------|-------------|
-| `liminal --prompt "..."` | Generate p5.js art |
-| `liminal generate/gen/g` | Same as --prompt |
-| `liminal tui` | Launch Bubble Tea operator cockpit |
-| `liminal serve [port]` | Start preview server (default: 3456) |
-| `liminal list` | Show saved sketches |
-| `liminal chat` | Conversational creative coding mode |
-| `liminal compost <sub>` | Compost Mill: add/digest/soup/seeds/status |
-| `liminal composite --spec ...` | Compose video layers from JSON spec |
-| `liminal consolidate` | Compress memory (L3→L2) |
-| `liminal --configure` | Set up LM Studio config |
-| `liminal --recent [n]` | Show recent prompts |
-| `liminal --favorites` | List favorite prompts |
-| `liminal --version` | Show version |
-| `liminal --help` | Full help text |
+| `sinter --prompt "..."` | Generate p5.js art |
+| `sinter generate/gen/g` | Same as --prompt |
+| `sinter tui` | Launch Bubble Tea operator cockpit |
+| `sinter serve [port]` | Start preview server (default: 3456) |
+| `sinter list` | Show saved sketches |
+| `sinter chat` | Conversational creative coding mode |
+| `sinter compost <sub>` | Compost Mill: add/digest/soup/seeds/status |
+| `sinter composite --spec ...` | Compose video layers from JSON spec |
+| `sinter consolidate` | Compress memory (L3→L2) |
+| `sinter --configure` | Set up LM Studio config |
+| `sinter --recent [n]` | Show recent prompts |
+| `sinter --favorites` | List favorite prompts |
+| `sinter --version` | Show version |
+| `sinter --help` | Full help text |
 
 ### Notable flags:
 - `--use-swarm` / `--swarm-mode` / `--swarm-rounds` — 7-persona Ollama generation
@@ -131,7 +131,7 @@ GUI frontend is launched by `pnpm gui`; static builds are produced with `pnpm --
 
 ## 5. TUI Readiness
 
-`liminal tui` launches the Bubble Tea operator cockpit through the shared bridge:
+`sinter tui` launches the Bubble Tea operator cockpit through the shared bridge:
 
 - **Agent mode** — triggered by action phrases ("Fix the validation")
 - **Command mode** — triggered by questions ("What's the status?")
@@ -162,7 +162,7 @@ Requires: LLM backend running (same as CLI).
 
 ### Quick config:
 ```bash
-liminal --configure          # saves LM Studio defaults to ~/.liminal/config.json
+sinter --configure          # saves LM Studio defaults to ~/.liminal/config.json
 # OR set env vars directly:
 export LIMINAL_LLM_BASE_URL=http://localhost:1234/v1
 export LIMINAL_LLM_MODEL=qwen2.5-coder-7b-instruct
@@ -206,7 +206,7 @@ export LIMINAL_LLM_MODEL=qwen2.5-coder-7b-instruct
 1. **No Chromium in test environment** — sandbox visual tests require a real browser. Not blocking for CLI/TUI use.
 2. **GUI frontend not pre-built** — user needs to run `pnpm gui:dev` to get the React frontend. No one-liner "just open a browser" experience.
 3. **`--version` reports v1.0.0** but `package.json` says `2.1.0` — minor cosmetic bug in `bin/liminal`.
-4. **LLM backend is required** — the tool does nothing useful without a running LLM. First-run experience depends on `liminal --configure` being discoverable.
+4. **LLM backend is required** — the tool does nothing useful without a running LLM. First-run experience depends on `sinter --configure` being discoverable.
 5. **Lint warning in IntuitionStrategy.ts:113** — async method with no await; harmless.
 6. **`dual-llm.test.ts` skip guard too narrow** — Ollama test falls through to assertion when LLM client returns an unexpected error shape. Not user-facing.
 
@@ -219,22 +219,22 @@ Before starting a manual testing session:
 - [ ] Node.js ≥ 18 installed
 - [ ] `pnpm install` completed (or `npm install`)
 - [ ] LLM backend running (LM Studio, Ollama, or cloud API key set)
-- [ ] Run `liminal --configure` OR set `LIMINAL_LLM_BASE_URL` + `LIMINAL_LLM_MODEL`
+- [ ] Run `sinter --configure` OR set `LIMINAL_LLM_BASE_URL` + `LIMINAL_LLM_MODEL`
 - [ ] For GUI: run `pnpm gui` (starts backend + Vite frontend)
-- [ ] For TUI: run `liminal tui` in terminal
-- [ ] For CLI: run `liminal --help` to verify install
+- [ ] For TUI: run `sinter tui` in terminal
+- [ ] For CLI: run `sinter --help` to verify install
 
 ---
 
 ## 10. Suggested Test Scenarios
 
-1. **Basic generation:** `liminal --prompt "blue particle system" --max-iterations 2`
-2. **Serve output:** `liminal serve` → open browser at localhost:3456
-3. **List history:** `liminal list` / `liminal --recent`
-4. **Favorites:** `liminal --favorite "glowing orbs"` → `liminal --favorites`
-5. **Chat mode:** `liminal chat`
-6. **TUI:** `liminal tui` → type natural language commands
-7. **Compost Mill:** `liminal compost status` → `liminal compost add <sketch.js>` → `liminal compost digest`
-8. **Swarm:** `liminal --prompt "fractal tree" --use-swarm --swarm-mode hybrid`
-9. **Dual model:** `liminal --prompt "aurora borealis" --fast-model qwen3.5:9b --powerful-model qwen3:30b-a3b --routing-mode cascade`
+1. **Basic generation:** `sinter --prompt "blue particle system" --max-iterations 2`
+2. **Serve output:** `sinter serve` → open browser at localhost:3456
+3. **List history:** `sinter list` / `sinter --recent`
+4. **Favorites:** `sinter --favorite "glowing orbs"` → `sinter --favorites`
+5. **Chat mode:** `sinter chat`
+6. **TUI:** `sinter tui` → type natural language commands
+7. **Compost Mill:** `sinter compost status` → `sinter compost add <sketch.js>` → `sinter compost digest`
+8. **Swarm:** `sinter --prompt "fractal tree" --use-swarm --swarm-mode hybrid`
+9. **Dual model:** `sinter --prompt "aurora borealis" --fast-model qwen3.5:9b --powerful-model qwen3:30b-a3b --routing-mode cascade`
 10. **GUI:** `pnpm gui` → open localhost:5173

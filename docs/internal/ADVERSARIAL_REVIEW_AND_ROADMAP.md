@@ -2,7 +2,7 @@
 
 **Source:** 6-agent adversarial analysis against 1,703 commits, 1,148 messages, 58 sessions, full source code
 **Date:** April 12, 2026
-**Purpose:** Actionable findings to feed back into Liminal's development
+**Purpose:** Actionable findings to feed back into Sinter's development
 **Companion:** Full analysis in `dev-archaeology` repo → `ADVERSARIAL-ANALYSIS.md`
 
 ---
@@ -22,7 +22,7 @@
 
 ## Executive Summary
 
-Six specialized agents independently analyzed Liminal from adversarial perspectives. They converged on three root causes:
+Six specialized agents independently analyzed Sinter from adversarial perspectives. They converged on three root causes:
 
 | Root Cause | Impact | Fix |
 |------------|--------|-----|
@@ -30,7 +30,7 @@ Six specialized agents independently analyzed Liminal from adversarial perspecti
 | **Scoring without execution** | Quality assessed by text analysis, not behavioral verification | Split evaluators, add render-based signals |
 | **Process without specification** | Vision-driven development without atomic requirements | New guardrails enforcing spec completeness |
 
-**The paradox:** Liminal's greatest strength (AI-native velocity at 26-52x normal) is also its greatest risk (errors propagate at the same speed). The fix isn't "learn CS" — it's **build verification systems that catch what intuition misses.**
+**The paradox:** Sinter's greatest strength (AI-native velocity at 26-52x normal) is also its greatest risk (errors propagate at the same speed). The fix isn't "learn CS" — it's **build verification systems that catch what intuition misses.**
 
 ---
 
@@ -220,7 +220,7 @@ Above 200 commits/day, quality drops. 150 is sustainable. 103 (Era 13) was a del
 
 ### 3. "Other" Commits (30%) Are Tool Transitions
 
-492 commits (28.9%) are categorized as "other." These aren't random — they're tool transitions: switching between Claude Code, Cursor, Codex, and Liminal itself. Each tool switch incurs context rebuilding overhead.
+492 commits (28.9%) are categorized as "other." These aren't random — they're tool transitions: switching between Claude Code, Cursor, Codex, and Sinter itself. Each tool switch incurs context rebuilding overhead.
 
 **Optimize it:** Batch work by tool. Don't switch between Claude and Cursor mid-feature. Finish the feature in one tool, then switch.
 

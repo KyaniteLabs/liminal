@@ -1,6 +1,6 @@
-# Liminal Features
+# Sinter Features
 
-This directory documents the unique, innovative features of Liminal.
+This directory documents the unique, innovative features of Sinter.
 
 ---
 
@@ -40,7 +40,7 @@ Both features embody:
 
 > **"Nothing is waste. Everything is signal."**
 
-| Input Type | Traditional Systems | Liminal |
+| Input Type | Traditional Systems | Sinter |
 |------------|-------------------|---------|
 | Broken code | Trash | Compost nutrients |
 | Failed attempts | Logs (maybe) | Pattern data + harness analysis |

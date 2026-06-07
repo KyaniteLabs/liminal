@@ -1,11 +1,11 @@
 /**
- * ProjectStore — High-level creative history API for Liminal.
+ * ProjectStore — High-level creative history API for Sinter.
  *
  * Wraps EventStore (timeline/versioning) and AssetStore (binary storage)
  * into a single facade that CompostMill and the CLI can use without
  * knowing about SQLite or content-addressable storage internals.
  *
- * This is the public interface for Liminal's "creative memory." Every
+ * This is the public interface for Sinter's "creative memory." Every
  * significant compost operation should flow through here so that the
  * event timeline is always complete.
  *
@@ -59,7 +59,7 @@ export interface FormattedTimeline {
 }
 
 /**
- * The main interface for Liminal's creative history system.
+ * The main interface for Sinter's creative history system.
  *
  * Usage from CompostMill:
  * ```ts

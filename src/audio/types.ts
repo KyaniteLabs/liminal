@@ -1,5 +1,5 @@
 /**
- * Audio feature types for the Liminal audio analysis pipeline.
+ * Audio feature types for the Sinter audio analysis pipeline.
  *
  * These types define the data structures produced by audio analysis
  * (Meyda, pitchfinder) and consumed by the audio-to-visual mapper.

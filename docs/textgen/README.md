@@ -1,6 +1,6 @@
 # TextGenerativeGenerator
 
-**Experimental text-based generative art for Liminal**
+**Experimental text-based generative art for Sinter**
 
 ## Overview
 

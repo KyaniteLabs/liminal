@@ -1,4 +1,4 @@
-# Liminal Studio chat-first UX slice
+# Sinter Studio chat-first UX slice
 
 Date: 2026-04-29  
 Branch: `fix/studio-chat-first-ux`  
@@ -6,7 +6,7 @@ Baseline: `8712ff0f7cdbf6af9dfe03ef7fc7bcb35d4d33aa`
 
 ## Target experience
 
-Liminal Studio should feel like Codex for creative coding: the main surface is a clean conversation with an AI creative coding agent, with generated artifacts easy to preview on the side. Internal proof, harness, observability, and model details remain available, but they are no longer the dominant artist-facing object.
+Sinter Studio should feel like Codex for creative coding: the main surface is a clean conversation with an AI creative coding agent, with generated artifacts easy to preview on the side. Internal proof, harness, observability, and model details remain available, but they are no longer the dominant artist-facing object.
 
 ## T3Code reference patterns used
 
@@ -22,7 +22,7 @@ Read-only reference: `pingdotgg/t3code@dbebc387dd458dd7062380ccb862a5cdac7aba66`
 
 | Capability/control | New home | Preservation note |
 | --- | --- | --- |
-| Natural-language prompt | Primary chat composer | Same `workbench-prompt` state and submit path; now labeled `Message Liminal`. |
+| Natural-language prompt | Primary chat composer | Same `workbench-prompt` state and submit path; now labeled `Message Sinter`. |
 | Generate action | Primary composer button | Same `onRun` / disabled-state plumbing. |
 | Generate vs Polish | Advanced drawer | Existing execution select remains. |
 | Domain/run mode selector | Advanced drawer | Existing selector and prompt override copy remain. |

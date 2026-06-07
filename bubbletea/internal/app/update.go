@@ -151,7 +151,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ChatViewport.Style = chatViewportStyle()
 			m.ChatViewport.MouseWheelEnabled = true
 			m.ChatViewport.MouseWheelDelta = 4
-			m.ChatViewport.SetContent("Welcome to Liminal. Type a message to begin.")
+			m.ChatViewport.SetContent("Welcome to Sinter. Type a message to begin.")
 
 			m.PreviewViewport = viewport.New(metrics.operatorContentWidth, metrics.operatorViewportHeight)
 			m.PreviewViewport.Style = previewViewportStyle()

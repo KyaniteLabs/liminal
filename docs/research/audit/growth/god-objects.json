@@ -164,7 +164,7 @@
       "functions": 4,
       "classes": 1,
       "estimated_methods": 35,
-      "recommendation": "Split main Liminal class - extract into: LiminalCore.ts, LiminalAPI.ts, CommandHandlers.ts"
+      "recommendation": "Split main Sinter class - extract into: LiminalCore.ts, LiminalAPI.ts, CommandHandlers.ts"
     },
     {
       "file": "src/core/CodeValidator.ts",

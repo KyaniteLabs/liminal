@@ -1,7 +1,7 @@
 /**
  * ProjectSerializer - Import/Export v2.0
  *
- * Handles serialization and deserialization of Liminal projects
+ * Handles serialization and deserialization of Sinter projects
  * with support for:
  * - v2.0 format with groups, animations, and masks
  * - Backward compatibility with v1.0
@@ -73,13 +73,13 @@ export interface ValidationResult {
 }
 
 /**
- * ProjectSerializer - Handles import/export of Liminal projects
+ * ProjectSerializer - Handles import/export of Sinter projects
  */
 export class ProjectSerializer {
   private supportedVersions = ['1.0', '2.0'];
 
   /**
-   * Export a composition engine's state to Liminal project format.
+   * Export a composition engine's state to Sinter project format.
    */
   exportProject(
     engine: CompositionEngine,
@@ -130,7 +130,7 @@ export class ProjectSerializer {
   }
 
   /**
-   * Import a Liminal project into a composition engine.
+   * Import a Sinter project into a composition engine.
    * Returns the imported animations, masks, and assets.
    */
   // eslint-disable-next-line @typescript-eslint/require-await

@@ -1,5 +1,5 @@
 /**
- * Liminal Composition Engine
+ * Sinter Composition Engine
  *
  * Multi-layer composition system for combining outputs from
  * different generators (p5, Tone, Three.js, etc.).

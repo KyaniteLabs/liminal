@@ -3,7 +3,7 @@
 ## Purpose
 
 Phase 4 required a check for accidental Sites framing around business metrics.
-Liminal Sites should be an aesthetic webpage evolution product, not SEO,
+Sinter Sites should be an aesthetic webpage evolution product, not SEO,
 conversion, revenue, funnel, or growth software.
 
 ## Command
@@ -15,7 +15,7 @@ git grep -n -I -E 'SEO|conversion|revenue|funnel|growth|click-through|lead captu
 ## Result Summary
 
 The command returned many hits across historical docs, archived audits, factory
-persona material, code comments, and general Liminal research. Those hits do
+persona material, code comments, and general Sinter research. Those hits do
 not by themselves prove current Sites product framing is wrong.
 
 Examples of expected or unrelated hit classes:

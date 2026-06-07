@@ -1,6 +1,6 @@
 # Dogfood Test Queues - 2 Agent Split
 
-**Goal:** Every landing page example must be generated through Liminal with no hand-coding.
+**Goal:** Every landing page example must be generated through Sinter with no hand-coding.
 
 ---
 

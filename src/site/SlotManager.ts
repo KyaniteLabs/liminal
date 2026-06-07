@@ -1,7 +1,7 @@
 /**
  * SlotManager — manages named site regions (slots) for the living website.
  *
- * Each slot represents a region on kyanitelabs.tech where Liminal injects
+ * Each slot represents a region on kyanitelabs.tech where Sinter injects
  * creative output. Slots track an active variant and an optional challenger.
  * State is persisted to a JSON file on disk.
  */

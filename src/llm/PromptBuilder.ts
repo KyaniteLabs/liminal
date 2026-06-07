@@ -207,7 +207,7 @@ export class PromptBuilder {
       ctx.soul = await readFile(join(PROMPT_BUILDER_ROOT, 'SOUL.md'), 'utf-8');
     } catch (err) {
       Logger.debug('PromptBuilder', 'SOUL.md not found, using default soul:', err);
-      ctx.soul = 'You are Liminal, a creative coding assistant.';
+      ctx.soul = 'You are Sinter, a creative coding assistant.';
     }
 
     // Try to load PROJECT_RULES.md

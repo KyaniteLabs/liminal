@@ -79,7 +79,7 @@ export interface SelfImprovementGauntletResult {
 export const SELF_IMPROVEMENT_GAUNTLET_PROMPTS: readonly GauntletPrompt[] = [
   {
     id: 'prompt-to-action-loop',
-    prompt: 'Make the prompt to Liminal acts to Liminal improves itself loop concrete for the agent',
+    prompt: 'Make the prompt to Sinter acts to Sinter improves itself loop concrete for the agent',
     organs: ['reflexes', 'harness', 'intuition'],
   },
   {

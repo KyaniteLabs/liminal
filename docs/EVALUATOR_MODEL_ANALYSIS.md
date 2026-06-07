@@ -4,7 +4,7 @@
 
 ## What an Evaluator Actually Does
 
-Based on Liminal's architecture, the Evaluator performs:
+Based on Sinter's architecture, the Evaluator performs:
 
 1. **Code Validation**
    - Syntax checking

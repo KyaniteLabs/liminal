@@ -6,7 +6,7 @@
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 Date: April 3, 2026
-Project: Liminal Creative Coding Agent
+Project: Sinter Creative Coding Agent
 Branch: main
 Status: ✅ ALL WAVES COMPLETE
 

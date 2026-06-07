@@ -1,6 +1,6 @@
 # First Composition Tutorial
 
-> A step-by-step guide to creating your first generative art composition with Liminal.
+> A step-by-step guide to creating your first generative art composition with Sinter.
 
 ---
 
@@ -10,7 +10,7 @@ Before starting this tutorial, ensure you have:
 
 ### 1. LLM Configuration
 
-Liminal requires a configured LLM backend to generate code. You have several options:
+Sinter requires a configured LLM backend to generate code. You have several options:
 
 **Option A: LM Studio (Recommended for Beginners)**
 ```bash
@@ -18,7 +18,7 @@ Liminal requires a configured LLM backend to generate code. You have several opt
 # Download a model like Qwen2.5-Coder-7B
 # Start the local server (default: localhost:1234)
 
-liminal --configure  # Auto-detects LM Studio
+sinter --configure  # Auto-detects LM Studio
 ```
 
 **Option B: Ollama**
@@ -26,7 +26,7 @@ liminal --configure  # Auto-detects LM Studio
 # Install Ollama from https://ollama.ai
 ollama pull qwen2.5-coder:7b
 
-# Configure Liminal
+# Configure Sinter
 export LIMINAL_LLM_PROVIDER=ollama
 export LIMINAL_LLM_BASE_URL=http://localhost:11434
 export LIMINAL_LLM_MODEL=qwen2.5-coder:7b
@@ -49,11 +49,11 @@ You should be familiar with:
 ### 3. Verify Installation
 
 ```bash
-# Check Liminal is installed
-liminal --version
+# Check Sinter is installed
+sinter --version
 
 # Verify LLM connection
-liminal --prompt "test" --max-iterations 1
+sinter --prompt "test" --max-iterations 1
 ```
 
 ---
@@ -65,13 +65,13 @@ Let's create a simple p5.js composition—a breathing circle that pulses gently.
 ### Step 1: Create the Composition
 
 ```bash
-liminal --prompt "Create a simple p5.js sketch with a circle in the center that slowly pulses in size using sine wave. Use calming blue colors." \
+sinter --prompt "Create a simple p5.js sketch with a circle in the center that slowly pulses in size using sine wave. Use calming blue colors." \
         --output ./my-first-composition
 ```
 
 ### Step 2: Understanding the Output
 
-Liminal generates several files:
+Sinter generates several files:
 
 ```
 my-first-composition/
@@ -87,7 +87,7 @@ my-first-composition/
 
 ```bash
 # Start the preview server
-liminal serve ./my-first-composition
+sinter serve ./my-first-composition
 
 # Or open directly in browser
 open ./my-first-composition/index.html
@@ -123,14 +123,14 @@ Now let's add a Tone.js audio layer that responds to mouse movement.
 ### Step 1: Generate the Audio Layer
 
 ```bash
-liminal --prompt "Create a Tone.js synthesizer that changes pitch based on mouse X position. Map mouseX from 200Hz to 800Hz. Add a subtle reverb effect." \
+sinter --prompt "Create a Tone.js synthesizer that changes pitch based on mouse X position. Map mouseX from 200Hz to 800Hz. Add a subtle reverb effect." \
         --domain music \
         --output ./audio-layer
 ```
 
 ### Step 2: Understanding Cross-Layer Communication
 
-Liminal supports cross-layer communication where visual and audio layers can interact. Here's how it works:
+Sinter supports cross-layer communication where visual and audio layers can interact. Here's how it works:
 
 ```javascript
 // Visual layer (p5.js) exports values
@@ -311,7 +311,7 @@ Groups allow you to organize layers and apply effects to multiple layers at once
 
 ### Step 1: Understanding Groups
 
-In Liminal, groups are logical collections of layers:
+In Sinter, groups are logical collections of layers:
 
 ```
 Composition
@@ -327,10 +327,10 @@ Composition
 
 ### Step 2: Creating Groups
 
-When generating with Liminal, you can specify groups in your prompt:
+When generating with Sinter, you can specify groups in your prompt:
 
 ```bash
-liminal --prompt "Create a composition with:
+sinter --prompt "Create a composition with:
   - Background group: gradient sky with moving clouds
   - Midground group: particle system with 50 particles
   - Foreground group: large central orb with glow effect
@@ -582,7 +582,7 @@ function draw() {
 ### Step 3: Generate Animated Composition
 
 ```bash
-liminal --prompt "Create an animated p5.js composition with:
+sinter --prompt "Create an animated p5.js composition with:
   - A circle that moves in a figure-8 pattern
   - Opacity that fades in at start and out at end
   - Color that shifts from blue to purple to pink
@@ -884,7 +884,7 @@ Congratulations on completing your first composition! Here's where to go next:
 
 ### API Documentation
 
-- **[Core API](../api/core.md)** - Programmatic usage of Liminal
+- **[Core API](../api/core.md)** - Programmatic usage of Sinter
 - **[Generator Reference](../api/generators.md)** - All available generators and options
 - **[Configuration Guide](../api/configuration.md)** - Environment variables and settings
 
@@ -897,7 +897,7 @@ Browse the [examples directory](../../examples/) for complete, working compositi
 ls examples/
 
 # Try an example
-liminal --prompt "Create a composition like examples/flow-field" \
+sinter --prompt "Create a composition like examples/flow-field" \
         --output ./my-flow-field
 ```
 
@@ -910,7 +910,7 @@ liminal --prompt "Create a composition like examples/flow-field" \
 ### Tips for Continued Learning
 
 1. **Start Simple**: Begin with basic shapes and build complexity gradually
-2. **Iterate Often**: Use Liminal's feedback loop to refine your ideas
+2. **Iterate Often**: Use Sinter's feedback loop to refine your ideas
 3. **Study Examples**: Reverse-engineer compositions you admire
 4. **Experiment**: Try unexpected combinations of techniques
 5. **Document**: Save versions of your work to track evolution
@@ -923,19 +923,19 @@ liminal --prompt "Create a composition like examples/flow-field" \
 
 ```bash
 # Basic generation
-liminal --prompt "..." --output ./project
+sinter --prompt "..." --output ./project
 
 # Specify domain
-liminal --prompt "..." --domain glsl --output ./shader
+sinter --prompt "..." --domain glsl --output ./shader
 
 # Chat mode for complex ideas
-liminal chat
+sinter chat
 
 # Serve and preview
-liminal serve ./project
+sinter serve ./project
 
 # List all your compositions
-liminal list
+sinter list
 ```
 
 ### Common Code Patterns

@@ -496,11 +496,11 @@ describe('LayerManager', () => {
     it('generates JS for an existing animation', () => {
       manager.addLayer(layer1);
       mockCreateAnim.mockReturnValue({ id: 'anim-1' });
-      mockGenJS.mockReturnValue('// Liminal Animation: anim-1');
+      mockGenJS.mockReturnValue('// Sinter Animation: anim-1');
       manager.createAnimation(layer1.id, 1000, []);
 
       const js = manager.generateAnimationJS('anim-1');
-      expect(js).toBe('// Liminal Animation: anim-1');
+      expect(js).toBe('// Sinter Animation: anim-1');
     });
 
     it('returns null for nonexistent animation', () => {

@@ -57,7 +57,7 @@ A class for managing numeric sequences.
 Adds a number to the sequence.
 `;
 
-const TXT_CONTENT = `Liminal is a creative coding platform.
+const TXT_CONTENT = `Sinter is a creative coding platform.
 
 It supports generative art, music, and interactive experiences.
 

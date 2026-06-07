@@ -149,7 +149,7 @@ npm run lint
 npm run typecheck
 
 # 4. Manual smoke test
-./bin/liminal --prompt "blue circle" --max-iterations 1
+./bin/sinter --prompt "blue circle" --max-iterations 1
 ```
 
 ---

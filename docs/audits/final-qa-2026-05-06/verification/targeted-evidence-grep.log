@@ -386,7 +386,7 @@ src/generators/tone/ToneGenerator.ts:52:    const isCompleteHtml = /^(?:html\s*)
 src/generators/tone/ToneGenerator.ts:53:    if (!isCompleteHtml && /<\/(?:script|body|html)>/i.test(clean)) {
 src/generators/tone/ToneGenerator.ts:57:    if (isCompleteHtml) {
 src/core/ScoringEngine.ts:736:      failureClass: 'none',
-docs/internal/TIER_0_REMEDIATION_SUMMARY.md:2:## Liminal Codebase - Critical Fixes Completed
+docs/internal/TIER_0_REMEDIATION_SUMMARY.md:2:## Sinter Codebase - Critical Fixes Completed
 docs/internal/TIER_0_REMEDIATION_SUMMARY.md:29:| `src/harness/HarnessUpdater.ts` | 7 console.log → Logger.info |
 docs/internal/TIER_0_REMEDIATION_SUMMARY.md:198:4. **Complete documentation sync**
 test/unit/evolution/meta-mode.test.ts:14:    expect(meta.getCompletedCount()).toBe(0);
@@ -410,7 +410,7 @@ src/index.ts:341:      await metaHarness.onGenerationComplete({
 docs/internal/REMEDIATION_COMPLETE.txt:131:  • Complete ESLint async enforcement
 src/audio/types.ts:56:/** Complete audio analysis result for a single frame. */
 src/runtime-core/SelfImprovementReflexes.ts:116:        failureClass: 'none',
-docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:2:## Liminal Codebase - Complete Transformation
+docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:2:## Sinter Codebase - Complete Transformation
 docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:7:**Waves Completed:** 16/16
 docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:27:| Type safety | Stringly-typed | Full enums | Complete |
 docs/internal/PLUS_ULTRA_REMEDIATION_REPORT.md:34:**Status:** ✅ Complete
@@ -441,7 +441,7 @@ src/core/RalphLoop.ts:1195:          isComplete,
 src/core/RalphLoop.ts:1432:          await metaHarness.onGenerationComplete({
 src/core/RalphLoop.ts:1468:        await metaHarness.onGenerationComplete({
 src/core/RalphLoop.ts:1612:  static isCodeComplete(code: string): boolean {
-docs/internal/SYNTHESIS.md:37:On March 19 at 9:30 PM, the atelier repository was renamed to "Liminal." Two commits handle this: "chore: Rename Atelier to Liminal" (21:30:56) and "chore: Complete rename from Atelier to Liminal" (21:41:42). This was the moment the project found its identity -- no longer an "atelier" (a workshop) but something liminal (a threshold, an in-between space).
+docs/internal/SYNTHESIS.md:37:On March 19 at 9:30 PM, the atelier repository was renamed to "Sinter." Two commits handle this: "chore: Rename Atelier to Sinter" (21:30:56) and "chore: Complete rename from Atelier to Sinter" (21:41:42). This was the moment the project found its identity -- no longer an "atelier" (a workshop) but something liminal (a threshold, an in-between space).
 docs/internal/USER_TESTING_READINESS_REPORT.md:57:All failures trace back to **no headless browser installed** (no Chromium/Puppeteer/Playwright binary in this environment). Every failing test is correctly guarded with `describe.skipIf(process.env.CI)` — they will be skipped in CI and in properly configured local dev environments.
 src/core/types/GenerationEvaluation.ts:37:  failureClass: 'none' | 'render' | 'validator' | 'scorer' | 'infra';
 src/core/CreativeIterationGate.ts:7:  isComplete: boolean;
@@ -679,8 +679,8 @@ docs/archive/internal-audits/LIMINAL_IMPROVEMENTS_SUMMARY.md:304:| `src/prompts/
 docs/archive/internal-audits/LIMINAL_IMPROVEMENTS_SUMMARY.md:312:| `src/harness/HarnessUpdater.ts` | NEW | 140 | Adaptation application |
 docs/archive/internal-audits/LIMINAL_IMPROVEMENTS_SUMMARY.md:330:| **HarnessUpdater** | `src/harness/HarnessUpdater.ts` | Applies adaptations based on detected patterns |
 docs/io-catalog.html:332:                        <li><strong>Output:</strong> Complete standalone HTML with import maps</li>
-docs/io-catalog.html:752:            <p class="domain-desc">Complete HTML documents with WebGL 3D rendering. Liminal's ThreeGenerator produces full standalone HTML pages with import maps and Three.js setup.</p>
-docs/archive/internal-audits/PRD.md:69:**Critical:** Liminal has **zero dependency** on BrainLoop. Completely independent implementation.
+docs/io-catalog.html:752:            <p class="domain-desc">Complete HTML documents with WebGL 3D rendering. Sinter's ThreeGenerator produces full standalone HTML pages with import maps and Three.js setup.</p>
+docs/archive/internal-audits/PRD.md:69:**Critical:** Sinter has **zero dependency** on BrainLoop. Completely independent implementation.
 docs/archive/internal-audits/PRD.md:852:│  │ FailureLogger │──▶│ PatternDetector │──▶│ HarnessUpdater  │    │
 docs/archive/internal-audits/PRD.md:873:| **HarnessUpdater** | Applies adaptations based on detected patterns | `src/harness/HarnessUpdater.ts` |
 docs/archive/internal-audits/AUDIT_PROMPT.md:33:- `src/harness/MetaHarnessIntegration.ts` - onGenerationComplete wired
@@ -713,7 +713,7 @@ docs/archive/internal-audits/RED_TEAM_AUDIT_REPORT.md:352:| 2026-03-30 | Remedia
 docs/archive/internal-audits/architecture-all-guardrails.html:6:    <title>Complete Guardrail Architecture - 18 Types</title>
 docs/archive/internal-audits/architecture-all-guardrails.html:246:                <div class="card-subtitle">Syntax, Structure, Completeness</div>
 docs/archive/internal-audits/architecture-all-guardrails.html:330:                        <li>Completely missing elements</li>
-docs/archive/internal-audits/architecture.html:6:    <title>Liminal Architecture - Complete System Map</title>
+docs/archive/internal-audits/architecture.html:6:    <title>Sinter Architecture - Complete System Map</title>
 docs/archive/internal-audits/architecture.html:398:        <div class="header-meta">Complete system map with wiring status | Last updated: 2026-04-01</div>
 docs/archive/internal-audits/architecture.html:489:                    <p><strong>Recently Fixed:</strong> RalphLoop now reports failures to Meta-Harness via <code>onGenerationComplete()</code> calls. E2E tests also report to harness.</p>
 docs/archive/internal-audits/architecture.html:548:                            <span class="component-name">HarnessUpdater</span>
@@ -810,5 +810,5 @@ docs/archive/internal-audits/FUNCTIONAL_ADVERSARIAL_AUDIT.md:18:| **Feature Comp
 docs/archive/internal-audits/IMPACT_REPORT.html:718:                    <div class="stat-label">Tasks Completed</div>
 docs/archive/internal-audits/IMPACT_REPORT.html:1234:            <p style="margin-top: 0.5rem; font-size: 0.8rem;">2026-03-21 • The Unification Complete</p>
 docs/archive/internal-audits/SECURITY_AUDIT_CHECKLIST.md:133:**Audit Completed:** 2026-03-30
-docs/archive/internal-audits/architecture-guardrails.html:6:    <title>Liminal Guardrail Architecture - Complete Taxonomy</title>
-docs/archive/internal-audits/architecture-guardrails.html:714:            <p>Complete Guardrail Taxonomy | Liminal Architecture</p>
+docs/archive/internal-audits/architecture-guardrails.html:6:    <title>Sinter Guardrail Architecture - Complete Taxonomy</title>
+docs/archive/internal-audits/architecture-guardrails.html:714:            <p>Complete Guardrail Taxonomy | Sinter Architecture</p>

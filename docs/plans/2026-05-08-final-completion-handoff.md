@@ -4,7 +4,7 @@
 
 **Architecture:** Treat this file as the handoff source of truth. Start from the canonical checkout, verify the current baseline, then work through small PRs: gate repair, proof refresh, final audit documentation, any new material fixes, and closure verification.
 
-**Tech Stack:** Liminal repo, pnpm scripts, GitHub PRs, Electron Studio, existing final QA docs, existing proof receipts.
+**Tech Stack:** Sinter repo, pnpm scripts, GitHub PRs, Electron Studio, existing final QA docs, existing proof receipts.
 
 ---
 

@@ -1,7 +1,7 @@
 /**
  * CognitiveArchitectureAtlas
  *
- * Machine-readable finish-line contract for Liminal's creative body and
+ * Machine-readable finish-line contract for Sinter's creative body and
  * learning-inspired cognitive organs. This keeps proof slices from silently
  * becoming product scope.
  */
@@ -41,7 +41,7 @@ const DOMAIN_GATES = ['generate', 'validate', 'preview/export', 'evaluate honest
 export class CognitiveArchitectureAtlas {
   build(): CognitiveArchitectureReport {
     return {
-      title: 'Liminal Cognitive Architecture',
+      title: 'Sinter Cognitive Architecture',
       purpose: 'Every creative act becomes material for future intelligence: perception -> memory -> compost -> dreaming -> intuition -> creation -> evaluation -> self-improvement.',
       domains: [
         this.domain('svg', 'SVG', 'gold', 'Inspectable vector art and agent-editable visual structure'),

@@ -217,7 +217,7 @@ Expected:
 
 Run:
 ```bash
-git diff origin/main...security/redteam-remediation-20260409 -- bin/liminal
+git diff origin/main...security/redteam-remediation-20260409 -- bin/sinter
 ```
 
 Expected:
@@ -227,7 +227,7 @@ Expected:
 
 Run:
 ```bash
-rg -n "exec\\(|spawn\\(|shell: true|\\$\\(|child_process|open " bin/liminal src scripts
+rg -n "exec\\(|spawn\\(|shell: true|\\$\\(|child_process|open " bin/sinter src scripts
 ```
 
 Expected:

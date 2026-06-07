@@ -1,7 +1,7 @@
 # Pre-Existing Issues Log
 
 **Date Discovered:** 2026-03-31  
-**Context:** Dogfood QA Campaign - Liminal Harness Improvements  
+**Context:** Dogfood QA Campaign - Sinter Harness Improvements  
 **Rule:** These issues EXISTED BEFORE any changes made today. Documented for tracking.
 
 ---

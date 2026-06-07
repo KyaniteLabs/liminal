@@ -14,9 +14,9 @@ describe('WHAT_TO_EXPECT first-run guide', () => {
   it('describes the current Studio/workbench first-run path instead of the retired harness task runner', () => {
     const doc = readRepoFile('docs/WHAT_TO_EXPECT.md');
 
-    expect(doc).toContain('# What to Expect When Running Liminal Studio');
+    expect(doc).toContain('# What to Expect When Running Sinter Studio');
     expect(doc).toContain('pnpm gui');
-    expect(doc).toContain('Message Liminal');
+    expect(doc).toContain('Message Sinter');
     expect(doc).toContain('Generate');
     expect(doc).toContain('Polish');
     expect(doc).toContain('same-screen preview');

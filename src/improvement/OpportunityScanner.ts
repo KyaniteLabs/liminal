@@ -392,7 +392,7 @@ export function collectRepositoryOpportunityEvidence(repoRoot = process.cwd()): 
 }
 
 export function formatOpportunityReport(report: ImprovementOpportunityReport): string {
-  const lines = [`Liminal self-healing ${report.runType} report`, report.summary, '', 'Proposals:'];
+  const lines = [`Sinter self-healing ${report.runType} report`, report.summary, '', 'Proposals:'];
   if (report.proposals.length === 0) {
     lines.push('  none');
   } else {

@@ -119,4 +119,4 @@ const brief = await ideate("Something like Kid A", {
 2. **Physical output**: Plotter, CNC, laser cutter integrations
 3. **Networked/Shared**: Multi-user collaborative creative sessions
 4. **Temporal**: Time-based evolution, long-running generative systems
-5. **AI-AI**: Liminal generates prompt → Liminal evaluates → loop
+5. **AI-AI**: Sinter generates prompt → Sinter evaluates → loop

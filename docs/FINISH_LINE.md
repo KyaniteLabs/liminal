@@ -1,11 +1,11 @@
-# Liminal Finish Line: Creative Cognitive System
+# Sinter Finish Line: Creative Cognitive System
 
-Liminal V1 is **not** a narrowed four-generator proof. Liminal V1 is a creative cognitive system: a Studio where artists create with code, plus a harness where every artifact, failure, preference, model, dream, and repair becomes part of the system's future intelligence.
+Sinter V1 is **not** a narrowed four-generator proof. Sinter V1 is a creative cognitive system: a Studio where artists create with code, plus a harness where every artifact, failure, preference, model, dream, and repair becomes part of the system's future intelligence.
 
 ## Product Contract
 
 1. **Creative instrument:** a human can ask for art, music, shaders, motion, typography, or video and see usable artifacts with honest previews and receipts.
-2. **Self-improving organism:** Liminal perceives experience, stores it, composts it, dreams from it, develops intuition from it, and repairs itself when evidence shows weakness.
+2. **Self-improving organism:** Sinter perceives experience, stores it, composts it, dreams from it, develops intuition from it, and repairs itself when evidence shows weakness.
 
 Proof slices may be narrow. Product scope must not silently shrink.
 
@@ -61,12 +61,12 @@ Proof slices may be narrow. Product scope must not silently shrink.
 - Do not hide provider/model identity behind wrapper labels.
 - Do not synthesize fallback artifacts when the generator failed.
 - Do not mark an organ complete because files exist; prove it participates in the closed loop.
-- Do not call Liminal finished until Studio, CLI reports, docs, proofs, and self-improvement runs use the same contract.
+- Do not call Sinter finished until Studio, CLI reports, docs, proofs, and self-improvement runs use the same contract.
 
 ## Finish-Line Gates
 
-1. `liminal studio` shows a creative session with cognitive-loop receipts, including honest memory retrieval plus post-generation memory, compost, and dream-queue write-back.
-2. `node bin/liminal report cognition` lists every creative domain and cognitive organ.
+1. `sinter studio` shows a creative session with cognitive-loop receipts, including honest memory retrieval plus post-generation memory, compost, and dream-queue write-back.
+2. `node bin/sinter report cognition` lists every creative domain and cognitive organ.
 3. A proof bundle shows creative memory influencing a later generation; the live writer proof must also show Studio's post-generation memory, compost, and dream-queue write-back receipts.
 4. A self-improvement run fixes or improves one real weakness in an isolated worktree with verification.
 5. A model-assimilation report can audition and assign a new model by evidence.

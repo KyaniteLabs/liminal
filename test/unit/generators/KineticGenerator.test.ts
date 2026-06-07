@@ -137,7 +137,7 @@ describe('KineticGenerator', () => {
     const gen = new KineticGenerator();
     const result = await gen.generateFull('empty');
     expect(result.code).toContain('<!DOCTYPE html>');
-    expect(result.code).toContain('Liminal recovery');
+    expect(result.code).toContain('Sinter recovery');
     expect(result.code).toContain('@keyframes orbit');
     expect(result.success).toBe(false);
     expect(result.error).toContain('Recovered with deterministic CSS kinetic scaffold');

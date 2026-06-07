@@ -108,7 +108,7 @@ export function buildSyncPreviewHtml(code: string): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Liminal Sync Stage</title>
+  <title>Sinter Sync Stage</title>
   <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}canvas{display:block}</style>
   <script>${audioBootstrap()}</script>
   <script type="importmap">{"imports":{"three":"${THREE_CDN}"}}</script>
@@ -125,7 +125,7 @@ export function buildSyncPreviewHtml(code: string): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Liminal Sync Stage</title>
+  <title>Sinter Sync Stage</title>
   <style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070a}main{position:fixed;inset:0;display:grid;place-items:center}main > canvas,body > canvas{display:block;max-width:100vw;max-height:100vh;object-fit:contain}body > canvas{position:fixed!important;top:50%!important;left:50%!important;transform:translate(-50%,-50%)!important}</style>
   <script>${sensorPolicyBootstrap()}</script>
   <script>${audioBootstrap()}</script>

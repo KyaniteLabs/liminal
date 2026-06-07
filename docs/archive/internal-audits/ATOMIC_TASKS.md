@@ -373,9 +373,9 @@
 - [ ] **FV8** — ADRs created for decisions
 
 ### Manual Testing
-- [ ] **FV9** — `liminal --prompt "test"` works
-- [ ] **FV10** — `liminal chat` works
-- [ ] **FV11** — `liminal --use-swarm` works
+- [ ] **FV9** — `sinter --prompt "test"` works
+- [ ] **FV10** — `sinter chat` works
+- [ ] **FV11** — `sinter --use-swarm` works
 - [ ] **FV12** — Preview server works
 
 ---

@@ -1,4 +1,4 @@
-# Liminal Operator-Path Validation — 2026-06-06
+# Sinter Operator-Path Validation — 2026-06-06
 
 Goal: validate the **entire** application end-to-end through actual execution — every operator path — and repair what's broken until all pass. Validated against `main` (`b523e3ca`) with the GLM provider (reachable; the default). Network/generation commands run with the sandbox disabled.
 
@@ -18,7 +18,7 @@ Legend: ✅ verified by execution · 🔧 defect found+fixed · ⏳ pending · �
 ## CLI operator paths
 | Path | Status | Evidence |
 |---|---|---|
-| `--help`, `--version` | ✅ | usage / `Liminal v2.1.0` |
+| `--help`, `--version` | ✅ | usage / `Sinter v2.1.0` |
 | `provider status` / `list` | ✅ | readiness table |
 | `list` | ✅ | sketches list |
 | `report cognition` | ✅ | cognitive architecture atlas |

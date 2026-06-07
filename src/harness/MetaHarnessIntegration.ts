@@ -457,7 +457,7 @@ Respond with a JSON object:
         entry: 'index.js',
         domains: [generatorName.toLowerCase()],
         keywords: [generatorName.toLowerCase()],
-        author: 'Liminal Harness',
+        author: 'Sinter Harness',
         minLiminalVersion: '2.0.0',
       };
 

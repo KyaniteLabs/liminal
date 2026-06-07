@@ -1,4 +1,4 @@
-# Liminal Security Guide
+# Sinter Security Guide
 
 ## Table of Contents
 1. [Overview](#overview)
@@ -12,7 +12,7 @@
 
 ## Overview
 
-Liminal implements multiple security layers to protect against common web application vulnerabilities.
+Sinter implements multiple security layers to protect against common web application vulnerabilities.
 
 ## Deployment Security
 
@@ -36,7 +36,7 @@ docker run \
   --cap-add=SYS_ADMIN \
   --read-only \
   --tmpfs /tmp \
-  liminal
+  sinter
 ```
 
 ## Environment Variables
@@ -56,7 +56,7 @@ docker run \
 
 ## SSRF Protection
 
-Liminal validates all LLM URLs to prevent Server-Side Request Forgery:
+Sinter validates all LLM URLs to prevent Server-Side Request Forgery:
 
 ### Blocked by Default
 - Cloud metadata endpoints (169.254.169.254)
@@ -89,7 +89,7 @@ Chrome sandbox is enabled by default. Only disable when:
 
 ## Security Headers
 
-Liminal uses route-specific security headers instead of one universal header claim:
+Sinter uses route-specific security headers instead of one universal header claim:
 
 - `PreviewServer` responses include `Content-Security-Policy`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, and `Referrer-Policy`.
 - Studio GUI/API/SSE responses include `X-Content-Type-Options: nosniff`, `Strict-Transport-Security`, `Referrer-Policy`, and `X-Frame-Options: SAMEORIGIN`.

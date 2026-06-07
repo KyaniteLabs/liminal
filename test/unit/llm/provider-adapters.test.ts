@@ -636,7 +636,7 @@ describe('OpenRouterProvider', () => {
 
     const [, options] = mockFetch.mock.calls[0];
     expect(options.headers['HTTP-Referer']).toBe('https://liminal.art');
-    expect(options.headers['X-Title']).toBe('Liminal');
+    expect(options.headers['X-Title']).toBe('Sinter');
   });
 
   it('includes reasoning parameter when thinking is enabled', async () => {

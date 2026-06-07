@@ -1,4 +1,4 @@
-# Liminal Project Rules & Memory
+# Sinter Project Rules & Memory
 
 **Last Updated:** April 1, 2026
 **Status:** ACTIVE - These rules govern all future work
@@ -210,7 +210,7 @@ docs: Updated features.html and dashboard.html
 
 - **Documentation Site:** `http://localhost:3456/`
 - **Dashboard:** `http://localhost:3456/dashboard.html`
-- **GitHub:** https://github.com/KyaniteLabs/liminal
+- **GitHub:** https://github.com/KyaniteLabs/sinter
 
 ---
 
@@ -224,7 +224,7 @@ docs: Updated features.html and dashboard.html
 
 ---
 
-**These rules are BINDING for all future work on Liminal.**
+**These rules are BINDING for all future work on Sinter.**
 
 *Violating these rules requires explicit justification and immediate correction.*
 

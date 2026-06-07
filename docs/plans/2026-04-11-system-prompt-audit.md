@@ -1,4 +1,4 @@
-# System Prompt Audit — Liminal
+# System Prompt Audit — Sinter
 
 **Date:** April 11, 2026
 **Scope:** `liminal` repository only
@@ -7,7 +7,7 @@
 
 ## Why this audit exists
 
-This pass audits Liminal's system-prompt surfaces for three things:
+This pass audits Sinter's system-prompt surfaces for three things:
 
 1. **Quality** — clarity, non-contradiction, stable behavior, and good separation of role vs. task.
 2. **Token efficiency** — avoid duplicated instructions, stale examples, and oversized low-yield prompt text.

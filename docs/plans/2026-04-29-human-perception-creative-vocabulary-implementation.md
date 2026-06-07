@@ -1,6 +1,6 @@
 # Human Perception Guardrails and Creative Vocabulary Engines Implementation Plan
 
-**Goal:** Reframe Liminal's aesthetic system so hard guardrails protect human sensory ergonomics while optional creative vocabulary engines help users steer color, music, motion, video, and writing preferences.
+**Goal:** Reframe Sinter's aesthetic system so hard guardrails protect human sensory ergonomics while optional creative vocabulary engines help users steer color, music, motion, video, and writing preferences.
 
 **Architecture:** Add a small domain-neutral perception/vocabulary layer, preserve existing validators/evaluators, and migrate misleading aesthetic naming through compatibility wrappers. The first implementation should be metadata- and tests-first: make CLI/docs truthful, add perception guardrail contracts, then wire advisory vocabulary engines without forcing subjective beauty rules.
 
@@ -548,7 +548,7 @@ Expected: PASS.
 **Step 5: Commit**
 
 ```bash
-git add bin/liminal docs/cli-reference.html test/unit/cli-aesthetic-flags.test.ts
+git add bin/sinter docs/cli-reference.html test/unit/cli-aesthetic-flags.test.ts
 git commit -m "Make aesthetic CLI flags truthful"
 ```
 

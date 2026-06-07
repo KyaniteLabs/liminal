@@ -1,10 +1,10 @@
-# Gemma 4 + Liminal: The Perfect Match
+# Gemma 4 + Sinter: The Perfect Match
 
 **Why Gemma 4 Changes Everything for the Meta-Harness**
 
 ## The Current Problem
 
-Liminal's HarnessAgent uses 7 tools:
+Sinter's HarnessAgent uses 7 tools:
 - `readFile` - Read file contents
 - `writeFile` - Write entire file
 - `applyEdit` - Targeted string replacement
@@ -106,7 +106,7 @@ Output:
 | Error-prone | Reliable function calling |
 | Limited to 7 tools | Can scale to many tools |
 
-## The Full Picture: Gemma 4 + Liminal
+## The Full Picture: Gemma 4 + Sinter
 
 ### Generator Layer (Dumb)
 - LFM 2.5 1.2B - Fast code generation
@@ -151,7 +151,7 @@ Prompt: "Recreate this animation in p5.js"
 → Gemma 4 processes frames, generates code
 ```
 
-## Model Selection for Liminal
+## Model Selection for Sinter
 
 | Component | Model | Why |
 |-----------|-------|-----|
@@ -206,7 +206,7 @@ messages.push({
 
 ## The Vision
 
-**Liminal becomes truly multimodal:**
+**Sinter becomes truly multimodal:**
 
 1. **Upload a song** → Gemma E4B analyzes audio → Generates Strudel pattern
 2. **Upload a video** → Gemma 26B processes frames → Generates p5.js animation
@@ -235,4 +235,4 @@ messages.push({
 | Audio input | 🔄 | Gemma E4B |
 | 256K context | 🔄 | Gemma 26B/31B |
 
-**Gemma 4 isn't just another model. It's the agentic layer Liminal needs.**
+**Gemma 4 isn't just another model. It's the agentic layer Sinter needs.**

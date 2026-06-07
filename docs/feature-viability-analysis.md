@@ -1,4 +1,4 @@
-# Liminal — Feature Viability Analysis
+# Sinter — Feature Viability Analysis
 
 **Date:** 2026-04-06 (updated 2026-04-21)
 **Status:** Active reference
@@ -9,13 +9,13 @@
 
 ## A. Executive Summary
 
-Liminal is a creative coding engine that combines iterative LLM generation, multi-domain code output (p5.js, Three.js, GLSL, Hydra, Strudel, Tone.js, Revideo, HTML, ASCII, Kinetic Typography, generative text — 11 domains total), quality scoring, evolutionary optimization, and cross-domain composition into a single system. Three interfaces: CLI, Studio (chat-first TUI agent), and Bubble Tea TUI.
+Sinter is a creative coding engine that combines iterative LLM generation, multi-domain code output (p5.js, Three.js, GLSL, Hydra, Strudel, Tone.js, Revideo, HTML, ASCII, Kinetic Typography, generative text — 11 domains total), quality scoring, evolutionary optimization, and cross-domain composition into a single system. Three interfaces: CLI, Studio (chat-first TUI agent), and Bubble Tea TUI.
 
 ### Top 3 Opportunities
 
 1. **Creative Coding SaaS** ($10-30/mo) — The fastest path to revenue. Most of the pipeline works today. Target: creative coders, artists, educators.
-2. **API / Engine Licensing** ($0.01-0.10/generation) — Let other tools embed Liminal's generation brain. High-value, low-volume.
-3. **Programmatic Video Studio** ($50-500/video) — Marketing teams need video at scale. Liminal has Revideo + narrative pipeline.
+2. **API / Engine Licensing** ($0.01-0.10/generation) — Let other tools embed Sinter's generation brain. High-value, low-volume.
+3. **Programmatic Video Studio** ($50-500/video) — Marketing teams need video at scale. Sinter has Revideo + narrative pipeline.
 
 ### Top 3 Risks
 
@@ -25,7 +25,7 @@ Liminal is a creative coding engine that combines iterative LLM generation, mult
 
 ### The Bottom Line
 
-Liminal's strongest asset is **integration breadth** — 11 creative domains working end-to-end with iterative generation, evolutionary optimization, and cross-domain composition. No single component is algorithmically novel, but the orchestration is real engineering that would take 6-12 months to replicate from scratch. The **Autonomous Gardener** (TasteModelTrainer + DreamPlanner + EmergenceCritic + StagnationDetector) is the most commercially interesting subsystem because it gets smarter with usage — a potential data flywheel.
+Sinter's strongest asset is **integration breadth** — 11 creative domains working end-to-end with iterative generation, evolutionary optimization, and cross-domain composition. No single component is algorithmically novel, but the orchestration is real engineering that would take 6-12 months to replicate from scratch. The **Autonomous Gardener** (TasteModelTrainer + DreamPlanner + EmergenceCritic + StagnationDetector) is the most commercially interesting subsystem because it gets smarter with usage — a potential data flywheel.
 
 **Recommendation:** Proprietary license, start with SaaS + API, invest in validating quality scoring against human judgment.
 
@@ -33,7 +33,7 @@ Liminal's strongest asset is **integration breadth** — 11 creative domains wor
 
 ## B. Honest Capability Assessment
 
-### What Liminal Does Well
+### What Sinter Does Well
 
 | Capability | Maturity | Commercial Value |
 |---|---|---|
@@ -51,7 +51,7 @@ Liminal's strongest asset is **integration breadth** — 11 creative domains wor
 | Emergence evaluation (novelty + perturbation) | Production | Medium — measures genuine novelty, not just correctness |
 | Taste learning (margin-based SGD) | Production | Medium — closes user preference loop without ML framework |
 
-### What Liminal Does NOT Do Well
+### What Sinter Does NOT Do Well
 
 | Gap | Impact | Status |
 |---|---|---|
@@ -79,7 +79,7 @@ The most commercially interesting subsystem. Located in `src/autonomy/`, `src/le
 - **StagnationDetector** — Identifies when the system produces diminishing returns.
 - **GardenHealthMonitor** — Tracks creative diversity, seed freshness, compost health.
 
-**Why this matters commercially:** This is a learning system that improves with every generation. The more people use Liminal, the better the taste model and quality prediction becomes. This is a genuine data flywheel — accumulated usage data makes the product better for everyone, which attracts more users, which generates more data. This is the strongest argument for proprietary licensing.
+**Why this matters commercially:** This is a learning system that improves with every generation. The more people use Sinter, the better the taste model and quality prediction becomes. This is a genuine data flywheel — accumulated usage data makes the product better for everyone, which attracts more users, which generates more data. This is the strongest argument for proprietary licensing.
 
 ### Infrastructure Cost Per Output Type
 
@@ -107,19 +107,19 @@ The most commercially interesting subsystem. Located in `src/autonomy/`, `src/le
 
 ### Direct Competitors — Creative Coding Tools
 
-| Tool | Price | What It Does | Liminal's Advantage |
+| Tool | Price | What It Does | Sinter's Advantage |
 |---|---|---|---|
-| p5.js Web Editor | Free | Browser-based p5.js IDE | Liminal generates code; editor doesn't |
-| Processing IDE | Free | Desktop creative coding IDE | Liminal adds LLM generation + iteration |
-| Shadertoy | Free | Browser GLSL editor + community | Liminal adds generation + quality scoring |
-| Strudel REPL | Free | Browser live coding music | Liminal adds multi-domain composition |
+| p5.js Web Editor | Free | Browser-based p5.js IDE | Sinter generates code; editor doesn't |
+| Processing IDE | Free | Desktop creative coding IDE | Sinter adds LLM generation + iteration |
+| Shadertoy | Free | Browser GLSL editor + community | Sinter adds generation + quality scoring |
+| Strudel REPL | Free | Browser live coding music | Sinter adds multi-domain composition |
 | openFrameworks | Free | C++ creative coding toolkit | Different market (C++ vs web) |
-| TouchDesigner | $0-600 | Professional real-time visuals | Liminal adds AI generation; TD is manual |
+| TouchDesigner | $0-600 | Professional real-time visuals | Sinter adds AI generation; TD is manual |
 | Max/MSP | $250-400 | Visual programming for music/art | Different paradigm (node-based vs code) |
 
 ### Adjacent Competitors — AI Creative Tools
 
-| Tool | Price | What It Does | Gap vs Liminal |
+| Tool | Price | What It Does | Gap vs Sinter |
 |---|---|---|---|
 | Midjourney | $10-60/mo | AI image generation | Outputs images, not editable code |
 | DALL-E 3 | $0.04/image | AI image generation | Outputs images, not editable code |
@@ -132,13 +132,13 @@ The most commercially interesting subsystem. Located in `src/autonomy/`, `src/le
 
 ### Commercial Creative Platforms
 
-| Tool | Price | Revenue Model | Liminal's Angle |
+| Tool | Price | Revenue Model | Sinter's Angle |
 |---|---|---|---|
-| Figma | $0-75/mo | SaaS subscription | Liminal generates; Figma designs manually |
-| After Effects | $22/mo | Adobe subscription | Liminal generates; AE composites manually |
-| Resolume | $400-1000 | One-time license | Liminal generates content; Resolume performs live |
+| Figma | $0-75/mo | SaaS subscription | Sinter generates; Figma designs manually |
+| After Effects | $22/mo | Adobe subscription | Sinter generates; AE composites manually |
+| Resolume | $400-1000 | One-time license | Sinter generates content; Resolume performs live |
 | Unity | $0-2040/yr | Subscription + revenue share | Different market (games vs generative art) |
-| Remotion | Free (OSS) | Open source + consulting | Liminal uses Revideo as rendering backend (Remotion deprecated) |
+| Remotion | Free (OSS) | Open source + consulting | Sinter uses Revideo as rendering backend (Remotion deprecated) |
 
 ### The Gap Nobody Fills
 
@@ -178,7 +178,7 @@ The closest workflow today: Claude/ChatGPT for generation → paste into p5.js e
 
 #### 2. API / Engine Licensing
 
-> Let other apps embed Liminal's generation + iteration + scoring engine via API.
+> Let other apps embed Sinter's generation + iteration + scoring engine via API.
 
 | Dimension | Score | Notes |
 |---|---|---|
@@ -226,7 +226,7 @@ The closest workflow today: Claude/ChatGPT for generation → paste into p5.js e
 
 | Dimension | Score | Notes |
 |---|---|---|
-| Technical Feasibility | 4 | Generation + explanation is LLM-native. Liminal already does this. |
+| Technical Feasibility | 4 | Generation + explanation is LLM-native. Sinter already does this. |
 | Market Demand | 5 | Millions learn creative coding. Coding Train has millions of views. |
 | Revenue Potential | 3 | $10-20/mo subscription. Institutional licenses $500-2000/yr. |
 | Competitive Moat | 2 | Education content is hard to moat. Iterative feedback loop is unique. |
@@ -264,7 +264,7 @@ The closest workflow today: Claude/ChatGPT for generation → paste into p5.js e
 
 | Dimension | Score | Notes |
 |---|---|---|
-| Technical Feasibility | 2 | Needs extraction from Liminal, generalization, documentation, SDK. |
+| Technical Feasibility | 2 | Needs extraction from Sinter, generalization, documentation, SDK. |
 | Market Demand | 3 | AI companies building creative tools need quality assessment and model routing. |
 | Revenue Potential | 4 | Enterprise licensing: $1K-10K/mo. |
 | Competitive Moat | 4 | Accumulated quality data + model routing expertise + learning loop. |
@@ -324,11 +324,11 @@ The closest workflow today: Claude/ChatGPT for generation → paste into p5.js e
 
 ### Current License Status
 
-Liminal's `LICENSE` file is **MIT** — this means anyone can fork, modify, and even sell the code without paying Simon. This must change before any commercial activity.
+Sinter's `LICENSE` file is **MIT** — this means anyone can fork, modify, and even sell the code without paying Simon. This must change before any commercial activity.
 
 ### Integrated Dependencies — Attribution Requirements
 
-Liminal integrates a significant number of external libraries. Each has its own license requirements:
+Sinter integrates a significant number of external libraries. Each has its own license requirements:
 
 #### Permissive (MIT/BSD/Apache — Safe for proprietary)
 
@@ -366,19 +366,19 @@ Liminal integrates a significant number of external libraries. Each has its own 
 ### Critical Legal Actions
 
 1. **Re-license from MIT to proprietary** — This is the single most important legal step. The current MIT license allows anyone to compete with a fork.
-2. **Audit hydra-synth and strudel dependencies** — Both are AGPL. If Liminal runs these server-side (which it does via HydraAdapter and StrudelAdapter), the AGPL may require disclosing Liminal's source code. Options:
+2. **Audit hydra-synth and strudel dependencies** — Both are AGPL. If Sinter runs these server-side (which it does via HydraAdapter and StrudelAdapter), the AGPL may require disclosing Sinter's source code. Options:
    - Run Hydra/Strudel client-side only (in the browser) — AGPL doesn't apply to client-side use
    - Negotiate commercial licenses with the library authors
    - Replace with non-AGPL alternatives (hardest path)
 3. **LLM output ownership** — Verify terms for each LLM provider. Most (OpenAI, Anthropic) grant ownership of outputs to the user. MiniMax terms need verification.
-4. **Trademark "Liminal"** — Search USPTO for existing trademarks. The name is generic enough that it may be taken.
+4. **Trademark "Sinter"** — Search USPTO for existing trademarks. The name is generic enough that it may be taken.
 5. **Attribution compliance** — Create a `THIRD_PARTY_NOTICES` file listing all dependencies with their license text. Required for MIT/BSD/Apache libraries.
 6. **FFmpeg linking** — Ensure FFmpeg is dynamically linked (called via CLI, not statically compiled). Static linking would trigger GPL.
 7. **Music/sound licensing** — If Tone.js or Strudel generates music, ensure there's no copyright claim from training data. This is an evolving legal area.
 
 ### Naming & Branding Considerations
 
-- **"Liminal"** is a common English word meaning "threshold." It's used by several existing products/companies. Trademark search is critical.
+- **"Sinter"** is a common English word meaning "threshold." It's used by several existing products/companies. Trademark search is critical.
 - Alternative names if trademark is unavailable: **Atelier** (already used as legacy config name), **Threshold**, **The Mill**, **Compost** (leaning into the compost metaphor).
 - Domain availability: `liminal.dev`, `liminal.art`, `liminal.studio` should be checked.
 
@@ -413,7 +413,7 @@ Liminal integrates a significant number of external libraries. Each has its own 
 |---|---|---|---|
 | MIT fork competes with proprietary version | High | High | Re-license before launch. Add CLA for future contributions. |
 | AGPL violation from server-side Hydra/Strudel | High | Medium | Client-side execution. Commercial license. |
-| Trademark conflict on "Liminal" name | Medium | Medium | Trademark search. Alternative names ready. |
+| Trademark conflict on "Sinter" name | Medium | Medium | Trademark search. Alternative names ready. |
 | LLM-generated code copyright ambiguity | Medium | Medium | Clear ToS. Indemnification clause. Provider ownership grants. |
 
 ---
@@ -425,7 +425,7 @@ Liminal integrates a significant number of external libraries. Each has its own 
 1. **Re-license to proprietary** (BSL or custom EULA)
 2. **Audit AGPL dependencies** — resolve hydra-synth and strudel licensing
 3. **Create THIRD_PARTY_NOTICES file**
-4. **Trademark search for "Liminal"**
+4. **Trademark search for "Sinter"**
 5. **Add Contributor License Agreement (CLA)** for any open contributions
 
 ### Phase 1: SaaS MVP (Months 1-3)

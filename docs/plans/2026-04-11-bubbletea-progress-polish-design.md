@@ -1,7 +1,7 @@
 # Bubble Tea Progress Polish Design
 
 ## Context
-Liminal's Bubble Tea operator surface already exposed task cards, timelines, changed files, verification jobs, artifacts, and shortcut help, but it still lacked a strong sense of live motion and progress. The right column was informative yet visually flatter than the rest of Liminal's terminal identity.
+Sinter's Bubble Tea operator surface already exposed task cards, timelines, changed files, verification jobs, artifacts, and shortcut help, but it still lacked a strong sense of live motion and progress. The right column was informative yet visually flatter than the rest of Sinter's terminal identity.
 
 ## Intent
 Add the first Charm/Bubbles-driven polish slice without destabilizing the bridge or interaction model:

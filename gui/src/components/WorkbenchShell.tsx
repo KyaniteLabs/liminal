@@ -68,7 +68,7 @@ export function WorkbenchShell({
   const showStopped = recourseState === 'stopped';
   const showGeneratePreviewReady = activeMode === 'generate' && artifactReady;
   const artifactHeading = stageBusy
-    ? 'Liminal is generating…'
+    ? 'Sinter is generating…'
     : showRecovery
       ? showStopped ? 'Generation stopped' : 'No preview was produced'
     : showGeneratePreviewReady
@@ -104,7 +104,7 @@ export function WorkbenchShell({
         <div className="liminal-brand">
           <span className="liminal-brand__mark">L</span>
           <div>
-            <h1>Liminal Studio</h1>
+            <h1>Sinter Studio</h1>
             <p>Codex for creative coding</p>
           </div>
         </div>
@@ -269,7 +269,7 @@ export function WorkbenchShell({
 
         <section className="liminal-chat-composer" aria-label="Message composer">
           <div className="liminal-composer-head">
-            <label className="liminal-composer-label" htmlFor="workbench-prompt">Message Liminal</label>
+            <label className="liminal-composer-label" htmlFor="workbench-prompt">Message Sinter</label>
             <span>{stageBusy ? 'Working' : 'Ready'}</span>
           </div>
           <textarea

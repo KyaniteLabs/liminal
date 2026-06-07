@@ -1,8 +1,8 @@
-# Liminal Final QA Persona-Cluster Audit
+# Sinter Final QA Persona-Cluster Audit
 
 Date: 2026-05-06
 
-This folder records the final pre-publication QA campaign for Liminal.
+This folder records the final pre-publication QA campaign for Sinter.
 
 The campaign uses the imported Factory personas and their RAG seed manifests as read-only expert lenses. It does not wire personas into runtime behavior, prompts, Studio, TUI, or audit automation.
 

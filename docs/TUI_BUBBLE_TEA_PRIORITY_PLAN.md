@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This is the shortest practical Bubble Tea plan for the Liminal TUI.
+This is the shortest practical Bubble Tea plan for the Sinter TUI.
 
 It is organized into:
 - Now

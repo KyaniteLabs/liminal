@@ -3,7 +3,7 @@
  *
  * Every compost operation (add files, digest, promote seeds, run soup cycles,
  * prune) is recorded as an immutable event in an append-only log. This gives
- * Liminal something it has never had: a timeline. Users can:
+ * Sinter something it has never had: a timeline. Users can:
  *
  *   - Inspect what happened and when  (timeline / log)
  *   - Undo the most recent operation   (undo)
@@ -105,7 +105,7 @@ export interface Branch {
 export interface EventStoreConfig {
   /** Path to the project root directory. */
   projectRoot: string;
-  /** Subdirectory name for Liminal data (default: '.liminal'). */
+  /** Subdirectory name for Sinter data (default: '.liminal'). */
   dataDir?: string;
   /** Database filename (default: 'project.liminal'). */
   dbFilename?: string;

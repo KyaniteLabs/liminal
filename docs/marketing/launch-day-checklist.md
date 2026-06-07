@@ -1,4 +1,4 @@
-# Launch Day Checklist — Liminal Building in Public
+# Launch Day Checklist — Sinter Building in Public
 
 **Date:** ___/___/2026
 **Goal:** First public launch-candidate reveal. Establish credibility through a real chat-first Studio demo, same-screen preview, and honest caveats.
@@ -13,7 +13,7 @@
 - [ ] **Reply with prompt challenge** to your own thread
 - [ ] **Post TikTok/Reel:** Jellyfish generation video (Script 2)
 - [ ] **Cross-post to Instagram** with same video
-- [ ] **Update bio:** "Building Liminal — Codex for creative coding. Chat-first Studio, real previews, honest caveats."
+- [ ] **Update bio:** "Building Sinter — Codex for creative coding. Chat-first Studio, real previews, honest caveats."
 
 ## Midday (12:00-1:00 PM PT)
 
@@ -71,7 +71,7 @@ If someone asks something you didn't expect:
 > Right now there isn't one. I'm building the thing I wish existed. If enough people want it, we'll figure that out together.
 
 **"This is just vibe coding"**
-> Liminal is closer to Codex for creative coding: chat, generate, preview, revise, and keep proof receipts available when something needs debugging.
+> Sinter is closer to Codex for creative coding: chat, generate, preview, revise, and keep proof receipts available when something needs debugging.
 
 ---
 

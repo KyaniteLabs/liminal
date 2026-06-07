@@ -1,5 +1,5 @@
 /**
- * Error types for Liminal
+ * Error types for Sinter
  *
  * Provides domain-specific error classes for better error handling
  * and debugging across the codebase.

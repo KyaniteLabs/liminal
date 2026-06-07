@@ -17,7 +17,7 @@ const {
   mockComplete: vi.fn(),
   mockStreamWithThinking: vi.fn(),
   mockGetConfig: vi.fn(() => ({ model: 'test-model' })),
-  mockLoadSoul: vi.fn(async () => 'You are Liminal, a creative coding partner.'),
+  mockLoadSoul: vi.fn(async () => 'You are Sinter, a creative coding partner.'),
   mockFormatError: vi.fn((_ctx: string, err: unknown) => `Formatted: ${String(err)}`),
   mockMetaHarnessGetStatus: vi.fn(() => ({
     initialized: true,

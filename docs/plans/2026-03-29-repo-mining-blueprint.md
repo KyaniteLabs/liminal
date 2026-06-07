@@ -1,15 +1,15 @@
-# Liminal GitHub Repo Mining Blueprint
+# Sinter GitHub Repo Mining Blueprint
 
-> **Purpose**: Single-source guide for a coding agent to mine 45 GitHub repos into Liminal
+> **Purpose**: Single-source guide for a coding agent to mine 45 GitHub repos into Sinter
 > **Owner**: Pastorsimon1798
 > **Date**: 2026-03-29
 > **Status**: READY FOR EXECUTION
 
 ---
 
-## What Is Liminal
+## What Is Sinter
 
-Liminal is a self-recursive creative coding agent at `/Users/simongonzalezdecruz/workspaces/liminal/`. It generates emergent generative art through iterative LLM-driven refinement via a **Ralph-Wiggum Loop**: the same prompt runs repeatedly, but context accumulates (artistic knowledge, compost DNA, evaluation history, archive examples). The agent generates code, evaluates its own output, and progressively improves until a quality gate is met.
+Sinter is a self-recursive creative coding agent at `/Users/simongonzalezdecruz/workspaces/liminal/`. It generates emergent generative art through iterative LLM-driven refinement via a **Ralph-Wiggum Loop**: the same prompt runs repeatedly, but context accumulates (artistic knowledge, compost DNA, evaluation history, archive examples). The agent generates code, evaluates its own output, and progressively improves until a quality gate is met.
 
 **Stack**: TypeScript, Node.js, ESM, `tsc` build to `dist/`, pnpm, 187 test files, MIT license.
 
@@ -19,7 +19,7 @@ Liminal is a self-recursive creative coding agent at `/Users/simongonzalezdecruz
 
 ---
 
-## Existing Liminal Architecture
+## Existing Sinter Architecture
 
 The agent must understand what already exists before writing code. All paths relative to project root.
 
@@ -139,7 +139,7 @@ These contain the highest-value code — complete evolutionary systems, audio pi
 
 Multi-head creative AI with MAP-Elites quality-diversity optimization and novelty search.
 
-| Source File | What to Port | Target in Liminal |
+| Source File | What to Port | Target in Sinter |
 |------------|--------------|-------------------|
 | `src/hydra/creative/map_elites.py` | N-dimensional BehaviorGrid (20x20), coverage tracking, behavior diversity metrics | `src/evolution/MapElites.ts` — upgrade from 2D to N-dim |
 | `src/hydra/creative/novelty_archive.py` | K-NN with capacity-bounded deque, exponential decay sparseness, persistence | `src/evolution/NoveltyArchive.ts` — add save/load |
@@ -155,7 +155,7 @@ Multi-head creative AI with MAP-Elites quality-diversity optimization and novelt
 
 Evolution simulator with 55+ genetic traits, speciation, and adaptive procedural music.
 
-| Source File | What to Port | Target in Liminal |
+| Source File | What to Port | Target in Sinter |
 |------------|--------------|-------------------|
 | `src/genetics/MutationEngine.ts` | Per-trait mutation (15% rate, ±15% magnitude), beneficial bias (10%), super mutations, DNA points | `src/evolution/MutationEngine.ts` (NEW) |
 | `src/genetics/TraitSynergies.ts` | 12 emergent synergies (Hunter=speed+vision, Tank=armor+size). Trait interconnections | `src/evolution/TraitSynergies.ts` (NEW) |
@@ -171,7 +171,7 @@ Evolution simulator with 55+ genetic traits, speciation, and adaptive procedural
 
 79 MCP tools for video editing, published to PyPI, 545 tests.
 
-| Source File | What to Port | Target in Liminal |
+| Source File | What to Port | Target in Sinter |
 |------------|--------------|-------------------|
 | Full MCP architecture | 3-interface pattern (MCP server + Python client + CLI), structured JSON returns | `src/mcp/server.ts` (NEW) |
 | Timeline DSL | JSON declarative video editing language | `src/mcp/tools/timeline.ts` (NEW) |
@@ -186,7 +186,7 @@ Evolution simulator with 55+ genetic traits, speciation, and adaptive procedural
 
 Integrated 3D design + manufacturing platform with sophisticated AI prompt architecture.
 
-| Source File | What to Port | Target in Liminal |
+| Source File | What to Port | Target in Sinter |
 |------------|--------------|-------------------|
 | `caedoapi/ai/prompts.py` | 8 specialized prompts with temperature tuning (0.2-0.8), anti-hallucination, JSON schemas | `src/prompts/specialized/` (NEW directory, 8 files) |
 | `caedoapi/services/memory_service.py` | Extract user preferences from conversations, importance scoring (0-1), category-based | `src/brain/CreativePreferenceExtractor.ts` (NEW) |
@@ -201,7 +201,7 @@ Integrated 3D design + manufacturing platform with sophisticated AI prompt archi
 
 Transforms voice (singing, humming, speaking) into 3D ceramic sculptures in real-time.
 
-| Source File | What to Port | Target in Liminal |
+| Source File | What to Port | Target in Sinter |
 |------------|--------------|-------------------|
 | `src/lib/engine/physicsMapping.ts` | Audio-frame-to-lathe-profile: energy→radius, pitch→height, semitone log scaling, beat impulse (1.2x) | `src/audio/VoiceToShapeMapper.ts` (NEW) |
 | `src/lib/audio/audioTheory.ts` | Hz→MIDI, scale quantization, **pitch-class-to-HSL** (12 notes = 30° hue steps: C=Red, E=Yellow, G#=Blue) | `src/audio/PitchColorMapper.ts` (NEW) |
@@ -214,7 +214,7 @@ Transforms voice (singing, humming, speaking) into 3D ceramic sculptures in real
 
 Voice-to-song: records singing/humming/beatboxing → complete music arrangements.
 
-| Source File | What to Port | Target in Liminal |
+| Source File | What to Port | Target in Sinter |
 |------------|--------------|-------------------|
 | `lib/audio/pitch-detector.ts` | Multi-method: Hann windowing (4096 samples, 75% overlap), pre-emphasis, noise profile, confidence scoring | `src/audio/PitchDetector.ts` (NEW) |
 | `lib/audio/music-generator.ts` | Drums (MembraneSynth/NoiseSynth/MetalSynth), bass (sawtooth), chords (PolySynth triangle) | `src/audio/BackingTrackGenerator.ts` (NEW) |
@@ -227,7 +227,7 @@ Voice-to-song: records singing/humming/beatboxing → complete music arrangement
 
 AI-powered music composition with proven generative algorithms.
 
-| Source File | What to Port | Target in Liminal |
+| Source File | What to Port | Target in Sinter |
 |------------|--------------|-------------------|
 | `src/generators/euclidean.ts` | **Bjorklund's algorithm**: distribute N pulses across M steps, rotation support, role-specific MIDI mapping | `src/music/EuclideanRhythm.ts` (NEW) |
 | `src/generators/markov.ts` | Order-1 to Order-4 Markov chains, transition matrix, probabilistic walking | `src/music/MarkovChain.ts` (NEW) |
@@ -556,7 +556,7 @@ Deliberating panel replaces single evaluator.
 
 ### Phase 6: MCP Server + Smart Routing (5 new files, 2 modified)
 
-Expose Liminal as an MCP server with intelligent routing.
+Expose Sinter as an MCP server with intelligent routing.
 
 **New files:**
 1. `src/mcp/server.ts` — from mcp-video + DialectOS patterns
@@ -603,9 +603,9 @@ Polish and enrichment.
 - Use `string` template literals instead of `fmt.Sprintf`
 
 ### Integration Rules
-1. All new modules must use Liminal's existing `LLMClient` for AI calls (never call APIs directly)
+1. All new modules must use Sinter's existing `LLMClient` for AI calls (never call APIs directly)
 2. All new modules must use `Gallery` for persistence (never write custom file I/O except for module-specific data)
-3. All new modules must follow Liminal's TypeScript conventions (ESM, strict mode, no `any`)
+3. All new modules must follow Sinter's TypeScript conventions (ESM, strict mode, no `any`)
 4. All new modules must have corresponding test files in `test/`
 5. All new CLI commands must be wired into `bin/liminal` and `src/compost/cli.ts` as appropriate
 

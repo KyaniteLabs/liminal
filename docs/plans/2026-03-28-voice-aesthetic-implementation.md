@@ -725,5 +725,5 @@ After all tasks complete, verify end-to-end:
 2. **Aesthetic gate test:** Run `RalphLoop.run()` with `useAestheticGuardrails: true` and a code sample with 15+ colors — verify violations detected and score penalty applied
 3. **Audio analysis test:** Create a 440Hz sine wave `Float32Array`, run through `AudioAnalyzer`, verify pitch detected near A4 and visual params generated
 4. **Prompt validation:** `npx vitest run test/prompts/` — all 38 IDs registered (36 existing + 2 new)
-5. **CLI smoke test:** `node bin/liminal --help` shows new `--voice`, `--aesthetic` flags
+5. **CLI smoke test:** `node bin/sinter --help` shows new `--voice`, `--aesthetic` flags
 6. **TypeScript compilation:** `npx tsc --noEmit` — no type errors

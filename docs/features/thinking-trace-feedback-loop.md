@@ -2,9 +2,9 @@
 
 ## Overview
 
-The **Thinking-Trace Feedback Loop** is Liminal's mechanism for capturing, analyzing, and learning from LLM reasoning traces—turning every generation attempt (success or failure) into training signal for system improvement.
+The **Thinking-Trace Feedback Loop** is Sinter's mechanism for capturing, analyzing, and learning from LLM reasoning traces—turning every generation attempt (success or failure) into training signal for system improvement.
 
-> **Core Innovation**: Unlike traditional systems that discard "failed" outputs, Liminal treats the model's reasoning process as first-class telemetry, extracting insights from *how* the model thinks, not just *what* it produces.
+> **Core Innovation**: Unlike traditional systems that discard "failed" outputs, Sinter treats the model's reasoning process as first-class telemetry, extracting insights from *how* the model thinks, not just *what* it produces.
 
 > **Unique Architecture**: Generator thinking and harness thinking are kept completely separate and analyzed differently. The harness asks two critical questions: **"WHERE DID IT GO WRONG?"** and **"HOW CAN I COMMUNICATE BETTER?"**
 
@@ -135,7 +135,7 @@ The **Thinking-Trace Feedback Loop** is Liminal's mechanism for capturing, analy
 
 ### 1. Reasoning Distillation
 
-Traditional systems treat the model as a black box. Liminal extracts the reasoning trace:
+Traditional systems treat the model as a black box. Sinter extracts the reasoning trace:
 
 ```
 Input → [Model] → {Thinking} → {Output}
@@ -328,7 +328,7 @@ As a coding agent, you have full visibility:
 
 ## Summary
 
-The Thinking-Trace Feedback Loop transforms Liminal from a **code generator** into a **learning system** that:
+The Thinking-Trace Feedback Loop transforms Sinter from a **code generator** into a **learning system** that:
 
 1. **Captures** reasoning traces from ALL 9 generators
 2. **Separates** generator thinking from harness thinking

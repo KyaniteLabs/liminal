@@ -260,7 +260,7 @@ class TuiDebugger {
     if (!this.fileStream) return;
     const header = [
       '='.repeat(80),
-      `Liminal TUI Debug Log`,
+      `Sinter TUI Debug Log`,
       `Started: ${new Date().toISOString()}`,
       `PID: ${process.pid}`,
       `Node: ${process.version}`,

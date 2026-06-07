@@ -20,7 +20,7 @@ describe('RevideoGenerator', () => {
           'import { createRef, waitFor } from "@revideo/core";',
           'export default makeScene2D("TitleCard", function* (view) {',
           '  const title = createRef<Txt>();',
-          '  view.add(<Rect width={1920} height={1080} fill={"#050a18"}><Txt ref={title} text={"Liminal"} fill={"#fff"} /></Rect>);',
+          '  view.add(<Rect width={1920} height={1080} fill={"#050a18"}><Txt ref={title} text={"Sinter"} fill={"#fff"} /></Rect>);',
           '  yield* title().opacity(1, 0.8);',
           '  yield* waitFor(1);',
           '});',

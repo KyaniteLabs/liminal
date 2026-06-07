@@ -1,4 +1,4 @@
-# ADR 0003 - Liminal Instrument Performance Shape
+# ADR 0003 - Sinter Instrument Performance Shape
 
 ## Status
 
@@ -10,11 +10,11 @@ Accepted for this branch.
 
 ## Context
 
-The handoff clarifies that Liminal Instrument is not merely Sing. It is the
-performance sibling of Liminal Sites:
+The handoff clarifies that Sinter Instrument is not merely Sing. It is the
+performance sibling of Sinter Sites:
 
 ```text
-Liminal Instrument = Liminal tuned for live performance.
+Sinter Instrument = Sinter tuned for live performance.
 ```
 
 Studio creates aesthetic systems. Instrument makes them playable.
@@ -22,7 +22,7 @@ Studio creates aesthetic systems. Instrument makes them playable.
 ## Decision
 
 Instrument must be a deterministic, local-first runtime for performing
-Liminal-made aesthetic systems. AI may assist through optional sidecars, but it
+Sinter-made aesthetic systems. AI may assist through optional sidecars, but it
 must never block the hot loop.
 
 ## Input Families

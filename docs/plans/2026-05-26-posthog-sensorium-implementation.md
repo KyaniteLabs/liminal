@@ -1,10 +1,10 @@
 # PostHog Sensorium Implementation Plan
 
-**Goal:** Convert the existing literal PostHog engagement loop into a mission-safe aesthetic sensorium where PostHog raw data drives bounded decorative Liminal output without disturbing existing KyaniteLabs analytics or conversion surfaces.
+**Goal:** Convert the existing literal PostHog engagement loop into a mission-safe aesthetic sensorium where PostHog raw data drives bounded decorative Sinter output without disturbing existing KyaniteLabs analytics or conversion surfaces.
 
 **Architecture:** Keep the current PostHog client, slot manager, daemon, and HTML injection work, but introduce a separate signal-to-aesthetic pipeline. Raw PostHog data becomes `SiteSignalVector`, then `AestheticIntent`, then bounded `AestheticLayerConfig`, then optional generation/deployment. `EngagementFitness` remains available for experiments but is no longer the core behavior.
 
-**Tech Stack:** TypeScript, Vitest, existing Liminal evolution/render systems, `posthog-node`, existing CLI/daemon structure.
+**Tech Stack:** TypeScript, Vitest, existing Sinter evolution/render systems, `posthog-node`, existing CLI/daemon structure.
 
 ---
 
@@ -24,7 +24,7 @@ The newer `posthog-sensorium-design.md` overrides the earlier engagement/A-B fra
 - Follow TDD for each component.
 - Do not remove existing PostHog analytics behavior.
 - Do not rename existing traditional analytics events.
-- Prefix new Liminal analytics events with `liminal_`.
+- Prefix new Sinter analytics events with `liminal_`.
 - Keep changes surgical; do not rewrite unrelated evolution systems.
 - Prefer deterministic pure functions for signal mapping and guardrails.
 - Generated aesthetic parameters must be bounded and mission-safe.
@@ -821,8 +821,8 @@ sed -n '260,330p' src/utils/htmlWrapper.ts
 
 Add tests asserting:
 
-- Liminal injection only happens when Liminal PostHog env/config is present.
-- Liminal events are prefixed with `liminal_`.
+- Sinter injection only happens when Sinter PostHog env/config is present.
+- Sinter events are prefixed with `liminal_`.
 - The injected snippet does not overwrite an existing `window.posthog` initialization if one already exists in the page.
 - Layer load/failure events use names like `liminal_layer_loaded` / `liminal_layer_failed_safe`.
 
@@ -846,7 +846,7 @@ Expected: PASS.
 
 ```bash
 git add src/utils/htmlWrapper.ts test/unit/generation/HTMLWrapper.test.ts
-git commit -m "fix: isolate liminal posthog layer analytics"
+git commit -m "fix: isolate sinter posthog layer analytics"
 git push
 ```
 
@@ -987,7 +987,7 @@ git diff --stat origin/main...HEAD
 git diff --name-only origin/main...HEAD
 ```
 
-Expected: only sensorium-related files and existing Liminal/PostHog integration files changed.
+Expected: only sensorium-related files and existing Sinter/PostHog integration files changed.
 
 **Step 5: Final commit if any fixes remain**
 
@@ -1003,4 +1003,4 @@ git push
 
 The first implementation pass should avoid live PostHog API complexity. Build the pure transformation pipeline first and test it with raw event fixtures. Only then wire daemon fetching/writing.
 
-Do not chase a perfect autonomous website in this pass. The goal is to make the architecture safe, explicit, and testable so future Liminal generation can use it without becoming counterproductive.
+Do not chase a perfect autonomous website in this pass. The goal is to make the architecture safe, explicit, and testable so future Sinter generation can use it without becoming counterproductive.

@@ -2,7 +2,7 @@
 
 ## Target experience
 
-Liminal Studio is a chat-first creative coding agent. Artists should start from the conversation, choose or describe the medium in plain language, and immediately see the generated artifact as a real visual/audio/composition preview. Internal proof, harness, and receipt details remain available, but they are not the main visual object.
+Sinter Studio is a chat-first creative coding agent. Artists should start from the conversation, choose or describe the medium in plain language, and immediately see the generated artifact as a real visual/audio/composition preview. Internal proof, harness, and receipt details remain available, but they are not the main visual object.
 
 ## Preserved capability map
 

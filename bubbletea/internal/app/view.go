@@ -309,7 +309,7 @@ func (m Model) renderChatContent() string {
 	if len(m.ChatBlocks) == 0 && m.ActiveResponse == "" {
 		sb.WriteString(lipgloss.NewStyle().
 			Foreground(ui.FgMuted).
-			Render("Welcome to Liminal. Type a message to begin."))
+			Render("Welcome to Sinter. Type a message to begin."))
 	}
 
 	return sb.String()

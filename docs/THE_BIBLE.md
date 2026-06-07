@@ -1,4 +1,4 @@
-# THE BIBLE - Liminal System Documentation
+# THE BIBLE - Sinter System Documentation
 
 **Version:** 2.1.0 - Beta
 **Date:** 2026-04-15
@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-Liminal is a creative coding agent with self-improving capabilities. It generates p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video (Revideo/Hydra), and more. The system features:
+Sinter is a creative coding agent with self-improving capabilities. It generates p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video (Revideo/Hydra), and more. The system features:
 
 - **28 Documented Systems** across core runtime, operator surfaces, and support infrastructure
 - **18 Guardrails** (M1-M18 implemented)
@@ -684,7 +684,7 @@ Current runtime truth: the Meta-Harness is in manual-memory mode. It logs failur
 **Architecture:**
 - Pane-first layout: chat history on the left, operator surface on the right
 - Explicit modes: Chat, Inspect, Action, Confirm
-- Multiline operator composer: textarea input with Liminal-themed prompt/placeholder styling, `Enter` to send, and `Alt+Enter` to insert a newline
+- Multiline operator composer: textarea input with Sinter-themed prompt/placeholder styling, `Enter` to send, and `Alt+Enter` to insert a newline
 - Active-response pane: streaming responses don't touch committed history
 - Confirmation-first: no state mutation without operator approval
 - Trust/provenance labels: provider, model, trust-level badges

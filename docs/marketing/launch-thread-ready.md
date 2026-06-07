@@ -1,4 +1,4 @@
-# Liminal Launch Thread — Launch-Candidate Copy
+# Sinter Launch Thread — Launch-Candidate Copy
 
 **Positioning:** Codex for creative coding. Clean chat, same-screen preview, honest proof.
 
@@ -8,7 +8,7 @@ Copy-paste each post, then attach fresh screenshots from the local proof bundle 
 
 ## Post 1/8 — The Hook
 
-I built Liminal: Codex for creative coding.
+I built Sinter: Codex for creative coding.
 
 You chat with an AI agent, describe a sketch / shader / sound / scene, and the artifact previews in the same screen while you keep iterating.
 
@@ -37,7 +37,7 @@ The internal harness is still there, but it does not have to be the artist's men
 
 A creative coding tool has to show the work where the conversation is happening.
 
-Liminal's launch-candidate smoke generated a p5.js moonlit garden, mounted the preview in Studio, then accepted a revision: darker, slower, more spacious.
+Sinter's launch-candidate smoke generated a p5.js moonlit garden, mounted the preview in Studio, then accepted a revision: darker, slower, more spacious.
 
 Same screen. No pop-up-only workflow.
 
@@ -47,11 +47,11 @@ Same screen. No pop-up-only workflow.
 
 ## Post 4/8 — The Mediums
 
-Liminal can target multiple creative-code domains:
+Sinter can target multiple creative-code domains:
 
 p5.js, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, TextGen.
 
-The user can name a medium explicitly, or Liminal can choose one from the creative brief.
+The user can name a medium explicitly, or Sinter can choose one from the creative brief.
 
 ---
 
@@ -69,7 +69,7 @@ It also handles denied microphone permission with a clear recovery message.
 
 ## Post 6/8 — Honesty
 
-Liminal is not perfect.
+Sinter is not perfect.
 
 The point is not to hide failure. The point is to make creative generation observable enough that failures can be diagnosed, repaired, and improved without pretending every output is magic.
 

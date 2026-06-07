@@ -296,7 +296,7 @@ export class ShaderGenerator extends TierBasedGenerator {
 
   private providerRecoveryShader(): string {
     return [
-      '/* Liminal provider recovery: local GLSL safety shader rendered after the model returned no artifact. */',
+      '/* Sinter provider recovery: local GLSL safety shader rendered after the model returned no artifact. */',
       'precision mediump float;',
       'uniform vec2 u_resolution;',
       'uniform float u_time;',

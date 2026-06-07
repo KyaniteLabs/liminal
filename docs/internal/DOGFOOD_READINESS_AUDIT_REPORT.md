@@ -1,4 +1,4 @@
-# Liminal Dog Food Testing Readiness - Comprehensive Audit Report
+# Sinter Dog Food Testing Readiness - Comprehensive Audit Report
 
 **Audit Date:** 2026-04-03  
 **Auditor:** Agent (Worktree: agent-1775272239)  
@@ -346,7 +346,7 @@ npx tsx scripts/generate-dogfood-report.ts
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Dogfood    │────▶│   Liminal   │────▶│  Generator  │
+│  Dogfood    │────▶│   Sinter   │────▶│  Generator  │
 │   Script    │     │     run()   │     │   (LLM)     │
 └─────────────┘     └─────────────┘     └──────┬──────┘
        │                                        │

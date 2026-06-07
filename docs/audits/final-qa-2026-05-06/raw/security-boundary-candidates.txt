@@ -346,7 +346,7 @@ test/integration/entropy-compost-cycle.test.ts:63:    const heapDir = path.join(
 test/integration/entropy-compost-cycle.test.ts:65:    const file = path.join(heapDir, 'doc.txt');
 test/integration/entropy-compost-cycle.test.ts:77:    const heapDir = path.join(tmpDir, 'heap');
 test/integration/entropy-compost-cycle.test.ts:79:    const file = path.join(heapDir, 'doc.txt');
-gui/start.js:22:  console.log(`Liminal GUI backend: http://localhost:${PORT}`);
+gui/start.js:22:  console.log(`Sinter GUI backend: http://localhost:${PORT}`);
 test/integration/dual-llm.test.ts:1:// Allow localhost for tests
 test/integration/dual-llm.test.ts:55:    process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:1234/v1';
 test/integration/dual-llm.test.ts:107:    process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434';
@@ -888,7 +888,7 @@ test/compost/CompostSoup.test.ts:50:      seedDir: path.join(tmpDir, 'seeds'),
 scripts/utils/start-studio.js:6:import { spawn } from 'node:child_process';
 scripts/utils/start-studio.js:45:const backend = spawn(process.execPath, ['gui/start.js'], {
 scripts/utils/start-studio.js:66:  await waitFor(`http://localhost:${apiPort}/api/health`);
-scripts/utils/start-studio.js:67:  console.log(`Liminal Studio frontend: http://localhost:${guiPort}`);
+scripts/utils/start-studio.js:67:  console.log(`Sinter Studio frontend: http://localhost:${guiPort}`);
 scripts/utils/start-studio.js:68:  frontend = spawn(npmCmd, ['run', 'dev', '--', '--host', 'localhost', '--port', String(guiPort)], {
 scripts/utils/start-studio.js:69:    cwd: path.join(root, 'gui'),
 scripts/utils/start-studio.js:71:    env: { ...process.env, VITE_API_TARGET: `http://localhost:${apiPort}` },

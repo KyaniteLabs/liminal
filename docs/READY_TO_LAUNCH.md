@@ -6,9 +6,9 @@
 
 > Current status: historical preflight artifact, not a live launch-readiness claim.
 > For current verification policy, use `docs/launch/test-ci-truth-matrix-2026-05-01.md`; for current launch proof, rerun the proof commands rather than trusting this historical preflight.
-> As of 2026-04-19, Liminal is a launch candidate with proof slices complete, but full launch readiness still depends on the remaining manual/live gates and documentation truth pass.
+> As of 2026-04-19, Sinter is a launch candidate with proof slices complete, but full launch readiness still depends on the remaining manual/live gates and documentation truth pass.
 
-**Historical pre-flight package for Liminal Meta-Harness**
+**Historical pre-flight package for Sinter Meta-Harness**
 
 ---
 
@@ -39,7 +39,7 @@
 ### Option 1: Quick Shell Script (30 seconds)
 
 ```bash
-cd /Users/simongonzalezdecruz/workspaces/liminal
+cd /Users/simongonzalezdecruz/workspaces/sinter
 ./docs/AUDIT_QUICK.sh
 ```
 
@@ -54,7 +54,7 @@ cd /Users/simongonzalezdecruz/workspaces/liminal
 
 **Give this prompt to your auditing agent:**
 
-> You are a Pre-Flight Auditing Agent for the Liminal Meta-Harness. Perform a comprehensive audit of /Users/simongonzalezdecruz/workspaces/liminal before activation. Check: 1) Build passes, 2) Dependencies present, 3) Harness wiring (RalphLoop→metaHarness, TUI→HarnessAgent), 4) Task files valid JSON, 5) Safety systems exist, 6) LLM configured. Provide GO/NO-GO decision with detailed report.
+> You are a Pre-Flight Auditing Agent for the Sinter Meta-Harness. Perform a comprehensive audit of /Users/simongonzalezdecruz/workspaces/sinter before activation. Check: 1) Build passes, 2) Dependencies present, 3) Harness wiring (RalphLoop→metaHarness, TUI→HarnessAgent), 4) Task files valid JSON, 5) Safety systems exist, 6) LLM configured. Provide GO/NO-GO decision with detailed report.
 
 **Or copy the full prompt from:** `docs/AUDIT_PROMPT.md`
 
@@ -62,7 +62,7 @@ cd /Users/simongonzalezdecruz/workspaces/liminal
 
 ```bash
 # 1. Build
-cd /Users/simongonzalezdecruz/workspaces/liminal
+cd /Users/simongonzalezdecruz/workspaces/sinter
 npm run build
 # Expected: No errors
 

@@ -355,7 +355,7 @@ export function buildDefaultSingPreviewHtml(): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Liminal Live Audio</title>
+  <title>Sinter Live Audio</title>
   <style>
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#030508}
     #liminal-layer-0{position:absolute;inset:0;z-index:0}

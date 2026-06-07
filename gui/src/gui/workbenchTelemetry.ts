@@ -58,7 +58,7 @@ export interface WorkbenchClarificationRequest {
 }
 
 export interface WorkbenchCognitiveReceipt {
-  heading: 'What Liminal learned';
+  heading: 'What Sinter learned';
   loop: string;
   items: Array<{ organ: string; status: string; detail: string }>;
   writeBackStatus: 'observed' | 'partial' | 'skipped' | 'missing';
@@ -457,7 +457,7 @@ export function latestCognitiveReceipt(events: WorkbenchBridgeEvent[]): Workbenc
   const writeBackItems = cognitiveWriteBackItems(items);
 
   return {
-    heading: 'What Liminal learned',
+    heading: 'What Sinter learned',
     loop: String(receipt.loop || 'creative'),
     items,
     writeBackStatus: cognitiveWriteBackStatus(writeBackItems),
@@ -785,7 +785,7 @@ export function latestClarificationRequest(events: WorkbenchBridgeEvent[]): Work
     if (event.type === 'generation.clarification_needed') {
       const questions = Array.isArray(event.questions) ? event.questions : [];
       return {
-        question: String(questions[0] || event.reason || 'What should Liminal generate?'),
+        question: String(questions[0] || event.reason || 'What should Sinter generate?'),
         reason: String(event.reason || 'More detail is needed before generation.'),
       };
     }

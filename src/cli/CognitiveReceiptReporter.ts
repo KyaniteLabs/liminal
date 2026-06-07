@@ -48,7 +48,7 @@ export async function writeCliCognitiveReceipt(options: {
   });
 
   return [
-    '🧠 What Liminal learned:',
+    '🧠 What Sinter learned:',
     ...writeBack.receipts.map((receipt) => `  ${receipt.organ}: ${receipt.status} — ${receipt.detail}`),
     `  artifact: ${writeBack.artifactPath}`,
   ];

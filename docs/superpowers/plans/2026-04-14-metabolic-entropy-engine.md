@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace ad-hoc `Math.random()` in Liminal's creative pipeline with a centralized, constructor-injected entropy generator that harvests randomness from the system's own metabolic state.
+**Goal:** Replace ad-hoc `Math.random()` in Sinter's creative pipeline with a centralized, constructor-injected entropy generator that harvests randomness from the system's own metabolic state.
 
 **Architecture:** Four new files in `src/entropy/` define the engine (`MetabolicEntropyEngine`), compressor (`EntropyCompressor`), harvester (`EntropyHarvester`), and types. Existing creative consumers (`CompostSoup`, `GeneratorHarnessTools`, `MarkovChain`, `DreamEngine`) receive the engine via constructor/options. `CompostMill` triggers a harvest at the end of every digest. The CLI bootstraps the engine with live `EventStore`, `CompostHeap`, and `TelemetryCollector` references.
 
@@ -1123,7 +1123,7 @@ git commit -m "feat(entropy): require entropy engine in DreamEngine and replace 
 - Modify: `bin/liminal`
 - Modify: `src/compost/cli.ts` (if needed for type-only import)
 
-- [ ] **Step 1: Update bin/liminal compost bootstrap**
+- [ ] **Step 1: Update bin/sinter compost bootstrap**
 
 In `bin/liminal`, find the compost command block (around line 567). After the `llm` and `fastLLM` setup, add:
 
@@ -1240,7 +1240,7 @@ Good. Now back to `bin/liminal`:
 - [ ] **Step 2: Commit**
 
 ```bash
-git add bin/liminal
+git add bin/sinter
 git commit -m "feat(entropy): bootstrap MetabolicEntropyEngine in CLI"
 ```
 

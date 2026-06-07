@@ -160,7 +160,7 @@ describe('RepoIndexLite', () => {
 
   it('routes broad agent/harness self-improvement prompts to packet localization instead of the generic runtime facade', () => {
     const prompts = [
-      'Make the prompt to Liminal acts to Liminal improves itself loop concrete for the agent',
+      'Make the prompt to Sinter acts to Sinter improves itself loop concrete for the agent',
       'Improve harness self-improvement without narrowing the creative surface',
       'Tighten TUI self-improvement routing so broad requests become bounded repo work',
     ];

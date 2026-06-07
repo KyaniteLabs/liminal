@@ -40,7 +40,9 @@ Verified by re-render (before → after):
 - **dusk-bloom** (p5 + shader `overlay`): washed out — two pastels + `overlay` = low-contrast (composition-level light-on-light).
 - **ink-garden** (three + hydra `lighten`): vivid mandala + pyramid (hydra quadrant-clipped by the harness).
 
-**Lever identified & addressed**: WS-A fixed contrast *within* a layer, but the composition decomposer chose blends without **inter-layer** contrast awareness. `CompositionOrchestrator.decomposePrompt` now instructs: prefer screen/lighten for bright-over-dark, `normal` for an opaque focal element, avoid multiply/overlay/darken unless layers differ clearly in lightness, give each layer a palette that contrasts the ones beneath, and keep one clear focal layer. *(Builds + tests pass; visual re-verification pending — the studio model, MiniMax, hit its 5-hour token limit mid-pass, resets 20:00 UTC.)*
+**Lever identified & addressed**: WS-A fixed contrast *within* a layer, but the composition decomposer chose blends without **inter-layer** contrast awareness. `CompositionOrchestrator.decomposePrompt` now instructs: prefer screen/lighten for bright-over-dark, `normal` for an opaque focal element, avoid multiply/overlay/darken unless layers differ clearly in lightness, give each layer a palette that contrasts the ones beneath, and keep one clear focal layer.
+
+**Verified (2026-06-07):** the studio model (MiniMax) hit its 5-hour token limit, so the studio role was temporarily repointed to GLM (config backed up + restored) to drive the decomposer. A novel NL composition ("a brass orrery … over a slate workshop, faint music-box melody") decomposed into `three` (`normal`, opacity 1 — opaque focal) + `p5` (`screen`, opacity 0.55 — bright overlay) + `strudel` (audio) — i.e. it **chose the contrast-preserving blends and avoided multiply/overlay entirely**. Rendered composite: a warm amber orrery reading clearly over a dark starfield — coherent and legible, none of the muddy/washed-out failure modes.
 
 ## Honest verdict
 

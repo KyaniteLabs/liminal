@@ -2,6 +2,7 @@ import { LLMClient, LLMConfig, LLMResponse } from '../../llm/LLMClient.js';
 import { GenerationError } from '../../errors/GenerationError.js';
 import { Layer, createLayer, LayerRole } from '../../composition/types.js';
 import { getEffectiveConfig } from '../../config/ConfigLoader.js';
+import { loadRoleConfig } from '../../config/RoleConfig.js';
 import { GENERATOR_TOOLS, createGeneratorToolExecutor } from '../../harness/tools/generator-tools.js';
 import { P5Validator } from '../../core/validators/P5Validator.js';
 
@@ -44,12 +45,22 @@ export class P5GeneratorLLM {
     if (!this._configNeedsResolution) return;
     this._configNeedsResolution = false;
 
-    const config = await getEffectiveConfig(undefined, process.cwd());
-    if (config.baseUrl || config.apiKey) {
+    // Resolve the GENERATOR ROLE (not the default provider). Passing
+    // getEffectiveConfig()'s baseUrl/model here overrides `role: 'generator'`
+    // in the LLMClient constructor, so a per-role generator model is ignored.
+    let gen;
+    try {
+      gen = (await loadRoleConfig(process.cwd())).generator;
+    } catch {
+      const config = await getEffectiveConfig(undefined, process.cwd());
+      gen = config?.baseUrl ? { baseUrl: config.baseUrl, model: config.model, apiKey: config.apiKey, temperature: undefined } : undefined;
+    }
+    if (gen?.baseUrl || gen?.apiKey) {
       this.llm = new LLMClient({
-        baseUrl: config.baseUrl,
-        model: config.model,
-        apiKey: config.apiKey,
+        baseUrl: gen.baseUrl,
+        model: gen.model,
+        apiKey: gen.apiKey,
+        temperature: gen.temperature,
         role: 'generator',
       });
     }

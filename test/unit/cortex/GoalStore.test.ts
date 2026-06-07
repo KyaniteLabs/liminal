@@ -55,7 +55,7 @@ describe('GoalStore', () => {
   });
 
   function makeStore(): GoalStore {
-    return new GoalStore(mockFs as unknown as import('../../../src/fs/LiminalFS.js').LiminalFS);
+    return new GoalStore(mockFs as unknown as import('../../../src/fs/SinterFS.js').SinterFS);
   }
 
   function getStoredGoal(id: string): CortexGoal | null {

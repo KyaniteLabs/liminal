@@ -866,7 +866,7 @@ ${safeCommentCode}
         let liminalToneBpm = ${bpm};
         let liminalToneBeatSeconds = 60 / liminalToneBpm;
         let toneArtifactError = null;
-        function syncLiminalToneTempo() {
+        function syncSinterToneTempo() {
             const authoredBpm = Number(window.Tone?.Transport?.bpm?.value);
             liminalToneBpm = Number.isFinite(authoredBpm) && authoredBpm >= 30 && authoredBpm <= 300
                 ? authoredBpm
@@ -905,12 +905,12 @@ ${safeCommentCode}
             statusEl.className = 'ready';
             statusEl.textContent = 'Tone runtime issue: ' + err.message;
         } finally {
-            syncLiminalToneTempo();
+            syncSinterToneTempo();
         }
 
         playBtn.addEventListener('click', async () => {
             await Tone.start();
-            syncLiminalToneTempo();
+            syncSinterToneTempo();
             if (window.Tone?.Transport?.start) Tone.Transport.start();
             isPlaying = true;
             statusEl.className = 'playing';
@@ -1005,7 +1005,7 @@ ${safeCommentCode}
         let liminalToneBpm = ${bpm};
         let liminalToneBeatSeconds = 60 / liminalToneBpm;
         let liminalTonePlaying = false;
-        function syncLiminalToneTempo() {
+        function syncSinterToneTempo() {
             const authoredBpm = Number(window.Tone?.Transport?.bpm?.value);
             liminalToneBpm = Number.isFinite(authoredBpm) && authoredBpm >= 30 && authoredBpm <= 300
                 ? authoredBpm
@@ -1041,19 +1041,19 @@ ${safeCommentCode}
             console.warn('Tone artifact script error:', error);
             liminalToneStatus.textContent = 'Tone artifact script error: ' + error.message;
         } finally {
-            syncLiminalToneTempo();
+            syncSinterToneTempo();
         }
         document.getElementById('liminal-tone-start').addEventListener('click', async () => {
             try {
                 if (window.Tone?.start) await Tone.start();
-                syncLiminalToneTempo();
+                syncSinterToneTempo();
                 liminalTonePlaying = true;
                 liminalToneStatus.textContent = 'Playing — embedded artifact controls are preserved.';
                 const artifactButton = document.querySelector('#tone-artifact-surface button:not([disabled]), #tone-artifact-surface [role="button"]:not([aria-disabled="true"])');
                 if (artifactButton) artifactButton.click();
                 else if (typeof play === 'function') play();
-                syncLiminalToneTempo();
-                setTimeout(syncLiminalToneTempo, 120);
+                syncSinterToneTempo();
+                setTimeout(syncSinterToneTempo, 120);
                 if (window.Tone?.Transport?.start && Tone.Transport.state !== 'started') Tone.Transport.start();
             } catch (error) {
                 console.warn('Tone preview start error:', error);

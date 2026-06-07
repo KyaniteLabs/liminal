@@ -1,5 +1,5 @@
 /**
- * TaskLedger integration test — full lifecycle against a real LiminalFS
+ * TaskLedger integration test — full lifecycle against a real SinterFS
  * instance in a temp directory, plus corpus file loading.
  *
  * Exercises: createTask, recordAttempt, recordCandidate, recordDecision,
@@ -11,7 +11,7 @@ import { mkdtempSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { LiminalFS } from '../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../src/fs/SinterFS.js';
 import { TaskLedger } from '../../src/ledger/TaskLedger.js';
 import type { TaskAttempt, TaskCandidate, TaskDecision } from '../../src/ledger/types.js';
 
@@ -27,7 +27,7 @@ function l001Def() {
     id: 'L001',
     title: 'Add test for TraceFSAdapter.linkReasoningTrace',
     description:
-      'Write a unit test in test/unit/fs/TraceFSAdapter.test.ts that verifies linkReasoningTrace stores a trace artifact via LiminalFS.writeArtifact and creates a ref at trace/<traceId>.',
+      'Write a unit test in test/unit/fs/TraceFSAdapter.test.ts that verifies linkReasoningTrace stores a trace artifact via SinterFS.writeArtifact and creates a ref at trace/<traceId>.',
     taskClass: 'leaf' as const,
     files: {
       allowlist: ['test/unit/fs/TraceFSAdapter.test.ts'],
@@ -85,12 +85,12 @@ function makeDecision(taskId: string, candidateId: string, decisionId: string): 
 
 describe('TaskLedger integration — full lifecycle', () => {
   let tempDir: string;
-  let liminalFs: LiminalFS;
+  let liminalFs: SinterFS;
   let ledger: TaskLedger;
 
   beforeEach(() => {
     tempDir = makeTempDir();
-    liminalFs = LiminalFS.open(tempDir);
+    liminalFs = SinterFS.open(tempDir);
     ledger = new TaskLedger(liminalFs);
   });
 

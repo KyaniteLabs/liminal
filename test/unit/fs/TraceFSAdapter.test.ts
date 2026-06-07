@@ -2,17 +2,17 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 import { TraceFSAdapter } from '../../../src/fs/adapters/TraceFSAdapter.js';
 
 describe('TraceFSAdapter', () => {
   let projectRoot: string;
-  let fs: LiminalFS;
+  let fs: SinterFS;
   let adapter: TraceFSAdapter;
 
   beforeEach(() => {
     projectRoot = mkdtempSync(join(tmpdir(), 'liminal-trace-test-'));
-    fs = LiminalFS.open(projectRoot);
+    fs = SinterFS.open(projectRoot);
     adapter = new TraceFSAdapter(fs);
   });
 

@@ -148,7 +148,7 @@ export type {
   GlobalSettings,
   AudioSettings,
   CompositionMetadata,
-  LiminalProject,
+  SinterProject,
 } from '../composition/types.js';
 
 export {

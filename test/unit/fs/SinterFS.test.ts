@@ -2,15 +2,15 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 
-describe('LiminalFS', () => {
+describe('SinterFS', () => {
   let tempDir: string;
-  let liminalFs: LiminalFS;
+  let liminalFs: SinterFS;
 
   beforeEach(() => {
     tempDir = mkdtempSync(join(tmpdir(), 'liminal-fs-test-'));
-    liminalFs = LiminalFS.open(tempDir);
+    liminalFs = SinterFS.open(tempDir);
   });
 
   afterEach(() => {

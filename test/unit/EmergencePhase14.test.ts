@@ -8,7 +8,7 @@ import { EmergenceScorecard } from '../../src/evaluation/EmergenceScorecard.js';
 import { NicheQuotaPolicy } from '../../src/autonomy/NicheQuotaPolicy.js';
 import { ArchiveTaskPlanner } from '../../src/autonomy/ArchiveTaskPlanner.js';
 import type { ArchiveEntry, BehaviorDescriptor } from '../../src/emergence/types.js';
-import type { LiminalObjectRef } from '../../src/fs/types.js';
+import type { SinterObjectRef } from '../../src/fs/types.js';
 
 function makeEntry(id: string, descValues: Array<{ axis: string; value: number }>): ArchiveEntry {
   const descriptor: BehaviorDescriptor = {
@@ -18,7 +18,7 @@ function makeEntry(id: string, descValues: Array<{ axis: string; value: number }
   };
   return {
     id,
-    artifactRef: { uri: `test://${id}`, kind: 'generated-code' } as LiminalObjectRef,
+    artifactRef: { uri: `test://${id}`, kind: 'generated-code' } as SinterObjectRef,
     descriptor,
     lineage: { artifactId: id, parentIds: [], provenance: 'fresh-generation', createdAt: '' },
     qualityScore: 0.7,

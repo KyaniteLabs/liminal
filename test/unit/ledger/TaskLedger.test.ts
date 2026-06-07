@@ -1,6 +1,6 @@
 /**
  * TaskLedger unit tests — validates manifest CRUD, attempt recording,
- * candidate recording, and decision lifecycle against a real LiminalFS
+ * candidate recording, and decision lifecycle against a real SinterFS
  * instance in a temp directory.
  */
 
@@ -9,18 +9,18 @@ import { mkdtempSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 import { TaskLedger } from '../../../src/ledger/TaskLedger.js';
 import type { TaskManifest, TaskAttempt, TaskCandidate, TaskDecision } from '../../../src/ledger/types.js';
 
 describe('TaskLedger', () => {
   let tempDir: string;
-  let liminalFs: LiminalFS;
+  let liminalFs: SinterFS;
   let ledger: TaskLedger;
 
   beforeEach(() => {
     tempDir = mkdtempSync(join(tmpdir(), 'liminal-ledger-test-'));
-    liminalFs = LiminalFS.open(tempDir);
+    liminalFs = SinterFS.open(tempDir);
     ledger = new TaskLedger(liminalFs);
   });
 

@@ -11,7 +11,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { TaskLedger } from '../../../src/ledger/TaskLedger.js';
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 
 // Mock RalphLoop.run (static method — LLM boundary)
 vi.mock('../../../src/core/RalphLoop.js', () => ({
@@ -51,7 +51,7 @@ describe('ConveyorRunner', () => {
 
   beforeEach(() => {
     tempDir = mkdtempSync(join(tmpdir(), 'conveyor-runner-test-'));
-    const fs = LiminalFS.open(tempDir);
+    const fs = SinterFS.open(tempDir);
     ledger = new TaskLedger(fs);
   });
 

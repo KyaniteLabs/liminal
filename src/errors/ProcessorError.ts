@@ -1,10 +1,10 @@
-import { LiminalError } from './base.js';
+import { SinterError } from './base.js';
 
 /**
  * Error for batch processor failures.
  * Used when processor function is not set or processing fails.
  */
-export class ProcessorError extends LiminalError {
+export class ProcessorError extends SinterError {
   public readonly jobId?: string;
 
   constructor(

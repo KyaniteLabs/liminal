@@ -259,7 +259,7 @@ export interface Asset {
 }
 
 /** Sinter project file format v2.0 */
-export interface LiminalProject {
+export interface SinterProject {
   /** File format version */
   version: '2.0' | '1.0';
 
@@ -285,7 +285,7 @@ export interface LiminalProject {
 }
 
 /** Legacy v1.0 project format */
-export interface LiminalProjectV1 {
+export interface SinterProjectV1 {
   /** File format version */
   version: '1.0';
 
@@ -455,7 +455,7 @@ function generateCompositionId(): string {
 /**
  * Export a composition to Sinter project format.
  */
-export function exportProject(composition: Composition): LiminalProject {
+export function exportProject(composition: Composition): SinterProject {
   const now = new Date().toISOString();
   return {
     version: '1.0',

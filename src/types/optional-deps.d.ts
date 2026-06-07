@@ -70,7 +70,7 @@ interface AccessibilityMetrics {
   audioPeakLevel: number;
 }
 
-interface LiminalMetrics {
+interface SinterMetrics {
   frameCount: number;
   lastFrameTime: number;
   fpsSamples: number[];
@@ -79,5 +79,5 @@ interface LiminalMetrics {
 
 interface Window {
   __accessibilityMetrics?: AccessibilityMetrics;
-  __liminalMetrics?: LiminalMetrics;
+  __liminalMetrics?: SinterMetrics;
 }

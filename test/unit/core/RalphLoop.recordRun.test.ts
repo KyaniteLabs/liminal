@@ -4,11 +4,11 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { RalphLoop } from '../../../src/core/RalphLoop.js';
 import { ScoringEngine } from '../../../src/core/ScoringEngine.js';
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 import { LoopPersistence } from '../../../src/core/LoopPersistence.js';
 import { generatorRegistry } from '../../../src/generators/GeneratorRegistry.js';
 
-describe('RalphLoop recordRun LiminalFS integration', () => {
+describe('RalphLoop recordRun SinterFS integration', () => {
   let projectRoot: string;
   let galleryDir: string;
   let originalApiKey: string | undefined;
@@ -65,8 +65,8 @@ describe('RalphLoop recordRun LiminalFS integration', () => {
     rmSync(galleryDir, { recursive: true, force: true });
   });
 
-  it('writes run artifact and run record to LiminalFS', async () => {
-    // This test exercises real LiminalFS I/O; takes ~4s solo, needs headroom under parallel load
+  it('writes run artifact and run record to SinterFS', async () => {
+    // This test exercises real SinterFS I/O; takes ~4s solo, needs headroom under parallel load
     const result = await RalphLoop.run('p5 sketch with circle', {
       project: 'test-project',
       maxIterations: 1,
@@ -80,8 +80,8 @@ describe('RalphLoop recordRun LiminalFS integration', () => {
     expect(result.code).toContain('function setup()');
     expect(saveIterationSpy).toHaveBeenCalledTimes(1);
 
-    // Re-open LiminalFS to inspect persisted data
-    const fs = LiminalFS.open(projectRoot);
+    // Re-open SinterFS to inspect persisted data
+    const fs = SinterFS.open(projectRoot);
 
     // Verify LoopPersistence wrote gallery refs
     const latestRef = fs.readRef('gallery/test-project/latest');

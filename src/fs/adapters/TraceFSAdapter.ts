@@ -1,16 +1,16 @@
-import type { LiminalFS } from '../LiminalFS.js';
-import type { LiminalObjectRef } from '../types.js';
+import type { SinterFS } from '../SinterFS.js';
+import type { SinterObjectRef } from '../types.js';
 
 export interface LinkedTrace {
   traceId: string;
   runId: string;
-  artifactRefs: LiminalObjectRef[];
+  artifactRefs: SinterObjectRef[];
 }
 
 export class TraceFSAdapter {
-  private fs: LiminalFS;
+  private fs: SinterFS;
 
-  constructor(fs: LiminalFS) {
+  constructor(fs: SinterFS) {
     this.fs = fs;
   }
 

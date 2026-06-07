@@ -260,7 +260,7 @@ document.body.innerHTML = ` + '`' + `<button id="startButton">Start Ambient Sequ
       const result = GenericWrapper.wrap(code, { domain: 'tone' });
       const startBlock = result.slice(result.indexOf("playBtn.addEventListener('click'"));
 
-      expect(result).toContain('syncLiminalToneTempo();');
+      expect(result).toContain('syncSinterToneTempo();');
       expect(result).toContain('Tone.Transport.bpm.value = bpm;');
       expect(startBlock).not.toContain('Tone.Transport.bpm.value = liminalToneBpm');
     });

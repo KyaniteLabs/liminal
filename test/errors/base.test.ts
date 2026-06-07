@@ -1,19 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { LiminalError } from '../../src/errors/base';
+import { SinterError } from '../../src/errors/base';
 
-describe('LiminalError', () => {
+describe('SinterError', () => {
   it('should create an error with message, code, and context', () => {
     const context = { foo: 'bar', count: 42 };
-    const error = new LiminalError('Something went wrong', 'ERR_TEST', context);
+    const error = new SinterError('Something went wrong', 'ERR_TEST', context);
 
     expect(error.message).toBe('Something went wrong');
     expect(error.code).toBe('ERR_TEST');
     expect(error.context).toEqual(context);
-    expect(error.name).toBe('LiminalError');
+    expect(error.name).toBe('SinterError');
   });
 
   it('should work without context', () => {
-    const error = new LiminalError('Simple error', 'ERR_SIMPLE');
+    const error = new SinterError('Simple error', 'ERR_SIMPLE');
 
     expect(error.message).toBe('Simple error');
     expect(error.code).toBe('ERR_SIMPLE');
@@ -21,16 +21,16 @@ describe('LiminalError', () => {
   });
 
   it('should be an instance of Error', () => {
-    const error = new LiminalError('Test', 'ERR_TEST');
+    const error = new SinterError('Test', 'ERR_TEST');
 
     expect(error).toBeInstanceOf(Error);
-    expect(error).toBeInstanceOf(LiminalError);
+    expect(error).toBeInstanceOf(SinterError);
   });
 
   it('should capture stack trace', () => {
-    const error = new LiminalError('Stack test', 'ERR_STACK');
+    const error = new SinterError('Stack test', 'ERR_STACK');
 
     expect(error.stack).toContain('Stack test');
-    expect(error.stack).toContain('LiminalError');
+    expect(error.stack).toContain('SinterError');
   });
 });

@@ -477,7 +477,7 @@ func TestMouseWheelScrollsPaneUnderCursor(t *testing.T) {
 	}
 }
 
-func TestNewModelUsesLiminalTextareaStyles(t *testing.T) {
+func TestNewModelUsesSinterTextareaStyles(t *testing.T) {
 	m := NewModel("http://localhost:0")
 
 	if got, want := m.TextInput.FocusedStyle.Prompt.Render(">"), ui.TextareaPromptFocusedStyle.Render(">"); got != want {

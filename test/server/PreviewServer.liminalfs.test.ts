@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { PreviewServer } from '../../src/render/PreviewServer.js';
-import { LiminalFS } from '../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../src/fs/SinterFS.js';
 
 async function startOnEphemeralPort(server: PreviewServer): Promise<number> {
   await server.start(0);
@@ -12,7 +12,7 @@ async function startOnEphemeralPort(server: PreviewServer): Promise<number> {
   return port;
 }
 
-describe('PreviewServer LiminalFS endpoints', () => {
+describe('PreviewServer SinterFS endpoints', () => {
   let server: PreviewServer;
   let projectRoot: string;
   let originalCwd: typeof process.cwd;
@@ -34,8 +34,8 @@ describe('PreviewServer LiminalFS endpoints', () => {
     rmSync(projectRoot, { recursive: true, force: true });
   });
 
-  it('GET /api/liminal/gallery/:project returns iterations from LiminalFS refs', async () => {
-    const fs = LiminalFS.open(projectRoot);
+  it('GET /api/liminal/gallery/:project returns iterations from SinterFS refs', async () => {
+    const fs = SinterFS.open(projectRoot);
     const ref1 = fs.writeArtifact({
       kind: 'gallery-version',
       content: 'function setup() {}',
@@ -65,7 +65,7 @@ describe('PreviewServer LiminalFS endpoints', () => {
   });
 
   it('GET /api/liminal/gallery/:project returns organism iterations', async () => {
-    const fs = LiminalFS.open(projectRoot);
+    const fs = SinterFS.open(projectRoot);
     const ref = fs.writeArtifact({
       kind: 'organism',
       content: JSON.stringify({ type: 'organism', musicCode: 'note("c3")', visualCode: 'osc(10)' }),
@@ -88,7 +88,7 @@ describe('PreviewServer LiminalFS endpoints', () => {
   });
 
   it('GET /api/liminal/gallery/:project/:version returns artifact content', async () => {
-    const fs = LiminalFS.open(projectRoot);
+    const fs = SinterFS.open(projectRoot);
     const ref = fs.writeArtifact({
       kind: 'gallery-version',
       content: 'ellipse(50, 50, 20, 20);',

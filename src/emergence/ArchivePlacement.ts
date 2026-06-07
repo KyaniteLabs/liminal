@@ -16,7 +16,7 @@ import type {
   LineageRecord,
   PlacementResult,
 } from './types.js';
-import type { LiminalObjectRef } from '../fs/types.js';
+import type { SinterObjectRef } from '../fs/types.js';
 
 export interface ArchivePlacementConfig {
   /** Number of bins per descriptor axis (default: 10) */
@@ -49,7 +49,7 @@ export class ArchivePlacement {
    * Returns the placement result (accepted, cell, outcome).
    */
   place(params: {
-    artifactRef: LiminalObjectRef;
+    artifactRef: SinterObjectRef;
     descriptor: BehaviorDescriptor;
     lineage: LineageRecord;
     qualityScore: number;

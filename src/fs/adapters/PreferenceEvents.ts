@@ -1,22 +1,22 @@
 /**
  * PreferenceEvents FS adapter — Phase 13E
  *
- * Persists preference events through LiminalFS for session-linked
+ * Persists preference events through SinterFS for session-linked
  * manifest tracking.
  */
 
-import type { LiminalFS } from '../LiminalFS.js';
-import type { LiminalObjectRef } from '../types.js';
+import type { SinterFS } from '../SinterFS.js';
+import type { SinterObjectRef } from '../types.js';
 import type { PreferenceRecord } from '../../emergence/types.js';
 
 export class PreferenceEventsFSAdapter {
-  private fs: LiminalFS;
+  private fs: SinterFS;
 
-  constructor(fs: LiminalFS) {
+  constructor(fs: SinterFS) {
     this.fs = fs;
   }
 
-  writePreferenceEvent(record: PreferenceRecord): LiminalObjectRef {
+  writePreferenceEvent(record: PreferenceRecord): SinterObjectRef {
     const content = JSON.stringify(record, null, 2);
 
     const ref = this.fs.writeArtifact({
@@ -35,7 +35,7 @@ export class PreferenceEventsFSAdapter {
     return ref;
   }
 
-  writeSessionPreferences(sessionId: string, records: PreferenceRecord[]): LiminalObjectRef {
+  writeSessionPreferences(sessionId: string, records: PreferenceRecord[]): SinterObjectRef {
     const content = JSON.stringify({
       sessionId,
       events: records,

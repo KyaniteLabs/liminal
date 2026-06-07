@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 
 const mockGenerate = vi.hoisted(() =>
   vi.fn(async () => ({ musicCode: '$0 s0 ~ :seq(1,2)', visualCode: 'osc(10).rotate(0.5)' })),
@@ -14,7 +14,7 @@ vi.mock('../../../src/musicToVisual/generateMusicToVisual.js', () => ({
 
 const { runOrganismMode } = await import('../../../src/core/OrganismLoop.js');
 
-describe('OrganismLoop LiminalFS integration', () => {
+describe('OrganismLoop SinterFS integration', () => {
   let projectRoot: string;
   let galleryDir: string;
   let originalCwd: typeof process.cwd;
@@ -38,8 +38,8 @@ describe('OrganismLoop LiminalFS integration', () => {
     rmSync(galleryDir, { recursive: true, force: true });
   });
 
-  it('writes organism artifact and gallery refs to LiminalFS', async () => {
-    const fs = LiminalFS.open(projectRoot);
+  it('writes organism artifact and gallery refs to SinterFS', async () => {
+    const fs = SinterFS.open(projectRoot);
 
     const result = await runOrganismMode(
       'strudel + hydra organism',
@@ -82,7 +82,7 @@ describe('OrganismLoop LiminalFS integration', () => {
     fs.close();
   });
 
-  it('falls back to plain gallery save when LiminalFS is not provided', async () => {
+  it('falls back to plain gallery save when SinterFS is not provided', async () => {
     const result = await runOrganismMode(
       'strudel + hydra organism',
       {
@@ -96,8 +96,8 @@ describe('OrganismLoop LiminalFS integration', () => {
     expect(result.iterations).toBe(1);
     expect(result.completed).toBe(true);
 
-    // No LiminalFS means no refs
-    const fs = LiminalFS.open(projectRoot);
+    // No SinterFS means no refs
+    const fs = SinterFS.open(projectRoot);
     expect(fs.readRef('gallery/organism-project/v1')).toBeNull();
     fs.close();
   });

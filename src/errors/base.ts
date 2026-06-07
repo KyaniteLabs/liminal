@@ -2,7 +2,7 @@
  * Base error class for all Sinter errors.
  * Provides structured error information with codes, context, cause chaining, and retryability.
  */
-export class LiminalError extends Error {
+export class SinterError extends Error {
   public readonly retryable: boolean;
 
   constructor(

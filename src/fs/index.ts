@@ -1,8 +1,8 @@
-export { LiminalFS } from './LiminalFS.js';
+export { SinterFS } from './SinterFS.js';
 export { PreferenceEventsFSAdapter } from './adapters/PreferenceEvents.js';
 export type {
-  LiminalObjectKind,
-  LiminalObjectRef,
+  SinterObjectKind,
+  SinterObjectRef,
   WriteArtifactInput,
-  LiminalRunRecord,
+  SinterRunRecord,
 } from './types.js';

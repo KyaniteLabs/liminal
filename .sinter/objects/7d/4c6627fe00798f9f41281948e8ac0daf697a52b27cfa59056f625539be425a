@@ -1,0 +1,2 @@
+// Recovered from thinking
+function setup() { createCanvas(400, 400); }

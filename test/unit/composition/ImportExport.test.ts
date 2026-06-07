@@ -15,7 +15,7 @@ import {
   createLayer,
   createComposition,
   Layer,
-  LiminalProject,
+  SinterProject,
   Animation,
   LayerMask,
 } from '../../../src/composition/types.js';
@@ -109,7 +109,7 @@ describe('ProjectSerializer', () => {
     });
 
     it('should import project with layer groups', async () => {
-      const project: LiminalProject = {
+      const project: SinterProject = {
         version: '2.0',
         metadata: {
           created: new Date().toISOString(),
@@ -191,7 +191,7 @@ describe('ProjectSerializer', () => {
     });
 
     it('should import project with animations', async () => {
-      const project: LiminalProject = {
+      const project: SinterProject = {
         version: '2.0',
         metadata: {
           created: new Date().toISOString(),
@@ -273,7 +273,7 @@ describe('ProjectSerializer', () => {
     });
 
     it('should import project with masks', async () => {
-      const project: LiminalProject = {
+      const project: SinterProject = {
         version: '2.0',
         metadata: {
           created: new Date().toISOString(),
@@ -468,7 +468,7 @@ describe('ProjectSerializer', () => {
 
   describe('Project Validation', () => {
     it('should validate valid v2.0 project', () => {
-      const project: LiminalProject = {
+      const project: SinterProject = {
         version: '2.0',
         metadata: {
           created: new Date().toISOString(),
@@ -584,7 +584,7 @@ describe('ProjectSerializer', () => {
     });
 
     it('should import project from ZIP blob', async () => {
-      const originalProject: LiminalProject = {
+      const originalProject: SinterProject = {
         version: '2.0',
         metadata: {
           created: new Date().toISOString(),
@@ -627,7 +627,7 @@ describe('ProjectSerializer', () => {
     });
 
     it('should handle empty project ZIP export', async () => {
-      const project: LiminalProject = {
+      const project: SinterProject = {
         version: '2.0',
         metadata: {
           created: new Date().toISOString(),
@@ -658,7 +658,7 @@ describe('ProjectSerializer', () => {
 
   describe('URL Import', () => {
     it('should import project from URL', async () => {
-      const mockProject: LiminalProject = {
+      const mockProject: SinterProject = {
         version: '2.0',
         metadata: {
           created: new Date().toISOString(),
@@ -747,7 +747,7 @@ describe('ProjectSerializer', () => {
       const existingLayer = createLayer('p5', 'existing', 'prompt');
       engine.addLayer(existingLayer);
 
-      const project: LiminalProject = {
+      const project: SinterProject = {
         version: '2.0',
         metadata: {
           created: new Date().toISOString(),
@@ -789,7 +789,7 @@ describe('ProjectSerializer', () => {
     });
 
     it('should update engine settings on import', async () => {
-      const project: LiminalProject = {
+      const project: SinterProject = {
         version: '2.0',
         metadata: {
           created: new Date().toISOString(),
@@ -823,7 +823,7 @@ describe('ProjectSerializer', () => {
     });
 
     it('should return import result with animations and masks', async () => {
-      const project: LiminalProject = {
+      const project: SinterProject = {
         version: '2.0',
         metadata: {
           created: new Date().toISOString(),

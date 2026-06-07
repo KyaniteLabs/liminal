@@ -13,7 +13,7 @@ import { GalleryFSAdapter } from '../fs/adapters/GalleryFSAdapter.js';
 import { mergeSketchCode } from '../utils/mergeSketchCode.js';
 import { ContextAccumulation } from './ContextAccumulation.js';
 import type { NormalizedLoopOptions, IterationContext } from './LoopConfig.js';
-import type { LiminalFS } from '../fs/LiminalFS.js';
+import type { SinterFS } from '../fs/SinterFS.js';
 
 /**
  * Handles gallery persistence and merge operations within the loop.
@@ -24,7 +24,7 @@ export class LoopPersistence {
   constructor(
     private gallery: Gallery,
     private options: NormalizedLoopOptions,
-    private liminalFs?: LiminalFS,
+    private liminalFs?: SinterFS,
   ) {
     if (this.liminalFs) {
       this.adapter = new GalleryFSAdapter(this.gallery, this.liminalFs);
@@ -50,7 +50,7 @@ export class LoopPersistence {
       try {
         this.adapter.writeGalleryVersionRef(this.options.project, iteration, code);
       } catch {
-        // LiminalFS reference failures must not hide a successful gallery save.
+        // SinterFS reference failures must not hide a successful gallery save.
       }
     }
   }
@@ -90,7 +90,7 @@ export class LoopPersistence {
       try {
         this.adapter.writeGalleryVersionRef(this.options.project, iteration + 1, proposed);
       } catch {
-        // LiminalFS reference failures must not hide a successful gallery save.
+        // SinterFS reference failures must not hide a successful gallery save.
       }
     }
   }

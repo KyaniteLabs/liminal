@@ -2,7 +2,7 @@
  * LineageTracker — Phase 13E
  *
  * Tracks parent refs, seed/params, remix lineage, and provenance for every
- * creative run. Persists through LiminalFS for replay and branching.
+ * creative run. Persists through SinterFS for replay and branching.
  */
 
 import { promises as fs } from 'fs';

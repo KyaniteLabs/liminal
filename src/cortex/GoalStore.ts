@@ -1,7 +1,7 @@
 /**
  * GoalStore — Phase 13 Increment 2
  *
- * CRUD persistence for CortexGoal objects via LiminalFS manifests.
+ * CRUD persistence for CortexGoal objects via SinterFS manifests.
  * Storage layout: .sinter/manifests/cortex/goal/<id>/manifest.json
  *
  * Follows the same pattern as TaskLedger (src/ledger/TaskLedger.ts).
@@ -17,13 +17,13 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 
-import type { LiminalFS } from '../fs/LiminalFS.js';
+import type { SinterFS } from '../fs/SinterFS.js';
 import type { CortexGoal, GoalPriority, GoalCategory, GoalStatus } from './types.js';
 
 const GOAL_PREFIX = 'cortex/goal';
 
 export class GoalStore {
-  constructor(private fs: LiminalFS) {}
+  constructor(private fs: SinterFS) {}
 
   /**
    * Add a new goal. Auto-generates ID and timestamps.

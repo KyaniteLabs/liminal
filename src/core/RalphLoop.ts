@@ -31,7 +31,7 @@ import { ContextAccumulation } from './ContextAccumulation.js';
 import { ScoringEngine } from './ScoringEngine.js';
 import { PromiseDetector } from './PromiseDetector.js';
 import { Gallery } from '../gallery/Gallery.js';
-import { LiminalFS } from '../fs/LiminalFS.js';
+import { SinterFS } from '../fs/SinterFS.js';
 import { SafetyGuardrails } from './SafetyGuardrails.js';
 import { CompostHeap } from '../compost/CompostHeap.js';
 import { formatError } from '../utils/errors.js';
@@ -76,7 +76,7 @@ import { runOrganismMode } from './OrganismLoop.js';
 import { AmbiguityDetector } from './AmbiguityDetector.js';
 import { env } from '../utils/env.js';
 import { Provider } from '../types/providers.js';
-import { LiminalError } from '../errors/index.js';
+import { SinterError } from '../errors/index.js';
 import { isAbortError } from '../utils/abort.js';
 
 export type { LoopOptions, LoopResult, IterationContext, NormalizedLoopOptions };
@@ -191,8 +191,8 @@ export class RalphLoop {
       }
     }
 
-    // Initialize LiminalFS once per run (used by all modes)
-    const liminalFs = LiminalFS.open(process.cwd());
+    // Initialize SinterFS once per run (used by all modes)
+    const liminalFs = SinterFS.open(process.cwd());
 
     try {
       liminalFs.recordRun({
@@ -203,7 +203,7 @@ export class RalphLoop {
         metadata: { maxIterations: normalizedOptions.maxIterations, mode: normalizedOptions.mode },
       });
     } catch {
-      // LiminalFS run recording is non-critical
+      // SinterFS run recording is non-critical
     }
 
     // Organism mode: delegate entirely to OrganismLoop
@@ -620,7 +620,7 @@ export class RalphLoop {
 
         // Select the best candidate or fail if none valid
         if (candidates.length === 0) {
-          throw new LiminalError(
+          throw new SinterError(
             'All generation candidates failed',
             'ERR_ALL_CANDIDATES_FAILED',
             {
@@ -670,7 +670,7 @@ export class RalphLoop {
 
                   if (renderEvidence.infraUnavailable) {
                     if (evalMode === 'strict-browser') {
-                      throw new LiminalError(
+                      throw new SinterError(
                         'Browser rendering infrastructure is unavailable in strict-browser mode',
                         'ERR_RENDER_INFRA_UNAVAILABLE',
                       );
@@ -699,7 +699,7 @@ export class RalphLoop {
                     );
                     if (genEval.failureClass === 'scorer') {
                       if (evalMode === 'strict-browser') {
-                        throw new LiminalError(
+                        throw new SinterError(
                           'Evaluator LLM is unavailable in strict-browser mode',
                           'ERR_EVALUATOR_UNAVAILABLE',
                         );
@@ -864,7 +864,7 @@ export class RalphLoop {
 
             if (renderEvidence.infraUnavailable) {
               if (evalMode === 'strict-browser') {
-                throw new LiminalError(
+                throw new SinterError(
                   'Browser rendering infrastructure is unavailable in strict-browser mode',
                   'ERR_RENDER_INFRA_UNAVAILABLE',
                 );
@@ -895,7 +895,7 @@ export class RalphLoop {
               );
               if (genEval.failureClass === 'scorer') {
                 if (evalMode === 'strict-browser') {
-                  throw new LiminalError(
+                  throw new SinterError(
                     'Evaluator LLM is unavailable in strict-browser mode',
                     'ERR_EVALUATOR_UNAVAILABLE',
                   );
@@ -1014,7 +1014,7 @@ export class RalphLoop {
                       );
                       if (genEvalRepair.failureClass === 'scorer') {
                         if (evalMode === 'strict-browser') {
-                          throw new LiminalError(
+                          throw new SinterError(
                             'Evaluator LLM is unavailable in strict-browser mode',
                             'ERR_EVALUATOR_UNAVAILABLE',
                           );
@@ -1611,8 +1611,8 @@ export class RalphLoop {
         finalScore,
       });
 
-      // Phase 5A: Record run in LiminalFS
-      let runArtifact: import('../fs/types.js').LiminalObjectRef | undefined;
+      // Phase 5A: Record run in SinterFS
+      let runArtifact: import('../fs/types.js').SinterObjectRef | undefined;
       if (currentCode) {
         try {
           runArtifact = liminalFs.writeArtifact({
@@ -1629,7 +1629,7 @@ export class RalphLoop {
             },
           });
         } catch {
-          // LiminalFS failure must not affect loop operation
+          // SinterFS failure must not affect loop operation
         }
       }
 
@@ -1648,7 +1648,7 @@ export class RalphLoop {
           },
         });
       } catch {
-        // LiminalFS failure must not affect loop operation
+        // SinterFS failure must not affect loop operation
       }
 
       // Prefer the best valid candidate over the last iteration. best-tracking

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { BehaviorDescriptorExtractor } from '../../src/emergence/BehaviorDescriptorExtractor.js';
 import { ArchivePlacement } from '../../src/emergence/ArchivePlacement.js';
 import type { ArchiveEntry, BehaviorDescriptor, LineageRecord, EmergenceSignals } from '../../src/emergence/types.js';
-import type { LiminalObjectRef } from '../../src/fs/types.js';
+import type { SinterObjectRef } from '../../src/fs/types.js';
 
 // ── BehaviorDescriptorExtractor ──
 
@@ -101,7 +101,7 @@ function makeEntry(id: string, qualityScore: number, descriptorOverrides?: Parti
     perturbationResilience: 0.5, fertility: 0.5, aesthetic: qualityScore,
   };
 
-  const ref: LiminalObjectRef = {
+  const ref: SinterObjectRef = {
     uri: `liminal://artifact/${id}`,
     kind: 'generated-code',
   };

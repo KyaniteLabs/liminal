@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { EmergenceHooks } from '../../src/emergence/EmergenceHooks.js';
-import { LiminalFS } from '../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../src/fs/SinterFS.js';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -9,11 +9,11 @@ const emergenceHooksTestTimeoutMs = 30000;
 
 describe('EmergenceHooks', () => {
   let tmpDir: string;
-  let liminalFs: LiminalFS;
+  let liminalFs: SinterFS;
 
   beforeEach(() => {
     tmpDir = mkdtempSync(join(tmpdir(), 'liminal-hooks-test-'));
-    liminalFs = LiminalFS.open(tmpDir);
+    liminalFs = SinterFS.open(tmpDir);
   });
 
   afterEach(() => {

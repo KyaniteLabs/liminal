@@ -79,7 +79,7 @@
   {
     "id": "Q005",
     "title": "Add CLI integration test for load and list subcommands",
-    "description": "Create an integration test at test/integration/ledger-cli.test.ts that tests the full lifecycle: (1) load a task from JSON, (2) list tasks to verify it appears, (3) show task details, (4) accept a candidate, (5) verify status reflects the decision. Use real LiminalFS (tmpdir), real TaskLedger, and the actual parseArgs+execute functions. This tests the CLI dispatch end-to-end without mocking internals.",
+    "description": "Create an integration test at test/integration/ledger-cli.test.ts that tests the full lifecycle: (1) load a task from JSON, (2) list tasks to verify it appears, (3) show task details, (4) accept a candidate, (5) verify status reflects the decision. Use real SinterFS (tmpdir), real TaskLedger, and the actual parseArgs+execute functions. This tests the CLI dispatch end-to-end without mocking internals.",
     "taskClass": "orchestrator",
     "files": {
       "allowlist": ["test/integration/ledger-cli.test.ts"],
@@ -88,7 +88,7 @@
     "verifyCommand": "pnpm vitest run test/integration/ledger-cli.test.ts --no-coverage",
     "scoringCriteria": [
       "Tests load, list, show, accept, status subcommands",
-      "Uses real LiminalFS (tmpdir, no mocks)",
+      "Uses real SinterFS (tmpdir, no mocks)",
       "Exercises >=2 real modules together",
       "Asserts specific values, not just defined",
       "Cleans up tmpdir in afterEach"

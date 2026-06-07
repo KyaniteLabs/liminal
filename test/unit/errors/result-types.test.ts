@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  LiminalError,
+  SinterError,
   GitError,
   GitRepoError,
   GitPushError,
@@ -10,12 +10,12 @@ import {
   FileDiscoveryError,
 } from '../../../src/errors/index.js';
 
-// ── LiminalError base class ──────────────────────────────────────────
+// ── SinterError base class ──────────────────────────────────────────
 
-describe('LiminalError', () => {
+describe('SinterError', () => {
   it('sets code, context, retryable, and cause from constructor', () => {
     const cause = new Error('original failure');
-    const error = new LiminalError('something broke', 'ERR_TEST', { key: 'value' }, { cause, retryable: true });
+    const error = new SinterError('something broke', 'ERR_TEST', { key: 'value' }, { cause, retryable: true });
 
     expect(error.message).toBe('something broke');
     expect(error.code).toBe('ERR_TEST');
@@ -25,22 +25,22 @@ describe('LiminalError', () => {
   });
 
   it('defaults retryable to false', () => {
-    const error = new LiminalError('fail', 'ERR_X');
+    const error = new SinterError('fail', 'ERR_X');
     expect(error.retryable).toBe(false);
   });
 
   it('is instanceof Error', () => {
-    const error = new LiminalError('fail', 'ERR_X');
+    const error = new SinterError('fail', 'ERR_X');
     expect(error).toBeInstanceOf(Error);
   });
 
   it('sets name to constructor name', () => {
-    const error = new LiminalError('fail', 'ERR_X');
-    expect(error.name).toBe('LiminalError');
+    const error = new SinterError('fail', 'ERR_X');
+    expect(error.name).toBe('SinterError');
   });
 
   it('works without optional params', () => {
-    const error = new LiminalError('bare', 'ERR_BARE');
+    const error = new SinterError('bare', 'ERR_BARE');
     expect(error.message).toBe('bare');
     expect(error.code).toBe('ERR_BARE');
     expect(error.context).toBeUndefined();
@@ -66,9 +66,9 @@ describe('GitError', () => {
     expect(error.retryable).toBe(true);
   });
 
-  it('is instanceof LiminalError and Error', () => {
+  it('is instanceof SinterError and Error', () => {
     const error = new GitError('git failed');
-    expect(error).toBeInstanceOf(LiminalError);
+    expect(error).toBeInstanceOf(SinterError);
     expect(error).toBeInstanceOf(Error);
   });
 
@@ -90,10 +90,10 @@ describe('GitRepoError', () => {
     expect(error.retryable).toBe(false);
   });
 
-  it('is instanceof GitError and LiminalError', () => {
+  it('is instanceof GitError and SinterError', () => {
     const error = new GitRepoError('not a repo');
     expect(error).toBeInstanceOf(GitError);
-    expect(error).toBeInstanceOf(LiminalError);
+    expect(error).toBeInstanceOf(SinterError);
   });
 
   it('has code ERR_GIT', () => {
@@ -108,10 +108,10 @@ describe('GitPushError', () => {
     expect(error.retryable).toBe(true);
   });
 
-  it('is instanceof GitError and LiminalError', () => {
+  it('is instanceof GitError and SinterError', () => {
     const error = new GitPushError('push rejected');
     expect(error).toBeInstanceOf(GitError);
-    expect(error).toBeInstanceOf(LiminalError);
+    expect(error).toBeInstanceOf(SinterError);
   });
 });
 
@@ -123,9 +123,9 @@ describe('CompostError', () => {
     expect(error.code).toBe('ERR_COMPOST');
   });
 
-  it('is instanceof LiminalError and Error', () => {
+  it('is instanceof SinterError and Error', () => {
     const error = new CompostError('compost failed');
-    expect(error).toBeInstanceOf(LiminalError);
+    expect(error).toBeInstanceOf(SinterError);
     expect(error).toBeInstanceOf(Error);
   });
 
@@ -142,10 +142,10 @@ describe('CompostDigestError', () => {
     expect(error.retryable).toBe(true);
   });
 
-  it('is instanceof CompostError and LiminalError', () => {
+  it('is instanceof CompostError and SinterError', () => {
     const error = new CompostDigestError('digest crashed');
     expect(error).toBeInstanceOf(CompostError);
-    expect(error).toBeInstanceOf(LiminalError);
+    expect(error).toBeInstanceOf(SinterError);
   });
 });
 
@@ -157,9 +157,9 @@ describe('PersistenceError', () => {
     expect(error.code).toBe('ERR_PERSISTENCE');
   });
 
-  it('is instanceof LiminalError', () => {
+  it('is instanceof SinterError', () => {
     const error = new PersistenceError('write failed');
-    expect(error).toBeInstanceOf(LiminalError);
+    expect(error).toBeInstanceOf(SinterError);
   });
 
   it('respects retryable option', () => {
@@ -178,9 +178,9 @@ describe('FileDiscoveryError', () => {
     expect(error.code).toBe('ERR_FILE_DISCOVERY');
   });
 
-  it('is instanceof LiminalError', () => {
+  it('is instanceof SinterError', () => {
     const error = new FileDiscoveryError('no files found');
-    expect(error).toBeInstanceOf(LiminalError);
+    expect(error).toBeInstanceOf(SinterError);
   });
 
   it('respects retryable option', () => {

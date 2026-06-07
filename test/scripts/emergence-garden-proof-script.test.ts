@@ -14,7 +14,7 @@ describe('emergence garden proof script', () => {
 
     expect(source).toContain("path.join('.omx', 'proof', 'emergence-garden')");
     expect(source).toContain('EmergenceHooks');
-    expect(source).toContain('LiminalFS');
+    expect(source).toContain('SinterFS');
     expect(source).toContain('archiveStats');
     expect(source).toContain('lineageStats');
     expect(source).toContain('report.json');

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { GenerationError } from '../../src/errors/GenerationError';
-import { LiminalError } from '../../src/errors/base';
+import { SinterError } from '../../src/errors/base';
 
 describe('GenerationError', () => {
   it('should create a GenerationError with message and code', () => {
@@ -26,10 +26,10 @@ describe('GenerationError', () => {
     expect(error.context).toEqual({ domain: 'glsl', prompt: 'test' });
   });
 
-  it('should be an instance of LiminalError and Error', () => {
+  it('should be an instance of SinterError and Error', () => {
     const error = new GenerationError('Test');
 
-    expect(error).toBeInstanceOf(LiminalError);
+    expect(error).toBeInstanceOf(SinterError);
     expect(error).toBeInstanceOf(Error);
     expect(error).toBeInstanceOf(GenerationError);
   });

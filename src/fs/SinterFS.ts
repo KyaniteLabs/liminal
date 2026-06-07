@@ -1,9 +1,9 @@
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { ProjectStore } from '../compost/ProjectStore.js';
-import type { LiminalObjectRef, WriteArtifactInput, LiminalRunRecord } from './types.js';
+import type { SinterObjectRef, WriteArtifactInput, SinterRunRecord } from './types.js';
 
-export class LiminalFS {
+export class SinterFS {
   private projectStore: ProjectStore;
   private projectRoot: string;
 
@@ -12,10 +12,10 @@ export class LiminalFS {
     this.projectRoot = projectRoot;
   }
 
-  static open(projectRoot: string): LiminalFS {
+  static open(projectRoot: string): SinterFS {
     const store = new ProjectStore({ projectRoot });
     store.init();
-    return new LiminalFS(store, projectRoot);
+    return new SinterFS(store, projectRoot);
   }
 
   getProjectRoot(): string {
@@ -26,9 +26,9 @@ export class LiminalFS {
     return this.projectStore;
   }
 
-  writeArtifact(input: WriteArtifactInput): LiminalObjectRef {
+  writeArtifact(input: WriteArtifactInput): SinterObjectRef {
     const stored = this.projectStore.storeAssetContent(input.content, input.filename, input.kind);
-    const ref: LiminalObjectRef = {
+    const ref: SinterObjectRef = {
       uri: `liminal://artifact/${stored.hash}`,
       hash: stored.hash,
       kind: input.kind,
@@ -49,19 +49,19 @@ export class LiminalFS {
     return ref;
   }
 
-  readArtifact(ref: LiminalObjectRef): Buffer | null {
+  readArtifact(ref: SinterObjectRef): Buffer | null {
     if (ref.hash) {
       return this.projectStore.getAssetContent(ref.hash);
     }
     return null;
   }
 
-  recordRun(record: LiminalRunRecord): void {
+  recordRun(record: SinterRunRecord): void {
     const eventStore = this.projectStore.getEventStore();
     eventStore.append('run_record', { ...record });
   }
 
-  writeRef(name: string, ref: LiminalObjectRef): void {
+  writeRef(name: string, ref: SinterObjectRef): void {
     this.validateRefName(name);
     const path = join(this.projectRoot, '.sinter', 'refs', `${name}.json`);
     const dir = dirname(path);
@@ -78,14 +78,14 @@ export class LiminalFS {
     });
   }
 
-  readRef(name: string): LiminalObjectRef | null {
+  readRef(name: string): SinterObjectRef | null {
     this.validateRefName(name);
     const path = join(this.projectRoot, '.sinter', 'refs', `${name}.json`);
     if (!existsSync(path)) {
       return null;
     }
     const content = readFileSync(path, 'utf-8');
-    return JSON.parse(content) as LiminalObjectRef;
+    return JSON.parse(content) as SinterObjectRef;
   }
 
   writeManifest(name: string, data: Record<string, unknown>): void {

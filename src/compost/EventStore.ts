@@ -57,7 +57,7 @@ export type EventType =
   | 'git_branch'         // A git branch was created via GitIntegration
   | 'entropy_harvest'    // Entropy was harvested from metabolic state
   | 'entropy_fallback'   // Entropy fallback was used
-  | 'run_record';        // A run was recorded via LiminalFS
+  | 'run_record';        // A run was recorded via SinterFS
 
 /** An immutable event in the compost timeline. */
 export interface CompostEvent {

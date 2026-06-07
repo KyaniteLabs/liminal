@@ -2,7 +2,7 @@
  * Unit tests for ReplayBundle — Phase 10 Lane 10-4
  *
  * Tests evidence packaging, file export, and retry recommendations.
- * Uses real LiminalFS (tmpdir) — no mocks on the ledger.
+ * Uses real SinterFS (tmpdir) — no mocks on the ledger.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -10,7 +10,7 @@ import { mkdtempSync, rmSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { TaskLedger } from '../../../src/ledger/TaskLedger.js';
-import { LiminalFS } from '../../../src/fs/LiminalFS.js';
+import { SinterFS } from '../../../src/fs/SinterFS.js';
 import { ReplayBundle } from '../../../src/ledger/ReplayBundle.js';
 
 describe('ReplayBundle', () => {
@@ -19,7 +19,7 @@ describe('ReplayBundle', () => {
 
   beforeEach(() => {
     tempDir = mkdtempSync(join(tmpdir(), 'replay-bundle-test-'));
-    const fs = LiminalFS.open(tempDir);
+    const fs = SinterFS.open(tempDir);
     ledger = new TaskLedger(fs);
   });
 

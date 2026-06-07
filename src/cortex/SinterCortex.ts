@@ -18,7 +18,7 @@ export interface CortexEvent {
   data: Record<string, unknown>;
 }
 
-export interface LiminalCortexDeps {
+export interface SinterCortexDeps {
   perceptionBus: { getSnapshot(): CortexSnapshot };
   goalStore: { getActiveGoals(): CortexGoal[] };
   config: CortexConfig;
@@ -30,7 +30,7 @@ interface SupervisionResult {
   expiredLeases: ActiveLease[];
 }
 
-export class LiminalCortex {
+export class SinterCortex {
   private readonly allocator = new PriorityAllocator();
   private readonly budget: BudgetTracker;
   private readonly proposer: ActionProposer;
@@ -43,7 +43,7 @@ export class LiminalCortex {
   private latestDecisions: ActionProposal[] = [];
   private latestStuckWorkers: StuckWorker[] = [];
 
-  constructor(private deps: LiminalCortexDeps) {
+  constructor(private deps: SinterCortexDeps) {
     this.budget = new BudgetTracker({
       actionsLimit: deps.config.budgetActionsLimit,
       tokenLimit: deps.config.budgetTokenLimit,

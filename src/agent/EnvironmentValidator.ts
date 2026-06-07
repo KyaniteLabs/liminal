@@ -4,7 +4,7 @@
  * Validates the runtime environment for Sinter Studio:
  *   - Node.js version
  *   - Go toolchain presence
- *   - LiminalFS writability
+ *   - SinterFS writability
  *   - Provider connectivity (API key + baseUrl)
  *   - Config file presence
  *

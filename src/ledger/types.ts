@@ -3,10 +3,10 @@
  *
  * Defines the manifest, attempt, candidate, and decision types
  * that represent the full lifecycle of a self-hosting task.
- * All entities are persisted via LiminalFS manifests, refs, and artifacts.
+ * All entities are persisted via SinterFS manifests, refs, and artifacts.
  */
 
-import type { LiminalObjectRef } from '../fs/types.js';
+import type { SinterObjectRef } from '../fs/types.js';
 
 // ─── Enums & Status ────────────────────────────────────────────────
 
@@ -30,7 +30,7 @@ export interface FileAccessPolicy {
 
 /**
  * Task manifest — the core entity.
- * Stored as a LiminalFS manifest at `task/<id>/manifest`.
+ * Stored as a SinterFS manifest at `task/<id>/manifest`.
  */
 export interface TaskManifest {
   /** Unique task identifier (e.g., 'L001', 'W001') */
@@ -65,7 +65,7 @@ export interface TaskManifest {
 
 /**
  * A single attempt at executing a task.
- * Stored as a LiminalFS manifest + ref at `task/<id>/attempt/<attempt-id>`.
+ * Stored as a SinterFS manifest + ref at `task/<id>/attempt/<attempt-id>`.
  */
 export interface TaskAttempt {
   /** Unique attempt identifier */
@@ -91,14 +91,14 @@ export interface TaskAttempt {
   /** Final quality score from RalphLoop (0–1) */
   finalScore: number;
   /** Ref to the generated artifact (set after verification) */
-  artifactRef: LiminalObjectRef | null;
+  artifactRef: SinterObjectRef | null;
 }
 
 // ─── Task Candidate ───────────────────────────────────────────────
 
 /**
  * A verified candidate output for a task.
- * Stored as a LiminalFS artifact + ref at `task/<id>/candidate/<candidate-id>`.
+ * Stored as a SinterFS artifact + ref at `task/<id>/candidate/<candidate-id>`.
  */
 export interface TaskCandidate {
   /** Unique candidate identifier */
@@ -125,7 +125,7 @@ export interface TaskCandidate {
 
 /**
  * An acceptance or rejection decision for a candidate.
- * Stored as a LiminalFS manifest at `task/<id>/decision/<decision-id>`.
+ * Stored as a SinterFS manifest at `task/<id>/decision/<decision-id>`.
  */
 export interface TaskDecision {
   /** Unique decision identifier */

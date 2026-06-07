@@ -5,7 +5,7 @@
  * and debugging across the codebase.
  */
 
-export { LiminalError } from './base.js';
+export { SinterError } from './base.js';
 export { ConfigError } from './ConfigError.js';
 export { ValidationError } from './ValidationError.js';
 export { GenerationError } from './GenerationError.js';

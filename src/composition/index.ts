@@ -60,8 +60,8 @@ export type {
   GlobalSettings,
   AudioSettings,
   CompositionMetadata,
-  LiminalProject,
-  LiminalProjectV1,
+  SinterProject,
+  SinterProjectV1,
   Asset,
   Animation,
 } from './types.js';

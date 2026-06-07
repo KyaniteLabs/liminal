@@ -13,12 +13,12 @@ describe('Sinter Main Entry Point', () => {
   let originalHome;
   let tempHome;
   let originalGlmKey;
-  let originalLiminalKey;
+  let originalSinterKey;
 
   beforeEach(() => {
     originalHome = process.env.HOME;
     originalGlmKey = process.env.GLM_API_KEY;
-    originalLiminalKey = process.env.LIMINAL_LLM_API_KEY;
+    originalSinterKey = process.env.LIMINAL_LLM_API_KEY;
     tempHome = mkdtempSync(join(tmpdir(), 'liminal-index-test-'));
     process.env.HOME = tempHome;
     delete process.env.GLM_API_KEY;
@@ -30,8 +30,8 @@ describe('Sinter Main Entry Point', () => {
     else process.env.HOME = originalHome;
     if (originalGlmKey === undefined) delete process.env.GLM_API_KEY;
     else process.env.GLM_API_KEY = originalGlmKey;
-    if (originalLiminalKey === undefined) delete process.env.LIMINAL_LLM_API_KEY;
-    else process.env.LIMINAL_LLM_API_KEY = originalLiminalKey;
+    if (originalSinterKey === undefined) delete process.env.LIMINAL_LLM_API_KEY;
+    else process.env.LIMINAL_LLM_API_KEY = originalSinterKey;
     rmSync(tempHome, { recursive: true, force: true });
   });
 

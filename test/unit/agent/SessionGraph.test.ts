@@ -126,14 +126,14 @@ describe('SessionGraph', () => {
   });
 
   describe('persistence', () => {
-    it('does not call fs when no LiminalFS is provided', () => {
+    it('does not call fs when no SinterFS is provided', () => {
       const graph = new SessionGraph('sess-1');
       // Should not throw — in-memory mode
       graph.recordTurn({ turnId: 't1', input: 'a', intent: 'direct', delegatedTo: 'llm', response: 'r', durationMs: 10 });
       expect(graph.getTurns()).toHaveLength(1);
     });
 
-    it('calls fs.writeManifest when LiminalFS is provided', () => {
+    it('calls fs.writeManifest when SinterFS is provided', () => {
       const writeManifest = vi.fn();
       const graph = new SessionGraph('sess-1', { writeManifest } as any);
       graph.recordTurn({ turnId: 't1', input: 'a', intent: 'direct', delegatedTo: 'llm', response: 'r', durationMs: 10 });

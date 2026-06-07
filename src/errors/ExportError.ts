@@ -1,10 +1,10 @@
-import { LiminalError } from './base.js';
+import { SinterError } from './base.js';
 
 /**
  * Error for export operation failures.
  * Used when HTML, JS, ZIP, or video export fails.
  */
-export class ExportError extends LiminalError {
+export class ExportError extends SinterError {
   public readonly path?: string;
   public readonly format?: string;
 
@@ -31,7 +31,7 @@ export class ExportError extends LiminalError {
  * Error for security-related failures during export.
  * Used for path traversal detection and validation failures.
  */
-export class SecurityError extends LiminalError {
+export class SecurityError extends SinterError {
   public readonly path?: string;
   public readonly reason?: string;
 

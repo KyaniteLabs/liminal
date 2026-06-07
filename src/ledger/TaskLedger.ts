@@ -2,7 +2,7 @@
  * TaskLedger — Core persistence layer for the Self-Hosting Task Ledger.
  *
  * Manages the full lifecycle of task manifests, attempts, candidates,
- * and decisions via LiminalFS manifests, refs, and artifacts.
+ * and decisions via SinterFS manifests, refs, and artifacts.
  *
  * Storage layout:
  *   .sinter/manifests/task/<id>/manifest.json          — task manifest
@@ -15,7 +15,7 @@
 import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { LiminalFS } from '../fs/LiminalFS.js';
+import type { SinterFS } from '../fs/SinterFS.js';
 import type {
   TaskManifest,
   TaskAttempt,
@@ -27,10 +27,10 @@ import type {
 const TASK_PREFIX = 'task';
 
 export class TaskLedger {
-  constructor(private fs: LiminalFS) {}
+  constructor(private fs: SinterFS) {}
 
-  /** Expose the underlying LiminalFS for artifact storage. */
-  getFs(): LiminalFS {
+  /** Expose the underlying SinterFS for artifact storage. */
+  getFs(): SinterFS {
     return this.fs;
   }
 

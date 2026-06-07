@@ -4,7 +4,7 @@
  * Orchestrates archive write-through for every creative run.
  * Called after generation, remix, compost promotion, dream, or branch
  * to extract descriptors, track lineage, attempt archive placement,
- * and persist everything through LiminalFS.
+ * and persist everything through SinterFS.
  *
  * Usage:
  *   const hooks = new EmergenceHooks(liminalFs);
@@ -16,7 +16,7 @@ import { LineageTracker } from './LineageTracker.js';
 import { ArchivePlacement } from './ArchivePlacement.js';
 import { EmergenceCritic } from './EmergenceCritic.js';
 import { ArchiveEntriesFSAdapter } from '../fs/adapters/ArchiveEntries.js';
-import type { LiminalFS } from '../fs/LiminalFS.js';
+import type { SinterFS } from '../fs/SinterFS.js';
 import type {
   BehaviorDescriptor,
   LineageRecord,
@@ -39,7 +39,7 @@ export interface CreativeRunInput {
   seed?: string;
   /** Run parameters */
   runParams?: Record<string, unknown>;
-  /** Run ID from LiminalFS */
+  /** Run ID from SinterFS */
   runId?: string;
   /** Optional metadata for descriptor extraction */
   metadata?: Record<string, unknown>;
@@ -60,7 +60,7 @@ export class EmergenceHooks {
   private readonly fsAdapter: ArchiveEntriesFSAdapter;
 
   constructor(
-    liminalFs: LiminalFS,
+    liminalFs: SinterFS,
     archiveConfig?: {
       binsPerAxis?: number;
       nearEliteCapacity?: number;
@@ -81,7 +81,7 @@ export class EmergenceHooks {
   /**
    * Main hook — call after every creative run.
    * Extracts descriptor, records lineage, attempts archive placement,
-   * and persists to LiminalFS.
+   * and persists to SinterFS.
    */
   async onCreativeRun(input: CreativeRunInput): Promise<CreativeRunResult> {
     // 1. Extract behavior descriptor
@@ -113,7 +113,7 @@ export class EmergenceHooks {
       signals,
     });
 
-    // 5. Persist to LiminalFS if accepted
+    // 5. Persist to SinterFS if accepted
     if (placement.accepted) {
       const entry = placement.outcome === 'new-cell'
         ? this.archive.getElite(placement.cellId)

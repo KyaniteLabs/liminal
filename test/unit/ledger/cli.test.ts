@@ -2,7 +2,7 @@
  * Unit tests for src/ledger/cli.ts — parseArgs function
  *
  * Tests the pure parseArgs function with all subcommand variants.
- * Does NOT mock LiminalFS or TaskLedger — only tests argument parsing.
+ * Does NOT mock SinterFS or TaskLedger — only tests argument parsing.
  */
 
 import { describe, it, expect } from 'vitest';

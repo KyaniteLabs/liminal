@@ -280,8 +280,8 @@ vi.mock('../../../src/render/RenderAndScorePipeline.js', () => ({
   },
 }));
 
-vi.mock('../../../src/fs/LiminalFS.js', () => ({
-  LiminalFS: {
+vi.mock('../../../src/fs/SinterFS.js', () => ({
+  SinterFS: {
     open: vi.fn(() => ({
       recordRun: vi.fn(),
       getProjectStore: vi.fn(() => ({
@@ -732,7 +732,7 @@ describe('RalphLoop — comprehensive', () => {
         tolerateErrors: true,
       });
 
-      // All candidates fail → LiminalError thrown per iteration, tolerated
+      // All candidates fail → SinterError thrown per iteration, tolerated
       expect(result.finalScore).toBe(0);
     });
   });

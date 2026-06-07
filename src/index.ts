@@ -65,7 +65,7 @@ import { SERVICE_DEFAULTS } from './constants.js';
 
 export const LIMINAL_VERSION = '2.1.0';
 
-export interface LiminalConfig {
+export interface SinterConfig {
   name: string;
   version: string;
   loop: {
@@ -88,7 +88,7 @@ export interface LiminalConfig {
   };
 }
 
-export const defaultConfig: LiminalConfig = {
+export const defaultConfig: SinterConfig = {
   name: 'liminal',
   version: LIMINAL_VERSION,
   loop: {
@@ -392,13 +392,13 @@ export async function runFromArgs(args: {
  * Main Liminal class - entry point for the creative coding agent
  */
 export class Liminal {
-  private config: LiminalConfig;
+  private config: SinterConfig;
 
-  constructor(config: Partial<LiminalConfig> = {}) {
+  constructor(config: Partial<SinterConfig> = {}) {
     this.config = { ...defaultConfig, ...config };
   }
 
-  getConfig(): LiminalConfig {
+  getConfig(): SinterConfig {
     return this.config;
   }
 
@@ -736,12 +736,12 @@ export type { TextGenOptions, TextGenForm, TextGenStyle } from './generators/tex
 export type { SVGGeneratorOptions } from './generators/svg/SVGGenerator.js';
 // Note: ShaderGenerator, ThreeGenerator, HTMLWebGenerator, ASCIIArtGenerator, TextGenerativeGenerator exported below with TierBasedGenerator
 
-export { LiminalFS } from './fs/index.js';
+export { SinterFS } from './fs/index.js';
 export type {
-  LiminalObjectKind,
-  LiminalObjectRef,
+  SinterObjectKind,
+  SinterObjectRef,
   WriteArtifactInput,
-  LiminalRunRecord,
+  SinterRunRecord,
 } from './fs/index.js';
 
 // Meta-Harness - Failure observation and pattern detection
@@ -829,7 +829,7 @@ export type {
   GlobalSettings,
   AudioSettings,
   CompositionMetadata,
-  LiminalProject,
+  SinterProject,
   Export,
   Import,
 

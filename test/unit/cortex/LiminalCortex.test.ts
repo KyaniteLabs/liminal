@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { LiminalCortex } from '../../../src/cortex/LiminalCortex.js';
+import { SinterCortex } from '../../../src/cortex/SinterCortex.js';
 import type { CortexSnapshot, CortexConfig } from '../../../src/cortex/types.js';
-import type { CortexEvent } from '../../../src/cortex/LiminalCortex.js';
+import type { CortexEvent } from '../../../src/cortex/SinterCortex.js';
 const { mockSnapshot, mockGoals, mockOnEvent } = vi.hoisted(() => ({ mockSnapshot: vi.fn(), mockGoals: vi.fn(), mockOnEvent: vi.fn() }));
 function mkS(o: Partial<CortexSnapshot> = {}): CortexSnapshot { return { timestamp: new Date().toISOString(), taskPipeline: { pending: 0, inProgress: 0, completed: 10, failed: 0, skipped: 0, acceptanceRate: 0.9, failureBreakdown: {} }, llmHealth: { avgLatencyMs: 500, successRate: 0.95, recentErrorCount: 0, lastError: null, activeProvider: 't', activeModel: 't' }, scoreTrend: { scores: [0.7, 0.75, 0.8], average: 0.75, count: 3 }, activeProcesses: [], eventsProcessed: 50, ...o }; }
 function mkC(o: Partial<CortexConfig> = {}): CortexConfig { return { loopIntervalMs: 100, maxConsecutiveFailures: 3, budgetActionsLimit: 10, budgetTokenLimit: 50000, autonomyLevel: 'assist', ...o }; }
-describe('LiminalCortex', () => {
+describe('SinterCortex', () => {
   let pb: { getSnapshot: ReturnType<typeof vi.fn> }; let gs: { getActiveGoals: ReturnType<typeof vi.fn> };
   beforeEach(() => { vi.clearAllMocks(); pb = { getSnapshot: mockSnapshot }; gs = { getActiveGoals: mockGoals }; mockSnapshot.mockReturnValue(mkS()); mockGoals.mockReturnValue([]); });
-  function mk(c?: Partial<CortexConfig>) { return new LiminalCortex({ perceptionBus: pb as any, goalStore: gs as any, config: mkC(c), onEvent: mockOnEvent }); }
+  function mk(c?: Partial<CortexConfig>) { return new SinterCortex({ perceptionBus: pb as any, goalStore: gs as any, config: mkC(c), onEvent: mockOnEvent }); }
   it('starts', () => { const c = mk({ loopIntervalMs: 60000 }); c.start(); expect(c.isRunning()).toBe(true); c.stop(); });
   it('stops', () => { const c = mk({ loopIntervalMs: 60000 }); c.start(); c.stop(); expect(c.isRunning()).toBe(false); });
   it('no double-start', () => { const c = mk({ loopIntervalMs: 60000 }); c.start(); c.start(); expect(c.isRunning()).toBe(true); c.stop(); });

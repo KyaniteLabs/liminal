@@ -3,7 +3,7 @@
  *
  * Captures user preference actions (pin, favorite, branch, compost,
  * more-like-this, less-like-this, pairwise) as structured data persisted
- * through LiminalFS. This is the taste-learning signal pipeline.
+ * through SinterFS. This is the taste-learning signal pipeline.
  */
 
 import { promises as fs } from 'fs';

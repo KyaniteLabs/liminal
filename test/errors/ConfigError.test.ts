@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ConfigError } from '../../src/errors/ConfigError';
-import { LiminalError } from '../../src/errors/base';
+import { SinterError } from '../../src/errors/base';
 
 describe('ConfigError', () => {
   it('should create a ConfigError with message and code', () => {
@@ -19,10 +19,10 @@ describe('ConfigError', () => {
     expect(error.context).toEqual(context);
   });
 
-  it('should be an instance of LiminalError and Error', () => {
+  it('should be an instance of SinterError and Error', () => {
     const error = new ConfigError('Test');
 
-    expect(error).toBeInstanceOf(LiminalError);
+    expect(error).toBeInstanceOf(SinterError);
     expect(error).toBeInstanceOf(Error);
     expect(error).toBeInstanceOf(ConfigError);
   });

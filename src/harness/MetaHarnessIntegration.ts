@@ -458,7 +458,7 @@ Respond with a JSON object:
         domains: [generatorName.toLowerCase()],
         keywords: [generatorName.toLowerCase()],
         author: 'Sinter Harness',
-        minLiminalVersion: '2.0.0',
+        minSinterVersion: '2.0.0',
       };
 
       await fs.writeFile(

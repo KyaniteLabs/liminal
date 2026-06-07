@@ -1,2 +1,0 @@
-function setup() { createCanvas(400, 400); background(20); }
-function draw() { background(20, 10); fill(255); circle(width / 2, height / 2, 80); }

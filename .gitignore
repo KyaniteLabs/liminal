@@ -166,7 +166,9 @@ test-gallery-temp/
 # Archives
 *.zip
 
-# Sinter runtime object store (emergence archive cells written per generation)
-.sinter/objects/
-.sinter/project.sinter-shm
-.sinter/project.sinter-wal
+# Sinter runtime object store — content-addressable store (objects, refs) + SQLite
+# DB and its WAL/SHM. All regenerable machine-local state; never tracked.
+/.sinter/
+
+# Quality/QA verification artifacts (baselines, render matrices, compose-verify logs)
+/.quality/

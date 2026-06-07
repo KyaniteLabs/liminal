@@ -2305,8 +2305,12 @@ else if (cmd === 'ship' && cmdArgs[0] === 'garden') {
   const { CreativeWeaknessEmitter } = await import('../dist/autonomy/CreativeWeaknessEmitter.js');
 
   // Readiness gate check
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
   const healthMonitor = new GardenHealthMonitor();
   const readinessBuilder = new LaunchSummaryBuilder();
+  const liminalFs = LiminalFS.open(process.cwd());
+  const hooks = new EmergenceHooks(liminalFs);
   const archive = hooks.getArchive();
   const cells = archive.getAllCells();
   const health = healthMonitor.measure(cells);
@@ -2438,7 +2442,11 @@ else if (cmd === 'prompt' && cmdArgs[0] === 'synthesize') {
 }
 else {
   console.error('');
-  console.error('Run "liminal --configure" to set up LM Studio');
-  console.error('Or use: liminal "your idea"');
+  if (cmd) {
+    console.error(`Unknown command or subcommand: ${[cmd, ...cmdArgs].join(' ')}`);
+    console.error('Run "liminal --help" to see available commands and subcommands.');
+  } else {
+    console.error('Run "liminal --help" for usage, or: liminal "your idea"');
+  }
   process.exit(1);
 }

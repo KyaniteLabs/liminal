@@ -320,6 +320,7 @@ function printHelp() {
   console.log('  list, ls                    Show saved sketches');
   console.log('  compost <subcommand>        Compost Mill: add, digest, soup, seeds, status');
   console.log('  composite                   Analyze composition spec and generate layer plan');
+  console.log('  compose --spec <s.json>     Generate every layer and assemble one layered work');
   console.log('  chat                        Start conversational creative coding mode');
   console.log('  git <subcommand>            Git integration: status, log, diff, branch, commit, init');
   console.log('  fix <file|description>      Auto-fix code issues with LLM assistance');
@@ -1308,6 +1309,58 @@ else if (cmd === 'composite') {
     process.exit(0);
   } catch (err) {
     console.error('Composite analysis failed:', err.message);
+    process.exit(1);
+  }
+}
+else if (cmd === 'compose') {
+  // End-to-end layered work: generate every layer via the domain generators and
+  // assemble one standalone composite HTML (stacked, blended visual layers +
+  // audio). This is the "combine outputs" path — Liminal's core mixing capability.
+  const specPath = flags.spec;
+  if (!specPath) {
+    console.error('Usage: liminal compose --spec <spec.json> [-o <dir>]');
+    console.error('  spec: { "title", "background", "layers": [ { "domain", "prompt", "blendMode", "opacity" } ] }');
+    console.error('  domains: p5, three, shader, hydra, ascii, html, tone, strudel');
+    process.exit(1);
+  }
+  const outDir = flags.output || 'output';
+  const { CompositionOrchestrator } = await import('../dist/composition/CompositionOrchestrator.js');
+  const { harnessMemory } = await import('../dist/harness/HarnessMemory.js');
+  try {
+    const spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+    console.log('🎨 Composing ' + (spec.layers?.length ?? 0) + ' layers...');
+    console.log('');
+    const result = await CompositionOrchestrator.compose(spec);
+    fs.mkdirSync(outDir, { recursive: true });
+    const htmlPath = path.join(outDir, 'composition.html');
+    fs.writeFileSync(htmlPath, result.html, 'utf-8');
+    for (const l of result.layers) {
+      console.log('  [' + l.domain + '] ' + (l.generated
+        ? 'ok — ' + l.codeLength + ' chars, blend=' + l.blendMode + ' opacity=' + l.opacity
+        : 'FAILED: ' + l.error));
+    }
+    console.log('');
+    console.log('✅ ' + result.successCount + '/' + result.layers.length + ' layers composed');
+    console.log('✅ Saved: ' + htmlPath);
+    // Feed self-improvement: record this composition as a generation episode.
+    try {
+      await harnessMemory.initialize();
+      harnessMemory.recordEpisode({
+        type: 'generation',
+        domain: 'composition',
+        prompt: result.title + ' :: ' + result.layers.map(l => l.domain + ':' + l.prompt).join(' | '),
+        code: result.html,
+        score: result.layers.length ? result.successCount / result.layers.length : 0,
+        tags: ['composition', ...result.layers.map(l => l.domain)],
+      });
+      await harnessMemory.save();
+      console.log('🧠 Recorded composition episode for self-improvement');
+    } catch (memErr) {
+      console.log('⚠️  Episode not recorded: ' + memErr.message);
+    }
+    process.exit(result.successCount > 0 ? 0 : 1);
+  } catch (err) {
+    console.error('Compose failed:', err.message);
     process.exit(1);
   }
 }

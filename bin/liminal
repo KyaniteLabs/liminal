@@ -349,7 +349,7 @@ function printHelp() {
   console.log('  list, ls                    Show saved sketches');
   console.log('  compost <subcommand>        Compost Mill: add, digest, soup, seeds, status');
   console.log('  composite                   Analyze composition spec and generate layer plan');
-  console.log('  compose --spec <s.json>     Generate every layer and assemble one layered work');
+  console.log('  compose --prompt "<idea>"     Decompose an idea into layers + assemble (or --spec)');
   console.log('  chat                        Start conversational creative coding mode');
   console.log('  git <subcommand>            Git integration: status, log, diff, branch, commit, init');
   console.log('  fix <file|description>      Auto-fix code issues with LLM assistance');
@@ -1019,7 +1019,7 @@ if (cmd === 'site') {
   process.exit(0);
 }
 
-if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
+if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || (flags.prompt && (!cmd || naturalLanguagePrompt))) {
   prompt = commandPrompt(flags.prompt, cmdArgs);
   if (!prompt) {
     console.error('Error: --prompt is required');
@@ -1071,6 +1071,7 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
     console.log('⏱️ Time: ' + (result.duration / 1000).toFixed(1) + 's');
     console.log('🎯 Reason: ' + result.reason);
     console.log('⭐ Quality score: ' + result.finalScore.toFixed(2));
+    console.log('🤖 Model: ' + (result.model || 'unknown'));
     // Track in history
     await history.add(prompt);
 
@@ -1350,9 +1351,11 @@ else if (cmd === 'compose') {
   // assemble one standalone composite HTML (stacked, blended visual layers +
   // audio). This is the "combine outputs" path — Liminal's core mixing capability.
   const specPath = flags.spec;
-  if (!specPath) {
-    console.error('Usage: liminal compose --spec <spec.json> [-o <dir>]');
-    console.error('  spec: { "title", "background", "layers": [ { "domain", "prompt", "blendMode", "opacity" } ] }');
+  const nlPrompt = flags.prompt || (cmdArgs.length ? cmdArgs.join(' ') : undefined);
+  if (!specPath && !nlPrompt) {
+    console.error('Usage: liminal compose (--prompt "<idea>" | --spec <spec.json>) [-o <dir>]');
+    console.error('  --prompt: an LLM decomposes the idea into layers, then composes them');
+    console.error('  --spec:   { "title", "background", "layers": [ { "domain", "prompt", "blendMode", "opacity" } ] }');
     console.error('  domains: p5, three, shader, hydra, ascii, html, tone, strudel');
     process.exit(1);
   }
@@ -1360,10 +1363,17 @@ else if (cmd === 'compose') {
   const { CompositionOrchestrator } = await import('../dist/composition/CompositionOrchestrator.js');
   const { harnessMemory } = await import('../dist/harness/HarnessMemory.js');
   try {
-    const spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
-    console.log('🎨 Composing ' + (spec.layers?.length ?? 0) + ' layers...');
-    console.log('');
-    const result = await CompositionOrchestrator.compose(spec);
+    let result;
+    if (specPath) {
+      const spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
+      console.log('🎨 Composing ' + (spec.layers?.length ?? 0) + ' layers...');
+      console.log('');
+      result = await CompositionOrchestrator.compose(spec);
+    } else {
+      console.log('🧩 Decomposing idea into layers...');
+      console.log('');
+      result = await CompositionOrchestrator.composeFromPrompt(nlPrompt);
+    }
     fs.mkdirSync(outDir, { recursive: true });
     const htmlPath = path.join(outDir, 'composition.html');
     fs.writeFileSync(htmlPath, result.html, 'utf-8');

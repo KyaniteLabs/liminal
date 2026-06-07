@@ -23,6 +23,7 @@ import { generatorRegistry } from '../generators/GeneratorRegistry.js';
 import { registerAllGenerators } from '../generators/registerGenerators.js';
 import { HTMLWrapper, type Domain as WrapDomain } from '../utils/htmlWrapper.js';
 import type { DomainType, BlendMode } from './types.js';
+import { LLMClient } from '../llm/LLMClient.js';
 import { Logger } from '../utils/Logger.js';
 
 /** One requested layer in a composition. */
@@ -122,6 +123,80 @@ export class CompositionOrchestrator {
     }));
 
     return { html, title, layers, successCount: results.filter(r => r.generated).length };
+  }
+
+  /**
+   * Compose from a single natural-language idea: an LLM decomposes it into a
+   * layer spec (which domains, what each layer is, blend modes), then the layers
+   * are generated and assembled. This is the conversational entry to the
+   * "combine outputs" capability.
+   */
+  static async composeFromPrompt(prompt: string, llm?: LLMClient): Promise<CompositionResult> {
+    const spec = await this.decomposePrompt(prompt, llm);
+    return this.compose(spec);
+  }
+
+  /** Use an LLM to turn a free-form idea into a validated CompositionSpec. */
+  static async decomposePrompt(prompt: string, llm?: LLMClient): Promise<CompositionSpec> {
+    const client = llm ?? new LLMClient({ role: 'studio' });
+    const system =
+      'You are a composition planner for a creative-coding studio. Break a creative idea ' +
+      'into 2-4 visual/audio layers that stack into one piece. Reply with ONLY strict JSON ' +
+      '(no markdown) of shape: {"title": string, "background": string (css color), "layers": ' +
+      '[{"domain": one of ["shader","three","p5","hydra","ascii","html","tone","strudel"], ' +
+      '"prompt": string, "blendMode": one of ["normal","screen","multiply","overlay","lighten","darken"], ' +
+      '"opacity": number 0..1}]}. Order layers back-to-front (first = background). Put a background ' +
+      'layer first (shader/three), foreground detail next (p5/ascii) with a "screen" or "lighten" ' +
+      'blend so it shows through, and an optional audio layer (tone/strudel) last.';
+    const res = await client.generate(system, `Idea: ${prompt}`);
+    const spec = this.parseSpec(res.code ?? '', prompt);
+    Logger.info('CompositionOrchestrator', `Decomposed prompt into ${spec.layers.length} layers: ${spec.layers.map(l => l.domain).join(', ')}`);
+    return spec;
+  }
+
+  /**
+   * Parse and sanitize an LLM decomposition into a valid CompositionSpec.
+   * Tolerant of markdown fences; clamps opacity, validates domains/blend modes,
+   * and falls back to a single p5 layer if nothing usable is found.
+   */
+  static parseSpec(raw: string, originalPrompt: string): CompositionSpec {
+    const validDomains = new Set<DomainType>(Object.keys(DOMAIN_TO_ENTRY) as DomainType[]);
+    const validBlends = new Set<BlendMode>(['normal', 'screen', 'multiply', 'overlay', 'lighten', 'darken']);
+    let parsed: unknown;
+    try {
+      const json = raw.replace(/^[\s\S]*?```(?:json)?/i, '').replace(/```[\s\S]*$/i, '').trim() || raw.trim();
+      const start = json.indexOf('{');
+      const end = json.lastIndexOf('}');
+      parsed = JSON.parse(start >= 0 && end > start ? json.slice(start, end + 1) : json);
+    } catch {
+      parsed = null;
+    }
+    const obj = (parsed && typeof parsed === 'object') ? parsed as Record<string, unknown> : {};
+    const rawLayers = Array.isArray(obj.layers) ? obj.layers : [];
+    const layers: CompositionLayerSpec[] = [];
+    for (const l of rawLayers) {
+      if (!l || typeof l !== 'object') continue;
+      const r = l as Record<string, unknown>;
+      const domain = String(r.domain || '').toLowerCase() as DomainType;
+      if (!validDomains.has(domain)) continue;
+      const blend = String(r.blendMode || 'normal').toLowerCase() as BlendMode;
+      const opacityNum = typeof r.opacity === 'number' ? r.opacity : Number(r.opacity);
+      layers.push({
+        domain,
+        prompt: typeof r.prompt === 'string' && r.prompt.trim() ? r.prompt.trim() : originalPrompt,
+        blendMode: validBlends.has(blend) ? blend : 'normal',
+        opacity: Number.isFinite(opacityNum) ? Math.min(1, Math.max(0, opacityNum)) : 1,
+      });
+    }
+    if (layers.length === 0) {
+      // Decomposition failed — degrade to a single sketch of the whole idea.
+      layers.push({ domain: 'p5', prompt: originalPrompt, blendMode: 'normal', opacity: 1 });
+    }
+    return {
+      title: typeof obj.title === 'string' && obj.title.trim() ? obj.title.trim() : 'Liminal Composition',
+      background: typeof obj.background === 'string' && obj.background.trim() ? obj.background.trim() : '#05070f',
+      layers,
+    };
   }
 
   private static async generateLayer(

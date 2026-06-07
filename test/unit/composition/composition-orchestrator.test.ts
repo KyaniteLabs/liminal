@@ -99,3 +99,38 @@ describe('CompositionOrchestrator.compose', () => {
     expect(result.layers[0].error).toMatch(/unsupported layer domain: video/);
   });
 });
+
+describe('CompositionOrchestrator.parseSpec (NL decomposition parsing)', () => {
+  it('parses fenced JSON, drops invalid domains, clamps opacity, keeps blend modes', () => {
+    const raw = '```json\n' + JSON.stringify({
+      title: 'Reef', background: '#012',
+      layers: [
+        { domain: 'shader', prompt: 'caustics bg', blendMode: 'normal', opacity: 1 },
+        { domain: 'NOPE', prompt: 'x' },
+        { domain: 'p5', prompt: 'fish', blendMode: 'screen', opacity: 1.7 },
+      ],
+    }) + '\n```';
+    const spec = CompositionOrchestrator.parseSpec(raw, 'a coral reef');
+    expect(spec.title).toBe('Reef');
+    expect(spec.background).toBe('#012');
+    expect(spec.layers).toHaveLength(2); // invalid domain dropped
+    expect(spec.layers[0].domain).toBe('shader');
+    expect(spec.layers[1].domain).toBe('p5');
+    expect(spec.layers[1].blendMode).toBe('screen');
+    expect(spec.layers[1].opacity).toBe(1); // 1.7 clamped to 1
+  });
+
+  it('falls back to a single p5 layer of the original idea when JSON is unusable', () => {
+    const spec = CompositionOrchestrator.parseSpec('this is not json', 'a glowing forest at dusk');
+    expect(spec.layers).toHaveLength(1);
+    expect(spec.layers[0].domain).toBe('p5');
+    expect(spec.layers[0].prompt).toBe('a glowing forest at dusk');
+  });
+
+  it('defaults an unknown blend mode to normal and missing opacity to 1', () => {
+    const raw = JSON.stringify({ layers: [{ domain: 'three', prompt: 'spheres', blendMode: 'plasma' }] });
+    const spec = CompositionOrchestrator.parseSpec(raw, 'idea');
+    expect(spec.layers[0].blendMode).toBe('normal');
+    expect(spec.layers[0].opacity).toBe(1);
+  });
+});

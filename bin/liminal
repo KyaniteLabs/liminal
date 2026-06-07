@@ -115,7 +115,7 @@ function setProviderKey(providerKey, apiKey, { model, baseUrl, activate } = {}) 
 
 function printProviderHelp() {
   console.log('');
-  console.log('🔌 Liminal Provider Setup');
+  console.log('🔌 Sinter Provider Setup');
   console.log('');
   console.log('USAGE:');
   console.log('  liminal provider help');
@@ -142,7 +142,7 @@ function printProviderHelp() {
 
 function printProviderList() {
   console.log('');
-  console.log('Available Liminal providers:');
+  console.log('Available Sinter providers:');
   for (const name of CLI_PROVIDER_NAMES) {
     const provider = CLI_PROVIDER_DEFAULTS[name];
     console.log(`  ${name.padEnd(10)} ${provider.label} (${provider.baseUrl})`);
@@ -170,7 +170,7 @@ function printProviderStatus() {
   const config = readLiminalConfig();
   const active = config.defaultProvider;
   console.log('');
-  console.log('Liminal provider readiness:');
+  console.log('Sinter provider readiness:');
   for (const [name, provider] of Object.entries(CLI_PROVIDER_DEFAULTS)) {
     // Ready if no key needed, or a key is present in env OR the saved config.
     const hasKey = Boolean(process.env[provider.apiKeyEnv]) || savedKeyFor(name, config);
@@ -330,7 +330,7 @@ function summarizeSession(session) {
 
 function printHelp() {
   console.log('');
-  console.log('🎨 Liminal: Creative Coding Agent');
+  console.log('🎨 Sinter: Creative Coding Agent');
   console.log('');
   console.log('USAGE:');
   console.log('  liminal [options] <command> [args]');
@@ -379,7 +379,7 @@ function printHelp() {
   console.log('  --favorites                 List favorite prompts');
   console.log('  --interactive, -i           Interactive TUI mode');
   console.log('  --mode <mode>              Mode: live-music (Live AV Strudel + Hydra to --output)');
-  console.log('  --use-swarm                Use Liminal swarm (5 default personas) for generation');
+  console.log('  --use-swarm                Use Sinter swarm (5 default personas) for generation');
   console.log('  --swarm-mode <mode>        Swarm mode: competitive, hybrid, ring, mesh (default: hybrid)');
   console.log('  --swarm-rounds <num>       Max swarm rounds (default: 10)');
   console.log('  --fast-model <name>        Primary/fast model for dual-mode (e.g., qwen3.5:9b)');
@@ -421,7 +421,7 @@ if (flags.help) {
 
 // Handle --version flag
 if (flags.version) {
-  console.log(`Liminal v${packageJson.version}`);
+  console.log(`Sinter v${packageJson.version}`);
   process.exit(0);
 }
 
@@ -748,7 +748,7 @@ if (flags.configure) {
   const providerKey = resolveCliProvider(flags.provider) || 'lmstudio';
   const providerDefaults = CLI_PROVIDER_DEFAULTS[providerKey];
   console.log('');
-  console.log('🎨 Liminal Configuration');
+  console.log('🎨 Sinter Configuration');
   console.log('');
   console.log(`Setting up ${providerDefaults.label} config...`);
   console.log('');
@@ -876,7 +876,7 @@ if (naturalLanguagePrompt && flags.prompt && isSelfImprovementPrompt(flags.promp
   const taskMdPath = path.join(outDir, 'self-improvement-task.md');
   fs.writeFileSync(taskJsonPath, `${JSON.stringify(prepared.task, null, 2)}\n`, 'utf-8');
   fs.writeFileSync(taskMdPath, [
-    '# Liminal Self-Improvement Task Packet',
+    '# Sinter Self-Improvement Task Packet',
     '',
     `Task: ${prepared.task.title}`,
     `Task ID: ${prepared.taskId}`,
@@ -897,7 +897,7 @@ if (naturalLanguagePrompt && flags.prompt && isSelfImprovementPrompt(flags.promp
   ].join('\n'), 'utf-8');
 
   console.log('');
-  console.log('🛠️ Liminal: Self-improvement request');
+  console.log('🛠️ Sinter: Self-improvement request');
   console.log('✅ Routed to self-improvement task preparation, not creative generation.');
   console.log(`📁 Output: ${outDir}`);
   console.log(`✅ Task JSON: ${taskJsonPath}`);
@@ -926,7 +926,7 @@ if (naturalLanguagePrompt && flags.prompt && isSelfImprovementPrompt(flags.promp
   const sessionMdPath = path.join(outDir, 'self-improvement-session.md');
   fs.writeFileSync(sessionJsonPath, `${JSON.stringify(sessionSummary, null, 2)}\n`, 'utf-8');
   fs.writeFileSync(sessionMdPath, [
-    '# Liminal Self-Improvement Session',
+    '# Sinter Self-Improvement Session',
     '',
     `Status: ${sessionSummary.status}`,
     `Exit reason: ${sessionSummary.exitReason || 'n/a'}`,
@@ -973,7 +973,7 @@ if (isLiveMusic) {
   const liveOpts = liveConfig?.live || {};
 
   console.log('');
-  console.log('🎵 Liminal: Live AV');
+  console.log('🎵 Sinter: Live AV');
   console.log('📝 Prompt: "' + livePrompt + '"');
   console.log('📁 Output: ' + liveOutDir);
   if (liveOpts.oscHost || liveOpts.syncMode) {
@@ -1032,7 +1032,7 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || (flags.prompt && (!cmd
   fs.mkdirSync(outDir, { recursive: true });
 
   console.log('');
-  console.log('🎨 Liminal: Creative Coding Agent');
+  console.log('🎨 Sinter: Creative Coding Agent');
   console.log('📝 Prompt: "' + prompt + '"');
   console.log('🔄 Max iterations: ' + maxIterations);
   if (output) console.log('📁 Output: ' + output);
@@ -1085,7 +1085,7 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || (flags.prompt && (!cmd
     } catch (receiptErr) {
       const message = receiptErr instanceof Error ? receiptErr.message : String(receiptErr);
       console.log('');
-      console.log('🧠 What Liminal learned: unavailable — ' + message);
+      console.log('🧠 What Sinter learned: unavailable — ' + message);
     }
     console.log('');
     process.exit(0);
@@ -1349,7 +1349,7 @@ else if (cmd === 'composite') {
 else if (cmd === 'compose') {
   // End-to-end layered work: generate every layer via the domain generators and
   // assemble one standalone composite HTML (stacked, blended visual layers +
-  // audio). This is the "combine outputs" path — Liminal's core mixing capability.
+  // audio). This is the "combine outputs" path — Sinter's core mixing capability.
   const specPath = flags.spec;
   const nlPrompt = flags.prompt || (cmdArgs.length ? cmdArgs.join(' ') : undefined);
   if (!specPath && !nlPrompt) {
@@ -1428,7 +1428,7 @@ else if (cmd === 'consolidate' || flags.consolidate) {
   const { HarnessMemory } = await import('../dist/harness/HarnessMemory.js');
 
   console.log('');
-  console.log('🧠 Liminal Memory Consolidation');
+  console.log('🧠 Sinter Memory Consolidation');
   console.log('');
 
   const memory = new HarnessMemory();
@@ -1505,7 +1505,7 @@ else if (cmd === 'bridge') {
     const server = new TuiBridgeServer(bridge, { port, llm });
     await server.start();
     console.log('');
-    console.log('Liminal TUI Bridge');
+    console.log('Sinter TUI Bridge');
     console.log(`  Listening: ${server.address}`);
     console.log(`  LLM: ${llmProvider} / ${llmModel}`);
     console.log('');
@@ -1532,7 +1532,7 @@ else if (cmd === 'studio') {
   const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 
   console.log('');
-  console.log('◆ Liminal Studio');
+  console.log('◆ Sinter Studio');
   console.log(`  GUI: ${guiUrl}`);
   console.log(`  API: http://localhost:${apiPort}`);
   console.log('  Surface: GUI workbench with live preview and Improve lane');
@@ -1553,7 +1553,7 @@ else if (cmd === 'studio') {
   });
 
   studio.on('error', (err) => {
-    console.error('Failed to launch Liminal Studio:', err.message);
+    console.error('Failed to launch Sinter Studio:', err.message);
     process.exit(1);
   });
 }
@@ -1594,7 +1594,7 @@ else if (cmd === 'quality') {
   const suite = JSON.parse(suiteJson);
 
   console.log('');
-  console.log('◆ Liminal Quality Gate');
+  console.log('◆ Sinter Quality Gate');
   console.log(`  Suite: ${suite.name} (${suite.cases.length} cases)`);
   console.log('');
 
@@ -1672,7 +1672,7 @@ else if (cmd === 'fix') {
   const fixTarget = cmdArgs[0];
 
   console.log('');
-  console.log('🔧 Liminal Fix');
+  console.log('🔧 Sinter Fix');
   console.log('');
 
   // Validate and normalize confirm option

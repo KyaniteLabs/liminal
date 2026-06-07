@@ -46,13 +46,13 @@ describe('CLI Integration Tests', () => {
     test('should show version', async () => {
       const result = await runCLI(['--version']);
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Liminal');
+      expect(result.stdout).toContain('Sinter');
     }, 10000);
 
     test('should show provider setup help without starting generation', async () => {
       const result = await runCLI(['provider', 'help']);
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Liminal Provider Setup');
+      expect(result.stdout).toContain('Sinter Provider Setup');
       expect(result.stdout).toContain('GLM_API_KEY');
       expect(result.stdout).not.toContain('Generating: provider help');
     }, 10000);
@@ -74,7 +74,7 @@ describe('CLI Integration Tests', () => {
         console.log('[DEBUG] stderr:', result.stderr);
       }
       expect(result.exitCode).toBe(0);
-      expect(result.stdout).toContain('Liminal');
+      expect(result.stdout).toContain('Sinter');
     }, TEST_TIMEOUT);
 
     test('--mode live-music --prompt "ambient" --output <dir> produces files in output dir', async () => {

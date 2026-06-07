@@ -1,7 +1,7 @@
 {
-  "name": "liminal-ai",
+  "name": "sinter",
   "version": "2.1.0",
-  "description": "Creative coding agent with internal Ralph-Wiggum Loop and multi-domain intelligence",
+  "description": "Sinter — a creative-coding studio that generates across many visual/audio domains and fires them into one layered work (to sinter: fuse many particles into a single solid form, the way a kiln fuses clay)",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -171,6 +171,7 @@
     "ws": "8.20.1"
   },
   "bin": {
+    "sinter": "bin/liminal",
     "liminal": "bin/liminal",
     "lim": "bin/liminal"
   },

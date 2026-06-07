@@ -1,4 +1,6 @@
-# Liminal
+# Sinter
+
+*To sinter:* to fire many separate particles into one solid, durable form — the way a kiln fuses grains of clay into a single vessel. That's the idea: generate across many creative-coding domains, then fuse them into one layered work.
 
 [![CI](https://github.com/KyaniteLabs/liminal/actions/workflows/ci.yml/badge.svg)](https://github.com/KyaniteLabs/liminal/actions/workflows/ci.yml)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](./LICENSE)
@@ -7,18 +9,18 @@
 
 > Codex for creative coding: a chat-first Studio that helps you turn natural language, sound, and iteration into sketches, shaders, music, video compositions, and other creative-code artifacts.
 >
-> **Finish-line contract:** Liminal is a creative cognitive system, not a narrowed proof wedge. See [docs/FINISH_LINE.md](docs/FINISH_LINE.md) for the domain, cognitive-organ, self-improvement, and model-assimilation contract.
+> **Finish-line contract:** Sinter is a creative cognitive system, not a narrowed proof wedge. See [docs/FINISH_LINE.md](docs/FINISH_LINE.md) for the domain, cognitive-organ, self-improvement, and model-assimilation contract.
 
-Liminal is a model-agnostic creative coding system. You describe what you want — "a quiet moonlit garden with blue-green fireflies" or "glitch techno beats with feedback loops" — and Liminal helps choose a medium, generates the artifact, shows an inline/side-panel preview, and keeps the conversation open for revision. It works with any OpenAI-compatible API, Ollama, LM Studio, Anthropic-style providers, and GLM.
+Sinter is a model-agnostic creative coding system. You describe what you want — "a quiet moonlit garden with blue-green fireflies" or "glitch techno beats with feedback loops" — and Sinter helps choose a medium, generates the artifact, shows an inline/side-panel preview, and keeps the conversation open for revision. It works with any OpenAI-compatible API, Ollama, LM Studio, Anthropic-style providers, and GLM.
 
-Liminal Studio is the artist-facing workbench: clean chat on the left, live preview on the right, and advanced receipts hidden until you ask for them. Bubble Tea remains the keyboard-first operator cockpit for deeper diagnostics and review actions.
+Sinter Studio is the artist-facing workbench: clean chat on the left, live preview on the right, and advanced receipts hidden until you ask for them. Bubble Tea remains the keyboard-first operator cockpit for deeper diagnostics and review actions.
 
 ---
 
 
 ## Public Discovery
 
-**Liminal** is a model-agnostic creative coding studio for AI-assisted art, music, shaders, sketches, video compositions, and iterative creative systems. It combines a chat-first Studio, CLI, TUI, multi-agent critique, taste learning, creative-code generation, and self-improvement loops.
+**Sinter** is a model-agnostic creative coding studio for AI-assisted art, music, shaders, sketches, video compositions, and iterative creative systems. It combines a chat-first Studio, CLI, TUI, multi-agent critique, taste learning, creative-code generation, and self-improvement loops.
 
 **Public URL:** [kyanitelabs.github.io/liminal](https://kyanitelabs.github.io/liminal/) is the front door for search engines, AI assistants, and people evaluating the project before cloning it.
 
@@ -33,7 +35,7 @@ Liminal Studio is the artist-facing workbench: clean chat on the left, live prev
 pnpm install
 
 # Configure (first time) — sets up ~/.liminal/config.json
-liminal --configure
+sinter --configure
 
 # Or use environment variables:
 export LLM_API_KEY=your-key
@@ -41,14 +43,14 @@ export LLM_MODEL=MiniMax-M2.7
 export LLM_BASE_URL=https://api.minimax.io/anthropic
 
 # Generate
-liminal --prompt "Create a calming blue particle system"
+sinter --prompt "Create a calming blue particle system"
 
 # Chat-driven creative session
-liminal chat
+sinter chat
 
 # Studio — chat-first GUI workbench with same-screen preview
 pnpm gui
-# or: liminal studio
+# or: sinter studio
 
 # Desktop Studio — Electron shell around the same local Studio
 pnpm desktop
@@ -56,29 +58,29 @@ pnpm desktop
 
 # Bubble Tea operator cockpit (requires Go >= 1.21)
 pnpm tui
-# or: liminal tui
+# or: sinter tui
 
 # Read-only self-healing opportunity scan
-liminal improve scan
+sinter improve scan
 ```
 
 ---
 
 ## Ready-to-show market path
 
-Use this path when you want to try Liminal as a product instead of asking an agent to babysit a proof run. It keeps the full creative surface in scope: p5, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, and TextGen.
+Use this path when you want to try Sinter as a product instead of asking an agent to babysit a proof run. It keeps the full creative surface in scope: p5, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, and TextGen.
 
 ```bash
 # 1. Install and build
 pnpm install
 pnpm build
 
-# 2. Configure a provider (or run liminal --configure)
+# 2. Configure a provider (or run sinter --configure)
 export LIMINAL_LLM_PROVIDER=glm
 export GLM_API_KEY=your-key
 
 # 3. Generate from natural language
-liminal "a luminous blue-green particle garden"
+sinter "a luminous blue-green particle garden"
 
 # 4. Launch Studio for chat, same-screen preview, revision, and optional details
 pnpm gui
@@ -90,10 +92,10 @@ pnpm run proof:live-provider-smoke -- --provider=glm --timeout-ms=120000
 pnpm exec tsx scripts/proof/creative-copilot-proof.ts --provider=glm --all --timeout-ms=120000 --max-tokens=4096 --out=.omx/proof/market-all-domain-sweep
 
 # 7. Ask the app for the plain answer
-liminal market status
+sinter market status
 ```
 
-Expected current result: `liminal market status` prints `Market readiness: READY` after the live smoke receipt exists. The current launch-candidate proof also includes Studio p5 generation, same-screen preview, revision, microphone preview smoke, and permission-denied UX receipts summarized in `docs/launch/launch-candidate-2026-04-30.md`. Strudel patterns are saved with an external playback link, Tone.js saves playable HTML, HyperFrames saves HTML/GSAP composition artifacts, and Revideo code artifacts are generated; native rendered video/still capture is a separate follow-up.
+Expected current result: `sinter market status` prints `Market readiness: READY` after the live smoke receipt exists. The current launch-candidate proof also includes Studio p5 generation, same-screen preview, revision, microphone preview smoke, and permission-denied UX receipts summarized in `docs/launch/launch-candidate-2026-04-30.md`. Strudel patterns are saved with an external playback link, Tone.js saves playable HTML, HyperFrames saves HTML/GSAP composition artifacts, and Revideo code artifacts are generated; native rendered video/still capture is a separate follow-up.
 
 ---
 
@@ -101,7 +103,7 @@ Expected current result: `liminal market status` prints `Market readiness: READY
 
 **Core loop:** Generate → Evaluate → Iterate → Improve
 
-Each iteration, Liminal:
+Each iteration, Sinter:
 1. Builds an enhanced prompt from artistic knowledge, compost seeds, and archive examples
 2. Generates creative code in your chosen domain
 3. Evaluates output on technical and aesthetic dimensions
@@ -118,7 +120,7 @@ Each iteration, Liminal:
 - **Music theory engine** — Euclidean rhythms, Markov chains, scales, chord progressions
 - **Voice/audio pipeline** — Maps microphone/audio features to visual parameters in real time, with explicit permission-denied UX
 - **Aesthetic guardrails** — Color harmony, layout, typography, and sound quality critics
-- **Liminal Studio** — Chat-first GUI with same-screen preview, revision, optional detail receipts, and an Improve lane tucked behind disclosures
+- **Sinter Studio** — Chat-first GUI with same-screen preview, revision, optional detail receipts, and an Improve lane tucked behind disclosures
 - **LiminalCortex** — Background executive that perceives system events, manages goals, and proposes improvements
 - **Emergence evaluation** — Novelty scoring, temporal structure analysis, perturbation probes, weighted ensemble critic
 - **Taste learning + dreaming** — Preference-informed generation, cross-modal dream recombinations, motif rehydration
@@ -137,7 +139,7 @@ Each iteration, Liminal:
 | **Swarm** | `--use-swarm` | Five default personas (Kai, Nova, Rex, Sam, Max) generate in parallel and vote on best |
 | **Deep Collab** | `--routing-mode` | Dual-model routing (fast + powerful) |
 | **Live AV** | `--mode live-music` | Generate Strudel music + Hydra video-synth code |
-| **Studio** | `liminal studio` | Chat-first GUI with same-screen preview, revision, and optional Improve/details drawers |
+| **Studio** | `sinter studio` | Chat-first GUI with same-screen preview, revision, and optional Improve/details drawers |
 | **Cortex** | (in Studio) | Background executive manages goals and improvements |
 
 ---
@@ -146,50 +148,50 @@ Each iteration, Liminal:
 
 ```bash
 # Generation
-liminal -p "Create a particle system"              # Generate with prompt
-liminal -p "sketch" -m 10 -o ./output              # Custom iterations + output dir
-liminal -p "idea" --use-swarm --swarm-mode hybrid  # Swarm generation
-liminal -p "ambient glitch set" --mode live-music  # Live AV mode
+sinter -p "Create a particle system"              # Generate with prompt
+sinter -p "sketch" -m 10 -o ./output              # Custom iterations + output dir
+sinter -p "idea" --use-swarm --swarm-mode hybrid  # Swarm generation
+sinter -p "ambient glitch set" --mode live-music  # Live AV mode
 
 # Interactive
 pnpm gui                                            # GUI workbench
-liminal chat                                        # Conversational creative session
+sinter chat                                        # Conversational creative session
 pnpm tui                                            # Bubble Tea operator cockpit
-liminal improve scan                                # Read-only repair/hardening/optimization proposals
-liminal improve run <proposal-id>                   # Run one proposal from an isolated worktree
+sinter improve scan                                # Read-only repair/hardening/optimization proposals
+sinter improve run <proposal-id>                   # Run one proposal from an isolated worktree
 
 # Emergence + Evaluation
-liminal emergence score <file>                      # Score emergence dimensions
-liminal emergence probe <file>                      # Run perturbation probes
-liminal report provenance <file>                    # Trace creative lineage
-liminal report archive                              # Archive overview
-liminal report garden                               # Autonomous Gardener status
-liminal report cognition                            # Creative body + cognitive architecture atlas
+sinter emergence score <file>                      # Score emergence dimensions
+sinter emergence probe <file>                      # Run perturbation probes
+sinter report provenance <file>                    # Trace creative lineage
+sinter report archive                              # Archive overview
+sinter report garden                               # Autonomous Gardener status
+sinter report cognition                            # Creative body + cognitive architecture atlas
 pnpm proof:cognitive-loop -- --out=.omx/proof/cognitive-loop-dev
 pnpm proof:cognitive-loop -- --live --out=.omx/proof/cognitive-loop-live-dev
 pnpm proof:model-assimilation -- --out=.omx/proof/model-assimilation-dev
 
 # Compost Mill — creative material digestion
-liminal compost add <path>                          # Feed material to heap
-liminal compost digest                              # Run digestion pipeline
-liminal compost soup start                          # Start evolutionary soup
-liminal compost soup stop                           # Stop soup
-liminal compost seeds list                          # Browse promoted seeds
-liminal compost status                              # Overview
+sinter compost add <path>                          # Feed material to heap
+sinter compost digest                              # Run digestion pipeline
+sinter compost soup start                          # Start evolutionary soup
+sinter compost soup stop                           # Stop soup
+sinter compost seeds list                          # Browse promoted seeds
+sinter compost status                              # Overview
 
 # Self-hosting task ledger
-liminal ledger list                                 # List tasks
-liminal ledger show <id>                            # Show task details
-liminal ledger run <id>                             # Execute a task
-liminal ledger verify <id>                          # Verify task result
-liminal ledger status                               # Ledger overview
+sinter ledger list                                 # List tasks
+sinter ledger show <id>                            # Show task details
+sinter ledger run <id>                             # Execute a task
+sinter ledger verify <id>                          # Verify task result
+sinter ledger status                               # Ledger overview
 
 # Utilities
-liminal list                                        # List saved sketches
-liminal serve 3456                                  # Preview server
-liminal fix <file|description>                      # Auto-fix code with LLM
-liminal consolidate                                 # Memory consolidation
-liminal --configure                                 # Setup config
+sinter list                                        # List saved sketches
+sinter serve 3456                                  # Preview server
+sinter fix <file|description>                      # Auto-fix code with LLM
+sinter consolidate                                 # Memory consolidation
+sinter --configure                                 # Setup config
 ```
 
 ### Flags
@@ -210,7 +212,7 @@ liminal --configure                                 # Setup config
 
 ### Provider Configuration
 
-Liminal reads from `~/.liminal/config.json`, environment variables, or `--configure`:
+Sinter reads from `~/.liminal/config.json`, environment variables, or `--configure`:
 
 ```bash
 # Environment variables
@@ -219,7 +221,7 @@ LLM_MODEL=MiniMax-M2.7
 LLM_BASE_URL=https://api.minimax.io/anthropic
 
 # Or swap models on the fly
-LIMINAL_LLM_MODEL='google/gemini-3.1-pro-preview' liminal bubbletea
+LIMINAL_LLM_MODEL='google/gemini-3.1-pro-preview' sinter bubbletea
 ```
 
 ---
@@ -278,7 +280,7 @@ Business Source License 1.1. Source code is available for viewing, learning, and
 
 ---
 
-**Liminal** — The code evolves. You curate. The system learns.
+**Sinter** — The code evolves. You curate. The system learns.
 
 ---
 

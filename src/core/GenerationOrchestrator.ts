@@ -221,7 +221,7 @@ export class GenerationOrchestrator {
       try {
         const mined = MiningEngine.mineResult(swarmResult);
         for (const fragment of mined) {
-          this.archiveLearning.addFragment(fragment, this.options.collabDomain || 'p5');
+          await this.archiveLearning.addFragment(fragment, this.options.collabDomain || 'p5');
         }
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);

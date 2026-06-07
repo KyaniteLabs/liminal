@@ -99,7 +99,7 @@ export class ArchiveLearning {
    * @param metadata - Optional additional metadata
    * @returns ArchivedItem if added, null if quality too low
    */
-  addOutput(
+  async addOutput(
     prompt: string,
     output: string,
     domain: string,
@@ -125,9 +125,14 @@ export class ArchiveLearning {
       usedCount: 0,
     };
 
-    this.archive.add(item).catch((err: unknown) => {
+    // Await persistence so the item is actually flushed to disk before the
+    // caller (and the CLI process) exits — otherwise the archive never
+    // accumulates and cross-run learning silently no-ops.
+    try {
+      await this.archive.add(item);
+    } catch (err: unknown) {
       Logger.warn('ArchiveLearning', `Failed to add item to archive: ${err instanceof Error ? err.message : String(err)}`);
-    });
+    }
     return item;
   }
 

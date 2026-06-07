@@ -78,6 +78,7 @@ const MODEL_CAPABILITIES: Record<string, Partial<ModelCapabilities>> = {
   'moonshot-v1*':        { thinking: false, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'none', streamingStyle: 'sse' },
 
   // MiniMax
+  'minimax-m3*':        { thinking: true, streaming: true, jsonMode: true, toolUse: true,  maxContextTokens: 256000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
   'minimax-m2.7*':      { thinking: true, streaming: true, jsonMode: true, toolUse: false, maxContextTokens: 256000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
   'minimax-m2.5*':      { thinking: true, streaming: true, jsonMode: true, toolUse: false, maxContextTokens: 256000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
   'minimax-text-01*':   { thinking: true, streaming: true, jsonMode: true, toolUse: false, maxContextTokens: 256000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },

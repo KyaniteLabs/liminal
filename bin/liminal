@@ -1071,6 +1071,7 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
     console.log('⏱️ Time: ' + (result.duration / 1000).toFixed(1) + 's');
     console.log('🎯 Reason: ' + result.reason);
     console.log('⭐ Quality score: ' + result.finalScore.toFixed(2));
+    console.log('🤖 Model: ' + (result.model || 'unknown'));
     // Track in history
     await history.add(prompt);
 

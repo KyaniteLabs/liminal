@@ -71,6 +71,16 @@ vi.mock('../../src/core/ScoringEngine.js', () => ({
   })),
 }));
 
+vi.mock('../../src/config/RoleConfig.js', () => ({
+  // Hermetic generator-role model so provenance is deterministic in tests.
+  loadRoleConfig: vi.fn(async () => ({
+    generator: { baseUrl: 'http://test', model: 'test-generator-model', temperature: 0.7 },
+    evaluator: { baseUrl: 'http://test', model: 'test-generator-model', temperature: 0.2 },
+    harness: { baseUrl: 'http://test', model: 'test-generator-model', temperature: 0.5 },
+    studio: { baseUrl: 'http://test', model: 'test-generator-model', temperature: 0.6 },
+  })),
+}));
+
 vi.mock('../../src/config/FeatureFlags.js', () => ({
   getEvalMode: vi.fn(() => 'legacy'),
   getRepairMode: vi.fn(() => 'off'),
@@ -336,6 +346,20 @@ describe('RalphLoop Best-of-N', () => {
 
     expect(result.code).toBe('High quality iteration one');
     expect(result.finalScore).toBe(0.9);
+  });
+
+  it('records the generator-role model as provenance even when the candidate omits it', async () => {
+    // Generators that return only a code string drop the model; the loop should
+    // still report the generator-role model instead of "unknown".
+    generateSequence = [{ code: 'A valid sketch' }];
+    scoreSequence = [{ score: 0.8 }];
+
+    const result = await RalphLoop.run('test prompt', {
+      maxIterations: 1,
+      _disableIterationExtension: true,
+    });
+
+    expect(result.model).toBe('test-generator-model');
   });
 
   it('should fail explicitly when all candidates fail validation', async () => {

@@ -36,6 +36,7 @@ import { SafetyGuardrails } from './SafetyGuardrails.js';
 import { CompostHeap } from '../compost/CompostHeap.js';
 import { formatError } from '../utils/errors.js';
 import { CodeValidator } from './CodeValidator.js';
+import { loadRoleConfig } from '../config/RoleConfig.js';
 import { CompostMill } from '../compost/CompostMill.js';
 import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
 import { ArchiveLearning } from '../learning/index.js';
@@ -375,7 +376,15 @@ export class RalphLoop {
     let previousCode = '';
     let finalScore = 0;
     let lastThinking: string | undefined;
-    let lastModel: string | undefined;
+    // Model provenance: generation uses the generator role, so seed lastModel
+    // with its resolved model. Generators that return only a code string drop
+    // the model, which would otherwise be recorded as "unknown".
+    let generatorRoleModel: string | undefined;
+    try {
+      generatorRoleModel = (await loadRoleConfig()).generator?.model;
+      if (generatorRoleModel === 'auto' || generatorRoleModel === 'unknown') generatorRoleModel = undefined;
+    } catch { /* role config unavailable — leave undefined */ }
+    let lastModel: string | undefined = generatorRoleModel;
     // Best VALID candidate across iterations. The loop must return its best
     // result, not merely the last one: a later iteration can regress, and the
     // final validation gate would otherwise reject a good earlier result and
@@ -756,7 +765,8 @@ export class RalphLoop {
 
           currentCode = bestCandidate.code;
           lastThinking = bestCandidate.thinking;
-          lastModel = bestCandidate.model;
+          // Keep the seeded generator-role model when the candidate didn't carry one.
+          lastModel = bestCandidate.model ?? lastModel;
         }
         generationDurationMs = Math.max(0, Date.now() - generationPhaseStartedAt);
 

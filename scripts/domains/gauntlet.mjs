@@ -518,7 +518,7 @@ function auditMarkdown(receipts, runId) {
   ].join('\n');
 }
 
-async function runCli(argv) {
+export async function runCli(argv) {
   const options = parseArgs(argv);
   if (options.help) {
     console.log(usage());

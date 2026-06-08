@@ -37,4 +37,4 @@ jobs:
         run: pnpm build
 
       - name: Run Domain Ratchet
-        run: pnpm domain:ratchet
+        run: pnpm domain:ratchet:ci

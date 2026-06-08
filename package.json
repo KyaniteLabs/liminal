@@ -28,6 +28,7 @@
     "domain:gauntlet": "node scripts/domains/gauntlet.mjs --domain",
     "domain:all": "node scripts/domains/gauntlet.mjs --all",
     "domain:ratchet": "node scripts/domains/gauntlet.mjs --all --ratchet",
+    "domain:ratchet:ci": "node scripts/domains/ratchet-ci-proof.mjs",
     "postinstall": "node scripts/packaging/postinstall.mjs",
     "prepack": "npm run build",
     "build": "tsc --incremental false",

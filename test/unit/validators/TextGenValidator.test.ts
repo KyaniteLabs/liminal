@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { CodeValidator } from '../../../src/core/CodeValidator.js';
 import { TextGenValidator } from '../../../src/core/validators/TextGenValidator.js';
 
 describe('TextGenValidator', () => {
@@ -43,5 +44,46 @@ Line 3
     const result = TextGenValidator.validate(code);
     expect(result.valid).toBe(false);
     expect(result.errors).toContain('TextGen output should be raw text, not an HTML document');
+  });
+
+  it('preserves explicit textgen concrete poetry through CodeValidator', () => {
+    const code = `
+T
+                 H R
+                E S H
+               O L D
+              O
+             L
+            D
+           M
+          A
+         C
+        H
+       I
+      N
+     E
+    L
+   E
+  A
+ R
+N
+I
+N
+G
+    T
+   H
+  E
+ I
+R
+O
+W
+N
+` + 'threshold '.repeat(8);
+
+    const result = CodeValidator.validate(code, 'textgen');
+
+    expect(result.valid).toBe(true);
+    expect(result.cleanedCode).toContain('H R');
+    expect(result.errors).toEqual([]);
   });
 });

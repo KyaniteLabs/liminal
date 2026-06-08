@@ -313,14 +313,17 @@ export class CodeValidator {
 
     const decontaminated = stripContamination(code);
     const firstContentLine = decontaminated.split('\n').find(line => line.trim().length > 0)?.trim() ?? '';
-    const cleaned = ASCIIValidator.detectASCII(decontaminated) && !REASONING_PATTERNS.some(pattern => pattern.test(firstContentLine))
+    const explicitDomain = domain as Domain | undefined;
+    const preserveTextOutput = explicitDomain === 'textgen' ||
+      (ASCIIValidator.detectASCII(decontaminated) && !REASONING_PATTERNS.some(pattern => pattern.test(firstContentLine)));
+    const cleaned = preserveTextOutput
       ? decontaminated.replace(/^\s*\n/, '').trimEnd()
       : stripReasoningText(decontaminated);
     if (!cleaned.trim()) {
       return { valid: false, cleanedCode: '', errors: ['Code is empty after stripping LLM reasoning text'] };
     }
 
-    const detectedDomain = (domain as Domain) || detectDomain(cleaned);
+    const detectedDomain = explicitDomain || detectDomain(cleaned);
 
     const allErrors = [
       ...validateStructure(cleaned, detectedDomain),

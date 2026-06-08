@@ -25,7 +25,6 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build:test": "node scripts/packaging/build-test-binary.mjs",
     "domain:gauntlet": "node scripts/domains/gauntlet.mjs --domain",
     "domain:all": "node scripts/domains/gauntlet.mjs --all",
     "domain:ratchet": "node scripts/domains/gauntlet.mjs --all --ratchet",

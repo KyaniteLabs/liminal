@@ -1,28 +1,37 @@
 name: Gauntlet Ratchet
+
 on:
   push:
     branches:
       - main
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: liminal-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   gauntlet:
     name: Domain Gauntlet Ratchet
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      
-      - uses: pnpm/action-setup@v3
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          version: 8
-          
-      - uses: actions/setup-node@v4
+          persist-credentials: false
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 20
-          cache: 'pnpm'
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.30.1 --activate
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build project
         run: pnpm build

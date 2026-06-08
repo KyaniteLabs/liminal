@@ -511,8 +511,10 @@ function auditMarkdown(receipts, runId) {
     '',
     'Notes:',
     '',
+    '- `scripts/domains/passing-domains.json` is a conservative CI ratchet floor, not the full live scoreboard; domains move into it only after repeatable gauntlet and visual-quality evidence.',
     '- `glsl` uses the existing `shader` generator entry and validates through the GLSL validator family.',
-    '- `kinetic` and `textgen` are marked FAIL until they have dedicated domain validators; their generators can still produce artifacts, but the gauntlet does not fake a core lock from size-only fallback validation.',
+    '- `kinetic` is marked FAIL until it has a dedicated domain validator; its generator can still produce artifacts, but the gauntlet does not fake a core lock from size-only fallback validation.',
+    '- `hydra` and `three` are intentionally not in the ratchet floor yet: they can pass the mechanical gauntlet, but fresh headless screenshots still need visual-quality hardening before they are treated as perfect.',
   ].join('\n');
 }
 

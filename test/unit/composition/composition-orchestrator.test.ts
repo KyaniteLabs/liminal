@@ -20,6 +20,7 @@ vi.mock('../../../src/utils/htmlWrapper.js', () => ({
 }));
 
 import { CompositionOrchestrator } from '../../../src/composition/CompositionOrchestrator.js';
+import { exceedsWashoutBudget } from '../../../src/composition/BlendBudget.js';
 
 describe('CompositionOrchestrator.compose', () => {
   beforeEach(() => {
@@ -181,5 +182,43 @@ describe('CompositionOrchestrator — foreground transparency contract', () => {
       layers: [{ domain: 'p5', prompt: 'opaque base' }],
     });
     expect(result.layers[0].opaqueBackground).toBe(false);
+  });
+});
+
+describe('CompositionOrchestrator.decomposePrompt — washout brightness cap', () => {
+  const mockLLM = (specObj: unknown) =>
+    ({ generate: async () => ({ code: JSON.stringify(specObj) }) }) as unknown as Parameters<
+      typeof CompositionOrchestrator.decomposePrompt
+    >[1];
+
+  it('caps a decomposition that stacks multiple bright layers to stay within the washout budget', async () => {
+    const washy = {
+      title: 'Washy', background: '#02030a',
+      layers: [
+        { domain: 'three', prompt: 'glacier', blendMode: 'normal', opacity: 1 },
+        { domain: 'shader', prompt: 'aurora', blendMode: 'screen', opacity: 1 },
+        { domain: 'p5', prompt: 'glints', blendMode: 'screen', opacity: 1 },
+        { domain: 'hydra', prompt: 'wisps', blendMode: 'lighten', opacity: 1 },
+      ],
+    };
+    const spec = await CompositionOrchestrator.decomposePrompt('an icy cavern', mockLLM(washy));
+    expect(exceedsWashoutBudget(spec.layers)).toBe(false);
+    // bright blends are KEPT (additive blends never occlude); excess opacity is scaled down
+    expect(spec.layers.map((l) => l.blendMode)).toEqual(['normal', 'screen', 'screen', 'lighten']);
+    expect(spec.layers[1].opacity).toBe(1);    // first bright layer kept full (running 1.0)
+    expect(spec.layers[2].opacity).toBe(0.3);  // reduced to remaining budget (1.3 - 1.0)
+    expect(spec.layers[3].opacity).toBe(0);    // budget already full → contributes nothing
+  });
+
+  it('leaves a single-bright-layer decomposition unchanged', async () => {
+    const ok = {
+      title: 'OK', background: '#000',
+      layers: [
+        { domain: 'three', prompt: 'bg', blendMode: 'normal', opacity: 1 },
+        { domain: 'p5', prompt: 'fg', blendMode: 'screen', opacity: 1 },
+      ],
+    };
+    const spec = await CompositionOrchestrator.decomposePrompt('idea', mockLLM(ok));
+    expect(spec.layers.map((l) => l.blendMode)).toEqual(['normal', 'screen']);
   });
 });

@@ -24,6 +24,7 @@ import { registerAllGenerators } from '../generators/registerGenerators.js';
 import { HTMLWrapper, type Domain as WrapDomain } from '../utils/htmlWrapper.js';
 import type { DomainType, BlendMode } from './types.js';
 import { buildLayerPrompt, paintsOpaqueBackground } from './LayerContract.js';
+import { capLayerBrightness, exceedsWashoutBudget } from './BlendBudget.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { Logger } from '../utils/Logger.js';
 
@@ -158,9 +159,20 @@ export class CompositionOrchestrator {
       'clearly different lightness, because they muddy or wash out similar-value layers. ' +
       'Give each layer prompt a deliberate palette that contrasts the layers beneath it, and pick a ' +
       'background color at the opposite lightness end from the foreground. The composite should have ' +
-      'ONE clear focal layer with depth — never an even, low-contrast mush.';
+      'ONE clear focal layer with depth — never an even, low-contrast mush. ' +
+      'Use a brightening blend ("screen"/"lighten") on AT MOST ONE foreground layer; any additional ' +
+      'foreground layers must use "normal" — stacking multiple screen/lighten layers washes the ' +
+      'composite out to white.';
     const res = await client.generate(system, `Idea: ${prompt}`);
     const spec = this.parseSpec(res.code ?? '', prompt);
+    // Cap cumulative brightening so multiple stacked screen/lighten layers don't wash
+    // the composite out to white (#619 caveat). Excess bright layers demote to normal.
+    if (exceedsWashoutBudget(spec.layers)) {
+      const before = spec.layers.map((l) => l.blendMode);
+      spec.layers = capLayerBrightness(spec.layers);
+      const demoted = spec.layers.filter((l, i) => l.blendMode !== before[i]).length;
+      Logger.info('CompositionOrchestrator', `Washout guard: demoted ${demoted} over-budget bright layer(s) to normal`);
+    }
     Logger.info('CompositionOrchestrator', `Decomposed prompt into ${spec.layers.length} layers: ${spec.layers.map(l => l.domain).join(', ')}`);
     return spec;
   }

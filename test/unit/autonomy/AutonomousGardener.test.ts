@@ -7,12 +7,12 @@ import { AutonomousGardener } from '../../../src/autonomy/AutonomousGardener.js'
 import type { GardenerCycleResult } from '../../../src/autonomy/AutonomousGardener.js';
 import type { ArchiveCell, ArchiveEntry, DescriptorAxis } from '../../../src/emergence/types.js';
 
-function makeEntry(id: string, quality: number): ArchiveEntry {
+function makeEntry(id: string, quality: number, descriptorValue = 0.5): ArchiveEntry {
   return {
     id,
     artifactRef: { kind: 'test' as const, path: `test/${id}` },
     descriptor: {
-      values: [{ axis: 'order-chaos' as const, value: 0.5 }],
+      values: [{ axis: 'order-chaos' as const, value: descriptorValue }],
       source: 'test',
       extractedAt: new Date().toISOString(),
     },
@@ -23,11 +23,11 @@ function makeEntry(id: string, quality: number): ArchiveEntry {
   };
 }
 
-function makeCell(id: string, quality: number): ArchiveCell {
+function makeCell(id: string, quality: number, descriptorValue = 0.5): ArchiveCell {
   return {
     cellId: `cell-${id}`,
-    coordinates: [{ axis: 'order-chaos' as const, value: 0.5 }],
-    elite: makeEntry(id, quality),
+    coordinates: [{ axis: 'order-chaos' as const, value: descriptorValue }],
+    elite: makeEntry(id, quality, descriptorValue),
     nearElites: [],
     capacity: 5,
   };
@@ -122,5 +122,31 @@ describe('AutonomousGardener', () => {
     expect(result).not.toBeNull();
     expect(result!.stagnation).not.toBeNull();
     expect(result!.stagnation.isStagnant === true || result!.stagnation.isStagnant === false).toBe(true);
+  });
+
+  it('reports archive entries selected by the loaded taste model', () => {
+    const gardener = new AutonomousGardener({
+      totalBudget: 20,
+      replayRatio: 1,
+      replayBiasStrength: 1,
+      minTasteScore: 0.5,
+      maxArchiveTasks: 1,
+    });
+    gardener.loadTasteModel({
+      axisWeights: [1],
+      qualityWeight: 0,
+      trainedAt: new Date().toISOString(),
+      pairCount: 1,
+      trainingAgreement: 1,
+    });
+
+    const result = gardener.cycle([
+      makeCell('preferred', 0.5, 0.9),
+      makeCell('low-signal', 0.9, 0.1),
+    ], axes);
+
+    expect(result).not.toBeNull();
+    expect(result!.tasteAlignedCount).toBe(1);
+    expect(result!.tasteSelectedEntryIds).toEqual(['preferred']);
   });
 });

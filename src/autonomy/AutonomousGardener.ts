@@ -37,6 +37,8 @@ export interface GardenerCycleResult {
   dreamResults?: RecombinationResult[];
   /** Number of taste-aligned entries in this cycle */
   tasteAlignedCount?: number;
+  /** Archive entry IDs selected by the loaded taste model during replay */
+  tasteSelectedEntryIds?: string[];
 }
 
 export interface AutonomousGardenerConfig {
@@ -139,6 +141,7 @@ export class AutonomousGardener {
     let dreamCount = 0;
     let promisingStatesCount = 0;
     let tasteAlignedCount = 0;
+    const tasteSelectedEntryIds: string[] = [];
     const dreamResults: RecombinationResult[] = [];
     const budgetPerAction = 10;
 
@@ -179,6 +182,7 @@ export class AutonomousGardener {
         replayCount++;
         if (this.replayBiasPolicy.isModelLoaded()) {
           const tasteSelected = this.replayBiasPolicy.selectForReplay(elites, 3);
+          tasteSelectedEntryIds.push(...tasteSelected.map(e => e.id));
           promisingStatesCount += tasteSelected.length;
           tasteAlignedCount += tasteSelected.filter(e => this.replayBiasPolicy.isTasteAligned(e)).length;
         } else {
@@ -218,6 +222,7 @@ export class AutonomousGardener {
       promisingStates: promisingStatesCount,
       dreamResults: dreamResults.length > 0 ? dreamResults : undefined,
       tasteAlignedCount,
+      tasteSelectedEntryIds: tasteSelectedEntryIds.length > 0 ? tasteSelectedEntryIds : undefined,
     };
   }
 

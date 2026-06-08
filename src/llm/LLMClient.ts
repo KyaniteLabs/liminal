@@ -150,6 +150,10 @@ export class LLMClient {
   private cache = new CacheManager({ enabled: true });
   private provider: BaseProvider | null = null;
   private role: ModelRole | undefined;
+  private readonly explicitEndpointConfig: boolean;
+  private readonly explicitTemperatureConfig: boolean;
+  private readonly explicitMaxTokensConfig: boolean;
+  private roleConfigResolutionPromise: Promise<void> | null = null;
   /** Cached role config — populated lazily when role is used */
   private static roleConfigs: Record<ModelRole, ResolvedRoleConfig> | null = null;
   /** Cached raw config file — needed for fallback resolution */
@@ -229,6 +233,9 @@ export class LLMClient {
 
   constructor(config?: Partial<LLMConfig>) {
     this.role = config?.role;
+    this.explicitEndpointConfig = Boolean(config?.baseUrl || config?.model || config?.apiKey);
+    this.explicitTemperatureConfig = config?.temperature !== undefined;
+    this.explicitMaxTokensConfig = config?.maxTokens !== undefined;
 
     // If a role is specified, try to resolve from RoleConfig system
     let roleBaseUrl: string | undefined;
@@ -362,6 +369,56 @@ export class LLMClient {
   static clearGlobalCache(): void {
     LLMClient.roleConfigs = null;
     LLMClient.roleConfigFile = null;
+  }
+
+  private async resolveRoleConfigForRequest(): Promise<void> {
+    if (!this.role || this.explicitEndpointConfig) return;
+
+    if (!this.roleConfigResolutionPromise) {
+      this.roleConfigResolutionPromise = this.doResolveRoleConfigForRequest();
+    }
+
+    return this.roleConfigResolutionPromise;
+  }
+
+  private async doResolveRoleConfigForRequest(): Promise<void> {
+    if (!LLMClient.roleConfigs) {
+      await LLMClient.loadRoles(process.cwd());
+    }
+
+    const roleConfig = this.role ? LLMClient.roleConfigs?.[this.role] : undefined;
+    if (!roleConfig || !this.hasUsableRoleEndpoint(roleConfig)) return;
+
+    if (
+      this.config.baseUrl === roleConfig.baseUrl &&
+      this.config.model === roleConfig.model &&
+      this.config.apiKey === roleConfig.apiKey
+    ) {
+      return;
+    }
+
+    this.config = {
+      ...this.config,
+      baseUrl: roleConfig.baseUrl,
+      apiKey: roleConfig.apiKey,
+      model: roleConfig.model,
+      provider: roleConfig.provider,
+      temperature: this.explicitTemperatureConfig ? this.config.temperature : roleConfig.temperature,
+      maxTokens: this.explicitMaxTokensConfig ? this.config.maxTokens : roleConfig.maxTokens,
+    };
+    this.provider = null;
+    this.fallbackProviders = null;
+    this.resolvedModel = null;
+  }
+
+  private hasUsableRoleEndpoint(roleConfig: ResolvedRoleConfig): boolean {
+    const configuredBaseUrl = roleConfig.baseUrl && roleConfig.baseUrl !== SERVICE_DEFAULTS.LOCAL_LLM_URL;
+    const configuredModel = Boolean(
+      roleConfig.model &&
+      roleConfig.model !== SERVICE_DEFAULTS.DEFAULT_MODEL &&
+      roleConfig.model !== 'unknown'
+    );
+    return Boolean(configuredBaseUrl || configuredModel || roleConfig.apiKey);
   }
 
   /** Get the role this client was configured for */
@@ -679,6 +736,8 @@ export class LLMClient {
   }
 
   private async doResolveModel(): Promise<string> {
+    await this.resolveRoleConfigForRequest();
+
     // Only auto-detect for local endpoints (LM Studio, etc.)
     const baseUrl = this.config.baseUrl;
     const isLocal = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');

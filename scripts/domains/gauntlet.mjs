@@ -124,7 +124,7 @@ export const DOMAIN_GAUNTLET_DOMAINS = [
     label: 'Kinetic Typography',
     generator: 'kinetic',
     validationDomain: 'kinetic',
-    hasDedicatedValidator: false,
+    hasDedicatedValidator: true,
     renderMode: 'png',
     artifactExtension: 'html',
     prompt: 'Target creative domain: Kinetic Typography. Generate CSS kinetic typography HTML with animated words orbiting a central phrase. Never-used gauntlet nonce:',
@@ -513,7 +513,7 @@ function auditMarkdown(receipts, runId) {
     '',
     '- `scripts/domains/passing-domains.json` is a conservative CI ratchet floor, not the full live scoreboard; domains move into it only after repeatable gauntlet and visual-quality evidence.',
     '- `glsl` uses the existing `shader` generator entry and validates through the GLSL validator family.',
-    '- `kinetic` is marked FAIL until it has a dedicated domain validator; its generator can still produce artifacts, but the gauntlet does not fake a core lock from size-only fallback validation.',
+    '- `kinetic` now has a dedicated domain validator, but remains outside the ratchet floor until repeatable gauntlet and visual-quality evidence justify locking it.',
     '- `hydra` and `three` are intentionally not in the ratchet floor yet: they can pass the mechanical gauntlet, but fresh headless screenshots still need visual-quality hardening before they are treated as perfect.',
   ].join('\n');
 }

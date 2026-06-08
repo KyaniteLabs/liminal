@@ -8,8 +8,9 @@
  * - diversity (0-1): behavior-space diversity contribution
  * - engagement (0-1): real-user engagement from PostHog A/B tests
  *
- * Engagement is gated on LIMINAL_POSTHOG_KEY — when absent,
- * the 4-axis legacy weights are used and engagement defaults to 0.5.
+ * Engagement is an OPT-IN axis. Per ADR 0002, PostHog is an aesthetic sensorium,
+ * not the objective function, so its default weight is 0 — callers that explicitly
+ * want engagement in the mix must pass a non-zero `engagement` weight themselves.
  */
 
 export interface FitnessWeights {
@@ -21,11 +22,11 @@ export interface FitnessWeights {
 }
 
 export const DEFAULT_FITNESS_WEIGHTS: FitnessWeights = {
-  novelty: 0.25,
-  quality: 0.25,
+  novelty: 0.375,
+  quality: 0.375,
   technical: 0.15,
   diversity: 0.10,
-  engagement: 0.25,
+  engagement: 0, // opt-in sensorium axis (ADR 0002); freed weight split across novelty+quality
 };
 
 export interface FitnessComponents {

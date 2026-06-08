@@ -135,7 +135,7 @@ describe("LivingSiteDaemon", () => {
 	});
 
 	describe("evaluateChallenger", () => {
-		it("promotes challenger when engagement beats active variant", async () => {
+		it("promotes challenger when it has higher aesthetic fitness", async () => {
 			const sm = new SlotManager(statePath);
 			const ph = new PostHogClient();
 			const active = makeVariant({ experimentId: "active-1", fitness: 0.4 });
@@ -169,7 +169,7 @@ describe("LivingSiteDaemon", () => {
 			cleanup();
 		});
 
-		it("keeps active variant when challenger engagement loses", async () => {
+		it("keeps active variant when challenger has lower aesthetic fitness", async () => {
 			const sm = new SlotManager(statePath);
 			const ph = new PostHogClient();
 			const active = makeVariant({ experimentId: "active-1", fitness: 0.8 });
@@ -209,6 +209,61 @@ describe("LivingSiteDaemon", () => {
 				});
 				cleanup();
 			});
+
+		it("does not promote on engagement alone when aesthetic fitness is lower (ADR 0002: PostHog is a sensorium, not the objective)", async () => {
+			const sm = new SlotManager(statePath);
+			const ph = new PostHogClient();
+			const active = makeVariant({ experimentId: "active-1", fitness: 0.8 });
+			const challenger = makeVariant({ experimentId: "challenger-1", fitness: 0.5 });
+			sm.setSlot(makeSlot({ active, challenger }));
+			// Engagement strongly favors the challenger; aesthetic fitness favors the active.
+			vi.spyOn(ph, "getVariantEngagementMetrics")
+				.mockResolvedValueOnce({
+					variantId: active.experimentId,
+					visitors: 250,
+					metrics: { dwellRate: 0.2, scrollDepth: 0.2, interactionRate: 0.2, retentionScore: 0.2 },
+				})
+				.mockResolvedValueOnce({
+					variantId: challenger.experimentId,
+					visitors: 250,
+					metrics: { dwellRate: 0.9, scrollDepth: 0.9, interactionRate: 0.9, retentionScore: 0.9 },
+				});
+			const daemon = new LivingSiteDaemon(sm, ph, { ...DEFAULT_DAEMON_CONFIG, assetDir: tmpDir });
+
+			await daemon.evaluateChallenger(sm.getSlot("home-hero")!, false);
+
+			// Aesthetic fitness is the objective → higher engagement must NOT win.
+			expect(sm.getSlot("home-hero")!.active.experimentId).toBe("active-1");
+			expect(sm.getSlot("home-hero")!.challenger).toBeNull();
+			cleanup();
+		});
+
+		it("uses engagement as a tiebreaker when aesthetic fitness is ~equal", async () => {
+			const sm = new SlotManager(statePath);
+			const ph = new PostHogClient();
+			const active = makeVariant({ experimentId: "active-1", fitness: 0.7 });
+			const challenger = makeVariant({ experimentId: "challenger-1", fitness: 0.71 });
+			sm.setSlot(makeSlot({ active, challenger }));
+			// Aesthetic delta (0.01) is within the tie epsilon → engagement decides.
+			vi.spyOn(ph, "getVariantEngagementMetrics")
+				.mockResolvedValueOnce({
+					variantId: active.experimentId,
+					visitors: 250,
+					metrics: { dwellRate: 0.2, scrollDepth: 0.2, interactionRate: 0.2, retentionScore: 0.2 },
+				})
+				.mockResolvedValueOnce({
+					variantId: challenger.experimentId,
+					visitors: 250,
+					metrics: { dwellRate: 0.9, scrollDepth: 0.9, interactionRate: 0.9, retentionScore: 0.9 },
+				});
+			const daemon = new LivingSiteDaemon(sm, ph, { ...DEFAULT_DAEMON_CONFIG, assetDir: tmpDir });
+
+			await daemon.evaluateChallenger(sm.getSlot("home-hero")!, false);
+
+			expect(sm.getSlot("home-hero")!.active.experimentId).toBe("challenger-1");
+			expect(sm.getSlot("home-hero")!.challenger).toBeNull();
+			cleanup();
+		});
 	});
 
 	describe("injectVariantEngagementTracking", () => {
@@ -335,8 +390,8 @@ describe("LivingSiteDaemon", () => {
 			const daemon = new LivingSiteDaemon(sm, ph);
 			const combiner = daemon.createFitnessCombiner(false);
 			const weights = combiner.getWeights();
-			expect(weights.novelty).toBe(0.25);
-			expect(weights.engagement).toBe(0.25);
+			expect(weights.novelty).toBe(0.375);
+			expect(weights.engagement).toBe(0);
 			cleanup();
 		});
 

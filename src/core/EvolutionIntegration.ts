@@ -22,12 +22,6 @@ export interface EvolutionUpdateResult {
 	hints: string;
 }
 
-/** Options for evolution update including optional engagement score */
-export interface EvolutionUpdateOptions {
-	/** Engagement score from PostHog data (0-1). Defaults to 0.5 (neutral) when absent. */
-	engagementScore?: number;
-}
-
 /**
  * Coordinates MAP-Elites, novelty archive, and aesthetic model updates.
  */
@@ -46,9 +40,7 @@ export class EvolutionIntegration {
 		code: string,
 		evaluationScore: number,
 		prompt: string,
-		updateOptions?: EvolutionUpdateOptions,
 	): EvolutionUpdateResult {
-		void updateOptions; // Reserved for engagement-score-aware fitness in daemon context
 		let noveltyScore = 0;
 		let hints = "";
 

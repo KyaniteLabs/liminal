@@ -52,6 +52,13 @@ export const DEFAULT_DAEMON_CONFIG: DaemonConfig = {
 	minVisualScore: 0.65,
 };
 
+/**
+ * Aesthetic-fitness gap below which two variants are treated as a visual tie.
+ * Within a tie, the PostHog engagement sensorium acts only as a tiebreaker —
+ * never as the primary objective (ADR 0002).
+ */
+const AESTHETIC_TIE_EPSILON = 0.02;
+
 export class LivingSiteDaemon {
 	private readonly engagement = new EngagementFitness();
 	private readonly slotGrids = new Map<string, MapElites>();
@@ -103,7 +110,9 @@ export class LivingSiteDaemon {
 
 	/**
 	 * Evaluate a challenger variant against the active variant.
-	 * Promotes the challenger if it has higher engagement.
+	 * Promotes the challenger when it has higher aesthetic/visual fitness.
+	 * Engagement (PostHog) is recorded as a sensorium signal and only breaks
+	 * ties between visually-equivalent variants — never the objective (ADR 0002).
 	 */
 	async evaluateChallenger(slot: SiteSlot, dryRun: boolean): Promise<void> {
 		if (!slot.challenger) return;
@@ -131,14 +140,27 @@ export class LivingSiteDaemon {
 			return;
 		}
 
+		// Aesthetic/visual fitness is the objective function. ADR 0002: PostHog
+		// engagement is an aesthetic sensorium, not the objective — it is recorded
+		// below and only breaks ties between visually-equivalent variants.
+		const activeAesthetic = slot.active.fitness;
+		const challengerAesthetic = slot.challenger.fitness;
+		const aestheticDelta = challengerAesthetic - activeAesthetic;
+
 		const activeScore = this.engagement.score(activeResult.metrics);
 		const challengerScore = this.engagement.score(challengerResult.metrics);
-		const challengerWins = challengerScore > activeScore;
+
+		const challengerWins =
+			Math.abs(aestheticDelta) > AESTHETIC_TIE_EPSILON
+				? aestheticDelta > 0
+				: challengerScore > activeScore;
 
 		this.posthog.trackEvent("liminal_challenger_evaluated", {
 			slotId: slot.id,
 			challengerExperimentId: slot.challenger.experimentId,
 			activeExperimentId: slot.active.experimentId,
+			activeAesthetic,
+			challengerAesthetic,
 			activeScore,
 			challengerScore,
 			dryRun,

@@ -6,6 +6,39 @@
 > and keep state honest. The HUMAN (Simon) dispatches your prompts to the workers and
 > relays results back to you.
 
+## Live update — 2026-06-08 16:38 PDT
+
+This section supersedes the original handoff snapshot below.
+
+- Current main: `a08f4523 fix(visual): stabilize hydra three html renders (#633)`.
+- Open PRs: **0**.
+- Merged during the replacement-orchestrator stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization.
+- Cleaned worktrees created by this stint: `G-gauntlet-ratchet`, `K-kinetic-validator`, `V-visual-render`. The persistent stale worktrees remain listed in §2/§7.
+- Local root state after pull: only pre-existing dirty `docs/validation/self-improve-ledger.jsonl`.
+
+### Current gauntlet/ratchet reality
+
+The latest landed ratchet on #633 was CI-green, and local `pnpm domain:ratchet:ci` exited 0 with `[RATCHET] SUCCESS: All expected domains passed`.
+
+Do **not** overread that as all-12 perfect. The ratchet still prints non-gated failures in local output:
+
+| Domain | Latest local evidence | Status |
+|---|---|---|
+| hydra | PASS in single-domain and ratchet; latest PNG 900x600, `render(o0)`, avg luma 102.71, 17,834 unique colors | improved; vision-checked |
+| three | PASS; latest visual has bright `scene.background = 0xe8e0f0`, avg luma 219.56, no helpers | improved; vision-checked |
+| html | PASS; latest control-panel artifact avg luma 233.5 | improved; vision-checked |
+| svg | local ratchet printed `generate: svg generation timed out after 120000ms` after empty-tool-loop retry | Wave 2 |
+| kinetic | local ratchet printed invalid-HTML recovery despite #632 validator work | Wave 2 |
+| p5, glsl, tone, strudel, revideo, ascii, textgen | PASS in latest local ratchet run | keep ratcheted |
+
+### Next Wave 2 dispatch
+
+1. **Ratchet honesty:** make `pnpm domain:ratchet:ci` either gate all printed rows or clearly label non-gated rows as advisory. The current 0 exit with visible SVG/Kinetic failures is acceptable for #633 because CI ratchet expected domains passed, but not acceptable for final all-12 lock.
+2. **SVG timeout:** investigate why SVG tool-loop empty retry can hang until 120s. Likely generator/provider behavior, not a render issue.
+3. **Kinetic invalid recovery:** #632 added the validator, but local ratchet still reports `KineticGenerator: Recovered with deterministic CSS kinetic scaffold: Validation retry returned invalid CSS kinetic HTML...`. Fix generator/recovery contract without fake deterministic fallback success.
+4. **Full all-12 vision audit:** rerun `node scripts/domains/gauntlet.mjs --all` after Wave 2, inspect latest PNG/HTML artifacts, and mark only domains that pass and look genuinely good as "perfect."
+5. **Return to launch backlog:** once #2 is truly green, resume #7 Surfaces, #8 secrets hardening/release trust, #9 design debt/coverage, and M5 trend-log audits.
+
 ---
 
 ## 0. The one mission right now

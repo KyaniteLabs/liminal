@@ -89,6 +89,7 @@
     "proof:studio-launch-gauntlet": "node scripts/proof/studio-launch-gauntlet.mjs",
     "proof:route-performance": "tsx scripts/proof/route-performance-budget.ts",
     "quality:render": "node scripts/quality/render.mjs",
+    "quality:render-gallery": "node scripts/quality/render-gallery.mjs",
     "quality:matrix": "node scripts/quality/matrix.mjs"
   },
   "keywords": [

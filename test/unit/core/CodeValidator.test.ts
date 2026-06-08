@@ -258,6 +258,63 @@ const camera = {};`;
       const result = CodeValidator.validate(code, 'three');
       expect(result.valid).toBe(false);
     });
+
+    it('should reject Three.js code with invalid JavaScript syntax', () => {
+      const code = `const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+const material = ;
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+
+const light = new THREE.PointLight(0xffffff, 1, 100);
+light.position.set(5, 5, 5);
+scene.add(light);
+
+const ambient = new THREE.AmbientLight(0x404040);
+scene.add(ambient);
+
+camera.position.z = 5;
+
+function animate() {
+  requestAnimationFrame(animate);
+  cube.rotation.x += 0.01;
+  cube.rotation.y += 0.01;
+  cube.position.x = Math.sin(Date.now() * 0.001) * 2;
+  renderer.render(scene, camera);
+}
+animate();`;
+      const result = CodeValidator.validate(code, 'three');
+      expect(result.valid).toBe(false);
+      expect(result.errors.join('\n')).toContain('invalid JavaScript syntax');
+    });
+  });
+
+  describe('Guaranteed runtime throw validation', () => {
+    it('should reject generated sketches with explicit throw statements', () => {
+      const code = `let particles = [];
+function setup() {
+  createCanvas(400, 400);
+  for (let i = 0; i < 30; i++) {
+    particles.push({ x: random(width), y: random(height), hue: random(360) });
+  }
+}
+function draw() {
+  throw new Error("generated sketch exploded before drawing");
+  background(0);
+  for (const p of particles) {
+    stroke(p.hue, 80, 95);
+    line(width / 2, height / 2, p.x, p.y);
+  }
+}`;
+      const result = CodeValidator.validate(code, 'p5');
+      expect(result.valid).toBe(false);
+      expect(result.errors.join('\n')).toContain('explicit throw');
+    });
   });
 
   describe('Strudel structural validation', () => {

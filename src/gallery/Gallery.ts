@@ -12,6 +12,7 @@
 import fs from 'fs/promises';
 import { normalizePath, assertSafeSegment } from '../utils/normalizePath.js';
 import { Logger } from '../utils/Logger.js';
+import { CodeValidator } from '../core/CodeValidator.js';
 import type { SwarmResult } from '../swarm/types.js';
 
 export interface Iteration {
@@ -216,6 +217,10 @@ export class Gallery {
     }
     assertSafeSegment(project.trim(), 'Project name');
 
+    const validatedFinalOutput = result.finalOutput
+      ? this.validateGalleryVersionCode(result.finalOutput)
+      : '';
+
     const date = new Date();
     const dateStr = date.toISOString().split('T')[0];
     const projectDirName = `${dateStr}--${project.trim()}`;
@@ -249,13 +254,13 @@ export class Gallery {
     await fs.writeFile(sessionPath, JSON.stringify(sessionData, null, 2), 'utf-8');
 
     // Also save the final output as the latest version
-    if (result.finalOutput) {
+    if (validatedFinalOutput) {
       const history = await this.loadHistory(project).catch((err) => {
         Logger.debug('Gallery', 'Failed to load history:', err);
         return [];
       });
       const nextVersion = history.length + 1;
-      await this.saveIteration(project, nextVersion, result.finalOutput);
+      await this.saveIteration(project, nextVersion, validatedFinalOutput);
     }
   }
 
@@ -280,15 +285,33 @@ export class Gallery {
     if (!visualCode || typeof visualCode !== 'string') {
       throw new Error('visualCode is required and must be a string');
     }
+    const validatedMusicCode = this.validateOrganismCode(musicCode, 'strudel', 'musicCode');
+    const validatedVisualCode = this.validateOrganismCode(visualCode, 'hydra', 'visualCode');
 
     const projectDir = await this.ensureProjectDir(project);
     const payload = {
       type: 'organism',
-      musicCode: musicCode.trim() || musicCode,
-      visualCode: visualCode.trim() || visualCode,
+      musicCode: validatedMusicCode.trim() || validatedMusicCode,
+      visualCode: validatedVisualCode.trim() || validatedVisualCode,
     };
     const filepath = normalizePath(projectDir, `v${version}.js`);
     await fs.writeFile(filepath, JSON.stringify(payload), 'utf-8');
+  }
+
+  private validateGalleryVersionCode(code: string): string {
+    const validation = CodeValidator.validate(code);
+    if (!validation.valid) {
+      throw new Error(`Gallery version validation failed: ${validation.errors.join('; ')}`);
+    }
+    return validation.cleanedCode;
+  }
+
+  private validateOrganismCode(code: string, domain: string, field: string): string {
+    const validation = CodeValidator.validate(code, domain);
+    if (!validation.valid) {
+      throw new Error(`Gallery organism validation failed for ${field} (${domain}): ${validation.errors.join('; ')}`);
+    }
+    return validation.cleanedCode;
   }
 
   /**

@@ -4,9 +4,22 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { SinterFS } from '../../../src/fs/SinterFS.js';
 
-const mockGenerate = vi.hoisted(() =>
-  vi.fn(async () => ({ musicCode: '$0 s0 ~ :seq(1,2)', visualCode: 'osc(10).rotate(0.5)' })),
-);
+const validMusicCode = `$: s("bd hh*2").gain(0.8).room(0.2)
+$: s("cp").rarely(x => x.rev()).gain(0.6)
+$: note("c3 eb3 g3 bb3").s("sawtooth").slow(2).gain(0.5)
+bpm(120)`;
+
+const validVisualCode = `osc(10, 0.1, 0.8)
+  .color(1, 0.2, 0.5)
+  .rotate(() => time * 0.1)
+  .modulate(noise(3))
+  .out(o0)
+shape(4, 0.5)
+  .repeat(3, 3)
+  .out(o1)
+render()`;
+
+const mockGenerate = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../src/musicToVisual/generateMusicToVisual.js', () => ({
   generateMusicToVisual: mockGenerate,
@@ -26,8 +39,8 @@ describe('OrganismLoop SinterFS integration', () => {
     process.cwd = () => projectRoot;
 
     mockGenerate.mockResolvedValue({
-      musicCode: '$0 s0 ~ :seq(1,2)',
-      visualCode: 'osc(10).rotate(0.5)',
+      musicCode: validMusicCode,
+      visualCode: validVisualCode,
     });
   });
 
@@ -68,8 +81,8 @@ describe('OrganismLoop SinterFS integration', () => {
     expect(content).not.toBeNull();
     const parsed = JSON.parse(content!.toString('utf-8'));
     expect(parsed.type).toBe('organism');
-    expect(parsed.musicCode).toBe('$0 s0 ~ :seq(1,2)');
-    expect(parsed.visualCode).toBe('osc(10).rotate(0.5)');
+    expect(parsed.musicCode).toBe(validMusicCode);
+    expect(parsed.visualCode).toBe(validVisualCode);
 
     // Verify run record exists in EventStore
     const eventStore = fs.getProjectStore().getEventStore();

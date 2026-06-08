@@ -18,6 +18,7 @@ import { EmergenceCritic } from './EmergenceCritic.js';
 import { ArchiveEntriesFSAdapter } from '../fs/adapters/ArchiveEntries.js';
 import type { SinterFS } from '../fs/SinterFS.js';
 import type {
+  ArchiveCell,
   BehaviorDescriptor,
   LineageRecord,
   EmergenceSignals,
@@ -58,6 +59,11 @@ export class EmergenceHooks {
   private readonly archive: ArchivePlacement;
   private readonly critic: EmergenceCritic;
   private readonly fsAdapter: ArchiveEntriesFSAdapter;
+  private readonly archiveConfig: {
+    binsPerAxis?: number;
+    nearEliteCapacity?: number;
+    minQuality?: number;
+  };
 
   constructor(
     liminalFs: SinterFS,
@@ -67,15 +73,46 @@ export class EmergenceHooks {
       minQuality?: number;
     },
   ) {
-    this.extractor = new BehaviorDescriptorExtractor();
-    this.lineageTracker = new LineageTracker();
-    this.archive = new ArchivePlacement({
+    this.archiveConfig = {
       binsPerAxis: archiveConfig?.binsPerAxis,
       nearEliteCapacity: archiveConfig?.nearEliteCapacity,
       minQuality: archiveConfig?.minQuality,
-    });
+    };
+    this.extractor = new BehaviorDescriptorExtractor();
+    this.lineageTracker = new LineageTracker();
+    this.archive = new ArchivePlacement({ ...this.archiveConfig });
     this.critic = new EmergenceCritic();
     this.fsAdapter = new ArchiveEntriesFSAdapter(liminalFs);
+  }
+
+  /**
+   * Hydrate a quality-diversity archive from the emergence experience that
+   * previous runs persisted to SinterFS (via {@link onCreativeRun}), and return
+   * its cells. This is what lets the autonomy garden accumulate across cycles
+   * instead of starting cold: the gardener's `getCells` reads through here so
+   * each cycle plans over everything learned so far.
+   *
+   * Reconstructs cells by replaying persisted entries through a fresh
+   * {@link ArchivePlacement} (same binning config as this instance), so it reuses
+   * the canonical placement/binning logic rather than duplicating the cell format.
+   * Returns `[]` for an empty store — the first-ever cycle hydrates nothing and
+   * must not throw.
+   */
+  hydrateArchive(): ArchiveCell[] {
+    const entries = this.fsAdapter.readAllArchiveEntries();
+    if (entries.length === 0) return [];
+
+    const archive = new ArchivePlacement({ ...this.archiveConfig });
+    for (const entry of entries) {
+      archive.place({
+        artifactRef: entry.artifactRef,
+        descriptor: entry.descriptor,
+        lineage: entry.lineage,
+        qualityScore: entry.qualityScore,
+        signals: entry.signals,
+      });
+    }
+    return archive.getAllCells();
   }
 
   /**

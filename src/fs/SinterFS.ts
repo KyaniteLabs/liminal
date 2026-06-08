@@ -1,4 +1,4 @@
-import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'node:fs';
+import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { ProjectStore } from '../compost/ProjectStore.js';
 import type { SinterObjectRef, WriteArtifactInput, SinterRunRecord } from './types.js';
@@ -86,6 +86,36 @@ export class SinterFS {
     }
     const content = readFileSync(path, 'utf-8');
     return JSON.parse(content) as SinterObjectRef;
+  }
+
+  /**
+   * List every ref name under a prefix directory, recursing into subdirectories.
+   * Returns fully-qualified ref names (e.g. `archive/<id>`) for each `<name>.json`
+   * under `.sinter/refs/<prefix>/`, or `[]` if the prefix has no refs yet.
+   * Recursion is required because ref names can contain `/` (e.g. an artifact URI
+   * key like `archive/sinter://artifact/<id>` nests on disk). The returned names
+   * round-trip through {@link readRef}. Mirrors how the gallery endpoints
+   * enumerate `refs/gallery/`.
+   */
+  listRefs(prefix: string): string[] {
+    this.validateRefName(prefix);
+    const base = join(this.projectRoot, '.sinter', 'refs', prefix);
+    if (!existsSync(base)) {
+      return [];
+    }
+    const names: string[] = [];
+    const walk = (dir: string, rel: string): void => {
+      for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const childRel = rel ? `${rel}/${e.name}` : e.name;
+        if (e.isDirectory()) {
+          walk(join(dir, e.name), childRel);
+        } else if (e.isFile() && e.name.endsWith('.json')) {
+          names.push(`${prefix}/${childRel.slice(0, -'.json'.length)}`);
+        }
+      }
+    };
+    walk(base, '');
+    return names;
   }
 
   writeManifest(name: string, data: Record<string, unknown>): void {

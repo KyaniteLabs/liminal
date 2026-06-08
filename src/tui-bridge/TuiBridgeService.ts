@@ -34,6 +34,7 @@ import type { CortexConfig } from '../cortex/types.js';
 import { AutonomousGardener, type GardenerCycleResult } from '../autonomy/AutonomousGardener.js';
 import { SinterFS } from '../fs/SinterFS.js';
 import { resolveSinterProjectRoot } from '../fs/projectRoot.js';
+import { EmergenceHooks } from '../emergence/EmergenceHooks.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
 import { buildCreativePreferencePromptHints, createCreativePreferenceSuggestion } from '../chat/CreativePreferenceGuide.js';
@@ -182,6 +183,8 @@ export class TuiBridgeService {
   private cortexLoop: SinterCortex | null = null;
   // Autonomous gardener: coordinates taste learning, dream recombination, emergence cycles
   private gardener: AutonomousGardener | null = null;
+  // Emergence hooks: reads persisted archive experience so the gardener hydrates each cycle
+  private emergenceHooks: EmergenceHooks | null = null;
   // Cognitive write-back: memory, compost, and dreaming receipts for Studio generation
   private cognitiveWriter: PostGenerationCognitiveWriter;
   /** Default Gardener configuration */
@@ -247,11 +250,13 @@ export class TuiBridgeService {
     this.cortexLoop.start();
 
     // Start the Autonomous Gardener — coordinates taste learning, dream
-    // recombination, and emergence evaluation in the background. Uses empty
-    // archive getters initially; the gardener handles empty state gracefully.
+    // recombination, and emergence evaluation in the background. Each cycle
+    // hydrates the archive from emergence experience persisted to SinterFS by
+    // prior creative runs (EmergenceHooks.onCreativeRun), so the garden
+    // accumulates instead of starting cold. Empty store → [] (handled gracefully).
     this.gardener = new AutonomousGardener(TuiBridgeService.GARDENER_CONFIG);
     void this.gardener.start(
-      () => [],   // Archive cells — populated by emergence pipeline at runtime
+      () => this.getEmergenceHooks()?.hydrateArchive() ?? [],   // Archive cells hydrated from SinterFS
       () => [],   // Descriptor axes — populated by emergence pipeline at runtime
       (result: GardenerCycleResult) => {
         for (const sid of this.sessions.list()) {
@@ -1445,6 +1450,24 @@ export class TuiBridgeService {
       }
     }
     return this.goalStore;
+  }
+
+  /**
+   * Lazy-initialize EmergenceHooks with SinterFS so the gardener can hydrate the
+   * archive from persisted emergence experience each cycle.
+   * Returns null if SinterFS cannot be opened (e.g. not in a project directory).
+   */
+  private getEmergenceHooks(): EmergenceHooks | null {
+    if (!this.emergenceHooks) {
+      try {
+        const fs = SinterFS.open(resolveSinterProjectRoot());
+        this.emergenceHooks = new EmergenceHooks(fs);
+      } catch (err) {
+        Logger.debug('TuiBridgeService', 'EmergenceHooks unavailable — SinterFS could not be opened:', err);
+        return null;
+      }
+    }
+    return this.emergenceHooks;
   }
 
   /**

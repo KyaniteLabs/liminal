@@ -1,5 +1,11 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import { CodeValidator } from '../../../src/core/CodeValidator.js';
+import { HydraValidator } from '../../../src/core/validators/HydraValidator.js';
+import { StrudelValidator } from '../../../src/core/validators/StrudelValidator.js';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 // Shared p5 code body that exceeds the 500-byte MIN_SIZE_REQUIREMENTS for p5 domain
 const P5_BODY = `particles = [];
@@ -546,6 +552,76 @@ Allowed characters are plain ASCII.`;
   });
 
   describe('domain detection precedence', () => {
+    it('routes Strudel audio with shape/out chains to the Strudel validator before Hydra', () => {
+      const code = `bpm(132)
+stack(
+  s("bd hh*2").shape(0.35).gain(0.8).out(),
+  note("c3 eb3 g3 bb3").s("sawtooth").slow(2).out()
+)
+.room(0.3)
+.size(0.6)`;
+      const strudelValidate = vi.spyOn(StrudelValidator, 'validate');
+      const hydraValidate = vi.spyOn(HydraValidator, 'validate');
+
+      expect(CodeValidator.detectDomain(code)).toBe('strudel');
+
+      const result = CodeValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(strudelValidate).toHaveBeenCalledOnce();
+      expect(hydraValidate).not.toHaveBeenCalled();
+    });
+
+    it('keeps real visual domains on their canonical routes', () => {
+      const cases = [
+        {
+          domain: 'hydra',
+          code: `src(o0)
+  .modulate(osc(6, 0.08, 0.4))
+  .blend(shape(4, 0.35).rotate(0.3))
+  .out(o0)`,
+        },
+        {
+          domain: 'p5',
+          code: `function setup() {
+  createCanvas(640, 480);
+  colorMode(HSB, 360, 100, 100, 1);
+}
+function draw() {
+  background(220, 30, 8, 0.2);
+  for (let i = 0; i < 80; i++) {
+    stroke((frameCount + i * 4) % 360, 80, 95, 0.6);
+    line(width / 2, height / 2, noise(i, frameCount * 0.01) * width, i * 6);
+  }
+}`,
+        },
+        {
+          domain: 'shader',
+          code: `precision mediump float;
+uniform vec2 u_resolution;
+uniform float u_time;
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  float pulse = sin(u_time + uv.x * 12.0) * 0.5 + 0.5;
+  gl_FragColor = vec4(uv.x, pulse, uv.y, 1.0);
+}`,
+        },
+        {
+          domain: 'three',
+          code: `import * as THREE from 'three';
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 100);
+const renderer = new THREE.WebGLRenderer();
+const mesh = new THREE.Mesh(new THREE.TorusKnotGeometry(1, 0.2, 96, 12), new THREE.MeshNormalMaterial());
+scene.add(mesh);
+renderer.render(scene, camera);`,
+        },
+      ];
+
+      for (const { domain, code } of cases) {
+        expect(CodeValidator.detectDomain(code)).toBe(domain);
+      }
+    });
+
     it('does not classify multi-line Hydra chains as ASCII art', () => {
       const code = `osc(4, 0.1, 1)
 .add(noise(3, 0.2))

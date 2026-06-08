@@ -30,8 +30,8 @@ describe("DEFAULT_FITNESS_WEIGHTS", () => {
 		);
 	});
 
-	it("includes engagement axis", () => {
-		expect(DEFAULT_FITNESS_WEIGHTS.engagement).toBeGreaterThan(0);
+	it("defaults engagement axis to 0 (opt-in sensorium, not a default objective)", () => {
+		expect(DEFAULT_FITNESS_WEIGHTS.engagement).toBe(0);
 	});
 });
 

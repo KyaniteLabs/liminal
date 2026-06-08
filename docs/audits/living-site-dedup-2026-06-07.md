@@ -185,10 +185,23 @@ the CLI (Integration-First).
 | Does it keep / scope / reverse engagement evolution? | **Scope** — PostHog = sensorium, not objective function (ADR 0002 aligned). |
 | In-repo defect found | Daemon promotes on engagement as the objective function — an ADR-0002 violation to fix as the consolidation. |
 
-## Recommended actions (pending approval)
+## Actions taken (approved 2026-06-07)
 
-1. Archive the orphaned branch tip as a tag, then remove the worktree + branch:
-   `git tag archive/living-site-quality 6163389a` → `git worktree remove
-   .claude/worktrees/living-site-quality` → delete local branch `feat/living-site-quality`.
-2. Implement the Phase-3 consolidation (engagement → sensorium, remove dead surfaces).
-3. Open a PR to `main` with this audit doc + the consolidation.
+1. **Consolidation landed in this PR** (engagement → sensorium):
+   - `LivingSiteDaemon.evaluateChallenger` now promotes on **aesthetic/visual fitness**
+     (`slot.*.fitness`); engagement is recorded telemetry and only a tiebreaker within
+     `AESTHETIC_TIE_EPSILON`. Fixes the ADR-0002 objective-function violation.
+   - `FitnessCombiner` default `engagement` weight `0.25 → 0` (opt-in sensorium axis);
+     freed weight split across the co-highest `novelty`/`quality` axes.
+   - `EvolutionIntegration`: removed the dead, discarded `engagementScore` /
+     `EvolutionUpdateOptions` surface (RalphLoop's 4-arg call is unaffected).
+   - `FitnessCombiner` is intentionally **kept** (unwired-but-intended unified fitness;
+     not deleted) per the no-deletion-of-unwired-code rule.
+   - Tests updated + 2 new regression tests proving engagement is no longer the objective
+     (higher engagement + lower aesthetic must NOT promote; engagement only breaks ties).
+   - **Verification:** `pnpm build` 0 TS errors; `FitnessCombiner` + `EvolutionIntegration`
+     + `LivingSiteDaemon` suites 61/61 pass; `CompostSoup` 18/18 pass; `SiteCommand` stays
+     CLI-registered (`bin/sinter site evolve`).
+2. **Orphaned worktree:** branch tip archived as tag `archive/living-site-quality`
+   (`6163389a`); worktree `.claude/worktrees/living-site-quality` removed; branch
+   `feat/living-site-quality` deleted. No unique work lost (Phase 1).

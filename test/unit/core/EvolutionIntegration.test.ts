@@ -215,14 +215,4 @@ describe("EvolutionIntegration", () => {
 		const result = ei.update(2, "code", 0.8, "prompt");
 		expect(result.noveltyScore).toBe(0.75);
 	});
-
-	it("accepts optional engagementScore without breaking", () => {
-		const options = makeOptions();
-		const ei = new EvolutionIntegration(options, null);
-		const result = ei.update(2, "code", 0.8, "prompt", {
-			engagementScore: 0.72,
-		});
-		expect(result.noveltyScore).toBe(0.75);
-		expect(result.hints).toBe("");
-	});
 });

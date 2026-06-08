@@ -1,19 +1,48 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { TuiBridgeService } from '../../src/tui-bridge/TuiBridgeService.js';
+import type { ReviewCandidate } from '../../src/agent/ReviewManager.js';
+import type { PreferenceRecord } from '../../src/emergence/types.js';
 
 describe('TuiBridgeService command handlers', () => {
   let service: TuiBridgeService;
   let sessionId: string;
+  let tmpRoot: string;
+  let savedRoot: string | undefined;
 
   beforeEach(() => {
+    savedRoot = process.env.SINTER_PROJECT_ROOT;
+    tmpRoot = mkdtempSync(join(tmpdir(), 'tui-commands-test-'));
+    process.env.SINTER_PROJECT_ROOT = tmpRoot;
     service = new TuiBridgeService();
     sessionId = service.createSession().sessionId;
+  });
+
+  afterEach(() => {
+    service.destroy();
+    if (savedRoot !== undefined) process.env.SINTER_PROJECT_ROOT = savedRoot;
+    else delete process.env.SINTER_PROJECT_ROOT;
+    rmSync(tmpRoot, { recursive: true, force: true });
   });
 
   function events() { return service.getEvents(sessionId); }
   function lastCommandContent(): string {
     const cmds = events().filter(e => e.type === 'response.committed');
     return cmds.length > 0 ? (cmds[cmds.length - 1] as any).content ?? '' : '';
+  }
+
+  function addReviewCandidate(label = 'candidate'): ReviewCandidate {
+    return (service as any).reviewManager.addCandidate(sessionId, label, `content for ${label}`, 0.9);
+  }
+
+  function readPreferenceRecords(): PreferenceRecord[] {
+    const prefDir = join(tmpRoot, '.sinter', 'preferences');
+    if (!existsSync(prefDir)) return [];
+    return readdirSync(prefDir)
+      .filter(file => file.endsWith('.json'))
+      .map(file => JSON.parse(readFileSync(join(prefDir, file), 'utf-8')) as PreferenceRecord);
   }
 
   describe('/modes', () => {
@@ -200,6 +229,36 @@ describe('TuiBridgeService command handlers', () => {
       await service.submitInput(sessionId, { mode: 'chat', text: '/pin' });
       const content = lastCommandContent();
       expect(content).toContain('Usage: /pin <candidate-id>');
+    });
+
+    it('/pin persists a pin preference for an existing review candidate', async () => {
+      const candidate = addReviewCandidate('liked sketch');
+
+      await service.submitInput(sessionId, { mode: 'chat', text: `/pin ${candidate.id}` });
+
+      const records = readPreferenceRecords();
+      expect(lastCommandContent()).toContain(`Pinned: ${candidate.id}`);
+      expect(records).toHaveLength(1);
+      expect(records[0]).toMatchObject({
+        action: 'pin',
+        artifactId: candidate.id,
+        sessionId,
+      });
+    });
+
+    it('/reject persists a reject preference for an existing review candidate', async () => {
+      const candidate = addReviewCandidate('weak sketch');
+
+      await service.submitInput(sessionId, { mode: 'chat', text: `/reject ${candidate.id}` });
+
+      const records = readPreferenceRecords();
+      expect(lastCommandContent()).toContain(`Rejected: ${candidate.label}`);
+      expect(records).toHaveLength(1);
+      expect(records[0]).toMatchObject({
+        action: 'reject',
+        artifactId: candidate.id,
+        sessionId,
+      });
     });
 
     it('/diff requires two ids', async () => {

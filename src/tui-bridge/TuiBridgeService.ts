@@ -32,6 +32,7 @@ import { SinterCortex } from '../cortex/SinterCortex.js';
 import { CortexExplainer } from '../cortex/CortexExplainer.js';
 import type { CortexConfig } from '../cortex/types.js';
 import { AutonomousGardener, type GardenerCycleResult } from '../autonomy/AutonomousGardener.js';
+import { TasteLearningService } from '../learning/TasteLearningService.js';
 import { SinterFS } from '../fs/SinterFS.js';
 import { resolveSinterProjectRoot } from '../fs/projectRoot.js';
 import { EmergenceHooks } from '../emergence/EmergenceHooks.js';
@@ -183,6 +184,8 @@ export class TuiBridgeService {
   private cortexLoop: SinterCortex | null = null;
   // Autonomous gardener: coordinates taste learning, dream recombination, emergence cycles
   private gardener: AutonomousGardener | null = null;
+  // Taste learning service: records preference events and hydrates gardener replay bias.
+  private tasteLearningService: TasteLearningService | null = null;
   // Emergence hooks: reads persisted archive experience so the gardener hydrates each cycle
   private emergenceHooks: EmergenceHooks | null = null;
   // Shared SinterFS handle for session persistence/hydration; opened lazily.
@@ -259,6 +262,7 @@ export class TuiBridgeService {
     // prior creative runs (EmergenceHooks.onCreativeRun), so the garden
     // accumulates instead of starting cold. Empty store → [] (handled gracefully).
     this.gardener = new AutonomousGardener(TuiBridgeService.GARDENER_CONFIG);
+    this.hydrateLatestTasteModel();
     void this.gardener.start(
       () => this.getEmergenceHooks()?.hydrateArchive() ?? [],   // Archive cells hydrated from SinterFS
       () => [],   // Descriptor axes — populated by emergence pipeline at runtime
@@ -1130,7 +1134,7 @@ export class TuiBridgeService {
    * Handle review commands: /accept <id>, /reject <id>, /pin <id>,
    * /diff <idA> <idB>, /candidates
    */
-  private handleReviewCommand(sessionId: string, input: string): { reviewRequired: boolean } {
+  private async handleReviewCommand(sessionId: string, input: string): Promise<{ reviewRequired: boolean }> {
     const parts = input.trim().split(/\s+/);
     const cmd = parts[0];
 
@@ -1174,8 +1178,9 @@ export class TuiBridgeService {
       if (!candidate) {
         this.emitCommandResponse(sessionId, `Candidate ${candidateId} not found.`);
       } else {
+        const saved = await this.recordReviewPreference(sessionId, 'reject', candidateId);
         this.emit(sessionId, { type: 'review.candidate_rejected', sessionId, candidateId });
-        this.emitCommandResponse(sessionId, `Rejected: ${candidate.label}`);
+        this.emitCommandResponse(sessionId, `Rejected: ${candidate.label}${saved ? '\nPreference saved.' : '\nPreference storage unavailable.'}`);
       }
       return { reviewRequired: false };
     }
@@ -1190,8 +1195,9 @@ export class TuiBridgeService {
       if (!ok) {
         this.emitCommandResponse(sessionId, `Candidate ${candidateId} not found.`);
       } else {
+        const saved = await this.recordReviewPreference(sessionId, 'pin', candidateId);
         this.emit(sessionId, { type: 'review.favorite_pinned', sessionId, candidateId });
-        this.emitCommandResponse(sessionId, `Pinned: ${candidateId}`);
+        this.emitCommandResponse(sessionId, `Pinned: ${candidateId}${saved ? '\nPreference saved.' : '\nPreference storage unavailable.'}`);
       }
       return { reviewRequired: false };
     }
@@ -1491,6 +1497,54 @@ export class TuiBridgeService {
       }
     }
     return this.sinterFs;
+  }
+
+  /**
+   * Lazily initialize taste learning against the same project-local SinterFS
+   * handle used by session and archive persistence.
+   */
+  private getTasteLearningService(): TasteLearningService | null {
+    if (!this.tasteLearningService) {
+      const fs = this.getSinterFS();
+      if (!fs) return null;
+      this.tasteLearningService = new TasteLearningService(fs);
+    }
+    return this.tasteLearningService;
+  }
+
+  private hydrateLatestTasteModel(): boolean {
+    const service = this.getTasteLearningService();
+    if (!service || !this.gardener) return false;
+    try {
+      const weights = service.loadLatestModel();
+      if (!weights) return false;
+      this.gardener.loadTasteModel(weights);
+      return true;
+    } catch (err) {
+      Logger.debug('TuiBridgeService', 'Taste model hydration unavailable:', err);
+      return false;
+    }
+  }
+
+  private async recordReviewPreference(
+    sessionId: string,
+    action: 'pin' | 'reject',
+    artifactId: string,
+  ): Promise<boolean> {
+    const service = this.getTasteLearningService();
+    if (!service) return false;
+
+    try {
+      await service.recordPreference({ action, artifactId, sessionId });
+      const summary = await service.trainFromProject();
+      if (summary.weights && this.gardener) {
+        this.gardener.loadTasteModel(summary.weights);
+      }
+      return true;
+    } catch (err) {
+      Logger.warn('TuiBridgeService', `Preference ${action} persistence failed for ${artifactId}:`, err);
+      return false;
+    }
   }
 
   /**

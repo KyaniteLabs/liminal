@@ -13,6 +13,8 @@ export type {
 } from './QualityArchive.js';
 
 export { PreferenceEventLogger } from './PreferenceEventLogger.js';
+export { TasteLearningService } from './TasteLearningService.js';
+export type { TasteLearningRecordResult, TasteTrainingSummary } from './TasteLearningService.js';
 
 // Phase 15 — Taste Learning
 export { PreferenceDatasetBuilder } from './PreferenceDatasetBuilder.js';

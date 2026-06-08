@@ -236,6 +236,8 @@ for (let i = 0; i < args.length; i++) {
     flags.version = true;
   } else if (arg === '--prompt' || arg === '-p') {
     flags.prompt = args[++i];
+  } else if (arg === '--session') {
+    flags.session = args[++i];
   } else if (arg === '--max-iterations' || arg === '-m') {
     flags.maxIterations = parseInt(args[++i]);
   } else if (arg === '--output' || arg === '-o') {
@@ -404,7 +406,7 @@ function printHelp() {
   console.log('  quality <subcommand>       Quality gate: run, gate');
   console.log('  market status              Show honest market readiness status');
   console.log('  archive <subcommand>      Archive: inspect, lineage, branch, list');
-  console.log('  preferences <subcommand>  Preferences: export, stats');
+  console.log('  preferences <subcommand>  Preferences: export, stats, train, model');
   console.log('  report cognition           Show creative body and cognitive architecture atlas');
   console.log('');
   console.log('OPTIONS:');
@@ -1993,62 +1995,109 @@ else if (cmd === 'archive') {
   process.exit(0);
 }
 else if (cmd === 'preferences') {
-  const { PreferenceEventLogger } = await import('../dist/learning/PreferenceEventLogger.js');
+  const { PreferenceEventLogger, TasteLearningService } = await import('../dist/learning/index.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { resolveSinterProjectRoot } = await import('../dist/fs/projectRoot.js');
 
   const subCmd = cmdArgs[0];
-  const logger = new PreferenceEventLogger();
+  const sinterFs = SinterFS.open(resolveSinterProjectRoot());
+  let exitCode = 0;
 
-  if (subCmd === 'export') {
-    const sessionId = flags.prompt; // Reuse --prompt for --session
-    let records;
-    if (sessionId) {
-      records = await logger.exportSession(sessionId);
+  try {
+    const logger = new PreferenceEventLogger({
+      prefDir: TasteLearningService.preferenceDirForProject(sinterFs),
+    });
+    const service = new TasteLearningService(sinterFs);
+
+    if (subCmd === 'export') {
+      const sessionId = flags.session || flags.prompt;
+      let records;
+      if (sessionId) {
+        records = await logger.exportSession(sessionId);
+        console.log('');
+        console.log(`Preference events for session ${sessionId}:`);
+      } else {
+        const dataset = await logger.exportDataset();
+        console.log('');
+        console.log('Preference Dataset Export:');
+        console.log(`  Total events: ${dataset.totalEvents}`);
+        console.log(`  Pairwise comparisons: ${dataset.pairwiseComparisons.length}`);
+        console.log(`  Positive feedback: ${dataset.positiveFeedback.length}`);
+        console.log(`  Negative feedback: ${dataset.negativeFeedback.length}`);
+        console.log('');
+        if (dataset.pairwiseComparisons.length > 0) {
+          console.log('  Pairwise:');
+          for (const c of dataset.pairwiseComparisons) {
+            console.log(`    winner: ${c.winner}  loser: ${c.loser}`);
+          }
+        }
+        console.log('');
+      }
+      if (records) {
+        for (const r of records) {
+          console.log(`  ${r.action} ${r.artifactId}${r.comparedTo ? ' vs ' + r.comparedTo : ''}  @${r.capturedAt}`);
+        }
+        console.log('');
+      }
+    } else if (subCmd === 'stats') {
+      const stats = await logger.getStats();
       console.log('');
-      console.log(`Preference events for session ${sessionId}:`);
-    } else {
-      const dataset = await logger.exportDataset();
+      console.log('Preference Stats:');
+      console.log(`  Total events: ${stats.totalEvents}`);
+      console.log(`  Unique artifacts: ${stats.uniqueArtifacts}`);
+      console.log(`  Pairwise: ${stats.pairwiseCount}`);
       console.log('');
-      console.log('Preference Dataset Export:');
-      console.log(`  Total events: ${dataset.totalEvents}`);
-      console.log(`  Pairwise comparisons: ${dataset.pairwiseComparisons.length}`);
-      console.log(`  Positive feedback: ${dataset.positiveFeedback.length}`);
-      console.log(`  Negative feedback: ${dataset.negativeFeedback.length}`);
-      console.log('');
-      if (dataset.pairwiseComparisons.length > 0) {
-        console.log('  Pairwise:');
-        for (const c of dataset.pairwiseComparisons) {
-          console.log(`    winner: ${c.winner}  loser: ${c.loser}`);
+      if (Object.keys(stats.byAction).length > 0) {
+        console.log('  By action:');
+        for (const [action, count] of Object.entries(stats.byAction)) {
+          console.log(`    ${action}: ${count}`);
         }
       }
       console.log('');
-      process.exit(0);
-    }
-    if (records) {
-      for (const r of records) {
-        console.log(`  ${r.action} ${r.artifactId}${r.comparedTo ? ' vs ' + r.comparedTo : ''}  @${r.capturedAt}`);
-      }
+    } else if (subCmd === 'train') {
+      const summary = await service.trainFromProject();
       console.log('');
-    }
-  } else if (subCmd === 'stats') {
-    const stats = await logger.getStats();
-    console.log('');
-    console.log('Preference Stats:');
-    console.log(`  Total events: ${stats.totalEvents}`);
-    console.log(`  Unique artifacts: ${stats.uniqueArtifacts}`);
-    console.log(`  Pairwise: ${stats.pairwiseCount}`);
-    console.log('');
-    if (Object.keys(stats.byAction).length > 0) {
-      console.log('  By action:');
-      for (const [action, count] of Object.entries(stats.byAction)) {
-        console.log(`    ${action}: ${count}`);
+      console.log('=== Taste Model Training ===');
+      console.log(`  Archive entries: ${summary.archiveEntryCount}`);
+      console.log(`  Preference events: ${summary.preferenceEventCount}`);
+      console.log(`  Training pairs: ${summary.pairCount}`);
+
+      if (!summary.persisted || !summary.weights) {
+        console.error(`  Not trained: ${summary.reason ?? 'no usable preference data'}`);
+        console.log('');
+        exitCode = 1;
+      } else {
+        console.log(`  Model ref: ${summary.ref?.kind}:${summary.ref?.path}`);
+        console.log(`  Pair count: ${summary.weights.pairCount}`);
+        console.log(`  Training agreement: ${(summary.weights.trainingAgreement * 100).toFixed(1)}%`);
+        console.log(`  Quality weight: ${summary.weights.qualityWeight.toFixed(3)}`);
+        console.log(`  Axis weights: ${summary.weights.axisWeights.map((w, i) => `[${i}]${w.toFixed(3)}`).join(' ')}`);
+        console.log('');
       }
+    } else if (subCmd === 'model') {
+      const model = service.loadLatestModel();
+      console.log('');
+      console.log('=== Taste Model ===');
+      if (!model) {
+        console.error('  No persisted taste model found. Run `sinter preferences train` first.');
+        console.log('');
+        exitCode = 1;
+      } else {
+        console.log(`  Trained at: ${model.trainedAt}`);
+        console.log(`  Pair count: ${model.pairCount}`);
+        console.log(`  Training agreement: ${(model.trainingAgreement * 100).toFixed(1)}%`);
+        console.log(`  Quality weight: ${model.qualityWeight.toFixed(3)}`);
+        console.log(`  Axis weights: ${model.axisWeights.map((w, i) => `[${i}]${w.toFixed(3)}`).join(' ')}`);
+        console.log('');
+      }
+    } else {
+      console.error('Usage: sinter preferences <export|stats|train|model> [--session <id>]');
+      exitCode = 1;
     }
-    console.log('');
-  } else {
-    console.error('Usage: sinter preferences <export|stats> [--session <id>]');
-    process.exit(1);
+  } finally {
+    sinterFs.close();
   }
-  process.exit(0);
+  process.exit(exitCode);
 }
 else if (cmd === 'emergence') {
   const subCmd = cmdArgs[0];

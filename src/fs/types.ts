@@ -12,7 +12,8 @@ export type SinterObjectKind =
   | 'task-attempt'
   | 'session-turn'
   | 'archive-entry'
-  | 'preference-event';
+  | 'preference-event'
+  | 'taste-model';
 
 export interface SinterObjectRef {
   uri: string;

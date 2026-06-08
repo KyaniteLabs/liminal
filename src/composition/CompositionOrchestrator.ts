@@ -23,6 +23,7 @@ import { generatorRegistry } from '../generators/GeneratorRegistry.js';
 import { registerAllGenerators } from '../generators/registerGenerators.js';
 import { HTMLWrapper, type Domain as WrapDomain } from '../utils/htmlWrapper.js';
 import type { DomainType, BlendMode } from './types.js';
+import { buildLayerPrompt, paintsOpaqueBackground } from './LayerContract.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { Logger } from '../utils/Logger.js';
 
@@ -55,6 +56,8 @@ export interface ComposedLayer {
   /** True if a generator produced code; false if the layer failed to generate. */
   generated: boolean;
   error?: string;
+  /** True if a FOREGROUND layer painted an opaque full-canvas background (seam risk; contract violation). */
+  opaqueBackground?: boolean;
 }
 
 export interface CompositionResult {
@@ -120,6 +123,7 @@ export class CompositionOrchestrator {
       codeLength: r.code.length,
       generated: r.generated,
       error: r.error,
+      opaqueBackground: r.opaqueBackground,
     }));
 
     return { html, title, layers, successCount: results.filter(r => r.generated).length };
@@ -209,7 +213,7 @@ export class CompositionOrchestrator {
   private static async generateLayer(
     spec: CompositionLayerSpec,
     index: number,
-  ): Promise<{ spec: CompositionLayerSpec; code: string; generated: boolean; error?: string }> {
+  ): Promise<{ spec: CompositionLayerSpec; code: string; generated: boolean; error?: string; opaqueBackground?: boolean }> {
     const entryName = DOMAIN_TO_ENTRY[spec.domain];
     if (!entryName) {
       return { spec, code: '', generated: false, error: `unsupported layer domain: ${spec.domain}` };
@@ -219,10 +223,18 @@ export class CompositionOrchestrator {
       return { spec, code: '', generated: false, error: `no generator registered for ${entryName}` };
     }
     try {
-      const raw = await entry.generate(spec.prompt);
+      // Base layer (z=1) may paint an opaque full-stage background; every foreground
+      // layer is told to render on a transparent canvas so lower layers show through.
+      const isBase = index === 0;
+      const raw = await entry.generate(buildLayerPrompt(spec.prompt, { isBase, domain: spec.domain }));
       const code = typeof raw === 'string' ? raw : raw.code;
       Logger.info('CompositionOrchestrator', `Layer ${index} (${spec.domain}) generated ${code.length} chars`);
-      return { spec, code, generated: true };
+      // Deterministic guard: flag a foreground layer that violated the contract.
+      const opaqueBackground = !isBase && paintsOpaqueBackground(code, spec.domain);
+      if (opaqueBackground) {
+        Logger.warn('CompositionOrchestrator', `Layer ${index} (${spec.domain}) paints an opaque full-canvas background — violates the transparency contract (seam risk)`);
+      }
+      return { spec, code, generated: true, opaqueBackground };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       Logger.warn('CompositionOrchestrator', `Layer ${index} (${spec.domain}) failed: ${message}`);

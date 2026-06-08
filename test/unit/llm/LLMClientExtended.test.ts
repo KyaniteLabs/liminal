@@ -1,3 +1,6 @@
+import fs from 'fs/promises';
+import os from 'os';
+import path from 'path';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { err } from 'neverthrow';
 
@@ -960,6 +963,56 @@ describe('LLMClient loadRoles', () => {
 
   it('does not throw when config file is missing', async () => {
     await expect(LLMClient.loadRoles('/nonexistent/path')).resolves.toBeUndefined();
+  });
+
+  it('lazy-loads a configured generator role before the first role-scoped request', async () => {
+    const originalCwd = process.cwd();
+    const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-role-lazy-'));
+    await fs.mkdir(path.join(projectDir, 'config'), { recursive: true });
+    await fs.writeFile(
+      path.join(projectDir, 'config', 'sinter.json'),
+      JSON.stringify({
+        llm: {
+          baseUrl: 'https://api.z.ai/api/anthropic',
+          model: 'glm-5v-turbo',
+          apiKey: 'fake-glm-key',
+        },
+      }),
+    );
+
+    try {
+      process.chdir(projectDir);
+      const client = new LLMClient({ role: 'generator' });
+      expect(client.getConfig().baseUrl).toBe('http://localhost:1234/v1');
+
+      const provider = {
+        name: 'anthropic',
+        getModel: vi.fn(() => 'glm-5v-turbo'),
+        getConfig: vi.fn(() => ({
+          baseUrl: 'https://api.z.ai/api/anthropic',
+          model: 'glm-5v-turbo',
+        })),
+        generate: vi.fn(async () => ({
+          isErr: () => false,
+          value: { content: 'configured role response', success: true },
+        })),
+      };
+      vi.spyOn(client as any, 'getProvider').mockResolvedValue(provider);
+
+      const response = await client.complete({ prompt: 'hello' });
+
+      expect(response.success).toBe(true);
+      expect(provider.generate).toHaveBeenCalledOnce();
+      expect(client.getConfig()).toMatchObject({
+        baseUrl: 'https://api.z.ai/api/anthropic',
+        model: 'glm-5v-turbo',
+        apiKey: 'fake-glm-key',
+      });
+      expect(response.endpoint).toBe('https://api.z.ai/api/anthropic/v1/messages');
+    } finally {
+      process.chdir(originalCwd);
+      await fs.rm(projectDir, { recursive: true, force: true });
+    }
   });
 });
 

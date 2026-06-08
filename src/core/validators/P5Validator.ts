@@ -86,6 +86,17 @@ export class P5Validator {
     'triangle', 'vertex',
   ]);
 
+  /**
+   * p5 functions that parse a color argument. Calling any of these with the bare
+   * `arguments` object (a color helper that forwards `arguments` instead of
+   * `...arguments`) throws "[object Arguments] is not a valid color representation"
+   * at runtime — a guaranteed-throw the generator must regenerate away from.
+   */
+  private static readonly COLOR_FUNCTIONS = new Set([
+    'fill', 'stroke', 'background', 'color', 'colorMode', 'tint',
+    'ambientLight', 'specularColor', 'lerpColor',
+  ]);
+
   private static readonly traverseAst = (
     typeof traverseModule === 'function'
       ? traverseModule
@@ -137,6 +148,7 @@ export class P5Validator {
     errors.push(...this.validateJavaScriptSyntax(code));
     if (errors.length === 0) {
       errors.push(...this.validateReferencedIdentifiers(code));
+      errors.push(...this.validateColorArgs(code));
     }
 
     // Raw p5.js must have setup/draw/createCanvas (traditional or arrow functions)
@@ -177,6 +189,7 @@ export class P5Validator {
     for (const scriptBody of this.extractInlineScriptBodies(code)) {
       errors.push(...this.validateJavaScriptSyntax(scriptBody));
       errors.push(...this.validateReferencedIdentifiers(scriptBody));
+      errors.push(...this.validateColorArgs(scriptBody));
     }
 
     return errors;
@@ -196,6 +209,44 @@ export class P5Validator {
     } catch (error) {
       return [`p5.js code has invalid JavaScript syntax: ${this.formatParseError(error)}`];
     }
+  }
+
+  /**
+   * Flag a p5 color function called with the bare `arguments` object — a color
+   * helper that forwards `arguments` instead of `...arguments`. p5 throws
+   * "[object Arguments] is not a valid color representation" at runtime, so the
+   * generator's validate->retry loop must regenerate. The valid spread form
+   * `fill(...arguments)` is a SpreadElement (not an `arguments` Identifier) and is
+   * correctly allowed.
+   */
+  private static validateColorArgs(code: string): string[] {
+    let ast: ReturnType<typeof parse>;
+    try {
+      ast = parse(code, { sourceType: 'script', allowReturnOutsideFunction: false, plugins: ['jsx'] });
+    } catch {
+      return []; // invalid syntax is reported separately by validateJavaScriptSyntax
+    }
+    const colorFns = this.COLOR_FUNCTIONS;
+    const offenders = new Set<string>();
+    this.traverseAst(ast, {
+      CallExpression(path) {
+        const callee = path.node.callee;
+        const name = callee.type === 'Identifier'
+          ? callee.name
+          : callee.type === 'MemberExpression' && !callee.computed && callee.property.type === 'Identifier'
+            ? callee.property.name
+            : null;
+        if (!name || !colorFns.has(name)) return;
+        const first = path.node.arguments[0];
+        if (first && first.type === 'Identifier' && first.name === 'arguments') {
+          offenders.add(name);
+        }
+      },
+    });
+    if (offenders.size === 0) return [];
+    return [
+      `p5.js color function(s) called with the \`arguments\` object (${Array.from(offenders).sort().join(', ')}) — use \`...arguments\` (spread) or explicit values; passing \`arguments\` throws "[object Arguments] is not a valid color representation" at runtime`,
+    ];
   }
 
   private static validateReferencedIdentifiers(code: string): string[] {

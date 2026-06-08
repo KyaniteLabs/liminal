@@ -385,4 +385,55 @@ describe('P5Validator', () => {
       expect(P5Validator.getMinSize()).toBe(120);
     });
   });
+
+  describe('color argument validation', () => {
+    const COLOR_ARGS_MSG = 'called with the `arguments` object';
+
+    it('rejects a p5 color function called with the bare arguments object', () => {
+      const code = `
+        function setup() { createCanvas(400, 400); }
+        function paint() { fill(arguments); rect(0, 0, 10, 10); }
+        function draw() { clear(); paint(255, 0, 0); }
+      `;
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.includes(COLOR_ARGS_MSG))).toBe(true);
+    });
+
+    it('accepts the spread form fill(...arguments)', () => {
+      const code = `
+        function setup() { createCanvas(400, 400); }
+        function paint() { fill(...arguments); rect(0, 0, 10, 10); }
+        function draw() { clear(); paint(255, 0, 0); }
+      `;
+      const result = P5Validator.validate(code);
+      expect(result.errors.some((e) => e.includes(COLOR_ARGS_MSG))).toBe(false);
+    });
+
+    it('accepts normal color calls with explicit values', () => {
+      const code = `
+        function setup() { createCanvas(400, 400); }
+        function draw() { background(20, 30, 40); fill(255, 0, 0); ellipse(10, 10, 5); }
+      `;
+      const result = P5Validator.validate(code);
+      expect(result.errors.some((e) => e.includes(COLOR_ARGS_MSG))).toBe(false);
+    });
+
+    it('flags other color functions (stroke/background) called with arguments', () => {
+      const stroked = P5Validator.validate(`
+        function setup() { createCanvas(400, 400); }
+        function draw() { stroke(arguments); }
+      `);
+      expect(stroked.errors.some((e) => e.includes(COLOR_ARGS_MSG))).toBe(true);
+    });
+
+    it('flags the arguments-color bug inside HTML-wrapped p5', () => {
+      const code = `<!DOCTYPE html><html><head><script src="https://cdn.jsdelivr.net/npm/p5@1.11.2/lib/p5.min.js"></script></head><body><script>
+        function setup() { createCanvas(400, 400); }
+        function draw() { background(arguments); }
+      </script></body></html>`;
+      const result = P5Validator.validate(code);
+      expect(result.errors.some((e) => e.includes(COLOR_ARGS_MSG))).toBe(true);
+    });
+  });
 });

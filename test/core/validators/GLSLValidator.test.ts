@@ -311,6 +311,31 @@ describe('GLSLValidator', () => {
     });
   });
 
+  describe('preprocessor balance', () => {
+    const body = 'precision mediump float;\nuniform float u_time;\nvoid main(){ vec3 a = vec3(sin(u_time)); vec3 b = vec3(0.2, 0.4, 0.6); gl_FragColor = vec4(a + b, 1.0); }';
+
+    it('rejects an #endif without a matching #if (the gauntlet render-failure class)', () => {
+      const result = GLSLValidator.validate('#endif\n' + body);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.includes('#endif without a matching #if'))).toBe(true);
+    });
+
+    it('rejects an unclosed #ifdef', () => {
+      const result = GLSLValidator.validate('#ifdef GL_ES\n' + body);
+      expect(result.errors.some((e) => e.includes('without a matching #endif'))).toBe(true);
+    });
+
+    it('rejects #else without a matching #if', () => {
+      const result = GLSLValidator.validate('#else\n' + body);
+      expect(result.errors.some((e) => e.includes('#else/#elif without a matching #if'))).toBe(true);
+    });
+
+    it('accepts a balanced #ifdef GL_ES precision guard', () => {
+      const result = GLSLValidator.validate('#ifdef GL_ES\n' + body + '\n#endif');
+      expect(result.errors.some((e) => e.includes('preprocessor'))).toBe(false);
+    });
+  });
+
   describe('getMinSize', () => {
     it('should return the compact runnable shader minimum size', () => {
       expect(GLSLValidator.getMinSize()).toBe(300);

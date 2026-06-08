@@ -235,4 +235,18 @@ describe('ShaderGenerator', () => {
 
     await expect(gen.generate('Create a GLSL violet nebula shader')).rejects.toThrow(/cannot use model "local-model"/);
   });
+
+  it('collapses an #ifdef GL_ES precision guard to a bare precision line (avoids orphan #endif at render)', () => {
+    const gen = new ShaderGenerator();
+    const sanitized = (gen as any).sanitizeShaderCode([
+      '#ifdef GL_ES',
+      'precision mediump float;',
+      '#endif',
+      'uniform float u_time;',
+      'void main(){ gl_FragColor = vec4(vec3(sin(u_time)), 1.0); }',
+    ].join('\n'));
+    expect(sanitized).toContain('precision mediump float;');
+    expect(sanitized).not.toContain('#ifdef GL_ES');
+    expect(sanitized).not.toContain('#endif');
+  });
 });

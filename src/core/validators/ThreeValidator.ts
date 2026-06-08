@@ -104,6 +104,15 @@ export class ThreeValidator {
       errors.push('Three.js code mixing importmap with global THREE - use one style consistently');
     }
 
+    // A lit material with no light source renders dark/murky. Unlit
+    // (MeshBasicMaterial) and points/lines don't need a light, so only flag the
+    // guaranteed-dark case: a lit material present but no light added.
+    const usesLitMaterial = /THREE\.Mesh(?:Standard|Physical|Phong|Lambert|Toon)Material\b/.test(code);
+    const hasLight = /THREE\.(?:Ambient|Directional|Point|Spot|Hemisphere|RectArea)Light\b/.test(code);
+    if (usesLitMaterial && !hasLight) {
+      errors.push('Three.js scene uses a lit material (MeshStandard/Physical/Phong/Lambert/Toon) but adds no light — it will render dark; add a THREE.AmbientLight plus a DirectionalLight/PointLight');
+    }
+
     return errors;
   }
 

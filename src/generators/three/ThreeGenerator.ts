@@ -24,6 +24,8 @@ export class ThreeGenerator extends TierBasedGenerator {
       'Animate the camera manually with sin/cos in the render loop instead of using controls.',
       'Do not use ellipses, TODO comments, placeholder comments, or phrases like setup renderer, crystals, particles, or animation loop without implementing them.',
       'Include visible geometry, lights, camera, renderer setup, and a requestAnimationFrame render loop.',
+      'Do NOT add debug helpers or gizmos: no THREE.AxesHelper, THREE.GridHelper, THREE.PolarGridHelper, or any THREE.*Helper. The scene must read as finished art, not a debug viewport with an axis cross.',
+      'Light and expose the scene strongly: add a THREE.AmbientLight AND at least one THREE.DirectionalLight or THREE.PointLight with adequate intensity (roughly 1.0-2.5), positioned to reveal the geometry. The render must be clearly visible — never dark, murky, or near-black.',
     ].join('\n');
     const code = await super.generate(threePrompt, options);
     return this.sanitizeThreeCode(code);
@@ -88,6 +90,15 @@ export class ThreeGenerator extends TierBasedGenerator {
       return {
         valid: false,
         error: 'Generated Three.js output must not embed a second HTML document inside a <script> block',
+      };
+    }
+
+    // Reject debug helpers/gizmos (AxesHelper, GridHelper, any THREE.*Helper) — they
+    // leave an axis cross / grid through finished art. The retry loop regenerates without them.
+    if (/\bTHREE\.[A-Za-z0-9]*Helper\b/.test(code)) {
+      return {
+        valid: false,
+        error: 'Generated Three.js output must not add debug helpers/gizmos (THREE.AxesHelper, GridHelper, or any *Helper); produce finished art without a debug axis cross',
       };
     }
 

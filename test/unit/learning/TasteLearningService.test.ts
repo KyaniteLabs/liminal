@@ -98,7 +98,7 @@ describe('TasteLearningService', () => {
     });
     expect(summary.pairCount).toBeGreaterThan(0);
     expect(summary.weights?.pairCount).toBe(summary.pairCount);
-    expect(sinterFs.readRef('taste/model/latest')).not.toBeNull();
+    expect(sinterFs.readRef('taste/model/latest')).toMatchObject({ kind: 'taste-model' });
 
     const loaded = service.loadLatestModel();
     expect(loaded).toMatchObject({

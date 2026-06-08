@@ -145,8 +145,9 @@ describe('AutonomousGardener', () => {
       makeCell('low-signal', 0.9, 0.1),
     ], axes);
 
-    expect(result).not.toBeNull();
-    expect(result!.tasteAlignedCount).toBe(1);
-    expect(result!.tasteSelectedEntryIds).toEqual(['preferred']);
+    expect(result).toMatchObject({
+      tasteAlignedCount: 1,
+      tasteSelectedEntryIds: ['preferred'],
+    });
   });
 });

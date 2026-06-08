@@ -233,7 +233,7 @@ export class LLMClient {
 
   constructor(config?: Partial<LLMConfig>) {
     this.role = config?.role;
-    this.explicitEndpointConfig = Boolean(config?.baseUrl || config?.model || config?.apiKey);
+    this.explicitEndpointConfig = Boolean(config?.baseUrl || config?.model || config?.apiKey || env('LLM_BASE_URL') || env('LLM_MODEL'));
     this.explicitTemperatureConfig = config?.temperature !== undefined;
     this.explicitMaxTokensConfig = config?.maxTokens !== undefined;
 

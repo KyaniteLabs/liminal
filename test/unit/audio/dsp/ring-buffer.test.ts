@@ -11,7 +11,7 @@ describe('AnalysisRingBuffer', () => {
     expect(rb.takeFrameIfReady(HOP)).toBeNull();
     rb.push(new Float32Array(128).fill(2));
     const frame = rb.takeFrameIfReady(HOP);
-    expect(frame).not.toBeNull();
+    expect(frame).toBeInstanceOf(Float32Array);
     expect((frame as Float32Array).length).toBe(SIZE);
   });
 
@@ -36,7 +36,7 @@ describe('AnalysisRingBuffer', () => {
   it('returns null again immediately after taking (counter consumes hop)', () => {
     const rb = new AnalysisRingBuffer(SIZE);
     rb.push(new Float32Array(256).fill(1));
-    expect(rb.takeFrameIfReady(HOP)).not.toBeNull();
+    expect(rb.takeFrameIfReady(HOP)).toBeInstanceOf(Float32Array);
     expect(rb.takeFrameIfReady(HOP)).toBeNull();
   });
 });

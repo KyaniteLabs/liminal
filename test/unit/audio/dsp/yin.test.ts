@@ -13,14 +13,14 @@ describe('detectPitchYin', () => {
 
   it('detects a 220 Hz tone within 2 Hz with high clarity', () => {
     const r = detectPitchYin(sine(220, N, sr), sr);
-    expect(r.frequency).not.toBeNull();
+    expect(typeof r.frequency).toBe('number');
     expect(Math.abs((r.frequency as number) - 220)).toBeLessThan(2);
     expect(r.clarity).toBeGreaterThan(0.8);
   });
 
   it('detects a low C3 (130.81 Hz) within 2 Hz — the case the 128-sample path failed', () => {
     const r = detectPitchYin(sine(130.81, N, sr), sr);
-    expect(r.frequency).not.toBeNull();
+    expect(typeof r.frequency).toBe('number');
     expect(Math.abs((r.frequency as number) - 130.81)).toBeLessThan(2);
   });
 

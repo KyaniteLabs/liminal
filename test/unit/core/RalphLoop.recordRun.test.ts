@@ -96,8 +96,7 @@ describe('RalphLoop recordRun SinterFS integration', () => {
 
     // Verify LoopPersistence wrote gallery refs
     const latestRef = fs.readRef('gallery/test-project/latest');
-    expect(latestRef).not.toBeNull();
-    expect(latestRef?.kind).toBe('gallery-version');
+    expect(latestRef).toMatchObject({ kind: 'gallery-version' });
 
     // Verify artifact content matches generated code
     const content = fs.readArtifact(latestRef!);

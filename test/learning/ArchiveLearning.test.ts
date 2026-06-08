@@ -4,6 +4,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
  */
 
 import { ArchiveLearning } from '../../src/learning/ArchiveLearning.js';
+import { QualityArchive } from '../../src/learning/QualityArchive.js';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
@@ -61,7 +62,6 @@ describe('ArchiveLearning', () => {
       'p5',
       0.8  // Above threshold of 0.7
     );
-    expect(result).not.toBeNull();
     expect(result!.domain).toBe('p5');
     expect(result!.qualityScore).toBe(0.8);
     expect(result!.prompt).toBe('test prompt');
@@ -217,8 +217,8 @@ describe('ArchiveLearning', () => {
     const item = await archive.addOutput('prompt', 'output', 'p5', 0.8);
     expect(item!.usedCount).toBe(0);
 
-    archive.recordUsage(item!.id);
-    // Need to reload to see the change from underlying archive
+    await archive.recordUsage(item!.id);
+    // Reload to confirm the change was persisted by the underlying archive.
     await archive.getArchive().load();
     const updated = archive.getArchive().getById(item!.id);
     expect(updated?.usedCount).toBe(1);
@@ -228,10 +228,30 @@ describe('ArchiveLearning', () => {
     const item = await archive.addOutput('prompt', 'output', 'p5', 0.8);
     expect(item!.userRating).toBeUndefined();
 
-    archive.addUserRating(item!.id, 4.5);
+    await archive.addUserRating(item!.id, 4.5);
     await archive.getArchive().load();
     const updated = archive.getArchive().getById(item!.id);
     expect(updated?.userRating).toBe(4.5);
+  });
+
+  it('addUserRating/recordUsage persistence is awaitable (no fire-and-forget race)', async () => {
+    // Regression lock for the fire-and-forget race: awaiting the wrapper must
+    // guarantee the write is flushed before a reload reads it back. Before the
+    // fix these were void wrappers, so `await` resolved immediately and the
+    // reload raced the persist, reading undefined/0 under load.
+    const item = await archive.addOutput('prompt', 'output', 'p5', 0.8);
+
+    await archive.addUserRating(item!.id, 3);
+    await archive.recordUsage(item!.id);
+    await archive.getArchive().load();
+    const afterFirst = archive.getArchive().getById(item!.id);
+    expect(afterFirst?.userRating).toBe(3);
+    expect(afterFirst?.usedCount).toBe(1);
+
+    // A second awaited rating overwrites and is also durably persisted.
+    await archive.addUserRating(item!.id, 5);
+    await archive.getArchive().load();
+    expect(archive.getArchive().getById(item!.id)?.userRating).toBe(5);
   });
 
   it('exportForFinetuning returns training data format', async () => {
@@ -270,7 +290,7 @@ describe('ArchiveLearning', () => {
 
   it('getArchive returns underlying QualityArchive instance', async () => {
     const underlying = archive.getArchive();
-    expect(underlying).not.toBeNull();
+    expect(underlying).toBeInstanceOf(QualityArchive);
     expect(underlying).toHaveProperty('query');
     expect(underlying).toHaveProperty('add');
   });

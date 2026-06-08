@@ -4,12 +4,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import puppeteer from 'puppeteer';
+import sharp from 'sharp';
 
 import { CodeValidator } from '../../dist/core/CodeValidator.js';
 import { generatorRegistry } from '../../dist/generators/GeneratorRegistry.js';
 import { KineticWrapper } from '../../dist/generators/kinetic/KineticWrapper.js';
 import { registerAllGenerators } from '../../dist/generators/registerGenerators.js';
 import { HTMLWrapper } from '../../dist/utils/htmlWrapper.js';
+import { relativeLuminance, DARK_LUMINANCE_THRESHOLD } from '../quality/luminance.mjs';
 
 const DEFAULT_OUT_DIR = '.quality/gauntlet';
 const DEFAULT_TIMEOUT_MS = 120_000;
@@ -132,7 +134,7 @@ export const DOMAIN_GAUNTLET_DOMAINS = [
     label: 'TextGen',
     generator: 'textgen',
     validationDomain: 'textgen',
-    hasDedicatedValidator: false,
+    hasDedicatedValidator: true,
     renderMode: 'receipt',
     artifactExtension: 'txt',
     prompt: 'Target creative domain: TextGen. Generate concrete-poetry text art about a threshold machine learning its own name. Never-used gauntlet nonce:',
@@ -221,11 +223,13 @@ function parseArgs(argv) {
     renderWaitMs: DEFAULT_RENDER_WAIT_MS,
     markdown: '',
     strict: false,
+    ratchet: false,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--all') options.all = true;
     else if (arg === '--strict') options.strict = true;
+    else if (arg === '--ratchet') options.ratchet = true;
     else if (arg === '--domain') options.domain = argv[++index] ?? '';
     else if (arg === '--out-dir') options.outDir = argv[++index] ?? DEFAULT_OUT_DIR;
     else if (arg === '--timeout-ms') options.timeoutMs = Number(argv[++index] ?? DEFAULT_TIMEOUT_MS);
@@ -253,6 +257,7 @@ function usage() {
     '  --timeout-ms <ms>             Per-domain generation timeout',
     '  --render-wait-ms <ms>         Browser wait before PNG capture',
     '  --strict                      Exit 1 if any domain FAILs',
+    '  --ratchet                     Exit 1 if any domain in passing-domains.json FAILs',
   ].join('\n');
 }
 
@@ -367,6 +372,31 @@ async function renderToPng(domain, code, outDir, runId, waitMs) {
     await page.screenshot({ path: pngPath });
     const stat = await fs.stat(pngPath);
     if (stat.size < 1500) errors.push(`PNG is suspiciously small (${stat.size}b)`);
+
+    try {
+      const { data, info } = await sharp(pngPath).raw().toBuffer({ resolveWithObject: true });
+      let totalLuminance = 0;
+      let minR = 255, maxR = 0, minG = 255, maxG = 0, minB = 255, maxB = 0;
+      for (let i = 0; i < data.length; i += info.channels) {
+        const r = data[i], g = data[i+1], b = data[i+2];
+        totalLuminance += relativeLuminance(r, g, b);
+        if (r < minR) minR = r;
+        if (r > maxR) maxR = r;
+        if (g < minG) minG = g;
+        if (g > maxG) maxG = g;
+        if (b < minB) minB = b;
+        if (b > maxB) maxB = b;
+      }
+      const meanLuminance = totalLuminance / (info.width * info.height);
+      if (minR === maxR && minG === maxG && minB === maxB) {
+        errors.push('Render is blank (solid color)');
+      } else if (meanLuminance < DARK_LUMINANCE_THRESHOLD) {
+        errors.push(`Render is too dark (mean luminance: ${meanLuminance.toFixed(3)})`);
+      }
+    } catch (err) {
+      errors.push(`Failed to analyze visual output: ${err.message}`);
+    }
+
     return {
       ok: errors.length === 0,
       mode: 'png',
@@ -518,8 +548,27 @@ async function runCli(argv) {
     await fs.mkdir(path.dirname(options.markdown), { recursive: true });
     await fs.writeFile(options.markdown, `${auditMarkdown(receipts, runId)}\n`, 'utf8');
   }
+
+  let ratchetExitCode = 0;
+  if (options.ratchet) {
+    try {
+      const ratchetConfig = JSON.parse(await fs.readFile(path.join(process.cwd(), 'scripts/domains/passing-domains.json'), 'utf8'));
+      const failedPassingDomains = receipts.filter((r) => r.status === 'FAIL' && ratchetConfig.includes(r.domain));
+      if (failedPassingDomains.length > 0) {
+        console.error(`\n[RATCHET] ERROR: The following domains were expected to pass but failed:`);
+        failedPassingDomains.forEach((f) => console.error(`  - ${f.domain}: ${f.failureReason}`));
+        ratchetExitCode = 1;
+      } else {
+        console.log(`\n[RATCHET] SUCCESS: All expected domains passed.`);
+      }
+    } catch (e) {
+      console.error(`\n[RATCHET] ERROR: Could not read passing-domains.json (${e.message})`);
+      ratchetExitCode = 1;
+    }
+  }
+
   if (options.strict && receipts.some((receipt) => receipt.status === 'FAIL')) return 1;
-  return 0;
+  return ratchetExitCode || 0;
 }
 
 const isMain = process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1]);

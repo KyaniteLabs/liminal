@@ -61,3 +61,56 @@ load, passed by luck in isolation).
 "awaitable persistence" class across the QualityArchive accessor surface (addOutput #4 → now
 recordUsage + addUserRating). Recurring pattern → guardrail candidate (evaluated under
 Empower-Orchestrator with the four-question blast-radius check).
+
+## Unit 2 — test-quality weak-assertion cleanup (FIXED)
+
+**What was wrong:** 5 new (non-baselined) weak `not.toBeNull()` assertions flagged by `test:quality`,
+in `test/unit/audio/dsp/ring-buffer.test.ts` (×2), `test/unit/audio/dsp/yin.test.ts` (×2), and
+`test/unit/core/RalphLoop.recordRun.test.ts` (×1). `not.toBeNull()` proves a value exists but not that
+it is correct.
+
+**The fix (surgical, behavioral assertions):**
+- ring-buffer: `not.toBeNull()` → `toBeInstanceOf(Float32Array)` (asserts the actual frame type).
+- yin: `not.toBeNull()` → `expect(typeof r.frequency).toBe('number')` (justifies the `as number` cast;
+  the adjacent `Math.abs(... ) < 2` keeps the value assertion).
+- RalphLoop.recordRun: `not.toBeNull()` + `?.kind` pair → one `toMatchObject({ kind: 'gallery-version' })`.
+
+**Evidence:** affected suites 10/10 pass; `pnpm test:quality` → **0 new warnings, all checks passed**
+(down from 5 new warnings at STEP 0); typecheck clean.
+
+## Unit 3 — `proof-llm-server` test hermeticity (SURFACED, NOT IMPLEMENTED)
+
+**Finding:** `test/integration/proof-llm-server.test.js > can drive P5Generator without touching the
+user configured provider` fails on a dev box that has a live `~/.sinter/config.json`. The canned proof
+server always emits code containing `frameCount`; the test got real-model output (800×600, p5.Vector,
+no `frameCount`) instead — i.e. `P5Generator` used the **live GLM provider**, not the injected proof
+env. A diagnostic confirmed it (and burned real tokens). **Passes in CI** (no config file → env-vars
+win → canned server). So it is a local-only test-hermeticity defect, not a product/CI bug.
+
+**Root cause (product-side):** `src/harness/MultiProviderConfig.ts:116` gates env overrides behind a
+`respectGenericEnvOverrides` flag; when off, the file config (`~/.sinter/config.json`) wins over the
+test's `LLM_*`/`LIMINAL_LLM_*` env vars.
+
+**Why not implemented this session:** the fix touches env-vs-file config precedence — real-user blast
+radius — and the test is CI-green. Per the session's own guardrail (stop and surface on product-side
+precedence changes), this is left as a recommendation rather than churned.
+
+**Recommended fix (test-side, low risk):** make `installIntegrationProofLLMEnv` hermetic — isolate the
+test from `~/.sinter/config.json` (e.g. redirect config resolution to a clean temp dir for the test's
+duration, mirroring PR #605's `SINTER_PROJECT_ROOT` isolation), so the proof server is always used and
+the suite never calls a live cloud provider.
+
+## Escalations (investigated; user's call)
+
+- **Evaluator offline (confirmed):** NUCBOX qwen @ `100.113.174.74:4000` → connection refused. Scoring
+  is honest-degraded. Restore = repoint `evaluator` role → `glm` in `~/.sinter/config.json` (back up,
+  restore after). Live-config edit — not touched.
+- **`sinter-self-improve` cron absent (confirmed):** script present, no crontab line. Recommend leaving
+  it absent until the evaluator is restored (else it accrues low-confidence degraded ledger entries).
+
+## Agent-system note (Empower-Orchestrator)
+
+Spawned subagent lanes (`oh-my-claudecode:*`) are **unavailable this session**: their model resolves to
+`glm-5.1`, which is unreachable here (runtime is Anthropic Opus 4.8). Code review for Unit 1 was done as
+a structured in-context pass instead. Surfacing as an environment finding — the separate-lane review
+discipline is degraded until GLM routing is reachable or subagents are repointed to an available model.

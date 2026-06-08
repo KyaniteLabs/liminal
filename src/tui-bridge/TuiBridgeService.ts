@@ -185,6 +185,10 @@ export class TuiBridgeService {
   private gardener: AutonomousGardener | null = null;
   // Emergence hooks: reads persisted archive experience so the gardener hydrates each cycle
   private emergenceHooks: EmergenceHooks | null = null;
+  // Shared SinterFS handle for session persistence/hydration; opened lazily.
+  private sinterFs: SinterFS | null = null;
+  // Guards one-time hydration of persisted sessions into the resumer.
+  private sessionsHydrated = false;
   // Cognitive write-back: memory, compost, and dreaming receipts for Studio generation
   private cognitiveWriter: PostGenerationCognitiveWriter;
   /** Default Gardener configuration */
@@ -317,8 +321,9 @@ export class TuiBridgeService {
     conversation.startNewSession();
     this.conversations.set(sessionId, conversation);
 
-    // Initialize session graph for turn persistence
-    const graph = new SessionGraph(sessionId);
+    // Initialize session graph for turn persistence. Pass SinterFS so turns
+    // persist to disk and survive restarts (read back by SessionResumer.hydrate).
+    const graph = new SessionGraph(sessionId, this.getSinterFS() ?? undefined);
     this.sessionGraphs.set(sessionId, graph);
 
     // Register with session resumer for /sessions command
@@ -1286,6 +1291,7 @@ export class TuiBridgeService {
    * Handle /sessions: list resumable sessions.
    */
   private handleSessionsCommand(sessionId: string): { reviewRequired: boolean } {
+    this.ensureSessionsHydrated();
     const sessions = this.sessionResumer.listSessions();
 
     this.emit(sessionId, {
@@ -1468,6 +1474,43 @@ export class TuiBridgeService {
       }
     }
     return this.emergenceHooks;
+  }
+
+  /**
+   * Lazily open a shared SinterFS handle (session persistence + hydration).
+   * Returns null if SinterFS cannot be opened (e.g. not in a project directory),
+   * in which case sessions degrade to memory-only.
+   */
+  private getSinterFS(): SinterFS | null {
+    if (!this.sinterFs) {
+      try {
+        this.sinterFs = SinterFS.open(resolveSinterProjectRoot());
+      } catch (err) {
+        Logger.debug('TuiBridgeService', 'SinterFS unavailable — sessions are memory-only:', err);
+        return null;
+      }
+    }
+    return this.sinterFs;
+  }
+
+  /**
+   * Hydrate sessions persisted by prior processes into the resumer, once, so
+   * `/sessions` accumulates across restarts. Safe no-op if SinterFS is
+   * unavailable or already hydrated.
+   */
+  private ensureSessionsHydrated(): void {
+    if (this.sessionsHydrated) return;
+    this.sessionsHydrated = true;
+    const fs = this.getSinterFS();
+    if (!fs) return;
+    try {
+      const loaded = this.sessionResumer.hydrate(fs);
+      if (loaded > 0) {
+        Logger.debug('TuiBridgeService', `Hydrated ${loaded} persisted session(s) from SinterFS.`);
+      }
+    } catch (err) {
+      Logger.debug('TuiBridgeService', 'Session hydration failed:', err);
+    }
   }
 
   /**

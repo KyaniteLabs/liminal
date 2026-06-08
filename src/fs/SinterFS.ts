@@ -99,7 +99,29 @@ export class SinterFS {
    */
   listRefs(prefix: string): string[] {
     this.validateRefName(prefix);
-    const base = join(this.projectRoot, '.sinter', 'refs', prefix);
+    return this.listJsonNames('refs', prefix);
+  }
+
+  /**
+   * List every manifest name under a prefix directory, recursing into
+   * subdirectories. Returns fully-qualified names (e.g. `session/<id>/manifest`)
+   * for each `<name>.json` under `.sinter/manifests/<prefix>/`, or `[]` if the
+   * prefix has none. The returned names round-trip through {@link readManifest}.
+   * The read counterpart for callers (e.g. SessionResumer, GoalStore) that need
+   * to enumerate persisted manifests rather than read one by known id.
+   */
+  listManifests(prefix: string): string[] {
+    this.validateRefName(prefix);
+    return this.listJsonNames('manifests', prefix);
+  }
+
+  /**
+   * Recursively collect prefixed names of every `*.json` file under
+   * `.sinter/<kind>/<prefix>/`. Recursion is required because names can contain
+   * `/` (refs/manifests nest on disk). Returns `[]` when the prefix dir is absent.
+   */
+  private listJsonNames(kind: 'refs' | 'manifests', prefix: string): string[] {
+    const base = join(this.projectRoot, '.sinter', kind, prefix);
     if (!existsSync(base)) {
       return [];
     }

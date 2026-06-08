@@ -58,6 +58,31 @@ export class SessionGraph {
   }
 
   /**
+   * Reconstruct a SessionGraph from manifests previously persisted to SinterFS
+   * (the read counterpart to {@link persistTurn}/{@link persistManifest}). Reads
+   * the session manifest plus all of its turn records, ordered by timestamp.
+   * Returns `null` when no manifest exists for the session. The returned graph
+   * keeps `fs` attached, so subsequent turns continue to persist.
+   */
+  static load(fs: SinterFS, sessionId: string): SessionGraph | null {
+    const manifestData = fs.readManifest(`session/${sessionId}/manifest`);
+    if (!manifestData) return null;
+
+    const graph = new SessionGraph(sessionId, fs);
+    graph.manifest = manifestData as unknown as SessionManifest;
+
+    const turns: SessionTurnRecord[] = [];
+    for (const name of fs.listManifests(`session/${sessionId}/turn`)) {
+      const data = fs.readManifest(name);
+      if (data) turns.push(data as unknown as SessionTurnRecord);
+    }
+    turns.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+    graph.turns = turns;
+
+    return graph;
+  }
+
+  /**
    * Record a completed turn.
    * Persists to SinterFS if available, otherwise stores in memory.
    */

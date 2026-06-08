@@ -1048,11 +1048,13 @@ if (cmd === 'site') {
     process.exit(1);
   }
 
+  // Parse from the full argv (`args`): the global flag loop consumes `--dry-run`
+  // into `flags` and drops `--once`/`--slot`/`--interval`, so none reach `cmdArgs`.
   const options = {
-    once: cmdArgs.includes('--once'),
-    dryRun: cmdArgs.includes('--dry-run'),
-    slot: (() => { const idx = cmdArgs.indexOf('--slot'); return idx !== -1 ? cmdArgs[idx + 1] : undefined; })(),
-    interval: (() => { const idx = cmdArgs.indexOf('--interval'); return idx !== -1 ? parseInt(cmdArgs[idx + 1]) : undefined; })(),
+    once: args.includes('--once'),
+    dryRun: args.includes('--dry-run'),
+    slot: (() => { const idx = args.indexOf('--slot'); return idx !== -1 ? args[idx + 1] : undefined; })(),
+    interval: (() => { const idx = args.indexOf('--interval'); return idx !== -1 ? parseInt(args[idx + 1]) : undefined; })(),
   };
 
   await runSiteEvolve(options);

@@ -8,6 +8,7 @@
  * - StrudelValidator: src/core/validators/StrudelValidator.ts
  * - HydraValidator: src/core/validators/HydraValidator.ts
  * - ToneValidator: src/core/validators/ToneValidator.ts
+ * - KineticValidator: src/core/validators/KineticValidator.ts
  * - HTMLValidator: src/core/validators/HTMLValidator.ts
  * - ASCIIValidator: src/core/validators/ASCIIValidator.ts
  */
@@ -19,6 +20,7 @@ import { StrudelValidator } from './validators/StrudelValidator.js';
 import { HydraValidator } from './validators/HydraValidator.js';
 import { ToneValidator } from './validators/ToneValidator.js';
 import { RevideoValidator } from './validators/RevideoValidator.js';
+import { KineticValidator } from './validators/KineticValidator.js';
 import { HTMLValidator } from './validators/HTMLValidator.js';
 import { ASCIIValidator } from './validators/ASCIIValidator.js';
 import { HyperFramesValidator } from './validators/HyperFramesValidator.js';
@@ -50,7 +52,7 @@ const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
   'hyperframes': HyperFramesValidator.getMinSize(),
   'html': HTMLValidator.getMinSize(),
   'ascii': ASCIIValidator.getMinSize(),
-  'kinetic': 100,
+  'kinetic': KineticValidator.getMinSize(),
   'music': 100,
   'textgen': TextGenValidator.getMinSize(),
   'unknown': 100,
@@ -219,6 +221,11 @@ function validateStructure(code: string, domain: Domain): string[] {
     }
     case 'hyperframes': {
       const result = HyperFramesValidator.validate(trimmed);
+      errors.push(...result.errors);
+      break;
+    }
+    case 'kinetic': {
+      const result = KineticValidator.validate(trimmed);
       errors.push(...result.errors);
       break;
     }

@@ -25,6 +25,8 @@ export class HTMLWebGenerator extends TierBasedGenerator {
       'Generate a complete single-file HTML document.',
       'Start with <!DOCTYPE html> and include <html>, <head>, <body>, and all closing tags.',
       'Keep it compact enough to finish in one response; no markdown fences or prose.',
+      'Ensure the visual output is high contrast and never renders as a dark or black screen. Avoid very dark backgrounds unless foreground elements are brightly lit.',
+      'Ensure all JavaScript inside <script> tags is syntactically valid and free of ReferenceErrors (e.g. do not use undefined variables).',
       '',
       `User request: ${prompt}`,
     ].join('\n');

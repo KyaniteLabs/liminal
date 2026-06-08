@@ -228,6 +228,34 @@ describe('ThreeValidator', () => {
       const result = ThreeValidator.validate(code);
       expect(result.errors.some((e) => e.includes('adds no light'))).toBe(false);
     });
+
+    it('flags very dark literal backgrounds that fail image-proof luminance', () => {
+      const result = ThreeValidator.validate([
+        'const scene = new THREE.Scene();',
+        'scene.background = new THREE.Color(0x0a0a1a);',
+        'const renderer = new THREE.WebGLRenderer();',
+        'const camera = new THREE.PerspectiveCamera();',
+        'const mat = new THREE.MeshBasicMaterial({ color: 0xff8844 });',
+        'scene.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat));',
+        'renderer.render(scene, camera);',
+      ].join('\n'));
+
+      expect(result.errors.some((e) => e.includes('background/clear color 0x0a0a1a is too dark'))).toBe(true);
+    });
+
+    it('allows mid-tone literal backgrounds for image proof', () => {
+      const result = ThreeValidator.validate([
+        'const scene = new THREE.Scene();',
+        'scene.background = new THREE.Color(0x6b8cff);',
+        'const renderer = new THREE.WebGLRenderer();',
+        'const camera = new THREE.PerspectiveCamera();',
+        'const mat = new THREE.MeshBasicMaterial({ color: 0xff8844 });',
+        'scene.add(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), mat));',
+        'renderer.render(scene, camera);',
+      ].join('\n'));
+
+      expect(result.errors.some((e) => e.includes('background/clear color'))).toBe(false);
+    });
   });
 
   describe('getMinSize', () => {

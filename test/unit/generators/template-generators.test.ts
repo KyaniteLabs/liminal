@@ -136,18 +136,18 @@ describe('HydraGenerator', () => {
       expect(sanitized.match(/\.out\(o0\)/g)).toHaveLength(1);
     });
 
-    it('adds render() for multiple outputs', () => {
+    it('adds render(o0) for multiple outputs', () => {
       const gen = new HydraGenerator();
       const code = 'osc(10).out(o0)\nosc(20).out(o1)';
       const sanitized = (gen as any).sanitizeCode(code);
-      expect(sanitized).toContain('render()');
+      expect(sanitized).toContain('render(o0)');
     });
 
-    it('adds render() for one output so headless previews are visible', () => {
+    it('adds render(o0) for one output so headless previews are visible', () => {
       const gen = new HydraGenerator();
       const code = 'osc(10).out(o0)';
       const sanitized = (gen as any).sanitizeCode(code);
-      expect(sanitized).toContain('render()');
+      expect(sanitized).toContain('render(o0)');
     });
   });
 });

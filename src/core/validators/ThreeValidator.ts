@@ -113,7 +113,40 @@ export class ThreeValidator {
       errors.push('Three.js scene uses a lit material (MeshStandard/Physical/Phong/Lambert/Toon) but adds no light — it will render dark; add a THREE.AmbientLight plus a DirectionalLight/PointLight');
     }
 
+    const darkBackground = this.findDarkBackgroundColor(code);
+    if (darkBackground) {
+      errors.push(`Three.js scene background/clear color ${darkBackground} is too dark for image proof; use a bright or mid-tone background so mean luminance passes render validation`);
+    }
+
     return errors;
+  }
+
+  private static findDarkBackgroundColor(code: string): string | null {
+    const patterns = [
+      /scene\.background\s*=\s*new\s+THREE\.Color\s*\(\s*(['"]?)(#?[0-9a-f]{6}|0x[0-9a-f]{6})\1\s*\)/gi,
+      /renderer\.setClearColor\s*\(\s*(['"]?)(#?[0-9a-f]{6}|0x[0-9a-f]{6})\1/gi,
+    ];
+
+    for (const pattern of patterns) {
+      for (const match of code.matchAll(pattern)) {
+        const literal = match[2];
+        const luminance = this.hexLuminance(literal);
+        if (luminance !== null && luminance < 48) return literal;
+      }
+    }
+
+    return null;
+  }
+
+  private static hexLuminance(literal: string): number | null {
+    const hex = literal.replace(/^#|^0x/i, '');
+    if (!/^[0-9a-f]{6}$/i.test(hex)) return null;
+
+    const value = Number.parseInt(hex, 16);
+    const r = (value >> 16) & 255;
+    const g = (value >> 8) & 255;
+    const b = value & 255;
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   }
 
   private static validateSemantics(code: string): string[] {

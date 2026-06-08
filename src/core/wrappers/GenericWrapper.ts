@@ -314,8 +314,10 @@ ${safeCommentCode}
             min-height: 100vh;
         }
         canvas {
-            max-width: 100vw;
-            max-height: 100vh;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            object-fit: cover;
         }
         #error {
             position: absolute;
@@ -340,13 +342,25 @@ ${safeCommentCode}
         const errorDiv = document.getElementById('error');
 
         try {
-            canvas.width = ${resolution.width};
-            canvas.height = ${resolution.height};
+            const hydraWidth = window.innerWidth || ${resolution.width};
+            const hydraHeight = window.innerHeight || ${resolution.height};
+            canvas.width = hydraWidth;
+            canvas.height = hydraHeight;
 
             const hydra = new Hydra({
                 canvas: canvas,
                 detectAudio: false,
-                enableStreamCapture: false
+                enableStreamCapture: false,
+                width: hydraWidth,
+                height: hydraHeight
+            });
+            if (typeof setResolution === 'function') setResolution(hydraWidth, hydraHeight);
+            window.addEventListener('resize', () => {
+                const nextWidth = window.innerWidth || ${resolution.width};
+                const nextHeight = window.innerHeight || ${resolution.height};
+                canvas.width = nextWidth;
+                canvas.height = nextHeight;
+                if (typeof setResolution === 'function') setResolution(nextWidth, nextHeight);
             });
             const go = () => {};
             const o = typeof o0 !== 'undefined' ? o0 : undefined;

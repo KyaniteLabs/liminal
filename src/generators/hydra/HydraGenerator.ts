@@ -16,9 +16,11 @@ export class HydraGenerator extends TierBasedGenerator {
       'Never use saturation(), feedback(), kaleidoscope(), colorShift(), post(), screen(), output(), s0 chains, s0.osc()/s0.noise(), initFBOTriangle(), or chained source methods like .osc().',
       'For image-proof visibility, include explicit .color(...) or .colorama(...) on the rendered chain.',
       'Use numeric color values like .color(0.95, 0.61, 0.62); do not pass osc(), noise(), or other sources into color().',
-      'Use numeric transform values like .brightness(1.2); do not pass osc(), noise(), or other sources into brightness(), saturate(), scale(), rotate(), or kaleid().',
+      'Keep the palette mid-bright: at least one .color(...) channel should be 0.8 or higher, and avoid mostly dark values below 0.3.',
+      'Use numeric transform values like .brightness(0.9); keep brightness() at or below 1.0 and do not pass osc(), noise(), or other sources into brightness(), saturate(), scale(), rotate(), or kaleid().',
       'Use visible numeric source rates such as osc(4, 0.1, 1.0), noise(3, 0.2), or voronoi(5, 0.3, 0.2); avoid all-near-zero source values.',
-      'For screenshot proof, combine at least two generated visual sources with .add(), .blend(), .mult(), .modulate(), or .diff().',
+      'For screenshot proof, combine at least two generated visual sources with .blend(..., 0.25-0.45), .mult(), .modulate(), .diff(), or weighted .add(..., 0.25-0.45); do not use unweighted .add(...).',
+      'End the patch with .out(o0) and render(o0); do not use bare render(), which shows an output grid with black unused quadrants.',
       'Build a rich, layered patch — not a one-liner: combine 2-3 sources and apply several transforms (.color()/.colorama(), .modulate(), .rotate(), .scale(), .kaleid(), .repeat()) with deliberate numeric parameters. Aim for at least 8 chained operations and 150+ characters of substance.',
       'The patch must render in a headless browser preview without webcam, screen capture, microphone, or user permissions.',
       '',
@@ -114,7 +116,22 @@ export class HydraGenerator extends TierBasedGenerator {
         error: 'Hydra image proof must use numeric transform arguments; source functions inside scalar transforms can render blank',
       };
     }
+    const overbright = this.findOverbrightBrightness(code);
+    if (overbright !== null) {
+      return {
+        valid: false,
+        error: `Hydra image proof must keep brightness() at or below 1.0 to avoid solid overexposed renders; found brightness(${overbright})`,
+      };
+    }
     return { valid: true };
+  }
+
+  private findOverbrightBrightness(code: string): number | null {
+    for (const match of code.matchAll(/\.brightness\s*\(\s*([0-9]*\.?[0-9]+)/g)) {
+      const value = Number(match[1]);
+      if (Number.isFinite(value) && value > 1.0) return value;
+    }
+    return null;
   }
 
   private sanitizeCode(code: string): string {
@@ -339,15 +356,14 @@ export class HydraGenerator extends TierBasedGenerator {
       clean += '\n.out(o0)';
     }
 
-    // Headless Hydra screenshots are reliably visible when the patch explicitly
-    // asks the runtime to render its output set. render(o0) can stay black in
-    // Chromium even when o0 has been written, so normalize to render().
+    // Headless screenshots need a full-frame output. Bare render() displays the
+    // output grid, leaving unused quadrants black when only o0 is populated.
     if (/\.out\s*\(/.test(clean)) {
       if (!clean.includes('render(')) {
-        clean += '\nrender()';
+        clean += '\nrender(o0)';
       } else {
-        clean = clean.replace(/render\s*\(\s*o0\s*\)/g, 'render()');
-        clean = clean.replace(/render\s*\(\s*all\s*\)/g, 'render()');
+        clean = clean.replace(/render\s*\(\s*\)/g, 'render(o0)');
+        clean = clean.replace(/render\s*\(\s*all\s*\)/g, 'render(o0)');
       }
     }
     
@@ -360,7 +376,7 @@ export class HydraGenerator extends TierBasedGenerator {
       prompt: [
         `Create a visible Hydra patch for: ${prompt}`,
         'Use one complete chain that combines at least two generated sources.',
-        'Safe shape: osc(...).add(noise(...)).color(...).kaleid(...).out(o0); render();',
+        'Safe shape: osc(...).blend(noise(...), 0.35).color(...).kaleid(...).out(o0); render(o0);',
         'Use numeric arguments only inside color(), brightness(), saturate(), scale(), rotate(), and kaleid().',
         'No camera/screen input, no prose, no markdown, no separate unfinished source chains.',
       ].join('\n'),

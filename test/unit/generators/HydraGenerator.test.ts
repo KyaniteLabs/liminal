@@ -179,7 +179,7 @@ describe('HydraGenerator', () => {
     const code = [
       'let k = kaleid(6)',
       'let pattern = osc(4, 0.1, 1.0).add(src(osc(6, 0.2, 0.8))).modulate(k)',
-      'pattern.color(0.95, 0.61, 0.62).saturate(1.2).brightness(1.2).out()',
+      'pattern.color(0.95, 0.61, 0.62).saturate(1.2).brightness(0.9).out()',
       'render()',
     ].join('\n');
 
@@ -298,6 +298,13 @@ describe('HydraGenerator', () => {
     expect(result.error).toContain('numeric transform arguments');
   });
 
+  it('rejects overbright brightness values that can render solid white', () => {
+    const gen = new TestableHydraGenerator();
+    const result = gen.validateForTest('osc(4, 0.1, 1).blend(noise(3, 0.2), 0.35).color(1, 0.2, 0.8).brightness(1.2).out()');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('brightness() at or below 1.0');
+  });
+
   it('sanitizeCode appends .out(o0) when missing render', async () => {
     mockToolLoop.mockResolvedValueOnce({
       content: 'osc(10, 0.1, 1.0).add(noise(3, 0.2)).color(1, 0.2, 0.8)',
@@ -308,17 +315,17 @@ describe('HydraGenerator', () => {
     expect(result).toContain('.out(o0)');
   });
 
-  it('sanitizeCode appends render when multiple outputs exist', async () => {
+  it('sanitizeCode appends render(o0) when multiple outputs exist', async () => {
     mockToolLoop.mockResolvedValueOnce({
       content: 'osc(10).color(1, 0.2, 0.8).out(o0)\nshape(4).color(0.1, 1, 0.7).out(o1)',
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('dual output');
-    expect(result).toContain('render()');
+    expect(result).toContain('render(o0)');
   });
 
-  it('sanitizeCode appends render for single-output headless visibility', async () => {
+  it('sanitizeCode appends render(o0) for single-output headless visibility', async () => {
     mockToolLoop.mockResolvedValueOnce({
       content: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1.0).color(0.95, 0.61, 0.62)).blend(voronoi(5, 0.3, 0.2).color(0.37, 0.92, 0.95)).out(o0)',
       iterations: 1, toolCallsMade: 0, success: true,
@@ -326,10 +333,10 @@ describe('HydraGenerator', () => {
     const gen = new HydraGenerator();
     const result = await gen.generate('single output');
     expect(result).toContain('.out(o0)');
-    expect(result).toContain('render()');
+    expect(result).toContain('render(o0)');
   });
 
-  it('sanitizeCode appends render for repeated default output chains', async () => {
+  it('sanitizeCode appends render(o0) for repeated default output chains', async () => {
     mockToolLoop.mockResolvedValueOnce({
       content: 'osc(1, 0.1, 1.0).add(noise(2, 0.3)).color(0.95, 0.61, 0.62).out();\nosc(3, 0.2, 1.0).mult(shape(1, 0.5)).color(0.37, 0.93, 0.95).out();',
       iterations: 1, toolCallsMade: 0, success: true,
@@ -337,7 +344,7 @@ describe('HydraGenerator', () => {
     const gen = new HydraGenerator();
     const result = await gen.generate('two default outputs');
     expect(result.match(/\.out\(/g)?.length).toBe(2);
-    expect(result).toContain('render()');
+    expect(result).toContain('render(o0)');
   });
 
   it('repairs leading source dots and screen-to-out chains from local model output', async () => {
@@ -370,7 +377,7 @@ describe('HydraGenerator', () => {
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('extract hydra');
-    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()\nrender()');
+    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()\nrender(o0)');
   });
 
   it('does not treat forbidden camera strings in prose as generated code', async () => {
@@ -384,7 +391,7 @@ describe('HydraGenerator', () => {
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('extract hydra despite prose constraints');
-    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()\nrender()');
+    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()\nrender(o0)');
   });
 
   it('combines a final inline hydra snippet with trailing out call', async () => {
@@ -394,7 +401,7 @@ describe('HydraGenerator', () => {
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('extract hydra trailing out');
-    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).mult(voronoi(5, 0.3, 0.2)).color(1, 0.2, 0.8)\n.out(o0)\nrender()');
+    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).mult(voronoi(5, 0.3, 0.2)).color(1, 0.2, 0.8)\n.out(o0)\nrender(o0)');
   });
 
   it('repairs invalid s0 source methods from local model output', async () => {
@@ -435,7 +442,7 @@ describe('HydraGenerator', () => {
     const result = await gen.generate('kaleidoscope visual');
 
     expect(result).toContain('.add(noise');
-    expect(result).toContain('render()');
+    expect(result).toContain('render(o0)');
     expect(mockComplete).toHaveBeenCalledOnce();
   });
 
@@ -455,6 +462,6 @@ describe('HydraGenerator', () => {
     const result = await gen.generate('kaleidoscope visual');
 
     expect(result).toContain('osc(4, 0.1, 1)');
-    expect(result).toContain('render()');
+    expect(result).toContain('render(o0)');
   });
 });

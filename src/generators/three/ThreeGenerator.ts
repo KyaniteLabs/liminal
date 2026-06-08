@@ -4,6 +4,7 @@
 
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 import { THREE_CDN } from '../../constants.js';
+import { ThreeValidator } from '../../core/validators/ThreeValidator.js';
 
 export class ThreeGenerator extends TierBasedGenerator {
   constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {
@@ -25,7 +26,8 @@ export class ThreeGenerator extends TierBasedGenerator {
       'Do not use ellipses, TODO comments, placeholder comments, or phrases like setup renderer, crystals, particles, or animation loop without implementing them.',
       'Include visible geometry, lights, camera, renderer setup, and a requestAnimationFrame render loop.',
       'Do NOT add debug helpers or gizmos: no THREE.AxesHelper, THREE.GridHelper, THREE.PolarGridHelper, or any THREE.*Helper. The scene must read as finished art, not a debug viewport with an axis cross.',
-      'Light and expose the scene strongly: add a THREE.AmbientLight AND at least one THREE.DirectionalLight or THREE.PointLight with adequate intensity (roughly 1.0-2.5), positioned to reveal the geometry. The render must be clearly visible — never dark, murky, or near-black.',
+      'Light and expose the scene very strongly: add a THREE.AmbientLight (intensity ~Math.PI) AND at least one THREE.DirectionalLight or THREE.PointLight with high intensity (roughly 3.0-10.0), positioned to reveal the geometry. (Three.js r160 uses physically correct lighting, so legacy 1.0 intensity is too dim). The render must be clearly visible — never dark, murky, or near-black.',
+      'Use a bright or mid-tone scene.background or renderer.setClearColor; avoid black, navy, or very dark backgrounds because screenshot proof uses whole-image luminance.',
     ].join('\n');
     const code = await super.generate(threePrompt, options);
     return this.sanitizeThreeCode(code);
@@ -100,6 +102,11 @@ export class ThreeGenerator extends TierBasedGenerator {
         valid: false,
         error: 'Generated Three.js output must not add debug helpers/gizmos (THREE.AxesHelper, GridHelper, or any *Helper); produce finished art without a debug axis cross',
       };
+    }
+
+    const darkBackgroundError = ThreeValidator.validate(code).errors.find((error) => error.includes('background/clear color'));
+    if (darkBackgroundError) {
+      return { valid: false, error: darkBackgroundError };
     }
 
     return { valid: true };

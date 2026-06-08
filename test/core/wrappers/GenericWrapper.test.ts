@@ -169,22 +169,26 @@ describe('GenericWrapper', () => {
       expect(result).not.toContain('Logger.error');
     });
 
-    it('uses default resolution', () => {
+    it('uses viewport dimensions with default resolution fallback', () => {
       const code = 'osc(20).out()';
       const result = GenericWrapper.wrap(code, { domain: 'hydra' });
       
-      expect(result).toContain('width = 1280');
-      expect(result).toContain('height = 720');
+      expect(result).toContain('const hydraWidth = window.innerWidth || 1280');
+      expect(result).toContain('const hydraHeight = window.innerHeight || 720');
+      expect(result).toContain('width: hydraWidth');
+      expect(result).toContain('height: hydraHeight');
+      expect(result).toContain('setResolution(hydraWidth, hydraHeight)');
       expect(result).toContain('const go = () => {}');
       expect(result).toContain('const o = typeof o0');
     });
 
-    it('uses custom resolution when provided', () => {
+    it('uses custom resolution as viewport fallback when provided', () => {
       const code = 'osc(20).out()';
       const result = GenericWrapper.wrap(code, { domain: 'hydra', hydraResolution: { width: 1920, height: 1080 } });
       
-      expect(result).toContain('width = 1920');
-      expect(result).toContain('height = 1080');
+      expect(result).toContain('const hydraWidth = window.innerWidth || 1920');
+      expect(result).toContain('const hydraHeight = window.innerHeight || 1080');
+      expect(result).toContain('setResolution(nextWidth, nextHeight)');
     });
   });
 

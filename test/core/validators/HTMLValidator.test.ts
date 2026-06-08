@@ -58,6 +58,47 @@ describe('HTMLValidator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
+    it('should reject invalid inline JavaScript in executable script tags', () => {
+      const code = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Broken Script</title>
+</head>
+<body>
+  <script>
+    const value = ;
+  </script>
+</body>
+</html>`;
+
+      const result = HTMLValidator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((error) => error.startsWith('HTML Syntax: Invalid JavaScript inside <script> tag:'))).toBe(true);
+    });
+
+    it('should ignore non-JavaScript script payloads', () => {
+      const code = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Data Scripts</title>
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.example.test/three.module.js" } }
+  </script>
+</head>
+<body>
+  <script type="application/json">
+    { "theme": "bright", "layers": [1, 2, 3] }
+  </script>
+</body>
+</html>`;
+
+      const result = HTMLValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
     it('should reject code without DOCTYPE', () => {
       const code = `<html>
 <head><title>Test</title></head>

@@ -5,6 +5,8 @@
  * required tags, and security considerations.
  */
 
+import { parse } from '@babel/parser';
+
 export interface HTMLValidationResult {
   valid: boolean;
   errors: string[];
@@ -165,7 +167,45 @@ export class HTMLValidator {
       // Not strictly an error, but recommended
     }
 
+    // Validate JS inside executable inline <script> tags
+    const scriptMatches = code.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi);
+    for (const match of scriptMatches) {
+      const scriptTag = match[0];
+      const scriptContent = match[1];
+      const sourceType = this.getInlineScriptSourceType(scriptTag);
+
+      if (!sourceType) continue;
+      
+      if (scriptContent.trim()) {
+        try {
+          parse(scriptContent, {
+            sourceType,
+            allowReturnOutsideFunction: false,
+          });
+        } catch (error) {
+          const msg = error instanceof Error ? error.message : String(error);
+          errors.push(`HTML Syntax: Invalid JavaScript inside <script> tag: ${msg}`);
+        }
+      }
+    }
+
     return errors;
+  }
+
+  private static getInlineScriptSourceType(scriptTag: string): 'script' | 'module' | null {
+    if (/\bsrc\s*=\s*["'][^"']+["']/i.test(scriptTag)) return null;
+
+    const typeMatch = scriptTag.match(/\btype\s*=\s*["']([^"']+)["']/i);
+    if (!typeMatch) return 'script';
+
+    const type = typeMatch[1].trim().toLowerCase().split(';')[0].trim();
+    if (!type || type === 'text/javascript' || type === 'application/javascript' || type === 'text/ecmascript' || type === 'application/ecmascript') {
+      return 'script';
+    }
+
+    if (type === 'module') return 'module';
+
+    return null;
   }
 
   /**

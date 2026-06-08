@@ -1515,10 +1515,15 @@ export class TuiBridgeService {
   private hydrateLatestTasteModel(): boolean {
     const service = this.getTasteLearningService();
     if (!service || !this.gardener) return false;
-    const weights = service.loadLatestModel();
-    if (!weights) return false;
-    this.gardener.loadTasteModel(weights);
-    return true;
+    try {
+      const weights = service.loadLatestModel();
+      if (!weights) return false;
+      this.gardener.loadTasteModel(weights);
+      return true;
+    } catch (err) {
+      Logger.debug('TuiBridgeService', 'Taste model hydration unavailable:', err);
+      return false;
+    }
   }
 
   private async recordReviewPreference(

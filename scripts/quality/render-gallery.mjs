@@ -15,6 +15,13 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import puppeteer from 'puppeteer';
 import { HTMLWrapper } from '../../dist/utils/htmlWrapper.js';
+import { detectDomain } from './detect-domain.mjs';
+import { relativeLuminance, DARK_LUMINANCE_THRESHOLD } from './luminance.mjs';
+
+// sharp is an optionalDependency — load it lazily so the renderer still works
+// without it (the DARK luminance flag is just skipped when it's unavailable).
+let sharp;
+try { sharp = (await import('sharp')).default; } catch { /* luminance flag disabled */ }
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const GALLERY = path.join(ROOT, 'gallery');
@@ -36,16 +43,7 @@ function pickArtifact(dir) {
   return versions[0] ? path.join(dir, versions[0]) : null;
 }
 
-// Detect the creative domain of raw code so it can be wrapped faithfully (the
-// same HTMLWrapper the product uses) — guessing p5 for everything renders shaders/
-// three/hydra as blank false-negatives.
-function detectDomain(code) {
-  if (/^\s*</.test(code) || /<svg[\s>]/i.test(code)) return 'svg';
-  if (/gl_FragColor|precision\s+(?:highp|mediump|lowp)|void\s+main\s*\(/.test(code)) return 'shader';
-  if (/\bTHREE\.|new\s+Scene\(|WebGLRenderer/.test(code)) return 'three';
-  if (/\bosc\(|\.out\(|\bsrc\(\s*o\d|noise\([^)]*\)\.|hydra/i.test(code)) return 'hydra';
-  return 'p5';
-}
+// detectDomain lives in ./detect-domain.mjs (shared + unit-tested).
 
 // Turn a gallery artifact into a full standalone HTML page.
 function toHtml(raw) {
@@ -104,11 +102,18 @@ const browser = await puppeteer.launch({
          '--enable-unsafe-swiftshader', '--enable-webgl', '--ignore-gpu-blocklist', '--disable-gpu-sandbox'],
 });
 
-let ok = 0, fail = 0;
+let ok = 0, fail = 0, skipped = 0;
 for (const dir of works) {
   const name = path.basename(dir);
   const art = pickArtifact(dir);
   if (!art) { console.log(`${name.padEnd(40)} SKIP (no v*.js/html)`); continue; }
+  // Audio works (Strudel/Tidal) can't be vision-rendered — skip rather than
+  // wrap-as-visual and produce a false-broken blank render (`bpm is not defined`).
+  if (detectDomain(fs.readFileSync(art, 'utf-8')) === 'audio') {
+    console.log(`${name.padEnd(40)} SKIP (audio domain — not visually rendered)`);
+    skipped++;
+    continue;
+  }
   const page = await browser.newPage();
   await page.setViewport({ width: 1000, height: 700, deviceScaleFactor: 1 });
   const errors = [];
@@ -125,10 +130,17 @@ for (const dir of works) {
     const sz = fs.statSync(out).size;
     status = sz < 2000 ? `SUSPECT-TINY(${sz}b)` : `ok ${(sz / 1024).toFixed(0)}KB`;
     sz < 2000 ? fail++ : ok++;
+    if (sharp && sz >= 2000) {                                       // flag too-dark/low-contrast renders objectively
+      try {
+        const { channels: [r, g, b] } = await sharp(out).stats();
+        const lum = relativeLuminance(r.mean, g.mean, b.mean);
+        if (lum < DARK_LUMINANCE_THRESHOLD) status += `  DARK(lum=${lum.toFixed(2)})`;
+      } catch { /* luminance is best-effort */ }
+    }
   } catch (e) { status = 'RENDER-FAIL: ' + String(e.message).slice(0, 90); fail++; }
   console.log(`${name.padEnd(40)} ${status}${errors.length ? '  ERR:' + errors.slice(0, 2).join(' | ') : ''}`);
   await page.close();
 }
 await browser.close();
-console.log(`\n${ok} ok, ${fail} suspect/failed → ${OUT}`);
+console.log(`\n${ok} ok, ${fail} suspect/failed, ${skipped} skipped (audio) → ${OUT}`);
 process.exit(fail > 0 && ok === 0 ? 1 : 0);

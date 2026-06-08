@@ -22,6 +22,7 @@ import { RevideoValidator } from './validators/RevideoValidator.js';
 import { HTMLValidator } from './validators/HTMLValidator.js';
 import { ASCIIValidator } from './validators/ASCIIValidator.js';
 import { HyperFramesValidator } from './validators/HyperFramesValidator.js';
+import { TextGenValidator } from './validators/TextGenValidator.js';
 import { validateSVG } from '../generators/svg/SVGValidator.js';
 import {
   type ValidationResult,
@@ -51,6 +52,7 @@ const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
   'ascii': ASCIIValidator.getMinSize(),
   'kinetic': 100,
   'music': 100,
+  'textgen': TextGenValidator.getMinSize(),
   'unknown': 100,
 };
 
@@ -239,6 +241,11 @@ function validateStructure(code: string, domain: Domain): string[] {
       }
       break;
     }
+    case 'textgen': {
+      const result = TextGenValidator.validate(trimmed);
+      errors.push(...result.errors);
+      break;
+    }
   }
 
   return errors;
@@ -306,14 +313,17 @@ export class CodeValidator {
 
     const decontaminated = stripContamination(code);
     const firstContentLine = decontaminated.split('\n').find(line => line.trim().length > 0)?.trim() ?? '';
-    const cleaned = ASCIIValidator.detectASCII(decontaminated) && !REASONING_PATTERNS.some(pattern => pattern.test(firstContentLine))
+    const explicitDomain = domain as Domain | undefined;
+    const preserveTextOutput = explicitDomain === 'textgen' ||
+      (ASCIIValidator.detectASCII(decontaminated) && !REASONING_PATTERNS.some(pattern => pattern.test(firstContentLine)));
+    const cleaned = preserveTextOutput
       ? decontaminated.replace(/^\s*\n/, '').trimEnd()
       : stripReasoningText(decontaminated);
     if (!cleaned.trim()) {
       return { valid: false, cleanedCode: '', errors: ['Code is empty after stripping LLM reasoning text'] };
     }
 
-    const detectedDomain = (domain as Domain) || detectDomain(cleaned);
+    const detectedDomain = explicitDomain || detectDomain(cleaned);
 
     const allErrors = [
       ...validateStructure(cleaned, detectedDomain),

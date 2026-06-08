@@ -266,23 +266,32 @@ export class ArchiveLearning {
 
   /**
    * Record that an archived output was used.
+   * Awaitable so callers can guarantee the usage count is persisted before
+   * the process exits or a reload occurs. Errors are logged, not thrown, so
+   * the fire-and-forget call sites that ignore the promise keep working.
    * @param itemId - ID of the archived item
    */
-  recordUsage(itemId: string): void {
-    this.archive.recordUsage(itemId).catch((err: unknown) => {
+  async recordUsage(itemId: string): Promise<void> {
+    try {
+      await this.archive.recordUsage(itemId);
+    } catch (err: unknown) {
       Logger.warn('ArchiveLearning', `Failed to record usage: ${err instanceof Error ? err.message : String(err)}`);
-    });
+    }
   }
 
   /**
    * Add a user rating to an archived output.
+   * Awaitable so callers can guarantee the rating is persisted before the
+   * process exits or a reload occurs. Errors are logged, not thrown.
    * @param itemId - ID of the archived item
    * @param rating - Rating value (typically 0-1 or 1-5)
    */
-  addUserRating(itemId: string, rating: number): void {
-    this.archive.addUserRating(itemId, rating).catch((err: unknown) => {
+  async addUserRating(itemId: string, rating: number): Promise<void> {
+    try {
+      await this.archive.addUserRating(itemId, rating);
+    } catch (err: unknown) {
       Logger.warn('ArchiveLearning', `Failed to add user rating: ${err instanceof Error ? err.message : String(err)}`);
-    });
+    }
   }
 
   /**

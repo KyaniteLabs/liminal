@@ -136,6 +136,26 @@ function detectDomain(code: string): Domain {
   return 'p5';
 }
 
+function stripCommentsAndStringLiterals(code: string): string {
+  return code
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/\/\/.*$/gm, ' ')
+    .replace(/(["'`])(?:\\[\s\S]|(?!\1)[\s\S])*\1/g, ' ');
+}
+
+function validateNoGuaranteedRuntimeThrow(code: string, domain: Domain): string[] {
+  if (domain === 'shader' || domain === 'glsl' || domain === 'svg' || domain === 'ascii') {
+    return [];
+  }
+
+  const executableSurface = stripCommentsAndStringLiterals(code);
+  if (/\bthrow\b/.test(executableSurface)) {
+    return ['Generated code contains an explicit throw statement that would fail at runtime'];
+  }
+
+  return [];
+}
+
 // -----------------------------------------------------------------------------
 // Domain-specific validation
 // -----------------------------------------------------------------------------
@@ -149,6 +169,7 @@ function validateStructure(code: string, domain: Domain): string[] {
   }
 
   errors.push(...detectContamination(trimmed));
+  errors.push(...validateNoGuaranteedRuntimeThrow(trimmed, domain));
 
   switch (domain) {
     case 'p5': {

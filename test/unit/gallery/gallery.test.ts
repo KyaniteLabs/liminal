@@ -16,6 +16,62 @@ describe('Gallery', () => {
     gallery = new Gallery(tmpDir);
   });
 
+  const validP5Code = `let particles = [];
+function setup() {
+  createCanvas(400, 400);
+  colorMode(HSB, 360, 100, 100, 1);
+  for (let i = 0; i < 40; i++) {
+    particles.push({ x: random(width), y: random(height), hue: random(360), speed: random(0.5, 2) });
+  }
+}
+function draw() {
+  background(220, 20, 8, 0.15);
+  for (const p of particles) {
+    stroke(p.hue, 80, 95, 0.7);
+    line(width / 2, height / 2, p.x, p.y);
+    p.x = (p.x + cos(frameCount * 0.01 + p.speed) + width) % width;
+    p.y = (p.y + sin(frameCount * 0.01 + p.speed) + height) % height;
+  }
+}`;
+
+  const mockSwarmResult = (finalOutput: string) => ({
+    finalOutput,
+    converged: true,
+    convergenceRound: 2,
+    mode: 'competitive' as const,
+    totalDurationMs: 5000,
+    allOutputs: [],
+    rounds: [
+      {
+        roundNum: 1,
+        winnerId: 'persona-1',
+        winnerContent: finalOutput,
+        constraint: 'Use 3 colors',
+        votes: new Map(),
+        scores: new Map([['persona-1', 0.8], ['persona-2', 0.6]]),
+        outputs: new Map([
+          ['persona-1', { personaName: 'Minimalist', content: finalOutput, model: 'test' }],
+          ['persona-2', { personaName: 'Expressionist', content: 'output2', model: 'test' }],
+        ]),
+      },
+    ],
+  });
+
+  const validStrudelCode = `$: s("bd hh*2").gain(0.8).room(0.2)
+$: s("cp").rarely(x => x.rev()).gain(0.6)
+$: note("c3 eb3 g3 bb3").s("sawtooth").slow(2).gain(0.5)
+bpm(120)`;
+
+  const validHydraCode = `osc(10, 0.1, 0.8)
+  .color(1, 0.2, 0.5)
+  .rotate(() => time * 0.1)
+  .modulate(noise(3))
+  .out(o0)
+shape(4, 0.5)
+  .repeat(3, 3)
+  .out(o1)
+render()`;
+
   afterEach(async () => {
     await fs.rm(tmpDir, { recursive: true, force: true });
   });
@@ -63,15 +119,31 @@ describe('Gallery', () => {
   // ── saveOrganism ─────────────────────────────────────────────────
 
   it('saveOrganism saves music + visual code as JSON', async () => {
-    await gallery.saveOrganism('bio-proj', 1, 's("bd").out(o0)', 'osc(10).out(o0)');
+    await gallery.saveOrganism('bio-proj', 1, validStrudelCode, validHydraCode);
 
     const history = await gallery.loadHistory('bio-proj');
     expect(history).toHaveLength(1);
     const iter = history[0] as OrganismIteration;
     expect(iter.type).toBe('organism');
-    expect(iter.musicCode).toBe('s("bd").out(o0)');
-    expect(iter.visualCode).toBe('osc(10).out(o0)');
+    expect(iter.musicCode).toBe(validStrudelCode);
+    expect(iter.visualCode).toBe(validHydraCode);
     expect(iter.version).toBe(1);
+  });
+
+  it('saveOrganism rejects invalid music or visual code before saving a gallery version', async () => {
+    const brokenMusicCode = `$: s("bd hh*2"
+$: s("cp").gain(0.6)
+$: note("c3 eb3 g3 bb3").s("sawtooth").slow(2).gain(0.5)
+bpm(120)`;
+
+    await expect(gallery.saveOrganism('broken-bio', 1, brokenMusicCode, validHydraCode)).rejects.toThrow(/Gallery organism validation failed|unmatched parentheses/);
+
+    const dirs = await gallery.listProjectDirs();
+    const projectDir = dirs.find((dir) => dir.endsWith('--broken-bio'));
+    if (projectDir) {
+      const entries = await fs.readdir(path.join(tmpDir, projectDir));
+      expect(entries).not.toContain('v1.js');
+    }
   });
 
   it('saveOrganism throws for empty musicCode or visualCode', async () => {
@@ -167,30 +239,30 @@ describe('Gallery', () => {
   // ── saveSwarmSession ─────────────────────────────────────────────
 
   it('saveSwarmSession stores session JSON and final output', async () => {
-    const mockResult = {
-      finalOutput: 'function setup() { createCanvas(100, 100); }',
-      converged: true,
-      convergenceRound: 2,
-      mode: 'competitive' as const,
-      totalDurationMs: 5000,
-      rounds: [
-        {
-          roundNum: 1,
-          winnerId: 'persona-1',
-          constraint: 'Use 3 colors',
-          scores: new Map([['persona-1', 0.8], ['persona-2', 0.6]]),
-          outputs: new Map([
-            ['persona-1', { personaName: 'Minimalist', content: 'output1', model: 'test' }],
-            ['persona-2', { personaName: 'Expressionist', content: 'output2', model: 'test' }],
-          ]),
-        },
-      ],
-    };
-
-    await gallery.saveSwarmSession('swarm-proj', mockResult as any);
+    await gallery.saveSwarmSession('swarm-proj', mockSwarmResult(validP5Code) as any);
 
     const history = await gallery.loadHistory('swarm-proj');
     expect(history.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('saveSwarmSession rejects invalid final output before saving a gallery version', async () => {
+    const brokenCode = `function setup() {
+  createCanvas(400, 400);
+  const broken = ;
+}
+function draw() {
+  background(0);
+  circle(width / 2, height / 2, 120);
+}`;
+
+    await expect(gallery.saveSwarmSession('broken-swarm', mockSwarmResult(brokenCode) as any)).rejects.toThrow(/invalid JavaScript syntax|Gallery version validation failed/);
+
+    const dirs = await gallery.listProjectDirs();
+    const projectDir = dirs.find((dir) => dir.endsWith('--broken-swarm'));
+    if (projectDir) {
+      const entries = await fs.readdir(path.join(tmpDir, projectDir));
+      expect(entries).not.toContain('v1.js');
+    }
   });
 
   it('saveSwarmSession throws for empty project name', async () => {

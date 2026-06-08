@@ -12,6 +12,7 @@ import { Gallery } from '../gallery/Gallery.js';
 import { GalleryFSAdapter } from '../fs/adapters/GalleryFSAdapter.js';
 import { mergeSketchCode } from '../utils/mergeSketchCode.js';
 import { ContextAccumulation } from './ContextAccumulation.js';
+import { CodeValidator } from './CodeValidator.js';
 import type { NormalizedLoopOptions, IterationContext } from './LoopConfig.js';
 import type { SinterFS } from '../fs/SinterFS.js';
 
@@ -37,8 +38,10 @@ export class LoopPersistence {
   async saveIteration(iteration: number, code: string): Promise<void> {
     if (!this.options.project) return;
 
+    const versionCode = this.validateGalleryVersionCode(code);
+
     try {
-      await this.gallery.saveIteration(this.options.project, iteration, code);
+      await this.gallery.saveIteration(this.options.project, iteration, versionCode);
     } catch (error) {
       if (!this.options.tolerateErrors) {
         throw error;
@@ -48,7 +51,7 @@ export class LoopPersistence {
 
     if (this.adapter) {
       try {
-        this.adapter.writeGalleryVersionRef(this.options.project, iteration, code);
+        this.adapter.writeGalleryVersionRef(this.options.project, iteration, versionCode);
       } catch {
         // SinterFS reference failures must not hide a successful gallery save.
       }
@@ -79,8 +82,10 @@ export class LoopPersistence {
 
     if (!this.options.project) return;
 
+    const versionCode = this.validateGalleryVersionCode(proposed);
+
     try {
-      await this.gallery.saveIteration(this.options.project, iteration + 1, proposed);
+      await this.gallery.saveIteration(this.options.project, iteration + 1, versionCode);
     } catch (error) {
       if (!this.options.tolerateErrors) throw error;
       return;
@@ -88,10 +93,27 @@ export class LoopPersistence {
 
     if (this.adapter) {
       try {
-        this.adapter.writeGalleryVersionRef(this.options.project, iteration + 1, proposed);
+        this.adapter.writeGalleryVersionRef(this.options.project, iteration + 1, versionCode);
       } catch {
         // SinterFS reference failures must not hide a successful gallery save.
       }
     }
+  }
+
+  private validateGalleryVersionCode(code: string): string {
+    const domain = this.getValidationDomain();
+    if (!domain) return code;
+
+    const validation = CodeValidator.validate(code, domain);
+    if (!validation.valid) {
+      throw new Error(`Gallery version validation failed for ${domain}: ${validation.errors.join('; ')}`);
+    }
+
+    return validation.cleanedCode;
+  }
+
+  private getValidationDomain(): string | null {
+    const domain = this.options.collabDomain || this.options.mode;
+    return domain ? String(domain) : null;
   }
 }

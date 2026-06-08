@@ -608,8 +608,19 @@ function draw() {
   describe('Gallery organism format', () => {
     it('saveOrganism saves organism payload; loadHistory returns organism iteration', async () => {
       const gallery = new Gallery(TEST_GALLERY_DIR);
-      const musicCode = 'setcps(2)\nn("c3 e3 g3").sound("sawtooth")';
-      const visualCode = 'osc().out();';
+      const musicCode = `$: s("bd hh*2").gain(0.8).room(0.2)
+$: s("cp").rarely(x => x.rev()).gain(0.6)
+$: note("c3 eb3 g3 bb3").s("sawtooth").slow(2).gain(0.5)
+bpm(120)`;
+      const visualCode = `osc(10, 0.1, 0.8)
+  .color(1, 0.2, 0.5)
+  .rotate(() => time * 0.1)
+  .modulate(noise(3))
+  .out(o0)
+shape(4, 0.5)
+  .repeat(3, 3)
+  .out(o1)
+render()`;
 
       await gallery.saveOrganism('organism-project', 1, musicCode, visualCode);
 

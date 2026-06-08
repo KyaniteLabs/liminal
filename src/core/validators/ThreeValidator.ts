@@ -5,6 +5,8 @@
  * Handles validation of Three.js code including ES modules and global THREE.
  */
 
+import { parse } from '@babel/parser';
+
 export interface ThreeValidationResult {
   valid: boolean;
   errors: string[];
@@ -22,6 +24,8 @@ export class ThreeValidator {
       errors.push('Code is empty');
       return { valid: false, errors };
     }
+
+    errors.push(...this.validateJavaScriptSyntax(trimmed));
 
     // Basic structure validation
     errors.push(...this.validateStructure(trimmed));
@@ -64,6 +68,26 @@ export class ThreeValidator {
     }
 
     return errors;
+  }
+
+  private static validateJavaScriptSyntax(code: string): string[] {
+    if (/^<!DOCTYPE|^<html/i.test(code.trim())) return [];
+
+    try {
+      parse(code, {
+        sourceType: 'module',
+        allowReturnOutsideFunction: false,
+        plugins: ['jsx'],
+      });
+      return [];
+    } catch (error) {
+      return [`Three.js code has invalid JavaScript syntax: ${this.formatParseError(error)}`];
+    }
+  }
+
+  private static formatParseError(error: unknown): string {
+    if (error instanceof Error) return error.message;
+    return String(error);
   }
 
   /**

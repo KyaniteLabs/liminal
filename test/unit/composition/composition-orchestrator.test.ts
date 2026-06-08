@@ -134,3 +134,52 @@ describe('CompositionOrchestrator.parseSpec (NL decomposition parsing)', () => {
     expect(spec.layers[0].opacity).toBe(1);
   });
 });
+
+describe('CompositionOrchestrator — foreground transparency contract', () => {
+  beforeEach(() => {
+    mocks.registerAllGenerators.mockClear();
+  });
+
+  it('applies the transparency contract to foreground layers but leaves the base prompt untouched', async () => {
+    const seen: Record<string, string> = {};
+    mocks.entries = [
+      { name: 'shader', generate: async (p: string) => { seen.shader = p; return 'void main(){gl_FragColor=vec4(1.0);}'; } },
+      { name: 'p5', generate: async (p: string) => { seen.p5 = p; return 'function draw(){ clear(); circle(1,1,1); }'; } },
+    ];
+    await CompositionOrchestrator.compose({
+      layers: [
+        { domain: 'shader', prompt: 'aurora base' },  // base (z=1) — opaque allowed
+        { domain: 'p5', prompt: 'snow particles' },    // foreground (z=2) — must be transparent
+      ],
+    });
+    expect(seen.shader).toBe('aurora base');
+    expect(seen.p5).toContain('snow particles');
+    expect(seen.p5).toContain('FULLY TRANSPARENT canvas');
+    expect(seen.p5).toContain('clear()');
+  });
+
+  it('flags a foreground p5 layer that paints an opaque background; base is exempt', async () => {
+    mocks.entries = [
+      { name: 'shader', generate: async () => 'void main(){gl_FragColor=vec4(1.0);}' },
+      { name: 'p5', generate: async () => 'function draw(){ background(20, 30, 40); ellipse(1,1,1); }' },
+    ];
+    const result = await CompositionOrchestrator.compose({
+      layers: [
+        { domain: 'shader', prompt: 'bg' },
+        { domain: 'p5', prompt: 'opaque sky foreground' },
+      ],
+    });
+    expect(result.layers[0].opaqueBackground).toBe(false); // base not guarded
+    expect(result.layers[1].opaqueBackground).toBe(true);  // foreground opaque bg flagged
+  });
+
+  it('does not flag a base layer that paints an opaque background', async () => {
+    mocks.entries = [
+      { name: 'p5', generate: async () => 'function draw(){ background(0); }' },
+    ];
+    const result = await CompositionOrchestrator.compose({
+      layers: [{ domain: 'p5', prompt: 'opaque base' }],
+    });
+    expect(result.layers[0].opaqueBackground).toBe(false);
+  });
+});

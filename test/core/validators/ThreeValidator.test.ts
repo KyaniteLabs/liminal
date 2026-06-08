@@ -196,6 +196,40 @@ describe('ThreeValidator', () => {
     });
   });
 
+  describe('lighting (guaranteed-dark guard)', () => {
+    const scene = (extra: string) => [
+      'const scene = new THREE.Scene();',
+      'const geo = new THREE.BoxGeometry(1, 1, 1);',
+      'const mat = new THREE.MeshStandardMaterial({ color: 0x44aa88 });',
+      'const mesh = new THREE.Mesh(geo, mat);',
+      'scene.add(mesh);',
+      extra,
+      'renderer.render(scene, camera);',
+    ].join('\n');
+
+    it('flags a lit material with no light (renders dark)', () => {
+      const result = ThreeValidator.validate(scene(''));
+      expect(result.errors.some((e) => e.includes('adds no light'))).toBe(true);
+    });
+
+    it('passes a lit material once a light is added', () => {
+      const result = ThreeValidator.validate(scene('scene.add(new THREE.AmbientLight(0xffffff, 1.2));'));
+      expect(result.errors.some((e) => e.includes('adds no light'))).toBe(false);
+    });
+
+    it('does not flag an unlit MeshBasicMaterial scene with no light', () => {
+      const code = [
+        'const scene = new THREE.Scene();',
+        'const mat = new THREE.MeshBasicMaterial({ color: 0xff0066 });',
+        'const mesh = new THREE.Mesh(new THREE.SphereGeometry(1), mat);',
+        'scene.add(mesh);',
+        'renderer.render(scene, camera);',
+      ].join('\n');
+      const result = ThreeValidator.validate(code);
+      expect(result.errors.some((e) => e.includes('adds no light'))).toBe(false);
+    });
+  });
+
   describe('getMinSize', () => {
     it('should return 800 bytes as minimum size', () => {
       expect(ThreeValidator.getMinSize()).toBe(800);

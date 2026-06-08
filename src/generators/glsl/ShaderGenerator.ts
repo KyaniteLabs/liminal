@@ -275,6 +275,20 @@ export class ShaderGenerator extends TierBasedGenerator {
   }
 
   private repairCommonLocalModelIssues(code: string): string {
+    // The WebGL1 fragment-shader render harness embeds the shader source directly
+    // and mishandles `#ifdef GL_ES ... #endif` precision guards: it strips the
+    // opener and leaves the `#endif`, producing "unexpected #endif without a
+    // matching #if" at compile. GLSL ES 1.00 only needs a bare precision
+    // declaration, so collapse any GL_ES guard to the precision line it wraps
+    // (or its inner content) before it can be orphaned downstream.
+    code = code.replace(
+      /#\s*if(?:def\s+GL_ES|\s+defined\s*\(\s*GL_ES\s*\))\b[^\n]*\n([\s\S]*?)\n?[^\S\n]*#\s*endif\b[^\n]*/gi,
+      (_match, inner: string) => {
+        const precision = inner.match(/precision\s+(?:low|medium|high)p\s+float\s*;/i);
+        return precision ? precision[0] : inner.trim();
+      },
+    );
+
     const hasPaletteVec2Call = /\bpalette\s*\(\s*p\s*\)/.test(code);
     const paletteBodyUsesP = /\bvec3\s+palette\s*\(\s*float\s+\w+\s*\)\s*\{[\s\S]*?\bp\b[\s\S]*?\}/.test(code);
     if (!hasPaletteVec2Call || !paletteBodyUsesP) return code;

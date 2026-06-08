@@ -173,4 +173,16 @@ renderer.render(scene, new THREE.PerspectiveCamera());
     expect(result).toContain('THREE');
     expect(result).not.toContain('import * as THREE');
   });
+
+  it('rejects debug helpers (THREE.AxesHelper) so finished art has no axis cross', () => {
+    const gen = new TestableThreeGenerator();
+    const code = [
+      'const scene = new THREE.Scene();',
+      'scene.add(new THREE.AxesHelper(5));',
+      'renderer.render(scene, camera);',
+    ].join('\n');
+    const result = gen.validateForTest(code);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('debug helpers');
+  });
 });

@@ -19,6 +19,7 @@ export class HydraGenerator extends TierBasedGenerator {
       'Use numeric transform values like .brightness(1.2); do not pass osc(), noise(), or other sources into brightness(), saturate(), scale(), rotate(), or kaleid().',
       'Use visible numeric source rates such as osc(4, 0.1, 1.0), noise(3, 0.2), or voronoi(5, 0.3, 0.2); avoid all-near-zero source values.',
       'For screenshot proof, combine at least two generated visual sources with .add(), .blend(), .mult(), .modulate(), or .diff().',
+      'Build a rich, layered patch — not a one-liner: combine 2-3 sources and apply several transforms (.color()/.colorama(), .modulate(), .rotate(), .scale(), .kaleid(), .repeat()) with deliberate numeric parameters. Aim for at least 8 chained operations and 150+ characters of substance.',
       'The patch must render in a headless browser preview without webcam, screen capture, microphone, or user permissions.',
       '',
       `User request: ${prompt}`,

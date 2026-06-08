@@ -26,6 +26,10 @@ export class GLSLValidator {
     // Basic structure validation
     errors.push(...this.validateStructure(trimmed));
 
+    // Preprocessor directive balance (#if/#endif) — an unbalanced conditional is a
+    // guaranteed compile error ("unexpected #endif without a matching #if").
+    errors.push(...this.validatePreprocessor(trimmed));
+
     // Quality checks
     errors.push(...this.validateQuality(trimmed));
 
@@ -53,6 +57,27 @@ export class GLSLValidator {
     }
 
     return errors;
+  }
+
+  /**
+   * Validate preprocessor directive balance. An #endif without a matching
+   * #if/#ifdef/#ifndef (or an unclosed conditional) is a guaranteed shader
+   * compile error ("unexpected #endif without a matching #if").
+   */
+  private static validatePreprocessor(code: string): string[] {
+    let depth = 0;
+    for (const rawLine of code.split('\n')) {
+      const line = rawLine.trim();
+      if (/^#\s*(?:if|ifdef|ifndef)\b/.test(line)) {
+        depth++;
+      } else if (/^#\s*(?:else|elif)\b/.test(line)) {
+        if (depth === 0) return ['GLSL preprocessor: #else/#elif without a matching #if'];
+      } else if (/^#\s*endif\b/.test(line)) {
+        if (depth === 0) return ['GLSL preprocessor: #endif without a matching #if'];
+        depth--;
+      }
+    }
+    return depth > 0 ? ['GLSL preprocessor: #if/#ifdef without a matching #endif'] : [];
   }
 
   /**

@@ -1014,6 +1014,72 @@ describe('LLMClient loadRoles', () => {
       await fs.rm(projectDir, { recursive: true, force: true });
     }
   });
+
+  it('keeps runtime LLM endpoint overrides ahead of persisted role config', async () => {
+    const originalCwd = process.cwd();
+    const savedEnv = {
+      LIMINAL_LLM_BASE_URL: process.env.LIMINAL_LLM_BASE_URL,
+      LIMINAL_LLM_MODEL: process.env.LIMINAL_LLM_MODEL,
+      LIMINAL_LLM_API_KEY: process.env.LIMINAL_LLM_API_KEY,
+    };
+    const projectDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-role-env-'));
+    await fs.mkdir(path.join(projectDir, 'config'), { recursive: true });
+    await fs.writeFile(
+      path.join(projectDir, 'config', 'sinter.json'),
+      JSON.stringify({
+        llm: {
+          baseUrl: 'https://api.z.ai/api/anthropic',
+          model: 'glm-5v-turbo',
+          apiKey: 'fake-glm-key',
+        },
+      }),
+    );
+
+    process.env.LIMINAL_LLM_BASE_URL = 'https://proof.example/v1';
+    process.env.LIMINAL_LLM_MODEL = 'sinter-integration-proof-model';
+    process.env.LIMINAL_LLM_API_KEY = 'proof-key';
+
+    try {
+      process.chdir(projectDir);
+      const client = new LLMClient({ role: 'generator' });
+      expect(client.getConfig()).toMatchObject({
+        baseUrl: 'https://proof.example/v1',
+        model: 'sinter-integration-proof-model',
+        apiKey: 'proof-key',
+      });
+
+      const provider = {
+        name: 'openai',
+        getModel: vi.fn(() => 'sinter-integration-proof-model'),
+        getConfig: vi.fn(() => ({
+          baseUrl: 'https://proof.example/v1',
+          model: 'sinter-integration-proof-model',
+        })),
+        generate: vi.fn(async () => ({
+          isErr: () => false,
+          value: { content: 'runtime role response', success: true },
+        })),
+      };
+      vi.spyOn(client as any, 'getProvider').mockResolvedValue(provider);
+
+      await expect(client.complete({ prompt: 'hello' })).resolves.toMatchObject({
+        success: true,
+        endpoint: 'https://proof.example/v1/chat/completions',
+      });
+      expect(client.getConfig()).toMatchObject({
+        baseUrl: 'https://proof.example/v1',
+        model: 'sinter-integration-proof-model',
+        apiKey: 'proof-key',
+      });
+    } finally {
+      process.chdir(originalCwd);
+      for (const [key, value] of Object.entries(savedEnv)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+      await fs.rm(projectDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('LLMClient request provenance', () => {

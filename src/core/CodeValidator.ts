@@ -103,24 +103,30 @@ function detectDomain(code: string): Domain {
   // Check for Revideo
   if (/\bmakeScene|@revideo\/core/.test(code)) return 'revideo';
 
+  // Check for Strudel before Hydra: Strudel audio chains can use .shape()/.out().
+  if (
+    /\bbpm\s*\(/.test(code) ||
+    /\bsetcp[ms]\s*\(/.test(code) ||
+    /\bs\s*\(\s*["']/.test(code) ||
+    /\b(?:sound|note|n|seq|stack)\s*\(/.test(code) ||
+    /\$:\s*s\(|\.stack\(|\.slow\(|\.fast\(/.test(code)
+  ) {
+    return 'strudel';
+  }
+
   // Check for Hydra
   if (/\b(osc|src|noise|shape|gradient|solid|voronoi)\s*\(/.test(code) && /\.out\(/.test(code) && !/\$:/.test(code)) {
     return 'hydra';
   }
 
-  // Check for Strudel
-  if (/\$:\s*s\(|\.stack\(|\.slow\(|\.fast\(/.test(code) && !/\bosc\(|\bsrc\(/.test(code)) {
-    return 'strudel';
-  }
-
   // Check for Tone.js
   if (/\bTone\./.test(code) || /from\s+['"]tone['"]/.test(code)) return 'tone';
 
+  // Check for Three.js before broad music fallback: Three render() is not audio.
+  if (/\bTHREE\.|import.*three|new\s+THREE\./.test(code)) return 'three';
+
   // Check for general music patterns
   if (/\$:\s*s\(/.test(code) || /\bosc\(|\bsrc\(|\brender\(/.test(code) || /strudel|hydra/i.test(code)) return 'music';
-
-  // Check for Three.js
-  if (/\bTHREE\.|import.*three|new\s+THREE\./.test(code)) return 'three';
 
   // Check for ASCII art after code/music domains. Multi-line Hydra/Strudel
   // chains are plain ASCII too, so ASCII must not preempt executable domains.

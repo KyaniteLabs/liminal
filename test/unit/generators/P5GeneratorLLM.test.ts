@@ -3,13 +3,14 @@
  * Covers constructor branches, generate, generateFull, generateLayer,
  * sound detection, error paths, and config resolution.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const { mockIsConfigured, mockGenerateP5Sketch, mockComplete, mockGetConfig, LLMClientMock } = vi.hoisted(() => {
+const { mockIsConfigured, mockGenerateP5Sketch, mockComplete, mockGetConfig, mockLoadRoleConfig, LLMClientMock } = vi.hoisted(() => {
   const mockIsConfigured = vi.fn().mockReturnValue(false);
   const mockGenerateP5Sketch = vi.fn();
   const mockComplete = vi.fn();
   const mockGetConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://test', role: 'generator' });
+  const mockLoadRoleConfig = vi.fn();
 
   const LLMClientMock = vi.fn(function(this: any) {
     this.generateP5Sketch = mockGenerateP5Sketch;
@@ -28,7 +29,7 @@ const { mockIsConfigured, mockGenerateP5Sketch, mockComplete, mockGetConfig, LLM
   });
   (LLMClientMock as any).isConfigured = mockIsConfigured;
 
-  return { mockIsConfigured, mockGenerateP5Sketch, mockComplete, mockGetConfig, LLMClientMock };
+  return { mockIsConfigured, mockGenerateP5Sketch, mockComplete, mockGetConfig, mockLoadRoleConfig, LLMClientMock };
 });
 
 vi.mock('../../../src/llm/LLMClient.js', () => ({
@@ -37,6 +38,10 @@ vi.mock('../../../src/llm/LLMClient.js', () => ({
 
 vi.mock('../../../src/config/ConfigLoader.js', () => ({
   getEffectiveConfig: vi.fn().mockResolvedValue({ baseUrl: '', apiKey: '', model: '' }),
+}));
+
+vi.mock('../../../src/config/RoleConfig.js', () => ({
+  loadRoleConfig: mockLoadRoleConfig,
 }));
 
 import { P5GeneratorLLM } from '../../../src/generators/p5/P5GeneratorLLM.js';
@@ -52,8 +57,20 @@ const VALID_LLM_RESPONSE = {
 describe('P5GeneratorLLM', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockLoadRoleConfig.mockResolvedValue({
+      generator: {
+        baseUrl: '',
+        apiKey: '',
+        model: '',
+        temperature: 0.7,
+      },
+    });
     mockGetConfig.mockReturnValue({ model: 'test-model', baseUrl: 'http://test', role: 'generator' });
     mockComplete.mockResolvedValue({ text: '', success: true });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   // ---------------------------------------------------------------------------
@@ -165,6 +182,53 @@ describe('P5GeneratorLLM', () => {
   // generate - success paths
   // ---------------------------------------------------------------------------
   describe('generate success paths', () => {
+    it('resolves saved generator config when no runtime LLM env override exists', async () => {
+      mockIsConfigured.mockReturnValue(true);
+      mockGenerateP5Sketch.mockResolvedValue(VALID_LLM_RESPONSE);
+      mockLoadRoleConfig.mockResolvedValueOnce({
+        generator: {
+          baseUrl: 'http://saved-provider.test/v1',
+          apiKey: 'saved-key',
+          model: 'saved-model',
+          temperature: 0.25,
+        },
+      });
+
+      const gen = new P5GeneratorLLM();
+      await gen.generate('draw using saved provider');
+
+      expect(mockLoadRoleConfig).toHaveBeenCalled();
+      expect(LLMClientMock).toHaveBeenLastCalledWith({
+        baseUrl: 'http://saved-provider.test/v1',
+        apiKey: 'saved-key',
+        model: 'saved-model',
+        temperature: 0.25,
+        role: 'generator',
+      });
+    });
+
+    it('keeps explicit runtime LLM env from being replaced by saved generator config', async () => {
+      vi.stubEnv('LIMINAL_LLM_BASE_URL', 'http://127.0.0.1:4555/v1');
+      vi.stubEnv('LIMINAL_LLM_MODEL', 'sinter-integration-proof-model');
+      mockIsConfigured.mockReturnValue(true);
+      mockGenerateP5Sketch.mockResolvedValue(VALID_LLM_RESPONSE);
+      mockLoadRoleConfig.mockResolvedValueOnce({
+        generator: {
+          baseUrl: 'https://saved-provider.example/v1',
+          apiKey: 'saved-key',
+          model: 'saved-model',
+          temperature: 0.25,
+        },
+      });
+
+      const gen = new P5GeneratorLLM();
+      await gen.generate('draw using proof env');
+
+      expect(mockLoadRoleConfig).not.toHaveBeenCalled();
+      expect(LLMClientMock).toHaveBeenCalledTimes(1);
+      expect(LLMClientMock).toHaveBeenCalledWith({ role: 'generator' });
+    });
+
     it('returns the code string from LLM response', async () => {
       mockIsConfigured.mockReturnValue(true);
       mockGenerateP5Sketch.mockResolvedValue(VALID_LLM_RESPONSE);

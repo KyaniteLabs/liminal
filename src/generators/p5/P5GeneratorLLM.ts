@@ -5,6 +5,7 @@ import { getEffectiveConfig } from '../../config/ConfigLoader.js';
 import { loadRoleConfig } from '../../config/RoleConfig.js';
 import { GENERATOR_TOOLS, createGeneratorToolExecutor } from '../../harness/tools/generator-tools.js';
 import { P5Validator } from '../../core/validators/P5Validator.js';
+import { env } from '../../utils/env.js';
 
 export interface P5GeneratorOptions {
   maxIterations?: number;
@@ -45,6 +46,11 @@ export class P5GeneratorLLM {
     if (!this._configNeedsResolution) return;
     this._configNeedsResolution = false;
 
+    // A plain P5GeneratorLLM() starts with an env-backed LLMClient. Integration
+    // suites and one-off CLI runs use these runtime vars to pin a proof/local
+    // model, so do not replace that client with persisted project/user config.
+    if (this.hasRuntimeLlmOverride()) return;
+
     // Resolve the GENERATOR ROLE (not the default provider). Passing
     // getEffectiveConfig()'s baseUrl/model here overrides `role: 'generator'`
     // in the LLMClient constructor, so a per-role generator model is ignored.
@@ -64,6 +70,13 @@ export class P5GeneratorLLM {
         role: 'generator',
       });
     }
+  }
+
+  private hasRuntimeLlmOverride(): boolean {
+    return Boolean(
+      env('LLM_BASE_URL') ||
+      env('LLM_MODEL')
+    );
   }
 
   async generate(prompt: string, options?: P5GeneratorOptions): Promise<string> {

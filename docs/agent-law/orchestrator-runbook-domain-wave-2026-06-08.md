@@ -6,17 +6,18 @@
 > and keep state honest. The HUMAN (Simon) dispatches your prompts to the workers and
 > relays results back to you.
 
-## Live update — 2026-06-08 20:52 PDT
+## Live update — 2026-06-08 22:05 PDT
 
 This section supersedes the original handoff snapshot below.
 
-- Current main: `bd894efa docs(orchestrator): record ratchet honesty and visual audit (#647)`.
-- Open PRs: **0**.
-- Merged during the replacement-orchestrator/domain-wave stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization, #642 Kimi-calibrated blank/flat + low-detail render gate, #644 bounded SVG direct retry, #646 ratchet honesty labels, #647 final master-plan/runbook sync.
+- Current main: `cbec734b fix(gui): make deterministic organism fixtures valid (#649)`.
+- Open PRs: **1**: #650 GLSL stabilization is held pending revision; do not merge the fallback-shader version.
+- Merged during the replacement-orchestrator/domain-wave stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization, #642 Kimi-calibrated blank/flat + low-detail render gate, #644 bounded SVG direct retry, #646 ratchet honesty labels, #647 final master-plan/runbook sync, #649 deterministic organism CI repair.
 - Kimi partial-frame calibration is evidence-only: bbox/coverage auto-fail is **not safe**. Use human-review labeling only unless the same Hydra half-black failure recurs.
 - Kimi all-domain visual audit is evidence-only: fresh all-domain gauntlet timed out after 300s, so the audit uses newest existing `.quality/gauntlet/` artifacts.
 - Recent merge cleanup covered the completed domain-wave/doc worktrees; the persistent stale worktrees remain listed in §2/§7.
 - Local root state after pull: only pre-existing dirty `docs/validation/self-improve-ledger.jsonl`.
+- CI packet lane exists at `docs/ci-investigations/`; packet `2026-06-09-run-27182845442.md` was repaired by #649.
 
 ### Current gauntlet/ratchet reality
 
@@ -47,11 +48,12 @@ Local verification for #642/#644:
 - #644 CI fully green: Domain Gauntlet Ratchet, agent-law, browser/e2e smoke, build-and-test, metadata, probe, validate-docs.
 - #646 CI fully green: Domain Gauntlet Ratchet, agent-law, browser/e2e smoke, build-and-test, metadata, probe, validate-docs.
 - #647 CI fully green: Domain Gauntlet Ratchet, agent-law, browser/e2e smoke, build-and-test, metadata, probe, validate-docs.
+- #649 CI fully green after rerun: initial `build-and-test` failure was a TypeScript internal `charCodeUnchecked` crash; rerun passed.
 
 ### Next Wave 2 dispatch
 
 1. **Hydra stabilization:** investigate the historical 43% failure rate. Focus on canvas sizing/init race and right-half black detection. Keep partial-frame as human-review unless the same Hydra half-black failure recurs.
-2. **GLSL stabilization:** investigate shader compile error screens. Capture browser console/shader logs and strengthen validator/retry so bad shaders self-repair before render.
+2. **GLSL stabilization:** revise #650. Keep WebGL1 precision normalization if it remains valid, but remove fallback-render masking and keep generated shader compile failures honest as retry/fail evidence.
 3. **Weak-domain depth:** improve Kinetic/SVG/ASCII/TextGen prompts or generator contracts for richer output; they are stable but not showpiece-quality.
 4. **Kinetic invalid recovery recheck:** #632 added the validator, but prior ratchet output mentioned invalid HTML recovery. Re-run with #646 honest labels before assigning code work.
 5. **Return to launch backlog:** once domain stabilization decisions are made, resume #7 Surfaces, #8 secrets hardening/release trust, #9 design debt/coverage, and M5 trend-log audits.

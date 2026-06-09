@@ -28,6 +28,7 @@ export class ThreeGenerator extends TierBasedGenerator {
       'Do NOT add debug helpers or gizmos: no THREE.AxesHelper, THREE.GridHelper, THREE.PolarGridHelper, or any THREE.*Helper. The scene must read as finished art, not a debug viewport with an axis cross.',
       'Light and expose the scene very strongly: add a THREE.AmbientLight (intensity ~Math.PI) AND at least one THREE.DirectionalLight or THREE.PointLight with high intensity (roughly 3.0-10.0), positioned to reveal the geometry. (Three.js r160 uses physically correct lighting, so legacy 1.0 intensity is too dim). The render must be clearly visible — never dark, murky, or near-black.',
       'Use a bright or mid-tone scene.background or renderer.setClearColor; avoid black, navy, or very dark backgrounds because screenshot proof uses whole-image luminance.',
+      'Size the renderer to FILL the whole viewport: renderer.setSize(window.innerWidth, window.innerHeight); set camera.aspect = window.innerWidth / window.innerHeight then camera.updateProjectionMatrix(); add a window "resize" handler updating both. NEVER hard-code renderer.setSize to fixed pixel numbers like setSize(600, 400) — the canvas must fill the entire frame, not sit in a corner with black margins.',
     ].join('\n');
     const code = await super.generate(threePrompt, options);
     return this.sanitizeThreeCode(code);
@@ -101,6 +102,17 @@ export class ThreeGenerator extends TierBasedGenerator {
       return {
         valid: false,
         error: 'Generated Three.js output must not add debug helpers/gizmos (THREE.AxesHelper, GridHelper, or any *Helper); produce finished art without a debug axis cross',
+      };
+    }
+
+    // Reject a hard-coded fixed renderer size with no viewport sizing — it leaves the
+    // canvas in a corner with black margins instead of filling the frame. Force
+    // full-viewport sizing (window.innerWidth/innerHeight) via the retry loop.
+    if (/\.setSize\s*\(\s*\d+(?:\.\d+)?\s*,\s*\d+(?:\.\d+)?\s*\)/.test(code) &&
+        !/\b(?:innerWidth|innerHeight|clientWidth|clientHeight)\b/.test(code)) {
+      return {
+        valid: false,
+        error: 'Generated Three.js output must size the renderer to the full viewport (renderer.setSize(window.innerWidth, window.innerHeight)), not fixed pixel dimensions; the canvas must fill the entire frame',
       };
     }
 

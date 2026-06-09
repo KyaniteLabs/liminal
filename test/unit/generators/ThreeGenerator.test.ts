@@ -185,4 +185,31 @@ renderer.render(scene, new THREE.PerspectiveCamera());
     expect(result.valid).toBe(false);
     expect(result.error).toContain('debug helpers');
   });
+
+  it('rejects a hard-coded fixed renderer size (must fill the full viewport)', () => {
+    const gen = new TestableThreeGenerator();
+    const code = [
+      'const scene = new THREE.Scene();',
+      'const renderer = new THREE.WebGLRenderer();',
+      'renderer.setSize(600, 400);',
+      'renderer.render(scene, camera);',
+    ].join('\n');
+    const result = gen.validateForTest(code);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('full viewport');
+  });
+
+  it('accepts a renderer sized to the viewport (window.innerWidth/innerHeight)', () => {
+    const gen = new TestableThreeGenerator();
+    const code = [
+      'const scene = new THREE.Scene();',
+      'scene.background = new THREE.Color(0x88aaff);',
+      'scene.add(new THREE.AmbientLight(0xffffff, Math.PI));',
+      'const renderer = new THREE.WebGLRenderer();',
+      'renderer.setSize(window.innerWidth, window.innerHeight);',
+      'renderer.render(scene, camera);',
+    ].join('\n');
+    const result = gen.validateForTest(code);
+    expect(result.error ?? '').not.toContain('full viewport');
+  });
 });

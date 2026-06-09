@@ -345,6 +345,32 @@ function htmlForVisualDomain(domain, code) {
   return HTMLWrapper.wrap(code, { domain: domain.wrapDomain ?? domain.id, title: `${domain.label} Gauntlet` });
 }
 
+function calculateEdgeDensity(grayPixels, width, height) {
+  let horizontalDiff = 0;
+  let verticalDiff = 0;
+
+  for (let y = 0; y < height; y++) {
+    const rowOffset = y * width;
+    for (let x = 1; x < width; x++) {
+      horizontalDiff += Math.abs(grayPixels[rowOffset + x] - grayPixels[rowOffset + x - 1]);
+    }
+  }
+
+  for (let y = 1; y < height; y++) {
+    const rowOffset = y * width;
+    const previousRowOffset = (y - 1) * width;
+    for (let x = 0; x < width; x++) {
+      verticalDiff += Math.abs(grayPixels[rowOffset + x] - grayPixels[previousRowOffset + x]);
+    }
+  }
+
+  const horizontalSamples = height * Math.max(0, width - 1);
+  const verticalSamples = Math.max(0, height - 1) * width;
+  const horizontalMean = horizontalSamples > 0 ? horizontalDiff / horizontalSamples : 0;
+  const verticalMean = verticalSamples > 0 ? verticalDiff / verticalSamples : 0;
+  return (horizontalMean + verticalMean) / 2;
+}
+
 async function renderToPng(domain, code, outDir, runId, waitMs) {
   const html = htmlForVisualDomain(domain, code);
   const htmlPath = path.join(outDir, `${runId}-${domain.id}.html`);
@@ -381,24 +407,36 @@ async function renderToPng(domain, code, outDir, runId, waitMs) {
 
     try {
       const { data, info } = await sharp(pngPath).raw().toBuffer({ resolveWithObject: true });
-      let totalLuminance = 0, brightCount = 0, whiteCount = 0;
-      let minR = 255, maxR = 0, minG = 255, maxG = 0, minB = 255, maxB = 0;
-      for (let i = 0; i < data.length; i += info.channels) {
+      const pixelCount = info.width * info.height;
+      const grayPixels = new Float32Array(pixelCount);
+      let totalLuminance = 0;
+      let brightCount = 0;
+      let whiteCount = 0;
+      let sumGray = 0;
+      let sumRgb = 0;
+      let sumSqRgb = 0;
+
+      for (let i = 0, pixelIndex = 0; i < data.length; i += info.channels, pixelIndex++) {
         const r = data[i], g = data[i+1], b = data[i+2];
         const lum = relativeLuminance(r, g, b);
+        const gray = (r + g + b) / 3;
+        grayPixels[pixelIndex] = gray;
+
         totalLuminance += lum;
+        sumGray += gray;
+        sumRgb += r + g + b;
+        sumSqRgb += (r * r) + (g * g) + (b * b);
         if (lum > BRIGHT_PIXEL_LUMINANCE) brightCount++;
         if (lum > WHITE_LUMINANCE && (Math.max(r, g, b) - Math.min(r, g, b)) < WHITE_SATURATION_MAX) whiteCount++;
-        if (r < minR) minR = r;
-        if (r > maxR) maxR = r;
-        if (g < minG) minG = g;
-        if (g > maxG) maxG = g;
-        if (b < minB) minB = b;
-        if (b > maxB) maxB = b;
       }
-      const pixelCount = info.width * info.height;
+      const rgbSampleCount = pixelCount * 3;
+      const meanGray = sumGray / pixelCount;
+      const colorStdev = Math.sqrt(Math.max(0, (sumSqRgb / rgbSampleCount) - ((sumRgb / rgbSampleCount) ** 2)));
+      const edgeDensity = calculateEdgeDensity(grayPixels, info.width, info.height);
       const issue = classifyRenderQuality({
-        isSolid: minR === maxR && minG === maxG && minB === maxB,
+        meanGray,
+        colorStdev,
+        edgeDensity,
         meanLuminance: totalLuminance / pixelCount,
         brightFraction: brightCount / pixelCount,
         whiteFraction: whiteCount / pixelCount,

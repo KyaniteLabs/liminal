@@ -41,15 +41,49 @@ render()
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should validate Hydra code with src() and modulate()', () => {
+    it('should reject camera/screen source buffers that render blank in headless preview', () => {
       const code = `
 s0.initCam()
 src(s0).modulate(osc(5, 0.1)).out()
       `;
 
       const result = HydraValidator.validate(code);
-      expect(result.valid).toBe(true);
-      expect(result.errors).toHaveLength(0);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Hydra headless preview must use generated sources, not camera/screen/video/image input buffers like s0.initCam(), s0.initScreen(), or src(s0)');
+    });
+
+    it('should reject bare render() when output grid buffers are unwritten', () => {
+      const code = `
+osc(10).color(1, 0.2, 0.5).out(o0)
+render()
+      `;
+
+      const result = HydraValidator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Hydra code uses render()/render(all) with unwritten output buffers; use render(o0) or write all o0-o3 outputs to avoid black grid quadrants');
+    });
+
+    it('should reject render(all) when output grid buffers are unwritten', () => {
+      const code = `
+osc(10).color(1, 0.2, 0.5).out(o0)
+noise(5).color(0.2, 0.8, 1).out(o1)
+render(all)
+      `;
+
+      const result = HydraValidator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Hydra code uses render()/render(all) with unwritten output buffers; use render(o0) or write all o0-o3 outputs to avoid black grid quadrants');
+    });
+
+    it('should reject rendering an output buffer that was never written', () => {
+      const code = `
+osc(10).color(1, 0.2, 0.5).out(o0)
+render(o2)
+      `;
+
+      const result = HydraValidator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Hydra code renders o2 but never writes .out(o2); render a written output buffer to avoid blank frames');
     });
 
     it('should reject code without .out()', () => {
@@ -135,7 +169,7 @@ src(o0)
   .blend(src(o1))
   .out(o2)
 
-render()
+render(o2)
       `;
 
       const result = HydraValidator.validate(code);

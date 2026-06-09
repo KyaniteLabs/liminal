@@ -371,7 +371,7 @@ shape(4, 0.5)
   .rotate(0.5)
   .out(o2)
 
-render()
+render(o0)
       `;
       const result = CodeValidator.validate(code, 'hydra');
       expect(result.valid).toBe(true);
@@ -690,7 +690,7 @@ renderer.render(scene, camera);`,
 .scrollX(0.05)
 .scrollY(-0.03)
 .out(o0)
-render()`;
+render(o0)`;
 
       expect(CodeValidator.detectDomain(code)).toBe('hydra');
       expect(CodeValidator.validate(code).valid).toBe(true);

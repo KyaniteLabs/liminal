@@ -1,4 +1,6 @@
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
+import { GenerationError } from '../../errors/GenerationError.js';
+import { HydraValidator } from '../../core/validators/HydraValidator.js';
 
 // Washout clamp constants (see capBlendWeights). Hydra's `.add(tex)` defaults to a
 // full additive (amount 1.0), and high `.add`/`.blend` weights pile sources toward
@@ -25,7 +27,7 @@ export class HydraGenerator extends TierBasedGenerator {
       'For image-proof visibility, include explicit .color(...) or .colorama(...) on the rendered chain.',
       'Use numeric color values like .color(0.95, 0.61, 0.62); do not pass osc(), noise(), or other sources into color().',
       'Target a MID-range overall exposure with a FULL tonal range: include both bright highlights and clear dark/shadow regions. Do NOT force every channel bright (that washes the frame white) and do NOT let the whole frame go black — aim for balanced mid-tones with real darks and lights.',
-      'Use numeric transform values like .brightness(0.9); keep brightness() at or below 1.0 and do not pass osc(), noise(), or other sources into brightness(), saturate(), scale(), rotate(), or kaleid().',
+      'Use numeric transform values like .brightness(0.85); include .brightness(0.75-0.95), keep brightness() at or below 1.0, and do not pass osc(), noise(), or other sources into brightness(), saturate(), scale(), rotate(), or kaleid().',
       'CONTRAST IS REQUIRED — the frame must span a WIDE luminance range with deep DARK / shadow regions AND bright highlights, never a uniform bright, milky, or near-white field. Add .contrast(1.3-1.7) and shape tone with .luma(...) (or start from a darker base) so a meaningful portion of the frame reads dark. Do not let blended sources wash the whole frame to white.',
       'Use visible numeric source rates such as osc(4, 0.1, 1.0), noise(3, 0.2), or voronoi(5, 0.3, 0.2); avoid all-near-zero source values.',
       'For screenshot proof, combine at least two generated visual sources with .blend(..., 0.25-0.45), .mult(), .modulate(), .diff(), or weighted .add(..., 0.25-0.45); do not use unweighted .add(...).',
@@ -35,14 +37,28 @@ export class HydraGenerator extends TierBasedGenerator {
       '',
       `User request: ${prompt}`,
     ].join('\n');
+    let code: string;
     try {
-      const code = await super.generate(hydraPrompt, options);
-      return this.sanitizeCode(code);
+      code = await super.generate(hydraPrompt, options);
     } catch (error) {
       const direct = await this.retryHydraDirect(prompt, options);
       if (direct) return direct;
       throw error;
     }
+    const clean = this.sanitizeCode(code);
+    const reliabilityIssue = this.findStaticRenderReliabilityIssue(clean);
+    if (this.isUndersizedHydraCode(clean) || reliabilityIssue) {
+      const direct = await this.retryHydraDirect(prompt, options);
+      if (direct) return direct;
+      const length = this.executableLength(clean);
+      const reason = reliabilityIssue ?? `Generated hydra code is too small (${length} chars) - minimum is ${HydraValidator.getMinSize()} chars`;
+      throw new GenerationError(
+        `HydraGenerator: ${reason}`,
+        'hydra',
+        { codeLength: length, generatedCode: clean, validationError: reliabilityIssue },
+      );
+    }
+    return clean;
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
@@ -139,6 +155,46 @@ export class HydraGenerator extends TierBasedGenerator {
     for (const match of code.matchAll(/\.brightness\s*\(\s*([0-9]*\.?[0-9]+)/g)) {
       const value = Number(match[1]);
       if (Number.isFinite(value) && value > 1.0) return value;
+    }
+    return null;
+  }
+
+  private isUndersizedHydraCode(code: string): boolean {
+    return this.executableLength(code) < HydraValidator.getMinSize();
+  }
+
+  private executableLength(code: string): number {
+    return code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').trim().length;
+  }
+
+  private findStaticRenderReliabilityIssue(code: string): string | null {
+    const outOfRangeColor = this.findOutOfRangeColorChannel(code);
+    if (outOfRangeColor !== null) {
+      return `Hydra color() channels must stay between 0.0 and 1.0 for predictable headless renders; found ${outOfRangeColor}`;
+    }
+
+    const brightnesses = [...code.matchAll(/\.brightness\s*\(\s*([0-9]*\.?[0-9]+)/g)]
+      .map(match => Number(match[1]))
+      .filter(Number.isFinite);
+    if (brightnesses.length === 0) {
+      return 'Hydra image proof must include brightness(0.75-0.95) to avoid dark/blank headless renders';
+    }
+    const tooDark = brightnesses.find(value => value < 0.6);
+    if (tooDark !== undefined) {
+      return `Hydra image proof brightness() is too dark for headless proof; found brightness(${tooDark})`;
+    }
+    return null;
+  }
+
+  private findOutOfRangeColorChannel(code: string): number | null {
+    for (const match of code.matchAll(/\.color\s*\(([^)]*)\)/g)) {
+      const args = this.splitTopLevelArgs(match[1]).map(arg => arg.trim());
+      if (args.length < 3) continue;
+      for (const arg of args.slice(0, 3)) {
+        if (!/^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(arg)) continue;
+        const value = Number(arg);
+        if (Number.isFinite(value) && (value < 0 || value > 1)) return value;
+      }
     }
     return null;
   }
@@ -468,8 +524,10 @@ export class HydraGenerator extends TierBasedGenerator {
       prompt: [
         `Create a visible Hydra patch for: ${prompt}`,
         'Use one complete chain that combines at least two generated sources.',
-        'Safe shape: osc(...).blend(noise(...), 0.35).color(...).kaleid(...).out(o0); render(o0);',
+        'Return a substantial 150+ character patch with at least 8 chained operations, not a tiny one-liner.',
+        'Safe shape: solid(...).add(osc(...), 0.3).blend(voronoi(...), 0.35).modulate(noise(...), 0.2).color(...).contrast(...).kaleid(...).rotate(...).scale(...).brightness(0.85).out(o0); render(o0);',
         'Use numeric arguments only inside color(), brightness(), saturate(), scale(), rotate(), and kaleid().',
+        'Keep color() channels between 0.0 and 1.0 and include brightness(0.75-0.95).',
         'No camera/screen input, no prose, no markdown, no separate unfinished source chains.',
       ].join('\n'),
       maxTokens: options?.maxTokens ?? 1400,
@@ -479,7 +537,7 @@ export class HydraGenerator extends TierBasedGenerator {
     if (!result.success || !result.text) return null;
     const raw = this.recoverHydraFromModelText(result.text) ?? result.text;
     const clean = this.sanitizeCode(raw);
-    return this.validateOutput(clean).valid ? clean : null;
+    return this.validateOutput(clean).valid && !this.isUndersizedHydraCode(clean) && !this.findStaticRenderReliabilityIssue(clean) ? clean : null;
   }
 
   private recoverHydraFromModelText(text: string): string | null {
@@ -527,15 +585,35 @@ export class HydraGenerator extends TierBasedGenerator {
 <title>Hydra Synth</title>
 <style>
 *{margin:0;padding:0;overflow:hidden}
-body{background:#000}
+html,body{width:100%;height:100%;background:#000}
 canvas{display:block;width:100vw;height:100vh}
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+<canvas id="c" width="1280" height="720"></canvas>
 <script src="https://cdn.jsdelivr.net/npm/hydra-synth@1.3.10/dist/hydra-synth.js"></script>
 <script>
-const h=new Hydra({canvas:document.getElementById('c'),detectAudio:false,width:innerWidth,height:innerHeight});
+const hydraCanvas = document.getElementById('c');
+function sizeHydraCanvas() {
+  const width = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1280);
+  const height = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 720);
+  hydraCanvas.width = width;
+  hydraCanvas.height = height;
+  return { width, height };
+}
+const hydraSize = sizeHydraCanvas();
+const hydra = new Hydra({
+  canvas: hydraCanvas,
+  detectAudio: false,
+  enableStreamCapture: false,
+  width: hydraSize.width,
+  height: hydraSize.height
+});
+if (typeof setResolution === 'function') setResolution(hydraSize.width, hydraSize.height);
+window.addEventListener('resize', () => {
+  const nextHydraSize = sizeHydraCanvas();
+  if (typeof setResolution === 'function') setResolution(nextHydraSize.width, nextHydraSize.height);
+});
 ${code}
 </script>
 </body>

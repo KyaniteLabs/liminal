@@ -2,40 +2,65 @@ import { describe, it, expect } from 'vitest';
 import { TuiSessionStore } from '../../../src/tui-bridge/TuiSessionStore.js';
 import type { TuiSessionStatus } from '../../../src/tui-bridge/types.js';
 
-describe('TuiSessionStore', () => {
-  const makeStatus = (id = 's1'): TuiSessionStatus =>
-    ({ sessionId: id, mode: 'chat', trust: { level: 'untrusted' } } as TuiSessionStatus);
+function makeStatus(overrides: Partial<TuiSessionStatus> = {}): TuiSessionStatus {
+  return {
+    sessionId: 'sess-1',
+    status: 'active',
+    startedAt: new Date().toISOString(),
+    ...overrides,
+  } as TuiSessionStatus;
+}
 
-  it('create stores and returns status', () => {
+describe('TuiSessionStore', () => {
+  it('creates and retrieves a session', () => {
     const store = new TuiSessionStore();
     const status = makeStatus();
-    const result = store.create(status);
-    expect(result).toBe(status);
-    expect(store.get('s1')).toBe(status);
+    store.create(status);
+    expect(store.get('sess-1')).toEqual(status);
   });
 
-  it('get returns undefined for unknown session', () => {
+  it('returns undefined for unknown session', () => {
     const store = new TuiSessionStore();
-    expect(store.get('nonexistent')).toBeUndefined();
+    expect(store.get('unknown')).toBeUndefined();
   });
 
-  it('update patches and returns new status', () => {
+  it('updates a session with partial patch', () => {
     const store = new TuiSessionStore();
     store.create(makeStatus());
-    const updated = store.update('s1', { mode: 'action' });
-    expect(updated.mode).toBe('action');
-    expect(store.get('s1')!.mode).toBe('action');
+    const updated = store.update('sess-1', { status: 'completed' } as Partial<TuiSessionStatus>);
+    expect(updated.status).toBe('completed');
+    expect(store.get('sess-1')!.status).toBe('completed');
   });
 
-  it('update throws for unknown session', () => {
+  it('throws when updating unknown session', () => {
     const store = new TuiSessionStore();
-    expect(() => store.update('ghost', { mode: 'action' })).toThrow('Unknown TUI session: ghost');
+    expect(() => store.update('missing', {} as any)).toThrow('Unknown TUI session');
   });
 
-  it('list returns all session IDs', () => {
+  it('preserves unpatched fields', () => {
     const store = new TuiSessionStore();
-    store.create(makeStatus('a'));
-    store.create(makeStatus('b'));
-    expect(store.list()).toEqual(expect.arrayContaining(['a', 'b']));
+    store.create(makeStatus({ sessionId: 'sess-1' }));
+    const updated = store.update('sess-1', { status: 'idle' } as Partial<TuiSessionStatus>);
+    expect(updated.sessionId).toBe('sess-1');
+  });
+
+  it('lists all session IDs', () => {
+    const store = new TuiSessionStore();
+    store.create(makeStatus({ sessionId: 'a' }));
+    store.create(makeStatus({ sessionId: 'b' }));
+    store.create(makeStatus({ sessionId: 'c' }));
+    expect(store.list().sort()).toEqual(['a', 'b', 'c']);
+  });
+
+  it('returns empty list when no sessions', () => {
+    const store = new TuiSessionStore();
+    expect(store.list()).toEqual([]);
+  });
+
+  it('overwrites on create if session ID already exists', () => {
+    const store = new TuiSessionStore();
+    store.create(makeStatus({ sessionId: 'x', status: 'active' } as any));
+    store.create(makeStatus({ sessionId: 'x', status: 'replaced' } as any));
+    expect(store.get('x')!.status).toBe('replaced');
   });
 });

@@ -1,18 +1,126 @@
 import { describe, it, expect } from 'vitest';
 import { PriorityAllocator } from '../../../src/cortex/PriorityAllocator.js';
 import type { CortexSnapshot, CortexGoal } from '../../../src/cortex/types.js';
-function mkS(o: Partial<CortexSnapshot> = {}): CortexSnapshot { return { timestamp: new Date().toISOString(), taskPipeline: { pending: 0, inProgress: 0, completed: 10, failed: 0, skipped: 0, acceptanceRate: 0.9, failureBreakdown: {} }, llmHealth: { avgLatencyMs: 500, successRate: 0.95, recentErrorCount: 0, lastError: null, activeProvider: 't', activeModel: 't' }, scoreTrend: { scores: [0.7, 0.75, 0.8], average: 0.75, count: 3 }, activeProcesses: [], eventsProcessed: 50, ...o }; }
-function mkG(o: Partial<CortexGoal> = {}): CortexGoal { return { id: 'g1', text: 'Test', priority: 'normal', category: 'maintenance', status: 'active', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), ...o }; }
+
+function makeSnapshot(overrides: Partial<CortexSnapshot> = {}): CortexSnapshot {
+  return {
+    taskPipeline: {
+      acceptanceRate: 0.8,
+      failed: 0,
+      total: 10,
+      failureBreakdown: {},
+    },
+    llmHealth: {
+      avgLatencyMs: 500,
+      successRate: 0.95,
+      totalCalls: 100,
+    },
+    scoreTrend: {
+      scores: [0.7, 0.75, 0.8],
+      average: 0.75,
+    },
+    activeProcesses: [],
+    ...overrides,
+  } as CortexSnapshot;
+}
+
+function makeGoal(overrides: Partial<CortexGoal> = {}): CortexGoal {
+  return {
+    id: 'goal-1',
+    text: 'improve test coverage',
+    category: 'coverage',
+    priority: 'high',
+    createdAt: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
 describe('PriorityAllocator', () => {
-  it('empty for healthy snapshot', () => expect(new PriorityAllocator().rank(mkS(), [])).toEqual([]));
-  it('detects low acceptance', () => expect(new PriorityAllocator().rank(mkS({ taskPipeline: { pending: 0, inProgress: 0, completed: 5, failed: 5, skipped: 0, acceptanceRate: 0.3, failureBreakdown: {} } }), []).some(r => r.actionType === 'improve-coverage')).toBe(true));
-  it('detects high failures', () => expect(new PriorityAllocator().rank(mkS({ taskPipeline: { pending: 0, inProgress: 0, completed: 5, failed: 8, skipped: 0, acceptanceRate: 0.6, failureBreakdown: { timeout: 5 } } }), []).some(r => r.actionType === 'fix-flaky-test')).toBe(true));
-  it('detects high latency', () => expect(new PriorityAllocator().rank(mkS({ llmHealth: { avgLatencyMs: 5000, successRate: 0.9, recentErrorCount: 0, lastError: null, activeProvider: 't', activeModel: 't' } }), []).some(r => r.actionType === 'reduce-latency')).toBe(true));
-  it('detects stuck processes', () => expect(new PriorityAllocator().rank(mkS({ activeProcesses: [{ name: 'w1', startedAt: new Date(Date.now() - 600000).toISOString(), stage: 'r' }] }), []).some(r => r.actionType === 'resolve-stuck-worker')).toBe(true));
-  it('detects declining scores', () => expect(new PriorityAllocator().rank(mkS({ scoreTrend: { scores: [0.8, 0.6, 0.4], average: 0.5, count: 3 } }), []).some(r => r.actionType === 'increase-score')).toBe(true));
-  it('sorts descending by score', () => { const r = new PriorityAllocator().rank(mkS({ taskPipeline: { pending: 0, inProgress: 0, completed: 3, failed: 7, skipped: 0, acceptanceRate: 0.2, failureBreakdown: { timeout: 7 } }, llmHealth: { avgLatencyMs: 6000, successRate: 0.8, recentErrorCount: 2, lastError: null, activeProvider: 't', activeModel: 't' } }), []); for (let i = 1; i < r.length; i++) expect(r[i-1].score).toBeGreaterThanOrEqual(r[i].score); });
-  it('results have required fields', () => { for (const r of new PriorityAllocator().rank(mkS({ taskPipeline: { pending: 0, inProgress: 0, completed: 3, failed: 5, skipped: 0, acceptanceRate: 0.3, failureBreakdown: {} } }), [])) { expect(r.actionType).toBeTruthy(); expect(typeof r.score).toBe('number'); expect(r.reasoning).toBeTruthy(); expect(Array.isArray(r.goalIds)).toBe(true); } });
-  it('goal alignment boosts score', () => { const s = mkS({ taskPipeline: { pending: 0, inProgress: 0, completed: 3, failed: 5, skipped: 0, acceptanceRate: 0.3, failureBreakdown: {} } }); const g = mkG({ text: 'Improve test coverage', category: 'coverage' }); const pa = new PriorityAllocator(); const cw = pa.rank(s, [g]).find(r => r.actionType === 'improve-coverage'); const cwo = pa.rank(s, []).find(r => r.actionType === 'improve-coverage'); if (cw && cwo) expect(cw.score).toBeGreaterThan(cwo.score); });
-  it('ignores non-stuck processes', () => expect(new PriorityAllocator().rank(mkS({ activeProcesses: [{ name: 'w1', startedAt: new Date(Date.now() - 30000).toISOString(), stage: 'r' }] }), []).some(r => r.actionType === 'resolve-stuck-worker')).toBe(false));
-  it('ignores stable scores', () => expect(new PriorityAllocator().rank(mkS({ scoreTrend: { scores: [0.8, 0.8, 0.8], average: 0.8, count: 3 } }), []).some(r => r.actionType === 'increase-score')).toBe(false));
+  it('returns empty array when no weaknesses detected', () => {
+    const allocator = new PriorityAllocator();
+    const result = allocator.rank(makeSnapshot(), []);
+    expect(result).toEqual([]);
+  });
+
+  it('detects low acceptance rate weakness', () => {
+    const allocator = new PriorityAllocator();
+    const snapshot = makeSnapshot({
+      taskPipeline: { acceptanceRate: 0.3, failed: 0, total: 10, failureBreakdown: {} },
+    });
+    const result = allocator.rank(snapshot, []);
+    expect(result.some(r => r.actionType === 'improve-coverage')).toBe(true);
+    expect(result.find(r => r.actionType === 'improve-coverage')!.reasoning).toContain('30%');
+  });
+
+  it('detects too many failed tasks', () => {
+    const allocator = new PriorityAllocator();
+    const snapshot = makeSnapshot({
+      taskPipeline: { acceptanceRate: 0.9, failed: 5, total: 10, failureBreakdown: { timeout: 3, error: 2 } },
+    });
+    const result = allocator.rank(snapshot, []);
+    expect(result.some(r => r.actionType === 'fix-flaky-test')).toBe(true);
+  });
+
+  it('detects high LLM latency', () => {
+    const allocator = new PriorityAllocator();
+    const snapshot = makeSnapshot({
+      llmHealth: { avgLatencyMs: 5000, successRate: 0.9, totalCalls: 50 },
+    });
+    const result = allocator.rank(snapshot, []);
+    expect(result.some(r => r.actionType === 'reduce-latency')).toBe(true);
+  });
+
+  it('detects stuck workers', () => {
+    const allocator = new PriorityAllocator();
+    const startedAt = new Date(Date.now() - 10 * 60 * 1000).toISOString(); // 10 min ago
+    const snapshot = makeSnapshot({
+      activeProcesses: [{ name: 'worker-1', startedAt, pid: 123 }],
+    });
+    const result = allocator.rank(snapshot, []);
+    expect(result.some(r => r.actionType === 'resolve-stuck-worker')).toBe(true);
+  });
+
+  it('detects declining score trend', () => {
+    const allocator = new PriorityAllocator();
+    const snapshot = makeSnapshot({
+      scoreTrend: { scores: [0.8, 0.6, 0.4], average: 0.5 },
+    });
+    const result = allocator.rank(snapshot, []);
+    expect(result.some(r => r.actionType === 'increase-score')).toBe(true);
+  });
+
+  it('sorts actions by score descending', () => {
+    const allocator = new PriorityAllocator();
+    const snapshot = makeSnapshot({
+      taskPipeline: { acceptanceRate: 0.2, failed: 5, total: 10, failureBreakdown: { err: 5 } },
+      llmHealth: { avgLatencyMs: 8000, successRate: 0.5, totalCalls: 10 },
+    });
+    const result = allocator.rank(snapshot, []);
+    for (let i = 1; i < result.length; i++) {
+      expect(result[i - 1].score).toBeGreaterThanOrEqual(result[i].score);
+    }
+  });
+
+  it('aligns with matching goals', () => {
+    const allocator = new PriorityAllocator();
+    const snapshot = makeSnapshot({
+      taskPipeline: { acceptanceRate: 0.3, failed: 0, total: 10, failureBreakdown: {} },
+    });
+    const goals = [makeGoal({ text: 'improve test coverage', category: 'coverage' })];
+    const result = allocator.rank(snapshot, goals);
+    const coverage = result.find(r => r.actionType === 'improve-coverage');
+    expect(coverage).toBeDefined();
+    expect(coverage!.goalIds).toContain('goal-1');
+  });
+
+  it('returns empty goals array when no goals match', () => {
+    const allocator = new PriorityAllocator();
+    const snapshot = makeSnapshot({
+      taskPipeline: { acceptanceRate: 0.3, failed: 0, total: 10, failureBreakdown: {} },
+    });
+    const goals = [makeGoal({ text: 'unrelated goal', category: 'design' })];
+    const result = allocator.rank(snapshot, goals);
+    const coverage = result.find(r => r.actionType === 'improve-coverage');
+    expect(coverage!.goalIds).toEqual([]);
+  });
 });

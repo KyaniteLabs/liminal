@@ -6,38 +6,47 @@
 > and keep state honest. The HUMAN (Simon) dispatches your prompts to the workers and
 > relays results back to you.
 
-## Live update — 2026-06-08 16:38 PDT
+## Live update — 2026-06-08 20:10 PDT
 
 This section supersedes the original handoff snapshot below.
 
-- Current main: `a08f4523 fix(visual): stabilize hydra three html renders (#633)`.
+- Current main: `0b8754c8 fix(gauntlet): detect blank and low-detail renders (#642)`.
 - Open PRs: **0**.
-- Merged during the replacement-orchestrator stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization.
+- Merged during the replacement-orchestrator/domain-wave stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization, #642 Kimi-calibrated blank/flat + low-detail render gate.
 - Cleaned worktrees created by this stint: `G-gauntlet-ratchet`, `K-kinetic-validator`, `V-visual-render`. The persistent stale worktrees remain listed in §2/§7.
 - Local root state after pull: only pre-existing dirty `docs/validation/self-improve-ledger.jsonl`.
 
 ### Current gauntlet/ratchet reality
 
-The latest landed ratchet on #633 was CI-green, and local `pnpm domain:ratchet:ci` exited 0 with `[RATCHET] SUCCESS: All expected domains passed`.
+The latest landed ratchet on #642 was CI-green. The gauntlet now analyzes rendered PNGs using color variance + edge density, not exact solid-color or luminance alone. This catches Kimi's unambiguous blank/flat class, including bright-gray blanks that luminance cannot catch.
 
-Do **not** overread that as all-12 perfect. The ratchet still prints non-gated failures in local output:
+Do **not** overread that as all-12 perfect. #642 does **not** auto-fail partial-frame/composition-layer layouts because Kimi identified too many false-positive risks; cropped-content detection stays a separate Wave-2/advisory lane.
 
 | Domain | Latest local evidence | Status |
 |---|---|---|
-| hydra | PASS in single-domain and ratchet; latest PNG 900x600, `render(o0)`, avg luma 102.71, 17,834 unique colors | improved; vision-checked |
-| three | PASS; latest visual has bright `scene.background = 0xe8e0f0`, avg luma 219.56, no helpers | improved; vision-checked |
-| html | PASS; latest control-panel artifact avg luma 233.5 | improved; vision-checked |
-| svg | local ratchet printed `generate: svg generation timed out after 120000ms` after empty-tool-loop retry | Wave 2 |
-| kinetic | local ratchet printed invalid-HTML recovery despite #632 validator work | Wave 2 |
-| p5, glsl, tone, strudel, revideo, ascii, textgen | PASS in latest local ratchet run | keep ratcheted |
+| p5 | `node scripts/domains/gauntlet.mjs --domain p5 --ratchet` PASS after #642 | bright-gray blank class now objectively guarded without false-failing current p5 |
+| svg | `node scripts/domains/gauntlet.mjs --domain svg --ratchet` PASS after #642, but emitted the known empty-tool-loop retry first | negative-space SVGs not false-failed; generator/provider retry remains Wave 2 |
+| hydra | `node scripts/domains/gauntlet.mjs --domain hydra --ratchet` PASS after #642 | washout/blank class guarded; historical partial-frame gap remains separate |
+| glsl | `node scripts/domains/gauntlet.mjs --domain glsl --ratchet` PASS after #642 | shader-error-style low-detail screens are now in the objective failure band if they recur |
+| three/html/kinetic/revideo/ascii/tone/strudel/textgen | Latest all-domain status still needs a fresh orchestrator-run after ratchet-honesty lands | do not lock from stale PASS alone |
+
+Local verification for #642:
+
+- `pnpm vitest run test/unit/quality/luminance.test.ts --coverage=false` PASS, 11 tests.
+- `git diff --check` PASS.
+- `pnpm build` PASS.
+- `pnpm lint` PASS.
+- Focused gauntlets PASS: p5, svg, hydra, glsl.
+- `npx vitest run --changed origin/main --coverage=false --reporter=verbose --retry=2 --testTimeout=10000` was interrupted after several minutes with no output; CI `build-and-test` passed on #642.
 
 ### Next Wave 2 dispatch
 
-1. **Ratchet honesty:** make `pnpm domain:ratchet:ci` either gate all printed rows or clearly label non-gated rows as advisory. The current 0 exit with visible SVG/Kinetic failures is acceptable for #633 because CI ratchet expected domains passed, but not acceptable for final all-12 lock.
-2. **SVG timeout:** investigate why SVG tool-loop empty retry can hang until 120s. Likely generator/provider behavior, not a render issue.
-3. **Kinetic invalid recovery:** #632 added the validator, but local ratchet still reports `KineticGenerator: Recovered with deterministic CSS kinetic scaffold: Validation retry returned invalid CSS kinetic HTML...`. Fix generator/recovery contract without fake deterministic fallback success.
-4. **Full all-12 vision audit:** rerun `node scripts/domains/gauntlet.mjs --all` after Wave 2, inspect latest PNG/HTML artifacts, and mark only domains that pass and look genuinely good as "perfect."
-5. **Return to launch backlog:** once #2 is truly green, resume #7 Surfaces, #8 secrets hardening/release trust, #9 design debt/coverage, and M5 trend-log audits.
+1. **Ratchet honesty:** make `pnpm domain:ratchet:ci` and `node scripts/domains/gauntlet.mjs --all` impossible to summarize as "all green" when visible rows are advisory or failed. Gate all printed rows or label advisory rows unmistakably.
+2. **Partial-frame/cropped-content gap:** Kimi found historical `hydra@21-30` content confined to part of the frame. Do not add a global detector until false positives are bounded for HTML UI layouts, SVG negative space, and #619 transparent composition layers.
+3. **SVG retry/timeout:** investigate why SVG tool-loop empty retry can hang until 120s. Local #642 verification still saw the retry, even though the domain recovered and passed.
+4. **Kinetic invalid recovery:** #632 added the validator, but prior local ratchet still reported invalid-HTML recovery. Fix generator/recovery contract without fake deterministic fallback success.
+5. **Full all-12 vision audit:** rerun `node scripts/domains/gauntlet.mjs --all` after Wave 2, inspect latest PNG/HTML artifacts, and mark only domains that pass and look genuinely good as "perfect."
+6. **Return to launch backlog:** once #2 is truly green, resume #7 Surfaces, #8 secrets hardening/release trust, #9 design debt/coverage, and M5 trend-log audits.
 
 ---
 

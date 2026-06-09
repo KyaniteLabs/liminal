@@ -165,6 +165,8 @@ describe('SVGGenerator', () => {
       const prompt = (gen as any).buildSVGPrompt('make something useful', { mode });
       expect(prompt).toContain(`Mode: ${mode}`);
       expect(prompt).toContain(SVG_MODE_PROFILES[mode].label);
+      expect(prompt).toContain('Keep the SVG compact');
+      expect(prompt).toContain('End with </svg>');
     }
   });
 
@@ -204,7 +206,7 @@ describe('SVGGenerator', () => {
 
     expect(toolLoop).not.toHaveBeenCalled();
     expect(complete).toHaveBeenCalledOnce();
-    expect(complete.mock.calls[0]?.[0].maxTokens).toBe(1200);
+    expect(complete.mock.calls[0]?.[0].maxTokens).toBe(2200);
     expect(complete.mock.calls[0]?.[0].signal).toBeInstanceOf(AbortSignal);
     expect(svg).toContain('<circle');
     expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
@@ -243,17 +245,13 @@ describe('SVGGenerator', () => {
     expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
   });
 
-  it('tries a stricter raw-SVG retry when the compact retry still returns prose', async () => {
+  it('fails clearly when the SVG retry still returns invalid prose', async () => {
     process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
     const llm = new LLMClient({ baseUrl: 'http://localhost:1234/v1', model: 'svg-test-model' });
     const complete = vi.spyOn(llm, 'complete')
       .mockResolvedValueOnce({ text: '', success: true })
-      .mockResolvedValueOnce({ text: 'I need to draw the logo first.', success: true })
-      .mockResolvedValueOnce({
-        text: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><defs><linearGradient id="g"><stop offset="0%" stop-color="#111827"/><stop offset="100%" stop-color="#67e8f9"/></linearGradient></defs><rect width="1024" height="1024" fill="#020617"/><path d="M352 816 L352 256 L672 256 L672 816 Z" fill="url(#g)"/><path d="M432 816 L432 384 L592 384 L592 816 Z" fill="#0f172a"/></svg>',
-        success: true,
-      });
-    vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValue({
+      .mockResolvedValueOnce({ text: 'I need to draw the logo first.', success: true });
+    const toolLoop = vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValue({
       content: '',
       iterations: 1,
       toolCallsMade: 0,
@@ -261,31 +259,12 @@ describe('SVGGenerator', () => {
     });
 
     const gen = new SVGGenerator(llm);
-    const svg = await gen.generate('liminal doorway logo');
 
-    expect(complete).toHaveBeenCalledTimes(3);
-    expect(svg).toContain('<svg');
-    expect(svg).toContain('<path');
-  });
-
-  it('uses a final terse SVG-only retry when earlier bounded attempts fail', async () => {
-    process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
-    const llm = new LLMClient({ baseUrl: 'http://localhost:1234/v1', model: 'svg-test-model' });
-    const complete = vi.spyOn(llm, 'complete')
-      .mockResolvedValueOnce({ text: '', success: true })
-      .mockRejectedValueOnce(new Error('SVG provider attempt timed out after 18000ms'))
-      .mockRejectedValueOnce(new Error('SVG provider attempt timed out after 18000ms'))
-      .mockResolvedValueOnce({
-        text: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#020617"/><circle cx="512" cy="512" r="220" fill="#67e8f9"/><path d="M392 760 L392 300 L632 300 L632 760 Z" fill="#0f172a"/></svg>',
-        success: true,
-      });
-
-    const gen = new SVGGenerator(llm);
-    const svg = await gen.generate('liminal doorway logo');
-
-    expect(complete).toHaveBeenCalledTimes(4);
-    expect(complete.mock.calls[3]?.[0].prompt).toContain('NO THINKING. NO EXPLANATION');
-    expect(svg).toContain('<circle');
+    await expect(gen.generate('liminal doorway logo')).rejects.toThrow(
+      'SVGGenerator: provider returned no valid SVG after 2 bounded direct attempts',
+    );
+    expect(toolLoop).not.toHaveBeenCalled();
+    expect(complete).toHaveBeenCalledTimes(2);
   });
 
   it('fails clearly when bounded provider attempts never return valid SVG', async () => {
@@ -306,8 +285,8 @@ describe('SVGGenerator', () => {
     const gen = new SVGGenerator(llm);
 
     await expect(gen.generate('new bounded SVG proof prompt')).rejects.toThrow(
-      'SVGGenerator: provider did not return valid SVG within bounded attempts',
+      'SVGGenerator: provider returned no valid SVG after 2 bounded direct attempts',
     );
-    expect(complete).toHaveBeenCalledTimes(4);
+    expect(complete).toHaveBeenCalledTimes(2);
   });
 });

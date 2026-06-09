@@ -56,7 +56,59 @@ export class HydraValidator {
       errors.push('Hydra code should use a source function: osc(), src(), noise(), shape(), gradient(), solid(), voronoi()');
     }
 
+    errors.push(...this.validateHeadlessSources(code));
+    errors.push(...this.validateRenderTarget(code));
+
     return errors;
+  }
+
+  /**
+   * Headless gallery/gauntlet previews cannot grant camera/screen/media input,
+   * so source buffers like s0 render blank even when the Hydra syntax is valid.
+   */
+  private static validateHeadlessSources(code: string): string[] {
+    const errors: string[] = [];
+
+    if (/\bs\d+\.init(?:Cam|Screen|Video|Image)\s*\(/.test(code) || /\bsrc\s*\(\s*s\d+\s*\)/.test(code)) {
+      errors.push('Hydra headless preview must use generated sources, not camera/screen/video/image input buffers like s0.initCam(), s0.initScreen(), or src(s0)');
+    }
+
+    return errors;
+  }
+
+  /**
+   * Bare render()/render(all) asks Hydra to display the multi-output grid. If
+   * any output buffer is unwritten, the unused quadrant renders black; require
+   * render(oN) unless all four outputs are intentionally populated.
+   */
+  private static validateRenderTarget(code: string): string[] {
+    const errors: string[] = [];
+    const writtenOutputs = this.collectWrittenOutputs(code);
+
+    for (const match of code.matchAll(/\brender\s*\(\s*([^)]*)\s*\)/g)) {
+      const target = match[1].trim();
+      if (target === '' || /^all$/i.test(target)) {
+        const missing = ['o0', 'o1', 'o2', 'o3'].filter(output => !writtenOutputs.has(output));
+        if (missing.length > 0) {
+          errors.push('Hydra code uses render()/render(all) with unwritten output buffers; use render(o0) or write all o0-o3 outputs to avoid black grid quadrants');
+        }
+        continue;
+      }
+
+      if (/^o[0-3]$/.test(target) && !writtenOutputs.has(target)) {
+        errors.push(`Hydra code renders ${target} but never writes .out(${target}); render a written output buffer to avoid blank frames`);
+      }
+    }
+
+    return errors;
+  }
+
+  private static collectWrittenOutputs(code: string): Set<string> {
+    const outputs = new Set<string>();
+    for (const match of code.matchAll(/\.out\s*\(\s*(o[0-3])?\s*\)/g)) {
+      outputs.add(match[1] || 'o0');
+    }
+    return outputs;
   }
 
   /**

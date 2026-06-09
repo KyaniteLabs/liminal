@@ -1,4 +1,6 @@
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
+import { HydraValidator } from '../../core/validators/HydraValidator.js';
+import { GenerationError } from '../../errors/GenerationError.js';
 
 // Washout clamp constants (see capBlendWeights). Hydra's `.add(tex)` defaults to a
 // full additive (amount 1.0), and high `.add`/`.blend` weights pile sources toward
@@ -35,14 +37,28 @@ export class HydraGenerator extends TierBasedGenerator {
       '',
       `User request: ${prompt}`,
     ].join('\n');
+    let code: string;
     try {
-      const code = await super.generate(hydraPrompt, options);
-      return this.sanitizeCode(code);
+      code = await super.generate(hydraPrompt, options);
     } catch (error) {
       const direct = await this.retryHydraDirect(prompt, options);
       if (direct) return direct;
       throw error;
     }
+
+    const clean = this.sanitizeCode(code);
+    const length = this.executableLength(clean);
+    if (length < HydraValidator.getMinSize()) {
+      const direct = await this.retryHydraDirect(prompt, options);
+      if (direct) return direct;
+      throw new GenerationError(
+        `${this.constructor.name}: generated Hydra code is too small (${length}b) after bounded direct retry`,
+        'hydra',
+        { codeLength: length, generatedCode: clean }
+      );
+    }
+
+    return clean;
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
@@ -469,6 +485,7 @@ export class HydraGenerator extends TierBasedGenerator {
         `Create a visible Hydra patch for: ${prompt}`,
         'Use one complete chain that combines at least two generated sources.',
         'Safe shape: osc(...).blend(noise(...), 0.35).color(...).kaleid(...).out(o0); render(o0);',
+        'Return a substantial 150+ character patch with at least 8 chained operations; do not return a tiny one-liner.',
         'Use numeric arguments only inside color(), brightness(), saturate(), scale(), rotate(), and kaleid().',
         'No camera/screen input, no prose, no markdown, no separate unfinished source chains.',
       ].join('\n'),
@@ -479,7 +496,15 @@ export class HydraGenerator extends TierBasedGenerator {
     if (!result.success || !result.text) return null;
     const raw = this.recoverHydraFromModelText(result.text) ?? result.text;
     const clean = this.sanitizeCode(raw);
-    return this.validateOutput(clean).valid ? clean : null;
+    return this.validateOutput(clean).valid && this.executableLength(clean) >= HydraValidator.getMinSize() ? clean : null;
+  }
+
+  private executableLength(code: string): number {
+    return code
+      .replace(/\/\/.*$/gm, '')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .trim()
+      .length;
   }
 
   private recoverHydraFromModelText(text: string): string | null {
@@ -527,15 +552,35 @@ export class HydraGenerator extends TierBasedGenerator {
 <title>Hydra Synth</title>
 <style>
 *{margin:0;padding:0;overflow:hidden}
-body{background:#000}
+html,body{width:100%;height:100%;background:#000}
 canvas{display:block;width:100vw;height:100vh}
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
+<canvas id="c" width="1280" height="720"></canvas>
 <script src="https://cdn.jsdelivr.net/npm/hydra-synth@1.3.10/dist/hydra-synth.js"></script>
 <script>
-const h=new Hydra({canvas:document.getElementById('c'),detectAudio:false,width:innerWidth,height:innerHeight});
+const hydraCanvas = document.getElementById('c');
+function sizeHydraCanvas() {
+  const width = Math.max(1, window.innerWidth || document.documentElement.clientWidth || 1280);
+  const height = Math.max(1, window.innerHeight || document.documentElement.clientHeight || 720);
+  hydraCanvas.width = width;
+  hydraCanvas.height = height;
+  return { width, height };
+}
+const hydraSize = sizeHydraCanvas();
+const hydra = new Hydra({
+  canvas: hydraCanvas,
+  detectAudio: false,
+  enableStreamCapture: false,
+  width: hydraSize.width,
+  height: hydraSize.height
+});
+if (typeof setResolution === 'function') setResolution(hydraSize.width, hydraSize.height);
+window.addEventListener('resize', () => {
+  const nextHydraSize = sizeHydraCanvas();
+  if (typeof setResolution === 'function') setResolution(nextHydraSize.width, nextHydraSize.height);
+});
 ${code}
 </script>
 </body>

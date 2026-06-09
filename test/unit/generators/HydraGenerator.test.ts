@@ -1,18 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockToolLoop, mockComplete, mockGetConfig } = vi.hoisted(() => ({
-  mockToolLoop: vi.fn().mockResolvedValue({
-    content: 'osc(10, 0.1, 1.0).out(o0)',
-    iterations: 1,
-    toolCallsMade: 0,
-    success: true,
-  }),
-  mockComplete: vi.fn().mockResolvedValue({
-    text: 'osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out(o0)',
-    success: true,
-  }),
-  mockGetConfig: vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' }),
-}));
+const { mockToolLoop, mockComplete, mockGetConfig, substantialHydraChain, substantialHydraPatch } = vi.hoisted(() => {
+  const substantialHydraChain = 'osc(6, 0.12, 1.0).blend(noise(3, 0.2).color(0.2, 0.6, 1.0), 0.35).modulate(voronoi(5, 0.25, 0.2), 0.25).kaleid(6).rotate(0.12).scale(1.03).contrast(1.4).brightness(0.82)';
+  const substantialHydraPatch = `${substantialHydraChain}.out(o0)\nrender(o0)`;
+  return {
+    substantialHydraChain,
+    substantialHydraPatch,
+    mockToolLoop: vi.fn().mockResolvedValue({
+      content: substantialHydraPatch,
+      iterations: 1,
+      toolCallsMade: 0,
+      success: true,
+    }),
+    mockComplete: vi.fn().mockResolvedValue({
+      text: substantialHydraPatch,
+      success: true,
+    }),
+    mockGetConfig: vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' }),
+  };
+});
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
@@ -85,10 +91,23 @@ describe('HydraGenerator', () => {
   it('wrapForGallery includes canvas element', () => {
     const gen = new HydraGenerator();
     const wrapped = gen.wrapForGallery('noise().out(o0)');
-    expect(wrapped).toContain('<canvas id="c">');
+    expect(wrapped).toContain('<canvas id="c" width="1280" height="720"></canvas>');
     expect(wrapped).toContain('hydra-synth.js');
     expect(wrapped).toContain('new Hydra');
     expect(wrapped).not.toContain('type="module"');
+  });
+
+  it('wrapForGallery sizes Hydra canvas before init and on resize', () => {
+    const gen = new HydraGenerator();
+    const wrapped = gen.wrapForGallery('noise().color(1, 0.2, 0.8).out(o0)');
+
+    expect(wrapped).toContain('function sizeHydraCanvas()');
+    expect(wrapped).toContain('hydraCanvas.width = width');
+    expect(wrapped).toContain('hydraCanvas.height = height');
+    expect(wrapped).toContain('width: hydraSize.width');
+    expect(wrapped).toContain('height: hydraSize.height');
+    expect(wrapped).toContain("if (typeof setResolution === 'function') setResolution(hydraSize.width, hydraSize.height)");
+    expect(wrapped).toContain("window.addEventListener('resize'");
   });
 
   it('rejects hydra image proof code without explicit color output', () => {
@@ -356,7 +375,7 @@ describe('HydraGenerator', () => {
 
   it('sanitizeCode appends .out(o0) when missing render', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 'osc(10, 0.1, 1.0).add(noise(3, 0.2)).color(1, 0.2, 0.8)',
+      content: substantialHydraChain,
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
@@ -366,7 +385,7 @@ describe('HydraGenerator', () => {
 
   it('sanitizeCode appends render(o0) when multiple outputs exist', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 'osc(10).color(1, 0.2, 0.8).out(o0)\nshape(4).color(0.1, 1, 0.7).out(o1)',
+      content: `${substantialHydraChain}.out(o0)\nshape(4, 0.35, 0.4).blend(noise(2, 0.2), 0.35).color(0.1, 1, 0.7).rotate(0.2).scale(1.1).out(o1)`,
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
@@ -376,7 +395,7 @@ describe('HydraGenerator', () => {
 
   it('sanitizeCode appends render(o0) for single-output headless visibility', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1.0).color(0.95, 0.61, 0.62)).blend(voronoi(5, 0.3, 0.2).color(0.37, 0.92, 0.95)).out(o0)',
+      content: `${substantialHydraChain}.out(o0)`,
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
@@ -398,7 +417,7 @@ describe('HydraGenerator', () => {
 
   it('repairs leading source dots and screen-to-out chains from local model output', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: '.solid(0.05, 0.13, 0.19).add(noise(3, 0.2)).color(1, 0.2, 0.8).screen();\n.out(o0)',
+      content: '.solid(0.05, 0.13, 0.19).blend(noise(3, 0.2).color(0.2, 0.6, 1.0), 0.35).modulate(voronoi(5, 0.25, 0.2), 0.2).kaleid(5).rotate(0.12).scale(1.05).contrast(1.4).brightness(0.82).screen();\n.out(o0)',
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
@@ -410,7 +429,7 @@ describe('HydraGenerator', () => {
 
   it('repairs output-to-out chains from local model output', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 'osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).output();\n.out(o0)',
+      content: `${substantialHydraChain}.output();\n.out(o0)`,
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
@@ -421,12 +440,12 @@ describe('HydraGenerator', () => {
 
   it('extracts the final inline hydra snippet from explanatory output', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: '`osc(4, 0.1, 1)` creates a waveform.\nUse `osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()`',
+      content: `\`osc(4, 0.1, 1)\` creates a waveform.\nUse \`${substantialHydraPatch}\``,
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('extract hydra');
-    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2), 0.3).color(1, 0.2, 0.8).out()\nrender(o0)');
+    expect(result).toBe(substantialHydraPatch);
   });
 
   it('does not treat forbidden camera strings in prose as generated code', async () => {
@@ -434,33 +453,33 @@ describe('HydraGenerator', () => {
       content: [
         'Thinking Process:',
         '* Do not use `s0.initCam()`, `s0.initScreen()`, or `src(s0)`.',
-        'Final code: `osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()`',
+        `Final code: \`${substantialHydraPatch}\``,
       ].join('\n'),
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('extract hydra despite prose constraints');
-    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2), 0.3).color(1, 0.2, 0.8).out()\nrender(o0)');
+    expect(result).toBe(substantialHydraPatch);
   });
 
   it('combines a final inline hydra snippet with trailing out call', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: '`osc(4, 0.1, 1).add(noise(3, 0.2)).mult(voronoi(5, 0.3, 0.2)).color(1, 0.2, 0.8)`\n.out(o0)',
+      content: `\`${substantialHydraChain}\`\n.out(o0)`,
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('extract hydra trailing out');
-    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2), 0.3).mult(voronoi(5, 0.3, 0.2)).color(1, 0.2, 0.8)\n.out(o0)\nrender(o0)');
+    expect(result).toBe(`${substantialHydraChain}\n.out(o0)\nrender(o0)`);
   });
 
   it('repairs invalid s0 source methods from local model output', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 's0.osc(4, 0.1, 1.0).add(noise(3, 0.2)).color(1, 0.2, 0.8).out(o0)',
+      content: 's0.osc(6, 0.12, 1.0).blend(noise(3, 0.2).color(0.2, 0.6, 1.0), 0.35).modulate(voronoi(5, 0.25, 0.2), 0.25).kaleid(6).rotate(0.12).scale(1.03).contrast(1.4).brightness(0.82).out(o0)',
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('repair s0 source');
-    expect(result).toContain('osc(4, 0.1, 1.0)');
+    expect(result).toContain('osc(6, 0.12, 1.0)');
     expect(result).not.toContain('s0.osc');
   });
 
@@ -483,14 +502,14 @@ describe('HydraGenerator', () => {
       success: true,
     });
     mockComplete.mockResolvedValueOnce({
-      text: 'osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out(o0)',
+      text: substantialHydraPatch,
       success: true,
     });
 
     const gen = new HydraGenerator();
     const result = await gen.generate('kaleidoscope visual');
 
-    expect(result).toContain('.add(noise');
+    expect(result).toContain('.blend(noise');
     expect(result).toContain('render(o0)');
     expect(mockComplete).toHaveBeenCalledOnce();
   });
@@ -503,14 +522,50 @@ describe('HydraGenerator', () => {
       success: true,
     });
     mockComplete.mockResolvedValueOnce({
-      text: '<think>`osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out(o0)`</think>',
+      text: `<think>\`${substantialHydraPatch}\`</think>`,
       success: true,
     });
 
     const gen = new HydraGenerator();
     const result = await gen.generate('kaleidoscope visual');
 
-    expect(result).toContain('osc(4, 0.1, 1)');
+    expect(result).toContain('osc(6, 0.12, 1.0)');
     expect(result).toContain('render(o0)');
+  });
+
+  it('retries once when sanitized Hydra code is below the validator minimum', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: 'osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out(o0)',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: true,
+    });
+    mockComplete.mockResolvedValueOnce({
+      text: substantialHydraPatch,
+      success: true,
+    });
+
+    const gen = new HydraGenerator();
+    const result = await gen.generate('substantial hydra patch');
+
+    expect(result).toBe(substantialHydraPatch);
+    expect(mockComplete).toHaveBeenCalledOnce();
+  });
+
+  it('fails honestly when the bounded direct retry is still below the validator minimum', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: 'osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out(o0)',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: true,
+    });
+    mockComplete.mockResolvedValueOnce({
+      text: 'osc(5, 0.1, 1).blend(noise(2, 0.2), 0.3).color(1, 0.2, 0.8).out(o0)',
+      success: true,
+    });
+
+    const gen = new HydraGenerator();
+    await expect(gen.generate('substantial hydra patch')).rejects.toThrow('generated Hydra code is too small');
+    expect(mockComplete).toHaveBeenCalledOnce();
   });
 });

@@ -620,7 +620,7 @@ bpm(120)`;
 shape(4, 0.5)
   .repeat(3, 3)
   .out(o1)
-render()`;
+render(o0)`;
 
       await gallery.saveOrganism('organism-project', 1, musicCode, visualCode);
 

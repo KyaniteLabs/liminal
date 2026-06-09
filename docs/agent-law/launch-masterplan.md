@@ -10,6 +10,8 @@
 > `main @ ac92bd75`; PR #644 merged; SVG retry is bounded; partial-frame remains human-review only.
 > Updated 2026-06-08 20:48 PDT after ratchet honesty + all-domain visual audit:
 > `main @ 8db42472`; PR #646 merged; ratchet output labels gated vs advisory; visual lock is 6/12, not 12/12.
+> Updated 2026-06-08 20:52 PDT after closeout docs sync:
+> `main @ bd894efa`; PR #647 merged; master plan + runbook record the honest Wave-2 state; 0 open PRs.
 > This file defines *what "launched" means*, *who owns which files*, and *how the
 > work converges*. Lanes map to **directories** so multiple workers run in
 > parallel with zero file collisions.
@@ -26,7 +28,7 @@ Launch gate = **M1–M4 + M7 green · M5 showing a credible upward trend · M6 a
 | # | Category | Green-gate (measurable "done") | Status @ establish |
 |---|----------|--------------------------------|--------------------|
 | 1 | Generation engine | operator-path real-LLM verification re-runs green | 🟢 |
-| 2 | Creative Body maturity | a CORE set (Simon: **all** domains) each pass a headless **gauntlet** in CI; rest labeled beta | 🟡 #646 makes ratchet output honest; Kimi visual audit says 6/12 lock-ready, 2 beta, 4 pass-but-weak |
+| 2 | Creative Body maturity | a CORE set (Simon: **all** domains) each pass a headless **gauntlet** in CI; rest labeled beta | 🟡 #646 makes ratchet output honest; #647 records Kimi visual audit: 6/12 lock-ready, 2 beta, 4 pass-but-weak |
 | 3 | SI – accumulation | regression-locked | 🟢 |
 | 4 | SI – **actually improving** | vision-audit **trend log** over ≥10 cron cycles shows rising quality, main-agent-graded (anti-Goodhart) | 🟡 cron live |
 | 5 | Evaluator | `evaluator` role reachable; real run returns **non-degraded** confidence; cron runs on it | 🟢 (GLM) |
@@ -72,7 +74,7 @@ M5 (#4 cron + vision trend) runs in background the whole time — the slow gate
 
 ## 5. Active dispatch (2026-06-08)
 
-Current live state at 2026-06-08 20:48 PDT: **0 open PRs** after #646. The domain-wave PR stack landed through #633; #642 landed Kimi-calibrated blank/flat honesty; #644 bounded SVG retry/failure behavior; #646 made ratchet output explicitly label gated vs advisory domains.
+Current live state at 2026-06-08 20:52 PDT: **0 open PRs** after #647. The domain-wave PR stack landed through #633; #642 landed Kimi-calibrated blank/flat honesty; #644 bounded SVG retry/failure behavior; #646 made ratchet output explicitly label gated vs advisory domains; #647 recorded the honest Wave-2 plan state.
 
 | Worker | Branch/PR | Lane result |
 |--------|-----------|-------------|
@@ -87,6 +89,7 @@ Current live state at 2026-06-08 20:48 PDT: **0 open PRs** after #646. The domai
 | C / SVG retry | #644 | SVG now makes two bounded direct provider attempts and fails cleanly instead of drifting near gauntlet timeout |
 | Minimax / ratchet honesty | #646 | Ratchet table now labels `GATED` vs `advisory`; success text reports gated denominator and names advisory failures |
 | Kimi all-domain visual audit | evidence-only | 6 lock-ready: p5, three, html, revideo, tone, strudel; beta: glsl, hydra; pass-but-weak: kinetic, svg, ascii, textgen |
+| Orchestrator / final plan sync | #647 | Master plan + runbook record the honest 6/12 lock state and Wave-2 priorities |
 
 Next dispatch should be Wave 2, not more Wave 1 merging:
 

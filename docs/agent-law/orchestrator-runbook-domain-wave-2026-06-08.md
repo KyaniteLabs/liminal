@@ -6,16 +6,16 @@
 > and keep state honest. The HUMAN (Simon) dispatches your prompts to the workers and
 > relays results back to you.
 
-## Live update — 2026-06-08 20:48 PDT
+## Live update — 2026-06-08 20:52 PDT
 
 This section supersedes the original handoff snapshot below.
 
-- Current main: `8db42472 fix(gauntlet): label gated vs advisory ratchet rows (#646)`.
+- Current main: `bd894efa docs(orchestrator): record ratchet honesty and visual audit (#647)`.
 - Open PRs: **0**.
-- Merged during the replacement-orchestrator/domain-wave stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization, #642 Kimi-calibrated blank/flat + low-detail render gate, #644 bounded SVG direct retry, #646 ratchet honesty labels.
+- Merged during the replacement-orchestrator/domain-wave stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization, #642 Kimi-calibrated blank/flat + low-detail render gate, #644 bounded SVG direct retry, #646 ratchet honesty labels, #647 final master-plan/runbook sync.
 - Kimi partial-frame calibration is evidence-only: bbox/coverage auto-fail is **not safe**. Use human-review labeling only unless the same Hydra half-black failure recurs.
 - Kimi all-domain visual audit is evidence-only: fresh all-domain gauntlet timed out after 300s, so the audit uses newest existing `.quality/gauntlet/` artifacts.
-- Cleaned worktrees created by this stint: `G-gauntlet-ratchet`, `K-kinetic-validator`, `V-visual-render`. The persistent stale worktrees remain listed in §2/§7.
+- Recent merge cleanup covered the completed domain-wave/doc worktrees; the persistent stale worktrees remain listed in §2/§7.
 - Local root state after pull: only pre-existing dirty `docs/validation/self-improve-ledger.jsonl`.
 
 ### Current gauntlet/ratchet reality
@@ -46,6 +46,7 @@ Local verification for #642/#644:
 - `npx vitest run --changed origin/main --coverage=false --reporter=verbose --retry=2 --testTimeout=10000` was interrupted after several minutes with no output; CI `build-and-test` passed on #642.
 - #644 CI fully green: Domain Gauntlet Ratchet, agent-law, browser/e2e smoke, build-and-test, metadata, probe, validate-docs.
 - #646 CI fully green: Domain Gauntlet Ratchet, agent-law, browser/e2e smoke, build-and-test, metadata, probe, validate-docs.
+- #647 CI fully green: Domain Gauntlet Ratchet, agent-law, browser/e2e smoke, build-and-test, metadata, probe, validate-docs.
 
 ### Next Wave 2 dispatch
 

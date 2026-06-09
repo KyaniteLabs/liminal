@@ -37,6 +37,7 @@ import {
   toolCatalogTool,
   createBackupTool,
   restoreBackupTool,
+  gitStatusTool,
 } from '../tools/index.js';
 import type { ToolResult } from '../tools/types.js';
 
@@ -373,6 +374,7 @@ export class HarnessAgent {
       case 'searchTools': return toolCatalogTool;
       case 'createBackup': return createBackupTool;
       case 'restoreBackup': return restoreBackupTool;
+      case 'gitStatus': return gitStatusTool;
       default: return null;
     }
   }

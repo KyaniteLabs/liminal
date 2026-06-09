@@ -46,6 +46,30 @@ Line 3
     expect(result.errors).toContain('TextGen output should be raw text, not an HTML document');
   });
 
+  it('fails if all lines have the same length (flat-list output is not text art)', () => {
+    const code = 'A threshold machine learning its own name in the dark\n'.repeat(5);
+    const result = TextGenValidator.validate(code);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('uniform line lengths'))).toBe(true);
+  });
+
+  it('passes a concrete-poetry receipt with varied line lengths', () => {
+    const code = [
+      'T',
+      '          H R',
+      '         E S H',
+      '        O L D',
+      '       learns',
+      '      its own name',
+      '     by counting the doors',
+      '    it refuses to fake.',
+      `  ${'A'.repeat(120)}`,
+    ].join('\n');
+    const result = TextGenValidator.validate(code);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
   it('preserves explicit textgen concrete poetry through CodeValidator', () => {
     const code = `
 T

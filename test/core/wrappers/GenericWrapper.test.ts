@@ -355,6 +355,44 @@ void main() { fragColor = vec4(1.0); }`;
       expect(result).not.toContain('out vec4 fragColor');
       expect(result).toContain('gl_FragColor = vec4(1.0)');
     });
+
+    it('auto-injects precision mediump float when the model omits it (WebGL1 GLSL ES 1.00 requirement)', () => {
+      const code = `uniform float u_time;
+uniform vec2 u_resolution;
+void main() { gl_FragColor = vec4(uv.x, uv.y, 0.0, 1.0); }`;
+      const result = GenericWrapper.wrap(code, { domain: 'shader' });
+
+      expect(result).toContain('precision mediump float;');
+    });
+
+    it('does not double-inject precision in the user shader when the model already declares it', () => {
+      const code = `precision highp float;
+uniform float u_time;
+void main() { gl_FragColor = vec4(1.0); }`;
+      const result = GenericWrapper.wrap(code, { domain: 'shader' });
+
+      // The auto-inject step must not duplicate a precision declaration that
+      // the model already emitted. Scan the harness for all precision
+      // declarations and confirm only the model's one survived injection.
+      const userPrecision = result.match(/precision\s+(?:lowp|mediump|highp)\s+float\s*;/g) ?? [];
+      expect(userPrecision).toHaveLength(1);
+      expect(userPrecision[0]).toBe('precision highp float;');
+    });
+
+    it('does not embed a runtime fallback shader; compile failures stay honest', () => {
+      const code = `precision mediump float;
+uniform float u_time;
+void main() { gl_FragColor = vec4(1.0); }`;
+      const result = GenericWrapper.wrap(code, { domain: 'shader' });
+
+      // The harness must NOT contain a recovery shader source string. If the
+      // model-emitted fragment shader fails to compile, the harness surfaces
+      // a visible error div so the gauntlet can detect and report the failure
+      // — it must not substitute a known-good image that would mask the bug.
+      expect(result).not.toContain('fsFallback');
+      // The honest error path is preserved.
+      expect(result).toContain('Shader compile error');
+    });
   });
 
   describe('wrap - Revideo', () => {

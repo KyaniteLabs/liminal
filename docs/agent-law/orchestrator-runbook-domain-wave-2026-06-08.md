@@ -6,35 +6,38 @@
 > and keep state honest. The HUMAN (Simon) dispatches your prompts to the workers and
 > relays results back to you.
 
-## Live update — 2026-06-08 20:38 PDT
+## Live update — 2026-06-08 20:48 PDT
 
 This section supersedes the original handoff snapshot below.
 
-- Current main: `ac92bd75 fix(svg): bound empty generation retry (#644)`.
+- Current main: `8db42472 fix(gauntlet): label gated vs advisory ratchet rows (#646)`.
 - Open PRs: **0**.
-- Merged during the replacement-orchestrator/domain-wave stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization, #642 Kimi-calibrated blank/flat + low-detail render gate, #644 bounded SVG direct retry.
+- Merged during the replacement-orchestrator/domain-wave stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization, #642 Kimi-calibrated blank/flat + low-detail render gate, #644 bounded SVG direct retry, #646 ratchet honesty labels.
 - Kimi partial-frame calibration is evidence-only: bbox/coverage auto-fail is **not safe**. Use human-review labeling only unless the same Hydra half-black failure recurs.
+- Kimi all-domain visual audit is evidence-only: fresh all-domain gauntlet timed out after 300s, so the audit uses newest existing `.quality/gauntlet/` artifacts.
 - Cleaned worktrees created by this stint: `G-gauntlet-ratchet`, `K-kinetic-validator`, `V-visual-render`. The persistent stale worktrees remain listed in §2/§7.
 - Local root state after pull: only pre-existing dirty `docs/validation/self-improve-ledger.jsonl`.
 
 ### Current gauntlet/ratchet reality
 
-The latest landed ratchet on #644 was CI-green. The gauntlet analyzes rendered PNGs using color variance + edge density, not exact solid-color or luminance alone. This catches Kimi's unambiguous blank/flat class, including bright-gray blanks that luminance cannot catch.
+The latest landed ratchet on #646 was CI-green. The gauntlet analyzes rendered PNGs using color variance + edge density, not exact solid-color or luminance alone. This catches Kimi's unambiguous blank/flat class, including bright-gray blanks that luminance cannot catch. Ratchet output now labels each row `GATED` or `advisory`, reports the gated denominator, and names failing advisory domains.
 
 Do **not** overread that as all-12 perfect. #642 does **not** auto-fail partial-frame/composition-layer layouts because Kimi identified too many false-positive risks; Kimi's later partial-frame calibration confirmed bbox/coverage is unsafe for auto-fail across p5, kinetic, three, and #619 composition layers.
 
 | Domain | Latest local evidence | Status |
 |---|---|---|
-| p5 | `node scripts/domains/gauntlet.mjs --domain p5 --ratchet` PASS after #642 | bright-gray blank class now objectively guarded without false-failing current p5 |
+| p5 | Kimi all-domain audit: latest artifact core-ready, 0/7 recent failures | lock-ready |
 | svg | #644: SVG now makes primary + one SVG-specific bounded direct provider attempt, then fails cleanly; local post-fix gauntlet hit provider 429, not timeout/empty tool-loop | timeout/empty-retry ambiguity fixed; provider availability still external |
-| hydra | `node scripts/domains/gauntlet.mjs --domain hydra --ratchet` PASS after #642 | washout/blank class guarded; historical partial-frame gap remains separate |
-| glsl | `node scripts/domains/gauntlet.mjs --domain glsl --ratchet` PASS after #642 | shader-error-style low-detail screens are now in the objective failure band if they recur |
-| three/html/kinetic/revideo/ascii/tone/strudel/textgen | Latest all-domain status still needs a fresh orchestrator-run after ratchet-honesty lands | do not lock from stale PASS alone |
+| hydra | Kimi audit: latest artifact PASS and rich, but 3/7 recent failures: 2 half-black partial frames + 1 blank washout | beta; stabilize before lock |
+| glsl | Kimi audit: latest artifact PASS and rich, but 2/6 recent shader-error screens | beta; stabilize before lock |
+| three, html, revideo, tone, strudel | Kimi audit: core-ready with stable recent artifacts | lock-ready |
+| kinetic, ascii, textgen | Kimi audit: PASS but visually simple/minimal | pass-but-weak |
 
 Local verification for #642/#644:
 
 - `pnpm vitest run test/unit/quality/luminance.test.ts --coverage=false` PASS, 11 tests.
 - `pnpm vitest run test/unit/generators/SVGGenerator.test.ts --coverage=false` PASS, 22 tests.
+- `pnpm vitest run scripts/domains/test/gauntlet.test.js --coverage=false` PASS, 6 tests after #646.
 - `git diff --check` PASS.
 - `pnpm build` PASS.
 - `pnpm lint` PASS.
@@ -42,14 +45,15 @@ Local verification for #642/#644:
 - #644 post-fix SVG gauntlet failed fast with `Anthropic API error 429`; that was provider/rate-limit behavior, not timeout or empty-tool-loop behavior.
 - `npx vitest run --changed origin/main --coverage=false --reporter=verbose --retry=2 --testTimeout=10000` was interrupted after several minutes with no output; CI `build-and-test` passed on #642.
 - #644 CI fully green: Domain Gauntlet Ratchet, agent-law, browser/e2e smoke, build-and-test, metadata, probe, validate-docs.
+- #646 CI fully green: Domain Gauntlet Ratchet, agent-law, browser/e2e smoke, build-and-test, metadata, probe, validate-docs.
 
 ### Next Wave 2 dispatch
 
-1. **Ratchet honesty:** make `pnpm domain:ratchet:ci` and `node scripts/domains/gauntlet.mjs --all` impossible to summarize as "all green" when visible rows are advisory or failed. Gate all printed rows or label advisory rows unmistakably.
-2. **Kinetic invalid recovery:** #632 added the validator, but prior local ratchet still reported invalid-HTML recovery. Fix generator/recovery contract without fake deterministic fallback success.
-3. **Full all-12 vision audit:** rerun `node scripts/domains/gauntlet.mjs --all` after ratchet honesty, inspect latest PNG/HTML artifacts, and mark only domains that pass and look genuinely good as "perfect."
-4. **Partial-frame policy:** keep partial-frame/cropped-content as human-review only. If Hydra repeats the same half-black failure, consider a targeted hydra-only auto-fail rule; do not generalize bbox/coverage.
-5. **Return to launch backlog:** once #2 is truly green, resume #7 Surfaces, #8 secrets hardening/release trust, #9 design debt/coverage, and M5 trend-log audits.
+1. **Hydra stabilization:** investigate the historical 43% failure rate. Focus on canvas sizing/init race and right-half black detection. Keep partial-frame as human-review unless the same Hydra half-black failure recurs.
+2. **GLSL stabilization:** investigate shader compile error screens. Capture browser console/shader logs and strengthen validator/retry so bad shaders self-repair before render.
+3. **Weak-domain depth:** improve Kinetic/SVG/ASCII/TextGen prompts or generator contracts for richer output; they are stable but not showpiece-quality.
+4. **Kinetic invalid recovery recheck:** #632 added the validator, but prior ratchet output mentioned invalid HTML recovery. Re-run with #646 honest labels before assigning code work.
+5. **Return to launch backlog:** once domain stabilization decisions are made, resume #7 Surfaces, #8 secrets hardening/release trust, #9 design debt/coverage, and M5 trend-log audits.
 
 ---
 

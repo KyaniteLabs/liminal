@@ -8,6 +8,8 @@
 > `main @ 0b8754c8`; PR #642 merged; blank/flat + low-detail render gate landed.
 > Updated 2026-06-08 20:38 PDT after SVG retry + partial-frame calibration:
 > `main @ ac92bd75`; PR #644 merged; SVG retry is bounded; partial-frame remains human-review only.
+> Updated 2026-06-08 20:48 PDT after ratchet honesty + all-domain visual audit:
+> `main @ 8db42472`; PR #646 merged; ratchet output labels gated vs advisory; visual lock is 6/12, not 12/12.
 > This file defines *what "launched" means*, *who owns which files*, and *how the
 > work converges*. Lanes map to **directories** so multiple workers run in
 > parallel with zero file collisions.
@@ -24,11 +26,11 @@ Launch gate = **M1–M4 + M7 green · M5 showing a credible upward trend · M6 a
 | # | Category | Green-gate (measurable "done") | Status @ establish |
 |---|----------|--------------------------------|--------------------|
 | 1 | Generation engine | operator-path real-LLM verification re-runs green | 🟢 |
-| 2 | Creative Body maturity | a CORE set (Simon: **all** domains) each pass a headless **gauntlet** in CI; rest labeled beta | 🟡 ratchet green for expected domains; #642 catches blank/flat + low-detail renders; #644 bounds SVG retry; full all-12 lock still needs ratchet honesty, Kinetic follow-up, and human vision audit |
+| 2 | Creative Body maturity | a CORE set (Simon: **all** domains) each pass a headless **gauntlet** in CI; rest labeled beta | 🟡 #646 makes ratchet output honest; Kimi visual audit says 6/12 lock-ready, 2 beta, 4 pass-but-weak |
 | 3 | SI – accumulation | regression-locked | 🟢 |
 | 4 | SI – **actually improving** | vision-audit **trend log** over ≥10 cron cycles shows rising quality, main-agent-graded (anti-Goodhart) | 🟡 cron live |
 | 5 | Evaluator | `evaluator` role reachable; real run returns **non-degraded** confidence; cron runs on it | 🟢 (GLM) |
-| 6 | Output quality | vision audit: **0 broken gens**, 0 too-dark in core set, **no seam / no washout** | 🟡 seam fixed (#619); GLSL/Hydra/Three/HTML visual failures improved (#629, #633); Kimi-calibrated blank/flat + low-detail gate landed (#642); partial-frame auto-fail rejected as unsafe |
+| 6 | Output quality | vision audit: **0 broken gens**, 0 too-dark in core set, **no seam / no washout** | 🟡 no latest artifact is broken, but GLSL/Hydra have transient failures; Kinetic/SVG/ASCII/TextGen are stable but visually weak |
 | 7 | Surfaces (Studio/TUI) | e2e UX smoke (brief→generate→preview→revise→cancel→confirm) + ≥1 **real-user** alpha session | ⬜ |
 | 8 | Release trust | clean package install + startup smoke + graceful failure messages + **no plaintext secrets** | 🟡 provider-routing/proof-server fixes landed (#628, #630); secrets hardening still open |
 | 9 | Eng hygiene | 11 HIGH design-debt closed; coverage ≥70 all metrics; 0 hygiene violations | ⬜ |
@@ -70,7 +72,7 @@ M5 (#4 cron + vision trend) runs in background the whole time — the slow gate
 
 ## 5. Active dispatch (2026-06-08)
 
-Current live state at 2026-06-08 20:38 PDT: **0 open PRs** after #644. The domain-wave PR stack landed through #633; #642 landed Kimi-calibrated blank/flat honesty; #644 bounded SVG retry/failure behavior.
+Current live state at 2026-06-08 20:48 PDT: **0 open PRs** after #646. The domain-wave PR stack landed through #633; #642 landed Kimi-calibrated blank/flat honesty; #644 bounded SVG retry/failure behavior; #646 made ratchet output explicitly label gated vs advisory domains.
 
 | Worker | Branch/PR | Lane result |
 |--------|-----------|-------------|
@@ -83,16 +85,18 @@ Current live state at 2026-06-08 20:38 PDT: **0 open PRs** after #644. The domai
 | Orchestrator / Kimi calibration | #642 | Gauntlet render-quality gate now rejects washed-out, blank/flat, and low-detail shader-error-style frames using color variance + edge density |
 | Kimi partial-frame QA | evidence-only | bbox/coverage auto-fail ruled unsafe; use human-review label only unless Hydra half-black failure recurs |
 | C / SVG retry | #644 | SVG now makes two bounded direct provider attempts and fails cleanly instead of drifting near gauntlet timeout |
+| Minimax / ratchet honesty | #646 | Ratchet table now labels `GATED` vs `advisory`; success text reports gated denominator and names advisory failures |
+| Kimi all-domain visual audit | evidence-only | 6 lock-ready: p5, three, html, revideo, tone, strudel; beta: glsl, hydra; pass-but-weak: kinetic, svg, ascii, textgen |
 
 Next dispatch should be Wave 2, not more Wave 1 merging:
 
 | Priority | Lane task | Owner suggestion |
 |----------|-----------|------------------|
-| 1 | Make `pnpm domain:ratchet:ci` and `node scripts/domains/gauntlet.mjs --all` honest for **all 12 printed rows**, not only expected domains | Minimax / Orchestrator |
-| 2 | Kinetic recovery still prints invalid HTML in ratchet even after #632 | kinetic generator lane |
-| 3 | Full all-12 vision audit of latest artifacts; mark weak-but-passing domains for aesthetic depth; partial-frame is human-review only | Kimi + Orchestrator + Simon |
-| 4 | If Hydra repeats the same half-black failure, consider a hydra-only targeted auto-fail rule; do **not** generalize bbox/coverage | Orchestrator |
-| 5 | Resume #7 Surfaces, #8 secrets hardening, #9 design debt, and M5 trend audits | distribute after domain lock |
+| 1 | Stabilize Hydra: historical 43% failure rate from half-black partial frames + blank washout; keep partial-frame human-review unless same Hydra failure recurs | Hydra/render lane |
+| 2 | Stabilize GLSL: historical 33% shader compile error screens; surface browser shader logs and strengthen retry/validation | GLSL lane |
+| 3 | Boost visual complexity for Kinetic/SVG/ASCII/TextGen; stable but pass-but-weak | prompt/generator lanes |
+| 4 | Kinetic recovery still previously printed invalid HTML after #632; recheck after #646 honest output before deciding if a code lane remains | kinetic generator lane |
+| 5 | Resume #7 Surfaces, #8 secrets hardening, #9 design debt, and M5 trend audits after domain stabilization decisions | distribute after domain lock |
 
 ## 6. Orchestrator cadence & doctrine
 

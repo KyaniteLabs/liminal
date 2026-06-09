@@ -1,250 +1,136 @@
 import { describe, it, expect } from 'vitest';
-import {
-  getNextQuestion,
-  getAllQuestions,
-  getPhaseOrder,
-  generateSummary
-} from '../../../dist/chat/InterviewPhase.js';
-import type { InterviewQuestion, InterviewPhase } from '../../../dist/chat/types.js';
+import { getPhaseOrder, getAllQuestions, getNextQuestion, generateSummary } from '../../../src/chat/InterviewPhase.js';
 
 describe('InterviewPhase', () => {
-  describe('getAllQuestions', () => {
-    it('should return all questions for each phase', () => {
-      const questions = getAllQuestions();
-
-      expect(questions.length).toBeGreaterThan(0);
-
-      // Check greeting phase
-      const greetingQuestions = questions.filter(q => q.phase === 'greeting');
-      expect(greetingQuestions.length).toBeGreaterThanOrEqual(1);
-
-      // Check discovery phase
-      const discoveryQuestions = questions.filter(q => q.phase === 'discovery');
-      expect(discoveryQuestions.length).toBeGreaterThanOrEqual(3);
-
-      // Check confirm phase
-      const confirmQuestions = questions.filter(q => q.phase === 'confirm');
-      expect(confirmQuestions.length).toBeGreaterThanOrEqual(1);
-
-      // Check generating phase
-      const generatingQuestions = questions.filter(q => q.phase === 'generating');
-      expect(generatingQuestions.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it('should return questions with valid structure', () => {
-      const questions = getAllQuestions();
-
-      questions.forEach(question => {
-        expect(question).toHaveProperty('id');
-        expect(question).toHaveProperty('phase');
-        expect(question).toHaveProperty('question');
-        expect(question).toHaveProperty('type');
-        expect(question).toHaveProperty('required');
-
-        expect(typeof question.id).toBe('string');
-        expect(typeof question.question).toBe('string');
-        expect(question.required === true || question.required === false).toBe(true);
-
-        expect(['greeting', 'discovery', 'confirm', 'generating']).toContain(question.phase);
-        expect(['text', 'choice', 'multiple']).toContain(question.type);
-
-        // If type is choice or multiple, options should be present
-        if (question.type === 'choice' || question.type === 'multiple') {
-
-          expect(Array.isArray(question.options)).toBe(true);
-          expect(question.options!.length).toBeGreaterThan(0);
-        }
-      });
-    });
-  });
-
   describe('getPhaseOrder', () => {
-    it('should return correct phase order', () => {
+    it('returns phases in correct order', () => {
       const order = getPhaseOrder();
-
       expect(order).toEqual(['greeting', 'discovery', 'confirm', 'generating']);
     });
   });
 
-  describe('getNextQuestion', () => {
-    it('should return first greeting question when no answers provided', () => {
-      const answers = new Map<string, any>();
-      const question = getNextQuestion('greeting', answers);
-
-      expect(question).not.toBeNull();
-      expect(question?.phase).toBe('greeting');
+  describe('getAllQuestions', () => {
+    it('returns all questions across phases', () => {
+      const all = getAllQuestions();
+      expect(all.length).toBeGreaterThan(5);
+      expect(all.some(q => q.phase === 'greeting')).toBe(true);
+      expect(all.some(q => q.phase === 'discovery')).toBe(true);
+      expect(all.some(q => q.phase === 'confirm')).toBe(true);
     });
 
-    it('should return discovery questions after greeting', () => {
-      const answers = new Map<string, any>([
-        ['intent', 'Create a particle system']
-      ]);
-      const question = getNextQuestion('discovery', answers);
-
-      expect(question).not.toBeNull();
-      expect(question?.phase).toBe('discovery');
-    });
-
-    it('should return confirm question after discovery', () => {
-      const answers = new Map<string, any>([
-        ['intent', 'Create a particle system'],
-        ['context', 'Web background'],
-        ['mood', 'Dreamy'],
-        ['references', []],
-        ['constraints', []]
-      ]);
-      const question = getNextQuestion('confirm', answers);
-
-      expect(question).not.toBeNull();
-      expect(question?.phase).toBe('confirm');
-    });
-
-    it('should return generating status after confirm', () => {
-      const answers = new Map<string, any>([
-        ['intent', 'Create a particle system'],
-        ['context', 'Web background'],
-        ['mood', 'Dreamy'],
-        ['references', []],
-        ['constraints', []],
-        ['confirmed', true]
-      ]);
-      const question = getNextQuestion('generating', answers);
-
-      expect(question).not.toBeNull();
-      expect(question?.phase).toBe('generating');
-    });
-
-    it('should return null after all phases complete', () => {
-      const answers = new Map<string, any>([
-        ['intent', 'Create a particle system'],
-        ['context', 'Web background'],
-        ['mood', 'Dreamy'],
-        ['references', []],
-        ['constraints', []],
-        ['confirmed', true],
-        ['generating', 'complete']
-      ]);
-      // After generating phase, there are no more phases
-      const question = getNextQuestion('generating', answers);
-
-      // Should return null since generating is the last phase and all its questions are answered
-      expect(question).toBeNull();
-    });
-
-    it('should skip questions based on answers provided', () => {
-      const answers = new Map<string, any>([
-        ['intent', 'Create a particle system'],
-        ['context', 'Web background'],
-        ['mood', 'Dreamy']
-      ]);
-
-      // Should return next un answered question
-      const question = getNextQuestion('discovery', answers);
-
-      expect(question).not.toBeNull();
-      expect(question?.phase).toBe('discovery');
-      // Should be asking about references or constraints
-      expect(['references', 'constraints']).toContain(question?.id);
-    });
-
-    it('should handle empty answers map gracefully', () => {
-      const answers = new Map<string, any>();
-      const question = getNextQuestion('greeting', answers);
-
-      expect(question).not.toBeNull();
-    });
-
-    it('should return question with text type for open-ended questions', () => {
-      const answers = new Map<string, any>();
-      const question = getNextQuestion('greeting', answers);
-
-      expect(question).not.toBeNull();
-      expect(question?.type).toBe('text');
+    it('includes required questions', () => {
+      const all = getAllQuestions();
+      const required = all.filter(q => q.required);
+      expect(required.length).toBeGreaterThanOrEqual(2);
     });
   });
 
-  describe('Question content', () => {
-    it('should include context question in discovery phase', () => {
-      const questions = getAllQuestions();
-      const contextQuestion = questions.find(q => q.id === 'context');
-
-      expect(contextQuestion?.phase).toBe('discovery');
-      expect(contextQuestion?.question).not.toBeNull();
+  describe('getNextQuestion', () => {
+    it('returns first greeting question for empty answers', () => {
+      const q = getNextQuestion('greeting', new Map());
+      expect(q).not.toBeNull();
+      expect(q!.id).toBe('intent');
+      expect(q!.phase).toBe('greeting');
+      expect(q!.required).toBe(true);
     });
 
-    it('should include mood question in discovery phase', () => {
-      const questions = getAllQuestions();
-      const moodQuestion = questions.find(q => q.id === 'mood');
-
-      expect(moodQuestion?.phase).toBe('discovery');
-      expect(moodQuestion?.question).not.toBeNull();
+    it('returns null when past last phase', () => {
+      // generating is the last phase; after that index would be >= length
+      const q = getNextQuestion('generating' as any, new Map());
+      // generating has one question; if it's answered, returns null
+      const answered = new Map([['generating', 'true']]);
+      const q2 = getNextQuestion('generating', answered);
+      expect(q2).toBeNull();
     });
 
-    it('should include references question in discovery phase', () => {
-      const questions = getAllQuestions();
-      const referencesQuestion = questions.find(q => q.id === 'references');
-
-      expect(referencesQuestion?.phase).toBe('discovery');
-      expect(referencesQuestion?.question).not.toBeNull();
+    it('skips answered questions within a phase', () => {
+      const answers = new Map([['intent', 'a sunset']]);
+      const q = getNextQuestion('greeting', answers);
+      // All greeting questions answered → moves to discovery
+      expect(q).not.toBeNull();
+      expect(q!.phase).toBe('discovery');
     });
 
-    it('should include constraints question in discovery phase', () => {
-      const questions = getAllQuestions();
-      const constraintsQuestion = questions.find(q => q.id === 'constraints');
-
-      expect(constraintsQuestion?.phase).toBe('discovery');
-      expect(constraintsQuestion?.question).not.toBeNull();
+    it('advances through discovery phase', () => {
+      const answers = new Map([
+        ['intent', 'sunset'],
+        ['context', 'gallery'],
+      ]);
+      // Start from greeting → all answered → discovery → find first unanswered
+      const q = getNextQuestion('greeting', answers);
+      expect(q).not.toBeNull();
+      expect(q!.id).toBe('mood');
     });
 
-    it('should include confirm question in confirm phase', () => {
-      const questions = getAllQuestions();
-      const confirmQuestion = questions.find(q => q.id === 'confirmed');
+    it('returns confirm question after discovery is complete', () => {
+      const discoveryAnswers = new Map();
+      // Fill all discovery question IDs
+      const discoveryIds = ['context', 'mood', 'references', 'constraints', 'audioPreference', 'aestheticPreset'];
+      for (const id of discoveryIds) {
+        discoveryAnswers.set(id, 'test');
+      }
+      discoveryAnswers.set('intent', 'test');
 
-      expect(confirmQuestion?.phase).toBe('confirm');
-      expect(confirmQuestion?.type).toBe('choice');
+      const q = getNextQuestion('greeting', discoveryAnswers);
+      expect(q).not.toBeNull();
+      expect(q!.phase).toBe('confirm');
+      expect(q!.id).toBe('confirmed');
     });
 
-    it('should include generating status in generating phase', () => {
-      const questions = getAllQuestions();
-      const generatingQuestion = questions.find(q => q.id === 'generating');
+    it('returns null when all phases complete', () => {
+      const all = getAllQuestions();
+      const allAnswered = new Map(all.map(q => [q.id, 'answered']));
+      const q = getNextQuestion('greeting', allAnswered);
+      expect(q).toBeNull();
+    });
 
-      expect(generatingQuestion?.phase).toBe('generating');
-      expect(generatingQuestion?.required).toBe(false);
+    it('returns discovery questions individually', () => {
+      const answers = new Map([['intent', 'test']]);
+      const q = getNextQuestion('discovery', answers);
+      expect(q).not.toBeNull();
+      expect(q!.id).toBe('context');
     });
   });
 
   describe('generateSummary', () => {
-    it('should generate summary from collected answers', () => {
-      const answers = new Map<string, any>([
-        ['intent', 'Create a particle system'],
-        ['context', 'Web background'],
-        ['mood', 'Dreamy']
-      ]);
-
-      const summary = generateSummary(answers);
-
-      expect(summary).toContain('Create a particle system');
-      expect(summary).toContain('Web background');
-      expect(summary).toContain('Dreamy');
+    it('returns empty string for empty answers', () => {
+      expect(generateSummary(new Map())).toBe('');
     });
 
-    it('should handle empty answers gracefully', () => {
-      const answers = new Map<string, any>();
+    it('formats answered questions', () => {
+      const answers = new Map([
+        ['intent', 'a sunset'],
+        ['context', 'web background'],
+      ]);
       const summary = generateSummary(answers);
-
-      expect(summary).toBe('');
+      expect(summary).toContain('sunset');
+      expect(summary).toContain('web background');
     });
 
-    it('should format array values as comma-separated', () => {
-      const answers = new Map<string, any>([
-        ['references', ['Artist A', 'Artist B']],
-        ['constraints', ['file size', 'performance']]
+    it('joins array values with comma', () => {
+      const answers = new Map([
+        ['constraints', ['no audio', 'dark mode']],
       ]);
-
       const summary = generateSummary(answers);
+      expect(summary).toContain('no audio, dark mode');
+    });
 
-      expect(summary).toContain('Artist A, Artist B');
-      expect(summary).toContain('file size, performance');
+    it('skips display-only IDs that have no answers', () => {
+      const answers = new Map([['intent', 'a sunset']]);
+      const summary = generateSummary(answers);
+      // Should have the intent but not empty lines for missing answers
+      const lines = summary.split('\n').filter(Boolean);
+      expect(lines.length).toBe(1);
+    });
+
+    it('excludes non-display IDs like confirmed', () => {
+      const answers = new Map([
+        ['intent', 'test'],
+        ['confirmed', 'Yes'],
+      ]);
+      const summary = generateSummary(answers);
+      expect(summary).not.toContain('Yes');
+      expect(summary).toContain('test');
     });
   });
 });

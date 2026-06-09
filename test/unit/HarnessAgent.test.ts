@@ -17,7 +17,7 @@ vi.mock('../../src/llm/LLMClient.js', () => ({
 }));
 
 // Import after mocks
-import { HarnessAgent, createHarnessAgent } from '../../src/harness/agent/HarnessAgent.js';
+import { HarnessAgent, createHarnessAgent, AVAILABLE_TOOL_NAMES } from '../../src/harness/agent/HarnessAgent.js';
 import { Status } from '../../src/types/status.js';
 
 describe('HarnessAgent', () => {
@@ -83,5 +83,15 @@ describe('HarnessAgent', () => {
     const report = agent.generateReport();
     expect(report).toContain('Total Tasks:');
     expect(report).toContain('Successful:');
+  });
+
+  // ── Tool dispatch contract ─────────────────────────────────────────
+  // Every advertised tool name must resolve to a real tool instance.
+  // Regression guard: gitStatus was listed but missing from dispatch.
+  it.each([...AVAILABLE_TOOL_NAMES])('getToolInstance resolves advertised tool %s', (toolName) => {
+    const agent = new HarnessAgent(mockLLM as unknown as import('../../src/llm/LLMClient.js').LLMClient);
+    const tool = (agent as unknown as { getToolInstance(name: string): { name: string } | null })
+      .getToolInstance(toolName);
+    expect(tool?.name).toBe(toolName);
   });
 });

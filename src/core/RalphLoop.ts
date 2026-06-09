@@ -1316,6 +1316,20 @@ export class RalphLoop {
             normalizedOptions.onThought?.(gateDecision.thought);
           }
         }
+        // Archive learning: store high-quality outputs BEFORE any early-exit so the
+        // accepted/break-triggering output is captured — not just the non-final
+        // intermediate iterations. Without this, a gen that achieves the quality
+        // threshold on its FIRST iteration (common for tone/ascii/kinetic/textgen)
+        // breaks here and never archives, so those domains never accumulate.
+        if (archiveLearning && evaluation.score >= 0.65) {
+          await archiveLearning.addOutput(
+            loadedPrompt, currentCode,
+            normalizedOptions.collabDomain || 'p5',
+            evaluation.score,
+            { iteration, domain: normalizedOptions.collabDomain || 'p5' }
+          );
+        }
+
         if (gateDecision.shouldBreak) {
           completed = gateDecision.completed;
           reason = gateDecision.reason;
@@ -1333,16 +1347,6 @@ export class RalphLoop {
         // Append aesthetic hints to usedPrompt for next iteration's context
         if (hints) {
           usedPrompt += hints;
-        }
-
-        // Archive learning: store high-quality outputs
-        if (archiveLearning && evaluation.score >= 0.65) {
-          await archiveLearning.addOutput(
-            loadedPrompt, currentCode,
-            normalizedOptions.collabDomain || 'p5',
-            evaluation.score,
-            { iteration, domain: normalizedOptions.collabDomain || 'p5' }
-          );
         }
 
         // Auto-compost: feed quality outputs to compost heap

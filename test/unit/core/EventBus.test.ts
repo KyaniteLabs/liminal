@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import eventBus, { EventTypes, type BusEvent } from '../../../src/core/EventBus.js';
 
 describe('EventBus', () => {
@@ -139,6 +139,96 @@ describe('EventBus', () => {
     it('has all expected keys', () => {
       const keys = Object.keys(EventTypes);
       expect(keys.length).toBeGreaterThanOrEqual(13);
+    });
+  });
+
+  describe('TUI mode', () => {
+    afterEach(() => {
+      eventBus.disableTuiMode();
+    });
+
+    it('enables TUI mode', () => {
+      eventBus.enableTuiMode();
+      expect(eventBus.isTuiMode()).toBe(true);
+    });
+
+    it('disables TUI mode', () => {
+      eventBus.enableTuiMode();
+      expect(eventBus.isTuiMode()).toBe(true);
+      eventBus.disableTuiMode();
+      expect(eventBus.isTuiMode()).toBe(false);
+    });
+
+    it('toggles TUI mode multiple times without deadlock', () => {
+      for (let i = 0; i < 10; i++) {
+        eventBus.enableTuiMode();
+        eventBus.disableTuiMode();
+      }
+      expect(eventBus.isTuiMode()).toBe(false);
+    });
+  });
+
+  describe('null/invalid listener handling', () => {
+    it('onEvent with null does not register', () => {
+      const result = eventBus.onEvent(null as any);
+      expect(result).toBe(eventBus);
+    });
+
+    it('onEvent with undefined does not register', () => {
+      const result = eventBus.onEvent(undefined as any);
+      expect(result).toBe(eventBus);
+    });
+
+    it('offEvent with null returns safely', () => {
+      const result = eventBus.offEvent(null as any);
+      expect(result).toBe(eventBus);
+    });
+  });
+
+  describe('listener error handling', () => {
+    it('catches listener errors without crashing', () => {
+      const badListener = vi.fn(() => {
+        throw new Error('listener exploded');
+      });
+      eventBus.onEvent(badListener);
+
+      // Should not throw — error is caught internally
+      expect(() => eventBus.emit('test:error', 'src', {})).not.toThrow();
+      expect(badListener).toHaveBeenCalled();
+
+      eventBus.offEvent(badListener);
+    });
+  });
+
+  describe('circular buffer overflow', () => {
+    it('handles more events than MAX_RECENT by overwriting oldest', () => {
+      // Use the existing singleton — emit enough to fill the ring buffer
+      for (let i = 0; i < 250; i++) {
+        eventBus.emit('overflow:test', 'src', { index: i });
+      }
+      const recent = eventBus.getRecentEvents();
+      // Ring buffer caps at 200
+      expect(recent.length).toBeLessThanOrEqual(200);
+      // Latest events should be present
+      const indices = recent
+        .filter((e: BusEvent) => e.type === 'overflow:test')
+        .map((e: BusEvent) => (e.data as { index: number }).index);
+      expect(indices.length).toBeGreaterThan(0);
+      expect(indices[indices.length - 1]).toBe(249);
+    });
+  });
+
+  describe('offEvent fallback path', () => {
+    it('removes a listener that was not registered via onEvent', () => {
+      // Register directly on the underlying emitter
+      const rawListener = vi.fn();
+      (eventBus as any).on('event', rawListener);
+
+      // offEvent should fall through to the fallback super.off path
+      eventBus.offEvent(rawListener);
+
+      eventBus.emit('fallback:test', 'src', {});
+      expect(rawListener).not.toHaveBeenCalled();
     });
   });
 

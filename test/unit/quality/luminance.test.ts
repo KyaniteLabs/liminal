@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 // @ts-expect-error — plain .mjs helper shared with scripts/quality/render-gallery.mjs
-import { relativeLuminance, DARK_LUMINANCE_THRESHOLD } from '../../../scripts/quality/luminance.mjs';
+import { relativeLuminance, DARK_LUMINANCE_THRESHOLD, WASHOUT_LUMINANCE_THRESHOLD, isWashedOut } from '../../../scripts/quality/luminance.mjs';
 
 describe('render-gallery luminance', () => {
   it('returns 0 for black and 1 for white', () => {
@@ -23,5 +23,27 @@ describe('render-gallery luminance', () => {
 
   it('uses a calibrated threshold of 0.12', () => {
     expect(DARK_LUMINANCE_THRESHOLD).toBe(0.12);
+  });
+
+  describe('washout (too-bright) detection', () => {
+    it('uses a calibrated washout threshold of 0.85', () => {
+      expect(WASHOUT_LUMINANCE_THRESHOLD).toBe(0.85);
+    });
+
+    it('flags washed/near-white renders (the 0.89–0.99 hydra washout band)', () => {
+      expect(isWashedOut(0.99)).toBe(true);
+      expect(isWashedOut(0.89)).toBe(true);
+    });
+
+    it('passes acceptable mid-range renders (the 0.32–0.68 band)', () => {
+      expect(isWashedOut(0.68)).toBe(false);
+      expect(isWashedOut(0.32)).toBe(false);
+      expect(isWashedOut(0.47)).toBe(false);
+    });
+
+    it('does not flag at or below the threshold', () => {
+      expect(isWashedOut(WASHOUT_LUMINANCE_THRESHOLD)).toBe(false);
+      expect(isWashedOut(0.851)).toBe(true);
+    });
   });
 });

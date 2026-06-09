@@ -16,3 +16,15 @@ export function relativeLuminance(r, g, b) {
 // 2026-06-08 vision audit: the works graded "too dark / barely legible"
 // measured 0.02–0.06; the acceptable showpiece measured ~0.47.
 export const DARK_LUMINANCE_THRESHOLD = 0.12;
+
+// Mean luminance (0..1) above this is flagged WASHED OUT (overbright / near-white).
+// Calibrated against the 2026-06-09 hydra washout data: washed renders measured
+// 0.89–0.99; acceptable renders measured 0.32–0.68. See
+// docs/validation/visual-quality-depth-2026-06-09.md.
+export const WASHOUT_LUMINANCE_THRESHOLD = 0.85;
+
+// True if a render's mean luminance is washed out (overbright). The generator
+// cannot predict this at codegen time, so it is judged on the rendered image.
+export function isWashedOut(meanLuminance) {
+  return meanLuminance > WASHOUT_LUMINANCE_THRESHOLD;
+}

@@ -11,11 +11,14 @@ import { generatorRegistry } from '../../dist/generators/GeneratorRegistry.js';
 import { KineticWrapper } from '../../dist/generators/kinetic/KineticWrapper.js';
 import { registerAllGenerators } from '../../dist/generators/registerGenerators.js';
 import { HTMLWrapper } from '../../dist/utils/htmlWrapper.js';
-import { relativeLuminance, DARK_LUMINANCE_THRESHOLD } from '../quality/luminance.mjs';
+import { relativeLuminance, DARK_LUMINANCE_THRESHOLD, WASHOUT_LUMINANCE_THRESHOLD } from '../quality/luminance.mjs';
 
 const DEFAULT_OUT_DIR = '.quality/gauntlet';
 const DEFAULT_TIMEOUT_MS = 120_000;
 const DEFAULT_RENDER_WAIT_MS = 4_000;
+// Washout is intermittent and only detectable on the rendered image, so a washed
+// PNG render is regenerated (fresh patch) up to this many total attempts.
+const WASHOUT_REGEN_ATTEMPTS = 3;
 
 export const DOMAIN_GAUNTLET_DOMAINS = [
   {
@@ -361,6 +364,7 @@ async function renderToPng(domain, code, outDir, runId, waitMs) {
   });
   const page = await browser.newPage();
   const errors = [];
+  let washedOut = false;
   try {
     await page.setViewport({ width: 900, height: 600, deviceScaleFactor: 1 });
     page.on('pageerror', (error) => errors.push(String(error.message ?? error).slice(0, 180)));
@@ -392,6 +396,9 @@ async function renderToPng(domain, code, outDir, runId, waitMs) {
         errors.push('Render is blank (solid color)');
       } else if (meanLuminance < DARK_LUMINANCE_THRESHOLD) {
         errors.push(`Render is too dark (mean luminance: ${meanLuminance.toFixed(3)})`);
+      } else if (meanLuminance > WASHOUT_LUMINANCE_THRESHOLD) {
+        washedOut = true;
+        errors.push(`Render is washed out / too bright (mean luminance: ${meanLuminance.toFixed(3)})`);
       }
     } catch (err) {
       errors.push(`Failed to analyze visual output: ${err.message}`);
@@ -403,11 +410,12 @@ async function renderToPng(domain, code, outDir, runId, waitMs) {
       artifact: pngPath,
       htmlArtifact: htmlPath,
       bytes: stat.size,
+      washedOut,
       errors,
     };
   } catch (error) {
     errors.push(error instanceof Error ? error.message : String(error));
-    return { ok: false, mode: 'png', artifact: pngPath, htmlArtifact: htmlPath, errors };
+    return { ok: false, mode: 'png', artifact: pngPath, htmlArtifact: htmlPath, washedOut, errors };
   } finally {
     await page.close().catch(() => {});
     await browser.close().catch(() => {});
@@ -461,15 +469,30 @@ async function writeCodeArtifact(domain, code, outDir, runId) {
 async function runDomain(domain, options, runId) {
   const startedAt = new Date().toISOString();
   const prompt = promptFor(domain, runId);
-  const generated = await generateForDomain(domain, prompt, options.timeoutMs);
-  if (generated.ok) {
-    generated.artifact = await writeCodeArtifact(domain, generated.code, options.outDir, runId);
-  }
+  const maxAttempts = domain.renderMode === 'png' ? WASHOUT_REGEN_ATTEMPTS : 1;
 
-  const validation = generated.ok
-    ? validateForDomain(domain, generated.code)
-    : { ok: false, cleanedCode: '', cleanedBytes: 0, errors: ['generation failed'], validator: `CodeValidator(${domain.validationDomain})` };
-  const render = await renderOrReceipt(domain, validation, options.outDir, runId, options.renderWaitMs);
+  let generated;
+  let validation;
+  let render;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    generated = await generateForDomain(domain, prompt, options.timeoutMs);
+    if (generated.ok) {
+      generated.artifact = await writeCodeArtifact(domain, generated.code, options.outDir, runId);
+    }
+
+    validation = generated.ok
+      ? validateForDomain(domain, generated.code)
+      : { ok: false, cleanedCode: '', cleanedBytes: 0, errors: ['generation failed'], validator: `CodeValidator(${domain.validationDomain})` };
+    render = await renderOrReceipt(domain, validation, options.outDir, runId, options.renderWaitMs);
+
+    // Only a washed-out render is regenerated (a fresh patch likely renders with
+    // normal exposure). Every other failure — validation, compile, blank, too-dark —
+    // is deterministic and must NOT be masked by retrying.
+    if (render.ok || !render.washedOut) break;
+    if (attempt < maxAttempts) {
+      console.error(`[gauntlet] ${domain.id}: render washed out, regenerating (attempt ${attempt + 1}/${maxAttempts})`);
+    }
+  }
   const finishedAt = new Date().toISOString();
   const receipt = buildDomainReceipt({ domain: domain.id, prompt, generated: redactCode(generated), validation: redactCode(validation), render, startedAt, finishedAt });
   const receiptPath = path.join(options.outDir, `${runId}-${domain.id}.receipt.json`);

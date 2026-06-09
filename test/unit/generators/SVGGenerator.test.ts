@@ -9,6 +9,7 @@ import {
   inferSVGMode,
   type SVGMode,
 } from '../../../src/generators/svg/SVGModeProfiles.js';
+import { Logger } from '../../../src/utils/Logger.js';
 
 class TestableSVGGenerator extends SVGGenerator {
   validateForTest(code: string) {
@@ -214,7 +215,6 @@ describe('SVGGenerator', () => {
     const llm = new LLMClient({ baseUrl: 'http://localhost:1234/v1', model: 'svg-test-model' });
     const complete = vi.spyOn(llm, 'complete')
       .mockResolvedValueOnce({ text: '', success: true })
-      .mockResolvedValueOnce({ text: '', success: true })
       .mockResolvedValueOnce({
         text: '<svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#111"/><path d="M20 50 L32 14 L44 50 Z" fill="#67e8f9"/></svg>',
         success: true,
@@ -225,12 +225,20 @@ describe('SVGGenerator', () => {
       toolCallsMade: 0,
       success: false,
     });
+    const warn = vi.spyOn(Logger, 'warn');
 
     const gen = new SVGGenerator(llm);
     const svg = await gen.generate('liminal doorway logo');
 
     expect(toolLoop).not.toHaveBeenCalled();
-    expect(complete).toHaveBeenCalledTimes(3);
+    expect(warn).not.toHaveBeenCalledWith(
+      'TierBasedGenerator',
+      expect.stringContaining('tool loop returned empty code'),
+    );
+    expect(complete).toHaveBeenCalledTimes(2);
+    expect(complete.mock.calls[1]?.[0].prompt).toContain('previous model call returned no final artifact');
+    expect(complete.mock.calls[1]?.[0].maxTokens).toBe(1600);
+    expect(complete.mock.calls[1]?.[0].signal).toBeInstanceOf(AbortSignal);
     expect(svg).toContain('<path');
     expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
   });
@@ -239,7 +247,6 @@ describe('SVGGenerator', () => {
     process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
     const llm = new LLMClient({ baseUrl: 'http://localhost:1234/v1', model: 'svg-test-model' });
     const complete = vi.spyOn(llm, 'complete')
-      .mockResolvedValueOnce({ text: '', success: true })
       .mockResolvedValueOnce({ text: '', success: true })
       .mockResolvedValueOnce({ text: 'I need to draw the logo first.', success: true })
       .mockResolvedValueOnce({
@@ -256,9 +263,29 @@ describe('SVGGenerator', () => {
     const gen = new SVGGenerator(llm);
     const svg = await gen.generate('liminal doorway logo');
 
-    expect(complete).toHaveBeenCalledTimes(4);
+    expect(complete).toHaveBeenCalledTimes(3);
     expect(svg).toContain('<svg');
     expect(svg).toContain('<path');
+  });
+
+  it('uses a final terse SVG-only retry when earlier bounded attempts fail', async () => {
+    process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
+    const llm = new LLMClient({ baseUrl: 'http://localhost:1234/v1', model: 'svg-test-model' });
+    const complete = vi.spyOn(llm, 'complete')
+      .mockResolvedValueOnce({ text: '', success: true })
+      .mockRejectedValueOnce(new Error('SVG provider attempt timed out after 18000ms'))
+      .mockRejectedValueOnce(new Error('SVG provider attempt timed out after 18000ms'))
+      .mockResolvedValueOnce({
+        text: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#020617"/><circle cx="512" cy="512" r="220" fill="#67e8f9"/><path d="M392 760 L392 300 L632 300 L632 760 Z" fill="#0f172a"/></svg>',
+        success: true,
+      });
+
+    const gen = new SVGGenerator(llm);
+    const svg = await gen.generate('liminal doorway logo');
+
+    expect(complete).toHaveBeenCalledTimes(4);
+    expect(complete.mock.calls[3]?.[0].prompt).toContain('NO THINKING. NO EXPLANATION');
+    expect(svg).toContain('<circle');
   });
 
   it('fails clearly when bounded provider attempts never return valid SVG', async () => {
@@ -281,6 +308,6 @@ describe('SVGGenerator', () => {
     await expect(gen.generate('new bounded SVG proof prompt')).rejects.toThrow(
       'SVGGenerator: provider did not return valid SVG within bounded attempts',
     );
-    expect(complete).toHaveBeenCalledTimes(5);
+    expect(complete).toHaveBeenCalledTimes(4);
   });
 });

@@ -6,18 +6,18 @@
 > and keep state honest. The HUMAN (Simon) dispatches your prompts to the workers and
 > relays results back to you.
 
-## Live update — 2026-06-08 23:12 PDT
+## Live update — 2026-06-09 01:12 PDT
 
 This section supersedes the original handoff snapshot below.
 
-- Current main: `5c7faed7 fix(hydra): stabilize headless renders (#654)`.
+- Current main: `e069b8dc fix(svg): prevent wrapper washout false positive (#659)`.
 - Open PRs: **0**.
-- Merged during the replacement-orchestrator/domain-wave stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization, #642 Kimi-calibrated blank/flat + low-detail render gate, #644 bounded SVG direct retry, #646 ratchet honesty labels, #647/#648 orchestrator docs sync, #649 deterministic organism CI repair, #650 honest GLSL WebGL1 precision stabilization, #651 CI packet board sync, #652 GLSL state sync, #654 Hydra headless-render stabilization.
+- Merged during the replacement-orchestrator/domain-wave stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization, #642 Kimi-calibrated blank/flat + low-detail render gate, #644 bounded SVG direct retry, #646 ratchet honesty labels, #647/#648 orchestrator docs sync, #649 deterministic organism CI repair, #650 honest GLSL WebGL1 precision stabilization, #651 CI packet board sync, #652 GLSL state sync, #654 Hydra headless-render stabilization, #657 SVG washout root-cause doc, #656 ASCII/TextGen depth + gauntlet p5 offline asset fallback, #659 SVG wrapper washout false-positive fix.
 - Closed without merge: #653 duplicate Hydra PR, superseded by the fuller #654.
 - Kimi partial-frame calibration is evidence-only: bbox/coverage auto-fail is **not safe**. Use human-review labeling only unless the same Hydra half-black failure recurs.
 - Kimi all-domain visual audit is evidence-only: fresh all-domain gauntlet timed out after 300s, so the audit uses newest existing `.quality/gauntlet/` artifacts.
 - Kimi Hydra recurrence check: 4 fresh Hydra PNGs were full-frame with no half-black or washout recurrence; 1 fresh run failed validation at 147b/150b. A subsequent Codex live gauntlet reproduced the size failure at 131b/150b, so #654 implemented a Hydra-only bounded retry while preserving the 150b validator floor.
-- Recent merge cleanup removed the completed Hydra worktrees and duplicate branch; the persistent stale worktrees remain listed in §2/§7.
+- Recent merge cleanup removed the completed Hydra worktrees, duplicate branch, and #656 worktree/branch. The #659 worktree/branch still needs local cleanup after this runbook update lands; it contains only `node_modules` locally after merge.
 - Local root state after pull may still show the Kimi report `docs/ci-investigations/2026-06-09-hydra-recurrence-check.md` as untracked; do not delete or rewrite it unless explicitly assigned. The historically dirty `docs/validation/self-improve-ledger.jsonl` may reappear and should not be touched unless explicitly assigned.
 - CI packet lane exists at `docs/ci-investigations/`; packet `2026-06-09-run-27182845442.md` was repaired by #649.
 
@@ -30,11 +30,12 @@ Do **not** overread that as all-12 perfect. #642 does **not** auto-fail partial-
 | Domain | Latest local evidence | Status |
 |---|---|---|
 | p5 | Kimi all-domain audit: latest artifact core-ready, 0/7 recent failures | lock-ready |
-| svg | #644: SVG now makes primary + one SVG-specific bounded direct provider attempt, then fails cleanly; local post-fix gauntlet hit provider 429, not timeout/empty tool-loop | timeout/empty-retry ambiguity fixed; provider availability still external |
-| hydra | #654: validator rejects headless-invisible media buffers and unsafe bare render grids; gallery canvas now has intrinsic viewport sizing; generator retries once for undersized or static dark/blank-risk patches. Live gauntlet after the fix: PASS with 195b full-frame pastel contour PNG. | beta; stabilized, monitor before lock |
+| svg | #657 root-caused the `near-white fraction 0.740` washout as a preview-wrapper false positive; #659 fixed `HTMLWrapper.wrapSVG` so the white card hugs the SVG instead of filling most of the render frame. Local SVG gauntlet after build: PASS / PASS / PASS. | fixed mechanically; verify newest visuals before lock |
+| hydra | #654: validator rejects headless-invisible media buffers and unsafe bare render grids; gallery canvas now has intrinsic viewport sizing; generator retries once for undersized or static dark/blank-risk patches. Kimi post-#654 audit moved Hydra to lock-ready, but keep monitoring for recurrent half-black/blank/undersized output. | stabilized; monitor before permanent lock |
 | glsl | Kimi audit: latest artifact PASS and rich, but 2/6 recent shader-error screens; #650 now injects missing WebGL1 precision without runtime fallback masking | beta; re-run next all-domain batch before lock |
 | three, html, revideo, tone, strudel | Kimi audit: core-ready with stable recent artifacts | lock-ready |
-| kinetic, ascii, textgen | Kimi audit: PASS but visually simple/minimal | pass-but-weak |
+| kinetic | Kimi post-#654 audit: lock-ready, but Codex fresh all-domain run still saw historical dark/invalid-recovery noise on other runs | monitor; avoid churn unless failure recurs |
+| ascii, textgen | #656 strengthened prompts plus validators for non-trivial multiline output; CI ratchet proof passes both. Needs fresh visual/human audit before upgrading from "pass-but-weak." | depth ratcheted; verify visually |
 
 Local verification for #642/#644:
 
@@ -53,15 +54,19 @@ Local verification for #642/#644:
 - #649 CI fully green after rerun: initial `build-and-test` failure was a TypeScript internal `charCodeUnchecked` crash; rerun passed.
 - #650 CI fully green and merged: `pnpm build`, focused GLSL tests, Domain Gauntlet Ratchet, browser/e2e smoke, metadata, probe, docs, and agent-law all passed. Local orchestrator spot-check: `pnpm vitest run test/core/wrappers/GenericWrapper.test.ts --coverage=false` PASS, 53 tests. The merged diff contains no `fsFallback` runtime shader substitution; generated compile failures still surface as honest shader-error evidence.
 - #654 CI fully green and merged: `pnpm build`, `pnpm lint`, focused/affected Hydra tests, changed-file/pre-commit suites, Domain Gauntlet Ratchet, browser/e2e smoke, metadata, probe, docs, and agent-law all passed. Local Hydra gauntlet PASS after the fix; visual artifact was full-frame but still soft/pastel, so Hydra is not lock-ready yet.
+- #656 CI fully green and merged after orchestrator repair commit `7d310737`: Domain Gauntlet Ratchet initially failed on p5 `ERR_CONNECTION_CLOSED`; root cause was the direct gauntlet Puppeteer path not installing the already-existing local p5 CDN fallback. Local verification before merge: focused tests PASS, 90 tests; `pnpm build` PASS; `pnpm domain:ratchet:ci` PASS, 4/4 gated domains; `git diff --check` PASS.
+- #657 CI fully green and merged: docs-only SVG root-cause packet. Leak scan found no sensitive paths/tokens. No generator code changed.
+- #659 CI fully green and merged: `pnpm vitest run test/utils/html-wrapper-security.test.ts test/scripts/visual-output-preview-contract.test.ts --coverage=false` PASS, 15 tests; `pnpm build` PASS; `node scripts/domains/gauntlet.mjs --domain svg` PASS / PASS / PASS; pre-commit changed-file suite PASS, 70 files and 1002 tests; Domain Gauntlet Ratchet, build-and-test, browser/e2e smoke, docs, metadata, probe, and agent-law all passed.
 
 ### Next Wave 2 dispatch
 
-1. **All-domain recheck:** run the next `node scripts/domains/gauntlet.mjs --all` batch on `main @ 5c7faed7+` and visually inspect the newest PNGs. Do not claim all-12 locked from ratchet alone.
+1. **All-domain recheck:** run the next `node scripts/domains/gauntlet.mjs --all` batch on `main @ e069b8dc+` and visually inspect the newest PNGs. Do not claim all-12 locked from ratchet alone.
 2. **Hydra monitoring:** #654 closed the evidenced render-target/canvas/undersized retry issues. Re-open only if half-black, blank/washout, or repeated undersized failures recur on fresh main artifacts.
 3. **GLSL recheck:** #650 is merged. Re-run GLSL in the next all-domain gauntlet batch; if shader-error screens recur, fix validator/retry evidence rather than runtime render substitution.
-4. **Weak-domain depth:** improve Kinetic/SVG/ASCII/TextGen prompts or generator contracts for richer output; they are stable but not showpiece-quality.
-5. **Kinetic invalid recovery recheck:** #632 added the validator, but prior ratchet output mentioned invalid HTML recovery. Re-run with #646 honest labels before assigning code work.
-6. **Return to launch backlog:** once domain stabilization decisions are made, resume #7 Surfaces, #8 secrets hardening/release trust, #9 design debt/coverage, and M5 trend-log audits.
+4. **SVG visual recheck:** #659 fixed the wrapper false-positive mechanically. Confirm the newest SVG PNGs look good before moving SVG out of beta.
+5. **Weak-domain visual audit:** #656 raised ASCII/TextGen floors. Re-run/inspect before moving them out of pass-but-weak. Kinetic is currently monitor-only unless fresh artifacts regress.
+6. **Kinetic invalid recovery recheck:** #632 added the validator, but prior ratchet output mentioned invalid HTML recovery. Re-run with honest labels before assigning code work.
+7. **Return to launch backlog:** once domain stabilization decisions are made, resume #7 Surfaces, #8 secrets hardening/release trust, #9 design debt/coverage, and M5 trend-log audits.
 
 ---
 

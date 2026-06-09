@@ -16,6 +16,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import {
+  TARGET_DOMAINS,
+  MAX_PER_DOMAIN,
+  readPerDomainCounts,
+  pickUnderfilledDomains,
+  buildDomainPrompt,
+} from './self-improve-domains.mjs';
+
 const COUNT = Math.max(1, parseInt(process.argv[2] || '6', 10));
 const ARCHIVE = path.join(os.homedir(), '.sinter', 'archive', 'quality_archive.json');
 const LEDGER = 'docs/validation/self-improve-ledger.jsonl';
@@ -56,14 +64,20 @@ const gardenHealth = () => {
 };
 
 const stamp = new Date().toISOString();
+const beforeDomains = readPerDomainCounts(ARCHIVE);
 const before = { archive: readArchive(), health: gardenHealth() };
+// Route each gen to a least-populated domain so the archive diversifies instead of
+// collapsing every abstract theme onto the 'p5' fallback (the stall: detectPromptDomain
+// returns null for abstract prompts, so all --learn outputs landed in one domain).
+const targetDomains = pickUnderfilledDomains(beforeDomains, TARGET_DOMAINS, MAX_PER_DOMAIN, COUNT);
 console.log(`=== self-improve cycle (${COUNT} gens) @ ${stamp} ===`);
-console.log(`before: archive=${before.archive} health=${before.health}%`);
+console.log(`before: archive=${before.archive} health=${before.health}% targets=[${targetDomains.join(', ')}]`);
 
 const scores = [];
 for (let i = 0; i < COUNT; i++) {
   const idea = IDEAS[(before.archive + i) % IDEAS.length];
-  const prompt = `${idea} — cycle ${stamp} #${i + 1}`; // novel every time
+  const domain = targetDomains[i];
+  const prompt = `${buildDomainPrompt(domain, idea)} — cycle ${stamp} #${i + 1}`; // domain-routed + novel
   const tag = `${OUTROOT}/g_${Date.now()}_${i + 1}`;
   try {
     const out = execSync(
@@ -73,7 +87,7 @@ for (let i = 0; i < COUNT; i++) {
     const m = out.match(/Quality score:\s*([\d.]+)/);
     const s = m ? parseFloat(m[1]) : null;
     if (s != null) scores.push(s);
-    console.log(`  [${i + 1}/${COUNT}] score=${s ?? 'n/a'}  "${idea.slice(0, 40)}…"`);
+    console.log(`  [${i + 1}/${COUNT}] domain=${domain} score=${s ?? 'n/a'}  "${idea.slice(0, 32)}…"`);
   } catch (e) {
     const msg = String(e.stdout || e.message || '').slice(-200);
     console.log(`  [${i + 1}/${COUNT}] FAILED: ${/429|rate.?limit|usage limit/i.test(msg) ? 'RATE-LIMITED — stopping cycle early' : msg.slice(0, 120)}`);
@@ -81,6 +95,7 @@ for (let i = 0; i < COUNT; i++) {
   }
 }
 
+const afterDomains = readPerDomainCounts(ARCHIVE);
 const after = { archive: readArchive(), health: gardenHealth() };
 const mean = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
 // trend = mean(second half) - mean(first half): positive ⇒ later gens scoring higher
@@ -94,6 +109,8 @@ const record = {
   ts: stamp, requested: COUNT, completed: scores.length,
   before, after,
   archiveDelta: after.archive - before.archive,
+  targetedDomains: targetDomains,
+  beforeDomains, afterDomains,
   scores, meanScore: mean, intraCycleTrend: trend,
 };
 fs.appendFileSync(LEDGER, JSON.stringify(record) + '\n');

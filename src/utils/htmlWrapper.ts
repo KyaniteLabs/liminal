@@ -262,11 +262,11 @@ export class HTMLWrapper {
             background: radial-gradient(circle at 20% 16%, rgba(125, 211, 252, 0.22), transparent 30%), #0b1020;
         }
         main {
-            width: min(92vw, 900px);
-            min-height: min(92vh, 900px);
-            display: grid;
+            display: inline-grid;
             place-items: center;
-            padding: clamp(28px, 5vw, 72px);
+            max-width: 92vw;
+            max-height: 92vh;
+            padding: clamp(14px, 2.5vw, 32px);
             border-radius: 28px;
             background: #ffffff;
             box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);

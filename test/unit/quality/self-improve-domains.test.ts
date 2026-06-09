@@ -45,6 +45,33 @@ describe('pickUnderfilledDomains', () => {
   });
 });
 
+describe('pickUnderfilledDomains seed rotation (anti-fixation)', () => {
+  const counts = { a: 0, b: 0, c: 0, d: 5, e: 8 };
+  const doms = ['a', 'b', 'c', 'd', 'e'];
+
+  it('seed=0 preserves deterministic emptiest-first order', () => {
+    expect(pickUnderfilledDomains(counts, doms, 20, 2, 0)).toEqual(['a', 'b']);
+  });
+
+  it('a non-zero seed rotates to target with-room domains that are not the strict emptiest', () => {
+    // Without rotation the loop only ever picks a,b,c (the zeros). Rotation lets it reach
+    // d,e (have room) so archivable domains actually fill instead of stalling at Δ0.
+    expect(pickUnderfilledDomains(counts, doms, 20, 2, 3)).toEqual(['d', 'e']);
+  });
+
+  it('spreads coverage across ALL under-cap domains over successive seeds', () => {
+    const seen = new Set<string>();
+    for (let s = 0; s < doms.length; s++) {
+      for (const d of pickUnderfilledDomains(counts, doms, 20, 2, s)) seen.add(d);
+    }
+    expect([...seen].sort()).toEqual(['a', 'b', 'c', 'd', 'e']);
+  });
+
+  it('wraps the seed modulo the pool size', () => {
+    expect(pickUnderfilledDomains(counts, doms, 20, 2, doms.length)).toEqual(['a', 'b']); // seed 5 ≡ 0
+  });
+});
+
 describe('buildDomainPrompt', () => {
   it('wraps the theme in the domain-routing phrase for each domain', () => {
     expect(buildDomainPrompt('glsl', 'frost')).toBe('a GLSL fragment shader of frost');

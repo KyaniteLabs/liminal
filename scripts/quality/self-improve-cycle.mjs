@@ -69,7 +69,11 @@ const before = { archive: readArchive(), health: gardenHealth() };
 // Route each gen to a least-populated domain so the archive diversifies instead of
 // collapsing every abstract theme onto the 'p5' fallback (the stall: detectPromptDomain
 // returns null for abstract prompts, so all --learn outputs landed in one domain).
-const targetDomains = pickUnderfilledDomains(beforeDomains, TARGET_DOMAINS, MAX_PER_DOMAIN, COUNT);
+// Per-cycle random seed rotates the target set so the loop doesn't fixate on the same
+// perpetually-empty domains every cycle (some of which may not accumulate) — it spreads
+// coverage so archivable domains that still have room actually fill over time.
+const cycleSeed = Math.floor(Math.random() * 1e6);
+const targetDomains = pickUnderfilledDomains(beforeDomains, TARGET_DOMAINS, MAX_PER_DOMAIN, COUNT, cycleSeed);
 console.log(`=== self-improve cycle (${COUNT} gens) @ ${stamp} ===`);
 console.log(`before: archive=${before.archive} health=${before.health}% targets=[${targetDomains.join(', ')}]`);
 

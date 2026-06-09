@@ -1,5 +1,13 @@
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 
+// Washout clamp constants (see capBlendWeights). Hydra's `.add(tex)` defaults to a
+// full additive (amount 1.0), and high `.add`/`.blend` weights pile sources toward
+// white. These cap the additive contribution at the source — the actual washout
+// cause — without darkening renders that already sit in a healthy luminance band.
+const HYDRA_DEFAULT_ADD_WEIGHT = 0.3; // weight given to an otherwise-unweighted .add
+const HYDRA_MAX_ADD_WEIGHT = 0.4; // .add weights above this are clamped down
+const HYDRA_MAX_BLEND_WEIGHT = 0.5; // .blend weights above this are clamped down
+
 export interface HydraGeneratorOptions extends TierBasedGeneratorOptions {}
 
 export class HydraGenerator extends TierBasedGenerator {
@@ -367,8 +375,91 @@ export class HydraGenerator extends TierBasedGenerator {
         clean = clean.replace(/render\s*\(\s*all\s*\)/g, 'render(o0)');
       }
     }
-    
+
+    // Washout cause: additive/blend blow-out. Unweighted .add(x) defaults to a
+    // full additive (amount 1.0) and sums sources toward white; high .add/.blend
+    // weights pile brightness the same way. Deterministically cap them here — give
+    // unweighted .add a low default weight and clamp over-ceiling weights — so the
+    // actual cause is targeted without blindly darkening already-good renders.
+    clean = this.capBlendWeights(clean);
+
     return clean.trim();
+  }
+
+  /**
+   * Deterministically cap the additive/blend weights that cause hydra washout.
+   * Walks every `.add(...)` / `.blend(...)` call with balanced-paren parsing (a
+   * plain regex can't handle nested source args like `.add(osc(4, 0.1), 0.8)`):
+   *   - an unweighted `.add(src)` gets HYDRA_DEFAULT_ADD_WEIGHT appended (Hydra's
+   *     default add amount is a full 1.0, which sums straight to white);
+   *   - an `.add`/`.blend` whose trailing numeric weight exceeds its ceiling is
+   *     clamped down to that ceiling.
+   * Non-numeric weights (e.g. animated `() => ...`) and unweighted `.blend`
+   * (whose default 0.5 is already moderate) are left untouched, and `.mult`/
+   * `.diff`/`.modulate` are ignored since they darken or displace, not blow out.
+   */
+  private capBlendWeights(code: string): string {
+    const callRegex = /\.(add|blend)\s*\(/g;
+    let result = '';
+    let appendFrom = 0;
+    let match: RegExpExecArray | null;
+    while ((match = callRegex.exec(code)) !== null) {
+      const method = match[1] as 'add' | 'blend';
+      const openParen = match.index + match[0].length - 1; // index of '('
+      let depth = 1;
+      let cursor = openParen + 1;
+      while (cursor < code.length && depth > 0) {
+        const char = code[cursor];
+        if (char === '(') depth++;
+        else if (char === ')') depth--;
+        if (depth === 0) break;
+        cursor++;
+      }
+      if (depth !== 0) break; // unbalanced parens — leave the remainder untouched
+      const inner = code.slice(openParen + 1, cursor);
+      const capped = this.capCallArgs(inner, method);
+      result += code.slice(appendFrom, openParen + 1) + capped + ')';
+      appendFrom = cursor + 1;
+      callRegex.lastIndex = cursor + 1; // resume scanning after this whole call
+    }
+    result += code.slice(appendFrom);
+    return result;
+  }
+
+  /** Cap or append the weight on the arguments of a single .add/.blend call. */
+  private capCallArgs(inner: string, method: 'add' | 'blend'): string {
+    const rawArgs = this.splitTopLevelArgs(inner);
+    if (rawArgs.length === 0) return inner;
+    // Recurse so a nested .add/.blend inside a source expression is capped too.
+    const args = rawArgs.map(arg => this.capBlendWeights(arg).trim());
+    const numericLiteral = /^[+-]?(?:\d+\.?\d*|\.\d+)$/;
+    if (args.length === 1) {
+      return method === 'add' ? `${args[0]}, ${HYDRA_DEFAULT_ADD_WEIGHT}` : args[0];
+    }
+    const last = args[args.length - 1];
+    if (!numericLiteral.test(last)) return args.join(', '); // non-numeric weight
+    const ceiling = method === 'add' ? HYDRA_MAX_ADD_WEIGHT : HYDRA_MAX_BLEND_WEIGHT;
+    const cappedLast = Number(last) > ceiling ? String(ceiling) : last;
+    return [...args.slice(0, -1), cappedLast].join(', ');
+  }
+
+  /** Split call arguments on top-level commas, respecting nested ()/[] groups. */
+  private splitTopLevelArgs(inner: string): string[] {
+    if (inner.trim() === '') return [];
+    const args: string[] = [];
+    let depth = 0;
+    let start = 0;
+    for (let i = 0; i < inner.length; i++) {
+      const char = inner[i];
+      if (char === '(' || char === '[') depth++;
+      else if (char === ')' || char === ']') depth--;
+      else if (char === ',' && depth === 0) {
+        args.push(inner.slice(start, i));
+        start = i + 1;
+      }
+    }
+    args.push(inner.slice(start));
+    return args;
   }
 
   private async retryHydraDirect(prompt: string, options?: HydraGeneratorOptions): Promise<string | null> {

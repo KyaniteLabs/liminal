@@ -156,7 +156,7 @@ describe('HydraGenerator', () => {
     const code = [
       's0.init()',
       'shape(6, 0.35, 0.5).color(1, 0.2, 0.8).out(s1)',
-      'osc(3.5, 0.12, 1.2).add(s1, 0.6).out(s2)',
+      'osc(3.5, 0.12, 1.2).add(s1, 0.3).out(s2)',
       'noise(2.8, 0.25).modulate(s4, 0.4).out(s3)',
       's3',
       '  .modulate(s4, 0.4)',
@@ -167,7 +167,7 @@ describe('HydraGenerator', () => {
     const sanitized = (gen as any).sanitizeCode(code);
     expect(sanitized).not.toContain('s0.init');
     expect(sanitized).toContain('.out(o1)');
-    expect(sanitized).toContain('.add(src(o1), 0.6)');
+    expect(sanitized).toContain('.add(src(o1), 0.3)');
     expect(sanitized).toContain('.modulate(src(o3), 0.4)');
     expect(sanitized).toContain('src(o3)');
     expect(gen.validateForTest(sanitized).valid).toBe(true);
@@ -204,7 +204,7 @@ describe('HydraGenerator', () => {
     const sanitized = (gen as any).sanitizeCode(code);
     expect(sanitized).not.toContain('let pattern =');
     expect(sanitized).toContain('osc(4, 0.1, 1.0)');
-    expect(sanitized).toContain('.add(noise(3, 0.2))');
+    expect(sanitized).toContain('.add(noise(3, 0.2), 0.3)');
     expect(sanitized).toContain('.out(o0)');
     expect(gen.validateForTest(sanitized).valid).toBe(true);
   });
@@ -215,7 +215,7 @@ describe('HydraGenerator', () => {
       'osc(4, 0.1, 1).color(1, 0.2, 0.8).out(o1);',
       'solid(0.05, 0.13, 0.19).add(o1).blend(o2).diff(o3).out(o0);',
     ].join('\n'));
-    expect(sanitized).toContain('.add(src(o1))');
+    expect(sanitized).toContain('.add(src(o1), 0.3)');
     expect(sanitized).toContain('.blend(osc(4, 0.1, 1.0))');
     expect(sanitized).toContain('.diff(osc(4, 0.1, 1.0))');
     expect(sanitized).toContain('.out(o1)');
@@ -254,6 +254,55 @@ describe('HydraGenerator', () => {
     expect(sanitized).toContain('osc(6, 0.15, 1.2)');
     expect(sanitized).not.toContain('src(osc');
     expect(gen.validateForTest(sanitized).valid).toBe(true);
+  });
+
+  describe('capBlendWeights (deterministic washout clamp)', () => {
+    const cap = (code: string) => (new TestableHydraGenerator() as any).capBlendWeights(code) as string;
+
+    it('gives an unweighted .add a low default weight (full additive blows out)', () => {
+      expect(cap('osc(4, 0.1, 1).add(noise(3, 0.2)).out(o0)'))
+        .toBe('osc(4, 0.1, 1).add(noise(3, 0.2), 0.3).out(o0)');
+    });
+
+    it('clamps an over-ceiling .add weight down to the ceiling', () => {
+      expect(cap('osc(4, 0.1, 1).add(noise(3, 0.2), 0.8).out(o0)'))
+        .toBe('osc(4, 0.1, 1).add(noise(3, 0.2), 0.4).out(o0)');
+    });
+
+    it('clamps an over-ceiling .blend weight down to the ceiling', () => {
+      expect(cap('osc(4, 0.1, 1).blend(noise(3, 0.2), 0.9).out(o0)'))
+        .toBe('osc(4, 0.1, 1).blend(noise(3, 0.2), 0.5).out(o0)');
+    });
+
+    it('leaves an already-moderate .add weight unchanged (good renders not crushed)', () => {
+      const good = 'osc(4, 0.1, 1).add(noise(3, 0.2), 0.3).out(o0)';
+      expect(cap(good)).toBe(good);
+    });
+
+    it('leaves an unweighted .blend alone (its default 0.5 is already moderate)', () => {
+      const blend = 'osc(4, 0.1, 1).blend(noise(3, 0.2)).out(o0)';
+      expect(cap(blend)).toBe(blend);
+    });
+
+    it('does not touch .mult/.diff/.modulate (they darken or displace, not blow out)', () => {
+      const dark = 'osc(4, 0.1, 1).mult(noise(3, 0.2)).diff(shape(5)).modulate(voronoi(4), 0.8).out(o0)';
+      expect(cap(dark)).toBe(dark);
+    });
+
+    it('preserves nested source arguments when appending the default weight', () => {
+      expect(cap('solid(0.1).add(osc(6, 0.2, 0.8).color(1, 0.2, 0.8)).out(o0)'))
+        .toBe('solid(0.1).add(osc(6, 0.2, 0.8).color(1, 0.2, 0.8), 0.3).out(o0)');
+    });
+
+    it('leaves a non-numeric (animated) weight untouched', () => {
+      const animated = 'osc(4, 0.1, 1).add(noise(3, 0.2), () => Math.sin(time)).out(o0)';
+      expect(cap(animated)).toBe(animated);
+    });
+
+    it('caps an unweighted .add nested inside a blended source expression', () => {
+      expect(cap('solid(0.1).blend(osc(4).add(noise(2)), 0.3).out(o0)'))
+        .toBe('solid(0.1).blend(osc(4).add(noise(2), 0.3), 0.3).out(o0)');
+    });
   });
 
   it('collapses repeated source-call tails from provider corruption', () => {
@@ -377,7 +426,7 @@ describe('HydraGenerator', () => {
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('extract hydra');
-    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()\nrender(o0)');
+    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2), 0.3).color(1, 0.2, 0.8).out()\nrender(o0)');
   });
 
   it('does not treat forbidden camera strings in prose as generated code', async () => {
@@ -391,7 +440,7 @@ describe('HydraGenerator', () => {
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('extract hydra despite prose constraints');
-    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()\nrender(o0)');
+    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2), 0.3).color(1, 0.2, 0.8).out()\nrender(o0)');
   });
 
   it('combines a final inline hydra snippet with trailing out call', async () => {
@@ -401,7 +450,7 @@ describe('HydraGenerator', () => {
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('extract hydra trailing out');
-    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).mult(voronoi(5, 0.3, 0.2)).color(1, 0.2, 0.8)\n.out(o0)\nrender(o0)');
+    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2), 0.3).mult(voronoi(5, 0.3, 0.2)).color(1, 0.2, 0.8)\n.out(o0)\nrender(o0)');
   });
 
   it('repairs invalid s0 source methods from local model output', async () => {

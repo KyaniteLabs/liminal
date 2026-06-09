@@ -1,4 +1,6 @@
 import { GenerationError } from '../../errors/GenerationError.js';
+import { PromptBuilder } from '../../llm/PromptBuilder.js';
+import { detectModelTier, trimContext } from '../../llm/ModelTier.js';
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 import { SVG_MODE_PROFILES, inferSVGMode, type SVGMode } from './SVGModeProfiles.js';
 import { sanitizeSVG } from './SVGSanitizer.js';
@@ -8,7 +10,8 @@ export interface SVGGeneratorOptions extends TierBasedGeneratorOptions {
   mode?: SVGMode;
 }
 
-const SVG_PRIMARY_ATTEMPT_TIMEOUT_MS = 55_000;
+const SVG_PRIMARY_ATTEMPT_TIMEOUT_MS = 24_000;
+const SVG_EMPTY_RETRY_TIMEOUT_MS = 44_000;
 const SVG_RETRY_ATTEMPT_TIMEOUT_MS = 18_000;
 
 export class SVGGenerator extends TierBasedGenerator {
@@ -21,39 +24,60 @@ export class SVGGenerator extends TierBasedGenerator {
   async generate(prompt: string, options?: SVGGeneratorOptions): Promise<string> {
     this.currentMode = options?.mode ?? inferSVGMode(prompt);
     const svgPrompt = this.buildSVGPrompt(prompt, { mode: this.currentMode });
-    let code: string;
-    try {
-      code = await this.withAttemptTimeout(
-        options?.signal,
-        SVG_PRIMARY_ATTEMPT_TIMEOUT_MS,
-        (signal) => super.generate(svgPrompt, {
-          ...options,
-          signal,
-          maxTokens: options?.maxTokens ?? 1200,
-          useGeneratorTools: false,
-        }),
-      );
-    } catch (error) {
-      const direct = await this.retrySVGDirect(prompt, options);
-      if (direct.svg) return direct.svg;
-      throw new GenerationError(
-        `SVGGenerator: provider did not return valid SVG within bounded attempts: ${direct.error ?? this.describeError(error)}`,
-        'svg',
-        {
-          upstreamError: this.describeError(error),
-          directRetryError: direct.error,
-        },
-      );
+    const builtPrompt = await this.buildTieredSVGPrompt(svgPrompt, options);
+    const direct = await this.retrySVGDirect(prompt, builtPrompt, options);
+    if (direct.svg) return direct.svg;
+    throw new GenerationError(
+      `SVGGenerator: provider did not return valid SVG within bounded attempts: ${direct.error ?? 'provider returned no valid SVG candidate'}`,
+      'svg',
+      { directRetryError: direct.error },
+    );
+  }
+
+  private async completeSVGAttempt(attempt: {
+    systemPrompt: string;
+    prompt: string;
+    maxTokens: number;
+    timeoutMs: number;
+    temperature?: number;
+  }, options?: SVGGeneratorOptions): Promise<Awaited<ReturnType<typeof this.llm.complete>>> {
+    return this.withAttemptTimeout(
+      options?.signal,
+      attempt.timeoutMs,
+      (signal) => this.llm.complete({
+        systemPrompt: attempt.systemPrompt,
+        prompt: attempt.prompt,
+        maxTokens: attempt.maxTokens,
+        temperature: attempt.temperature ?? this.llm.getConfig().temperature,
+        signal,
+      }),
+    );
+  }
+
+  private validateCandidate(text: string, mode: SVGMode): { svg: string | null; error?: string } {
+    const sanitized = sanitizeSVG(text);
+    const validation = validateSVG(sanitized, { mode });
+    if (validation.valid) {
+      return { svg: validation.sanitized ?? sanitized };
     }
-    const sanitized = sanitizeSVG(code);
-    const validation = validateSVG(sanitized, { mode: this.currentMode });
-    if (!validation.valid) {
-      throw new GenerationError(`SVGGenerator: ${validation.error}`, 'svg', {
-        validationError: validation.error,
-        generatedCode: sanitized,
-      });
+    return { svg: null, error: validation.error };
+  }
+
+  private async buildTieredSVGPrompt(svgPrompt: string, options?: SVGGeneratorOptions): Promise<{ systemPrompt: string; userPrompt: string }> {
+    await this.llm.resolveEffectiveModel().catch(() => undefined);
+    this.tier = detectModelTier(this.llm.getConfig());
+    this.promptBuilder = new PromptBuilder(this.llm.getConfig());
+
+    const context = await PromptBuilder.loadContext(this.domain, svgPrompt);
+    if (context.domainDocs) {
+      const budget = options?.contextBudget ?? 8_000;
+      context.domainDocs = trimContext(context.domainDocs, Math.floor(budget * 0.3));
     }
-    return validation.sanitized ?? sanitized;
+
+    const built = this.promptBuilder.build(context);
+    return this.tier === 'tiny'
+      ? { systemPrompt: '', userPrompt: built.combined || built.user }
+      : { systemPrompt: built.system, userPrompt: built.user };
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
@@ -83,11 +107,19 @@ export class SVGGenerator extends TierBasedGenerator {
     ].filter(Boolean).join('\n');
   }
 
-  private async retrySVGDirect(prompt: string, options?: SVGGeneratorOptions): Promise<{ svg: string | null; error?: string }> {
+  private async retrySVGDirect(prompt: string, primaryPrompt: { systemPrompt: string; userPrompt: string }, options?: SVGGeneratorOptions): Promise<{ svg: string | null; error?: string }> {
     const mode = this.currentMode;
     const profile = SVG_MODE_PROFILES[mode];
     let lastError: string | undefined;
-    const prompts: Array<{ prompt: string; maxTokens: number; temperature?: number }> = [
+    const svgSystemPrompt = 'You create safe raw SVG. Output exactly one complete <svg>...</svg> document and nothing else.';
+    const prompts: Array<{ systemPrompt: string; prompt: string; maxTokens: number; timeoutMs: number; temperature?: number }> = [
+      { systemPrompt: primaryPrompt.systemPrompt, prompt: primaryPrompt.userPrompt, maxTokens: options?.maxTokens ?? 1200, timeoutMs: SVG_PRIMARY_ATTEMPT_TIMEOUT_MS },
+      {
+        systemPrompt: this.buildEmptyCodeRetrySystemPrompt(primaryPrompt.systemPrompt),
+        prompt: this.buildEmptyCodeRetryPrompt(prompt, primaryPrompt.userPrompt),
+        maxTokens: options?.maxTokens ?? 1600,
+        timeoutMs: SVG_EMPTY_RETRY_TIMEOUT_MS,
+      },
       { prompt: [
         `Mode: ${mode} (${profile.label})`,
         'Include xmlns and viewBox.',
@@ -97,37 +129,19 @@ export class SVGGenerator extends TierBasedGenerator {
         profile.allowFilters ? 'Self-contained filters are allowed.' : 'Do not use filters.',
         profile.allowText ? 'Text is allowed when useful.' : 'Do not use text.',
         `User request: ${prompt}`,
-      ].join('\n'), maxTokens: options?.maxTokens ?? 2200 },
-      { prompt: [
-        'Return raw SVG only. The first character must be "<" and the final characters must be "</svg>".',
-        'Use this structure, adapted to the user request: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">...</svg>',
-        'Draw a clear liminal doorway logo with safe vector primitives such as rect, path, circle, polygon, defs, and linearGradient.',
-        this.transparentBackgroundGuidance(prompt),
-        'No commentary, markdown, HTML, scripts, event handlers, foreignObject, external links, or remote assets.',
-        `User request: ${prompt}`,
-      ].join('\n'), maxTokens: options?.maxTokens ?? 2200, temperature: 0.2 },
+      ].join('\n'), systemPrompt: svgSystemPrompt, maxTokens: options?.maxTokens ?? 2200, timeoutMs: SVG_RETRY_ATTEMPT_TIMEOUT_MS },
       { prompt: [
         'NO THINKING. NO EXPLANATION. OUTPUT ONE SINGLE-LINE SVG ONLY.',
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"> with self-contained rect/path/circle/linearGradient elements.',
         'Theme: liminal doorway logo with gradients.',
         'End with </svg>.',
-      ].join('\n'), maxTokens: options?.maxTokens ?? 900, temperature: 0 },
+      ].join('\n'), systemPrompt: svgSystemPrompt, maxTokens: options?.maxTokens ?? 900, timeoutMs: SVG_RETRY_ATTEMPT_TIMEOUT_MS, temperature: 0 },
     ];
 
     for (const attempt of prompts) {
       let result: Awaited<ReturnType<typeof this.llm.complete>>;
       try {
-        result = await this.withAttemptTimeout(
-          options?.signal,
-          SVG_RETRY_ATTEMPT_TIMEOUT_MS,
-          (signal) => this.llm.complete({
-            systemPrompt: 'You create safe raw SVG. Output exactly one complete <svg>...</svg> document and nothing else.',
-            prompt: attempt.prompt,
-            maxTokens: attempt.maxTokens,
-            temperature: attempt.temperature ?? this.llm.getConfig().temperature,
-            signal,
-          }),
-        );
+        result = await this.completeSVGAttempt(attempt, options);
       } catch (error) {
         lastError = this.describeError(error);
         continue;
@@ -136,10 +150,9 @@ export class SVGGenerator extends TierBasedGenerator {
         lastError = result.error ?? 'provider returned empty SVG text';
         continue;
       }
-      const sanitized = sanitizeSVG(result.text);
-      const validation = validateSVG(sanitized, { mode });
-      if (validation.valid) return { svg: validation.sanitized ?? sanitized };
-      lastError = validation.error;
+      const candidate = this.validateCandidate(result.text, mode);
+      if (candidate.svg) return candidate;
+      lastError = candidate.error;
     }
 
     return { svg: null, error: lastError ?? 'provider returned no valid SVG candidate' };

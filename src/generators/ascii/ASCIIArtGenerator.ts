@@ -30,6 +30,8 @@ export class ASCIIArtGenerator extends TierBasedGenerator {
       'The renderer will crop or pad the final size; do not explain or count rows.',
       'Use only plain ASCII characters: spaces, letters, digits, and symbols such as .,:;-=+*#%/\\|_~()[]{}<>.',
       'Do not use Unicode symbols, markdown fences, explanations, captions, or prose.',
+      'Show a foreground subject AND supporting context (background, ground, framing elements) so the scene has depth and reads as composed, not as a single isolated figure.',
+      'Vary character density across rows (e.g., dense subject vs. sparse sky) to suggest form and dimension.',
       '',
       `User request: ${prompt}`,
     ].join('\n');

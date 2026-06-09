@@ -102,6 +102,8 @@ export class TextGenerativeGenerator extends TierBasedGenerator {
       'Return text art only: concrete poetry, word arrangement, typography, or ASCII-poem text.',
       'Do not return HTML, SVG, CSS, JavaScript, markdown fences, placeholder comments, or DOM structure.',
       'Use plain text lines that can be shown inside a <pre> element.',
+      'Compose a visible silhouette: vary line lengths deliberately (e.g., tapering, cascading, pyramidal, or radial) so the arrangement reads as a shape, not a flat list.',
+      'Use whitespace as a compositional element — leading spaces, short lines, and varying indentation are part of the artwork.',
     ].join('\n');
     const raw = await super.generate(textPrompt, {
       ...options,

@@ -94,6 +94,16 @@ World 🌍
       expect(result.errors.some(e => e.includes('extreme aspect ratio'))).toBe(true);
     });
 
+    it('should reject very minimal art (fewer than 3 non-empty lines)', () => {
+      const code = `
+   ___
+  /   \\
+      `;
+      const result = ASCIIValidator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.includes('too minimal') && e.includes('non-empty lines'))).toBe(true);
+    });
+
     it('should validate ASCII art face', () => {
       const code = `
   _____

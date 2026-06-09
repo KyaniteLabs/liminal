@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   DOMAIN_GAUNTLET_DOMAINS,
   buildDomainReceipt,
   buildMarkdownTable,
+  handleLocalBrowserAssetFallbackRequest,
   selectDomains,
 } from '../gauntlet.mjs';
 
@@ -108,5 +109,35 @@ describe('domain gauntlet pass/fail logic', () => {
   it('selects all finish-line domains or a single requested domain', () => {
     expect(selectDomains({ all: true }).map((domain) => domain.id)).toEqual(DOMAIN_GAUNTLET_DOMAINS.map((domain) => domain.id));
     expect(selectDomains({ domain: 'GLSL' }).map((domain) => domain.id)).toEqual(['glsl']);
+  });
+
+  it('fulfills p5 CDN requests from local assets in the direct gauntlet renderer', async () => {
+    const request = {
+      url: () => 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js',
+      respond: vi.fn(async () => {}),
+      continue: vi.fn(async () => {}),
+    };
+
+    await handleLocalBrowserAssetFallbackRequest(request);
+
+    expect(request.respond).toHaveBeenCalledWith(expect.objectContaining({
+      status: 200,
+      contentType: 'application/javascript; charset=utf-8',
+      body: expect.stringContaining('p5.js'),
+    }));
+    expect(request.continue).not.toHaveBeenCalled();
+  });
+
+  it('continues non-p5 asset requests in the direct gauntlet renderer', async () => {
+    const request = {
+      url: () => 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.160.0/three.min.js',
+      respond: vi.fn(async () => {}),
+      continue: vi.fn(async () => {}),
+    };
+
+    await handleLocalBrowserAssetFallbackRequest(request);
+
+    expect(request.respond).not.toHaveBeenCalled();
+    expect(request.continue).toHaveBeenCalledOnce();
   });
 });

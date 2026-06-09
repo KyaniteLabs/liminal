@@ -149,10 +149,12 @@ export class ASCIIValidator {
       errors.push('ASCII art must contain non-whitespace characters');
     }
 
-    // Warn if art is very small
+    // Reject very minimal art — the gauntlet receipt check requires >= 3
+    // non-empty lines and >= 16 art characters, so the validator should
+    // also catch this so the generator retries before reaching the gauntlet.
     const nonEmptyLines = lines.filter(l => l.trim().length > 0);
-    if (nonEmptyLines.length < 2) {
-      // Very minimal art - could be valid but warn
+    if (nonEmptyLines.length < 3) {
+      errors.push(`ASCII art is too minimal (${nonEmptyLines.length} non-empty lines; need at least 3)`);
     }
 
     // Check aspect ratio isn't extreme

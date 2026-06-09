@@ -160,7 +160,12 @@ describe('StrudelGenerator', () => {
   describe('validateOutput', () => {
     it('validates output with s() pattern', () => {
       const gen = new StrudelGenerator();
-      const result = gen.validateOutput('s("bd sd")');
+      const result = gen.validateOutput(`bpm(124)
+stack(
+  s("bd ~ [~ hh] [bd hh] ~").gain(0.9),
+  note("<c3 e3 g3 a3>").s("triangle").cutoff(900).delay(0.18),
+  s("cp ~ rim ~").room(0.25)
+).slow(2).out()`);
       expect(result.valid).toBe(true);
     });
 
@@ -168,18 +173,28 @@ describe('StrudelGenerator', () => {
       const gen = new StrudelGenerator();
       const result = gen.validateOutput('console.log("hello")');
       expect(result.valid).toBe(false);
-      expect(result.error).toContain('sound source');
+      expect(result.error).toContain('pattern functions');
     });
 
     it('validates with note() function', () => {
       const gen = new StrudelGenerator();
-      const result = gen.validateOutput('note("c3 e3 g3")');
+      const result = gen.validateOutput(`bpm(118)
+stack(
+  note("<c3 e3 g3 bb3>").s("sawtooth").cutoff(700).delay(0.12),
+  s("bd ~ sd ~").gain(0.8),
+  s("hh*8").room(0.2)
+).out()`);
       expect(result.valid).toBe(true);
     });
 
     it('validates with sound() function', () => {
       const gen = new StrudelGenerator();
-      const result = gen.validateOutput('sound("kick")');
+      const result = gen.validateOutput(`bpm(126)
+stack(
+  sound("bd ~ cp ~").gain(0.85),
+  note("<a2 c3 e3 g3>").s("triangle").cutoff(850).delay(0.16),
+  s("hh*8").room(0.3)
+).slow(2).out()`);
       expect(result.valid).toBe(true);
     });
   });

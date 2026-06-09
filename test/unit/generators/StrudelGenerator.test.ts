@@ -1,14 +1,37 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+const SUBSTANTIAL_STRUDEL = [
+  'bpm(124)',
+  'stack(',
+  '  s("bd ~ [~ hh] [bd hh] ~").gain(0.9),',
+  '  note("<c3 e3 g3 a3>").s("triangle").cutoff(900).delay(0.18),',
+  '  s("cp ~ rim ~").room(0.25)',
+  ').slow(2).out()',
+].join('\n');
+
 const { mockToolLoop, mockComplete, mockGetConfig } = vi.hoisted(() => ({
   mockToolLoop: vi.fn().mockResolvedValue({
-    content: 's("bd sd hh").fast(2)',
+    content: [
+      'bpm(124)',
+      'stack(',
+      '  s("bd ~ [~ hh] [bd hh] ~").gain(0.9),',
+      '  note("<c3 e3 g3 a3>").s("triangle").cutoff(900).delay(0.18),',
+      '  s("cp ~ rim ~").room(0.25)',
+      ').slow(2).out()',
+    ].join('\n'),
     iterations: 1,
     toolCallsMade: 0,
     success: true,
   }),
   mockComplete: vi.fn().mockResolvedValue({
-    text: 's("bd sd hh").fast(2)',
+    text: [
+      'bpm(124)',
+      'stack(',
+      '  s("bd ~ [~ hh] [bd hh] ~").gain(0.9),',
+      '  note("<c3 e3 g3 a3>").s("triangle").cutoff(900).delay(0.18),',
+      '  s("cp ~ rim ~").room(0.25)',
+      ').slow(2).out()',
+    ].join('\n'),
     success: true,
   }),
   mockGetConfig: vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' }),
@@ -58,14 +81,14 @@ describe('StrudelGenerator', () => {
   beforeEach(() => {
     mockToolLoop.mockReset();
     mockToolLoop.mockResolvedValue({
-      content: 's("bd sd hh").fast(2)',
+      content: SUBSTANTIAL_STRUDEL,
       iterations: 1,
       toolCallsMade: 0,
       success: true,
     });
     mockComplete.mockReset();
     mockComplete.mockResolvedValue({
-      text: 's("bd sd hh").fast(2)',
+      text: SUBSTANTIAL_STRUDEL,
       success: true,
     });
   });
@@ -94,7 +117,7 @@ describe('StrudelGenerator', () => {
   it('sanitizeCode strips markdown fences', async () => {
     mockComplete.mockResolvedValueOnce({ text: '', success: true });
     mockToolLoop.mockResolvedValueOnce({
-      content: '```javascript\ns("bd hh").fast(4)\n```',
+      content: `\`\`\`javascript\n${SUBSTANTIAL_STRUDEL}\n\`\`\``,
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new StrudelGenerator();
@@ -104,16 +127,18 @@ describe('StrudelGenerator', () => {
   });
 
   it('sanitizeCode strips HTML script loader tags while preserving Strudel source', async () => {
-    mockComplete.mockResolvedValueOnce({ text: '', success: true });
+    mockComplete
+      .mockResolvedValueOnce({ text: '', success: true })
+      .mockResolvedValueOnce({ text: '', success: true });
     mockToolLoop.mockResolvedValueOnce({
-      content: '<script src="https://cdn.jsdelivr.net/npm/@strudel/web@latest"></script>\nstack(s("bd"), note("c3")).out()',
+      content: `<script src="https://cdn.jsdelivr.net/npm/@strudel/web@latest"></script>\n${SUBSTANTIAL_STRUDEL}`,
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new StrudelGenerator();
     const result = await gen.generate('drum pattern');
 
     expect(result).not.toContain('<script');
-    expect(result).toContain('stack(s("bd"), note("c3")).out()');
+    expect(result).toContain('cutoff(900)');
   });
 
   it('sanitizeCode returns empty string for empty input', async () => {
@@ -135,20 +160,22 @@ describe('StrudelGenerator', () => {
   });
 
   it('uses compact direct generation before tool-assisted generation', async () => {
-    mockComplete.mockResolvedValueOnce({ text: '$: s("bd sd").fast(2)\\n$: note("c3 eb3").slow(2)', success: true });
+    mockComplete.mockResolvedValueOnce({ text: SUBSTANTIAL_STRUDEL, success: true });
 
     const gen = new StrudelGenerator();
     const result = await gen.generate('drums and bass');
 
-    expect(result).toContain('s("bd sd")');
+    expect(result).toContain('s("bd ~ [~ hh] [bd hh] ~")');
     expect(mockComplete).toHaveBeenCalledTimes(1);
     expect(mockToolLoop).not.toHaveBeenCalled();
   });
 
   it('falls back to tool-assisted generation when direct Strudel generation is empty', async () => {
-    mockComplete.mockResolvedValueOnce({ text: '', success: true });
+    mockComplete
+      .mockResolvedValueOnce({ text: '', success: true })
+      .mockResolvedValueOnce({ text: '', success: true });
     mockToolLoop.mockResolvedValueOnce({
-      content: 'stack(s("bd"), note("c3")).out()',
+      content: SUBSTANTIAL_STRUDEL,
       iterations: 1,
       toolCallsMade: 0,
       success: true,
@@ -157,19 +184,46 @@ describe('StrudelGenerator', () => {
     const gen = new StrudelGenerator();
     const result = await gen.generate('drums and bass');
 
-    expect(result).toContain('stack(s("bd"), note("c3")).out()');
+    expect(result).toContain('cutoff(900)');
     expect(mockToolLoop).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries undersized direct Strudel patterns instead of returning them', async () => {
+    mockComplete
+      .mockResolvedValueOnce({
+        text: 'bpm(120)\ns("bd ~ [~ hh] [bd hh] ~")\n.stack(note("c3 e3 g3").s("triangle"))\n.out()',
+        success: true,
+      })
+      .mockResolvedValueOnce({
+        text: [
+        'bpm(124)',
+        'stack(',
+        '  s("bd ~ [~ hh] [bd hh] ~").gain(0.9),',
+        '  note("<c3 e3 g3 a3>").s("triangle").cutoff(900).delay(0.18),',
+        '  s("cp ~ rim ~").room(0.25)',
+        ').slow(2).out()',
+        ].join('\n'),
+        success: true,
+      });
+
+    const gen = new StrudelGenerator();
+    const result = await gen.generate('layered drums and triangle melody');
+
+    expect(result.length).toBeGreaterThanOrEqual(100);
+    expect(result).toContain('cutoff(900)');
+    expect(mockComplete).toHaveBeenCalledTimes(2);
+    expect(mockToolLoop).not.toHaveBeenCalled();
   });
 
   it('recovers Strudel code from provider thinking during direct retry', async () => {
     mockComplete.mockResolvedValueOnce({
-      text: '<think>Plan:\\n$: s("bd sd").fast(2)\\n$: note("c3 eb3").slow(2)</think>',
+      text: `<think>Plan:\n${SUBSTANTIAL_STRUDEL}</think>`,
       success: true,
     });
 
     const gen = new StrudelGenerator();
     const result = await gen.generate('drums and bass');
 
-    expect(result).toContain('$: s("bd sd")');
+    expect(result).toContain('cutoff(900)');
   });
 });

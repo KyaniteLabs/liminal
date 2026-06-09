@@ -59,7 +59,6 @@ describe('ExecuteSkillTool', () => {
     const result = await localTool.execute({ name: 'test-skill' });
 
     expect(result.success).toBe(true);
-    expect(result.data?.skill).toBeDefined();
     expect(result.data?.skill.name).toBe('test-skill');
     expect(result.data?.skill.content).toContain('Test Skill');
 

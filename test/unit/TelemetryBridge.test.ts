@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // vi.mock factories are hoisted; must NOT reference outer-scope variables.
+const { mockOnEvent } = vi.hoisted(() => ({
+  mockOnEvent: vi.fn(),
+}));
+
 vi.mock('../../src/core/TelemetryAggregator.js', () => ({
   globalTelemetry: { record: vi.fn() },
 }));
 
-const mockOnEvent = vi.fn();
 vi.mock('../../src/core/EventBus.js', () => ({
   eventBus: { onEvent: (...args: any[]) => mockOnEvent(...args) },
   EventTypes: { LLM_RESPONSE: 'llm_response' },

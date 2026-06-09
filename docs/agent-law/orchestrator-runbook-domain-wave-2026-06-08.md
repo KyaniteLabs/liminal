@@ -6,17 +6,18 @@
 > and keep state honest. The HUMAN (Simon) dispatches your prompts to the workers and
 > relays results back to you.
 
-## Live update — 2026-06-08 22:05 PDT
+## Live update — 2026-06-08 22:37 PDT
 
 This section supersedes the original handoff snapshot below.
 
-- Current main: `cbec734b fix(gui): make deterministic organism fixtures valid (#649)`.
-- Open PRs: **1**: #650 GLSL stabilization is held pending revision; do not merge the fallback-shader version.
-- Merged during the replacement-orchestrator/domain-wave stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization, #642 Kimi-calibrated blank/flat + low-detail render gate, #644 bounded SVG direct retry, #646 ratchet honesty labels, #647 final master-plan/runbook sync, #649 deterministic organism CI repair.
+- Current main: `872235fb fix(glsl): prevent WebGL1 missing-precision compile failures; keep runtime failures honest (#650)`.
+- Open PRs: **0**.
+- Merged during the replacement-orchestrator/domain-wave stint: #627 runbook, #628 provider routing, #630 runtime endpoint overrides, #629 M3 visual quality, #631 TextGen + ratchet, #632 Kinetic validator, #633 V visual-render stabilization, #642 Kimi-calibrated blank/flat + low-detail render gate, #644 bounded SVG direct retry, #646 ratchet honesty labels, #647 final master-plan/runbook sync, #649 deterministic organism CI repair, #650 honest GLSL WebGL1 precision stabilization.
 - Kimi partial-frame calibration is evidence-only: bbox/coverage auto-fail is **not safe**. Use human-review labeling only unless the same Hydra half-black failure recurs.
 - Kimi all-domain visual audit is evidence-only: fresh all-domain gauntlet timed out after 300s, so the audit uses newest existing `.quality/gauntlet/` artifacts.
+- Kimi Hydra recurrence check is evidence-only: 4 fresh Hydra PNGs were full-frame with no half-black or washout recurrence; 1 fresh run failed validation at 147b/150b, which is monitor-only unless it recurs.
 - Recent merge cleanup covered the completed domain-wave/doc worktrees; the persistent stale worktrees remain listed in §2/§7.
-- Local root state after pull: only pre-existing dirty `docs/validation/self-improve-ledger.jsonl`.
+- Local root state after pull: untracked Kimi report `docs/ci-investigations/2026-06-09-hydra-recurrence-check.md`; historically dirty `docs/validation/self-improve-ledger.jsonl` may reappear and should not be touched unless explicitly assigned.
 - CI packet lane exists at `docs/ci-investigations/`; packet `2026-06-09-run-27182845442.md` was repaired by #649.
 
 ### Current gauntlet/ratchet reality
@@ -30,7 +31,7 @@ Do **not** overread that as all-12 perfect. #642 does **not** auto-fail partial-
 | p5 | Kimi all-domain audit: latest artifact core-ready, 0/7 recent failures | lock-ready |
 | svg | #644: SVG now makes primary + one SVG-specific bounded direct provider attempt, then fails cleanly; local post-fix gauntlet hit provider 429, not timeout/empty tool-loop | timeout/empty-retry ambiguity fixed; provider availability still external |
 | hydra | Kimi audit: latest artifact PASS and rich, but 3/7 recent failures: 2 half-black partial frames + 1 blank washout | beta; stabilize before lock |
-| glsl | Kimi audit: latest artifact PASS and rich, but 2/6 recent shader-error screens | beta; stabilize before lock |
+| glsl | Kimi audit: latest artifact PASS and rich, but 2/6 recent shader-error screens; #650 now injects missing WebGL1 precision without runtime fallback masking | beta; re-run next all-domain batch before lock |
 | three, html, revideo, tone, strudel | Kimi audit: core-ready with stable recent artifacts | lock-ready |
 | kinetic, ascii, textgen | Kimi audit: PASS but visually simple/minimal | pass-but-weak |
 
@@ -49,11 +50,12 @@ Local verification for #642/#644:
 - #646 CI fully green: Domain Gauntlet Ratchet, agent-law, browser/e2e smoke, build-and-test, metadata, probe, validate-docs.
 - #647 CI fully green: Domain Gauntlet Ratchet, agent-law, browser/e2e smoke, build-and-test, metadata, probe, validate-docs.
 - #649 CI fully green after rerun: initial `build-and-test` failure was a TypeScript internal `charCodeUnchecked` crash; rerun passed.
+- #650 CI fully green and merged: `pnpm build`, focused GLSL tests, Domain Gauntlet Ratchet, browser/e2e smoke, metadata, probe, docs, and agent-law all passed. Local orchestrator spot-check: `pnpm vitest run test/core/wrappers/GenericWrapper.test.ts --coverage=false` PASS, 53 tests. The merged diff contains no `fsFallback` runtime shader substitution; generated compile failures still surface as honest shader-error evidence.
 
 ### Next Wave 2 dispatch
 
-1. **Hydra stabilization:** investigate the historical 43% failure rate. Focus on canvas sizing/init race and right-half black detection. Keep partial-frame as human-review unless the same Hydra half-black failure recurs.
-2. **GLSL stabilization:** revise #650. Keep WebGL1 precision normalization if it remains valid, but remove fallback-render masking and keep generated shader compile failures honest as retry/fail evidence.
+1. **Hydra monitoring:** do not implement a half-black auto-fail yet. Fresh recurrence check found 0/4 partial-frame or washout PNGs on current main; re-open only if half-black recurs in 2+ consecutive runs or the 147b/150b code-size near-miss recurs in at least 2 of the next 10 Hydra runs.
+2. **GLSL recheck:** #650 is merged. Re-run GLSL in the next all-domain gauntlet batch; if shader-error screens recur, fix validator/retry evidence rather than runtime render substitution.
 3. **Weak-domain depth:** improve Kinetic/SVG/ASCII/TextGen prompts or generator contracts for richer output; they are stable but not showpiece-quality.
 4. **Kinetic invalid recovery recheck:** #632 added the validator, but prior ratchet output mentioned invalid HTML recovery. Re-run with #646 honest labels before assigning code work.
 5. **Return to launch backlog:** once domain stabilization decisions are made, resume #7 Surfaces, #8 secrets hardening/release trust, #9 design debt/coverage, and M5 trend-log audits.

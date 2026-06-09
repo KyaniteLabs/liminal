@@ -41,7 +41,7 @@ import {
 } from '../tools/index.js';
 import type { ToolResult } from '../tools/types.js';
 
-const AVAILABLE_TOOL_NAMES = [
+export const AVAILABLE_TOOL_NAMES = [
   'readFile',
   'applyEdit',
   'writeFile',

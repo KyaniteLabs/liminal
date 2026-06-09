@@ -17,7 +17,7 @@ const validVisualCode = `osc(10, 0.1, 0.8)
 shape(4, 0.5)
   .repeat(3, 3)
   .out(o1)
-render()`;
+render(o0)`;
 
 const mockGenerate = vi.hoisted(() => vi.fn());
 

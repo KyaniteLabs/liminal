@@ -25,6 +25,7 @@ export class ThreeGenerator extends TierBasedGenerator {
       'Animate the camera manually with sin/cos in the render loop instead of using controls.',
       'Do not use ellipses, TODO comments, placeholder comments, or phrases like setup renderer, crystals, particles, or animation loop without implementing them.',
       'Include visible geometry, lights, camera, renderer setup, and a requestAnimationFrame render loop.',
+      'CRITICAL: If you define a named render-loop function (e.g. function animate()), you MUST call it at the end of the script to start the animation. For example: append "animate();" as the last line. Never leave the animation function defined but uncalled — an uncalled function produces a blank scene.',
       'Do NOT add debug helpers or gizmos: no THREE.AxesHelper, THREE.GridHelper, THREE.PolarGridHelper, or any THREE.*Helper. The scene must read as finished art, not a debug viewport with an axis cross.',
       'Light and expose the scene very strongly: add a THREE.AmbientLight (intensity ~Math.PI) AND at least one THREE.DirectionalLight or THREE.PointLight with high intensity (roughly 3.0-10.0), positioned to reveal the geometry. (Three.js r160 uses physically correct lighting, so legacy 1.0 intensity is too dim). The render must be clearly visible — never dark, murky, or near-black.',
       'Use a bright or mid-tone scene.background or renderer.setClearColor; avoid black, navy, or very dark backgrounds because screenshot proof uses whole-image luminance.',
@@ -168,15 +169,25 @@ ${code}
     const htmlScript = code.match(/<script[^>]*type=["']module["'][^>]*>([\s\S]*?)<\/script>/i)
       || code.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
     if (htmlScript?.[1] && /\bTHREE\b/.test(htmlScript[1])) {
-      return htmlScript[1]
+      code = htmlScript[1]
+        .replace(/^\s*import\s+.*?\bTHREE\b.*?from\s+['"][^'"]+['"];?\s*$/gm, '')
+        .trim();
+    } else {
+      code = code
+        .replace(/^```(?:html|javascript|js)?\s*\n?/i, '')
+        .replace(/\n?```\s*$/i, '')
         .replace(/^\s*import\s+.*?\bTHREE\b.*?from\s+['"][^'"]+['"];?\s*$/gm, '')
         .trim();
     }
-    return code
-      .replace(/^```(?:html|javascript|js)?\s*\n?/i, '')
-      .replace(/\n?```\s*$/i, '')
-      .replace(/^\s*import\s+.*?\bTHREE\b.*?from\s+['"][^'"]+['"];?\s*$/gm, '')
-      .trim();
+
+    // Safety net: if a named render-loop function is defined but never called,
+    // auto-inject the call so the scene animates instead of rendering blank.
+    const fnMatch = code.match(/\bfunction\s+(animate|render|loop)\s*\(/);
+    if (fnMatch && !new RegExp(`\\b${fnMatch[1]}\\s*\\(\\s*\\)`).test(code)) {
+      code = code.trimEnd() + `\n${fnMatch[1]}();\n`;
+    }
+
+    return code;
   }
 
   private isLikelyTruncated(code: string): boolean {

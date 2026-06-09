@@ -547,15 +547,32 @@ async function writeCodeArtifact(domain, code, outDir, runId) {
 async function runDomain(domain, options, runId) {
   const startedAt = new Date().toISOString();
   const prompt = promptFor(domain, runId);
-  const generated = await generateForDomain(domain, prompt, options.timeoutMs);
+  let generated = await generateForDomain(domain, prompt, options.timeoutMs);
   if (generated.ok) {
     generated.artifact = await writeCodeArtifact(domain, generated.code, options.outDir, runId);
   }
 
-  const validation = generated.ok
+  let validation = generated.ok
     ? validateForDomain(domain, generated.code)
     : { ok: false, cleanedCode: '', cleanedBytes: 0, errors: ['generation failed'], validator: `CodeValidator(${domain.validationDomain})` };
-  const render = await renderOrReceipt(domain, validation, options.outDir, runId, options.renderWaitMs);
+  let render = await renderOrReceipt(domain, validation, options.outDir, runId, options.renderWaitMs);
+
+  // Bounded washout retry: if Hydra render is washed out (near-white), retry once
+  // with an anti-washout prompt. Generation-side brightness clamp is impossible,
+  // but an explicit anti-brightness prompt sometimes avoids the issue.
+  if (domain.id === 'hydra' && render.ok === false && render.errors?.some((e) => /washed out/i.test(e))) {
+    console.log(`[gauntlet] ${domain.id}: washout detected, retrying with anti-washout prompt`);
+    const antiWashoutPrompt = prompt + '\n\nIMPORTANT: Avoid additive washout. Keep .brightness() at 0.75-0.85 (no higher). Do NOT combine .brightness() with .colorama() — together they push the scene to pure white. Use .contrast(1.2-1.5) and .saturate() for visual richness instead of stacking brightening effects.';
+    generated = await generateForDomain(domain, antiWashoutPrompt, options.timeoutMs);
+    if (generated.ok) {
+      generated.artifact = await writeCodeArtifact(domain, generated.code, options.outDir, runId);
+    }
+    validation = generated.ok
+      ? validateForDomain(domain, generated.code)
+      : { ok: false, cleanedCode: '', cleanedBytes: 0, errors: ['generation failed'], validator: `CodeValidator(${domain.validationDomain})` };
+    render = await renderOrReceipt(domain, validation, options.outDir, runId, options.renderWaitMs);
+  }
+
   const finishedAt = new Date().toISOString();
   const receipt = buildDomainReceipt({ domain: domain.id, prompt, generated: redactCode(generated), validation: redactCode(validation), render, startedAt, finishedAt });
   const receiptPath = path.join(options.outDir, `${runId}-${domain.id}.receipt.json`);

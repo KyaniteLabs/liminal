@@ -547,15 +547,32 @@ async function writeCodeArtifact(domain, code, outDir, runId) {
 async function runDomain(domain, options, runId) {
   const startedAt = new Date().toISOString();
   const prompt = promptFor(domain, runId);
-  const generated = await generateForDomain(domain, prompt, options.timeoutMs);
+  let generated = await generateForDomain(domain, prompt, options.timeoutMs);
   if (generated.ok) {
     generated.artifact = await writeCodeArtifact(domain, generated.code, options.outDir, runId);
   }
 
-  const validation = generated.ok
+  let validation = generated.ok
     ? validateForDomain(domain, generated.code)
     : { ok: false, cleanedCode: '', cleanedBytes: 0, errors: ['generation failed'], validator: `CodeValidator(${domain.validationDomain})` };
-  const render = await renderOrReceipt(domain, validation, options.outDir, runId, options.renderWaitMs);
+  let render = await renderOrReceipt(domain, validation, options.outDir, runId, options.renderWaitMs);
+
+  // Bounded washout retry: if Hydra render is washed out (near-white), retry once
+  // with an anti-washout prompt. Generation-side brightness clamp is impossible,
+  // but an explicit anti-brightness prompt sometimes avoids the issue.
+  if (domain.id === 'hydra' && render.ok === false && render.errors?.some((e) => /washed out/i.test(e))) {
+    console.log(`[gauntlet] ${domain.id}: washout detected, retrying with anti-washout prompt`);
+    const antiWashoutPrompt = prompt + '\n\nIMPORTANT: Avoid additive washout. Keep .brightness() at 0.75-0.85 (no higher). Do NOT combine .brightness() with .colorama() — together they push the scene to pure white. Use .contrast(1.2-1.5) and .saturate() for visual richness instead of stacking brightening effects.';
+    generated = await generateForDomain(domain, antiWashoutPrompt, options.timeoutMs);
+    if (generated.ok) {
+      generated.artifact = await writeCodeArtifact(domain, generated.code, options.outDir, runId);
+    }
+    validation = generated.ok
+      ? validateForDomain(domain, generated.code)
+      : { ok: false, cleanedCode: '', cleanedBytes: 0, errors: ['generation failed'], validator: `CodeValidator(${domain.validationDomain})` };
+    render = await renderOrReceipt(domain, validation, options.outDir, runId, options.renderWaitMs);
+  }
+
   const finishedAt = new Date().toISOString();
   const receipt = buildDomainReceipt({ domain: domain.id, prompt, generated: redactCode(generated), validation: redactCode(validation), render, startedAt, finishedAt });
   const receiptPath = path.join(options.outDir, `${runId}-${domain.id}.receipt.json`);
@@ -622,6 +639,36 @@ export async function runCli(argv) {
   if (!options.all && !options.domain) throw new Error(`${usage()}\n\nMissing --all or --domain <domain>`);
   if (!Number.isFinite(options.timeoutMs) || options.timeoutMs <= 0) throw new Error('--timeout-ms must be a positive number');
   if (!Number.isFinite(options.renderWaitMs) || options.renderWaitMs < 0) throw new Error('--render-wait-ms must be a non-negative number');
+
+  // Stale-build guard: warn if dist/ is older than the latest git commit.
+  // Prevents false gauntlet results from outdated compiled output.
+  try {
+    const { execSync } = await import('node:child_process');
+    const gitTs = Number(execSync('git log -1 --format=%ct', { encoding: 'utf8' }).trim()) * 1000;
+    // Find the newest .js file in dist/ using Node fs (avoids platform-specific stat flags)
+    const distDir = path.resolve(process.cwd(), 'dist');
+    let newestMs = 0;
+    const walkDir = async (dir) => {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) await walkDir(full);
+        else if (entry.name.endsWith('.js')) {
+          const st = await fs.stat(full);
+          if (st.mtimeMs > newestMs) newestMs = st.mtimeMs;
+        }
+      }
+    };
+    await walkDir(distDir).catch(() => {});
+    if (newestMs === 0) {
+      console.warn('\n[gauntlet] WARNING: dist/ not found or empty. Run "pnpm build" first.\n');
+    } else if (newestMs < gitTs) {
+      const ageMin = Math.round((gitTs - newestMs) / 60_000);
+      console.warn(`\n[gauntlet] WARNING: dist/ is ${ageMin} min older than HEAD. Run "pnpm build" before gauntlet to avoid stale-build false results.\n`);
+    }
+  } catch {
+    // git or fs check failed — non-fatal, continue
+  }
 
   await fs.mkdir(options.outDir, { recursive: true });
   const runId = new Date().toISOString().replace(/[:.]/g, '-');

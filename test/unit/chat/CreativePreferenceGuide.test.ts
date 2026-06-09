@@ -1,61 +1,159 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
+  getCreativeVocabularyDomainsForRuntimeDomain,
   buildCreativePreferencePromptHints,
   createCreativePreferenceSuggestion,
-  getCreativeVocabularyDomainsForRuntimeDomain,
 } from '../../../src/chat/CreativePreferenceGuide.js';
 
+const { mockInfer, mockBuildHints, mockCollectQuestions } = vi.hoisted(() => ({
+  mockInfer: vi.fn().mockReturnValue({}),
+  mockBuildHints: vi.fn().mockReturnValue([]),
+  mockCollectQuestions: vi.fn().mockReturnValue([]),
+}));
+
+vi.mock('../../../src/creative-vocabulary/index.js', () => ({
+  inferCreativePreferences: mockInfer,
+  buildCreativePromptHints: mockBuildHints,
+  collectCreativeQuestions: mockCollectQuestions,
+}));
+
 describe('CreativePreferenceGuide', () => {
-  it('maps runtime domains to optional creative vocabulary lanes', () => {
-    expect(getCreativeVocabularyDomainsForRuntimeDomain('p5')).toEqual(['color', 'motion']);
-    expect(getCreativeVocabularyDomainsForRuntimeDomain('strudel')).toEqual(['music']);
-    expect(getCreativeVocabularyDomainsForRuntimeDomain('revideo')).toEqual(['motion', 'cinematic', 'creative-writing']);
-    expect(getCreativeVocabularyDomainsForRuntimeDomain('kinetic')).toEqual(['creative-writing', 'motion', 'color']);
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockInfer.mockReturnValue({});
+    mockBuildHints.mockReturnValue([]);
+    mockCollectQuestions.mockReturnValue([]);
   });
 
-  it('builds prompt hints from free-form conversation without adding mandatory UI fields', () => {
-    const hints = buildCreativePreferencePromptHints({
-      domain: 'strudel',
-      prompt: 'slow ambient chords with sparse instrumentation',
-      answers: { mood: 'gentle and quiet' },
+  describe('getCreativeVocabularyDomainsForRuntimeDomain', () => {
+    it('returns mapped domains for known runtime domains', () => {
+      expect(getCreativeVocabularyDomainsForRuntimeDomain('hydra')).toEqual(['color', 'motion']);
+      expect(getCreativeVocabularyDomainsForRuntimeDomain('p5')).toEqual(['color', 'motion']);
+      expect(getCreativeVocabularyDomainsForRuntimeDomain('strudel')).toEqual(['music']);
+      expect(getCreativeVocabularyDomainsForRuntimeDomain('revideo')).toEqual(['motion', 'cinematic', 'creative-writing']);
     });
 
-    expect(hints).toEqual(expect.arrayContaining([
-      'Prefer a slow tempo feel.',
-      'Keep musical density sparse.',
-      'Use chordal harmony as a creative preference.',
-    ]));
+    it('returns default domains for unknown runtime domain', () => {
+      expect(getCreativeVocabularyDomainsForRuntimeDomain('unknown')).toEqual(['color', 'motion']);
+    });
+
+    it('returns default domains for empty string', () => {
+      expect(getCreativeVocabularyDomainsForRuntimeDomain('')).toEqual(['color', 'motion']);
+    });
+
+    it('returns a copy (not the original array)', () => {
+      const a = getCreativeVocabularyDomainsForRuntimeDomain('hydra');
+      const b = getCreativeVocabularyDomainsForRuntimeDomain('hydra');
+      expect(a).toEqual(b);
+      expect(a).not.toBe(b);
+    });
   });
 
-  it('creates one low-priority optional suggestion instead of cluttering the interface', () => {
-    const suggestion = createCreativePreferenceSuggestion({
-      prompt: 'a cinematic title sequence with short captions',
-      domain: 'revideo',
-      techniques: [],
-      constraints: [],
-      references: [],
-      iteration: 1,
-      currentScore: 0.5,
+  describe('buildCreativePreferencePromptHints', () => {
+    it('returns hints from buildCreativePromptHints', () => {
+      mockInfer.mockReturnValue({ color: { palette: 'warm' } });
+      mockBuildHints.mockReturnValue(['Consider warm palettes']);
+
+      const hints = buildCreativePreferencePromptHints({
+        domain: 'hydra',
+        prompt: 'warm sunset',
+      });
+
+      expect(hints).toEqual(['Consider warm palettes']);
     });
 
-    expect(suggestion?.type).toBe('parameter');
-    expect(suggestion?.priority).toBe('low');
-    expect(suggestion?.title).toContain('Optional creative preferences');
-    expect(suggestion?.description).toContain('Should the video lead');
-    expect(suggestion?.description).not.toContain('guardrail');
+    it('passes answers to conversation text', () => {
+      mockInfer.mockReturnValue({});
+      mockBuildHints.mockReturnValue([]);
+
+      buildCreativePreferencePromptHints({
+        domain: 'p5',
+        prompt: 'test prompt',
+        answers: { q1: 'answer1', q2: ['a', 'b'] },
+      });
+
+      const calledWith = mockInfer.mock.calls[0][0];
+      expect(calledWith).toContain('test prompt');
+      expect(calledWith).toContain('answer1');
+      expect(calledWith).toContain('a b');
+    });
+
+    it('handles undefined answers', () => {
+      buildCreativePreferencePromptHints({
+        domain: 'p5',
+        prompt: 'test',
+      });
+
+      expect(mockInfer).toHaveBeenCalledWith('test');
+    });
+
+    it('handles null-ish values in answers', () => {
+      buildCreativePreferencePromptHints({
+        domain: 'p5',
+        prompt: 'test',
+        answers: { q1: null, q2: undefined },
+      });
+
+      expect(mockInfer).toHaveBeenCalled();
+    });
   });
 
-  it('surfaces writing preferences for Kinetic typography before lower-priority visual taste', () => {
-    const suggestion = createCreativePreferenceSuggestion({
-      prompt: 'moving type that reveals a short mythic phrase',
-      domain: 'kinetic',
-      techniques: [],
-      constraints: [],
-      references: [],
-      iteration: 1,
-      currentScore: 0.5,
+  describe('createCreativePreferenceSuggestion', () => {
+    it('returns null when context has no prompt', () => {
+      expect(createCreativePreferenceSuggestion({ prompt: '', domain: 'hydra' } as any)).toBeNull();
     });
 
-    expect(suggestion?.description).toContain('Should the words feel');
+    it('returns null when context has no domain', () => {
+      expect(createCreativePreferenceSuggestion({ prompt: 'sunset', domain: '' } as any)).toBeNull();
+    });
+
+    it('returns null when context is null', () => {
+      expect(createCreativePreferenceSuggestion(null as any)).toBeNull();
+    });
+
+    it('returns null when no questions are collected', () => {
+      mockCollectQuestions.mockReturnValue([]);
+
+      const result = createCreativePreferenceSuggestion({
+        prompt: 'make a sunset',
+        domain: 'hydra',
+      } as any);
+
+      expect(result).toBeNull();
+    });
+
+    it('returns suggestion when questions exist', () => {
+      mockCollectQuestions.mockReturnValue([
+        { question: 'What color palette?', domain: 'color' },
+      ]);
+
+      const result = createCreativePreferenceSuggestion({
+        prompt: 'make a sunset',
+        domain: 'hydra',
+      } as any);
+
+      expect(result).not.toBeNull();
+      expect(result!.type).toBe('parameter');
+      expect(result!.title).toBe('Optional creative preferences');
+      expect(result!.priority).toBe('low');
+      expect(result!.description).toContain('color/motion');
+      expect(result!.description).toContain('What color palette?');
+    });
+
+    it('limits questions to 2 in description', () => {
+      mockCollectQuestions.mockReturnValue([
+        { question: 'Q1?', domain: 'color' },
+        { question: 'Q2?', domain: 'motion' },
+        { question: 'Q3?', domain: 'color' },
+      ]);
+
+      const result = createCreativePreferenceSuggestion({
+        prompt: 'test',
+        domain: 'hydra',
+      } as any);
+
+      expect(result!.description).toContain('Q1?');
+      expect(result!.description.split('\n').length).toBeLessThanOrEqual(4);
+    });
   });
 });

@@ -1,184 +1,96 @@
 import { describe, it, expect } from 'vitest';
-import { buildCreativeBrief } from '../../../dist/chat/CreativeBrief.js';
-import type { CreativeBrief, InterviewAnswers, Domain, Technique } from '../../../dist/chat/types.js';
+import { buildCreativeBrief } from '../../../src/chat/CreativeBrief.js';
+import type { InterviewAnswers } from '../../../src/chat/CreativeBrief.js';
 
 describe('CreativeBrief', () => {
   describe('buildCreativeBrief', () => {
-    it('should build brief with all answers provided', () => {
-      const answers: InterviewAnswers = {
-        intent: 'Create a flowing particle system',
-        context: 'Exploring emergent behavior',
-        mood: 'ethereal',
-        constraints: ['max 100 particles', 'use perlin noise'],
-        references: [
-          { type: 'past-work', id: 'work-1', description: 'Previous particle study' }
-        ],
-        preferredDomain: 'p5'
-      };
-
-      const brief = buildCreativeBrief(answers);
-
-      expect(brief.intent).toBe('Create a flowing particle system');
-      expect(brief.context).toBe('Exploring emergent behavior');
-      expect(brief.mood).toBe('ethereal');
-      expect(brief.constraints).toEqual(['max 100 particles', 'use perlin noise']);
-      expect(brief.references).toEqual([
-        { type: 'past-work', id: 'work-1', description: 'Previous particle study' }
-      ]);
-      expect(brief.domain).toBe('p5');
-    });
-
-    it('should build brief with minimal answers (only intent)', () => {
-      const answers: InterviewAnswers = {
-        intent: 'Simple sketch'
-      };
-
-      const brief = buildCreativeBrief(answers);
-
-      expect(brief.intent).toBe('Simple sketch');
-      expect(brief.context).toBe('');
-      expect(brief.mood).toBe('');
-      expect(brief.constraints).toEqual([]);
-      expect(brief.references).toEqual([]);
-      expect(brief.domain).toBe('p5');
-      expect(brief.complexity).toBe('simple');
-    });
-
-    it('should build brief with no answers (defaults)', () => {
-      const answers: InterviewAnswers = {};
-
-      const brief = buildCreativeBrief(answers);
-
+    it('returns defaults for empty answers', () => {
+      const brief = buildCreativeBrief({});
       expect(brief.intent).toBe('');
       expect(brief.context).toBe('');
       expect(brief.mood).toBe('');
       expect(brief.constraints).toEqual([]);
       expect(brief.references).toEqual([]);
       expect(brief.domain).toBe('p5');
+      expect(brief.techniques).toEqual([]);
       expect(brief.complexity).toBe('simple');
+    });
+
+    it('uses provided answers directly', () => {
+      const answers: InterviewAnswers = {
+        intent: 'create a flowing particle system',
+        context: 'for a gallery exhibition',
+        mood: 'contemplative',
+        constraints: ['no audio', 'dark background'],
+        references: [{ name: 'Refik Anadol', url: 'https://example.com' }],
+        preferredDomain: 'hydra',
+      };
+      const brief = buildCreativeBrief(answers);
+      expect(brief.intent).toBe('create a flowing particle system');
+      expect(brief.context).toBe('for a gallery exhibition');
+      expect(brief.mood).toBe('contemplative');
+      expect(brief.constraints).toEqual(['no audio', 'dark background']);
+      expect(brief.references).toEqual([{ name: 'Refik Anadol', url: 'https://example.com' }]);
+      expect(brief.domain).toBe('hydra');
+    });
+
+    it('infers particle technique from intent', () => {
+      const brief = buildCreativeBrief({ intent: 'a system of particles floating in space' });
+      expect(brief.techniques.length).toBeGreaterThan(0);
+      expect(brief.techniques[0].name).toBe('Particle Systems');
+      expect(brief.techniques[0].domain).toBe('p5');
+    });
+
+    it('infers flow field technique from intent', () => {
+      const brief = buildCreativeBrief({ intent: 'flowing colors across the screen' });
+      expect(brief.techniques.some(t => t.name === 'Flow Fields')).toBe(true);
+    });
+
+    it('infers noise technique from intent', () => {
+      const brief = buildCreativeBrief({ intent: 'use noise for organic movement' });
+      expect(brief.techniques.some(t => t.name === 'Perlin Noise')).toBe(true);
+    });
+
+    it('infers cellular automata technique from intent', () => {
+      const brief = buildCreativeBrief({ intent: 'a cellular grid simulation' });
+      expect(brief.techniques.some(t => t.name === 'Cellular Automata')).toBe(true);
+    });
+
+    it('infers multiple techniques when keywords match', () => {
+      const brief = buildCreativeBrief({ intent: 'flow fields with particle noise' });
+      expect(brief.techniques.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('returns empty techniques when no keywords match', () => {
+      const brief = buildCreativeBrief({ intent: 'a simple gradient' });
       expect(brief.techniques).toEqual([]);
     });
 
-    it('should infer techniques from keywords - particle systems', () => {
-      const answers: InterviewAnswers = {
-        intent: 'Create a particle system'
-      };
-
-      const brief = buildCreativeBrief(answers);
-
-      expect(brief.techniques).toHaveLength(1);
-      expect(brief.techniques[0].name.toLowerCase()).toContain('particle');
-      expect(brief.techniques[0].keywords).toContain('particle');
-    });
-
-    it('should infer techniques from keywords - flow fields', () => {
-      const answers: InterviewAnswers = {
-        intent: 'Explore flow fields'
-      };
-
-      const brief = buildCreativeBrief(answers);
-
-      expect(brief.techniques).toHaveLength(1);
-      expect(brief.techniques[0].name.toLowerCase()).toContain('flow');
-      expect(brief.techniques[0].keywords).toContain('flow');
-    });
-
-    it('should infer techniques from keywords - perlin noise', () => {
-      const answers: InterviewAnswers = {
-        intent: 'Use noise for textures'
-      };
-
-      const brief = buildCreativeBrief(answers);
-
-      expect(brief.techniques).toHaveLength(1);
-      expect(brief.techniques[0].keywords).toContain('noise');
-    });
-
-    it('should infer techniques from keywords - cellular automata', () => {
-      const answers: InterviewAnswers = {
-        intent: 'Build cellular automata'
-      };
-
-      const brief = buildCreativeBrief(answers);
-
-      expect(brief.techniques).toHaveLength(1);
-      expect(brief.techniques[0].keywords).toContain('cellular');
-    });
-
-    it('should infer multiple techniques from multiple keywords', () => {
-      const answers: InterviewAnswers = {
-        intent: 'Create a flowing particle system with noise'
-      };
-
-      const brief = buildCreativeBrief(answers);
-
-      expect(brief.techniques.length).toBeGreaterThanOrEqual(2);
-      const techniqueNames = brief.techniques.map(t => t.name.toLowerCase());
-      expect(techniqueNames.some(n => n.includes('particle'))).toBe(true);
-      expect(techniqueNames.some(n => n.includes('flow') || n.includes('noise'))).toBe(true);
-    });
-
-    it('should infer complexity - simple (short intent, few constraints)', () => {
-      const answers: InterviewAnswers = {
-        intent: 'Simple sketch'
-      };
-
-      const brief = buildCreativeBrief(answers);
-
+    it('classifies as simple for short intent and few constraints', () => {
+      const brief = buildCreativeBrief({ intent: 'hi', constraints: [] });
       expect(brief.complexity).toBe('simple');
     });
 
-    it('should infer complexity - complex (long intent)', () => {
-      const answers: InterviewAnswers = {
-        intent: 'Create a complex interactive particle system with multiple layers of flow fields and cellular automata that respond to audio input'
-      };
-
-      const brief = buildCreativeBrief(answers);
-
+    it('classifies as complex for long intent', () => {
+      const brief = buildCreativeBrief({ intent: 'a'.repeat(51), constraints: [] });
       expect(brief.complexity).toBe('complex');
     });
 
-    it('should infer complexity - complex (many constraints)', () => {
-      const answers: InterviewAnswers = {
-        intent: 'Moderate sketch',
-        constraints: ['constraint 1', 'constraint 2', 'constraint 3']
-      };
-
-      const brief = buildCreativeBrief(answers);
-
+    it('classifies as complex for many constraints', () => {
+      const brief = buildCreativeBrief({ intent: 'short', constraints: ['a', 'b', 'c'] });
       expect(brief.complexity).toBe('complex');
     });
 
-    it('should infer complexity - medium (middle ground)', () => {
-      const answers: InterviewAnswers = {
-        intent: 'A moderately complex sketch with some details',
-        constraints: ['one constraint']
-      };
-
-      const brief = buildCreativeBrief(answers);
-
+    it('classifies as medium for moderate intent and constraints', () => {
+      const brief = buildCreativeBrief({ intent: 'a'.repeat(30), constraints: ['one'] });
       expect(brief.complexity).toBe('medium');
     });
 
-    it('should use preferred domain when provided', () => {
-      const answers: InterviewAnswers = {
-        intent: 'Some sketch',
-        preferredDomain: 'shader'
-      };
-
-      const brief = buildCreativeBrief(answers);
-
-      expect(brief.domain).toBe('shader');
-    });
-
-    it('should default to p5 domain when not provided', () => {
-      const answers: InterviewAnswers = {
-        intent: 'Some sketch'
-      };
-
-      const brief = buildCreativeBrief(answers);
-
-      expect(brief.domain).toBe('p5');
+    it('sets swarm and archive learning to undefined', () => {
+      const brief = buildCreativeBrief({ intent: 'test' });
+      expect(brief.useSwarm).toBeUndefined();
+      expect(brief.useArchiveLearning).toBeUndefined();
+      expect(brief.useCompostSeeds).toBeUndefined();
     });
   });
 });

@@ -60,7 +60,7 @@ describe('domain gauntlet pass/fail logic', () => {
       validation: { ok: true, cleanedBytes: 90, errors: [] },
       render: { ok: true, mode: 'receipt', artifact: '.quality/gauntlet/ascii.json', errors: [] },
       startedAt: '2026-06-08T00:00:00.000Z',
-      finishedAt: '2026-06-08T00:00:01.000Z',
+      finishedAt: '2026-06-08T00:00:00.001Z',
     });
     const fail = buildDomainReceipt({
       domain: 'tone',
@@ -69,13 +69,40 @@ describe('domain gauntlet pass/fail logic', () => {
       validation: { ok: true, cleanedBytes: 180, errors: [] },
       render: { ok: false, mode: 'receipt', errors: ['missing Tone.start'] },
       startedAt: '2026-06-08T00:00:00.000Z',
-      finishedAt: '2026-06-08T00:00:01.000Z',
+      finishedAt: '2026-06-08T00:00:00.001Z',
     });
 
     const table = buildMarkdownTable([pass, fail]);
 
     expect(table).toContain('| ascii | PASS | PASS | PASS | PASS |  |');
     expect(table).toContain('| tone | PASS | PASS | FAIL | FAIL | render-or-receipt: missing Tone.start |');
+  });
+
+  it('adds a Ratchet column when a ratchet floor is supplied', () => {
+    const gated = buildDomainReceipt({
+      domain: 'p5',
+      prompt: 'Target creative domain: p5. Never-used test prompt.',
+      generated: { ok: true, codeBytes: 120 },
+      validation: { ok: true, cleanedBytes: 118, errors: [] },
+      render: { ok: true, mode: 'png', artifact: '.quality/gauntlet/p5.png', errors: [] },
+      startedAt: '2026-06-08T00:00:00.000Z',
+      finishedAt: '2026-06-08T00:00:00.001Z',
+    });
+    const advisory = buildDomainReceipt({
+      domain: 'svg',
+      prompt: 'Target creative domain: svg. Never-used test prompt.',
+      generated: { ok: true, codeBytes: 200 },
+      validation: { ok: true, cleanedBytes: 200, errors: [] },
+      render: { ok: false, mode: 'png', errors: ['PNG is suspiciously small'] },
+      startedAt: '2026-06-08T00:00:00.000Z',
+      finishedAt: '2026-06-08T00:00:00.001Z',
+    });
+
+    const table = buildMarkdownTable([gated, advisory], ['p5']);
+
+    expect(table).toContain('| Domain | Generate | Validate | Render/Receipt | Ratchet | Status | Failure reason |');
+    expect(table).toContain('| p5 | PASS | PASS | PASS | GATED | PASS |  |');
+    expect(table).toContain('| svg | PASS | PASS | FAIL | advisory | FAIL | render-or-receipt: PNG is suspiciously small |');
   });
 
   it('selects all finish-line domains or a single requested domain', () => {

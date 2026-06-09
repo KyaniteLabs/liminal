@@ -146,4 +146,88 @@ describe('ToneAdapter security', () => {
     expect(script).toContain('Tone.js');
     expect(script).toContain(layer.code);
   });
+
+  it('generates script with default volume when audio settings missing', () => {
+    const layer = createLayer('const synth = new Tone.Synth().toDestination();');
+    const noAudioSettings: GlobalSettings = { width: 800, height: 600, frameRate: 60, backgroundColor: '#000' };
+
+    const script = adapter.generateScript(layer, noAudioSettings);
+
+    expect(script).toContain('Tone.js');
+  });
+
+  it('validates layer with Tone. references as valid', () => {
+    const layer = createLayer('const synth = new Tone.Synth().toDestination();');
+
+    const result = adapter.validate(layer);
+
+    expect(result.valid).toBe(true);
+    expect(result.errors).toBeUndefined();
+  });
+
+  it('validates layer without Tone. references as invalid', () => {
+    const layer = createLayer('const x = 42;');
+
+    const result = adapter.validate(layer);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toEqual(['Code does not reference Tone.js (Tone. not found)']);
+  });
+
+  it('returns empty exports when no instance exists', () => {
+    const layer = createLayer('const synth = new Tone.Synth();');
+
+    const exports_ = adapter.getExports(layer);
+
+    expect(exports_).toEqual([]);
+  });
+
+  it('returns exports after render', () => {
+    const layer = createLayer('const synth = new Tone.Synth().toDestination();');
+    adapter.render(layer, container);
+
+    const exports_ = adapter.getExports(layer);
+
+    expect(exports_.length).toBeGreaterThan(0);
+    const names = exports_.map(e => e.name);
+    expect(names).toContain('isPlaying');
+    expect(names).toContain('bpm');
+    expect(names).toContain('currentTime');
+    expect(names).toContain('activeSynths');
+    expect(names).toContain('elapsedTime');
+  });
+
+  it('returns empty exports after destroy', () => {
+    const layer = createLayer('const synth = new Tone.Synth().toDestination();');
+    adapter.render(layer, container);
+    adapter.destroy(layer);
+
+    const exports_ = adapter.getExports(layer);
+
+    expect(exports_).toEqual([]);
+  });
+
+  it('destroy is safe when no instance exists', () => {
+    const layer = createLayer('const synth = new Tone.Synth();');
+
+    expect(() => adapter.destroy(layer)).not.toThrow();
+  });
+
+  it('destroy disposes synths with dispose method', () => {
+    const layer = createLayer('const synth = new Tone.Synth().toDestination();');
+    const result = adapter.render(layer, container) as ToneRenderResult;
+    const synth = result.synths[0];
+
+    adapter.destroy(layer);
+
+    expect(synth.dispose).toHaveBeenCalled();
+  });
+
+  it('throwIfAborted: render throws when Tone not loaded', () => {
+    const freshAdapter = new ToneAdapter();
+    const layer = createLayer('const synth = new Tone.Synth();');
+    // Don't initialize — no Tone module
+
+    expect(() => freshAdapter.render(layer, container)).toThrow('Tone.js not loaded');
+  });
 });

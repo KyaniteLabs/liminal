@@ -108,14 +108,37 @@ function withPaletteComment(visualCode, palette) {
     : `${comment}\n${code}`;
 }
 
+function deterministicMusicCode(promptLabel) {
+  return [
+    `// deterministic organism: ${promptLabel}`,
+    'stack(',
+    '  s("bd ~ hh ~").gain(0.75),',
+    '  note("c4 e4 g4 b4").sound("sine").slow(2).gain(0.45)',
+    ').room(0.25)',
+  ].join('\n');
+}
+
+function deterministicVisualCode(bpm) {
+  const rate = Math.max(0.05, bpm / 600);
+  return [
+    `osc(${rate}, 0.08, 0.8)`,
+    '  .kaleid(4)',
+    '  .color(0.9, 0.45, 0.2)',
+    '  .rotate(0.1)',
+    '  .modulate(noise(2.5), 0.08)',
+    '  .blend(shape(4, 0.35).luma(0.2), 0.25)',
+    '  .out(o0);',
+  ].join('\n');
+}
+
 function buildDeterministicOrganism(prompt, traits = {}, seed = {}) {
   const bpm = normalizedBpm(traits.bpm);
   const palette = safeTraitLabel(traits.palette, 'default');
   const seedMusic = seed.musicCode || '';
   const seedVisual = seed.visualCode || '';
   const promptLabel = safeTraitLabel(prompt, 'ambient');
-  const baseMusic = seedMusic || `// deterministic organism: ${promptLabel}\nn("c4 e4 g4").sound("sine")`;
-  const baseVisual = seedVisual || `osc(${Math.max(0.05, bpm / 600)}).out();`;
+  const baseMusic = seedMusic || deterministicMusicCode(promptLabel);
+  const baseVisual = seedVisual || deterministicVisualCode(bpm);
   return {
     type: 'organism',
     musicCode: withBpmLine(baseMusic, bpm),

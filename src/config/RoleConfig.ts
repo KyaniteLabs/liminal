@@ -101,7 +101,19 @@ const DEFAULT_TIMEOUT = 120000;
 // ── Config Loading ──
 
 const CONFIG_DIR = join(homedir(), '.sinter');
-const USER_CONFIG_PATH = join(CONFIG_DIR, 'config.json');
+const DEFAULT_USER_CONFIG_PATH = join(CONFIG_DIR, 'config.json');
+
+/**
+ * Resolve the user config path. Honors `SINTER_CONFIG_PATH` (preferred) or
+ * `LIMINAL_CONFIG_PATH` (back-compat, matching the TUI bridge launcher) so a single
+ * process — e.g. a background daemon that should run on a different/cheaper model than
+ * interactive runs — can point at its own config file WITHOUT mutating the shared
+ * ~/.sinter/config.json. Read per call so the override is honored at use time.
+ */
+export function resolveUserConfigPath(): string {
+  const override = (process.env.SINTER_CONFIG_PATH ?? process.env.LIMINAL_CONFIG_PATH)?.trim();
+  return override ? override : DEFAULT_USER_CONFIG_PATH;
+}
 
 /**
  * Load and resolve role-based configuration from all sources.
@@ -232,7 +244,7 @@ export function detectProviderType(baseUrl: string, model?: string): ProviderTyp
 
 async function loadConfigFile(): Promise<RoleConfigFile | null> {
   try {
-    const content = await readFile(USER_CONFIG_PATH, 'utf-8');
+    const content = await readFile(resolveUserConfigPath(), 'utf-8');
     return JSON.parse(content) as RoleConfigFile;
   } catch {
     // No user config file — that's fine, env vars work
@@ -341,7 +353,7 @@ function mergeConfigs(base: RoleConfigFile | null, overlay: RoleConfigFile | nul
  * Write a role config file (for `sinter config` CLI command).
  */
 export async function saveRoleConfig(config: RoleConfigFile, configPath?: string): Promise<void> {
-  const target = configPath || USER_CONFIG_PATH;
+  const target = configPath || resolveUserConfigPath();
   await mkdir(dirname(target), { recursive: true });
   await writeFile(target, JSON.stringify(config, null, 2), 'utf-8');
 }

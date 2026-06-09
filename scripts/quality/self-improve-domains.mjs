@@ -49,19 +49,27 @@ export function readPerDomainCounts(archivePath) {
 }
 
 /**
- * Pick `n` domains to generate for this cycle, emptiest first, preferring domains
- * below the cap (a full domain can't accumulate). Ties break by the domains-list
- * order for determinism. Falls back to round-robin over all domains only when every
- * domain is at the cap.
+ * Pick `n` domains to generate for this cycle from those below the cap (a full domain
+ * can't accumulate), ordered emptiest-first with a domains-list tiebreak.
+ *
+ * `seed` rotates the start of the under-cap pool. Without rotation the picker would
+ * deterministically target the same strictly-emptiest domains every cycle — and if some
+ * of those never accumulate (e.g. a domain whose generator doesn't archive), the loop
+ * fixates on them forever and nets Δ0, never touching archivable domains that still have
+ * room. A per-cycle seed spreads coverage across ALL under-cap domains so the fillable
+ * ones make progress. seed=0 preserves the deterministic emptiest-first order.
  */
-export function pickUnderfilledDomains(counts, domains = TARGET_DOMAINS, cap = MAX_PER_DOMAIN, n = 3) {
+export function pickUnderfilledDomains(counts, domains = TARGET_DOMAINS, cap = MAX_PER_DOMAIN, n = 3, seed = 0) {
   const countOf = (d) => counts[d] ?? 0;
   const underCap = domains.filter((d) => countOf(d) < cap);
   const pool = (underCap.length > 0 ? underCap : domains)
     .slice()
     .sort((a, b) => countOf(a) - countOf(b) || domains.indexOf(a) - domains.indexOf(b));
+  if (pool.length === 0) return [];
+  const offset = ((Math.trunc(seed) % pool.length) + pool.length) % pool.length;
+  const rotated = pool.slice(offset).concat(pool.slice(0, offset));
   const picks = [];
-  for (let i = 0; i < n; i++) picks.push(pool[i % pool.length]);
+  for (let i = 0; i < n; i++) picks.push(rotated[i % rotated.length]);
   return picks;
 }
 

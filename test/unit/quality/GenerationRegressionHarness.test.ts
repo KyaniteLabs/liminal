@@ -5,30 +5,50 @@ import {
 } from '../../../src/quality/GenerationRegressionHarness.js';
 
 describe('GenerationRegressionHarness', () => {
-  it('preserves revideo domain', () => {
-    expect(normalizeRegressionDomain('revideo')).toBe('revideo');
+  describe('normalizeRegressionDomain', () => {
+    it('preserves revideo domain', () => {
+      expect(normalizeRegressionDomain('revideo')).toBe('revideo');
+    });
+
+    it('preserves all valid domains', () => {
+      const domains = ['p5', 'glsl', 'three', 'strudel', 'hydra', 'tone', 'html', 'ascii', 'revideo'] as const;
+      domains.forEach((d) => {
+        expect(normalizeRegressionDomain(d)).toBe(d);
+      });
+    });
   });
 
-  it('preserves normal domains', () => {
-    expect(normalizeRegressionDomain('ascii')).toBe('ascii');
-    expect(normalizeRegressionDomain('three')).toBe('three');
-  });
+  describe('inferRegressionBaseUrl', () => {
+    it('infers LM Studio base URL', () => {
+      expect(inferRegressionBaseUrl('lmstudio')).toBe('http://localhost:1234/v1');
+    });
 
-  it('infers LM Studio base URL by default', () => {
-    expect(inferRegressionBaseUrl('lmstudio')).toBe('http://localhost:1234/v1');
-  });
+    it('infers Ollama base URL', () => {
+      expect(inferRegressionBaseUrl('ollama')).toBe('http://localhost:11434');
+    });
 
-  it('infers Ollama base URL by default', () => {
-    expect(inferRegressionBaseUrl('ollama')).toBe('http://localhost:11434');
-  });
+    it('infers MiniMax base URL', () => {
+      expect(inferRegressionBaseUrl('minimax')).toBe('https://api.minimax.io/anthropic');
+    });
 
-  it('infers canonical cloud provider base URLs', () => {
-    expect(inferRegressionBaseUrl('minimax')).toBe('https://api.minimax.io/anthropic');
-    expect(inferRegressionBaseUrl('glm')).toBe('https://api.z.ai/api/anthropic');
-    expect(inferRegressionBaseUrl('kimi')).toBe('https://api.kimi.com/coding/v1');
-  });
+    it('infers GLM base URL', () => {
+      expect(inferRegressionBaseUrl('glm')).toBe('https://api.z.ai/api/anthropic');
+    });
 
-  it('prefers explicit base URLs', () => {
-    expect(inferRegressionBaseUrl('lmstudio', 'http://127.0.0.1:9999/v1')).toBe('http://127.0.0.1:9999/v1');
+    it('infers Kimi base URL', () => {
+      expect(inferRegressionBaseUrl('kimi')).toBe('https://api.kimi.com/coding/v1');
+    });
+
+    it('prefers explicit base URL over provider default', () => {
+      expect(inferRegressionBaseUrl('lmstudio', 'http://custom:9999/v1')).toBe('http://custom:9999/v1');
+    });
+
+    it('prefers explicit base URL even for unknown provider', () => {
+      expect(inferRegressionBaseUrl('unknown-provider', 'http://custom:8080')).toBe('http://custom:8080');
+    });
+
+    it('throws for unknown provider without explicit base URL', () => {
+      expect(() => inferRegressionBaseUrl('nonexistent-provider')).toThrow('Unknown provider');
+    });
   });
 });

@@ -5,6 +5,7 @@
  */
 
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
+import { StrudelValidator } from '../../core/validators/StrudelValidator.js';
 
 export interface StrudelGeneratorOptions extends TierBasedGeneratorOptions {
   bpm?: number;
@@ -24,10 +25,19 @@ export class StrudelGenerator extends TierBasedGenerator {
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
-    // Must have at least one sound source
-    if (!/\b(s\(|sound\(|note\()/.test(code)) {
-      return { valid: false, error: 'No sound source found (need s(), sound(), or note())' };
+    const validation = StrudelValidator.validate(code);
+    if (!validation.valid) {
+      return { valid: false, error: validation.errors.join('; ') };
     }
+
+    const minSize = StrudelValidator.getMinSize();
+    if (code.trim().length < minSize) {
+      return {
+        valid: false,
+        error: `Strudel code is too small (${code.trim().length}b) - minimum is ${minSize}b`,
+      };
+    }
+
     return { valid: true };
   }
 
@@ -108,23 +118,44 @@ export class StrudelGenerator extends TierBasedGenerator {
   }
 
   private async retryStrudelDirect(prompt: string, options?: StrudelGeneratorOptions): Promise<string | null> {
-    const result = await this.llm.complete({
-      systemPrompt: 'You write Strudel live-coding music patterns. Output only runnable Strudel code.',
-      prompt: [
+    const prompts = [
+      [
         `Create a Strudel pattern for: ${prompt}`,
         `Use bpm ${options?.bpm ?? 120} unless the prompt implies another tempo.`,
-        'Return 3 to 8 compact lines.',
-        'Include at least one s("bd ...") or note("...") pattern and call .out() or use $: lines.',
+        'Return 4 to 8 substantial runnable lines, at least 120 characters total.',
+        'Include bpm(), stack(...).out(), one s("bd ...") drum pattern, one note("...") melodic pattern, and effects like .gain(), .room(), .delay(), or .cutoff().',
         'No markdown fences, prose, HTML, or hidden reasoning in the final answer.',
       ].join('\n'),
-      maxTokens: options?.maxTokens ?? 1200,
-      temperature: this.llm.getConfig().temperature,
-      signal: options?.signal,
-    });
-    if (!result.success || !result.text) return null;
+      [
+        'Return only a complete Strudel live-coding pattern.',
+        `Prompt: ${prompt}`,
+        `Tempo: bpm(${options?.bpm ?? 120})`,
+        'Required shape:',
+        'bpm(...)',
+        'stack(',
+        '  s("bd ... hh ...").gain(...),',
+        '  note("<c3 e3 g3 ...>").s("triangle").cutoff(...).delay(...),',
+        '  s("cp ...").room(...)',
+        ').slow(...).out()',
+        'The final code must be at least 120 characters and must not include comments, markdown, prose, or HTML.',
+      ].join('\n'),
+    ];
 
-    const clean = this.sanitizeCode(this.recoverStrudelFromModelText(result.text) ?? result.text);
-    return this.validateOutput(clean).valid ? clean : null;
+    for (const directPrompt of prompts) {
+      const result = await this.llm.complete({
+        systemPrompt: 'You write Strudel live-coding music patterns. Output only runnable Strudel code.',
+        prompt: directPrompt,
+        maxTokens: options?.maxTokens ?? 1200,
+        temperature: this.llm.getConfig().temperature,
+        signal: options?.signal,
+      });
+      if (!result.success || !result.text) continue;
+
+      const clean = this.sanitizeCode(this.recoverStrudelFromModelText(result.text) ?? result.text);
+      if (this.validateOutput(clean).valid) return clean;
+    }
+
+    return null;
   }
 
   private recoverStrudelFromModelText(text: string): string | null {

@@ -75,7 +75,12 @@ export default defineConfig({
         branches: 68.4,
         functions: 81.8,
         lines: 79.3,
-        autoUpdate: isFastCi || isSlowCi ? undefined : undefined,
+        // CI must never rewrite this config, so the ratchet only engages
+        // on local full-coverage runs. Round DOWN to 0.1% so 0.01%
+        // run-to-run fluctuations don't cause false failures.
+        autoUpdate: isFastCi || isSlowCi
+          ? undefined
+          : (newThreshold: number) => Math.floor(newThreshold * 10) / 10,
       },
     },
   },

@@ -10,9 +10,8 @@ export interface SVGGeneratorOptions extends TierBasedGeneratorOptions {
   mode?: SVGMode;
 }
 
-const SVG_PRIMARY_ATTEMPT_TIMEOUT_MS = 24_000;
+const SVG_PRIMARY_ATTEMPT_TIMEOUT_MS = 32_000;
 const SVG_EMPTY_RETRY_TIMEOUT_MS = 44_000;
-const SVG_RETRY_ATTEMPT_TIMEOUT_MS = 18_000;
 
 export class SVGGenerator extends TierBasedGenerator {
   private currentMode: SVGMode = 'generative-art';
@@ -28,7 +27,7 @@ export class SVGGenerator extends TierBasedGenerator {
     const direct = await this.retrySVGDirect(prompt, builtPrompt, options);
     if (direct.svg) return direct.svg;
     throw new GenerationError(
-      `SVGGenerator: provider did not return valid SVG within bounded attempts: ${direct.error ?? 'provider returned no valid SVG candidate'}`,
+      `SVGGenerator: provider returned no valid SVG after 2 bounded direct attempts: ${direct.error ?? 'provider returned no valid SVG candidate'}`,
       'svg',
       { directRetryError: direct.error },
     );
@@ -96,6 +95,8 @@ export class SVGGenerator extends TierBasedGenerator {
       'Include xmlns="http://www.w3.org/2000/svg" and a valid viewBox.',
       'Do not return markdown fences, prose, HTML wrappers, scripts, event handlers, foreignObject, external images, external fonts, or remote hrefs.',
       'Use self-contained vector geometry only.',
+      'Keep the SVG compact: no comments, no repeated decorative boilerplate, and prefer 6-18 purposeful visible elements.',
+      'End with </svg>.',
       this.transparentBackgroundGuidance(prompt),
       ...profile.promptGuidance,
       profile.allowGradients ? 'Gradients may be used only when they remain self-contained and safe.' : 'Do not use gradients, masks, patterns, or paint-server URLs.',
@@ -109,33 +110,15 @@ export class SVGGenerator extends TierBasedGenerator {
 
   private async retrySVGDirect(prompt: string, primaryPrompt: { systemPrompt: string; userPrompt: string }, options?: SVGGeneratorOptions): Promise<{ svg: string | null; error?: string }> {
     const mode = this.currentMode;
-    const profile = SVG_MODE_PROFILES[mode];
     let lastError: string | undefined;
-    const svgSystemPrompt = 'You create safe raw SVG. Output exactly one complete <svg>...</svg> document and nothing else.';
     const prompts: Array<{ systemPrompt: string; prompt: string; maxTokens: number; timeoutMs: number; temperature?: number }> = [
-      { systemPrompt: primaryPrompt.systemPrompt, prompt: primaryPrompt.userPrompt, maxTokens: options?.maxTokens ?? 1200, timeoutMs: SVG_PRIMARY_ATTEMPT_TIMEOUT_MS },
+      { systemPrompt: primaryPrompt.systemPrompt, prompt: primaryPrompt.userPrompt, maxTokens: options?.maxTokens ?? 2200, timeoutMs: SVG_PRIMARY_ATTEMPT_TIMEOUT_MS },
       {
         systemPrompt: this.buildEmptyCodeRetrySystemPrompt(primaryPrompt.systemPrompt),
         prompt: this.buildEmptyCodeRetryPrompt(prompt, primaryPrompt.userPrompt),
         maxTokens: options?.maxTokens ?? 1600,
         timeoutMs: SVG_EMPTY_RETRY_TIMEOUT_MS,
       },
-      { prompt: [
-        `Mode: ${mode} (${profile.label})`,
-        'Include xmlns and viewBox.',
-        'Use only self-contained vector shapes. No script, event handlers, foreignObject, external hrefs, markdown, prose, or HTML.',
-        this.transparentBackgroundGuidance(prompt),
-        profile.allowGradients ? 'Self-contained gradients are allowed.' : 'Do not use gradients or paint-server URLs.',
-        profile.allowFilters ? 'Self-contained filters are allowed.' : 'Do not use filters.',
-        profile.allowText ? 'Text is allowed when useful.' : 'Do not use text.',
-        `User request: ${prompt}`,
-      ].join('\n'), systemPrompt: svgSystemPrompt, maxTokens: options?.maxTokens ?? 2200, timeoutMs: SVG_RETRY_ATTEMPT_TIMEOUT_MS },
-      { prompt: [
-        'NO THINKING. NO EXPLANATION. OUTPUT ONE SINGLE-LINE SVG ONLY.',
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"> with self-contained rect/path/circle/linearGradient elements.',
-        'Theme: liminal doorway logo with gradients.',
-        'End with </svg>.',
-      ].join('\n'), systemPrompt: svgSystemPrompt, maxTokens: options?.maxTokens ?? 900, timeoutMs: SVG_RETRY_ATTEMPT_TIMEOUT_MS, temperature: 0 },
     ];
 
     for (const attempt of prompts) {

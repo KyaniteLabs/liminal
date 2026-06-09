@@ -59,6 +59,8 @@ export class EmergenceHooks {
   private readonly archive: ArchivePlacement;
   private readonly critic: EmergenceCritic;
   private readonly fsAdapter: ArchiveEntriesFSAdapter;
+  /** Whether the live archive has been replayed from persisted entries yet (lazy, once). */
+  private hydrated = false;
   private readonly archiveConfig: {
     binsPerAxis?: number;
     nearEliteCapacity?: number;
@@ -168,8 +170,28 @@ export class EmergenceHooks {
     return { descriptor, lineage, signals, placement };
   }
 
-  /** Get the archive for direct querying (used by CLI and Cortex). */
+  /**
+   * Get the archive for direct querying (used by CLI and Cortex). Lazily replays
+   * everything previous runs persisted into the LIVE archive on first access, so
+   * consumers (garden status/start/rebalance, lineage, stats) see accumulated history
+   * instead of a cold, empty archive — previously they read `this.archive` empty even
+   * with dozens of persisted cells, which floored garden health at the 10% "no data"
+   * default. The per-generation `onCreativeRun` path does NOT call getArchive(), so it
+   * stays lean (no replay on every generation).
+   */
   getArchive(): ArchivePlacement {
+    if (!this.hydrated) {
+      this.hydrated = true;
+      for (const entry of this.fsAdapter.readAllArchiveEntries()) {
+        this.archive.place({
+          artifactRef: entry.artifactRef,
+          descriptor: entry.descriptor,
+          lineage: entry.lineage,
+          qualityScore: entry.qualityScore,
+          signals: entry.signals,
+        });
+      }
+    }
     return this.archive;
   }
 

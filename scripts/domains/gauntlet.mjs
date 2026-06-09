@@ -10,6 +10,7 @@ import { CodeValidator } from '../../dist/core/CodeValidator.js';
 import { generatorRegistry } from '../../dist/generators/GeneratorRegistry.js';
 import { KineticWrapper } from '../../dist/generators/kinetic/KineticWrapper.js';
 import { registerAllGenerators } from '../../dist/generators/registerGenerators.js';
+import { getLocalP5ScriptForUrl } from '../../dist/utils/browserAssetFallbacks.js';
 import { HTMLWrapper } from '../../dist/utils/htmlWrapper.js';
 import {
   relativeLuminance,
@@ -405,6 +406,7 @@ async function renderToPng(domain, code, outDir, runId, waitMs) {
   const errors = [];
   try {
     await page.setViewport({ width: 900, height: 600, deviceScaleFactor: 1 });
+    await installLocalBrowserAssetFallbacks(page);
     page.on('pageerror', (error) => errors.push(String(error.message ?? error).slice(0, 180)));
     page.on('console', (message) => {
       if (message.type() === 'error') errors.push(message.text().slice(0, 180));
@@ -471,6 +473,31 @@ async function renderToPng(domain, code, outDir, runId, waitMs) {
     await page.close().catch(() => {});
     await browser.close().catch(() => {});
   }
+}
+
+export async function handleLocalBrowserAssetFallbackRequest(request) {
+  const localScript = await getLocalP5ScriptForUrl(request.url());
+  if (localScript) {
+    await request.respond({
+      status: 200,
+      contentType: 'application/javascript; charset=utf-8',
+      body: localScript,
+    });
+    return;
+  }
+
+  await request.continue();
+}
+
+export async function installLocalBrowserAssetFallbacks(page) {
+  if (typeof page.setRequestInterception !== 'function') return;
+
+  await page.setRequestInterception(true);
+  page.on('request', (request) => {
+    void handleLocalBrowserAssetFallbackRequest(request).catch(() => {
+      void request.continue().catch(() => {});
+    });
+  });
 }
 
 function receiptCheck(domain, code) {

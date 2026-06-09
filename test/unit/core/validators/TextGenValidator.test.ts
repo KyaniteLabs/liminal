@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TextGenValidator } from '../../../src/core/validators/TextGenValidator.js';
+import { TextGenValidator } from '../../../../src/core/validators/TextGenValidator.js';
 
 describe('TextGenValidator', () => {
   describe('getMinSize', () => {

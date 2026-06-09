@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ExecuteSkillTool } from '../../../src/harness/tools/ExecuteSkillTool.js';
+import { ExecuteSkillTool } from '../../../../src/harness/tools/ExecuteSkillTool.js';
 import { mkdir, writeFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 

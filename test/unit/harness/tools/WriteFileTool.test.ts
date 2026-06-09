@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdir, writeFile, readFile, stat, rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { WriteFileTool } from '../../../src/harness/tools/WriteFileTool.js';
+import { WriteFileTool } from '../../../../src/harness/tools/WriteFileTool.js';
 
 const TMP_DIR = join(process.cwd(), 'test', '_writefile_tmp');
 

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import type { CommandRunner } from '../../../src/harness/tools/types.js';
-import { RunLintTool } from '../../../src/harness/tools/RunLintTool.js';
+import type { CommandRunner } from '../../../../src/harness/tools/types.js';
+import { RunLintTool } from '../../../../src/harness/tools/RunLintTool.js';
 
 describe('RunLintTool', () => {
   it('has correct name and description', () => {

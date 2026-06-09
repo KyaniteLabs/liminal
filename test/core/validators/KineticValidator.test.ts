@@ -12,7 +12,7 @@ const VALID_KINETIC_HTML = `<!DOCTYPE html>
       margin: 0;
       min-height: 100%;
       overflow: hidden;
-      background: #08101c;
+      background: #486581;
       color: #e6f7ff;
       font-family: system-ui, sans-serif;
     }
@@ -112,6 +112,26 @@ describe('KineticValidator', () => {
 
     expect(result.valid).toBe(false);
     expect(result.errors).toContain('Kinetic artwork must include a visible DOM, SVG, or canvas surface');
+  });
+
+  it('rejects near-black proof-surface backgrounds before render', () => {
+    const dark = VALID_KINETIC_HTML.replace('background: #486581;', 'background: #08101c;');
+
+    const result = KineticValidator.validate(dark);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('Kinetic background color #08101c is too dark for image proof; use a bright or mid-tone scene background');
+  });
+
+  it('rejects near-black proof backgrounds resolved through CSS variables', () => {
+    const dark = VALID_KINETIC_HTML
+      .replace('background: #486581;', 'background-color: var(--bg);')
+      .replace('html, body {', ':root { --bg: #0f172a; }\n    html, body {');
+
+    const result = KineticValidator.validate(dark);
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain('Kinetic background color #0f172a is too dark for image proof; use a bright or mid-tone scene background');
   });
 
   it('rejects invalid HTML, CSS, and JavaScript syntax', () => {

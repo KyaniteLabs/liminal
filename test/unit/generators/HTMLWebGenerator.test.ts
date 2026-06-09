@@ -1,19 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockGenerate, mockGenerateWithToolLoop } = vi.hoisted(() => ({
-  mockGenerate: vi.fn().mockResolvedValue({
-    code: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Test</title></head><body><h1>Hello</h1></body></html>',
+const { mockComplete, mockGenerateWithToolLoop } = vi.hoisted(() => ({
+  mockComplete: vi.fn().mockResolvedValue({
+    text: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Test</title></head><body><h1>Hello</h1></body></html>',
     success: true,
   }),
   mockGenerateWithToolLoop: vi.fn().mockImplementation(async () => {
-    const r = await mockGenerate();
-    return { content: r.code, toolCalls: [], success: r.success, error: r.error };
+    const r = await mockComplete();
+    return { content: r.text, toolCalls: [], success: r.success, error: r.error };
   }),
 }));
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
-    generate = mockGenerate;
+    complete = mockComplete;
     generateWithToolLoop = mockGenerateWithToolLoop;
     getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' });
   }
@@ -48,16 +48,21 @@ import { HTMLWebGenerator } from '../../../src/generators/html/HTMLWebGenerator.
 
 describe('HTMLWebGenerator', () => {
   beforeEach(() => {
-    mockGenerate.mockClear();
+    mockComplete.mockReset();
+    mockComplete.mockResolvedValue({
+      text: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Test</title></head><body><h1>Hello</h1></body></html>',
+      success: true,
+    });
+    mockGenerateWithToolLoop.mockClear();
     mockGenerateWithToolLoop.mockImplementation(async () => {
-      const r = await mockGenerate();
-      return { content: r.code, toolCalls: [], success: r.success, error: r.error };
+      const r = await mockComplete();
+      return { content: r.text, toolCalls: [], success: r.success, error: r.error };
     });
   });
 
   it('extracts HTML from markdown code fences', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: '```html\n<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Hi</title></head><body>Hi</body></html>\n```',
+    mockComplete.mockResolvedValueOnce({
+      text: '```html\n<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Hi</title></head><body>Hi</body></html>\n```',
       success: true,
     });
     const gen = new HTMLWebGenerator();
@@ -67,8 +72,8 @@ describe('HTMLWebGenerator', () => {
   });
 
   it('returns raw HTML when no code fences present', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Direct</title></head><body>Direct</body></html>',
+    mockComplete.mockResolvedValueOnce({
+      text: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Direct</title></head><body>Direct</body></html>',
       success: true,
     });
     const gen = new HTMLWebGenerator();
@@ -77,8 +82,8 @@ describe('HTMLWebGenerator', () => {
   });
 
   it('strips an opening html fence even when the closing fence is missing', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: '```html\n<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Unclosed</title></head><body>Unclosed fence</body></html>',
+    mockComplete.mockResolvedValueOnce({
+      text: '```html\n<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Unclosed</title></head><body>Unclosed fence</body></html>',
       success: true,
     });
     const gen = new HTMLWebGenerator();
@@ -87,9 +92,19 @@ describe('HTMLWebGenerator', () => {
     expect(result).not.toContain('```html');
   });
 
+  it('preserves doctype when provider emits doctype before an html fence', async () => {
+    mockComplete.mockResolvedValueOnce({
+      text: '<!DOCTYPE html>\n```html\n<html><head><meta charset="UTF-8"><title>Fenced</title></head><body>Fenced body</body></html>\n```',
+      success: true,
+    });
+    const gen = new HTMLWebGenerator();
+    const result = await gen.generate('doctype before fence');
+    expect(result).toBe('<!DOCTYPE html>\n<html><head><meta charset="UTF-8"><title>Fenced</title></head><body>Fenced body</body></html>');
+  });
+
   it('returns complete HTML documents with an <html> tag', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>No doctype</title></head><body>No doctype</body></html>',
+    mockComplete.mockResolvedValueOnce({
+      text: '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>No doctype</title></head><body>No doctype</body></html>',
       success: true,
     });
     const gen = new HTMLWebGenerator();
@@ -109,8 +124,8 @@ describe('HTMLWebGenerator', () => {
   });
 
   it('validateOutput accepts code with DOCTYPE', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Valid</title></head><body>Valid</body></html>',
+    mockComplete.mockResolvedValueOnce({
+      text: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Valid</title></head><body>Valid</body></html>',
       success: true,
     });
     const gen = new HTMLWebGenerator();
@@ -125,9 +140,9 @@ describe('HTMLWebGenerator', () => {
     expect(result.error).toContain('closing </html>');
   });
 
-  it('passes options through to super.generate', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Options</title></head><body>Options test</body></html>',
+  it('uses bounded direct completion instead of the generic tool loop', async () => {
+    mockComplete.mockResolvedValueOnce({
+      text: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Options</title></head><body>Options test</body></html>',
       success: true,
     });
     const gen = new HTMLWebGenerator();
@@ -138,5 +153,8 @@ describe('HTMLWebGenerator', () => {
       includeAnimations: false,
     });
     expect(result).toContain('<!DOCTYPE html>');
+    expect(mockComplete.mock.calls[0]?.[0].maxTokens).toBe(5000);
+    expect(mockComplete.mock.calls[0]?.[0].signal).toBeInstanceOf(AbortSignal);
+    expect(mockGenerateWithToolLoop).not.toHaveBeenCalled();
   });
 });

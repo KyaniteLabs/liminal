@@ -13,6 +13,8 @@ CORE PRINCIPLES:
 3. Composition fits an 800x600 viewport and scales responsively
 4. No JavaScript, no script tags
 5. No nav, no footer, no SaaS landing page chrome
+6. Use a bright or mid-tone visible scene background and luminous animated forms;
+   do not use near-black full-page backgrounds that render as a blank screenshot.
 
 CRITICAL: The <body> MUST contain visible div or svg elements that the CSS animations target.
 A <style> block alone with no elements in <body> is WRONG.

@@ -263,14 +263,17 @@ describe('ASCIIArtGenerator', () => {
   describe('validateOutput', () => {
     it('validates output with allowed ASCII characters', () => {
       const gen = new ASCIIArtGenerator();
-      // Only chars matching /^[\s.\-~+=*#%@\n\r]*$/ are allowed
-      const result = gen.validateOutput('  ..--..**\n##@@==++');
+      // Only chars matching /^[\s.\-~+=*#%@\n\r]*$/ are allowed.
+      // Use >= 3 non-empty lines so the structural minimum (added to catch
+      // 'very minimal art' in ASCIIArtGenerator.validateQuality) is met.
+      const result = gen.validateOutput('  ..--..**\n##@@==++\n..==..--');
       expect(result.valid).toBe(true);
     });
 
     it('accepts plain ASCII text characters allowed by the shared validator', () => {
       const gen = new ASCIIArtGenerator();
-      const result = gen.validateOutput('Hello World!');
+      // >= 3 non-empty lines so the structural minimum is met.
+      const result = gen.validateOutput('Hello World!\nplain text line\nstill allowed');
       expect(result.valid).toBe(true);
     });
 
@@ -282,8 +285,23 @@ describe('ASCIIArtGenerator', () => {
 
     it('accepts special allowed characters like .-~+=*#%@', () => {
       const gen = new ASCIIArtGenerator();
-      const result = gen.validateOutput('..--..**\n##@@==++');
+      // >= 3 non-empty lines so the structural minimum is met.
+      const result = gen.validateOutput('..--..**\n##@@==++\n..==..--');
       expect(result.valid).toBe(true);
+    });
+
+    it('rejects output with fewer than 3 non-empty lines (structural minimum)', () => {
+      const gen = new ASCIIArtGenerator();
+      // Two non-empty lines: even with allowed characters, the new
+      // ASCIIValidator structural-minimum check (>= 3 non-empty lines,
+      // matching the gauntlet receipt threshold) should reject this.
+      const result = gen.validateOutput('..--..**\n##@@==++');
+      expect(result.valid).toBe(false);
+      // ASCIIArtGenerator.validateOutput surfaces the validator's first
+      // error as a string. Confirm the structural-minimum message made
+      // it through.
+      expect(typeof result.error).toBe('string');
+      expect(result.error).toContain('too minimal');
     });
   });
 

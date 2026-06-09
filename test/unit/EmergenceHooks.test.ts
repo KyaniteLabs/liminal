@@ -39,6 +39,24 @@ describe('EmergenceHooks', () => {
     expect(result.placement.outcome).toBe('new-cell');
   }, emergenceHooksTestTimeoutMs);
 
+  it('getArchive() hydrates persisted cells for a fresh instance (was a cold empty archive)', async () => {
+    // Persist a creative run via one instance.
+    const writer = new EmergenceHooks(liminalFs);
+    const run = await writer.onCreativeRun({
+      output: 'function draw() { background(10); rect(20, 20, 60, 60); }',
+      qualityScore: 0.85,
+      provenance: 'fresh-generation',
+      seed: 'persist-seed',
+    });
+    expect(run.placement.accepted).toBe(true);
+
+    // A fresh instance on the same store (the `garden status` / gardener scenario) must see
+    // the persisted cell through getArchive() — previously it read a cold, empty archive,
+    // which floored garden health at the 10% "no data" default.
+    const reader = new EmergenceHooks(SinterFS.open(tmpDir));
+    expect(reader.getArchive().getAllCells().length).toBe(1);
+  }, emergenceHooksTestTimeoutMs);
+
   it('rejects low-quality artifacts', async () => {
     const hooks = new EmergenceHooks(liminalFs, { minQuality: 0.5 });
     const result = await hooks.onCreativeRun({

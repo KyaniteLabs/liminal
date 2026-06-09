@@ -210,21 +210,31 @@ describe('HTMLValidator', () => {
       expect(result.errors).toContain('HTML Security: document.write() is discouraged');
     });
 
-    it('should detect innerHTML assignment', () => {
-      const code = `<!DOCTYPE html>
+    it('allows static innerHTML literals but flags dynamic/interpolated assignments', () => {
+      const base = `<!DOCTYPE html>
 <html>
 <head><title>Test</title></head>
 <body>
   <div id="app"></div>
   <script>
-    document.getElementById('app').innerHTML = '<p>Content</p>';
+    document.getElementById('app').__ASSIGN__;
   </script>
 </body>
 </html>`;
 
-      const result = HTMLValidator.validate(code);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toContain('HTML Security: innerHTML assignment - ensure content is sanitized');
+      // Static literal — no untrusted data; safe in self-contained sandboxed artifacts.
+      const staticResult = HTMLValidator.validate(base.replace('__ASSIGN__', "innerHTML = '<p>Content</p>'"));
+      expect(staticResult.errors.some((e) => e.includes('innerHTML'))).toBe(false);
+
+      // Dynamic value (variable) — flagged as an injection sink.
+      const dynamicResult = HTMLValidator.validate(base.replace('__ASSIGN__', 'innerHTML = userSuppliedHtml'));
+      expect(dynamicResult.valid).toBe(false);
+      expect(dynamicResult.errors.some((e) => e.includes('innerHTML assigned a dynamic value'))).toBe(true);
+
+      // Interpolated template — flagged.
+      const interpResult = HTMLValidator.validate(base.replace('__ASSIGN__', 'innerHTML = `<p>${label}</p>`'));
+      expect(interpResult.valid).toBe(false);
+      expect(interpResult.errors.some((e) => e.includes('innerHTML assigned an interpolated template'))).toBe(true);
     });
 
     it('should warn about missing title', () => {

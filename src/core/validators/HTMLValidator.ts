@@ -113,7 +113,13 @@ export class HTMLValidator {
       { pattern: /eval\s*\(/i, msg: 'Dangerous eval() detected' },
       { pattern: /new\s+Function\s*\(/i, msg: 'Dangerous new Function() detected' },
       { pattern: /document\.write\s*\(/i, msg: 'document.write() is discouraged' },
-      { pattern: /innerHTML\s*=/i, msg: 'innerHTML assignment - ensure content is sanitized' },
+      // innerHTML is only an injection sink when assigned a DYNAMIC value (a variable,
+      // call, or interpolated template). A static string/template literal carries no
+      // untrusted data and is safe + common in self-contained generated UI — flagging
+      // those as a hard error needlessly blocked legitimate output (e.g. tone/kinetic
+      // audio UIs that do `el.innerHTML = '<button>…'`). Only flag the dynamic cases.
+      { pattern: /innerHTML\s*=(?!=)\s*[A-Za-z_$(]/i, msg: 'innerHTML assigned a dynamic value - sanitize or build with textContent/createElement' },
+      { pattern: /innerHTML\s*=(?!=)\s*`[^`]*\$\{/i, msg: 'innerHTML assigned an interpolated template - sanitize or build with textContent/createElement' },
     ];
 
     for (const { pattern, msg } of dangerousPatterns) {

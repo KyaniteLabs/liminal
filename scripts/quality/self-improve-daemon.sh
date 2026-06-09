@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+#
+# Permanent self-improvement loop (GLM) — the persistent, self-healing daemon.
+#
+# Runs the #664 domain-diversified self-improve cycle on a paced interval, forever,
+# against the global ~/.sinter config (generator + evaluator = GLM). Two layers of
+# self-healing:
+#   - inner:  a failed cycle is logged and the loop continues (never exits on error)
+#   - outer:  launchd KeepAlive restarts this whole script if it is ever killed/crashes
+# Persistent: launchd RunAtLoad starts it at login and across reboots.
+#
+# Managed by ~/Library/LaunchAgents/com.sinter.self-improve.plist
+# (install/uninstall via scripts/quality/install-self-improve-daemon.sh).
+#
+# Tunables (env): SINTER_REPO, SINTER_CYCLE_COUNT, SINTER_CYCLE_INTERVAL (seconds).
+
+set -u
+
+REPO="${SINTER_REPO:-$HOME/workspaces/liminal}"
+COUNT="${SINTER_CYCLE_COUNT:-3}"
+INTERVAL="${SINTER_CYCLE_INTERVAL:-3600}"   # seconds between cycles (default: 1h)
+
+export PATH="/opt/homebrew/bin:/usr/bin:/bin:${PATH:-}"
+
+cd "$REPO" || { echo "[daemon] FATAL: repo not found at $REPO"; exit 1; }
+
+echo "[daemon $(date -u +%FT%TZ)] started — repo=$REPO count=$COUNT interval=${INTERVAL}s (GLM)"
+
+while true; do
+  echo "[daemon $(date -u +%FT%TZ)] cycle start"
+  if node scripts/quality/self-improve-cycle.mjs "$COUNT"; then
+    echo "[daemon $(date -u +%FT%TZ)] cycle ok"
+  else
+    echo "[daemon $(date -u +%FT%TZ)] cycle FAILED (rc=$?) — continuing"
+  fi
+  echo "[daemon $(date -u +%FT%TZ)] sleeping ${INTERVAL}s"
+  sleep "$INTERVAL"
+done

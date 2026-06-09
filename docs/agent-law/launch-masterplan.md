@@ -12,6 +12,8 @@
 > `main @ 8db42472`; PR #646 merged; ratchet output labels gated vs advisory; visual lock is 6/12, not 12/12.
 > Updated 2026-06-08 20:52 PDT after closeout docs sync:
 > `main @ bd894efa`; PR #647 merged; master plan + runbook record the honest Wave-2 state; 0 open PRs.
+> Updated 2026-06-08 22:05 PDT after CI packet repair:
+> `main @ cbec734b`; PR #649 merged; CI packet lane added; #650 held pending no-fake-fallback GLSL revision.
 > This file defines *what "launched" means*, *who owns which files*, and *how the
 > work converges*. Lanes map to **directories** so multiple workers run in
 > parallel with zero file collisions.
@@ -28,7 +30,7 @@ Launch gate = **M1–M4 + M7 green · M5 showing a credible upward trend · M6 a
 | # | Category | Green-gate (measurable "done") | Status @ establish |
 |---|----------|--------------------------------|--------------------|
 | 1 | Generation engine | operator-path real-LLM verification re-runs green | 🟢 |
-| 2 | Creative Body maturity | a CORE set (Simon: **all** domains) each pass a headless **gauntlet** in CI; rest labeled beta | 🟡 #646 makes ratchet output honest; #647 records Kimi visual audit: 6/12 lock-ready, 2 beta, 4 pass-but-weak |
+| 2 | Creative Body maturity | a CORE set (Simon: **all** domains) each pass a headless **gauntlet** in CI; rest labeled beta | 🟡 #646 makes ratchet output honest; #647 records Kimi visual audit: 6/12 lock-ready, 2 beta, 4 pass-but-weak; #650 needs revision before merge |
 | 3 | SI – accumulation | regression-locked | 🟢 |
 | 4 | SI – **actually improving** | vision-audit **trend log** over ≥10 cron cycles shows rising quality, main-agent-graded (anti-Goodhart) | 🟡 cron live |
 | 5 | Evaluator | `evaluator` role reachable; real run returns **non-degraded** confidence; cron runs on it | 🟢 (GLM) |
@@ -74,7 +76,7 @@ M5 (#4 cron + vision trend) runs in background the whole time — the slow gate
 
 ## 5. Active dispatch (2026-06-08)
 
-Current live state at 2026-06-08 20:52 PDT: **0 open PRs** after #647. The domain-wave PR stack landed through #633; #642 landed Kimi-calibrated blank/flat honesty; #644 bounded SVG retry/failure behavior; #646 made ratchet output explicitly label gated vs advisory domains; #647 recorded the honest Wave-2 plan state.
+Current live state at 2026-06-08 22:05 PDT: **1 open PR** after #649: #650 is held for revision because its GLSL fallback shader risks false-green output. The domain-wave PR stack landed through #633; #642 landed Kimi-calibrated blank/flat honesty; #644 bounded SVG retry/failure behavior; #646 made ratchet output explicitly label gated vs advisory domains; #647 recorded the honest Wave-2 plan state; #649 repaired the deterministic organism CI failure without weakening validators.
 
 | Worker | Branch/PR | Lane result |
 |--------|-----------|-------------|
@@ -90,13 +92,16 @@ Current live state at 2026-06-08 20:52 PDT: **0 open PRs** after #647. The domai
 | Minimax / ratchet honesty | #646 | Ratchet table now labels `GATED` vs `advisory`; success text reports gated denominator and names advisory failures |
 | Kimi all-domain visual audit | evidence-only | 6 lock-ready: p5, three, html, revideo, tone, strudel; beta: glsl, hydra; pass-but-weak: kinetic, svg, ascii, textgen |
 | Orchestrator / final plan sync | #647 | Master plan + runbook record the honest 6/12 lock state and Wave-2 priorities |
+| C / CI repair | #649 | Deterministic organism fixtures now satisfy Strudel/Hydra gallery validation; validators stayed intact |
+| Minimax / GLSL stabilization | #650 | Held: keep precision-injection idea, remove fallback shader path that can mask compile failures |
+| Orchestrator / CI packet lane | docs/ci-investigations | One-file CI handoff packet format added after run 27182845442 |
 
 Next dispatch should be Wave 2, not more Wave 1 merging:
 
 | Priority | Lane task | Owner suggestion |
 |----------|-----------|------------------|
 | 1 | Stabilize Hydra: historical 43% failure rate from half-black partial frames + blank washout; keep partial-frame human-review unless same Hydra failure recurs | Hydra/render lane |
-| 2 | Stabilize GLSL: historical 33% shader compile error screens; surface browser shader logs and strengthen retry/validation | GLSL lane |
+| 2 | Stabilize GLSL: historical 33% shader compile error screens; revise #650 so precision normalization stays but fallback-render masking is removed | GLSL lane |
 | 3 | Boost visual complexity for Kinetic/SVG/ASCII/TextGen; stable but pass-but-weak | prompt/generator lanes |
 | 4 | Kinetic recovery still previously printed invalid HTML after #632; recheck after #646 honest output before deciding if a code lane remains | kinetic generator lane |
 | 5 | Resume #7 Surfaces, #8 secrets hardening, #9 design debt, and M5 trend audits after domain stabilization decisions | distribute after domain lock |

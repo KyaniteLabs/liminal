@@ -623,6 +623,36 @@ export async function runCli(argv) {
   if (!Number.isFinite(options.timeoutMs) || options.timeoutMs <= 0) throw new Error('--timeout-ms must be a positive number');
   if (!Number.isFinite(options.renderWaitMs) || options.renderWaitMs < 0) throw new Error('--render-wait-ms must be a non-negative number');
 
+  // Stale-build guard: warn if dist/ is older than the latest git commit.
+  // Prevents false gauntlet results from outdated compiled output.
+  try {
+    const { execSync } = await import('node:child_process');
+    const gitTs = Number(execSync('git log -1 --format=%ct', { encoding: 'utf8' }).trim()) * 1000;
+    // Find the newest .js file in dist/ using Node fs (avoids platform-specific stat flags)
+    const distDir = path.resolve(process.cwd(), 'dist');
+    let newestMs = 0;
+    const walkDir = async (dir) => {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) await walkDir(full);
+        else if (entry.name.endsWith('.js')) {
+          const st = await fs.stat(full);
+          if (st.mtimeMs > newestMs) newestMs = st.mtimeMs;
+        }
+      }
+    };
+    await walkDir(distDir).catch(() => {});
+    if (newestMs === 0) {
+      console.warn('\n[gauntlet] WARNING: dist/ not found or empty. Run "pnpm build" first.\n');
+    } else if (newestMs < gitTs) {
+      const ageMin = Math.round((gitTs - newestMs) / 60_000);
+      console.warn(`\n[gauntlet] WARNING: dist/ is ${ageMin} min older than HEAD. Run "pnpm build" before gauntlet to avoid stale-build false results.\n`);
+    }
+  } catch {
+    // git or fs check failed — non-fatal, continue
+  }
+
   await fs.mkdir(options.outDir, { recursive: true });
   const runId = new Date().toISOString().replace(/[:.]/g, '-');
   await registerAllGenerators();

@@ -492,6 +492,15 @@ ${safeCommentCode}
       normalized = normalized.replace(new RegExp(`\\b${outVar}\\b`, 'g'), 'gl_FragColor');
     }
 
+    // WebGL1 / GLSL ES 1.00 fragment shaders MUST declare a precision for the
+    // default float or compile fails with "No precision specified for default
+    // float". The GLSL 300 strip above has already downgraded the shader, so
+    // inject here. Matches ShaderGenerator.wrapForGallery's behavior so the
+    // gauntlet screenshot never shows a shader-error screen for this case.
+    if (!/^\s*precision\s+(?:lowp|mediump|highp)\s+float\s*;/m.test(normalized)) {
+      normalized = `precision mediump float;\n${normalized}`;
+    }
+
     return normalized;
   }
 

@@ -110,4 +110,118 @@ describe('ReplayBundle', () => {
       expect(rec.failureClass).not.toBeNull();
     });
   });
+
+  describe('inferFailureClass branches', () => {
+    it('returns harness-issue when no attempts exist', () => {
+      ledger.createTask({
+        id: 'F001', title: 'Empty', description: 'No attempts',
+        taskClass: 'leaf',
+        files: { allowlist: [], denylist: [] },
+        verifyCommand: 'echo ok', scoringCriteria: ['x'], lane: 1, maxAttempts: 3,
+      });
+
+      const bundle = new ReplayBundle(ledger);
+      const rec = bundle.recommendRetry('F001');
+
+      expect(rec.failureClass).toBe('harness-issue');
+      expect(rec.action).toBe('fix-harness');
+    });
+
+    it('returns provider-issue for timeout reason', () => {
+      ledger.createTask({
+        id: 'F002', title: 'Timeout', description: 'Provider timeout',
+        taskClass: 'leaf',
+        files: { allowlist: [], denylist: [] },
+        verifyCommand: 'echo ok', scoringCriteria: ['x'], lane: 1, maxAttempts: 3,
+      });
+      ledger.recordAttempt({
+        id: 'A1', taskId: 'F002', startedAt: new Date().toISOString(),
+        finalScore: 0.1, reason: 'Generation timeout after 120s', status: 'failed',
+      });
+
+      const bundle = new ReplayBundle(ledger);
+      const rec = bundle.recommendRetry('F002');
+
+      expect(rec.failureClass).toBe('provider-issue');
+      expect(rec.action).toBe('fallback-provider');
+    });
+
+    it('returns provider-issue for rate limit (429)', () => {
+      ledger.createTask({
+        id: 'F003', title: 'Rate', description: 'Rate limited',
+        taskClass: 'leaf',
+        files: { allowlist: [], denylist: [] },
+        verifyCommand: 'echo ok', scoringCriteria: ['x'], lane: 1, maxAttempts: 3,
+      });
+      ledger.recordAttempt({
+        id: 'A1', taskId: 'F003', startedAt: new Date().toISOString(),
+        finalScore: 0, reason: 'HTTP 429 rate limit exceeded', status: 'failed',
+      });
+
+      const bundle = new ReplayBundle(ledger);
+      const rec = bundle.recommendRetry('F003');
+
+      expect(rec.failureClass).toBe('provider-issue');
+    });
+
+    it('returns harness-issue for harness error reason', () => {
+      ledger.createTask({
+        id: 'F004', title: 'Harness', description: 'Harness failure',
+        taskClass: 'leaf',
+        files: { allowlist: [], denylist: [] },
+        verifyCommand: 'echo ok', scoringCriteria: ['x'], lane: 1, maxAttempts: 3,
+      });
+      ledger.recordAttempt({
+        id: 'A1', taskId: 'F004', startedAt: new Date().toISOString(),
+        finalScore: 0.5, reason: 'harness crashed during verification', status: 'failed',
+      });
+
+      const bundle = new ReplayBundle(ledger);
+      const rec = bundle.recommendRetry('F004');
+
+      expect(rec.failureClass).toBe('harness-issue');
+    });
+
+    it('returns generator-weakness for low score after multiple attempts', () => {
+      ledger.createTask({
+        id: 'F005', title: 'Weak', description: 'Weak output',
+        taskClass: 'leaf',
+        files: { allowlist: [], denylist: [] },
+        verifyCommand: 'echo ok', scoringCriteria: ['x'], lane: 1, maxAttempts: 3,
+      });
+      ledger.recordAttempt({
+        id: 'A1', taskId: 'F005', startedAt: new Date().toISOString(),
+        finalScore: 0.2, reason: 'low score', status: 'failed',
+      });
+      ledger.recordAttempt({
+        id: 'A2', taskId: 'F005', startedAt: new Date().toISOString(),
+        finalScore: 0.15, reason: 'still weak', status: 'failed',
+      });
+
+      const bundle = new ReplayBundle(ledger);
+      const rec = bundle.recommendRetry('F005');
+
+      expect(rec.failureClass).toBe('generator-weakness');
+      expect(rec.action).toBe('retry-different-temp');
+    });
+
+    it('returns verifier-opacity as default fallback', () => {
+      ledger.createTask({
+        id: 'F006', title: 'Opaque', description: 'Can not distinguish',
+        taskClass: 'leaf',
+        files: { allowlist: [], denylist: [] },
+        verifyCommand: 'echo ok', scoringCriteria: ['x'], lane: 1, maxAttempts: 3,
+      });
+      ledger.recordAttempt({
+        id: 'A1', taskId: 'F006', startedAt: new Date().toISOString(),
+        finalScore: 0.6, reason: 'unclear scoring', status: 'failed',
+      });
+
+      const bundle = new ReplayBundle(ledger);
+      const rec = bundle.recommendRetry('F006');
+
+      expect(rec.failureClass).toBe('verifier-opacity');
+      expect(rec.action).toBe('respec');
+    });
+  });
 });

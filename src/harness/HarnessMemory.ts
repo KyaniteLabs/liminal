@@ -103,22 +103,26 @@ export interface HarnessMemoryState {
 }
 
 const MEMORY_VERSION = 2; // Incremented for calibration support
-const DEFAULT_STATE: HarnessMemoryState = {
-  version: MEMORY_VERSION,
-  lastUpdated: new Date().toISOString(),
-  tasks: [],
-  adaptations: [],
-  episodes: [],
-  patterns: [],
-  calibration: [],
-  stats: {
-    totalGenerations: 0,
-    totalConversations: 0,
-    totalFailures: 0,
-    totalAdaptations: 0,
-    totalCalibrations: 0,
-  },
-};
+
+/** Factory — returns a fresh state object each call so arrays are never shared. */
+function createDefaultState(): HarnessMemoryState {
+  return {
+    version: MEMORY_VERSION,
+    lastUpdated: new Date().toISOString(),
+    tasks: [],
+    adaptations: [],
+    episodes: [],
+    patterns: [],
+    calibration: [],
+    stats: {
+      totalGenerations: 0,
+      totalConversations: 0,
+      totalFailures: 0,
+      totalAdaptations: 0,
+      totalCalibrations: 0,
+    },
+  };
+}
 
 export class HarnessMemory {
   private state: HarnessMemoryState;
@@ -133,7 +137,7 @@ export class HarnessMemory {
     this.memoryDir = join(homedir(), '.sinter', 'memory');
     this.memoryFile = join(this.memoryDir, 'harness-memory.json');
     // this.calibrationFile = join(this.memoryDir, 'calibration-data.json'); // Reserved for future use
-    this.state = { ...DEFAULT_STATE };
+    this.state = createDefaultState();
   }
 
   /** Check if the last save operation failed. */
@@ -162,7 +166,7 @@ export class HarnessMemory {
           // Corrupted or unreadable file — log as warning, start fresh
           Logger.warn('HarnessMemory', `Memory file unreadable, starting fresh: ${err instanceof Error ? err.message : err}`);
         }
-        this.state = { ...DEFAULT_STATE };
+        this.state = createDefaultState();
         const initSave = await this.save();
         if (initSave.isErr()) {
           Logger.warn('HarnessMemory', `Initial save failed: ${initSave.error.message}`);
@@ -182,7 +186,7 @@ export class HarnessMemory {
 
     } catch (err) {
       Logger.error('HarnessMemory', `Initialization failed: ${err}`);
-      this.state = { ...DEFAULT_STATE };
+      this.state = createDefaultState();
     }
   }
 
@@ -240,14 +244,14 @@ export class HarnessMemory {
 
       // Ensure totalCalibrations stat exists
       if (!data.stats) {
-        data.stats = { ...DEFAULT_STATE.stats };
+        data.stats = createDefaultState().stats;
       }
       if (data.stats.totalCalibrations === undefined) {
         data.stats.totalCalibrations = 0;
       }
     }
     return {
-      ...DEFAULT_STATE,
+      ...createDefaultState(),
       ...data,
     };
   }
@@ -720,7 +724,7 @@ export class HarnessMemory {
    * Clear all memory (use with caution)
    */
   async clear(): Promise<Result<void, PersistenceError>> {
-    this.state = { ...DEFAULT_STATE };
+    this.state = createDefaultState();
     this.dirty = true;
     return this.save();
   }

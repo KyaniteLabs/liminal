@@ -11,7 +11,13 @@ import { generatorRegistry } from '../../dist/generators/GeneratorRegistry.js';
 import { KineticWrapper } from '../../dist/generators/kinetic/KineticWrapper.js';
 import { registerAllGenerators } from '../../dist/generators/registerGenerators.js';
 import { HTMLWrapper } from '../../dist/utils/htmlWrapper.js';
-import { relativeLuminance, DARK_LUMINANCE_THRESHOLD } from '../quality/luminance.mjs';
+import {
+  relativeLuminance,
+  classifyRenderQuality,
+  BRIGHT_PIXEL_LUMINANCE,
+  WHITE_LUMINANCE,
+  WHITE_SATURATION_MAX,
+} from '../quality/luminance.mjs';
 
 const DEFAULT_OUT_DIR = '.quality/gauntlet';
 const DEFAULT_TIMEOUT_MS = 120_000;
@@ -375,11 +381,14 @@ async function renderToPng(domain, code, outDir, runId, waitMs) {
 
     try {
       const { data, info } = await sharp(pngPath).raw().toBuffer({ resolveWithObject: true });
-      let totalLuminance = 0;
+      let totalLuminance = 0, brightCount = 0, whiteCount = 0;
       let minR = 255, maxR = 0, minG = 255, maxG = 0, minB = 255, maxB = 0;
       for (let i = 0; i < data.length; i += info.channels) {
         const r = data[i], g = data[i+1], b = data[i+2];
-        totalLuminance += relativeLuminance(r, g, b);
+        const lum = relativeLuminance(r, g, b);
+        totalLuminance += lum;
+        if (lum > BRIGHT_PIXEL_LUMINANCE) brightCount++;
+        if (lum > WHITE_LUMINANCE && (Math.max(r, g, b) - Math.min(r, g, b)) < WHITE_SATURATION_MAX) whiteCount++;
         if (r < minR) minR = r;
         if (r > maxR) maxR = r;
         if (g < minG) minG = g;
@@ -387,12 +396,14 @@ async function renderToPng(domain, code, outDir, runId, waitMs) {
         if (b < minB) minB = b;
         if (b > maxB) maxB = b;
       }
-      const meanLuminance = totalLuminance / (info.width * info.height);
-      if (minR === maxR && minG === maxG && minB === maxB) {
-        errors.push('Render is blank (solid color)');
-      } else if (meanLuminance < DARK_LUMINANCE_THRESHOLD) {
-        errors.push(`Render is too dark (mean luminance: ${meanLuminance.toFixed(3)})`);
-      }
+      const pixelCount = info.width * info.height;
+      const issue = classifyRenderQuality({
+        isSolid: minR === maxR && minG === maxG && minB === maxB,
+        meanLuminance: totalLuminance / pixelCount,
+        brightFraction: brightCount / pixelCount,
+        whiteFraction: whiteCount / pixelCount,
+      });
+      if (issue) errors.push(issue);
     } catch (err) {
       errors.push(`Failed to analyze visual output: ${err.message}`);
     }

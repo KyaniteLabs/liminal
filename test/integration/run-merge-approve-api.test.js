@@ -13,6 +13,22 @@ const realFetch = globalThis.__liminalNativeFetch || globalThis.fetch.bind(globa
 const TEST_DIR = path.join(os.tmpdir(), `atelier-run-merge-${Date.now()}`);
 const TEST_CONFIG_PATH = path.join(TEST_DIR, 'config.json');
 const TEST_GALLERY = path.join(TEST_DIR, 'gallery');
+const VALID_ORGANISM_MUSIC = [
+  'setcps(1)',
+  'stack(',
+  '  s("bd ~ hh ~").gain(0.75),',
+  '  note("c4 e4 g4 b4").sound("sine").slow(2).gain(0.45)',
+  ').room(0.25)',
+].join('\n');
+const VALID_ORGANISM_VISUAL = [
+  'osc(0.2, 0.08, 0.8)',
+  '  .kaleid(4)',
+  '  .color(0.9, 0.45, 0.2)',
+  '  .rotate(0.1)',
+  '  .modulate(noise(2.5), 0.08)',
+  '  .blend(shape(4, 0.35).luma(0.2), 0.25)',
+  '  .out(o0);',
+].join('\n');
 
 describe('Run / Merge / Approve / Propose-mutate API', () => {
   /** @type {import('http').Server} */
@@ -154,8 +170,8 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
       const dirName = `${dateStr}--${projectName}`;
       const proposed = {
         type: 'organism',
-        musicCode: 'setcps(1)\nn("c4").sound("sine")',
-        visualCode: 'osc(0.2).out();',
+        musicCode: VALID_ORGANISM_MUSIC,
+        visualCode: VALID_ORGANISM_VISUAL,
       };
 
       const { status } = await post('/api/approve', {
@@ -209,8 +225,8 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
       await fs.mkdir(projectDir, { recursive: true });
       await fs.writeFile(path.join(projectDir, 'v1.js'), JSON.stringify({
         type: 'organism',
-        musicCode: 'setcps(1)\nn("c4").sound("sine")',
-        visualCode: 'osc(0.2).out();',
+        musicCode: VALID_ORGANISM_MUSIC,
+        visualCode: VALID_ORGANISM_VISUAL,
       }));
 
       const { result, externalUrls } = await forbidExternalFetches(() => post('/api/propose-mutate', {

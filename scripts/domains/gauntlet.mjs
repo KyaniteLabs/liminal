@@ -197,13 +197,23 @@ export function buildDomainReceipt(input) {
   };
 }
 
-export function buildMarkdownTable(receipts) {
-  const lines = [
-    '| Domain | Generate | Validate | Render/Receipt | Status | Failure reason |',
-    '| --- | --- | --- | --- | --- | --- |',
-  ];
+export function buildMarkdownTable(receipts, ratchetFloor = []) {
+  const ratchetSet = new Set(ratchetFloor);
+  const withRatchetColumn = ratchetFloor.length > 0;
+  const header = withRatchetColumn
+    ? '| Domain | Generate | Validate | Render/Receipt | Ratchet | Status | Failure reason |'
+    : '| Domain | Generate | Validate | Render/Receipt | Status | Failure reason |';
+  const separator = withRatchetColumn
+    ? '| --- | --- | --- | --- | --- | --- | --- |'
+    : '| --- | --- | --- | --- | --- | --- |';
+  const lines = [header, separator];
   for (const receipt of receipts) {
-    lines.push(`| ${receipt.domain} | ${boolCell(receipt.generated.ok)} | ${boolCell(receipt.validation.ok)} | ${boolCell(receipt.renderOrReceipt.ok)} | ${receipt.status} | ${cleanReason(receipt.failureReason)} |`);
+    const ratchetCell = withRatchetColumn ? (ratchetSet.has(receipt.domain) ? 'GATED' : 'advisory') : '';
+    const base = `| ${receipt.domain} | ${boolCell(receipt.generated.ok)} | ${boolCell(receipt.validation.ok)} | ${boolCell(receipt.renderOrReceipt.ok)}`;
+    const tail = withRatchetColumn
+      ? ` | ${ratchetCell} | ${receipt.status} | ${cleanReason(receipt.failureReason)} |`
+      : ` | ${receipt.status} | ${cleanReason(receipt.failureReason)} |`;
+    lines.push(`${base}${tail}`);
   }
   return lines.join('\n');
 }
@@ -533,9 +543,14 @@ function redactCode(value) {
   return copy;
 }
 
-function auditMarkdown(receipts, runId) {
-  const pass = receipts.filter((receipt) => receipt.status === 'PASS').map((receipt) => receipt.domain);
-  const fail = receipts.filter((receipt) => receipt.status === 'FAIL').map((receipt) => receipt.domain);
+function auditMarkdown(receipts, runId, ratchetFloor = []) {
+  const ratchetSet = new Set(ratchetFloor);
+  const gated = receipts.filter((receipt) => ratchetSet.has(receipt.domain));
+  const advisory = receipts.filter((receipt) => !ratchetSet.has(receipt.domain));
+  const gatedPass = gated.filter((receipt) => receipt.status === 'PASS');
+  const advisoryPass = advisory.filter((receipt) => receipt.status === 'PASS');
+  const gatedFail = gated.filter((receipt) => receipt.status === 'FAIL');
+  const advisoryFail = advisory.filter((receipt) => receipt.status === 'FAIL');
   const previewDescription = (domain) => {
     if (domain.renderMode === 'receipt') return 'code receipt check';
     if (domain.id === 'kinetic') return 'headless PNG via KineticWrapper/render pattern';
@@ -548,11 +563,15 @@ function auditMarkdown(receipts, runId) {
     '',
     'This audit enumerates the FINISH_LINE creative domains and runs the product generator, CodeValidator path, and render-or-receipt smoke for each one. Prompts include a run-specific never-used nonce to avoid stale generation cache hits.',
     '',
-    buildMarkdownTable(receipts),
+    buildMarkdownTable(receipts, ratchetFloor),
     '',
-    `PASS domains: ${pass.length ? pass.map((domain) => `\`${domain}\``).join(', ') : 'none'}.`,
+    `Gated (ratchet floor) domains: ${gated.length ? gated.map((d) => `\`${d.domain}\``).join(', ') : 'none'} — ${gatedPass.length}/${gated.length} PASS.`,
     '',
-    `FAIL domains: ${fail.length ? fail.map((domain) => `\`${domain}\``).join(', ') : 'none'}.`,
+    `Advisory domains: ${advisory.length ? advisory.map((d) => `\`${d.domain}\``).join(', ') : 'none'} — ${advisoryPass.length}/${advisory.length} PASS.`,
+    '',
+    `Gated FAIL domains: ${gatedFail.length ? gatedFail.map((d) => `\`${d.domain}\``).join(', ') : 'none'}.`,
+    '',
+    `Advisory FAIL domains: ${advisoryFail.length ? advisoryFail.map((d) => `\`${d.domain}\``).join(', ') : 'none'}.`,
     '',
     'Generation/validation/preview map:',
     '',
@@ -581,6 +600,17 @@ export async function runCli(argv) {
   const runId = new Date().toISOString().replace(/[:.]/g, '-');
   await registerAllGenerators();
 
+  let ratchetConfig = [];
+  if (options.ratchet) {
+    try {
+      ratchetConfig = JSON.parse(await fs.readFile(path.join(process.cwd(), 'scripts/domains/passing-domains.json'), 'utf8'));
+    } catch (e) {
+      console.error(`\n[RATCHET] ERROR: Could not read passing-domains.json (${e.message})`);
+      return 1;
+    }
+  }
+  const ratchetSet = new Set(ratchetConfig);
+
   const domains = selectDomains(options);
   const receipts = [];
   for (const domain of domains) {
@@ -590,31 +620,29 @@ export async function runCli(argv) {
     console.log(`[gauntlet] ${domain.id}: ${receipt.status}${receipt.failureReason ? ` (${receipt.failureReason})` : ''}`);
   }
 
-  const table = buildMarkdownTable(receipts);
+  const table = buildMarkdownTable(receipts, ratchetConfig);
   console.log(table);
 
   const summaryPath = path.join(options.outDir, `${runId}-summary.json`);
-  await fs.writeFile(summaryPath, `${JSON.stringify({ runId, receipts }, null, 2)}\n`, 'utf8');
+  await fs.writeFile(summaryPath, `${JSON.stringify({ runId, receipts, ratchetFloor: ratchetConfig }, null, 2)}\n`, 'utf8');
   if (options.markdown) {
     await fs.mkdir(path.dirname(options.markdown), { recursive: true });
-    await fs.writeFile(options.markdown, `${auditMarkdown(receipts, runId)}\n`, 'utf8');
+    await fs.writeFile(options.markdown, `${auditMarkdown(receipts, runId, ratchetConfig)}\n`, 'utf8');
   }
 
   let ratchetExitCode = 0;
   if (options.ratchet) {
-    try {
-      const ratchetConfig = JSON.parse(await fs.readFile(path.join(process.cwd(), 'scripts/domains/passing-domains.json'), 'utf8'));
-      const failedPassingDomains = receipts.filter((r) => r.status === 'FAIL' && ratchetConfig.includes(r.domain));
-      if (failedPassingDomains.length > 0) {
-        console.error(`\n[RATCHET] ERROR: The following domains were expected to pass but failed:`);
-        failedPassingDomains.forEach((f) => console.error(`  - ${f.domain}: ${f.failureReason}`));
-        ratchetExitCode = 1;
-      } else {
-        console.log(`\n[RATCHET] SUCCESS: All expected domains passed.`);
-      }
-    } catch (e) {
-      console.error(`\n[RATCHET] ERROR: Could not read passing-domains.json (${e.message})`);
+    const failedPassingDomains = receipts.filter((r) => r.status === 'FAIL' && ratchetSet.has(r.domain));
+    const advisoryFails = receipts.filter((r) => r.status === 'FAIL' && !ratchetSet.has(r.domain));
+    if (failedPassingDomains.length > 0) {
+      console.error(`\n[RATCHET] FAIL: ${failedPassingDomains.length}/${ratchetConfig.length} gated domain(s) failed:`);
+      failedPassingDomains.forEach((f) => console.error(`  - ${f.domain}: ${f.failureReason}`));
       ratchetExitCode = 1;
+    } else {
+      console.log(`\n[RATCHET] OK: ${ratchetConfig.length}/${ratchetConfig.length} gated domains passed.`);
+    }
+    if (advisoryFails.length > 0) {
+      console.log(`[RATCHET] INFO: ${advisoryFails.length} advisory domain(s) failed (not gated): ${advisoryFails.map((f) => f.domain).join(', ')}`);
     }
   }
 

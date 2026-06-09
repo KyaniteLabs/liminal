@@ -1,6 +1,5 @@
 import { GenerationError } from '../../errors/GenerationError.js';
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
-import { harnessMemory } from '../../harness/HarnessMemory.js';
 import { SVG_MODE_PROFILES, inferSVGMode, type SVGMode } from './SVGModeProfiles.js';
 import { sanitizeSVG } from './SVGSanitizer.js';
 import { validateSVG } from './SVGValidator.js';
@@ -8,6 +7,9 @@ import { validateSVG } from './SVGValidator.js';
 export interface SVGGeneratorOptions extends TierBasedGeneratorOptions {
   mode?: SVGMode;
 }
+
+const SVG_PRIMARY_ATTEMPT_TIMEOUT_MS = 55_000;
+const SVG_RETRY_ATTEMPT_TIMEOUT_MS = 18_000;
 
 export class SVGGenerator extends TierBasedGenerator {
   private currentMode: SVGMode = 'generative-art';
@@ -21,15 +23,27 @@ export class SVGGenerator extends TierBasedGenerator {
     const svgPrompt = this.buildSVGPrompt(prompt, { mode: this.currentMode });
     let code: string;
     try {
-      code = await super.generate(svgPrompt, {
-        ...options,
-        maxTokens: options?.maxTokens ?? 1200,
-        useGeneratorTools: false,
-      });
+      code = await this.withAttemptTimeout(
+        options?.signal,
+        SVG_PRIMARY_ATTEMPT_TIMEOUT_MS,
+        (signal) => super.generate(svgPrompt, {
+          ...options,
+          signal,
+          maxTokens: options?.maxTokens ?? 1200,
+          useGeneratorTools: false,
+        }),
+      );
     } catch (error) {
       const direct = await this.retrySVGDirect(prompt, options);
-      if (direct) return direct;
-      throw error;
+      if (direct.svg) return direct.svg;
+      throw new GenerationError(
+        `SVGGenerator: provider did not return valid SVG within bounded attempts: ${direct.error ?? this.describeError(error)}`,
+        'svg',
+        {
+          upstreamError: this.describeError(error),
+          directRetryError: direct.error,
+        },
+      );
     }
     const sanitized = sanitizeSVG(code);
     const validation = validateSVG(sanitized, { mode: this.currentMode });
@@ -69,9 +83,10 @@ export class SVGGenerator extends TierBasedGenerator {
     ].filter(Boolean).join('\n');
   }
 
-  private async retrySVGDirect(prompt: string, options?: SVGGeneratorOptions): Promise<string | null> {
+  private async retrySVGDirect(prompt: string, options?: SVGGeneratorOptions): Promise<{ svg: string | null; error?: string }> {
     const mode = this.currentMode;
     const profile = SVG_MODE_PROFILES[mode];
+    let lastError: string | undefined;
     const prompts: Array<{ prompt: string; maxTokens: number; temperature?: number }> = [
       { prompt: [
         `Mode: ${mode} (${profile.label})`,
@@ -100,20 +115,34 @@ export class SVGGenerator extends TierBasedGenerator {
     ];
 
     for (const attempt of prompts) {
-      const result = await this.llm.complete({
-        systemPrompt: 'You create safe raw SVG. Output exactly one complete <svg>...</svg> document and nothing else.',
-        prompt: attempt.prompt,
-        maxTokens: attempt.maxTokens,
-        temperature: attempt.temperature ?? this.llm.getConfig().temperature,
-        signal: options?.signal,
-      });
-      if (!result.success || !result.text) continue;
+      let result: Awaited<ReturnType<typeof this.llm.complete>>;
+      try {
+        result = await this.withAttemptTimeout(
+          options?.signal,
+          SVG_RETRY_ATTEMPT_TIMEOUT_MS,
+          (signal) => this.llm.complete({
+            systemPrompt: 'You create safe raw SVG. Output exactly one complete <svg>...</svg> document and nothing else.',
+            prompt: attempt.prompt,
+            maxTokens: attempt.maxTokens,
+            temperature: attempt.temperature ?? this.llm.getConfig().temperature,
+            signal,
+          }),
+        );
+      } catch (error) {
+        lastError = this.describeError(error);
+        continue;
+      }
+      if (!result.success || !result.text) {
+        lastError = result.error ?? 'provider returned empty SVG text';
+        continue;
+      }
       const sanitized = sanitizeSVG(result.text);
       const validation = validateSVG(sanitized, { mode });
-      if (validation.valid) return validation.sanitized ?? sanitized;
+      if (validation.valid) return { svg: validation.sanitized ?? sanitized };
+      lastError = validation.error;
     }
 
-    return this.recoverSVGFromMemory(prompt, mode);
+    return { svg: null, error: lastError ?? 'provider returned no valid SVG candidate' };
   }
 
   private transparentBackgroundGuidance(prompt: string): string {
@@ -122,20 +151,34 @@ export class SVGGenerator extends TierBasedGenerator {
       : '';
   }
 
-  private recoverSVGFromMemory(prompt: string, mode: SVGMode): string | null {
-    const promptNeedles = prompt.toLowerCase().split(/\s+/).filter(word => word.length > 3).slice(0, 8);
-    const episodes = harnessMemory.getEpisodesByDomain('svg').slice().reverse();
-    for (const episode of episodes) {
-      if (!episode.code) continue;
-      const episodePrompt = (episode.prompt ?? '').toLowerCase();
-      const promptOverlap = promptNeedles.filter(word => episodePrompt.includes(word)).length;
-      if (promptOverlap < Math.min(3, promptNeedles.length)) continue;
-
-      const sanitized = sanitizeSVG(episode.code);
-      const validation = validateSVG(sanitized, { mode });
-      if (validation.valid) return validation.sanitized ?? sanitized;
+  private async withAttemptTimeout<T>(
+    parentSignal: AbortSignal | undefined,
+    timeoutMs: number,
+    run: (signal: AbortSignal) => Promise<T>,
+  ): Promise<T> {
+    if (parentSignal?.aborted) {
+      throw new Error('SVG generation aborted before provider attempt started');
     }
-    return null;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort(new Error(`SVG provider attempt timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+    const abortFromParent = () => {
+      controller.abort(parentSignal?.reason ?? new Error('SVG generation aborted'));
+    };
+    parentSignal?.addEventListener('abort', abortFromParent, { once: true });
+
+    try {
+      return await run(controller.signal);
+    } finally {
+      clearTimeout(timeout);
+      parentSignal?.removeEventListener('abort', abortFromParent);
+    }
+  }
+
+  private describeError(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
   }
 
   wrapForGallery(code: string): string {

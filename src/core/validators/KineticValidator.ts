@@ -26,6 +26,7 @@ export class KineticValidator {
     errors.push(...HTMLValidator.validate(trimmed).errors);
     errors.push(...this.validateSize(trimmed));
     errors.push(...this.validateCssSyntax(trimmed));
+    errors.push(...this.validateProofBrightness(trimmed));
     errors.push(...this.validateJavaScriptSyntax(trimmed));
     errors.push(...this.validateVisibleSurface(trimmed));
     errors.push(...this.validateMotion(trimmed));
@@ -97,6 +98,88 @@ export class KineticValidator {
       }
     }
     return errors;
+  }
+
+  private static validateProofBrightness(code: string): string[] {
+    for (const color of this.extractProofSurfaceBackgrounds(code)) {
+      const luminance = this.hexLuminance(color);
+      if (luminance < 48) {
+        return [
+          `Kinetic background color ${color} is too dark for image proof; use a bright or mid-tone scene background`,
+        ];
+      }
+    }
+    return [];
+  }
+
+  private static extractProofSurfaceBackgrounds(code: string): string[] {
+    const colors: string[] = [];
+    const css = this.extractTagContents(code, 'style').join('\n');
+    const variables = this.extractCssVariables(css);
+    const rulePattern = /([^{}]+)\{([^{}]*)\}/g;
+    for (const match of css.matchAll(rulePattern)) {
+      const selector = match[1] ?? '';
+      if (!this.isProofSurfaceSelector(selector)) continue;
+      colors.push(...this.extractBackgroundHexColors(match[2] ?? '', variables));
+    }
+
+    const inlinePattern = /<(html|body|main|section|article|div|svg)\b([^>]*)>/gi;
+    for (const match of code.matchAll(inlinePattern)) {
+      const tag = match[1] ?? '';
+      const attrs = match[2] ?? '';
+      if (tag.toLowerCase() !== 'html' && tag.toLowerCase() !== 'body' && !this.isProofSurfaceSelector(attrs)) {
+        continue;
+      }
+      const style = attrs.match(/\bstyle\s*=\s*["']([^"']*)["']/i)?.[1] ?? '';
+      colors.push(...this.extractBackgroundHexColors(style, variables));
+    }
+
+    return colors;
+  }
+
+  private static extractCssVariables(css: string): Map<string, string> {
+    const variables = new Map<string, string>();
+    for (const match of css.matchAll(/(--[-_a-zA-Z0-9]+)\s*:\s*([^;{}]+)/g)) {
+      variables.set(match[1] ?? '', match[2]?.trim() ?? '');
+    }
+    return variables;
+  }
+
+  private static isProofSurfaceSelector(selector: string): boolean {
+    return /\b(?:html|body|main|section|article)\b/i.test(selector) ||
+      /\.(?:scene|stage|canvas|kinetic|field|composition|viewport|art|poster|backdrop)\b/i.test(selector) ||
+      /#(?:app|root|scene|stage|canvas|kinetic)\b/i.test(selector);
+  }
+
+  private static extractBackgroundHexColors(declarations: string, variables: Map<string, string>): string[] {
+    const colors: string[] = [];
+    for (const match of declarations.matchAll(/\bbackground(?:-color)?\s*:\s*([^;}]+)/gi)) {
+      const value = match[1] ?? '';
+      colors.push(...this.extractHexColors(value, variables));
+    }
+    return colors;
+  }
+
+  private static extractHexColors(value: string, variables: Map<string, string>, seen = new Set<string>()): string[] {
+    const colors = Array.from(value.matchAll(/#(?:[0-9a-f]{6}|[0-9a-f]{3})\b/gi), (match) => match[0]);
+    for (const match of value.matchAll(/var\(\s*(--[-_a-zA-Z0-9]+)(?:\s*,\s*([^)]+))?\s*\)/g)) {
+      const name = match[1] ?? '';
+      if (seen.has(name)) continue;
+      seen.add(name);
+      const resolved = variables.get(name) ?? match[2] ?? '';
+      colors.push(...this.extractHexColors(resolved, variables, seen));
+    }
+    return colors;
+  }
+
+  private static hexLuminance(hex: string): number {
+    const normalized = hex.length === 4
+      ? `#${hex[1]}${hex[1]}${hex[2]}${hex[2]}${hex[3]}${hex[3]}`
+      : hex;
+    const red = Number.parseInt(normalized.slice(1, 3), 16);
+    const green = Number.parseInt(normalized.slice(3, 5), 16);
+    const blue = Number.parseInt(normalized.slice(5, 7), 16);
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
   }
 
   private static validateJavaScriptSyntax(code: string): string[] {

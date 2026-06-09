@@ -204,6 +204,7 @@ describe('SVGGenerator', () => {
     expect(toolLoop).not.toHaveBeenCalled();
     expect(complete).toHaveBeenCalledOnce();
     expect(complete.mock.calls[0]?.[0].maxTokens).toBe(1200);
+    expect(complete.mock.calls[0]?.[0].signal).toBeInstanceOf(AbortSignal);
     expect(svg).toContain('<circle');
     expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
   });
@@ -258,5 +259,28 @@ describe('SVGGenerator', () => {
     expect(complete).toHaveBeenCalledTimes(4);
     expect(svg).toContain('<svg');
     expect(svg).toContain('<path');
+  });
+
+  it('fails clearly when bounded provider attempts never return valid SVG', async () => {
+    process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
+    const llm = new LLMClient({ baseUrl: 'http://localhost:1234/v1', model: 'svg-test-model' });
+    const complete = vi.spyOn(llm, 'complete').mockResolvedValue({
+      text: '',
+      success: true,
+      error: 'empty response',
+    });
+    vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValue({
+      content: '',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: false,
+    });
+
+    const gen = new SVGGenerator(llm);
+
+    await expect(gen.generate('new bounded SVG proof prompt')).rejects.toThrow(
+      'SVGGenerator: provider did not return valid SVG within bounded attempts',
+    );
+    expect(complete).toHaveBeenCalledTimes(5);
   });
 });

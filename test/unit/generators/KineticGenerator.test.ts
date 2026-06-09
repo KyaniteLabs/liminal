@@ -84,7 +84,11 @@ describe('KineticGenerator', () => {
       text: '<!DOCTYPE html><html><head><style>@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } .word { animation: spin 2s infinite; }</style></head><body><div class="word">hello</div></body></html>',
       success: true,
     });
-    mockGenerate.mockClear();
+    mockGenerate.mockReset();
+    mockGenerate.mockResolvedValue({
+      code: '<!DOCTYPE html><html><head><style>@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style></head><body><div style="animation: spin 2s infinite">hello</div></body></html>',
+      success: true,
+    });
   });
 
   it('constructs with kinetic domain', () => {
@@ -131,23 +135,21 @@ describe('KineticGenerator', () => {
     expect(wrapped).toContain('kinetic-canvas');
   });
 
-  it('generateFull preserves the explicit recovery scaffold and failure reason if LLM returns empty code', async () => {
+  it('generateFull returns explicit failure without deterministic scaffold if LLM returns empty code', async () => {
     mockComplete.mockResolvedValueOnce({ text: '', success: true });
     mockGenerate.mockResolvedValueOnce({ code: '', success: true });
     const gen = new KineticGenerator();
     const result = await gen.generateFull('empty');
-    expect(result.code).toContain('<!DOCTYPE html>');
-    expect(result.code).toContain('Sinter recovery');
-    expect(result.code).toContain('@keyframes orbit');
+    expect(result.code).toBe('');
     expect(result.success).toBe(false);
-    expect(result.error).toContain('Recovered with deterministic CSS kinetic scaffold');
+    expect(result.error).toBe('LLM returned empty CSS kinetic HTML');
   });
 
-  it('generate rejects recovery scaffolds so provider failures stay visible', async () => {
+  it('generate rejects provider failures without returning scaffold HTML', async () => {
     mockComplete.mockResolvedValueOnce({ text: '', success: true });
     mockGenerate.mockResolvedValueOnce({ code: '', success: true });
     const gen = new KineticGenerator();
 
-    await expect(gen.generate('empty')).rejects.toThrow('Recovered with deterministic CSS kinetic scaffold');
+    await expect(gen.generate('empty')).rejects.toThrow('LLM returned empty CSS kinetic HTML');
   });
 });

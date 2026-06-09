@@ -8,7 +8,7 @@ const KINETIC_HTML = `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kinetic Route Smoke</title>
   <style>
-    html, body { margin: 0; min-height: 100%; background: #0c1018; color: white; }
+    html, body { margin: 0; min-height: 100%; background: #486581; color: white; }
     body { display: grid; place-items: center; overflow: hidden; font-family: system-ui, sans-serif; }
     .stage { position: relative; width: 80vw; height: 60vh; display: grid; place-items: center; }
     .word { position: absolute; font-size: clamp(24px, 7vw, 84px); font-weight: 900; animation: drift 7s linear infinite; }

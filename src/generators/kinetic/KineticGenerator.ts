@@ -37,7 +37,7 @@ export class KineticGenerator extends TierBasedGenerator {
     let response = await this.tryCompactDirect(prompt, options);
     if (!response) {
       if (this.usesMiniMaxAnthropic()) {
-        return this.buildRecoveryKineticResponse(prompt, 'MiniMax Anthropic-compatible endpoint did not return valid CSS kinetic HTML inside the bounded live-journey budget');
+        return this.buildFailedKineticResponse('MiniMax Anthropic-compatible endpoint did not return valid CSS kinetic HTML inside the bounded live-journey budget');
       }
       try {
         response = await this.llm.generate(
@@ -47,12 +47,12 @@ export class KineticGenerator extends TierBasedGenerator {
           options?.bypassCache
         );
       } catch (error) {
-        return this.buildRecoveryKineticResponse(prompt, this.describeError(error));
+        return this.buildFailedKineticResponse(this.describeError(error));
       }
     }
 
     if (!response.code || response.code.trim().length === 0) {
-      return this.buildRecoveryKineticResponse(prompt, 'LLM returned empty CSS kinetic HTML');
+      return this.buildFailedKineticResponse('LLM returned empty CSS kinetic HTML');
     }
 
     response.code = this.normalizeKineticHtml(response.code);
@@ -66,68 +66,24 @@ export class KineticGenerator extends TierBasedGenerator {
           true
         );
       } catch (error) {
-        return this.buildRecoveryKineticResponse(prompt, `Validation retry failed after ${validated.error}: ${this.describeError(error)}`);
+        return this.buildFailedKineticResponse(`Validation retry failed after ${validated.error}: ${this.describeError(error)}`, response.code);
       }
       response.code = this.normalizeKineticHtml(response.code ?? '');
       const revalidated = this.validateOutput(response.code);
       if (!revalidated.valid) {
-        return this.buildRecoveryKineticResponse(prompt, `Validation retry returned invalid CSS kinetic HTML: ${revalidated.error}`);
+        return this.buildFailedKineticResponse(`Validation retry returned invalid CSS kinetic HTML: ${revalidated.error}`, response.code);
       }
     }
 
     return response;
   }
 
-  private buildRecoveryKineticResponse(prompt: string, reason: string): LLMResponse {
-    // Keep the operator path visible while preserving the provider failure in receipts.
+  private buildFailedKineticResponse(reason: string, code = ''): LLMResponse {
     return {
-      code: this.buildRecoveryKineticArtifact(prompt),
+      code,
       success: false,
-      error: `Recovered with deterministic CSS kinetic scaffold: ${reason}`,
+      error: reason,
     };
-  }
-
-  private buildRecoveryKineticArtifact(prompt: string): string {
-    const title = this.escapeHtml((prompt || 'Kinetic threshold').replace(/\s+/g, ' ').trim().slice(0, 80));
-    return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Kinetic Recovery Artwork</title>
-<style>
-html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#06111f;color:#e0f2fe;font-family:system-ui,sans-serif}
-body{display:grid;place-items:center}
-.scene{position:relative;width:min(92vw,900px);height:min(72vh,620px);display:grid;place-items:center;filter:drop-shadow(0 0 18px #38bdf8)}
-.word{position:absolute;font-size:clamp(28px,7vw,86px);font-weight:800;letter-spacing:0;text-transform:uppercase;animation:orbit 8s linear infinite,pulse 3s ease-in-out infinite}
-.word:nth-child(2){animation-delay:-2s;color:#f0abfc}
-.word:nth-child(3){animation-delay:-4s;color:#67e8f9}
-.word:nth-child(4){animation-delay:-6s;color:#fde68a}
-.threshold{position:absolute;inset:22%;border:2px solid #7dd3fc;border-radius:999px;animation:breathe 4s ease-in-out infinite}
-@keyframes orbit{from{transform:rotate(0deg) translateX(28vmin) rotate(0deg)}to{transform:rotate(360deg) translateX(28vmin) rotate(-360deg)}}
-@keyframes pulse{0%,100%{opacity:.72;scale:.92}50%{opacity:1;scale:1.08}}
-@keyframes breathe{0%,100%{transform:scale(.9);opacity:.45}50%{transform:scale(1.08);opacity:1}}
-</style>
-</head>
-<body>
-<main class="scene" aria-label="${title}">
-<div class="threshold"></div>
-<div class="word">${title}</div>
-<div class="word">Sinter</div>
-<div class="word">Motion</div>
-<div class="word">Threshold</div>
-</main>
-<!-- Sinter recovery: provider timed out before returning CSS kinetic HTML, so this prompt-derived scaffold preserves a visible animated operator path. -->
-</body>
-</html>`;
-  }
-
-  private escapeHtml(value: string): string {
-    return value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
   }
 
   private describeError(error: unknown): string {
@@ -143,6 +99,8 @@ body{display:grid;place-items:center}
         'The first characters must be <!DOCTYPE html> and the final characters must be </html>.',
         `Create CSS kinetic typography for: ${prompt}`,
         'Requirements: no JavaScript; include <style>, @keyframes, animation:, and visible text elements in <body>.',
+        'Use a bright or mid-tone full-scene background with luminous animated shapes/text; set body/html background-color to #486581, #64748b, or lighter.',
+        'If you use CSS variables for backgrounds, --bg must resolve to a bright or mid-tone hex, not #0f172a, #08101c, #0a0a0f, or other near-black values.',
         'Keep it compact enough to finish in one response.',
       ].join('\n'),
       maxTokens: Math.min(options?.maxTokens ?? 2500, 2800),
@@ -153,12 +111,11 @@ body{display:grid;place-items:center}
     if (!extracted) return null;
     const code = this.normalizeKineticHtml(extracted);
     const validated = this.validateOutput(code);
-    if (!validated.valid) return null;
     return {
       code,
       explanation: result.text,
       success: true,
-      error: result.error,
+      error: validated.valid ? result.error : validated.error,
       provenance: result.provenance,
     };
   }
@@ -228,6 +185,9 @@ Regenerate a complete CSS-kinetic artwork:
 - include visible elements inside <body> such as div/span/svg elements
 - include at least one CSS @keyframes block
 - use animation: ... infinite on visible elements
+- use a bright or mid-tone visible scene background; do not use near-black body/html backgrounds
+- set body/html background-color to a mid-tone hex such as #486581, #64748b, or lighter
+- if using CSS variables for backgrounds, the resolved --bg value must be bright or mid-tone
 - do not include JavaScript or <script>
 - output raw HTML only`;
   }
@@ -322,7 +282,7 @@ Regenerate a complete CSS-kinetic artwork:
         cleaned = cleaned.replace(/(<body\b[^>]*>)/i, `$1\n${injectedDivs}`);
         if (!cleaned.includes('position:') && !cleaned.includes('display:')) {
           cleaned = cleaned.replace('</style>', `
-body { margin: 0; overflow: hidden; background: #0d2031; width: 100vw; height: 100vh; position: relative; }
+body { margin: 0; overflow: hidden; background: #486581; width: 100vw; height: 100vh; position: relative; }
 body > div { position: absolute; }
 </style>`);
         }

@@ -1082,7 +1082,39 @@ describe('ScoringEngine', () => {
           height: 2,
           label: 'rendered-artifact',
         }],
+        expect.any(AbortSignal),
       );
+    });
+
+    it('bounds a hanging evaluator call and degrades to failureClass scorer', async () => {
+      // Evaluator never resolves — the rendered-evidence timeout (1s in test env)
+      // must convert the hang into a bounded degraded result instead of stalling
+      // the loop for the full RetryManager worst case (~13min).
+      mockLLMClientInstance.generateWithImages.mockImplementation(() => new Promise(() => undefined));
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const startedAt = Date.now();
+      const result = await scoreRenderedEvidence(
+        {
+          timingMs: 200,
+          infraUnavailable: false,
+          candidateFailure: false,
+          screenshotRef: 'screenshot',
+          screenshot: {
+            mimeType: 'image/png',
+            dataBase64: 'iVBORw0KGgo=',
+            width: 2,
+            height: 2,
+          },
+        },
+        'function setup() {}',
+        'make a visible sketch',
+        fakeLLM,
+      );
+
+      expect(Date.now() - startedAt).toBeLessThan(5000);
+      expect(result.score).toBe(0.5);
+      expect(result.confidence).toBe(0);
+      expect(result.failureClass).toBe('scorer');
     });
 
     it('parses repairAdvice from LLM response when present', async () => {
@@ -1184,7 +1216,7 @@ describe('ScoringEngine', () => {
       });
       expect(mockLoggerWarn).toHaveBeenCalledWith(
         'ScoringEngine',
-        'Rendered evidence LLM scoring failed:',
+        expect.stringMatching(/^Rendered evidence LLM scoring failed after \d+ms:$/),
         expect.anything(),
       );
     });

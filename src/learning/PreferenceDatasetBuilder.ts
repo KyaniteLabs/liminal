@@ -39,17 +39,32 @@ export interface PreferenceDatasetBuilderConfig {
   minConfidence?: number;
   /** Whether to include inferred preferences (default: true) */
   includeInferred?: boolean;
+  /** Whether to infer pairs from evaluator score gaps when entries carry no
+   *  user preference — the auto-feed that lets the taste model train before
+   *  any human pins exist (default: true; audit F7). */
+  includeScoreGapPairs?: boolean;
+  /** Minimum qualityScore gap for an inferred score pair (default: 0.2). */
+  scoreGapThreshold?: number;
 }
 
 const DEFAULT_MIN_CONFIDENCE = 0.3;
+const DEFAULT_SCORE_GAP_THRESHOLD = 0.2;
+/** Below every human signal (pairwise 1.0, pin 0.6, branch 0.5) by design. */
+const SCORE_GAP_CONFIDENCE = 0.4;
+/** Each winner pairs against at most this many lower-scored entries. */
+const SCORE_GAP_MAX_PAIRS_PER_WINNER = 2;
 
 export class PreferenceDatasetBuilder {
   private readonly minConfidence: number;
   private readonly includeInferred: boolean;
+  private readonly includeScoreGapPairs: boolean;
+  private readonly scoreGapThreshold: number;
 
   constructor(config: PreferenceDatasetBuilderConfig = {}) {
     this.minConfidence = config.minConfidence ?? DEFAULT_MIN_CONFIDENCE;
     this.includeInferred = config.includeInferred ?? true;
+    this.includeScoreGapPairs = config.includeScoreGapPairs ?? true;
+    this.scoreGapThreshold = config.scoreGapThreshold ?? DEFAULT_SCORE_GAP_THRESHOLD;
   }
 
   /**
@@ -113,6 +128,28 @@ export class PreferenceDatasetBuilder {
             entry, r, 'more-like-this', 0.8,
             entry.preference!.capturedAt,
           ));
+        }
+      }
+    }
+
+    // Auto-feed (audit F7): with zero human preferences the loops above yield
+    // nothing and the taste model starves. The evaluator's own scores carry a
+    // usable ordering — entries whose quality differs by a clear gap become
+    // low-confidence pairs, so training starts immediately and human signals
+    // (higher confidence) dominate as soon as they exist.
+    if (this.includeInferred && this.includeScoreGapPairs) {
+      const byScore = [...entries].sort((a, b) => b.qualityScore - a.qualityScore);
+      for (let i = 0; i < byScore.length; i++) {
+        const winner = byScore[i];
+        let made = 0;
+        for (let j = byScore.length - 1; j > i && made < SCORE_GAP_MAX_PAIRS_PER_WINNER; j--) {
+          const loser = byScore[j];
+          if (winner.qualityScore - loser.qualityScore < this.scoreGapThreshold) break;
+          pairs.push(this.makePair(
+            winner, loser, 'score-gap', SCORE_GAP_CONFIDENCE,
+            winner.archivedAt ?? new Date().toISOString(),
+          ));
+          made++;
         }
       }
     }

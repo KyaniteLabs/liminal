@@ -64,6 +64,36 @@ describe('ProviderRuntime', () => {
     })).toBe('sk-moonshot-primary');
   });
 
+  it('prefers endpoint-specific keys over the custom provider OpenAI fallback', () => {
+    // A custom endpoint pointing at Anthropic must never send the OpenAI key.
+    expect(selectRuntimeApiKey({
+      provider: 'custom',
+      baseUrl: 'https://api.anthropic.com/v1',
+      model: 'claude-sonnet-4-6',
+      env: {
+        OPENAI_API_KEY: 'sk-openai-generic',
+        ANTHROPIC_API_KEY: 'sk-ant-endpoint',
+      },
+    })).toBe('sk-ant-endpoint');
+
+    expect(selectRuntimeApiKey({
+      provider: 'custom',
+      baseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+      model: 'gemini-2.5-flash',
+      env: {
+        OPENAI_API_KEY: 'sk-openai-generic',
+        GOOGLE_API_KEY: 'g-endpoint',
+      },
+    })).toBe('g-endpoint');
+
+    // Plain OpenAI-compatible custom endpoints keep the OPENAI_API_KEY fallback.
+    expect(selectRuntimeApiKey({
+      provider: 'custom',
+      baseUrl: 'http://localhost:8000/v1',
+      env: { OPENAI_API_KEY: 'sk-openai-generic' },
+    })).toBe('sk-openai-generic');
+  });
+
   it('reports GLM 5V as vision-capable but ordinary GLM as text-only', () => {
     expect(inferProviderVisionSupport('glm', 'GLM-5v-turbo')).toBe('yes');
     expect(inferProviderVisionSupport('glm', 'glm-5.1')).toBe('no');

@@ -997,7 +997,9 @@ export class LLMClient {
 
       return result;
     } catch (error) {
-      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      // Synthetic aborts can be Errors with an empty .message — fall through
+      // to String(error) so telemetry never reads "err: undefined" (audit F21).
+      const errMsg = (error instanceof Error && error.message) ? error.message : String(error ?? 'Unknown error');
       const isRetryable = error instanceof LLMError && error.retryable;
       Logger.error('LLMClient', 'LLMClient.generate failed:', errMsg, isRetryable ? '(retryable, retries exhausted)' : '');
       eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', {

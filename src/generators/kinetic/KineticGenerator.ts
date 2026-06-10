@@ -105,7 +105,11 @@ export class KineticGenerator extends TierBasedGenerator {
       ].join('\n'),
       maxTokens: Math.min(options?.maxTokens ?? 2500, 2800),
       temperature: 0.1,
-    }, options?.signal, 60_000);
+      // The compact-direct attempt runs BEFORE the main path and its budget
+      // comes out of the caller's overall window — under provider slowness a
+      // hardcoded 60s burned half the proof budget and starved the fallback
+      // (audit F21). Keep 60s as the default, let ops widen it per env.
+    }, options?.signal, KineticGenerator.directAttemptTimeoutMs());
     if (!result.success || !result.text) return null;
     const extracted = this.extractKineticHtml(result.text);
     if (!extracted) return null;
@@ -139,6 +143,12 @@ export class KineticGenerator extends TierBasedGenerator {
       clearTimeout(timeout);
       parentSignal?.removeEventListener('abort', abortFromParent);
     }
+  }
+
+  /** Wall-clock budget for the compact-direct first attempt (default 60s). */
+  static directAttemptTimeoutMs(): number {
+    const raw = Number(process.env.SINTER_KINETIC_DIRECT_TIMEOUT_MS);
+    return Number.isFinite(raw) && raw >= 5_000 ? raw : 60_000;
   }
 
   private createDirectKineticClient(): LLMClient {

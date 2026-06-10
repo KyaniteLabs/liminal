@@ -20,14 +20,14 @@ analysis, targeted code sweeps. Single-agent (subagent fan-out unavailable this 
 | Secrets | repo scan clean; .gitignore covers .env |
 
 ### Visual grades (pass 1)
-Domains: hyperframes A · shader A- · tone B+ · ascii B- · textgen B- · p5 C+ · three D+ · hydra D · svg blank (harness) · strudel/revideo not visually graded (audio / not in harness)
-Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ · dusk-bloom D
+Domains: hyperframes A · shader A- · tone B+ · svg B+ (revised: the "blank" was harness blindness — F14; the artifact is a sound SINTER logo) · ascii B- · textgen B- · p5 C+ · three D+ · hydra D · strudel/revideo not visually graded (audio / not in harness)
+Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (root cause F15, fixed) · dusk-bloom D
 
 ## Findings — ordered by ROI (impact ÷ cost)
 
 ### Tier 1 — high impact, small fix
 1. **F8 (REVISED after adversarial re-check) — Command-like phrases and typos silently become paid generations.** Properly-split `taste status` correctly errors (verified live) — the original observation was zsh passing the phrase as ONE token. The REAL residual: a single-token typo (`sinter grden status`) or a quoted command-like phrase routes to the NL front door and spends a generation with no confirmation. Candidate: edit-distance did-you-mean gate before generating when token 1 nearly matches a known command. MEDIUM severity, kept here for visibility.
-1b. **F21 — Kinetic generation reliably times out in the proof path** (~60s, twice: once concurrent, once isolated — `llm:response 59996ms err: undefined`), while kinetic succeeds via RalphLoop `--learn` (archived 0.85 on 06-09). Points at the generator TOOL-LOOP in the direct-generator path (tone earlier logged "tool loop returned empty code; retrying once without tools"). Also fix the `err: undefined` logging (error detail lost).
+1b. **F21 — Kinetic generation reliably times out in the proof path** (~60s, twice: once concurrent, once isolated — `llm:response 59996ms err: undefined`), while kinetic succeeds via RalphLoop `--learn` (archived 0.85 on 06-09). **LOCALIZED (2026-06-10 PM):** both aborts match the hardcoded 60s inner cap in KineticGenerator's direct-print fallback (`completeWithAttemptTimeout(..., 60_000)`, KineticGenerator.ts:108) — the proof's per-domain timeout floors cannot override an inner cap, and something about this prompt shape stalls GLM past 60s. Remaining work: instrument a live run to see why the primary tool-loop path fails first and why the fallback stalls; make the inner cap configurable; fix the `err: undefined` logging (error detail lost).
 2. **F6 — Per-generation dream receipts still evaporate.** `PostGenerationCognitiveWriter` (`:79`) defaults to in-memory `new DreamQueue()`; both call sites (CLI receipts, TUI bridge) lose every "Queued dream recombination task". Default to the shared `~/.sinter/dreams/queue.json` persistPath (#686 infra).
 3. **F13 — Code-fence residue reaches rendered art.** Tone proof render shows a literal `html` token beside the start button — markdown fence leakage through extraction/wrapping. Locate in CodeParser/normalizeArtifactCode; add regression test.
 4. **F15 — Hydra layers don't fill the composite frame.** Ink-garden composite: hydra canvas rendered as a top-left quarter rectangle over black (content itself vivid). Composition adapter must size/stretch the hydra canvas to the viewport.
@@ -50,6 +50,19 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ · 
 17. **F20 — `TuiBridgeService.ts` 3,634 LOC** — split candidate (architecture lane).
 18. **Hygiene** — stale local branch `rescue/local-uncommitted-20260606` (not this agent's; confirm before deleting).
 
+## G009 progress (fix-by-ROI)
+
+| Finding | Status | PR |
+|---------|--------|-----|
+| F6 per-gen dream receipts evaporate | **FIXED** | #687 |
+| F1 fixed proof prompts (cache masking) | **FIXED** | #687 |
+| F13 code-fence residue in rendered art | **FIXED** (red-green verified) | #688 |
+| F15 hydra quarter-frame in composites | **FIXED** (bare `render()` → 2×2 debug grid; pixel-identical repro + full-bleed after) | #689 |
+| F14 render-harness SVG blindness | **FIXED** (svg grade revised to B+) | #690 |
+| F8 typo/quoted-phrase silent generations | revised + open (did-you-mean gate) | — |
+| F21 kinetic proof-path 60s inner cap | localized, open | — |
+| Tier 2/3 (composite render gate, three lighting, taste auto-feed, sing tests + ffmpeg, etc.) | open | — |
+
 ## Open campaign state
 - Pass 1 complete (this file). Passes 2-3 (clean-pass criterion) tracked in `.omc/ultragoal/goals.json` G010.
-- Fix story G009 executes this register top-down.
+- Fix story G009 executes this register top-down; five findings fixed as of 2026-06-10 PM (table above).

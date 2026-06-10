@@ -1,4 +1,5 @@
 import { promises as fs } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { Logger } from '../utils/Logger.js';
 import { harnessMemory } from '../harness/HarnessMemory.js';
@@ -76,7 +77,15 @@ export class PostGenerationCognitiveWriter {
 
   constructor(options: PostGenerationCognitiveWriterOptions = {}) {
     this.memory = options.memory ?? harnessMemory;
-    this.dreamQueue = options.dreamQueue ?? new DreamQueue();
+    // Default to the SHARED persistent dream queue so per-generation dream
+    // receipts survive process exit and join the same dream economy the
+    // gardener (garden tend) and the self-improve cycle consume from (#686).
+    // An injected dreamQueue (tests, custom sinks) always wins; construction
+    // is read-only — the file is only written when a dream is enqueued.
+    this.dreamQueue = options.dreamQueue ?? new DreamQueue({
+      persistPath: process.env.SINTER_DREAM_QUEUE_PATH
+        ?? path.join(os.homedir(), '.sinter', 'dreams', 'queue.json'),
+    });
     this.compost = options.compost;
     this.artifactRoot = options.artifactRoot ?? path.join(process.cwd(), '.omx', 'proof', 'live-cognition');
   }

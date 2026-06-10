@@ -1,0 +1,55 @@
+# Investor-Readiness Audit Register — 2026-06-10 (Pass 1)
+
+Campaign artifacts: `.omc/ultragoal/` (goals + ledger). Method: real-LLM execution proofs,
+headless renders, in-context vision grading, live operator-journey smokes, ledger trend
+analysis, targeted code sweeps. Single-agent (subagent fan-out unavailable this environment).
+
+## Verified GREEN (evidence-backed)
+
+| Area | Evidence |
+|------|----------|
+| CI on main | All workflows green through `0999828d` (#684 #685 #686 merged tonight) |
+| Self-improve daemon loop | pid live; ledger 20 cycles; archive 10→79; post-#678 gen success ~85% (was ~57%) |
+| Gardener→dreams→generation | `garden tend` persists dream plan; cycle consumed dream-2 live (completed w/ lineage); daemon runs tend hourly (#686) |
+| Market gate | `market status` READY (fresh live-provider-smoke receipt at HEAD) |
+| Studio GUI smoke | `proof:studio-smoke` pass (health + improve lane), receipt written |
+| TUI bridge | live session create/status over HTTP pass (glm roles wired) |
+| Sing engine build | `sing:typecheck` + `sing:build` pass (vite bundle + audio-core + pose worker); One-Euro filters live in pipeline; moonlitGarden preset present |
+| Domain proof | 11/12 live-LLM domains pass (kinetic aborted under self-inflicted concurrency; rerun pending) ; renders 9/9 zero console errors |
+| Craft pulse | 5 `as any` / 132.9k LOC; 10 TODO-family (mostly the TODO-scanner itself); empty catches are deliberate hardening |
+| Secrets | repo scan clean; .gitignore covers .env |
+
+### Visual grades (pass 1)
+Domains: hyperframes A · shader A- · tone B+ · ascii B- · textgen B- · p5 C+ · three D+ · hydra D · svg blank (harness) · strudel/revideo not visually graded (audio / not in harness)
+Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ · dusk-bloom D
+
+## Findings — ordered by ROI (impact ÷ cost)
+
+### Tier 1 — high impact, small fix
+1. **F8 (REVISED after adversarial re-check) — Command-like phrases and typos silently become paid generations.** Properly-split `taste status` correctly errors (verified live) — the original observation was zsh passing the phrase as ONE token. The REAL residual: a single-token typo (`sinter grden status`) or a quoted command-like phrase routes to the NL front door and spends a generation with no confirmation. Candidate: edit-distance did-you-mean gate before generating when token 1 nearly matches a known command. MEDIUM severity, kept here for visibility.
+1b. **F21 — Kinetic generation reliably times out in the proof path** (~60s, twice: once concurrent, once isolated — `llm:response 59996ms err: undefined`), while kinetic succeeds via RalphLoop `--learn` (archived 0.85 on 06-09). Points at the generator TOOL-LOOP in the direct-generator path (tone earlier logged "tool loop returned empty code; retrying once without tools"). Also fix the `err: undefined` logging (error detail lost).
+2. **F6 — Per-generation dream receipts still evaporate.** `PostGenerationCognitiveWriter` (`:79`) defaults to in-memory `new DreamQueue()`; both call sites (CLI receipts, TUI bridge) lose every "Queued dream recombination task". Default to the shared `~/.sinter/dreams/queue.json` persistPath (#686 infra).
+3. **F13 — Code-fence residue reaches rendered art.** Tone proof render shows a literal `html` token beside the start button — markdown fence leakage through extraction/wrapping. Locate in CodeParser/normalizeArtifactCode; add regression test.
+4. **F15 — Hydra layers don't fill the composite frame.** Ink-garden composite: hydra canvas rendered as a top-left quarter rectangle over black (content itself vivid). Composition adapter must size/stretch the hydra canvas to the viewport.
+5. **F1 — Proof prompts are fixed strings.** `live-creative-domain-execution.ts:33` + `matrix.mjs` SPECS — violates the novel-prompt rule; LLM caching can mask regressions. Append a per-run nonce (keep theme for comparability).
+6. **F14 — Render harness SVG job is blind.** viewBox-only SVG collapsed to ~nothing on the dark page (artifact itself is a sound logo with dark ink + orange gradient). wrapSvg needs explicit sizing + contrast-aware page background (light/checker for transparent art).
+
+### Tier 2 — high impact, medium cost
+7. **F16 — Composite washout/mud from light-direction blends (KNOWN, now quantified 2/5).** dusk-bloom (overlay) washed to near-white; reef-pulse (multiply) went mud. Extend the #637 render-measurement gate to composites and/or add LayerContract blend-mode guardrails (e.g., cap stacked lighten/screen/overlay; measured luminance bounds).
+8. **F12 — Hydra washout reproduced in proof artifact** (near-white pastel fog). Same cure: render-measured score gate wired into proof/learn paths (#637 lane).
+9. **F11 — three.js lighting quality.** "visible lighting" yielded a near-black cube; ink-garden crystal also dim. Inject a minimum light rig / material-brightness mandate in the three wrapper or prompt contract; score renders for subject visibility.
+10. **F7 — Taste model is starved.** Built (#611) but no preference data exists (`preferences model` → none). Auto-feed the preference dataset from objective render measurements + archive scores so taste training has signal without manual pins.
+11. **F18 — Composite spec fidelity.** `background` in specs not honored when layer 0 paints over it (paper-signal spec'd paper-white, rendered dark; dusk-bloom spec'd dark dusk, rendered pale). Verify spec.background survives or flag.
+
+### Tier 3 — important, larger or scoped work
+12. **F5 — Sing recording render is a stub** (`render-cli.ts`: "ffmpeg frame synthesis is the next implementation slice"). For the performance-instrument story this is the gap: record→MP4 no-ops. Implement frame synthesis or relabel the command until then.
+13. **F4 — `packages/sing` has zero tests** (Phase-5 wiring test never landed).
+14. **F17 — ascii/textgen presentation**: corner-pinned tiny on a vast canvas (wrapPre needs centering/scaling); content itself is on-concept.
+15. **F19 — p5 contrast adherence**: pale-on-pale scatter despite the bidirectional-contrast mandate; consider render-measured contrast scoring (joins #637 lane).
+16. **F10 — revideo artifacts aren't visually rendered/graded** by quality:render.
+17. **F20 — `TuiBridgeService.ts` 3,634 LOC** — split candidate (architecture lane).
+18. **Hygiene** — stale local branch `rescue/local-uncommitted-20260606` (not this agent's; confirm before deleting).
+
+## Open campaign state
+- Pass 1 complete (this file). Passes 2-3 (clean-pass criterion) tracked in `.omc/ultragoal/goals.json` G010.
+- Fix story G009 executes this register top-down.

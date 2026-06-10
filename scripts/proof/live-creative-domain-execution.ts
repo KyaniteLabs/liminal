@@ -30,6 +30,8 @@ type Domain = typeof LAUNCH_CREATIVE_DOMAINS[number];
 
 type GeneratorLike = { generate(prompt: string, options?: { signal?: AbortSignal; maxTokens?: number; useGeneratorTools?: boolean }): Promise<string> | string };
 
+const RUN_STAMP = new Date().toISOString();
+
 const PROMPTS: Record<Domain, string> = {
   p5: 'create a concise p5 generative sketch with blue green particles and visible motion',
   svg: 'create an SVG vector logo for Sinter with a transparent background',
@@ -144,7 +146,10 @@ function createGenerator(domain: Domain, config: { baseUrl?: string; model?: str
 }
 
 async function runDomain(domain: Domain, rootOutDir: string, timeoutMs: number, provider: string, model: string, config: Parameters<typeof createGenerator>[1]): Promise<DomainResult> {
-  const prompt = PROMPTS[domain];
+  // Per-run nonce keeps every proof prompt NOVEL (a reused prompt can hit the
+  // provider cache and return a stale artifact, masking real regressions)
+  // while the stable theme keeps runs comparable.
+  const prompt = `${PROMPTS[domain]} — proof ${RUN_STAMP}`;
   const started = Date.now();
   const domainTimeoutMs = Math.max(timeoutMs, DOMAIN_TIMEOUT_FLOORS_MS[domain] ?? timeoutMs);
   const controller = new AbortController();

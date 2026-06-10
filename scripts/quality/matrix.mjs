@@ -51,7 +51,13 @@ for (let i = 0; i < SPECS.length; i++) {
     await page.screenshot({ path: path.join(OUT, tag + '.png') });
     await page.close();
     const sz = fs.statSync(path.join(OUT, tag + '.png')).size;
-    summary.push(`✅ ${tag}: ${ok}/${total} layers [${spec.layers.map(l => l.domain + ':' + (l.blendMode||'normal')).join(' + ')}] (${sz}b)`);
+    const gate = result.renderGate;
+    const gateNote = gate
+      ? gate.skipped
+        ? '  gate:skipped'
+        : `  gate:${gate.verdict}(lum ${gate.measure.meanLuminance.toFixed(2)})${gate.remediation ? ` → ${gate.remediation.verdictAfter}${gate.remediation.applied ? ' [demoted ' + gate.remediation.demotedLayers.join(',') + ']' : ' [kept original]'}` : ''}`
+      : '';
+    summary.push(`✅ ${tag}: ${ok}/${total} layers [${spec.layers.map(l => l.domain + ':' + (l.blendMode||'normal')).join(' + ')}] (${sz}b)${gateNote}`);
   } catch (e) {
     summary.push(`⚠️  ${tag}: ${String(e.message).slice(0, 90)}`);
   }

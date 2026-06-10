@@ -245,6 +245,15 @@ export function detectProviderLabel(baseUrl: string, model = ''): ProviderStatus
   return baseUrl ? 'llm' : 'unknown';
 }
 
+/**
+ * Map a base URL to a configured-provider menu key (a PROVIDER_DEFAULTS entry).
+ *
+ * Naming/config layer only: endpoints without a first-class menu entry
+ * (e.g. api.anthropic.com, generativelanguage.googleapis.com) resolve to
+ * 'custom' here on purpose. Wire-format routing is independent —
+ * detectProviderAdapter() maps those hosts to the dedicated anthropic/google
+ * adapters via ProviderFactory.createProvider().
+ */
 export function detectRuntimeProviderFromUrl(baseUrl: string, model = ''): RuntimeProviderKey {
   const lowerUrl = baseUrl.toLowerCase();
   const host = endpointHost(baseUrl);

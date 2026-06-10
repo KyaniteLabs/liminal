@@ -6,6 +6,7 @@ import {
   detectProviderAdapter,
   detectProviderLabel,
   detectRoleProviderType,
+  detectRuntimeProviderFromUrl,
   inferProviderVisionSupport,
   normalizeProviderBaseUrl,
   resolveProviderAlias,
@@ -89,6 +90,41 @@ describe('ProviderRuntime', () => {
       apiKey: 'sk-live',
       model: 'gpt-5.4-mini',
       apiStyle: 'openai',
+    });
+  });
+
+  it('routes Anthropic and Google endpoints to dedicated adapters while the menu key stays custom', () => {
+    // Naming/config layer: Anthropic/Google are not first-class menu entries.
+    expect(detectRuntimeProviderFromUrl('https://api.anthropic.com/v1')).toBe('custom');
+    expect(detectRuntimeProviderFromUrl('https://generativelanguage.googleapis.com/v1beta')).toBe('custom');
+
+    // Wire-format layer: detectProviderAdapter routes them to dedicated adapters.
+    expect(detectProviderAdapter({ baseUrl: 'https://api.anthropic.com/v1', model: 'claude-sonnet-4-6' })).toBe('anthropic');
+    expect(detectProviderAdapter({ baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-2.5-flash' })).toBe('google');
+
+    const anthropic = resolveProviderRuntime({
+      provider: 'custom',
+      configuredBaseUrl: 'https://api.anthropic.com/v1',
+      model: 'claude-sonnet-4-6',
+      env: { ANTHROPIC_API_KEY: 'sk-ant-live' },
+    });
+    expect(anthropic).toMatchObject({
+      statusProvider: 'custom',
+      adapter: 'anthropic',
+      apiStyle: 'anthropic',
+      apiKey: 'sk-ant-live',
+    });
+
+    const google = resolveProviderRuntime({
+      provider: 'custom',
+      configuredBaseUrl: 'https://generativelanguage.googleapis.com/v1beta',
+      model: 'gemini-2.5-flash',
+      env: { GEMINI_API_KEY: 'gm-live' },
+    });
+    expect(google).toMatchObject({
+      statusProvider: 'custom',
+      adapter: 'google',
+      apiKey: 'gm-live',
     });
   });
 

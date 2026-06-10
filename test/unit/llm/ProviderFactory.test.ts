@@ -233,6 +233,24 @@ describe('createProvider', () => {
     expect(provider.name).toBe('google');
   });
 
+  it('auto-detects AnthropicProvider from an api.anthropic.com baseUrl without a hint', () => {
+    const provider = createProvider(makeConfig({
+      baseUrl: 'https://api.anthropic.com/v1',
+      model: 'claude-sonnet-4-20250514',
+    }));
+    expect(provider).toBeInstanceOf(AnthropicProvider);
+    expect(provider.name).toBe('anthropic');
+  });
+
+  it('auto-detects GoogleProvider from a generativelanguage.googleapis.com baseUrl without a hint', () => {
+    const provider = createProvider(makeConfig({
+      baseUrl: 'https://generativelanguage.googleapis.com/v1',
+      model: 'gemini-2.0-flash',
+    }));
+    expect(provider).toBeInstanceOf(GoogleProvider);
+    expect(provider.name).toBe('google');
+  });
+
   it('creates MiniMaxProvider for minimax', () => {
     const config = makeConfig({
       baseUrl: 'https://api.minimaxi.com/v1',

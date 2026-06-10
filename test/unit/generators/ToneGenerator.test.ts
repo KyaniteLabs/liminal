@@ -88,6 +88,27 @@ describe('ToneGenerator', () => {
     expect(result).toContain('Tone.Synth');
   });
 
+  it('sanitizeCode strips html-tagged fences without leaking the language word (F13)', async () => {
+    // Regression: a ```html fence after the DOCTYPE used to lose only its
+    // backticks (language allowlist omitted html), leaving a bare "html"
+    // line that rendered as visible text beside the artifact's start button
+    // (live-creative-domains tone proof, 2026-06-10). The leading-"html"
+    // band-aid in normalizeToneArtifact is anchored without /m and misses
+    // this mid-document residue.
+    mockComplete.mockResolvedValueOnce({
+      text: '<!DOCTYPE html>\n```html\n<html><head><meta charset="UTF-8"><title>Tone.js Patch</title></head><body><button id="start">Start</button><script>document.getElementById("start").onclick=async()=>{await Tone.start();Tone.Transport.bpm.value=84;new Tone.Loop((time)=>new Tone.Synth().toDestination().triggerAttackRelease("C4","8n",time),"4n").start(0);Tone.Transport.start();};</script></body></html>\n```',
+      success: true,
+    });
+
+    const gen = new ToneGenerator();
+    const result = await gen.generate('fenced ambient synth');
+
+    expect(result).not.toMatch(/^html$/m);
+    expect(result).not.toContain('```');
+    expect(result).toContain('Tone.Transport.bpm.value=84');
+    expect(result).toContain('<html>');
+  });
+
   it('sanitizeCode strips think tags', async () => {
     mockComplete.mockResolvedValue({ text: '', success: true });
     mockToolLoop.mockResolvedValueOnce({

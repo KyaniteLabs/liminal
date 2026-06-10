@@ -90,8 +90,11 @@ export class ToneGenerator extends TierBasedGenerator {
     
     let clean = code;
     
-    // Strip markdown code fences (only at start/end, preserve code inside)
-    clean = clean.replace(/^```(?:javascript|js|typescript|ts)?\n?/gm, '');
+    // Strip markdown code fences (only at start/end, preserve code inside).
+    // The language tag must stay GENERIC: an allowlist that omitted `html`
+    // ate only the backticks of a ```html fence and leaked a bare "html"
+    // token into rendered artifacts (investor-audit F13).
+    clean = clean.replace(/^```[ \t]*[\w-]*[ \t]*\r?\n?/gm, '');
     clean = clean.replace(/\n?```$/gm, '');
     clean = clean.replace(/^```$/gm, '');
     

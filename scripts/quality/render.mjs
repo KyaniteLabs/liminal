@@ -13,8 +13,15 @@ fs.mkdirSync(OUT, { recursive: true });
 const read = (f) => fs.readFileSync(path.join(SRC, f), 'utf-8');
 const wrapPre = (txt) =>
   `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#06080f;color:#cfe;font:14px ui-monospace,Menlo,monospace}pre{padding:18px;white-space:pre-wrap}</style></head><body><pre>${txt.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</pre></body></html>`;
+// SVG needs two harness accommodations the other domains don't (audit F14):
+// 1. viewBox-only SVGs have no intrinsic size and rendered near-invisible —
+//    give the element explicit dimensions (preserveAspectRatio letterboxes
+//    the art inside, so nothing distorts).
+// 2. A fixed dark page made dark-ink-on-transparent art (a valid, common
+//    output) judge as blank — a neutral checkerboard keeps both dark- and
+//    light-ink art visible and shows the grader what is transparent.
 const wrapSvg = (svg) =>
-  `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#06080f;display:flex;align-items:center;justify-content:center}svg{max-width:90vw;max-height:90vh}</style></head><body>${svg}</body></html>`;
+  `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;display:flex;align-items:center;justify-content:center}body{background:#858585;background-image:linear-gradient(45deg,#999 25%,transparent 25%,transparent 75%,#999 75%),linear-gradient(45deg,#999 25%,#737373 25%,#737373 75%,#999 75%);background-size:32px 32px;background-position:0 0,16px 16px}svg{width:90vmin;height:90vmin;max-width:90vw;max-height:90vh}</style></head><body>${svg}</body></html>`;
 
 // domain → how to turn the artifact into a full standalone HTML page
 const JOBS = [

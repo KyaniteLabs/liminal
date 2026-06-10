@@ -22,7 +22,9 @@ import {
   readPerDomainCounts,
   pickUnderfilledDomains,
   buildDomainPrompt,
+  dreamThemeFromTask,
 } from './self-improve-domains.mjs';
+import { DreamQueue } from '../../dist/dreaming/DreamQueue.js';
 
 const COUNT = Math.max(1, parseInt(process.argv[2] || '6', 10));
 // Per-gen wall clock budget. Slow domains (hydra measured ~8min for a single
@@ -30,6 +32,7 @@ const COUNT = Math.max(1, parseInt(process.argv[2] || '6', 10));
 // logged misleadingly as garbled stdout tails. Tunable per environment.
 const GEN_TIMEOUT_MS = Math.max(60_000, parseInt(process.env.SINTER_GEN_TIMEOUT_MS || '480000', 10));
 const ARCHIVE = path.join(os.homedir(), '.sinter', 'archive', 'quality_archive.json');
+const DREAM_QUEUE_PATH = path.join(os.homedir(), '.sinter', 'dreams', 'queue.json');
 const LEDGER = 'docs/validation/self-improve-ledger.jsonl';
 const OUTROOT = '.quality/rsi';
 fs.mkdirSync(OUTROOT, { recursive: true });
@@ -81,9 +84,16 @@ const targetDomains = pickUnderfilledDomains(beforeDomains, TARGET_DOMAINS, MAX_
 console.log(`=== self-improve cycle (${COUNT} gens) @ ${stamp} ===`);
 console.log(`before: archive=${before.archive} health=${before.health}% targets=[${targetDomains.join(', ')}]`);
 
+// One dream per cycle: gen #1 consumes the gardener's highest-priority queued
+// dream (persisted by `sinter garden tend`) as its theme — the link that turns
+// dream recombinations into real generations. Other gens keep the idea pool.
+const dreamQueue = new DreamQueue({ persistPath: DREAM_QUEUE_PATH });
+
 const scores = [];
 for (let i = 0; i < COUNT; i++) {
-  const idea = IDEAS[(before.archive + i) % IDEAS.length];
+  const dreamTask = i === 0 ? dreamQueue.dequeue() ?? null : null;
+  const dreamTheme = dreamTask ? dreamThemeFromTask(dreamTask) : null;
+  const idea = dreamTheme ?? IDEAS[(before.archive + i) % IDEAS.length];
   const domain = targetDomains[i];
   const prompt = `${buildDomainPrompt(domain, idea)} — cycle ${stamp} #${i + 1}`; // domain-routed + novel
   const tag = `${OUTROOT}/g_${Date.now()}_${i + 1}`;
@@ -102,8 +112,13 @@ for (let i = 0; i < COUNT; i++) {
     const m = out.match(/Quality score:\s*([\d.]+)/);
     const s = m ? parseFloat(m[1]) : null;
     if (s != null) scores.push(s);
-    console.log(`  [${i + 1}/${COUNT}] domain=${domain} score=${s ?? 'n/a'}  "${idea.slice(0, 32)}…"`);
+    if (dreamTask) {
+      if (s != null) dreamQueue.complete(dreamTask.id, { candidateDescriptor: [], parentIds: dreamTask.sources.map((src) => src.id) });
+      else dreamQueue.fail(dreamTask.id);
+    }
+    console.log(`  [${i + 1}/${COUNT}] domain=${domain} score=${s ?? 'n/a'}${dreamTask ? ` dream=${dreamTask.id}` : ''}  "${idea.slice(0, 32)}…"`);
   } catch (e) {
+    if (dreamTask) dreamQueue.fail(dreamTask.id);
     // execSync reports a timeout kill as SIGTERM with null status; name it
     // instead of dumping a mid-run stdout tail. Real errors arrive on stderr,
     // which the old logging ignored entirely.
@@ -117,7 +132,7 @@ for (let i = 0; i < COUNT; i++) {
       : timedOut
         ? `TIMEOUT — domain=${domain} exceeded ${GEN_TIMEOUT_MS / 1000}s and was killed${lastStage ? ` (last completed stage: ${lastStage.slice(0, 80)})` : ''}`
         : (errTail || outTail || String(e.message || '')).slice(0, 120);
-    console.log(`  [${i + 1}/${COUNT}] FAILED: ${reason}`);
+    console.log(`  [${i + 1}/${COUNT}] FAILED${dreamTask ? ` (dream=${dreamTask.id})` : ''}: ${reason}`);
     if (rateLimited) break;
   }
 }

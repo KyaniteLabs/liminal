@@ -422,7 +422,7 @@ function printHelp() {
   console.log('  preferences <subcommand>  Preferences: export, stats, train, model');
   console.log('  taste <train|eval>          Train or evaluate the taste model from preferences');
   console.log('  dream run [strategy]        Run a dream recombination cycle over the archive');
-  console.log('  garden <subcommand>         Autonomous gardener: status, rebalance, start, stop');
+  console.log('  garden <subcommand>         Autonomous gardener: status, rebalance, start, stop, tend [budget]');
   console.log('  ship <garden|rollback>      Promote a garden release candidate or roll back (--to <ref>)');
   console.log('  emergence <score|probe>     Score or probe emergence for a text or file output');
   console.log('  fs <artifacts|refs|runs>    Inspect Sinter content store: artifacts, refs, runs');
@@ -2608,6 +2608,57 @@ else if (cmd === 'garden' && cmdArgs[0] === 'start') {
 }
 else if (cmd === 'garden' && cmdArgs[0] === 'stop') {
   console.log('No garden running in this process. Use Ctrl+C on the running garden start process.');
+  process.exit(0);
+}
+else if (cmd === 'garden' && cmdArgs[0] === 'tend') {
+  // Bounded, non-interactive gardener pass for daemons/cron: runs cycles until
+  // the budget is exhausted, then persists the dream plan so the next
+  // self-improve cycle can generate from it (gardener → dreams → generations).
+  const budget = Math.max(10, parseInt(cmdArgs[1] || '100', 10) || 100);
+  const { AutonomousGardener } = await import('../dist/autonomy/AutonomousGardener.js');
+  const { DreamPlanner } = await import('../dist/dreaming/DreamPlanner.js');
+  const { DreamQueue } = await import('../dist/dreaming/DreamQueue.js');
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const sinterFs = SinterFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(sinterFs);
+    const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
+    const cells = hooks.getArchive().getAllCells();
+    const gardener = new AutonomousGardener({ mode: 'co-create', totalBudget: budget });
+
+    console.log('');
+    console.log(`=== Garden Tend (bounded, budget ${budget}, ${cells.length} cells) ===`);
+    let cycles = 0;
+    let lastHealth = 0;
+    let result;
+    while ((result = gardener.cycle(cells, axes)) !== null) {
+      cycles++;
+      lastHealth = result.health.healthScore;
+      const stag = result.stagnation.isStagnant ? `  stagnation=${(result.stagnation.severity * 100).toFixed(0)}%` : '';
+      console.log(`  [cycle ${result.cycle}] actions=${result.actions} health=${(result.health.healthScore * 100).toFixed(1)}% budget=${result.budgetRemaining}${stag}`);
+    }
+
+    // Persist the dream plan from the same planner the gardener uses, deduped
+    // against pairings already in the queue so hourly tends don't fill the cap
+    // with repeats.
+    const queuePath = path.join(process.env.HOME || '/tmp', '.sinter', 'dreams', 'queue.json');
+    const dreams = new DreamQueue({ persistPath: queuePath });
+    const plan = new DreamPlanner().plan(cells, axes);
+    const seen = new Set(dreams.getTasks().map((t) => `${t.strategy}:${t.sources.map((s) => s.id).sort().join('+')}`));
+    let enqueued = 0;
+    for (const t of plan.tasks) {
+      const key = `${t.strategy}:${t.sources.map((s) => s.id).sort().join('+')}`;
+      if (seen.has(key)) continue;
+      if (dreams.enqueue(t.strategy, t.sources, t.priority)) { enqueued++; seen.add(key); }
+    }
+    const status = dreams.getStatus();
+    console.log(`  done: cycles=${cycles} finalHealth=${(lastHealth * 100).toFixed(1)}%`);
+    console.log(`  dreams: +${enqueued} new (queued=${status.queued} completed=${status.completed}) → ${queuePath}`);
+  } finally {
+    sinterFs.close();
+  }
   process.exit(0);
 }
 else if (cmd === 'ship' && cmdArgs[0] === 'garden') {

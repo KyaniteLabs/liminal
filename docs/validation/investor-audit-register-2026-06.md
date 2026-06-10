@@ -59,9 +59,10 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 | F13 code-fence residue in rendered art | **FIXED** (red-green verified) | #688 |
 | F15 hydra quarter-frame in composites | **FIXED** (bare `render()` → 2×2 debug grid; pixel-identical repro + full-bleed after) | #689 |
 | F14 render-harness SVG blindness | **FIXED** (svg grade revised to B+) | #690 |
-| F8 typo/quoted-phrase silent generations | revised + open (did-you-mean gate) | — |
-| F21 kinetic proof-path 60s inner cap | localized, open | — |
-| Tier 2/3 (composite render gate, three lighting, taste auto-feed, sing tests + ffmpeg, etc.) | open | — |
+| F8 typo/quoted-phrase silent generations | **FIXED** (did-you-mean gate + `--prompt` escape hatch; both accident shapes repro'd live) | #693 |
+| F21 kinetic proof-path 60s inner cap | **RESOLVED** (stall gone post-#687: 28.7s live pass; env-tunable cap + honest abort telemetry + partial-run exit clarity) | #692 |
+| F16 composite washout/mud (Tier 2) | **FIXED** (CompositeRenderGate: measured verdict + one blend-demoted re-assembly; live probe lum 1.00→0.79 ok) | #694 |
+| Tier 2/3 remainder (three lighting F11, taste auto-feed F7, sing tests+ffmpeg F4/F5, ascii/textgen presentation F17, revideo render F10, bridge split F20) | open | — |
 
 ## Open campaign state
 - Pass 1 complete (this file). Passes 2-3 (clean-pass criterion) tracked in `.omc/ultragoal/goals.json` G010.

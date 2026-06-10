@@ -340,9 +340,13 @@ export function selectRuntimeApiKey(args: {
   const providerKeys = args.provider ? apiKeyEnvNamesForProvider(args.provider) : [];
   const endpointKeys = apiKeyEnvNamesForEndpoint(args.baseUrl, args.model);
   const genericKeys = args.genericFallbackKeys ?? ['LLM_API_KEY'];
+  // Endpoint-derived keys outrank provider-default keys: the endpoint is what
+  // the request hits, so a 'custom' provider pointed at api.anthropic.com or
+  // generativelanguage.googleapis.com must not fall back to OPENAI_API_KEY
+  // while an endpoint-matching key is available.
   const providerValues = [
-    ...providerKeys.map(key => readRuntimeEnv(env, key)),
     ...endpointKeys.map(key => readRuntimeEnv(env, key)),
+    ...providerKeys.map(key => readRuntimeEnv(env, key)),
   ];
   const genericValues = genericKeys.map(key => readRuntimeEnv(env, key));
   const values = [

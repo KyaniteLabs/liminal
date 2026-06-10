@@ -11,8 +11,19 @@ const OUT = '.quality/renders';
 fs.mkdirSync(OUT, { recursive: true });
 
 const read = (f) => fs.readFileSync(path.join(SRC, f), 'utf-8');
-const wrapPre = (txt) =>
-  `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#06080f;color:#cfe;font:14px ui-monospace,Menlo,monospace}pre{padding:18px;white-space:pre-wrap}</style></head><body><pre>${txt.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</pre></body></html>`;
+// Text art (ascii/textgen) used to render corner-pinned and tiny on a vast
+// empty canvas (audit F17). Center it and scale the type to the content: short
+// pieces get large glyphs, long ones stay readable, judged as a composition.
+const wrapPre = (txt) => {
+  const lines = txt.split('\n');
+  const longest = Math.max(1, ...lines.map((l) => l.length));
+  // Fit ~90% of the 900x600 frame in BOTH axes (monospace glyph ≈ 0.6em wide,
+  // line-height 1.25), clamped so short poems don't become billboards.
+  const fitWidth = (900 * 0.9) / (longest * 0.6);
+  const fitHeight = (600 * 0.9) / (lines.length * 1.25);
+  const fontPx = Math.max(14, Math.min(34, Math.floor(Math.min(fitWidth, fitHeight))));
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#06080f;color:#cfe;font:${fontPx}px ui-monospace,Menlo,monospace;display:flex;align-items:center;justify-content:center}pre{padding:18px;white-space:pre;line-height:1.25}</style></head><body><pre>${txt.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</pre></body></html>`;
+};
 // SVG needs two harness accommodations the other domains don't (audit F14):
 // 1. viewBox-only SVGs have no intrinsic size and rendered near-invisible —
 //    give the element explicit dimensions (preserveAspectRatio letterboxes
@@ -72,3 +83,7 @@ await browser.close();
 for (const r of results) {
   console.log(`${r.status === 'ok' ? '✅' : '⚠️ '} ${r.name.padEnd(12)} ${r.status}${r.errors.length ? '  | console: ' + r.errors.join(' ; ') : ''}`);
 }
+// Coverage transparency (audit F10): say what this harness deliberately does
+// NOT render, so absent rows read as known gaps rather than silent omissions.
+console.log('⏭️  strudel      skipped (audio — cannot be vision-graded)');
+console.log('⏭️  revideo      skipped (video composition — needs the Revideo renderer, not a static screenshot)');

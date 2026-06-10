@@ -120,6 +120,13 @@ export class HTMLValidator {
       // audio UIs that do `el.innerHTML = '<button>…'`). Only flag the dynamic cases.
       { pattern: /innerHTML\s*=(?!=)\s*[A-Za-z_$(]/i, msg: 'innerHTML assigned a dynamic value - sanitize or build with textContent/createElement' },
       { pattern: /innerHTML\s*=(?!=)\s*`[^`]*\$\{/i, msg: 'innerHTML assigned an interpolated template - sanitize or build with textContent/createElement' },
+      // The same dynamic-only rule applies to the sibling injection sinks the
+      // original patterns missed: append assignment, bracket-notation access,
+      // outerHTML, and insertAdjacentHTML. Static literals stay allowed.
+      { pattern: /innerHTML\s*\+=\s*(?:[A-Za-z_$(]|`[^`]*\$\{)/i, msg: 'innerHTML appended a dynamic value - sanitize or build with textContent/createElement' },
+      { pattern: /\[\s*["']innerHTML["']\s*\]\s*\+?=(?!=)\s*(?:[A-Za-z_$(]|`[^`]*\$\{)/i, msg: 'innerHTML (bracket form) assigned a dynamic value - sanitize or build with textContent/createElement' },
+      { pattern: /outerHTML\s*\+?=(?!=)\s*(?:[A-Za-z_$(]|`[^`]*\$\{)/i, msg: 'outerHTML assigned a dynamic value - sanitize or build with textContent/createElement' },
+      { pattern: /insertAdjacentHTML\s*\(\s*["'][^"']+["']\s*,\s*(?:[A-Za-z_$(]|`[^`]*\$\{)/i, msg: 'insertAdjacentHTML called with a dynamic value - sanitize or build with textContent/createElement' },
     ];
 
     for (const { pattern, msg } of dangerousPatterns) {

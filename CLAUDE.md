@@ -79,12 +79,12 @@ Every test file written or modified MUST meet these standards. No exceptions.
 
 | Metric | Current | Target | Gap |
 |--------|---------|--------|-----|
-| Statements | 67.4% | 70% | -2.6pp |
-| Branches | 57.3% | 70% | -12.7pp |
-| Functions | 68.2% | 70% | -1.8pp |
-| Lines | 68.2% | 70% | -1.8pp |
+| Statements | 78.4% | 70% | +8.4pp above target |
+| Branches | 68.4% | 70% | -1.6pp |
+| Functions | 81.8% | 70% | +11.8pp above target |
+| Lines | 79.3% | 70% | +9.3pp above target |
 
-*(Current values auto-update via the ratchet. This table reflects the gap at ratchet start.)*
+*(Current values = the ratchet floors in `vitest.config.ts` as of 2026-06-10. Three of four metrics are above target; branches is the remaining gap.)*
 
 **Rules:**
 1. Every new `src/` file MUST include a corresponding test file. Zero-coverage files are CI failures.

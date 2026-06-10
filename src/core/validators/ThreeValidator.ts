@@ -118,7 +118,41 @@ export class ThreeValidator {
       errors.push(`Three.js scene background/clear color ${darkBackground} is too dark for image proof; use a bright or mid-tone background so mean luminance passes render validation`);
     }
 
+    // Lights and a bright background are not enough when the SUBJECT itself is
+    // near-black: the audit's "visible lighting" proof rendered an almost-black
+    // cube on white (investor-audit F11). Only flag the guaranteed-invisible
+    // case — every material color literal in the scene is dark. A mix of dark
+    // and bright materials is a legitimate palette.
+    const darkMaterials = this.findUniformlyDarkMaterialColors(code);
+    if (darkMaterials) {
+      errors.push(`Three.js scene's material colors (${darkMaterials.join(', ')}) are all near-black — the subject will be invisible regardless of lighting; use mid-tone or bright material colors for the primary geometry`);
+    }
+
     return errors;
+  }
+
+  /**
+   * Material color literals from Mesh*Material({ color: … }) constructions and
+   * material.color.set(…) calls. Returns the literals only when EVERY one is
+   * dark (luminance < 48); null when none found or any is bright enough.
+   */
+  private static findUniformlyDarkMaterialColors(code: string): string[] | null {
+    const patterns = [
+      /THREE\.Mesh\w*Material\s*\(\s*\{[^}]*?\bcolor\s*:\s*(['"]?)(#?[0-9a-f]{6}|0x[0-9a-f]{6})\1/gi,
+      /\.color\.set\s*\(\s*(['"]?)(#?[0-9a-f]{6}|0x[0-9a-f]{6})\1\s*\)/gi,
+    ];
+    const literals: string[] = [];
+    for (const pattern of patterns) {
+      for (const match of code.matchAll(pattern)) {
+        literals.push(match[2]);
+      }
+    }
+    if (literals.length === 0) return null;
+    const allDark = literals.every((literal) => {
+      const luminance = this.hexLuminance(literal);
+      return luminance !== null && luminance < 48;
+    });
+    return allDark ? literals : null;
   }
 
   private static findDarkBackgroundColor(code: string): string | null {

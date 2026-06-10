@@ -263,4 +263,47 @@ describe('ThreeValidator', () => {
       expect(ThreeValidator.getMinSize()).toBe(800);
     });
   });
+
+  describe('uniformly dark material colors (audit F11)', () => {
+    const scene = (materials: string) => `
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color('#e8e4dc');
+      const light = new THREE.AmbientLight(0xffffff, Math.PI);
+      scene.add(light);
+      ${materials}
+      const renderer = new THREE.WebGLRenderer();
+    `;
+
+    it('flags a scene whose every material color is near-black', () => {
+      // The audit's "visible lighting" proof: lights + bright background but a
+      // near-black cube — invisible subject despite passing the light checks.
+      const code = scene(`const m = new THREE.MeshStandardMaterial({ color: 0x111318 });`);
+      const { errors } = ThreeValidator.validate(code);
+      expect(errors.some((e) => e.includes('material colors') && e.includes('near-black'))).toBe(true);
+    });
+
+    it('passes when at least one material is bright (dark accents are legit)', () => {
+      const code = scene(`
+        const dark = new THREE.MeshStandardMaterial({ color: 0x101216 });
+        const bright = new THREE.MeshStandardMaterial({ color: '#4f9dde' });
+      `);
+      const { errors } = ThreeValidator.validate(code);
+      expect(errors.some((e) => e.includes('near-black'))).toBe(false);
+    });
+
+    it('passes when no material color literal exists (defaults are bright)', () => {
+      const code = scene(`const m = new THREE.MeshStandardMaterial();`);
+      const { errors } = ThreeValidator.validate(code);
+      expect(errors.some((e) => e.includes('near-black'))).toBe(false);
+    });
+
+    it('catches dark colors set via material.color.set()', () => {
+      const code = scene(`
+        const m = new THREE.MeshStandardMaterial();
+        m.color.set('#0a0a0f');
+      `);
+      const { errors } = ThreeValidator.validate(code);
+      expect(errors.some((e) => e.includes('near-black'))).toBe(true);
+    });
+  });
 });

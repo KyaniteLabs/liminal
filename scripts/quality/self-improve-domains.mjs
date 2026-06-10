@@ -78,3 +78,49 @@ export function buildDomainPrompt(domain, theme) {
   const template = DOMAIN_TEMPLATES[domain];
   return template ? template(theme) : theme;
 }
+
+// Mirror of the descriptor axes used by the garden commands (bin/sinter) and
+// EmergenceHooks — keep in sync if the axis list ever changes.
+export const DESCRIPTOR_AXES = [
+  'order-chaos',
+  'sparse-dense',
+  'symmetry-asymmetry',
+  'smooth-bursty',
+  'static-evolving',
+  'harmonic-dissonant',
+];
+
+const AXIS_POLES = {
+  'order-chaos': ['orderly', 'chaotic'],
+  'sparse-dense': ['sparse', 'dense'],
+  'symmetry-asymmetry': ['symmetric', 'asymmetric'],
+  'smooth-bursty': ['smooth', 'bursty'],
+  'static-evolving': ['still', 'ever-evolving'],
+  'harmonic-dissonant': ['harmonic', 'dissonant'],
+};
+
+/**
+ * Turn a persisted dream task (sources carry descriptor vectors on the garden
+ * axes) into a generation theme: average the source descriptors and name the
+ * decisive poles (≤0.35 → first pole, ≥0.65 → second pole). This is how the
+ * gardener's dream recombinations become real generation prompts in the
+ * self-improve cycle. Returns null when the task has no usable descriptors.
+ */
+export function dreamThemeFromTask(task, axes = DESCRIPTOR_AXES) {
+  const descriptors = (task?.sources ?? [])
+    .map((s) => s?.descriptor)
+    .filter((d) => Array.isArray(d) && d.length > 0);
+  if (descriptors.length === 0) return null;
+
+  const dims = Math.min(axes.length, ...descriptors.map((d) => d.length));
+  const words = [];
+  for (let i = 0; i < dims; i++) {
+    const avg = descriptors.reduce((sum, d) => sum + d[i], 0) / descriptors.length;
+    const poles = AXIS_POLES[axes[i]];
+    if (!poles) continue;
+    if (avg <= 0.35) words.push(poles[0]);
+    else if (avg >= 0.65) words.push(poles[1]);
+  }
+  if (words.length === 0) words.push('balanced');
+  return `${words.join(', ')} forms recombined from its own archive lineage`;
+}

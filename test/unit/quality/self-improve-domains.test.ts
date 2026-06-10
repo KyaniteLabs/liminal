@@ -7,6 +7,7 @@ import {
   MAX_PER_DOMAIN,
   pickUnderfilledDomains,
   buildDomainPrompt,
+  dreamThemeFromTask,
   // @ts-expect-error — .mjs helper has no type declarations; imported for behavior only.
 } from '../../../scripts/quality/self-improve-domains.mjs';
 
@@ -95,5 +96,44 @@ describe('domain template coverage', () => {
 
   it('mirrors the QualityArchive per-domain cap', () => {
     expect(MAX_PER_DOMAIN).toBe(20);
+  });
+});
+
+describe('dreamThemeFromTask', () => {
+  it('names the decisive poles from averaged source descriptors', () => {
+    // axes: order-chaos, sparse-dense, symmetry-asymmetry, smooth-bursty, static-evolving, harmonic-dissonant
+    const task = {
+      sources: [
+        { id: 'a', descriptor: [0.9, 0.8, 0.5, 0.2, 0.9, 0.5], quality: 0.9 },
+        { id: 'b', descriptor: [0.9, 0.8, 0.5, 0.2, 0.9, 0.5], quality: 0.8 },
+      ],
+    };
+    expect(dreamThemeFromTask(task)).toBe(
+      'chaotic, dense, smooth, ever-evolving forms recombined from its own archive lineage',
+    );
+  });
+
+  it('averages divergent parents and skips non-decisive axes', () => {
+    const task = {
+      sources: [
+        { id: 'a', descriptor: [1.0, 0.5], quality: 0.9 },
+        { id: 'b', descriptor: [0.0, 0.5], quality: 0.7 },
+      ],
+    };
+    // axis 1 averages to 0.5 (non-decisive), axis 2 is 0.5 — nothing decisive.
+    expect(dreamThemeFromTask(task)).toBe('balanced forms recombined from its own archive lineage');
+  });
+
+  it('routes a dream theme through every domain template via detectable keywords', () => {
+    const theme = 'chaotic, dense forms recombined from its own archive lineage';
+    expect(buildDomainPrompt('glsl', theme)).toBe(`a GLSL fragment shader of ${theme}`);
+    expect(buildDomainPrompt('strudel', theme)).toBe(`a Strudel live-coding music pattern of ${theme}`);
+  });
+
+  it('returns null for tasks without usable descriptors', () => {
+    expect(dreamThemeFromTask({ sources: [] })).toBeNull();
+    expect(dreamThemeFromTask({ sources: [{ id: 'a', descriptor: [], quality: 0.5 }] })).toBeNull();
+    expect(dreamThemeFromTask(undefined)).toBeNull();
+    expect(dreamThemeFromTask({})).toBeNull();
   });
 });

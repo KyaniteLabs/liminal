@@ -6,6 +6,9 @@
  * Each dream task specifies a strategy, source artifacts, and priority.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 export type DreamStrategy =
   | 'elite-x-elite'
   | 'elite-x-compost'
@@ -33,6 +36,14 @@ export interface DreamQueueConfig {
   maxConcurrent?: number;
   /** Maximum queue size (default: 50) */
   maxQueueSize?: number;
+  /**
+   * Optional JSON file backing the queue. When set, the queue loads existing
+   * tasks on construction and saves after every mutation, so dreams survive
+   * process exit — the gardener (garden tend) enqueues in one process and the
+   * self-improve cycle consumes in another. Without it the queue stays
+   * in-memory, exactly as before.
+   */
+  persistPath?: string;
 }
 
 const DEFAULT_MAX_CONCURRENT = 3;
@@ -42,12 +53,60 @@ export class DreamQueue {
   private readonly queue: DreamTask[] = [];
   private readonly maxConcurrent: number;
   private readonly maxQueueSize: number;
+  private readonly persistPath?: string;
   private runningCount = 0;
   private taskIdCounter = 0;
 
   constructor(config: DreamQueueConfig = {}) {
     this.maxConcurrent = config.maxConcurrent ?? DEFAULT_MAX_CONCURRENT;
     this.maxQueueSize = config.maxQueueSize ?? DEFAULT_MAX_QUEUE;
+    this.persistPath = config.persistPath;
+    if (this.persistPath) this.loadFromDisk(this.persistPath);
+  }
+
+  private loadFromDisk(persistPath: string): void {
+    let raw: string;
+    try {
+      raw = fs.readFileSync(persistPath, 'utf-8');
+    } catch {
+      return; // no file yet — start empty
+    }
+    let tasks: DreamTask[];
+    try {
+      const data = JSON.parse(raw) as { tasks?: unknown };
+      if (!Array.isArray(data.tasks)) throw new Error('missing tasks array');
+      tasks = (data.tasks as DreamTask[]).filter(
+        t => t && typeof t.id === 'string' && Array.isArray(t.sources) && typeof t.priority === 'number',
+      );
+    } catch {
+      // Never destroy an unreadable queue file by saving over it — quarantine
+      // it (same recovery contract as QualityArchive) and start empty.
+      try {
+        fs.renameSync(persistPath, `${persistPath}.corrupt-${Date.now()}`);
+      } catch {
+        /* rename best-effort */
+      }
+      return;
+    }
+    for (const task of tasks) {
+      // A persisted 'running' task means its consumer died mid-dream (single
+      // consumer model: the self-improve cycle). Reclaim it so it can run again.
+      if (task.status === 'running') task.status = 'queued';
+      this.queue.push(task);
+      const idNum = Number(/^dream-(\d+)-/.exec(task.id)?.[1] ?? 0);
+      if (idNum > this.taskIdCounter) this.taskIdCounter = idNum;
+    }
+    this.queue.sort((a, b) => b.priority - a.priority);
+  }
+
+  private persist(): void {
+    if (!this.persistPath) return;
+    try {
+      fs.mkdirSync(path.dirname(this.persistPath), { recursive: true });
+      fs.writeFileSync(this.persistPath, JSON.stringify({ version: 1, tasks: this.queue }, null, 2), 'utf-8');
+    } catch {
+      /* persistence is best-effort; the in-memory queue stays authoritative */
+    }
   }
 
   /**
@@ -72,6 +131,7 @@ export class DreamQueue {
 
     this.queue.push(task);
     this.queue.sort((a, b) => b.priority - a.priority);
+    this.persist();
     return id;
   }
 
@@ -87,6 +147,7 @@ export class DreamQueue {
     task.status = 'running';
     task.startedAt = new Date().toISOString();
     this.runningCount++;
+    this.persist();
     return task;
   }
 
@@ -101,6 +162,7 @@ export class DreamQueue {
     task.completedAt = new Date().toISOString();
     task.result = result;
     this.runningCount--;
+    this.persist();
   }
 
   /**
@@ -113,6 +175,7 @@ export class DreamQueue {
     task.status = 'failed';
     task.completedAt = new Date().toISOString();
     this.runningCount--;
+    this.persist();
   }
 
   /**
@@ -147,6 +210,7 @@ export class DreamQueue {
       const idx = this.queue.indexOf(t);
       if (idx >= 0) this.queue.splice(idx, 1);
     }
+    this.persist();
     return before - this.queue.length;
   }
 }

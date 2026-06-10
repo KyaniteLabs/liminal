@@ -8,7 +8,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import fsSync from 'fs';
 import os from 'os';
-import { normalizePath, assertSafeSegment } from '../../src/utils/normalizePath.js';
+import { normalizePath, assertSafeSegment, resolveOutputPath } from '../../src/utils/normalizePath.js';
 import { run, runFromArgs } from '../../src/index.js';
 import { Gallery } from '../../src/gallery/Gallery.js';
 import { SeedArchive } from '../../src/gallery/SeedArchive.js';
@@ -40,6 +40,49 @@ describe('normalizePath', () => {
 
   it('throws when subPath is absolute', () => {
     expect(() => normalizePath(base, '/etc/passwd')).toThrow('Path traversal or escape not allowed');
+  });
+});
+
+describe('resolveOutputPath', () => {
+  const base = path.join(os.tmpdir(), 'atelier-outpath-test-' + Date.now());
+
+  beforeAll(async () => {
+    await fs.mkdir(base, { recursive: true });
+  });
+
+  afterAll(async () => {
+    await fs.rm(base, { recursive: true, force: true }).catch(() => {});
+  });
+
+  it('resolves relative paths inside base like normalizePath', () => {
+    expect(resolveOutputPath(base, 'out/sub')).toBe(normalizePath(base, 'out/sub'));
+  });
+
+  it('throws on relative escape', () => {
+    expect(() => resolveOutputPath(base, '../etc')).toThrow('Path traversal or escape not allowed');
+  });
+
+  it('allows the CLI default absolute output hub under ~/.sinter', () => {
+    const hub = path.join(os.homedir(), '.sinter', 'output');
+    expect(resolveOutputPath(base, hub)).toBe(hub);
+  });
+
+  it('allows absolute paths inside base', () => {
+    const inside = path.join(base, 'deep', 'dir');
+    expect(resolveOutputPath(base, inside)).toBe(inside);
+  });
+
+  it('throws on absolute paths outside base and outside ~/.sinter', () => {
+    expect(() => resolveOutputPath(base, '/etc/passwd')).toThrow('Path traversal or escape not allowed');
+    expect(() => resolveOutputPath(base, path.join(os.homedir(), 'Documents', 'x'))).toThrow(
+      'Path traversal or escape not allowed'
+    );
+  });
+
+  it('throws on absolute paths that dot-escape into a sibling of base', () => {
+    expect(() => resolveOutputPath(base, path.join(base, '..', 'sibling'))).toThrow(
+      'Path traversal or escape not allowed'
+    );
   });
 });
 

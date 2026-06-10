@@ -60,7 +60,7 @@ import { generateMusic } from './music/generateMusic.js';
 
 import fs from 'fs/promises';
 import path from 'path';
-import { normalizePath, assertSafeSegment } from './utils/normalizePath.js';
+import { resolveOutputPath, assertSafeSegment } from './utils/normalizePath.js';
 import { SERVICE_DEFAULTS } from './constants.js';
 
 export const SINTER_VERSION = '2.1.0';
@@ -208,8 +208,8 @@ export async function run(prompt: string, options: {
     validatePrompt(prompt);
 
     const cwd = process.cwd();
-    const outputResolved = normalizePath(cwd, output);
-    const galleryDirResolved = normalizePath(cwd, galleryDir);
+    const outputResolved = resolveOutputPath(cwd, output);
+    const galleryDirResolved = resolveOutputPath(cwd, galleryDir);
     assertSafeSegment(project, 'Project name');
 
     // Create output directory if it doesn't exist

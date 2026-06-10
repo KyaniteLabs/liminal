@@ -331,7 +331,9 @@ class Bus extends EventEmitter {
     } else if (event.type === EventTypes.LLM_RESPONSE) {
       const d = this.asLLMResponseData(event.data);
       if (d) {
-        const status = d.success ? 'ok' : `err: ${d.error}`;
+        // Some failure paths carry an Error whose .message is empty (synthetic
+        // aborts) — never print the literal "err: undefined" (audit F21).
+        const status = d.success ? 'ok' : `err: ${d.error ?? 'unknown (no error message)'}`;
         process.stdout.write(`${sanitizeTerminalText(`${msg} ${d.provider}/${d.model} ${d.latencyMs}ms ${status}`, { maxLength: 180, singleLine: true })}\n`);
       }
     } else if (event.type === EventTypes.LOOP_ITERATION) {

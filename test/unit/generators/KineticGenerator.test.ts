@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const { mockComplete, mockGenerate, mockGetConfig } = vi.hoisted(() => ({
   mockComplete: vi.fn().mockResolvedValue({
@@ -151,5 +151,31 @@ describe('KineticGenerator', () => {
     const gen = new KineticGenerator();
 
     await expect(gen.generate('empty')).rejects.toThrow('LLM returned empty CSS kinetic HTML');
+  });
+
+  describe('directAttemptTimeoutMs (audit F21)', () => {
+    const KEY = 'SINTER_KINETIC_DIRECT_TIMEOUT_MS';
+    const saved = process.env[KEY];
+    afterEach(() => {
+      if (saved === undefined) delete process.env[KEY];
+      else process.env[KEY] = saved;
+    });
+
+    it('defaults the compact-direct budget to 60s', () => {
+      delete process.env[KEY];
+      expect(KineticGenerator.directAttemptTimeoutMs()).toBe(60_000);
+    });
+
+    it('honors an env override at or above the 5s floor', () => {
+      process.env[KEY] = '120000';
+      expect(KineticGenerator.directAttemptTimeoutMs()).toBe(120_000);
+    });
+
+    it('rejects sub-floor and non-numeric overrides', () => {
+      process.env[KEY] = '10';
+      expect(KineticGenerator.directAttemptTimeoutMs()).toBe(60_000);
+      process.env[KEY] = 'garbage';
+      expect(KineticGenerator.directAttemptTimeoutMs()).toBe(60_000);
+    });
   });
 });

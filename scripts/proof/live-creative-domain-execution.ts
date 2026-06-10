@@ -235,6 +235,11 @@ async function main(): Promise<void> {
   await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, 'utf8');
   await writeFile(path.join(outDir, 'receipt.json'), `${JSON.stringify(receipt, null, 2)}\n`, 'utf8');
   console.log(`live creative-domain receipt: ${receiptPath}`);
+  if (failed.length === 0 && missingDomains.length > 0) {
+    // Partial reruns (--domains x) exit 1 by contract — the receipt guards the
+    // FULL launch set — but say so plainly instead of looking like a gen failure.
+    console.log(`note: all ${results.length} requested domain(s) passed; receipt status is 'fail' only because this partial run does not cover the launch set (${missingDomains.length} domain(s) not attempted).`);
+  }
   process.exit(receipt.status === 'pass' ? 0 : 1);
 }
 

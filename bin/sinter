@@ -403,6 +403,7 @@ function printHelp() {
   console.log('  compost <subcommand>        Compost Mill: add, digest, soup, seeds, status');
   console.log('  composite                   Analyze composition spec and generate layer plan');
   console.log('  compose --prompt "<idea>"     Decompose an idea into layers + assemble (or --spec)');
+  console.log('  live-music                  Generate a live AV set (Strudel music + Hydra visuals)');
   console.log('  chat                        Start conversational creative coding mode');
   console.log('  git <subcommand>            Git integration: status, log, diff, branch, commit, init');
   console.log('  fix <file|description>      Auto-fix code issues with LLM assistance');
@@ -416,9 +417,18 @@ function printHelp() {
   console.log('  improve <scan|run>          Diagnose repair, hardening, and optimization proposals');
   console.log('  quality <subcommand>       Quality gate: run, gate');
   console.log('  market status              Show honest market readiness status');
+  console.log('  readiness status            Alias of market status');
   console.log('  archive <subcommand>      Archive: inspect, lineage, branch, list');
   console.log('  preferences <subcommand>  Preferences: export, stats, train, model');
-  console.log('  report cognition           Show creative body and cognitive architecture atlas');
+  console.log('  taste <train|eval>          Train or evaluate the taste model from preferences');
+  console.log('  dream run [strategy]        Run a dream recombination cycle over the archive');
+  console.log('  garden <subcommand>         Autonomous gardener: status, rebalance, start, stop');
+  console.log('  ship <garden|rollback>      Promote a garden release candidate or roll back (--to <ref>)');
+  console.log('  emergence <score|probe>     Score or probe emergence for a text or file output');
+  console.log('  fs <artifacts|refs|runs>    Inspect Sinter content store: artifacts, refs, runs');
+  console.log('  demo creative-codex         Run the Creative Codex demo scenario');
+  console.log('  prompt synthesize           Synthesize a prompt from a node graph (--input <graph.json>)');
+  console.log('  report <subcommand>         Reports: cognition, provenance, archive, garden, readiness');
   console.log('');
   console.log('OPTIONS:');
   console.log('  --prompt, -p <text>         Prompt for generation');
@@ -432,6 +442,7 @@ function printHelp() {
   console.log('  --favorites                 List favorite prompts');
   console.log('  --interactive, -i           Interactive TUI mode');
   console.log('  --mode <mode>              Mode: live-music (Live AV Strudel + Hydra to --output)');
+  console.log('  --learn                     Feed generation results into the quality archive');
   console.log('  --use-swarm                Use Sinter swarm (5 default personas) for generation');
   console.log('  --swarm-mode <mode>        Swarm mode: competitive, hybrid, ring, mesh (default: hybrid)');
   console.log('  --swarm-rounds <num>       Max swarm rounds (default: 10)');

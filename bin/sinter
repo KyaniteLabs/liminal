@@ -428,7 +428,8 @@ function printHelp() {
   console.log('  fs <artifacts|refs|runs>    Inspect Sinter content store: artifacts, refs, runs');
   console.log('  demo creative-codex         Run the Creative Codex demo scenario');
   console.log('  prompt synthesize           Synthesize a prompt from a node graph (--input <graph.json>)');
-  console.log('  report <subcommand>         Reports: cognition, provenance, archive, garden, readiness');
+  console.log('  report cognition            Show creative body and cognitive architecture atlas');
+  console.log('  report <subcommand>         Other reports: provenance, archive, garden, readiness');
   console.log('');
   console.log('OPTIONS:');
   console.log('  --prompt, -p <text>         Prompt for generation');

@@ -55,11 +55,11 @@ export default defineConfig({
         // ━━━ Global coverage ratchet ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // TARGET: 70% across all metrics (user-requested)
         //
-        // Current → Target gaps:
-        //   Statements: 68.6% → 70% (gap: -1.4pp)
-        //   Branches:   58.9% → 70% (gap: -11.1pp)
-        //   Functions:  69.7% → 70% (gap: -0.3pp)
-        //   Lines:      69.5% → 70% (gap: -0.5pp)
+        // Current → Target (as of 2026-06-10):
+        //   Statements: 78.4% → 70% (+8.4pp above target)
+        //   Branches:   68.4% → 70% (gap: -1.6pp — last metric below target)
+        //   Functions:  81.8% → 70% (+11.8pp above target)
+        //   Lines:      79.3% → 70% (+9.3pp above target)
         //
         // Ratchet is set to current CI-measured values (floor).
         // Coverage can only go UP, never DOWN. Any decrease fails CI.

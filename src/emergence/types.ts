@@ -124,7 +124,11 @@ export type PreferenceAction =
   | 'less-like-this'
   | 'pairwise-a'
   | 'pairwise-b'
-  | 'reject';
+  | 'reject'
+  /** System-inferred from evaluator score gaps — NOT a user action. Keeps the
+   *  taste model trainable before any human pins exist (audit F7); human
+   *  preferences carry higher confidence and dominate when present. */
+  | 'score-gap';
 
 /** A single preference event captured from user interaction. */
 export interface PreferenceRecord {

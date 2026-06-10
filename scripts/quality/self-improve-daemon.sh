@@ -31,6 +31,11 @@ while true; do
   # persist the dream plan that the cycle below consumes (one dream per cycle).
   echo "[daemon $(date -u +%FT%TZ)] garden tend"
   node bin/sinter garden tend || echo "[daemon $(date -u +%FT%TZ)] tend FAILED (rc=$?) — continuing"
+  # LLM-free taste training: score-gap auto-feed means the model trains from
+  # the archive's own evaluator ordering, refined by human pins when they exist.
+  # `preferences train` is the PERSISTING path (TasteLearningService → SinterFS).
+  echo "[daemon $(date -u +%FT%TZ)] preferences train"
+  node bin/sinter preferences train || echo "[daemon $(date -u +%FT%TZ)] preferences train FAILED (rc=$?) — continuing"
   echo "[daemon $(date -u +%FT%TZ)] cycle start"
   if node scripts/quality/self-improve-cycle.mjs "$COUNT"; then
     echo "[daemon $(date -u +%FT%TZ)] cycle ok"

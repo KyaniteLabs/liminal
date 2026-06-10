@@ -169,6 +169,18 @@ describe('GenericWrapper', () => {
       expect(result).not.toContain('Logger.error');
     });
 
+    it('pins bare render() to the primary output so the patch fills the frame (F15)', () => {
+      // Bare render() = hydra's 2x2 debug grid: top-left quadrant patch,
+      // three black quadrants — observed live in composites.
+      const result = GenericWrapper.wrap('osc(8,0.1,1.2).kaleid(3).out(o0)\nrender()', { domain: 'hydra' });
+      expect(result).toContain('render(o0)');
+      expect(result).not.toMatch(/\brender\s*\(\s*\)/);
+
+      // Explicit output args are preserved untouched.
+      const explicit = GenericWrapper.wrap('osc(4).out(o1)\nrender(o1)', { domain: 'hydra' });
+      expect(explicit).toContain('render(o1)');
+    });
+
     it('uses viewport dimensions with default resolution fallback', () => {
       const code = 'osc(20).out()';
       const result = GenericWrapper.wrap(code, { domain: 'hydra' });

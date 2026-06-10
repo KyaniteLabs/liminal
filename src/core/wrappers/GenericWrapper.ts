@@ -293,7 +293,14 @@ ${safeCommentCode}
   }
 
   private static wrapHydra(code: string, resolution: { width: number; height: number }): string {
-    const safeCode = code.replace(/`/g, '\\`');
+    // A bare render() switches hydra-synth into its 2x2 output-buffer debug
+    // grid: the patch shrinks to the top-left quadrant and the other three
+    // render black. Generated code emits it often enough that it reached live
+    // composites (investor-audit F15, pixel-identical reproduction). Pin bare
+    // render() to the primary output; explicit render(oN) calls are preserved.
+    const safeCode = code
+      .replace(/\brender\s*\(\s*\)/g, 'render(o0)')
+      .replace(/`/g, '\\`');
 
     return `<!DOCTYPE html>
 <html lang="en">

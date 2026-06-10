@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { commandPrompt, inferNaturalLanguagePrompt, isSelfImprovementPrompt } from '../../../src/cli/PromptArgs.js';
+import { commandPrompt, inferNaturalLanguagePrompt, isSelfImprovementPrompt, suggestCommandForTypo } from '../../../src/cli/PromptArgs.js';
 
 describe('PromptArgs', () => {
   describe('commandPrompt', () => {
@@ -106,6 +106,39 @@ describe('PromptArgs', () => {
 
     it('returns false for empty string', () => {
       expect(isSelfImprovementPrompt('')).toBe(false);
+    });
+  });
+
+  describe('suggestCommandForTypo (audit F8 — front-door gate)', () => {
+    it('catches single-edit typos of known commands', () => {
+      expect(suggestCommandForTypo('grden', ['status'])).toEqual({ command: 'garden', reason: 'typo' });
+      expect(suggestCommandForTypo('tast', ['eval'])).toEqual({ command: 'taste', reason: 'typo' });
+      expect(suggestCommandForTypo('serv', [])).toEqual({ command: 'serve', reason: 'typo' });
+    });
+
+    it('catches a quoted command phrase passed as one argument', () => {
+      // The shape that launched two real paid generations during the audit
+      // (zsh does not word-split unquoted parameters).
+      expect(suggestCommandForTypo('taste status', [])).toEqual({ command: 'taste', reason: 'quoted-phrase' });
+      expect(suggestCommandForTypo('dream status', [])).toEqual({ command: 'dream', reason: 'quoted-phrase' });
+    });
+
+    it('lets genuine creative prompts through to generation', () => {
+      expect(suggestCommandForTypo('icebergs', ['dancing', 'in', 'the', 'sky'])).toBeNull(); // 5 words
+      expect(suggestCommandForTypo('cosmic', ['jellyfish'])).toBeNull(); // no near-miss
+      expect(suggestCommandForTypo('blue particles drifting upward', [])).toBeNull(); // quoted, no command word
+      expect(suggestCommandForTypo('a quiet tide, breathing', [])).toBeNull(); // punctuation = prose
+    });
+
+    it('does not fire for exact known commands or empty input', () => {
+      expect(suggestCommandForTypo('garden', ['status'])).toBeNull(); // dispatched, never NL
+      expect(suggestCommandForTypo(null, [])).toBeNull();
+    });
+
+    it('uses a tighter threshold for short tokens', () => {
+      expect(suggestCommandForTypo('lst', [])).toEqual({ command: 'list', reason: 'typo' }); // d=1 at len 3
+      expect(suggestCommandForTypo('lt', [])).toEqual({ command: 'ls', reason: 'typo' }); // d=1 to ls
+      expect(suggestCommandForTypo('zq', [])).toBeNull(); // no 1-edit neighbor at len 2
     });
   });
 });

@@ -768,7 +768,7 @@ const [
   { LLMClient },
   { ModelRouter },
   { chatCommand },
-  { commandPrompt, inferNaturalLanguagePrompt, isSelfImprovementPrompt },
+  { commandPrompt, inferNaturalLanguagePrompt, isSelfImprovementPrompt, suggestCommandForTypo },
   { writeCliCognitiveReceipt },
   { collectRepositoryMarketReadinessStatus, formatMarketReadinessStatus },
 ] = await Promise.all([
@@ -931,6 +931,20 @@ await LLMClient.loadRoles();
 
 const naturalLanguagePrompt = inferNaturalLanguagePrompt(cmd, cmdArgs);
 if (naturalLanguagePrompt && flags.prompt === undefined) {
+  // Command-shaped near-misses must not silently become PAID generations
+  // (audit F8): a typo'd command or a quoted "command subcommand" phrase gets
+  // a did-you-mean error with an explicit escape hatch instead.
+  const typo = suggestCommandForTypo(cmd, cmdArgs);
+  if (typo) {
+    if (typo.reason === 'quoted-phrase') {
+      console.error(`"${cmd}" looks like the "${typo.command}" command quoted as one argument.`);
+      console.error(`Did you mean: sinter ${cmd}  (without quotes)?`);
+    } else {
+      console.error(`Unknown command "${cmd}" — did you mean "${typo.command}"?`);
+    }
+    console.error(`To generate art from this text instead, run: sinter --prompt ${JSON.stringify(naturalLanguagePrompt)}`);
+    process.exit(1);
+  }
   flags.prompt = naturalLanguagePrompt;
 }
 

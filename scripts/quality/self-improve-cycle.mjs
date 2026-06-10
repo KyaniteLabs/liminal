@@ -25,6 +25,10 @@ import {
 } from './self-improve-domains.mjs';
 
 const COUNT = Math.max(1, parseInt(process.argv[2] || '6', 10));
+// Per-gen wall clock budget. Slow domains (hydra measured ~8min for a single
+// iteration) overran the old 240s ceiling every time and were SIGTERM'd —
+// logged misleadingly as garbled stdout tails. Tunable per environment.
+const GEN_TIMEOUT_MS = Math.max(60_000, parseInt(process.env.SINTER_GEN_TIMEOUT_MS || '480000', 10));
 const ARCHIVE = path.join(os.homedir(), '.sinter', 'archive', 'quality_archive.json');
 const LEDGER = 'docs/validation/self-improve-ledger.jsonl';
 const OUTROOT = '.quality/rsi';
@@ -86,16 +90,27 @@ for (let i = 0; i < COUNT; i++) {
   try {
     const out = execSync(
       `node bin/sinter --prompt ${JSON.stringify(prompt)} --learn --intuition -o ${JSON.stringify(tag)}`,
-      { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 240000 },
+      { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'], timeout: GEN_TIMEOUT_MS },
     );
     const m = out.match(/Quality score:\s*([\d.]+)/);
     const s = m ? parseFloat(m[1]) : null;
     if (s != null) scores.push(s);
     console.log(`  [${i + 1}/${COUNT}] domain=${domain} score=${s ?? 'n/a'}  "${idea.slice(0, 32)}…"`);
   } catch (e) {
-    const msg = String(e.stdout || e.message || '').slice(-200);
-    console.log(`  [${i + 1}/${COUNT}] FAILED: ${/429|rate.?limit|usage limit/i.test(msg) ? 'RATE-LIMITED — stopping cycle early' : msg.slice(0, 120)}`);
-    if (/429|rate.?limit|usage limit/i.test(msg)) break;
+    // execSync reports a timeout kill as SIGTERM with null status; name it
+    // instead of dumping a mid-run stdout tail. Real errors arrive on stderr,
+    // which the old logging ignored entirely.
+    const timedOut = e.signal === 'SIGTERM' && e.status == null;
+    const errTail = String(e.stderr || '').trim().slice(-200);
+    const outTail = String(e.stdout || '').trim().slice(-200);
+    const rateLimited = /429|rate.?limit|usage limit/i.test(`${errTail} ${outTail}`);
+    const reason = rateLimited
+      ? 'RATE-LIMITED — stopping cycle early'
+      : timedOut
+        ? `TIMEOUT — domain=${domain} exceeded ${GEN_TIMEOUT_MS / 1000}s and was killed`
+        : (errTail || outTail || String(e.message || '')).slice(0, 120);
+    console.log(`  [${i + 1}/${COUNT}] FAILED: ${reason}`);
+    if (rateLimited) break;
   }
 }
 

@@ -628,6 +628,16 @@ function reliableScoreBoostTimeoutMs(): number {
   return process.env.NODE_ENV === 'test' ? 1_000 : 8_000;
 }
 
+// Bound for the rendered-evidence evaluator call. Without it, a slow or hanging
+// evaluator endpoint compounds through RetryManager (6 attempts x 120s provider
+// timeout + 62s backoff ≈ 13min worst case) — the observed multi-minute hydra
+// stalls. On timeout the caller falls back to legacy scoring (8s-bounded).
+function renderedEvidenceScoreTimeoutMs(): number {
+  const configured = Number.parseInt(process.env.LIMINAL_RENDERED_SCORE_TIMEOUT_MS ?? '', 10);
+  if (Number.isFinite(configured) && configured > 0) return configured;
+  return process.env.NODE_ENV === 'test' ? 1_000 : 45_000;
+}
+
 function createTimeoutController(parent: AbortSignal | undefined, timeoutMs: number): { signal?: AbortSignal; cleanup: () => void } {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
     return { signal: parent, cleanup: () => undefined };
@@ -771,9 +781,12 @@ If an image is attached, evaluate the visible rendered artifact first and use th
     : '\nScreenshot: not available; evaluate from code and timing only.';
   const userPrompt = `Brief: ${brief}\nCode:\n${code}\nTiming: ${evidence.timingMs}ms${screenshotNote}`;
 
+  const scoreTimeoutMs = renderedEvidenceScoreTimeoutMs();
+  const timeoutController = createTimeoutController(undefined, scoreTimeoutMs);
+  const scoreStartedAt = Date.now();
   try {
-    const response = evidence.screenshot
-      ? await llm.generateWithImages(
+    const llmCall = evidence.screenshot
+      ? llm.generateWithImages(
           systemPrompt,
           userPrompt,
           [{
@@ -783,8 +796,17 @@ If an image is attached, evaluate the visible rendered artifact first and use th
             height: evidence.screenshot.height,
             label: 'rendered-artifact',
           }],
+          timeoutController.signal,
         )
-      : await llm.generate(systemPrompt, userPrompt);
+      : llm.generate(systemPrompt, userPrompt, timeoutController.signal);
+    // Observe the late rejection if the timeout wins the race — the aborted
+    // call still rejects afterwards and would otherwise crash the process.
+    void llmCall.catch(() => undefined);
+    const response = await withScoringTimeout(llmCall, scoreTimeoutMs);
+    Logger.info(
+      'ScoringEngine',
+      `[stage-timing] rendered-evidence-score: ${Date.now() - scoreStartedAt}ms (screenshot: ${evidence.screenshot ? `${Math.round(evidence.screenshot.dataBase64.length / 1024)}KB` : 'none'})`,
+    );
     const jsonMatch = response.code.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return {
@@ -820,7 +842,7 @@ If an image is attached, evaluate the visible rendered artifact first and use th
       reasoning: typeof parsed.reasoning === 'string' ? parsed.reasoning : undefined,
     };
   } catch (error) {
-    Logger.warn('ScoringEngine', 'Rendered evidence LLM scoring failed:', error instanceof Error ? error.message : error);
+    Logger.warn('ScoringEngine', `Rendered evidence LLM scoring failed after ${Date.now() - scoreStartedAt}ms:`, error instanceof Error ? error.message : error);
     return {
       score: 0.5,
       confidence: 0,
@@ -831,5 +853,7 @@ If an image is attached, evaluate the visible rendered artifact first and use th
         constraint: 'Evaluator LLM must complete successfully for rendered-evidence scoring',
       },
     };
+  } finally {
+    timeoutController.cleanup();
   }
 }

@@ -90,7 +90,14 @@ for (let i = 0; i < COUNT; i++) {
   try {
     const out = execSync(
       `node bin/sinter --prompt ${JSON.stringify(prompt)} --learn --intuition -o ${JSON.stringify(tag)}`,
-      { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'], timeout: GEN_TIMEOUT_MS },
+      {
+        encoding: 'utf-8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        timeout: GEN_TIMEOUT_MS,
+        // Surface info-level [stage-timing] probes so a timeout kill's stdout
+        // tail names the stage that was in flight when the budget expired.
+        env: { ...process.env, LIMINAL_LOG_LEVEL: process.env.LIMINAL_LOG_LEVEL || 'info' },
+      },
     );
     const m = out.match(/Quality score:\s*([\d.]+)/);
     const s = m ? parseFloat(m[1]) : null;
@@ -104,10 +111,11 @@ for (let i = 0; i < COUNT; i++) {
     const errTail = String(e.stderr || '').trim().slice(-200);
     const outTail = String(e.stdout || '').trim().slice(-200);
     const rateLimited = /429|rate.?limit|usage limit/i.test(`${errTail} ${outTail}`);
+    const lastStage = (String(e.stdout || '').match(/\[stage-timing\][^\n]*/g) || []).pop();
     const reason = rateLimited
       ? 'RATE-LIMITED — stopping cycle early'
       : timedOut
-        ? `TIMEOUT — domain=${domain} exceeded ${GEN_TIMEOUT_MS / 1000}s and was killed`
+        ? `TIMEOUT — domain=${domain} exceeded ${GEN_TIMEOUT_MS / 1000}s and was killed${lastStage ? ` (last completed stage: ${lastStage.slice(0, 80)})` : ''}`
         : (errTail || outTail || String(e.message || '')).slice(0, 120);
     console.log(`  [${i + 1}/${COUNT}] FAILED: ${reason}`);
     if (rateLimited) break;

@@ -98,6 +98,10 @@ type RalphQualityEvaluation = {
   failureClass?: GenerationEvaluation['failureClass'];
 };
 
+function logStageTiming(stage: string, startedAt: number): void {
+  Logger.info('RalphLoop', `[stage-timing] ${stage}: ${Date.now() - startedAt}ms`);
+}
+
 function extractScoringReasoning(result: { report?: unknown }): string | undefined {
   const report = result.report;
   if (!report || typeof report !== 'object') return undefined;
@@ -233,7 +237,9 @@ export class RalphLoop {
 
     // Git integration — auto-on, agent manages version control behind the scenes
     const gitIntegration = new GitIntegration(normalizedOptions.git ?? {});
+    const gitStartRunStartedAt = Date.now();
     await gitIntegration.startRun(normalizedOptions.project ?? `run-${Date.now()}`, sessionId);
+    logStageTiming('preloop:git-start-run', gitStartRunStartedAt);
 
     // Voice-driven visual mapping: analyze audio file if provided
     if (normalizedOptions.voiceFile && !normalizedOptions.visualMappingParams) {
@@ -322,9 +328,11 @@ export class RalphLoop {
     let aestheticModel: AestheticModel | null = null;
 
     if (normalizedOptions.useArchiveLearning) {
+      const archiveLoadStartedAt = Date.now();
       archiveLearning = new ArchiveLearning({ archivePath: normalizedOptions.archivePath });
       qualityArchive = archiveLearning.getArchive();
       await qualityArchive.load();
+      logStageTiming('preloop:archive-load', archiveLoadStartedAt);
     }
 
     if (normalizedOptions.useAestheticModel) {
@@ -770,6 +778,7 @@ export class RalphLoop {
           lastModel = bestCandidate.model ?? lastModel;
         }
         generationDurationMs = Math.max(0, Date.now() - generationPhaseStartedAt);
+        logStageTiming(`iter${iteration}:generate`, generationPhaseStartedAt);
 
         // Check code completeness (structural - braces, parens balanced)
         const isComplete = RalphLoop.isCodeComplete(currentCode);
@@ -857,11 +866,13 @@ export class RalphLoop {
           if ((evalMode === 'auto' || evalMode === 'strict-browser') && !isAudioDomain(normalizedOptions.collabDomain)) {
             const { HeadlessRenderer } = await import('../render/HeadlessRenderer.js');
             const renderer = HeadlessRenderer.getInstance();
+            const renderStartedAt = Date.now();
             const renderEvidence = await renderer.renderWithEvidence(currentCode, {
               domain: (normalizedOptions.collabDomain || 'p5') as import('../render/HeadlessRenderer.js').RenderDomain,
               width: 400,
               height: 400,
             });
+            logStageTiming(`iter${iteration}:evaluate:render`, renderStartedAt);
 
             if (renderEvidence.infraUnavailable) {
               if (evalMode === 'strict-browser') {
@@ -871,6 +882,7 @@ export class RalphLoop {
                 );
               }
               Logger.warn('RalphLoop', 'Browser render infra unavailable, falling back to legacy scoring');
+              const legacyScoreStartedAt = Date.now();
               const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
               const quickEvaluation = await scoringEngine.scoreReliable(
                 {
@@ -879,6 +891,7 @@ export class RalphLoop {
                   lirContext,
                 },
               );
+              logStageTiming(`iter${iteration}:evaluate:legacy-score(infra)`, legacyScoreStartedAt);
               evaluation = qualityEvaluationFromGenerationEvaluation(
                 buildGenerationEvaluationFromReliableScore(quickEvaluation, {
                   failureClass: 'infra',
@@ -887,6 +900,7 @@ export class RalphLoop {
               );
             } else {
               const { scoreRenderedEvidence } = await import('../core/ScoringEngine.js');
+              const renderedScoreStartedAt = Date.now();
               const genEval = await scoreRenderedEvidence(
                 renderEvidence,
                 currentCode,
@@ -894,6 +908,7 @@ export class RalphLoop {
                 undefined,
                 String(normalizedOptions.collabDomain || 'p5'),
               );
+              logStageTiming(`iter${iteration}:evaluate:rendered-score`, renderedScoreStartedAt);
               if (genEval.failureClass === 'scorer') {
                 if (evalMode === 'strict-browser') {
                   throw new SinterError(
@@ -902,6 +917,7 @@ export class RalphLoop {
                   );
                 }
                 Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence scoring, falling back to legacy scoring');
+                const legacyScoreStartedAt = Date.now();
                 const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
                 const quickEvaluation = await scoringEngine.scoreReliable(
                   {
@@ -910,6 +926,7 @@ export class RalphLoop {
                     lirContext,
                   },
                 );
+                logStageTiming(`iter${iteration}:evaluate:legacy-score(scorer)`, legacyScoreStartedAt);
                 evaluation = qualityEvaluationFromGenerationEvaluation(
                   buildGenerationEvaluationFromReliableScore(quickEvaluation, {
                     failureClass: 'scorer',
@@ -922,6 +939,7 @@ export class RalphLoop {
             }
           } else {
             // legacy mode
+            const legacyScoreStartedAt = Date.now();
             const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
             evaluation = await scoringEngine.scoreReliable(
               {
@@ -930,12 +948,14 @@ export class RalphLoop {
                 lirContext,
               },
             );
+            logStageTiming(`iter${iteration}:evaluate:legacy-score`, legacyScoreStartedAt);
           }
         }
 
         // DF3 Phase 2: Single-Round Repair
         const repairMode = getRepairMode();
         if (repairMode === 'single-round' && evaluation.score < normalizedOptions.minQualityScore) {
+          const repairStartedAt = Date.now();
           if (normalizedOptions.chatMode) {
             normalizedOptions.onThought?.('Attempting single-round repair...');
           }
@@ -1066,8 +1086,10 @@ export class RalphLoop {
               normalizedOptions.onThought?.('Repair attempt failed, continuing with incumbent');
             }
           }
+          logStageTiming(`iter${iteration}:repair`, repairStartedAt);
         }
         evaluationDurationMs = Math.max(0, Date.now() - evaluationPhaseStartedAt);
+        logStageTiming(`iter${iteration}:evaluate(total)`, evaluationPhaseStartedAt);
 
         // Record evaluation for repeated-failure detection
         repairHistory.push(generationEvaluationFromQualityEvaluation(evaluation));
@@ -1284,8 +1306,10 @@ export class RalphLoop {
         // Persist before any break gate below. High-quality first iterations can
         // stop immediately, but they still need gallery and run artifacts.
         previousCode = currentCode;
+        const persistStartedAt = Date.now();
         await persistence.saveIteration(iteration, currentCode);
         await persistence.saveMergeStep(iteration);
+        logStageTiming(`iter${iteration}:persist:gallery`, persistStartedAt);
         persistedCurrentIteration = true;
 
         if (normalizedOptions.signal?.aborted) {
@@ -1322,12 +1346,14 @@ export class RalphLoop {
         // threshold on its FIRST iteration (common for tone/ascii/kinetic/textgen)
         // breaks here and never archives, so those domains never accumulate.
         if (archiveLearning && evaluation.score >= 0.65) {
+          const archiveAddStartedAt = Date.now();
           await archiveLearning.addOutput(
             loadedPrompt, currentCode,
             normalizedOptions.collabDomain || 'p5',
             evaluation.score,
             { iteration, domain: normalizedOptions.collabDomain || 'p5' }
           );
+          logStageTiming(`iter${iteration}:archive:add-output`, archiveAddStartedAt);
         }
 
         if (gateDecision.shouldBreak) {
@@ -1337,7 +1363,9 @@ export class RalphLoop {
         }
 
         // Update evolution subsystems
+        const evolutionStartedAt = Date.now();
         const { noveltyScore, hints } = evolution.update(iteration, currentCode, evaluation.score, prompt);
+        logStageTiming(`iter${iteration}:evolution:update`, evolutionStartedAt);
 
         // DF3 Phase 8: Feed score into EvolutionEngine
         if (evolutionEngine) {
@@ -1448,6 +1476,7 @@ export class RalphLoop {
         }
 
         // Git: auto-commit iteration (agent manages this behind the scenes)
+        const gitCommitStartedAt = Date.now();
         await gitIntegration.commitIteration({
           prompt: loadedPrompt,
           score: evaluation.score,
@@ -1456,6 +1485,7 @@ export class RalphLoop {
           filePath: path.join(normalizedOptions.galleryDir, normalizedOptions.project, `v${iteration}.js`),
           model: lastModel,
         });
+        logStageTiming(`iter${iteration}:git:commit-iteration`, gitCommitStartedAt);
 
         // Track score history for convergence detection
         scoreHistory.push(evaluation.score);
@@ -1565,7 +1595,9 @@ export class RalphLoop {
 
     } finally {
       // Git: end run, restore original branch (always cleanup)
+      const gitEndRunStartedAt = Date.now();
       await gitIntegration.endRun(reason || 'loop ended', sessionId);
+      logStageTiming('postloop:git-end-run', gitEndRunStartedAt);
     }
 
     try {
@@ -1573,6 +1605,7 @@ export class RalphLoop {
 
       // Report final result to Meta-Harness (skip during tests to avoid log pollution)
       if (process.env.NODE_ENV !== 'test') {
+        const metaHarnessStartedAt = Date.now();
         await metaHarness.onGenerationComplete({
           success: completed,
           model: lastModel || (normalizedOptions.useSwarm ? 'swarm' : 'local'),
@@ -1583,11 +1616,14 @@ export class RalphLoop {
           duration: duration,
           thinking: lastThinking,
         });
+        logStageTiming('postloop:meta-harness', metaHarnessStartedAt);
       }
 
       // Persist archive learning data
       if (qualityArchive) {
+        const archiveSaveStartedAt = Date.now();
         await qualityArchive.save();
+        logStageTiming('postloop:archive-save', archiveSaveStartedAt);
       }
 
       // Persist MAP-Elites and AestheticModel across runs
@@ -1670,6 +1706,7 @@ export class RalphLoop {
       // (without it the emergence archive stays empty and the garden can never
       // learn). Guarded: must never affect loop operation; skipped under test.
       if (process.env.NODE_ENV !== 'test' && currentCode) {
+        const emergenceStartedAt = Date.now();
         try {
           const { EmergenceHooks } = await import('../emergence/EmergenceHooks.js');
           await new EmergenceHooks(liminalFs).onCreativeRun({
@@ -1687,6 +1724,7 @@ export class RalphLoop {
         } catch {
           // Emergence recording must not affect loop operation
         }
+        logStageTiming('postloop:emergence-hooks', emergenceStartedAt);
       }
 
       return {

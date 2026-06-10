@@ -237,6 +237,50 @@ describe('HTMLValidator', () => {
       expect(interpResult.errors.some((e) => e.includes('innerHTML assigned an interpolated template'))).toBe(true);
     });
 
+    it('extends the dynamic-only rule to +=, bracket form, outerHTML, and insertAdjacentHTML', () => {
+      const base = `<!DOCTYPE html>
+<html>
+<head><title>Test</title></head>
+<body>
+  <div id="app"></div>
+  <script>
+    document.getElementById('app').__ASSIGN__;
+  </script>
+</body>
+</html>`;
+      const check = (assign: string) => HTMLValidator.validate(base.replace('__ASSIGN__', assign));
+
+      // Static forms carry no untrusted data — still allowed.
+      expect(check("innerHTML += '<li>item</li>'").errors.some((e) => e.includes('innerHTML'))).toBe(false);
+      expect(check("insertAdjacentHTML('beforeend', '<li>item</li>')").errors.some((e) => e.includes('insertAdjacentHTML'))).toBe(false);
+      expect(check("outerHTML = '<div>done</div>'").errors.some((e) => e.includes('outerHTML'))).toBe(false);
+
+      // Dynamic append — flagged (variable and interpolated template).
+      const appendDyn = check('innerHTML += userSuppliedHtml');
+      expect(appendDyn.valid).toBe(false);
+      expect(appendDyn.errors.some((e) => e.includes('innerHTML appended a dynamic value'))).toBe(true);
+      const appendInterp = check('innerHTML += `<li>${item}</li>`');
+      expect(appendInterp.valid).toBe(false);
+      expect(appendInterp.errors.some((e) => e.includes('innerHTML appended a dynamic value'))).toBe(true);
+
+      // Bracket-notation assignment — flagged.
+      const bracketDyn = HTMLValidator.validate(
+        base.replace("document.getElementById('app').__ASSIGN__;", 'document.getElementById(\'app\')["innerHTML"] = userSuppliedHtml;'),
+      );
+      expect(bracketDyn.valid).toBe(false);
+      expect(bracketDyn.errors.some((e) => e.includes('innerHTML (bracket form) assigned a dynamic value'))).toBe(true);
+
+      // outerHTML with a dynamic value — flagged.
+      const outerDyn = check('outerHTML = renderUserContent()');
+      expect(outerDyn.valid).toBe(false);
+      expect(outerDyn.errors.some((e) => e.includes('outerHTML assigned a dynamic value'))).toBe(true);
+
+      // insertAdjacentHTML with a dynamic value — flagged.
+      const adjacentDyn = check("insertAdjacentHTML('beforeend', userSuppliedHtml)");
+      expect(adjacentDyn.valid).toBe(false);
+      expect(adjacentDyn.errors.some((e) => e.includes('insertAdjacentHTML called with a dynamic value'))).toBe(true);
+    });
+
     it('should warn about missing title', () => {
       const code = `<!DOCTYPE html>
 <html>

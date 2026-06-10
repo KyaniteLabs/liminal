@@ -118,7 +118,21 @@ export class QualityArchive {
       const archiveData = safeJsonParse(data, ArchiveDataSchema, 'QualityArchive');
 
       if (!archiveData) {
-        Logger.warn('QualityArchive', 'Archive data failed validation, starting fresh');
+        // Quarantine the invalid file before starting fresh — otherwise the
+        // next save() overwrites it, silently destroying every archived entry.
+        const quarantinePath = `${this.path}.corrupt-${Date.now()}`;
+        try {
+          await fs.rename(this.path, quarantinePath);
+          Logger.error(
+            'QualityArchive',
+            `Archive failed schema validation — original preserved at ${quarantinePath}, starting fresh`
+          );
+        } catch (renameError) {
+          Logger.error(
+            'QualityArchive',
+            `Archive failed schema validation and quarantine rename failed (${(renameError as Error).message}) — starting fresh; ${this.path} WILL be overwritten on next save`
+          );
+        }
         return;
       }
 

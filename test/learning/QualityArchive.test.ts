@@ -616,3 +616,99 @@ describe('QualityArchive', () => {
     expect(entries.length).toBe(1);
   });
 });
+
+describe('QualityArchive corrupt-file quarantine', () => {
+  // Own temp directory per test so we can assert on the quarantine file
+  // load() creates next to the archive (and clean it up afterwards).
+  let dir: string;
+  let archivePath: string;
+
+  const validEntry: ArchiveEntry = {
+    id: 'entry-1',
+    domain: 'p5',
+    prompt: 'recursive frost crystals over obsidian glass',
+    output: 'function setup() { createCanvas(400, 400); }',
+    qualityScore: 0.9,
+    metadata: {},
+    createdAt: '2026-06-01T00:00:00.000Z',
+  };
+
+  beforeEach(async () => {
+    dir = await fs.mkdtemp(join(tmpdir(), 'quality-archive-quarantine-'));
+    archivePath = join(dir, 'quality_archive.json');
+  });
+
+  afterEach(async () => {
+    await fs.rm(dir, { recursive: true, force: true });
+  });
+
+  async function listQuarantineFiles(): Promise<string[]> {
+    const files = await fs.readdir(dir);
+    return files.filter(f => /^quality_archive\.json\.corrupt-\d+$/.test(f));
+  }
+
+  it('quarantines a schema-invalid archive file and save() does not destroy it', async () => {
+    // lastUpdated as a number instead of an ISO string — the exact shape
+    // that wiped 57 entries in the 2026-06-10 incident
+    const corruptContent = JSON.stringify(
+      {
+        archives: { p5: [validEntry] },
+        lastUpdated: 1765324800000,
+      },
+      null,
+      2
+    );
+    await fs.writeFile(archivePath, corruptContent, 'utf-8');
+
+    const quarantineArchive = new QualityArchive({ path: archivePath });
+    await quarantineArchive.load();
+
+    // Original content preserved byte-for-byte under <path>.corrupt-<timestamp>
+    const quarantined = await listQuarantineFiles();
+    expect(quarantined).toHaveLength(1);
+    const preserved = await fs.readFile(join(dir, quarantined[0]), 'utf-8');
+    expect(preserved).toBe(corruptContent);
+
+    // Cache started fresh — no partial data leaked in from the invalid file
+    expect(quarantineArchive.getAll('p5')).toEqual([]);
+
+    // A subsequent save() writes a fresh archive WITHOUT touching the quarantine
+    await quarantineArchive.save();
+    const afterSave = await fs.readFile(join(dir, quarantined[0]), 'utf-8');
+    expect(afterSave).toBe(corruptContent);
+    const fresh = JSON.parse(await fs.readFile(archivePath, 'utf-8'));
+    expect(fresh.archives.p5).toEqual([]);
+  });
+
+  it('quarantines a file with invalid JSON syntax', async () => {
+    const corruptContent = '{ "archives": { "p5": [ TRUNCATED';
+    await fs.writeFile(archivePath, corruptContent, 'utf-8');
+
+    const quarantineArchive = new QualityArchive({ path: archivePath });
+    await quarantineArchive.load();
+
+    const quarantined = await listQuarantineFiles();
+    expect(quarantined).toHaveLength(1);
+    const preserved = await fs.readFile(join(dir, quarantined[0]), 'utf-8');
+    expect(preserved).toBe(corruptContent);
+  });
+
+  it('does not create quarantine files when the archive file is missing', async () => {
+    const freshArchive = new QualityArchive({ path: archivePath });
+    await freshArchive.load();
+
+    expect(await listQuarantineFiles()).toEqual([]);
+    expect(freshArchive.getAll('p5')).toEqual([]);
+  });
+
+  it('loads a valid archive without quarantining it', async () => {
+    const original = new QualityArchive({ path: archivePath });
+    await original.add(validEntry);
+
+    const reloaded = new QualityArchive({ path: archivePath });
+    await reloaded.load();
+
+    expect(reloaded.getAll('p5')).toEqual([validEntry]);
+    expect(await listQuarantineFiles()).toEqual([]);
+  });
+});

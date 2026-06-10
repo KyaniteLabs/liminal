@@ -25,6 +25,14 @@ import { HTMLWrapper, type Domain as WrapDomain } from '../utils/htmlWrapper.js'
 import type { DomainType, BlendMode } from './types.js';
 import { buildLayerPrompt, paintsOpaqueBackground } from './LayerContract.js';
 import { capLayerBrightness, exceedsWashoutBudget } from './BlendBudget.js';
+import {
+  measureCompositeHtml,
+  verdictFromMeasure,
+  layersToDemote,
+  gateEnabled,
+  DEMOTED_OPACITY_FACTOR,
+  type CompositeGateReport,
+} from './CompositeRenderGate.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { Logger } from '../utils/Logger.js';
 
@@ -67,6 +75,9 @@ export interface CompositionResult {
   layers: ComposedLayer[];
   /** Layers that generated successfully. */
   successCount: number;
+  /** Measured-frame gate report (washout/crush detection + blend remediation).
+   *  Absent when the gate is disabled or no visual layer generated. */
+  renderGate?: CompositeGateReport;
 }
 
 /** Domains that produce audio rather than a visual — they need a start gesture. */
@@ -116,6 +127,19 @@ export class CompositionOrchestrator {
     );
 
     const html = this.assemble(title, spec.background ?? '#000', results, results.map(r => r.code));
+
+    // Measured-frame gate: what is actually ON SCREEN decides, not the spec.
+    // Washed-out or crushed frames get one blend-demoted re-assembly (same
+    // generated art, safer compositing); the better-measuring variant wins.
+    let finalHtml = html;
+    let renderGate: CompositeGateReport | undefined;
+    const hasVisualLayer = results.some(r => r.generated && r.code && !AUDIO_DOMAINS.has(r.spec.domain));
+    if (gateEnabled() && hasVisualLayer) {
+      const gated = await this.runRenderGate(title, spec.background ?? '#000', results, html);
+      finalHtml = gated.html;
+      renderGate = gated.report;
+    }
+
     const layers: ComposedLayer[] = results.map((r) => ({
       domain: r.spec.domain,
       prompt: r.spec.prompt,
@@ -127,7 +151,51 @@ export class CompositionOrchestrator {
       opaqueBackground: r.opaqueBackground,
     }));
 
-    return { html, title, layers, successCount: results.filter(r => r.generated).length };
+    return { html: finalHtml, title, layers, successCount: results.filter(r => r.generated).length, renderGate };
+  }
+
+  /**
+   * Render-measure the assembled composite; on a washout/too-dark verdict,
+   * demote the offending non-base blend modes to 'normal' (at reduced
+   * opacity), re-assemble, and keep whichever frame measures better. Never
+   * throws — a gate failure degrades to the unmeasured composite.
+   */
+  private static async runRenderGate(
+    title: string,
+    background: string,
+    results: Array<{ spec: CompositionLayerSpec; code: string; generated: boolean; opaqueBackground?: boolean; error?: string }>,
+    html: string,
+  ): Promise<{ report: CompositeGateReport; html: string }> {
+    try {
+      const measure = await measureCompositeHtml(html);
+      const verdict = verdictFromMeasure(measure);
+      if (verdict === 'ok') return { report: { verdict, measure }, html };
+
+      const blendModes = results.map(r => (r.generated ? (r.spec.blendMode ?? 'normal') : 'normal'));
+      const demote = layersToDemote(verdict, blendModes);
+      if (demote.length === 0) {
+        Logger.warn('CompositionOrchestrator', `[render-gate] ${verdict} frame (mean lum ${measure.meanLuminance.toFixed(2)}) but no demotable blend layer — keeping as-is`);
+        return { report: { verdict, measure }, html };
+      }
+
+      const demoted = results.map((r, i) => (demote.includes(i)
+        ? { ...r, spec: { ...r.spec, blendMode: 'normal' as BlendMode, opacity: (r.spec.opacity ?? 1) * DEMOTED_OPACITY_FACTOR } }
+        : r));
+      const retryHtml = this.assemble(title, background, demoted, demoted.map(r => r.code));
+      const measureAfter = await measureCompositeHtml(retryHtml);
+      const verdictAfter = verdictFromMeasure(measureAfter);
+      const applied = verdictAfter === 'ok'
+        || Math.abs(measureAfter.meanLuminance - 0.5) < Math.abs(measure.meanLuminance - 0.5);
+      Logger.info('CompositionOrchestrator', `[render-gate] ${verdict} (lum ${measure.meanLuminance.toFixed(2)}) → demoted layers [${demote.join(',')}] → ${verdictAfter} (lum ${measureAfter.meanLuminance.toFixed(2)}); ${applied ? 'kept demoted variant' : 'kept original'}`);
+      return {
+        report: { verdict, measure, remediation: { demotedLayers: demote, verdictAfter, measureAfter, applied } },
+        html: applied ? retryHtml : html,
+      };
+    } catch (error) {
+      const message = error instanceof Error && error.message ? error.message : String(error);
+      Logger.warn('CompositionOrchestrator', `[render-gate] skipped: ${message}`);
+      return { report: { verdict: 'ok', skipped: message }, html };
+    }
   }
 
   /**

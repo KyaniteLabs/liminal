@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock at the boundaries: the generator registry (external generation) and the
 // HTML wrapper. vi.hoisted is mandatory — vi.mock factories are hoisted above consts.
@@ -21,6 +21,15 @@ vi.mock('../../../src/utils/htmlWrapper.js', () => ({
 
 import { CompositionOrchestrator } from '../../../src/composition/CompositionOrchestrator.js';
 import { exceedsWashoutBudget } from '../../../src/composition/BlendBudget.js';
+
+// The measured render gate launches headless Chrome — out of scope for every
+// unit test in this file (covered by the CompositeRenderGate suite + probe).
+beforeEach(() => {
+  process.env.SINTER_COMPOSITE_GATE = '0';
+});
+afterEach(() => {
+  delete process.env.SINTER_COMPOSITE_GATE;
+});
 
 describe('CompositionOrchestrator.compose', () => {
   beforeEach(() => {

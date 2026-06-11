@@ -15,12 +15,12 @@ Session role: frontier strategist/investigator per `SinterPrompt1fable.md`. Budg
 - **Self-improve daemon:** LIVE — ledger appended 20:45Z and 21:48Z; archive 113→124; health 84.5; mean scores 0.81/0.84.
 - **Investor-audit register staleness:** `docs/validation/investor-audit-register-2026-06.md` still lists F11/F7/F17 in the "open remainder" row, but #696 fixed F11 (three near-black), #697 fixed F17 (text-art centering), #698 fixed F7 (taste auto-feed). F4 closes when this branch merges. Remaining genuinely open: F5 (sing ffmpeg render stub), F10 (revideo render), F20 (bridge split), F19 (p5 contrast), F12/#637 lane.
 
-## Active risks
+## Original active risks (resolved/superseded later in this log)
 
-1. **CI gate vacuum (HIGH, unverified):** if Forgejo merges happen without Actions runners executing `.github/workflows`, the coverage ratchet / quality checker / orphan gate are silently OFF for the source of truth.
-2. **Docs mislead operators (HIGH):** README CI badge, `docs/launch/test-ci-truth-matrix-2026-05-01.md` (names GitHub checks + branch protection as the policy), AGENTS.md ("Issues tracked in GitHub Issues") all assume GitHub as gate.
-3. Branch SHA divergence (MEDIUM, content-safe) — resolution requires a push decision (ask first).
-4. Hygiene (LOW): idle clean worktree `.claude/worktrees/pr699-verify` (detached @ 8304107a; remove after F4 merges); 1 stash (`gallery-cleanup salvage` — meaningful WIP, keep).
+1. **CI gate vacuum (RESOLVED 2026-06-11):** Forgejo `fast-gate` is now the source-of-truth gate and succeeded on `3b81a84a` (task `440`).
+2. **Docs misled operators (PARTIALLY RESOLVED 2026-06-11):** AGENTS, the issue-tracker doc, triage-label guidance, and the CI truth matrix now name Forgejo as source of truth. GitHub references in older May roadmap/archive docs are historical unless explicitly reactivated.
+3. Branch SHA divergence (RESOLVED): source-of-truth moved to Forgejo and stale mirror branches were cleaned.
+4. Hygiene (RESOLVED for F4): `pr699-verify` was removed after F4 merged; daemon/user-owned dirty files are intentionally not committed.
 
 ## Decision log (FABLE-DO / HANDOFF / SKIP)
 
@@ -96,7 +96,7 @@ Session role: frontier strategist/investigator per `SinterPrompt1fable.md`. Budg
 - **Simon's update:** Forgejo VPS migration done; HTTPS main = `ee5a54f0` is truth (Codex repaired drift + ran leak audit); stale branches cleaned; GitHub not truth. Unproven: API token, tea, SSH (22 rejects key, 2222 times out), real Actions runner run. Use HTTPS for repo-state.
 - **Merged this window:** F18 fix (forge PR #1), F18 live receipt + ASCII foreground transparency fix (#3), handoff executions (#2: H02 docs sync, H03 daemon guardrail, H04 sing render, H05 revideo render, H06 render measurement) and `a2edd9fe` the Forgejo CI fast gate (H07 step 3).
 - **FAB-015 (second merged-vs-live incident):** all of the above was DORMANT in the live loop — dist/ built 15:21 Jun 10 (pre-everything), and daemon pid 44968's loop predated the guardrail (bootstrap gap: the guardrail can't load itself). Fixed operationally: `pnpm build` (exit 0; `dist/render/LuminanceVerdict.js` present; F18 contract in dist) + `launchctl kickstart` → pid 20551 trained and cycled on fresh code (archive 143). Durable fix = **Handoff 09** (HEAD-moved dist rebuild + per-cycle `codeSha`/`distBuiltAt` ledger stamp).
-- **FAB-016 (claim-vs-evidence audit of the executed handoffs):** calibration doc honest (escape hatch used; low-contrast stays opt-in pending labeled data); forge CI workflow sound; only unproven element is the runner itself (H07 probe pending).
+- **FAB-016 (claim-vs-evidence audit of the executed handoffs):** calibration doc honest (escape hatch used; low-contrast stays opt-in pending labeled data); forge CI workflow sound; runner proof later closed by task `440` on `3b81a84a`.
 
 ### Fifth work block — H09 merged+live, runner proven executing, F19 calibrated (2026-06-11 early AM)
 
@@ -109,7 +109,7 @@ Session role: frontier strategist/investigator per `SinterPrompt1fable.md`. Budg
 - **Handoff 10 executed by a worker and merged (`5a158156`)** — diff exactly in contract (LuminanceVerdict + its test + calibration doc; low-contrast branch deleted; labeled fixtures present). Post-merge verification: 39 files / 913 tests green across render+composition; typecheck implied by worker gate.
 - **The self-updating loop closed twice unattended:** daemon ledger 06:00Z line is stamped `codeSha=5a158156` — merge → HEAD-moved rebuild → generation under the new verdicts, no human in the loop. This was the session's target end-state.
 - **Branch hygiene:** deleted on forge: `feat/f7-taste-autofeed`, `fix/f11-three-subject-visibility`, `fix/f17-f10-harness-presentation` (squash-merge leftovers from GitHub-era #696-698; content verified in main) and merged `docs/fable-session-2026-06-10`. Forge now has only `main`.
-- **Still open (Simon, 5-second check):** Actions tab run status for `355d1a7a`/`5a158156` — badge endpoint is auth-gated, runner log window aged out (debug logging flooded it). Then Handoff 07's deliberate-failure probe.
+- **Closed (2026-06-11):** Forgejo Actions runner proof is complete: `fast-gate` succeeded on Forgejo `main` at `3b81a84a` (task `440`). No further Handoff 07 validation is being carried as owed work.
 
 ### Seventh work block — movement audit + telemetry fix (2026-06-11 ~07:45Z)
 

@@ -1,10 +1,12 @@
 # Triage Labels
 
-The active Matt Pocock skill subset now includes the issue-triage and publishing skills (`triage`, `to-prd`, and `to-issues`). This file records the exact GitHub labels those skills should use.
+The active Matt Pocock skill subset now includes the issue-triage and publishing skills (`triage`, `to-prd`, and `to-issues`). This file records the canonical label strings those skills should use on the current Forgejo tracker.
 
-## Current tracker labels checked during setup
+## Current tracker label policy
 
-`gh label list` was available during setup. The repository had labels such as `analysis`, `bug`, `documentation`, `enhancement`, `kilo-triaged`, `pipeline-task`, priority labels, and `wontfix`. It originally did **not** have these canonical Matt Pocock triage labels at setup time, but they have now been created in GitHub:
+Forgejo is the source of truth for current repo issues and PRs. The earlier `gh label list` / GitHub setup notes are archival only. If label state must be verified or changed, do it in Forgejo with an authenticated API/CLI session or the Forgejo web UI.
+
+Canonical labels:
 
 - `needs-triage`
 - `needs-info`

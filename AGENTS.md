@@ -24,7 +24,7 @@ Codex should use only the active Matt Pocock subset: `setup-matt-pocock-skills`,
 
 ### Issue tracker
 
-Issues have historically been tracked in GitHub Issues for `KyaniteLabs/liminal`; see `docs/agents/issue-tracker.md`. As of the 2026-06-10 Forgejo migration, repository source-of-truth and PR flow are moving to Forgejo; treat GitHub issue/PR state as mirror or legacy unless a current task says otherwise.
+Issues and PRs now use Forgejo as the source of truth for `KyaniteLabs/liminal`; see `docs/agents/issue-tracker.md`. Treat GitHub issue/PR state as mirror or legacy unless a current task explicitly says otherwise.
 
 ### Triage labels
 

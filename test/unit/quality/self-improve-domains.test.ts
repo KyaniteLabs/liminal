@@ -113,14 +113,39 @@ describe('dreamThemeFromTask', () => {
     );
   });
 
-  it('averages divergent parents and skips non-decisive axes', () => {
+  it('crosses divergent parents instead of averaging their poles to mush (FAB-022)', () => {
     const task = {
       sources: [
         { id: 'a', descriptor: [1.0, 0.5], quality: 0.9 },
         { id: 'b', descriptor: [0.0, 0.5], quality: 0.7 },
       ],
     };
-    // axis 1 averages to 0.5 (non-decisive), axis 2 is 0.5 — nothing decisive.
+    // Averaging produced 0.5 → 'balanced' mush; the tension IS the dream.
+    expect(dreamThemeFromTask(task)).toBe('chaotic crossed with orderly — one work fusing both lineage parents');
+  });
+
+  it('builds a unique cross from real opposite-pole parents (live queue sample, capped at 3 words per parent)', () => {
+    // Actual elite-x-compost pair from ~/.sinter/dreams/queue.json 2026-06-11:
+    // averaging rendered EVERY such dream as the same "chaotic, sparse,
+    // asymmetric…" theme (41/50 queued dreams were this strategy).
+    const task = {
+      sources: [
+        { id: 'a', descriptor: [1, 0.9868, 0.3441, 0.0505, 1, 0.7], quality: 0.9 },
+        { id: 'b', descriptor: [0, 0.4733, 0.5878, 1, 0, 0.0999], quality: 0.85 },
+      ],
+    };
+    expect(dreamThemeFromTask(task)).toBe(
+      'chaotic, dense, symmetric crossed with orderly, bursty, still — one work fusing both lineage parents',
+    );
+  });
+
+  it('keeps mid-everything parents on the balanced lineage phrasing', () => {
+    const task = {
+      sources: [
+        { id: 'a', descriptor: [0.5, 0.5], quality: 0.9 },
+        { id: 'b', descriptor: [0.45, 0.55], quality: 0.7 },
+      ],
+    };
     expect(dreamThemeFromTask(task)).toBe('balanced forms recombined from its own archive lineage');
   });
 

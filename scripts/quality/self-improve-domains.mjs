@@ -101,8 +101,11 @@ const AXIS_POLES = {
 
 /**
  * Turn a persisted dream task (sources carry descriptor vectors on the garden
- * axes) into a generation theme: average the source descriptors and name the
- * decisive poles (≤0.35 → first pole, ≥0.65 → second pole). This is how the
+ * axes) into a generation theme: name each parent's OWN decisive poles
+ * (≤0.35 → first pole, ≥0.65 → second pole) and cross distinct parents.
+ * Averaging the parents annihilated the tension recombination exists for —
+ * opposite poles cancel toward 0.5, and 41/50 queued dreams rendered the
+ * identical "chaotic, sparse, asymmetric…" theme (FAB-022). This is how the
  * gardener's dream recombinations become real generation prompts in the
  * self-improve cycle. Returns null when the task has no usable descriptors.
  */
@@ -112,15 +115,23 @@ export function dreamThemeFromTask(task, axes = DESCRIPTOR_AXES) {
     .filter((d) => Array.isArray(d) && d.length > 0);
   if (descriptors.length === 0) return null;
 
-  const dims = Math.min(axes.length, ...descriptors.map((d) => d.length));
-  const words = [];
-  for (let i = 0; i < dims; i++) {
-    const avg = descriptors.reduce((sum, d) => sum + d[i], 0) / descriptors.length;
-    const poles = AXIS_POLES[axes[i]];
-    if (!poles) continue;
-    if (avg <= 0.35) words.push(poles[0]);
-    else if (avg >= 0.65) words.push(poles[1]);
+  const polesFor = (d) => {
+    const dims = Math.min(axes.length, d.length);
+    const words = [];
+    for (let i = 0; i < dims; i++) {
+      const poles = AXIS_POLES[axes[i]];
+      if (!poles) continue;
+      if (d[i] <= 0.35) words.push(poles[0]);
+      else if (d[i] >= 0.65) words.push(poles[1]);
+    }
+    return words;
+  };
+
+  const voices = descriptors.map((d) => polesFor(d).join(', ')).filter((v) => v.length > 0);
+  const distinct = [...new Set(voices)];
+  if (distinct.length >= 2) {
+    const [a, b] = distinct.map((v) => v.split(', ').slice(0, 3).join(', '));
+    return `${a} crossed with ${b} — one work fusing both lineage parents`;
   }
-  if (words.length === 0) words.push('balanced');
-  return `${words.join(', ')} forms recombined from its own archive lineage`;
+  return `${distinct[0] ?? 'balanced'} forms recombined from its own archive lineage`;
 }

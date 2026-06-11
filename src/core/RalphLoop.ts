@@ -714,6 +714,18 @@ export class RalphLoop {
                       String(normalizedOptions.collabDomain || 'p5'),
                     );
                     if (genEval.failureClass === 'scorer') {
+                      // One retry before surrendering to the code-based fallback: a
+                      // transient evaluator flake otherwise shreds non-code domains
+                      // (a 0.95 textgen poem recorded as 0.06 when judged as code).
+                      genEval = await scoreRenderedEvidence(
+                        renderEvidence,
+                        candidate.code,
+                        prompt,
+                        undefined,
+                        String(normalizedOptions.collabDomain || 'p5'),
+                      );
+                    }
+                    if (genEval.failureClass === 'scorer') {
                       if (evalMode === 'strict-browser') {
                         throw new SinterError(
                           'Evaluator LLM is unavailable in strict-browser mode',
@@ -915,13 +927,24 @@ export class RalphLoop {
             } else {
               const { scoreRenderedEvidence } = await import('../core/ScoringEngine.js');
               const renderedScoreStartedAt = Date.now();
-              const genEval = await scoreRenderedEvidence(
+              let genEval = await scoreRenderedEvidence(
                 renderEvidence,
                 currentCode,
                 prompt,
                 undefined,
                 String(normalizedOptions.collabDomain || 'p5'),
               );
+              if (genEval.failureClass === 'scorer') {
+                // One retry before the code-based fallback (transient evaluator
+                // flakes shred non-code domains — see the textgen 0.06 incident).
+                genEval = await scoreRenderedEvidence(
+                  renderEvidence,
+                  currentCode,
+                  prompt,
+                  undefined,
+                  String(normalizedOptions.collabDomain || 'p5'),
+                );
+              }
               logStageTiming(`iter${iteration}:evaluate:rendered-score`, renderedScoreStartedAt);
               if (genEval.failureClass === 'scorer') {
                 if (evalMode === 'strict-browser') {

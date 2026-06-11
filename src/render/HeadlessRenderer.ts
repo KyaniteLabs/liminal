@@ -12,7 +12,7 @@ import { Logger } from '../utils/Logger.js';
 import { RenderEvidence } from '../core/types/GenerationEvaluation.js';
 import { getLocalP5ScriptForUrl } from '../utils/browserAssetFallbacks.js';
 
-export type RenderDomain = 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'tone' | 'svg' | 'html' | 'ascii' | 'kinetic' | 'unknown';
+export type RenderDomain = 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'tone' | 'svg' | 'html' | 'ascii' | 'kinetic' | 'textgen' | 'unknown';
 
 export interface RenderOptions {
   /** Canvas width in pixels */
@@ -286,9 +286,15 @@ export class HeadlessRenderer {
       const html = HTMLWrapper.wrap(code, {
         domain: domain === 'glsl'
           ? 'shader'
-          : domain === 'kinetic'
-            ? 'html'
-            : domain === 'unknown' ? undefined : domain
+          // textgen is plain text art: the ascii pre-wrap renders it faithfully.
+          // Unmapped it fell through HTMLWrapper's default (wrapped AS CODE),
+          // rendered blank, and every daemon-path textgen gen scored 0.06
+          // (floor 0.1 x cap 0.6) — starving the archive's best domain.
+          : domain === 'textgen'
+            ? 'ascii'
+            : domain === 'kinetic'
+              ? 'html'
+              : domain === 'unknown' ? undefined : domain
       });
 
       // Load the HTML

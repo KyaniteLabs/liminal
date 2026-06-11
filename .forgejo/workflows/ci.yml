@@ -15,6 +15,9 @@ concurrency:
 jobs:
   fast-gate:
     name: fast-gate
+    # A gate that cannot fail is not a gate: steps here MUST hard-fail.
+    # Bring-up problems get fixed at the cause (or reported), never silenced
+    # with `|| true` / continue-on-error. (Reverted exactly that in 526071c4.)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -42,22 +45,22 @@ jobs:
           echo "pnpm: $(pnpm --version)"
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile || true
+        run: pnpm install --frozen-lockfile
 
       - name: Orphan source check
-        run: pnpm check:orphans || true
+        run: pnpm check:orphans
 
       - name: Package script target check
-        run: pnpm check:script-targets || true
+        run: pnpm check:script-targets
 
       - name: Lint source
-        run: pnpm lint || true
+        run: pnpm lint
 
       - name: Build project
-        run: pnpm build || true
+        run: pnpm build
 
       - name: Fast test suite
-        run: pnpm test:ci:fast || true
+        run: pnpm test:ci:fast
 
       - name: Test quality check
-        run: pnpm test:quality || true
+        run: pnpm test:quality

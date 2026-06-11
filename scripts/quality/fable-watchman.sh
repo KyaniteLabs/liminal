@@ -17,6 +17,16 @@ PROMPT_FILE="$REPO/scripts/quality/watchman-prompt.md"
 export PATH="$HOME/.local/bin:$HOME/.kimi-code/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 cd "$REPO" || exit 1
 
+# Concurrency guard: never run a pass while another agent is mid-operation in
+# this repo (a kickstart test raced an interactive session today: ref-lock
+# failures + a FAB id collision). Signals: git's own index lock, or an
+# unambiguous headless agent process already running. Interactive sessions are
+# not reliably detectable — the overnight schedule keeps that overlap rare.
+if [ -f "$REPO/.git/index.lock" ] || pgrep -f "codex exec|kimi-cli -y|claude -p" >/dev/null 2>&1; then
+  echo "[watchman $(date -u +%FT%TZ)] another agent active in repo — skipping pass" >> "$LOG"
+  exit 0
+fi
+
 run_codex() {
   codex exec --dangerously-bypass-approvals-and-sandbox "$(cat "$PROMPT_FILE")"
 }
@@ -45,7 +55,7 @@ for runner in ${WATCHMAN_RUNNERS:-codex kimi claude}; do
     continue
   fi
   echo "[watchman $(date -u +%FT%TZ)] pass start runner=$runner" >> "$LOG"
-  "run_$runner" >> "$LOG" 2>&1
+  "run_$runner" < /dev/null >> "$LOG" 2>&1
   rc=$?
   echo "[watchman $(date -u +%FT%TZ)] pass end runner=$runner rc=$rc" >> "$LOG"
   [ $rc -eq 0 ] && exit 0

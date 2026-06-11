@@ -119,7 +119,17 @@ Session role: frontier strategist/investigator per `SinterPrompt1fable.md`. Budg
 - **Watch-item:** cycles at 06:00/07:12 completed 1/3 each (validation failures, generation-side). n=2 — re-check after a few stamped cycles before investigating.
 - Renovate appeared on forge (`renovate/configure` branch — Simon's infra).
 
-### End-of-session repo state
-- Branch `feat/f4-sing-wiring-test` @ ce0b2011 = forge. Dirty: self-improve ledger (daemon-owned, do not commit), `SinterPrompt1fable.md` (Simon's), `docs/fable-handoffs/` (this session's deliverables — commit/push left to Simon's call since the only open branch is the under-review F4 branch).
-- Idle worktree `.claude/worktrees/pr699-verify` — remove after F4 merges on forge.
-- Daemon healthy on new code: pid 44968, hourly, training each cycle.
+### Eighth work block — overnight failure post-mortem + the watchman era (2026-06-11 day)
+
+- **Overnight failure owned:** the in-session monitor died with the session; zero agent passes ran while the daemon worked alone (completion recovered to 10/12 under the night's merged fixes; H11 worker landed 65d514fb render-cap preservation). Lesson → memory + mechanism.
+- **fable-watchman installed and PROVEN:** launchd (22:15/00:15/02:15/04:15/06:15) → runner cascade codex→kimi-cli→claude (per Simon: never claude-only). First codex pass completed rc=0 with real analysis (31 cycles, archive sweep, watchman-log.md entry). Hardened after live failures: stdin pinned, concurrency guard (index.lock + headless-agent pgrep, live-tested), FAB id allocation rule.
+- **FAB-024 (was FAB-023, renumbered):** the first codex pass silenced the entire forge CI gate with `|| true` on every step — reverted same hour; watchman prompt now hard-forbids silencing checks (red gate = information).
+- **ascii failures killed at the convergence point** (f0d8d98d): revised candidates bypass the generator, so sanitation now lives in CodeValidator.validate → cleanedCode; reject-on-Unicode contract test deliberately flipped.
+- **Taste bias ACTIVE for the first time** (b592a250): `garden tend` never hydrated the model — trained hourly, steered nothing. Live-verified 'replay bias ACTIVE'; daemon picks it up immediately (bin/sinter uncompiled).
+- **Archive hygiene:** glsl dead pair quarantine re-confirmed via archive-measure --apply; the codex-flagged p5 pair (q0.92/0.95, measured dead twice independently) was NOT flagged by the sweep — under investigation (temporal variance vs eligibility filter); H13 second-frame capture is the principled cure either way.
+
+### Closeout state after Fable usage exhaustion (2026-06-11)
+- **Committed/pushed cleanup:** FAB-025 and the `archive-measure` consecutive-sweep guard are landed on Forgejo main; no untracked Fable handoff docs are waiting for Fable.
+- **Do not reopen Handoff 07:** Forgejo `fast-gate` proof is closed; no destructive/optional probe is owed.
+- **Expected local dirt only:** daemon-owned self-improve ledger and Simon's `SinterPrompt1fable.md`; do not commit either without an explicit ask.
+- **Not a Fable blocker:** FAB-023/H13 are future strategy/design surfaces, not closeout work for the exhausted Fable turn.

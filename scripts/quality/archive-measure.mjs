@@ -164,12 +164,28 @@ if (deadEntries.length > 0) {
   }
 }
 
+// Animated domains flip-flop on single frames: a sweep flagged 5 three
+// entries dead that the previous sweep (minutes earlier) measured fine, and
+// two p5 entries measured dead in two other harnesses were alive here.
+// Quarantine only on CONSECUTIVE-sweep agreement; first-time flags are
+// pending until the next sweep confirms them.
+const STATE_PATH = path.join(ROOT, '.quality/archive-measure-state.json');
+let prevDeadIds = [];
+try { prevDeadIds = JSON.parse(fs.readFileSync(STATE_PATH, 'utf-8')).deadIds ?? []; } catch { /* first sweep */ }
+const prevDeadSet = new Set(prevDeadIds);
+const confirmedDead = deadEntries.filter(({ entry }) => prevDeadSet.has(entry.id));
+const pendingDead = deadEntries.filter(({ entry }) => !prevDeadSet.has(entry.id));
+fs.writeFileSync(STATE_PATH, JSON.stringify({ sweptAt: new Date().toISOString(), deadIds: deadEntries.map(({ entry }) => entry.id) }, null, 2));
+if (pendingDead.length > 0) {
+  console.log(`\nPENDING_CONFIRMATION (dead this sweep, need a consecutive sweep to agree): ${pendingDead.map(({ entry }) => entry.id).join(', ')}`);
+}
+
 if (APPLY) {
   // Re-read before saving so a long render sweep does not clobber archive
   // entries added by a concurrently running daemon.
   await archive.load();
   const now = new Date().toISOString();
-  for (const { entry: measuredEntry, analysis } of deadEntries) {
+  for (const { entry: measuredEntry, analysis } of confirmedDead) {
     const entry = archive.getById(measuredEntry.id);
     if (!entry) continue;
     const priorScore = typeof entry.metadata?.preQuarantineQualityScore === 'number'
@@ -211,8 +227,8 @@ if (failures.length > 0) {
 }
 
 if (APPLY) {
-  const quarantinedIds = deadEntries.map(({ entry }) => entry.id).filter(id => archive.getById(id));
-  console.log(`\nQUARANTINED: ${quarantinedIds.length ? quarantinedIds.join(', ') : 'none'}`);
+  const quarantinedIds = confirmedDead.map(({ entry }) => entry.id).filter(id => archive.getById(id));
+  console.log(`\nQUARANTINED (consecutive-sweep confirmed): ${quarantinedIds.length ? quarantinedIds.join(', ') : 'none'}`);
 } else {
-  console.log(`\nWOULD_QUARANTINE: ${deadEntries.length ? deadEntries.map(({ entry }) => entry.id).join(', ') : 'none'}`);
+  console.log(`\nWOULD_QUARANTINE (consecutive-sweep confirmed): ${confirmedDead.length ? confirmedDead.map(({ entry }) => entry.id).join(', ') : 'none'}`);
 }

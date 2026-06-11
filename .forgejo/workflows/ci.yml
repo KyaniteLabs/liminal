@@ -18,7 +18,7 @@ jobs:
     # A gate that cannot fail is not a gate: steps here MUST hard-fail.
     # Bring-up problems get fixed at the cause (or reported), never silenced
     # with `|| true` / continue-on-error. (Reverted exactly that in 526071c4.)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 30
     env:
       ANTHROPIC_AUTH_TOKEN: ""
@@ -30,12 +30,22 @@ jobs:
       OLLAMA_API_KEY: ""
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-          fetch-depth: 1
-          lfs: false
-          filter: blob:none
+        env:
+          CHECKOUT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ -z "${FORGEJO_TOKEN:-}" ] || [ -z "${FORGEJO_INTERNAL_URL:-}" ]; then
+            echo "Forgejo checkout environment is missing on the runner" >&2
+            exit 1
+          fi
+          find . -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          git init .
+          git remote add origin "$FORGEJO_INTERNAL_URL"
+          GIT_CONFIG_COUNT=1 \
+            GIT_CONFIG_KEY_0=http.extraHeader \
+            GIT_CONFIG_VALUE_0="Authorization: token ${FORGEJO_TOKEN}" \
+            git fetch --no-tags --prune --filter=blob:none --depth=1 origin "$CHECKOUT_SHA"
+          git checkout --detach FETCH_HEAD
 
       - name: Enable pnpm
         run: |

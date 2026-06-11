@@ -104,6 +104,13 @@ Session role: frontier strategist/investigator per `SinterPrompt1fable.md`. Budg
 - **Runner (FAB-018):** `vps-runner-01` (act_runner v0.6.1, labels incl. `ubuntu-latest`) picked up and ran tasks 71+72 for KyaniteLabs/liminal. Forgejo restarted 05:05Z mid-task-72 (SSH repair in flight: container listens on 22 now, new pubkey registered) → completed-green-run proof still pending one quiet-window push.
 - **F19 (FAB-019):** labeled calibration delivered — `docs/validation/f19-calibration-2026-06-11.md` + `.quality/f19-renders/`. Washout rule alone: 50% FP rate ON THE ARCHIVE'S BEST WORK; `brightnessStd` separates (fog <=9.5 vs good high-key >=18.5); `LOW_CONTRAST_MAX_STD` unit bug (0-1 constant vs 0-255 measurement) means that verdict can never fire. Fix spec = **Handoff 10** (structure-aware verdicts + 6-fixture regression table).
 
+### Sixth work block — loop closure (2026-06-11 ~06:45Z)
+
+- **Handoff 10 executed by a worker and merged (`5a158156`)** — diff exactly in contract (LuminanceVerdict + its test + calibration doc; low-contrast branch deleted; labeled fixtures present). Post-merge verification: 39 files / 913 tests green across render+composition; typecheck implied by worker gate.
+- **The self-updating loop closed twice unattended:** daemon ledger 06:00Z line is stamped `codeSha=5a158156` — merge → HEAD-moved rebuild → generation under the new verdicts, no human in the loop. This was the session's target end-state.
+- **Branch hygiene:** deleted on forge: `feat/f7-taste-autofeed`, `fix/f11-three-subject-visibility`, `fix/f17-f10-harness-presentation` (squash-merge leftovers from GitHub-era #696-698; content verified in main) and merged `docs/fable-session-2026-06-10`. Forge now has only `main`.
+- **Still open (Simon, 5-second check):** Actions tab run status for `355d1a7a`/`5a158156` — badge endpoint is auth-gated, runner log window aged out (debug logging flooded it). Then Handoff 07's deliberate-failure probe.
+
 ### End-of-session repo state
 - Branch `feat/f4-sing-wiring-test` @ ce0b2011 = forge. Dirty: self-improve ledger (daemon-owned, do not commit), `SinterPrompt1fable.md` (Simon's), `docs/fable-handoffs/` (this session's deliverables — commit/push left to Simon's call since the only open branch is the under-review F4 branch).
 - Idle worktree `.claude/worktrees/pr699-verify` — remove after F4 merges on forge.

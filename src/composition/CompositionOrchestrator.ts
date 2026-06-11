@@ -340,11 +340,11 @@ export class CompositionOrchestrator {
     for (const r of results) {
       if (!r.generated || !r.code) continue;
       const wrapDomain = DOMAIN_TO_WRAP[r.spec.domain] ?? 'p5';
-      const layerHtml = HTMLWrapper.wrap(r.code, { domain: wrapDomain });
-      const dataUri = `data:text/html;base64,${Buffer.from(layerHtml, 'utf-8').toString('base64')}`;
       const blend = r.spec.blendMode ?? 'normal';
       const opacity = r.spec.opacity ?? 1;
       const isAudio = AUDIO_DOMAINS.has(r.spec.domain);
+      const layerHtml = HTMLWrapper.wrap(r.code, { domain: wrapDomain, compositionForeground: z > 1 && !isAudio });
+      const dataUri = `data:text/html;base64,${Buffer.from(layerHtml, 'utf-8').toString('base64')}`;
       // Audio layers are invisible but must stay in the DOM to keep playing.
       const visualStyle = isAudio
         ? 'width:1px;height:1px;opacity:0;pointer-events:none;'

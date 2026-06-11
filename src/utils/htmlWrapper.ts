@@ -34,6 +34,8 @@ export interface WrapOptions {
   asciiWidth?: number;
   /** For Hydra: canvas resolution */
   hydraResolution?: { width: number; height: number };
+  /** True when this output is stacked above another composition layer. */
+  compositionForeground?: boolean;
 }
 
 export class HTMLWrapper {
@@ -74,6 +76,21 @@ export class HTMLWrapper {
     return html
       .replace(/^\s*<meta\s+http-equiv=["']X-Frame-Options["'][^>]*>\s*$/gim, '')
       .replace(/^\s*<meta\s+http-equiv=["']Content-Security-Policy["'][^>]*>\s*$/gim, '');
+  }
+
+  private static injectCompositionForegroundTransparency(html: string): string {
+    const override = `
+    <style data-sinter-composition-foreground>
+      html, body { background: transparent !important; background-color: transparent !important; }
+      body { box-shadow: none !important; }
+      [data-ascii-preview-shell], .container, pre {
+        background: transparent !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+      }
+    </style>`;
+    if (/<\/head>/i.test(html)) return html.replace(/<\/head>/i, `${override}\n</head>`);
+    return html.replace(/<body\b/i, `${override}\n<body`);
   }
 
   private static escapeHTML(value: string): string {
@@ -175,6 +192,7 @@ export class HTMLWrapper {
     let showPreview = false;
     let asciiWidth = 60;
     let hydraResolution = { width: 1280, height: 720 };
+    let compositionForeground = false;
 
     if (typeof options === 'string') {
       domain = options;
@@ -186,6 +204,7 @@ export class HTMLWrapper {
       showPreview = options.showPreview ?? false;
       asciiWidth = options.asciiWidth ?? 60;
       hydraResolution = options.hydraResolution ?? { width: 1280, height: 720 };
+      compositionForeground = options.compositionForeground ?? false;
     }
 
     // Detect domain if not specified
@@ -194,9 +213,13 @@ export class HTMLWrapper {
     // Don't double-wrap general HTML, but enhance already-wrapped Tone and
     // HyperFrames pages so model-emitted HTML still gets Studio's preview shell.
     if (this.isAlreadyWrapped(code)) {
+      const stripped = this.stripInvalidMetaHeaders(code);
+      if (compositionForeground && detectedDomain === 'ascii') {
+        return this.injectCompositionForegroundTransparency(stripped);
+      }
       if (detectedDomain === 'tone') return GenericWrapper.wrap(code, { domain: 'tone' });
       if (detectedDomain === 'hyperframes') return GenericWrapper.wrap(code, { domain: 'hyperframes', title });
-      return this.stripInvalidMetaHeaders(code);
+      return stripped;
     }
 
     // Route to appropriate wrapper
@@ -224,7 +247,7 @@ export class HTMLWrapper {
         wrapped = GenericWrapper.wrap(code, { domain: 'hyperframes', title });
         break;
       case 'ascii':
-        wrapped = GenericWrapper.wrap(code, { domain: 'ascii', asciiWidth });
+        wrapped = GenericWrapper.wrap(code, { domain: 'ascii', asciiWidth, compositionForeground });
         break;
       case 'svg':
         wrapped = this.wrapSVG(code, title);

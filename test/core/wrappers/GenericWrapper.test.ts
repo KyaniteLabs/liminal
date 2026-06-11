@@ -497,5 +497,15 @@ export default makeScene2D("PreviewScene", function* (view) {
       expect(result).toContain('font-size: clamp');
       expect(result).toContain('min-width: min(760px, 92vw)');
     });
+
+    it('can render ASCII as transparent foreground for layered compositions', () => {
+      const code = ' /\\\n/__\\';
+      const result = GenericWrapper.wrap(code, { domain: 'ascii', compositionForeground: true });
+
+      expect(result).toContain('data-composition-foreground-ascii');
+      expect(result).toContain('background: transparent');
+      expect(result).not.toContain('#0a0a0f');
+      expect(result).not.toContain('rgba(0,0,0,.95)');
+    });
   });
 });

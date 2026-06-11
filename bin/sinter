@@ -392,7 +392,7 @@ function printHelp() {
   console.log('COMMANDS:');
   console.log('  <prompt>                    Natural-language creative request (no magic verb required)');
   console.log('  generate, gen, g <prompt>   Create art/code from prompt');
-  console.log('  tui                         Launch Bubble Tea operator cockpit');
+  console.log('  tui                         Launch Bubble Tea operator cockpit (maintenance mode — prefer: studio)');
   console.log('  bridge [port]               Start TUI bridge server (default: 3000)');
   console.log('  studio                     Launch GUI workbench (backend + browser app)');
   console.log('  provider <help|list|status> Show provider setup and missing key diagnostics');
@@ -1587,6 +1587,7 @@ else if (cmd === 'consolidate' || flags.consolidate) {
 } else if (cmd === 'tui') {
   const { spawn } = await import('child_process');
   const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  console.log('⚠ TUI is in maintenance mode (ADR 0005) — the Studio GUI is the supported surface: sinter studio');
   console.log('Launching Bubble Tea operator cockpit...');
   const tui = spawn(npmCmd, ['run', 'tui'], {
     cwd: repoRoot,

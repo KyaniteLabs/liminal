@@ -111,6 +111,14 @@ Session role: frontier strategist/investigator per `SinterPrompt1fable.md`. Budg
 - **Branch hygiene:** deleted on forge: `feat/f7-taste-autofeed`, `fix/f11-three-subject-visibility`, `fix/f17-f10-harness-presentation` (squash-merge leftovers from GitHub-era #696-698; content verified in main) and merged `docs/fable-session-2026-06-10`. Forge now has only `main`.
 - **Still open (Simon, 5-second check):** Actions tab run status for `355d1a7a`/`5a158156` — badge endpoint is auth-gated, runner log window aged out (debug logging flooded it). Then Handoff 07's deliberate-failure probe.
 
+### Seventh work block — movement audit + telemetry fix (2026-06-11 ~07:45Z)
+
+- **Quality movement (bounded, zero-generation audit):** rendered + vision-graded the newest post-fix archive entries. Pass-1 worst domains improved: three (lanterns, healthy), p5 (topographic ridgelines, good), kinetic (passable). SVG rows excluded (one-off harness wrap failure, known).
+- **FAB-020 (new HIGH):** two near-black glsl frames archived at 0.85 (brightF 0, std ~4, vision-dead) prove the H06 rendered-score cap does NOT reach archive admission — uncapped evaluator score is what gets archived, and the dead frames now feed taste training as winners. Handoff 11 written (wiring trace + retroactive archive quarantine via class methods).
+- **Telemetry fix shipped (`025a1860`):** FAILED tails were showing trailing INFO store-registration lines instead of the real error; cycle script now prefers the last error-bearing stderr line. Picked up automatically next cycle (cycle.mjs is re-invoked per iteration).
+- **Watch-item:** cycles at 06:00/07:12 completed 1/3 each (validation failures, generation-side). n=2 — re-check after a few stamped cycles before investigating.
+- Renovate appeared on forge (`renovate/configure` branch — Simon's infra).
+
 ### End-of-session repo state
 - Branch `feat/f4-sing-wiring-test` @ ce0b2011 = forge. Dirty: self-improve ledger (daemon-owned, do not commit), `SinterPrompt1fable.md` (Simon's), `docs/fable-handoffs/` (this session's deliverables — commit/push left to Simon's call since the only open branch is the under-review F4 branch).
 - Idle worktree `.claude/worktrees/pr699-verify` — remove after F4 merges on forge.

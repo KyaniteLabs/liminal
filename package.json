@@ -7,7 +7,7 @@
   "types": "dist/index.d.ts",
   "author": "Simon Gonzalez de Cruz",
   "license": "BUSL-1.1",
-  "packageManager": "pnpm@10.34.2",
+  "packageManager": "pnpm@10.34.3",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/KyaniteLabs/liminal.git"
@@ -123,7 +123,7 @@
     "eslint": "^8.57.1",
     "jsdom": "^29.0.1",
     "playwright": "^1.59.1",
-    "vite": "8.0.9",
+    "vite": "8.0.16",
     "vitest": "^4.1.2"
   },
   "dependencies": {
@@ -167,14 +167,14 @@
   },
   "overrides": {
     "basic-ftp": "5.3.1",
-    "hono": "4.12.23",
+    "hono": "4.12.25",
     "ip-address": "10.2.0",
     "@protobufjs/utf8": "1.1.1",
     "axios": "1.17.0",
     "picomatch": "4.0.4",
     "protobufjs": "7.6.3",
     "qs": "6.15.2",
-    "vite": "8.0.9",
+    "vite": "8.0.16",
     "ws": "8.21.0",
     "shell-quote": "^1.8.4"
   },
@@ -211,16 +211,16 @@
       "picomatch": "4.0.4",
       "brace-expansion": "2.1.1",
       "lodash": "^4.18.0",
-      "cookie": "0.7.0",
-      "path-to-regexp": "8.4.0",
+      "cookie": "0.7.2",
+      "path-to-regexp": "8.4.2",
       "basic-ftp": "5.3.1",
-      "hono": "4.12.23",
+      "hono": "4.12.25",
       "ip-address": "10.2.0",
       "@protobufjs/utf8": "1.1.1",
       "axios": "1.17.0",
       "protobufjs": "7.6.3",
       "qs": "6.15.2",
-      "vite": "8.0.9",
+      "vite": "8.0.16",
       "ws": "8.21.0",
       "uuid": "^14.0.0",
       "shell-quote": "^1.8.4"

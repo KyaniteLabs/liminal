@@ -153,7 +153,7 @@ Create the package with a minimal vertical slice:
 
 - Audio: MediaRecorder on the mic MediaStream → WebM/Opus
 - Telemetry: append to a `Float32Array` ring buffer in the worklet, flush to JSONL on session end
-- Offline renderer (CLI): `pnpm --filter sing render <session-dir> --resolution 4k` re-runs the preset against the telemetry stream and outputs MP4 via ffmpeg
+- Offline renderer (CLI): `pnpm --filter sing render <session-dir> --resolution 4k` currently validates the session bundle and refuses with `offline MP4 render not yet implemented` until the preset replay + ffmpeg frame-synthesis slice lands.
 
 ### Phase 5 — Sinter authoring refactor
 

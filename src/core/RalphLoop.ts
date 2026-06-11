@@ -96,6 +96,7 @@ type RalphQualityEvaluation = {
   report?: unknown;
   confidence?: number;
   failureClass?: GenerationEvaluation['failureClass'];
+  renderMeasure?: GenerationEvaluation['renderMeasure'];
 };
 
 function logStageTiming(stage: string, startedAt: number): void {
@@ -144,6 +145,7 @@ function qualityEvaluationFromGenerationEvaluation(genEval: GenerationEvaluation
     evaluatorReasoning: genEval.reasoning,
     confidence: genEval.confidence,
     failureClass: genEval.failureClass,
+    renderMeasure: genEval.renderMeasure,
   };
 }
 
@@ -156,6 +158,7 @@ function generationEvaluationFromQualityEvaluation(evaluation: RalphQualityEvalu
       ? { issue: evaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
       : undefined),
     reasoning: evaluation.evaluatorReasoning ?? extractScoringReasoning(evaluation),
+    renderMeasure: evaluation.renderMeasure,
   };
 }
 
@@ -1347,11 +1350,13 @@ export class RalphLoop {
         // breaks here and never archives, so those domains never accumulate.
         if (archiveLearning && evaluation.score >= 0.65) {
           const archiveAddStartedAt = Date.now();
+          const archiveMetadata: Record<string, unknown> = { iteration, domain: normalizedOptions.collabDomain || 'p5' };
+          if (evaluation.renderMeasure) archiveMetadata.renderMeasure = evaluation.renderMeasure;
           await archiveLearning.addOutput(
             loadedPrompt, currentCode,
             normalizedOptions.collabDomain || 'p5',
             evaluation.score,
-            { iteration, domain: normalizedOptions.collabDomain || 'p5' }
+            archiveMetadata,
           );
           logStageTiming(`iter${iteration}:archive:add-output`, archiveAddStartedAt);
         }

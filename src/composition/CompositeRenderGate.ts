@@ -17,14 +17,15 @@
  * LLM calls, bounded wall-clock.
  */
 
-export interface CompositeMeasure {
-  /** Mean perceptual luminance of the frame, 0..1 (0.299R+0.587G+0.114B). */
-  meanLuminance: number;
-  /** Fraction of pixels with luminance > 0.5 ("bright" content). */
-  brightFraction: number;
-  /** Fraction of pixels with luminance < 0.12 (the repo's DARK threshold). */
-  darkFraction: number;
-}
+import {
+  DARK_LUMINANCE_THRESHOLD,
+  BRIGHT_LUMINANCE_THRESHOLD,
+  luminanceFromRgb8,
+  verdictFromMeasure as sharedVerdictFromMeasure,
+  type LuminanceMeasure,
+} from '../render/LuminanceVerdict.js';
+
+export type CompositeMeasure = LuminanceMeasure;
 
 export type CompositeVerdict = 'ok' | 'washout' | 'too-dark';
 
@@ -45,14 +46,6 @@ export interface CompositeGateReport {
   skipped?: string;
 }
 
-// A frame this bright is the washout signature: dusk-bloom measured ~0.93
-// mean, the acceptable composites 0.2–0.6. Symmetric crush guard mirrors the
-// gallery audit's calibrated DARK threshold (luminance.mjs): a very dark mean
-// is only a failure when there is no bright focal content either.
-const WASHOUT_MEAN_LUMINANCE = 0.8;
-const DARK_MEAN_LUMINANCE = 0.1;
-const DARK_MIN_BRIGHT_FRACTION = 0.02;
-
 /** Blends that can only brighten the stack — the washout drivers. */
 const LIGHTENING_BLENDS = new Set(['screen', 'lighten']);
 /** Blends that can only darken the stack — the mud/crush drivers. */
@@ -60,14 +53,6 @@ const DARKENING_BLENDS = new Set(['multiply', 'darken']);
 /** Direction-dependent blends: demoted for washout only (overlay brightened
  *  dusk-bloom past white; it rarely crushes a frame to black on its own). */
 const WASHOUT_ALSO = new Set(['overlay']);
-
-export function verdictFromMeasure(measure: CompositeMeasure): CompositeVerdict {
-  if (measure.meanLuminance >= WASHOUT_MEAN_LUMINANCE) return 'washout';
-  if (measure.meanLuminance <= DARK_MEAN_LUMINANCE && measure.brightFraction < DARK_MIN_BRIGHT_FRACTION) {
-    return 'too-dark';
-  }
-  return 'ok';
-}
 
 /**
  * Pick the NON-BASE layer indexes whose blend mode drives the failed verdict.
@@ -92,6 +77,11 @@ export function layersToDemote(
 /** Opacity multiplier applied alongside a blend demotion: 'normal' at full
  *  opacity would hide the layers underneath; keep the layer translucent. */
 export const DEMOTED_OPACITY_FACTOR = 0.75;
+
+export function verdictFromMeasure(measure: CompositeMeasure): CompositeVerdict {
+  const verdict = sharedVerdictFromMeasure(measure, { lowContrast: false });
+  return verdict === 'low-contrast' ? 'ok' : verdict;
+}
 
 /**
  * Measure an assembled composite's frame statistics in headless Chrome.
@@ -130,10 +120,10 @@ export async function measureCompositeHtml(
       let dark = 0;
       const pixels = data.length / 4;
       for (let i = 0; i < data.length; i += 4) {
-        const lum = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255;
+        const lum = luminanceFromRgb8(data[i], data[i + 1], data[i + 2]);
         sum += lum;
-        if (lum > 0.5) bright++;
-        if (lum < 0.12) dark++;
+        if (lum > BRIGHT_LUMINANCE_THRESHOLD) bright++;
+        if (lum < DARK_LUMINANCE_THRESHOLD) dark++;
       }
       return { meanLuminance: sum / pixels, brightFraction: bright / pixels, darkFraction: dark / pixels };
     }, shot);

@@ -17,6 +17,7 @@ import puppeteer from 'puppeteer';
 import { HTMLWrapper } from '../../dist/utils/htmlWrapper.js';
 import { detectDomain } from './detect-domain.mjs';
 import { relativeLuminance, DARK_LUMINANCE_THRESHOLD } from './luminance.mjs';
+import { looksLikeRevideoArtifact, renderRevideoStill } from './revideo-render.mjs';
 
 // sharp is an optionalDependency — load it lazily so the renderer still works
 // without it (the DARK luminance flag is just skipped when it's unavailable).
@@ -38,7 +39,7 @@ fs.mkdirSync(OUT, { recursive: true });
 // Pick the latest version artifact inside a work dir (latest.json ref → vN, else highest vN).
 function pickArtifact(dir) {
   const files = fs.readdirSync(dir);
-  const versions = files.filter(f => /^v\d+\.(js|html)$/.test(f))
+  const versions = files.filter(f => /^v\d+\.(js|html|tsx|jsx)$/.test(f))
     .sort((a, b) => parseInt(b.match(/\d+/)[0], 10) - parseInt(a.match(/\d+/)[0], 10));
   return versions[0] ? path.join(dir, versions[0]) : null;
 }
@@ -106,10 +107,29 @@ let ok = 0, fail = 0, skipped = 0;
 for (const dir of works) {
   const name = path.basename(dir);
   const art = pickArtifact(dir);
-  if (!art) { console.log(`${name.padEnd(40)} SKIP (no v*.js/html)`); continue; }
+  if (!art) { console.log(`${name.padEnd(40)} SKIP (no v*.js/html/tsx/jsx)`); continue; }
+  const raw = fs.readFileSync(art, 'utf-8');
+  if (looksLikeRevideoArtifact(raw, art)) {
+    try {
+      const out = path.join(OUT, `${name}.png`);
+      const revideo = await renderRevideoStill({
+        source: raw,
+        outputPath: out,
+        tempDir: path.join(OUT, '.revideo-tmp'),
+        width: 1000,
+        height: 700,
+      });
+      console.log(`${name.padEnd(40)} ${revideo.message}`);
+      revideo.status === 'ok' ? ok++ : skipped++;
+    } catch (e) {
+      console.log(`${name.padEnd(40)} RENDER-FAIL: ${String(e.message).slice(0, 90)}`);
+      fail++;
+    }
+    continue;
+  }
   // Audio works (Strudel/Tidal) can't be vision-rendered — skip rather than
   // wrap-as-visual and produce a false-broken blank render (`bpm is not defined`).
-  if (detectDomain(fs.readFileSync(art, 'utf-8')) === 'audio') {
+  if (detectDomain(raw) === 'audio') {
     console.log(`${name.padEnd(40)} SKIP (audio domain — not visually rendered)`);
     skipped++;
     continue;
@@ -121,7 +141,7 @@ for (const dir of works) {
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text().slice(0, 140)); });
   let status;
   try {
-    await page.setContent(toHtml(fs.readFileSync(art, 'utf-8')), { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await page.setContent(toHtml(raw), { waitUntil: 'domcontentloaded', timeout: 20000 });
     await new Promise(r => setTimeout(r, Math.min(WAIT_MS, 2500))); // let CDN scripts load + gate appear
     await dismissStartGate(page);                                   // click through any start/audio gate
     await new Promise(r => setTimeout(r, WAIT_MS));                 // let animation run post-start

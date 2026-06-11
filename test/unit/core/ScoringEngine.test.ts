@@ -1046,6 +1046,97 @@ describe('ScoringEngine', () => {
       expect(result.failureClass).toBe('none');
     });
 
+    it('caps rendered score and emits repair feedback for measured washout', async () => {
+      mockLLMClientInstance.generate.mockResolvedValue({
+        code: '{"score":0.9,"confidence":0.8,"reasoning":"Looks polished"}',
+        success: true,
+      });
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const result = await scoreRenderedEvidence(
+        {
+          timingMs: 200,
+          infraUnavailable: false,
+          candidateFailure: false,
+          renderMeasure: { verdict: 'washout', meanLuminance: 0.88, brightFraction: 0.95, darkFraction: 0, brightnessStd: 0.04 },
+        },
+        'function setup() {}',
+        'make a visible sketch',
+        fakeLLM,
+      );
+
+      expect(result.score).toBeCloseTo(0.54, 5);
+      expect(result.renderMeasure?.verdict).toBe('washout');
+      expect(result.repairAdvice?.issue).toContain('verdict=washout');
+      expect(result.reasoning).toContain('Measured render penalty applied');
+      expect(mockLLMClientInstance.generate).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining('Render measure: verdict=washout, mean=0.880, bright=0.950, dark=0.000, std=0.04'),
+        expect.any(AbortSignal),
+      );
+    });
+
+    it('does not cap scores for ok render measures', async () => {
+      mockLLMClientInstance.generate.mockResolvedValue({
+        code: '{"score":0.9,"confidence":0.8,"reasoning":"Balanced frame"}',
+        success: true,
+      });
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const result = await scoreRenderedEvidence(
+        {
+          timingMs: 200,
+          infraUnavailable: false,
+          candidateFailure: false,
+          renderMeasure: { verdict: 'ok', meanLuminance: 0.5, brightFraction: 0.3, darkFraction: 0.2, brightnessStd: 0.25 },
+        },
+        'function setup() {}',
+        'make a visible sketch',
+        fakeLLM,
+      );
+
+      expect(result.score).toBe(0.9);
+      expect(result.repairAdvice).toBeUndefined();
+      expect(result.renderMeasure?.verdict).toBe('ok');
+    });
+
+    it('does not apply a render-measure penalty when measurement is unavailable', async () => {
+      mockLLMClientInstance.generate.mockResolvedValue({
+        code: '{"score":0.9,"confidence":0.8,"reasoning":"Scored without pixels"}',
+        success: true,
+      });
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const result = await scoreRenderedEvidence(
+        { timingMs: 200, infraUnavailable: false, candidateFailure: false },
+        'function setup() {}',
+        'make a visible sketch',
+        fakeLLM,
+      );
+
+      expect(result.score).toBe(0.9);
+      expect(result.renderMeasure).toBeUndefined();
+    });
+
+    it('does not penalize when screenshot measurement cannot be decoded', async () => {
+      mockLLMClientInstance.generateWithImages.mockResolvedValue({
+        code: '{"score":0.9,"confidence":0.8,"reasoning":"Evaluator still judged the attachment path"}',
+        success: true,
+      });
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const result = await scoreRenderedEvidence(
+        {
+          timingMs: 200,
+          infraUnavailable: false,
+          candidateFailure: false,
+          screenshot: { mimeType: 'image/png', dataBase64: 'not-a-png', width: 2, height: 2 },
+        },
+        'function setup() {}',
+        'make a visible sketch',
+        fakeLLM,
+      );
+
+      expect(result.score).toBe(0.9);
+      expect(result.renderMeasure).toBeUndefined();
+    });
+
     it('sends screenshot payload through the multimodal evaluator path', async () => {
       mockLLMClientInstance.generateWithImages.mockResolvedValue({
         code: '{"score":0.9,"confidence":0.95,"reasoning":"Visible output matches the brief"}',

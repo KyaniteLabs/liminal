@@ -1,26 +1,47 @@
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
+import { pathToFileURL } from 'url';
 
-const sessionDir = process.argv[2];
-
-if (!sessionDir) {
-  console.error('Usage: pnpm --filter sing render <session-dir> --resolution 4k');
-  process.exit(1);
+interface RenderCliIO {
+  exists(path: string): boolean;
+  readText(path: string): string;
+  stdout(message: string): void;
+  stderr(message: string): void;
 }
 
-const telemetryPath = join(sessionDir, 'telemetry.jsonl');
-const audioPath = join(sessionDir, 'audio.webm');
+const nodeIO: RenderCliIO = {
+  exists: existsSync,
+  readText: (path) => readFileSync(path, 'utf-8'),
+  stdout: console.log,
+  stderr: console.error,
+};
 
-if (!existsSync(telemetryPath)) {
-  console.error(`Missing telemetry stream: ${telemetryPath}`);
-  process.exit(1);
+export function runRenderCli(argv: readonly string[] = process.argv.slice(2), io: RenderCliIO = nodeIO): number {
+  const sessionDir = argv[0];
+  if (!sessionDir) {
+    io.stderr('Usage: pnpm --filter sing render <session-dir> --resolution 4k');
+    return 1;
+  }
+
+  const telemetryPath = join(sessionDir, 'telemetry.jsonl');
+  const audioPath = join(sessionDir, 'audio.webm');
+
+  if (!io.exists(telemetryPath)) {
+    io.stderr(`Missing telemetry stream: ${telemetryPath}`);
+    return 1;
+  }
+
+  const rows = io.readText(telemetryPath).trim().split('\n').filter(Boolean);
+  const audio = io.exists(audioPath) ? audioPath : null;
+  io.stderr([
+    'offline MP4 render not yet implemented',
+    `session=${sessionDir}`,
+    `telemetryRows=${rows.length}`,
+    `audio=${audio ?? 'missing'}`,
+  ].join('; '));
+  return 1;
 }
 
-const rows = readFileSync(telemetryPath, 'utf-8').trim().split('\n').filter(Boolean);
-console.log(JSON.stringify({
-  ok: true,
-  sessionDir,
-  telemetryRows: rows.length,
-  audio: existsSync(audioPath) ? audioPath : null,
-  note: 'Offline MP4 rendering is wired to the Sing session contract; ffmpeg frame synthesis is the next implementation slice.',
-}));
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  process.exitCode = runRenderCli();
+}

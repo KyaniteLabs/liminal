@@ -1,4 +1,4 @@
-import type { RenderEvidence } from '../core/types/GenerationEvaluation.js';
+import type { RenderEvidence, RenderMeasure } from '../core/types/GenerationEvaluation.js';
 import {
   evaluateAudioPerception,
   evaluateTextPerception,
@@ -6,7 +6,8 @@ import {
   evaluateVisualPerception,
 } from './HumanPerceptionGuardrails.js';
 import type { PerceptionCheckResult } from './types.js';
-import { analyzeScreenshotBase64 } from '../render/DecodedImageVisibility.js';
+import { analyzeScreenshotBase64, type PixelVisibilityAnalysis } from '../render/DecodedImageVisibility.js';
+import { verdictFromMeasure } from '../render/LuminanceVerdict.js';
 
 function isAudioDomain(domain: string): boolean {
   return /audio|music|tone|strudel/i.test(domain);
@@ -20,11 +21,40 @@ function isTextDomain(domain: string): boolean {
   return /text|ascii|caption|creative-writing/i.test(domain);
 }
 
+function cacheRenderMeasure(evidence: RenderEvidence, measure: RenderMeasure): RenderMeasure {
+  evidence.renderMeasure = measure;
+  return measure;
+}
+
+function measureFromVisibility(visibility: PixelVisibilityAnalysis): RenderMeasure | undefined {
+  if (visibility.sampledPixels === 0 || visibility.reason?.startsWith('decoded image data unavailable')) return undefined;
+  return {
+    verdict: verdictFromMeasure(visibility),
+    meanLuminance: visibility.meanLuminance,
+    brightFraction: visibility.brightFraction,
+    darkFraction: visibility.darkFraction,
+    brightnessStd: visibility.brightnessStd / 255,
+  };
+}
+
+export async function measureRenderEvidence(evidence: RenderEvidence): Promise<RenderMeasure | undefined> {
+  if (evidence.renderMeasure) return evidence.renderMeasure;
+  if (!evidence.screenshot || (evidence.screenshot.width ?? 0) <= 0 || (evidence.screenshot.height ?? 0) <= 0) {
+    return undefined;
+  }
+  const visibility = await analyzeScreenshotBase64(evidence.screenshot.dataBase64);
+  const measure = measureFromVisibility(visibility);
+  if (!measure) return undefined;
+  return cacheRenderMeasure(evidence, measure);
+}
+
 async function hasVisibleScreenshot(evidence: RenderEvidence): Promise<boolean> {
   if (!evidence.screenshot || (evidence.screenshot.width ?? 0) <= 0 || (evidence.screenshot.height ?? 0) <= 0) {
     return false;
   }
   const visibility = await analyzeScreenshotBase64(evidence.screenshot.dataBase64);
+  const measure = measureFromVisibility(visibility);
+  if (measure) cacheRenderMeasure(evidence, measure);
   return visibility.hasVisibleContent;
 }
 

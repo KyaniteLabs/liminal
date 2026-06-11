@@ -21,8 +21,8 @@ import { LLMClient } from '../llm/LLMClient.js';
 import { EVALUATOR_TOOLS, createGeneratorToolExecutor } from '../harness/tools/generator-tools.js';
 import { Result, ok, err } from 'neverthrow';
 import { LLMError } from '../llm/errors.js';
-import type { RenderEvidence, GenerationEvaluation } from './types/GenerationEvaluation.js';
-import { evaluateRenderEvidencePerception } from '../perception/RenderEvidencePerception.js';
+import type { RenderEvidence, GenerationEvaluation, RenderMeasure } from './types/GenerationEvaluation.js';
+import { evaluateRenderEvidencePerception, measureRenderEvidence } from '../perception/RenderEvidencePerception.js';
 import { DomainEvaluatorRegistry } from './evaluators/DomainEvaluatorRegistry.js';
 
 // ---------------------------------------------------------------------------
@@ -638,6 +638,40 @@ function renderedEvidenceScoreTimeoutMs(): number {
   return process.env.NODE_ENV === 'test' ? 1_000 : 45_000;
 }
 
+const RENDER_MEASURE_SCORE_MULTIPLIER = 0.6;
+
+function renderMeasureSummary(measure: RenderMeasure): string {
+  const std = measure.brightnessStd === undefined ? 'n/a' : measure.brightnessStd.toFixed(2);
+  return `verdict=${measure.verdict}, mean=${measure.meanLuminance.toFixed(3)}, bright=${measure.brightFraction.toFixed(3)}, dark=${measure.darkFraction.toFixed(3)}, std=${std}`;
+}
+
+function repairAdviceForRenderMeasure(measure: RenderMeasure) {
+  const issue = `Rendered frame measured ${measure.verdict}: ${renderMeasureSummary(measure)}`;
+  const fix = measure.verdict === 'washout'
+    ? 'Reduce additive brightness, lower lightening blends, and raise foreground/background contrast.'
+    : measure.verdict === 'too-dark'
+      ? 'Raise subject luminance, add visible focal highlights, and avoid crushed dark backgrounds.'
+      : 'Increase luminance separation between subject and background before retrying.';
+  return {
+    issue,
+    fix,
+    constraint: 'Rendered output must pass objective luminance measurement as well as evaluator judgment.',
+  };
+}
+
+function applyRenderMeasurePenalty(result: GenerationEvaluation, measure: RenderMeasure | undefined): GenerationEvaluation {
+  if (!measure) return result;
+  if (measure.verdict === 'ok') return { ...result, renderMeasure: measure };
+  const measuredLine = `Measured render penalty applied: ${renderMeasureSummary(measure)}.`;
+  return {
+    ...result,
+    score: Math.max(0, Math.min(1, result.score * RENDER_MEASURE_SCORE_MULTIPLIER)),
+    repairAdvice: repairAdviceForRenderMeasure(measure),
+    reasoning: [result.reasoning, measuredLine].filter(Boolean).join(' '),
+    renderMeasure: measure,
+  };
+}
+
 function createTimeoutController(parent: AbortSignal | undefined, timeoutMs: number): { signal?: AbortSignal; cleanup: () => void } {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
     return { signal: parent, cleanup: () => undefined };
@@ -724,6 +758,7 @@ export async function scoreRenderedEvidence(
     };
   }
 
+  const renderMeasure = await measureRenderEvidence(evidence);
   const perceptionReport = domain ? await evaluateRenderEvidencePerception(evidence, domain) : undefined;
   if (perceptionReport && !perceptionReport.passed) {
     const issueIds = perceptionReport.issues.map(issue => issue.id).join(', ');
@@ -737,6 +772,7 @@ export async function scoreRenderedEvidence(
         constraint: 'Runtime evidence must satisfy human perception ergonomics before aesthetic evaluation.',
       },
       reasoning: perceptionReport.issues.map(issue => issue.message).join(' '),
+      renderMeasure,
     };
   }
 
@@ -749,7 +785,7 @@ export async function scoreRenderedEvidence(
   })();
 
   if (!llm) {
-    return {
+    return applyRenderMeasurePenalty({
       score: 0.5,
       confidence: 0,
       failureClass: 'scorer',
@@ -758,7 +794,7 @@ export async function scoreRenderedEvidence(
         fix: 'Verify LLM_BASE_URL, LLM_MODEL, and LLM_API_KEY are configured correctly, or switch to legacy evaluation mode',
         constraint: 'Evaluator LLM must be reachable for rendered-evidence scoring',
       },
-    };
+    }, renderMeasure);
   }
 
   const systemPrompt = `You are an expert creative artifact evaluator. Evaluate the rendered output of the provided code against the brief.
@@ -779,7 +815,8 @@ If an image is attached, evaluate the visible rendered artifact first and use th
   const screenshotNote = evidence.screenshot
     ? `\nScreenshot: attached ${evidence.screenshot.mimeType}${evidence.screenshot.width && evidence.screenshot.height ? ` ${evidence.screenshot.width}x${evidence.screenshot.height}` : ''}`
     : '\nScreenshot: not available; evaluate from code and timing only.';
-  const userPrompt = `Brief: ${brief}\nCode:\n${code}\nTiming: ${evidence.timingMs}ms${screenshotNote}`;
+  const renderMeasureNote = renderMeasure ? `\nRender measure: ${renderMeasureSummary(renderMeasure)}` : '';
+  const userPrompt = `Brief: ${brief}\nCode:\n${code}\nTiming: ${evidence.timingMs}ms${screenshotNote}${renderMeasureNote}`;
 
   const scoreTimeoutMs = renderedEvidenceScoreTimeoutMs();
   const timeoutController = createTimeoutController(undefined, scoreTimeoutMs);
@@ -809,7 +846,7 @@ If an image is attached, evaluate the visible rendered artifact first and use th
     );
     const jsonMatch = response.code.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return {
+      return applyRenderMeasurePenalty({
         score: 0.5,
         confidence: 0,
         failureClass: 'scorer',
@@ -818,7 +855,7 @@ If an image is attached, evaluate the visible rendered artifact first and use th
           fix: 'Retry the evaluation or verify the evaluator model returns valid JSON',
           constraint: 'Evaluator must return a parseable JSON object',
         },
-      };
+      }, renderMeasure);
     }
     const parsed = JSON.parse(jsonMatch[0]);
     const score = typeof parsed.score === 'number' ? Math.max(0, Math.min(1, parsed.score)) : 0.5;
@@ -834,16 +871,16 @@ If an image is attached, evaluate the visible rendered artifact first and use th
           }
         : undefined;
 
-    return {
+    return applyRenderMeasurePenalty({
       score,
       confidence,
       failureClass: 'none',
       repairAdvice,
       reasoning: typeof parsed.reasoning === 'string' ? parsed.reasoning : undefined,
-    };
+    }, renderMeasure);
   } catch (error) {
     Logger.warn('ScoringEngine', `Rendered evidence LLM scoring failed after ${Date.now() - scoreStartedAt}ms:`, error instanceof Error ? error.message : error);
-    return {
+    return applyRenderMeasurePenalty({
       score: 0.5,
       confidence: 0,
       failureClass: 'scorer',
@@ -852,7 +889,7 @@ If an image is attached, evaluate the visible rendered artifact first and use th
         fix: 'Check network connectivity and evaluator credentials, or fall back to legacy evaluation mode',
         constraint: 'Evaluator LLM must complete successfully for rendered-evidence scoring',
       },
-    };
+    }, renderMeasure);
   } finally {
     timeoutController.cleanup();
   }

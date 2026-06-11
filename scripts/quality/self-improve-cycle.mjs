@@ -23,6 +23,7 @@ import {
   pickUnderfilledDomains,
   buildDomainPrompt,
   dreamThemeFromTask,
+  readPerDomainTopQuality,
 } from './self-improve-domains.mjs';
 import { DreamQueue } from '../../dist/dreaming/DreamQueue.js';
 
@@ -88,7 +89,8 @@ const before = { archive: readArchive(), health: gardenHealth() };
 // perpetually-empty domains every cycle (some of which may not accumulate) — it spreads
 // coverage so archivable domains that still have room actually fill over time.
 const cycleSeed = Math.floor(Math.random() * 1e6);
-const targetDomains = pickUnderfilledDomains(beforeDomains, TARGET_DOMAINS, MAX_PER_DOMAIN, COUNT, cycleSeed);
+const topQuality = readPerDomainTopQuality(ARCHIVE);
+const targetDomains = pickUnderfilledDomains(beforeDomains, TARGET_DOMAINS, MAX_PER_DOMAIN, COUNT, cycleSeed, topQuality);
 console.log(`=== self-improve cycle (${COUNT} gens) @ ${stamp} ===`);
 console.log(`before: archive=${before.archive} health=${before.health}% targets=[${targetDomains.join(', ')}]`);
 

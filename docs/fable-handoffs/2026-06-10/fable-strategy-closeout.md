@@ -42,3 +42,12 @@ The cure that worked every time was the same move: **stamp the claim with its ru
 1. **H13 two-frame capture** — the largest open measurement class (temporal instability) and the principled end of single-frame ambiguity; also unblocks fair adjudication of the flagged p5 pair.
 2. **Floor-aware ledger metric** — one field per ledger line (per-domain floor of targeted domains) so the curation ratchet becomes visible in the data the daemon already writes; textgen fill rides the same targeting logic.
 3. **G010 pass-2 under the honest pipeline** — the investor-audit clean-pass criterion is finally measurable: re-grade domains/composites knowing scores mean what they say. The pass-1 grades (hydra D, p5 C+) were measured under an inflated regime; the comparison is now apples-to-apples.
+
+## Post-pass-3 addendum — next-phase priorities (2026-06-11, campaign closed at `4e7f213c`)
+
+Pass-3 PASSED (5 visual domains A-/A: glsl, hydra, p5, svg, textgen; none below B-; `docs/validation/g010-pass3-2026-06-11.md`). Priorities for the next phase, in order:
+
+1. **Composition from the archive.** Assemble layered composites from curated archive-top entries (not fresh LLM layers): the engine, LayerContract, and CompositeRenderGate are all proven; ingredients are A-grade; generation cost ≈ zero. This is the next visible quality leap and the product's stated core.
+2. **Package the proof.** The pass-1→pass-3 movement + 25-finding ledger + stamped-claims doctrine is the KyaniteLabs public-proof narrative ("a creative system that audits itself honestly"). Curate it into a shareable surface; no new engineering.
+3. **Cadence stewardship.** 20-min cycles are right while textgen/glsl/hydra have cap room; at full saturation, the daemon should slow itself (cap-aware interval). Outputs per dollar is the performance metric, not cycles per hour.
+4. **Hydra: no action.** Noisy per-gen yield + A-class archive-top = the curation ratchet working. Cap dynamics will retarget pressure automatically at 20/20.

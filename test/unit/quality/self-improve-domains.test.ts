@@ -46,6 +46,33 @@ describe('pickUnderfilledDomains', () => {
   });
 });
 
+describe('pickUnderfilledDomains quality-aware targeting (all-domains-at-A)', () => {
+  it('keeps a capped domain targetable while its top quality is below the A-bar', () => {
+    const counts = { ascii: 20, p5: 20, textgen: 12 };
+    const quality = { ascii: 0.85, p5: 0.95, textgen: 0.95 };
+    const picks = pickUnderfilledDomains(counts, ['ascii', 'p5', 'textgen'], 20, 2, 0, quality);
+    expect(picks).toEqual(['textgen', 'ascii']); // under-cap first, then capped-below-bar; capped A-grade p5 excluded
+  });
+
+  it('orders capped below-bar domains by ascending quality (weakest top first)', () => {
+    const counts = { ascii: 20, kinetic: 20, three: 20 };
+    const quality = { ascii: 0.85, kinetic: 0.85, three: 0.8 };
+    const picks = pickUnderfilledDomains(counts, ['ascii', 'kinetic', 'three'], 20, 3, 0, quality);
+    expect(picks).toEqual(['three', 'ascii', 'kinetic']); // 0.80 before the 0.85 pair (tie keeps input order)
+  });
+
+  it('falls back to the existing round-robin when everything is capped AND at the bar', () => {
+    const counts = { a: 20, b: 20 };
+    const quality = { a: 0.95, b: 0.92 };
+    expect(pickUnderfilledDomains(counts, ['a', 'b'], 20, 3, 0, quality)).toEqual(['a', 'b', 'a']);
+  });
+
+  it('behaves exactly as before when no quality map is given (back-compat)', () => {
+    const counts = { strudel: 20, p5: 5 };
+    expect(pickUnderfilledDomains(counts, ['strudel', 'p5', 'glsl'], 20, 2)).toEqual(['glsl', 'p5']);
+  });
+});
+
 describe('pickUnderfilledDomains seed rotation (anti-fixation)', () => {
   const counts = { a: 0, b: 0, c: 0, d: 5, e: 8 };
   const doms = ['a', 'b', 'c', 'd', 'e'];

@@ -20,7 +20,6 @@
 import {
   DARK_LUMINANCE_THRESHOLD,
   BRIGHT_LUMINANCE_THRESHOLD,
-  luminanceFromRgb8,
   verdictFromMeasure as sharedVerdictFromMeasure,
   type LuminanceMeasure,
 } from '../render/LuminanceVerdict.js';
@@ -101,6 +100,11 @@ export async function measureCompositeHtml(
     await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30_000 });
     await new Promise((resolve) => setTimeout(resolve, settleMs));
     const shot = (await page.screenshot({ encoding: 'base64' })) as string;
+    // Drift guard for the inlined browser-side copies of these thresholds
+    // (page.evaluate cannot close over module scope).
+    if (BRIGHT_LUMINANCE_THRESHOLD !== 0.5 || DARK_LUMINANCE_THRESHOLD !== 0.12) {
+      throw new Error('CompositeRenderGate: inlined luminance thresholds diverged from LuminanceVerdict constants — update the page.evaluate copies');
+    }
     return await page.evaluate(async (b64: string) => {
       const img = new Image();
       img.src = `data:image/png;base64,${b64}`;
@@ -120,10 +124,16 @@ export async function measureCompositeHtml(
       let dark = 0;
       const pixels = data.length / 4;
       for (let i = 0; i < data.length; i += 4) {
-        const lum = luminanceFromRgb8(data[i], data[i + 1], data[i + 2]);
+        // Inline rec601 luma: page.evaluate serializes this callback, so module
+        // imports (luminanceFromRgb8) do not exist in browser scope — the gate
+        // silently skipped on every composite from 5a158156 until this fix.
+        const lum = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255;
         sum += lum;
-        if (lum > BRIGHT_LUMINANCE_THRESHOLD) bright++;
-        if (lum < DARK_LUMINANCE_THRESHOLD) dark++;
+        // Inline thresholds for the same serialization reason (values pinned
+        // to BRIGHT_LUMINANCE_THRESHOLD=0.5 / DARK_LUMINANCE_THRESHOLD=0.12 by
+        // the assertion below this evaluate call).
+        if (lum > 0.5) bright++;
+        if (lum < 0.12) dark++;
       }
       return { meanLuminance: sum / pixels, brightFraction: bright / pixels, darkFraction: dark / pixels };
     }, shot);

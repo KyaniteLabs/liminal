@@ -59,18 +59,57 @@ export function readPerDomainCounts(archivePath) {
  * room. A per-cycle seed spreads coverage across ALL under-cap domains so the fillable
  * ones make progress. seed=0 preserves the deterministic emptiest-first order.
  */
-export function pickUnderfilledDomains(counts, domains = TARGET_DOMAINS, cap = MAX_PER_DOMAIN, n = 3, seed = 0) {
+export function pickUnderfilledDomains(counts, domains = TARGET_DOMAINS, cap = MAX_PER_DOMAIN, n = 3, seed = 0, quality = {}) {
   const countOf = (d) => counts[d] ?? 0;
   const underCap = domains.filter((d) => countOf(d) < cap);
-  const pool = (underCap.length > 0 ? underCap : domains)
-    .slice()
-    .sort((a, b) => countOf(a) - countOf(b) || domains.indexOf(a) - domains.indexOf(b));
+  // Quality-aware targeting (all-domains-at-A): a capped domain whose archive
+  // top is still below the A-bar stays targetable so the displacement ratchet
+  // can keep lifting it — count-only targeting starves capped-but-mediocre
+  // domains of all generation pressure. quality[d] = top-quality signal
+  // (e.g. mean of the domain's top-2 archive scores); omit to keep the old
+  // count-only behavior.
+  const QUALITY_BAR = 0.9;
+  const belowBar = domains.filter(
+    (d) => countOf(d) >= cap && quality[d] !== undefined && quality[d] < QUALITY_BAR,
+  );
+  const ranked = [
+    ...underCap.slice().sort((a, b) => countOf(a) - countOf(b) || domains.indexOf(a) - domains.indexOf(b)),
+    ...belowBar.slice().sort((a, b) => quality[a] - quality[b] || domains.indexOf(a) - domains.indexOf(b)),
+  ];
+  const pool = ranked.length > 0
+    ? ranked
+    : domains
+      .slice()
+      .sort((a, b) => countOf(a) - countOf(b) || domains.indexOf(a) - domains.indexOf(b));
   if (pool.length === 0) return [];
   const offset = ((Math.trunc(seed) % pool.length) + pool.length) % pool.length;
   const rotated = pool.slice(offset).concat(pool.slice(0, offset));
   const picks = [];
   for (let i = 0; i < n; i++) picks.push(rotated[i % rotated.length]);
   return picks;
+}
+
+/** Read per-domain top-quality signal (mean of the top-2 non-quarantined
+ *  scores) from a QualityArchive JSON file. Missing/corrupt → {}. Feeds the
+ *  quality-aware arm of pickUnderfilledDomains. */
+export function readPerDomainTopQuality(archivePath) {
+  try {
+    const data = JSON.parse(fs.readFileSync(archivePath, 'utf-8'));
+    const archives = data && typeof data.archives === 'object' && data.archives ? data.archives : {};
+    const quality = {};
+    for (const [domain, entries] of Object.entries(archives)) {
+      if (!Array.isArray(entries)) continue;
+      const scores = entries
+        .filter((e) => !(e && e.metadata && e.metadata.quarantinedAt))
+        .map((e) => (e && typeof e.qualityScore === 'number' ? e.qualityScore : 0))
+        .sort((a, b) => b - a)
+        .slice(0, 2);
+      if (scores.length > 0) quality[domain] = scores.reduce((s, v) => s + v, 0) / scores.length;
+    }
+    return quality;
+  } catch {
+    return {};
+  }
 }
 
 /** Build a domain-routed prompt for a theme. Unknown domain → the raw theme. */

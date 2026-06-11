@@ -15,6 +15,9 @@ You are the overnight Fable watchman for the Sinter repo (cwd). One bounded pass
 - When adding a finding to the findings ledger, read the ledger's LAST line first and allocate the next unused FAB-NNN id (a race once produced two different FAB-023s).
 - Respect memory rules in docs/fable-handoffs/2026-06-10/findings-ledger.jsonl — do not re-investigate closed findings (FAB-001..022).
 
+## Render-infra alarm
+Scores clumping at exactly 0.68 (or repeated failureClass 'infra') mean the renderer cannot launch — usually purged browser caches (~/.cache/puppeteer, ~/Library/Caches/ms-playwright). Verify with one render probe; remedy: `npx puppeteer browsers install chrome && pnpm exec playwright install chromium`. Cache cleanups DELETE the evidence pipeline's eyes (FAB-028, 2026-06-11).
+
 ## Do
 1. Diagnose every FAILED generation since the last watchman entry (reasons are now named in the log). If a failure class repeats ≥2x and has a ≤30-line deterministic fix (validator sanitation, prompt contract, timeout knob), implement it test-first.
 2. Check score trend + archive growth. If the archive admitted anything that measures dead/washed (use `.quality/f19-calibrate.mjs` measurement style, read-only), append a finding to the findings ledger instead of mutating the archive.

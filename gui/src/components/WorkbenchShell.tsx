@@ -17,6 +17,8 @@ interface WorkbenchShellProps {
   runLabel: string;
   audioSlot?: React.ReactNode;
   providerLabel: string;
+  /** True when the studio backend is unreachable — shows the remedy banner. */
+  backendDown?: boolean;
   evaluatorLabel: string;
   inspectorLabel: string;
   stageSlot: React.ReactNode;
@@ -45,6 +47,7 @@ export function WorkbenchShell({
   runLabel,
   audioSlot,
   providerLabel,
+  backendDown,
   evaluatorLabel,
   inspectorLabel,
   stageSlot,
@@ -100,12 +103,18 @@ export function WorkbenchShell({
   return (
     <div className="sinter-workbench sinter-workbench--chat-first">
       <a className="sinter-skip-link" href="#main-content">Skip to main content</a>
+      {backendDown && (
+        <div className="atelier-alert atelier-alert--warn sinter-backend-banner" role="alert">
+          Studio backend isn&apos;t reachable — generation and live data are paused.
+          Start it from a terminal: <code>sinter studio</code>
+        </div>
+      )}
       <header className="sinter-commandbar">
         <div className="sinter-brand">
-          <span className="sinter-brand__mark">L</span>
+          <span className="sinter-brand__mark">S</span>
           <div>
             <h1>Sinter Studio</h1>
-            <p>Codex for creative coding</p>
+            <p>Creative coding studio</p>
           </div>
         </div>
         <details className="sinter-runtime-details">

@@ -223,6 +223,8 @@ export default function App() {
   const [timeoutMinutes, setTimeoutMinutes] = useState<number>(30);
   const [minQualityScore, setMinQualityScore] = useState<number>(0.7);
   const [galleryPath, setGalleryPath] = useState<string>('gallery');
+  // null = not yet probed; false = the startup config fetch failed (backend down).
+  const [backendReachable, setBackendReachable] = useState<boolean | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -232,6 +234,7 @@ export default function App() {
         if (!res.ok) throw new Error(await res.text());
         const data = await res.json();
         if (cancelled) return;
+        setBackendReachable(true);
         setConfig(data);
         setProvider(data.effective?.provider ?? 'lmstudio');
         setBaseUrl(data.effective?.baseUrl ?? '');
@@ -247,7 +250,10 @@ export default function App() {
         setMinQualityScore(data.creative?.minQualityScore ?? 0.7);
         setGalleryPath(data.galleryPath ?? 'gallery');
       } catch (e: unknown) {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+        if (!cancelled) {
+          setBackendReachable(false);
+          setError(e instanceof Error ? e.message : String(e));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -758,12 +764,14 @@ export default function App() {
   const liveGenerator = bridge.session?.roles?.generator;
   const liveHarness = bridge.session?.roles?.harness;
   const liveEvaluator = bridge.session?.roles?.evaluator;
+  // Without a live session these are CONFIG values, not runtime truth — label
+  // them as such instead of asserting an active model while disconnected.
   const providerLabel = liveGenerator
     ? `${liveGenerator.provider || 'unknown'} / ${liveGenerator.model || 'unknown'}`
-    : `${provider || 'unknown'} / ${model || 'unknown'}`;
+    : `configured: ${provider || 'unknown'} / ${model || 'unknown'}`;
   const evaluatorLabel = liveEvaluator
     ? `${liveEvaluator.provider || 'unknown'} / ${liveEvaluator.model || 'unknown'}`
-    : `${evaluatorProvider || 'unknown'} / ${evaluatorModel || 'unknown'}`;
+    : `configured: ${evaluatorProvider || 'unknown'} / ${evaluatorModel || 'unknown'}`;
   const inspectorLabel = liveHarness
     ? `${liveHarness.provider || 'unknown'} / ${liveHarness.model || 'unknown'}`
     : `${config?.roles?.harness?.provider || provider || 'unknown'} / ${config?.roles?.harness?.model || model || 'unknown'}`;
@@ -1382,6 +1390,7 @@ export default function App() {
       conversationNotice={studioConversationNotice}
       audioSlot={audioSlot}
       providerLabel={providerLabel}
+      backendDown={backendReachable === false || bridgeSummary.phase === 'disconnected'}
       evaluatorLabel={evaluatorLabel}
       inspectorLabel={inspectorLabel}
       stageSlot={stageSlot}

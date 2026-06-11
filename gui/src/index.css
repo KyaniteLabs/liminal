@@ -2386,3 +2386,17 @@ body::before {
 .cockpit-review-check--ready { border-left: 3px solid var(--atelier-success); }
 .cockpit-review-check--blocked { border-left: 3px solid var(--atelier-error); }
 .cockpit-review-check--waiting { border-left: 3px solid #e8c95a; }
+
+
+/* Backend-down remedy banner: floats above the layout so the workbench grid
+   cannot reflow it into a corner; unmissable but does not cover the header. */
+.sinter-backend-banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: min(720px, calc(100vw - 32px));
+  text-align: center;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+}

@@ -68,6 +68,9 @@ export class ASCIIArtGenerator extends TierBasedGenerator {
   }
 
   private formatASCII(code: string, width: number, height: number): string {
+    // The charset prompt rule alone fails ~2x/night (the model reaches for
+    // ◈/◉/◡-class glyphs); rewrite deterministically instead of discarding.
+    code = ASCIIValidator.sanitize(code);
     const lines = code.split('\n').filter(line => line.trim() !== '');
     
     // Remove code block markers if present

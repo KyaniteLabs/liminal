@@ -96,6 +96,44 @@ export class ASCIIValidator {
     return errors;
   }
 
+  /** Near-miss Unicode glyphs the LLM reaches for, mapped to allowed cousins.
+   *  Observed killing whole generations in the self-improve daemon (2026-06-11):
+   *  ◈ U+25C8, ◉ U+25C9, ◡ U+25E1 — each a sibling of an allowed glyph. */
+  private static readonly SANITIZE_MAP: Record<string, string> = {
+    '◈': '♦', '◆': '♦', '◇': '♦', '◉': '●', '◎': '○', '◠': '-', '◡': '_',
+  };
+
+  /**
+   * Deterministically rewrite disallowed characters to allowed ones instead of
+   * failing the whole generation: near-miss glyphs map to allowed cousins,
+   * accented letters decompose to their ASCII base, anything else becomes a
+   * single-width '*' (preserving line alignment). Allowed content is untouched.
+   */
+  static sanitize(code: string): string {
+    let out = '';
+    for (const char of code) {
+      const codePoint = char.codePointAt(0) ?? 0;
+      const isStandardAscii = codePoint >= 32 && codePoint <= 126;
+      if (isStandardAscii || char === '\n' || char === '\r' || char === '\t' || this.VALID_ASCII_CHARS.has(char)) {
+        out += char;
+        continue;
+      }
+      const mapped = this.SANITIZE_MAP[char];
+      if (mapped) {
+        out += mapped;
+        continue;
+      }
+      const base = char.normalize('NFKD').replace(/[̀-ͯ]/g, '');
+      const baseCp = base.codePointAt(0) ?? 0;
+      if (base.length === 1 && base !== char && baseCp >= 32 && baseCp <= 126) {
+        out += base;
+        continue;
+      }
+      out += '*';
+    }
+    return out;
+  }
+
   /**
    * Validate ASCII art characters
    */

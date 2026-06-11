@@ -182,4 +182,30 @@ void main() {
       expect(ASCIIValidator.getMinSize()).toBe(50);
     });
   });
+
+  describe('sanitize', () => {
+    it('maps near-miss Unicode art glyphs to their allowed cousins (the recurring daemon failure class)', () => {
+      // Observed live 2026-06-11: '\u25C8' (U+25C8), '\u25C9' (U+25C9), '\u25E1' (U+25E1) failed whole generations.
+      expect(ASCIIValidator.sanitize('\u25C8\u25C9\u25E1\u25E0\u25C6\u25C7\u25CE')).toBe('\u2666\u25CF_-\u2666\u2666\u25CB');
+      const art = ASCIIValidator.sanitize('  \u25C8\u25C8\u25C8  \n \u25C9   \u25C9 \n  \u25E1\u25E1\u25E1  ');
+      expect(ASCIIValidator.validate(art).valid).toBe(true);
+    });
+
+    it('strips diacritics to base ASCII letters', () => {
+      expect(ASCIIValidator.sanitize('caf\u00E9 ni\u00F1o')).toBe('cafe nino');
+    });
+
+    it('replaces unknown symbols with a single-width asterisk, preserving line lengths', () => {
+      const line = 'a\u2728b\u26A1c';
+      const out = ASCIIValidator.sanitize(line);
+      expect(out).toBe('a*b*c');
+      expect([...out].length).toBe([...line].length);
+    });
+
+    it('leaves allowed extended art characters untouched', () => {
+      const art = '\u250C\u2500\u2510\n\u2502\u2588\u2502\n\u2514\u2500\u2518 \u2605 \u25CF';
+      expect(ASCIIValidator.sanitize(art)).toBe(art);
+      expect(ASCIIValidator.validate(ASCIIValidator.sanitize(art)).valid).toBe(true);
+    });
+  });
 });

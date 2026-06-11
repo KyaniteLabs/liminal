@@ -133,13 +133,17 @@ for (let i = 0; i < COUNT; i++) {
     const timedOut = e.signal === 'SIGTERM' && e.status == null;
     const errTail = String(e.stderr || '').trim().slice(-200);
     const outTail = String(e.stdout || '').trim().slice(-200);
+    // INFO logs (store registrations etc.) can land on stderr AFTER the real
+    // error, so a bare tail hides it — prefer the last error-bearing line.
+    const errLine = String(e.stderr || '').split('\n').reverse()
+      .find((l) => /error|failed|❌|exception/i.test(l))?.trim();
     const rateLimited = /429|rate.?limit|usage limit/i.test(`${errTail} ${outTail}`);
     const lastStage = (String(e.stdout || '').match(/\[stage-timing\][^\n]*/g) || []).pop();
     const reason = rateLimited
       ? 'RATE-LIMITED — stopping cycle early'
       : timedOut
         ? `TIMEOUT — domain=${domain} exceeded ${GEN_TIMEOUT_MS / 1000}s and was killed${lastStage ? ` (last completed stage: ${lastStage.slice(0, 80)})` : ''}`
-        : (errTail || outTail || String(e.message || '')).slice(0, 120);
+        : (errLine || errTail || outTail || String(e.message || '')).slice(0, 120);
     console.log(`  [${i + 1}/${COUNT}] FAILED${dreamTask ? ` (dream=${dreamTask.id})` : ''}: ${reason}`);
     if (rateLimited) break;
   }

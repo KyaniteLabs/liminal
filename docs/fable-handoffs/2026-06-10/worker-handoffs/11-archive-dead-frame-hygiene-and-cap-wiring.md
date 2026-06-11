@@ -42,3 +42,11 @@ POST-CHECK: <preferences train output + archive counts>
 ```
 
 Stop and ask if Part A reveals the cap is wired correctly and the explanation is render variance at the 0.1 knife-edge — that becomes a threshold/hysteresis question for a calibration follow-up, not a wiring fix.
+
+---
+
+## ADDENDUM 2026-06-11 08:45Z (orchestrator) — Part A is likely a CLOSE-AS-CORRECT
+
+Part B (quarantine) confirmed executed at 08:19Z. New evidence changes Part A: the dead frames' gen-time `renderMeasure` metadata shows they measured **fine at capture** (`gls_2f06d51b`: lum 0.51, brightF 0.81 → verdict `ok` was correct) — the wiring delivered the measure and the verdict honestly. The frames are **animated shaders that decay to black after the capture moment** (temporal instability), not a cap bypass. Also note the stored `brightnessStd` values you'll see in older metadata are 0–1-scaled (FAB-021, fixed ~08:50Z); post-fix entries store the documented 0–255 scale.
+
+Revised definition of done for Part A: verify with one trace that `evaluation.score` at the `:1355` admission derives from `genEval` in the happy path (it appears to), then report Part A as correct-by-evidence. The temporal-instability fix (late/second-frame capture in HeadlessRenderer) is a SEPARATE design item — flag it, do not implement here.

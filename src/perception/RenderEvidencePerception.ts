@@ -33,7 +33,10 @@ function measureFromVisibility(visibility: PixelVisibilityAnalysis): RenderMeasu
     meanLuminance: visibility.meanLuminance,
     brightFraction: visibility.brightFraction,
     darkFraction: visibility.darkFraction,
-    brightnessStd: visibility.brightnessStd / 255,
+    // LuminanceMeasure documents brightnessStd on the 0..255 luma scale — the
+    // same scale verdictFromMeasure consumes above. Normalizing here (FAB-021)
+    // made persisted archive measures contradict the calibrated thresholds.
+    brightnessStd: visibility.brightnessStd,
   };
 }
 

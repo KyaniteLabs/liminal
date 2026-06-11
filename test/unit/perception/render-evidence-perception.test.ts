@@ -77,6 +77,22 @@ describe('render evidence perception mapping', () => {
     expect(evidence.renderMeasure?.darkFraction).toBeLessThan(0.5);
   });
 
+  it('stores brightnessStd on the documented 0..255 luma scale (LuminanceMeasure contract)', async () => {
+    // The varied 8×8 gradient has luma = 11.392x + 20.608y (x,y ∈ 0..7), whose
+    // analytic std is ≈53.9 on the 0..255 scale. A 0..1-normalized value (the
+    // FAB-021 bug, ≈0.21) misleads archive audits and any threshold consumer.
+    const evidence: RenderEvidence = {
+      timingMs: 120,
+      infraUnavailable: false,
+      candidateFailure: false,
+      screenshot: { mimeType: 'image/png', dataBase64: await createPngBase64('varied'), width: 8, height: 8 },
+    };
+
+    const measure = await measureRenderEvidence(evidence);
+    expect(measure?.brightnessStd).toBeGreaterThan(50);
+    expect(measure?.brightnessStd).toBeLessThan(58);
+  });
+
   it('rejects solid and transparent screenshots as invisible visual evidence', async () => {
     const solid: RenderEvidence = {
       timingMs: 120,

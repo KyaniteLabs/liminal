@@ -1,44 +1,39 @@
 # Render measure calibration — 2026-06-11
 
-Purpose: make the H06 luminance scorer honest. It should penalize obvious washed-out or black renders, but it must not pretend to grade artistic quality without calibration data.
+Purpose: make the H06/F19 luminance scorer honest. It should penalize obvious washed-out or black renders, but it must not punish bright high-key work with real structure.
 
 ## Current thresholds
 
 | Verdict | Rule |
 | --- | --- |
-| `washout` | mean luminance >= `0.80` |
-| `too-dark` | mean luminance <= `0.10` and bright fraction < `0.02` |
-| `low-contrast` | disabled by default; requires `SINTER_CONTRAST_VERDICT=1` or explicit scorer option |
+| `washout` | mean luminance >= `0.80` and brightness std < `15` |
+| `too-dark` | mean luminance <= `0.10`, bright fraction < `0.02`, and brightness std < `5` |
+| `low-contrast` | deleted from live verdicting; structure-aware washout/dark gates cover the calibrated failure class |
 
-## Available calibration artifact
+`brightnessStd` is on the `0..255` luma scale produced by `DecodedImageVisibility`. Missing `brightnessStd` keeps the legacy mean-only behavior for older composite measurements that do not yet carry the field.
 
-Command used:
+## Calibration artifact
 
-```bash
-node scripts/quality/render-gallery.mjs --count 8 --wait 1000
-```
+The first H06 artifact was intentionally conservative: one measured gallery render, verdict `ok`. Handoff 10 upgrades the rule from the F19 labeled sweep documented in `docs/validation/f19-calibration-2026-06-11.md`.
 
-| Artifact | mean | bright fraction | dark fraction | brightness std | verdict |
-| --- | ---: | ---: | ---: | ---: | --- |
-| `gallery/2026-06-11--cli-project/v1.js` | `0.4096` | `0.3427` | `0.1019` | `0.2500` | `ok` |
+The regression table is the six vision-graded fixtures from that sweep:
+
+| Fixture | mean | brightness std | bright fraction | previous verdict | calibrated verdict |
+| --- | ---: | ---: | ---: | --- | --- |
+| hydra fog, true washout | `0.8296` | `8.7951` | default | `washout` | `washout` |
+| three blank-pink, true washout | `0.9386` | `9.4877` | default | `washout` | `washout` |
+| pastel flower field A, good high-key | `0.8310` | `20.4243` | default | `washout` | `ok` |
+| pastel flower field B, good high-key | `0.8173` | `18.4812` | default | `washout` | `ok` |
+| glowing-pond nocturne, good dark | `0.0654` | `11.3449` | `0.0` | `too-dark` | `ok` |
+| dead black render | `0.0300` | `0.5000` | `0.0` | `too-dark` | `too-dark` |
 
 ## Decision
 
-The available gallery set has only one visual artifact, so it does **not** prove a reliable separation between C+/D work and A-grade work. H06 therefore ships the objective failure gates only:
+Mean luminance alone was too blunt: it flagged bright pastel work as washout and dark intentional work as too-dark. The labeled set shows the separating signal is structure (`brightnessStd`): true washouts are below `9.5`, while good high-key renders are above `18.4`.
 
-- extreme washout;
-- extreme darkness with almost no bright focal content;
-- no penalty for missing/undecodable screenshots, because that is an infrastructure gap, not evidence of bad art.
+Live verdicting now uses:
 
-Low-contrast scoring remains opt-in until the gallery contains a representative set of washed Hydra, pale p5, A-grade shader, and hyperframes renders with human labels.
+- `washout = mean >= 0.80 && brightnessStd < 15`
+- `too-dark = mean <= 0.10 && brightFraction < 0.02 && brightnessStd < 5`
 
-## Next calibration data needed
-
-Capture at least 10 labeled renders across Hydra, p5, GLSL, three, hyperframes, and SVG. Include at least:
-
-- two known washed-out failures;
-- two known too-dark failures;
-- two low-contrast-but-intentional pieces;
-- four strong accepted pieces.
-
-Only then should `low-contrast` become a default verdict.
+The old opt-in `low-contrast` branch is removed from live verdicting instead of rescaled. Rescaling it would reintroduce false positives on the same high-key/low-key art class the F19 sweep was meant to protect. Keep future contrast work behind a separately labeled dataset and a separate regression table.

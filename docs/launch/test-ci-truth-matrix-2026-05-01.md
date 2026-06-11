@@ -7,7 +7,7 @@ This matrix maps commands to the claims they actually prove. Do not use a narrow
 
 ## 2026-06-10 forge transition
 
-Forgejo is now the source of truth for repository state. The explicit Forgejo fast gate lives at `.forgejo/workflows/ci.yml` and is the intended required merge gate once Forgejo Actions and a `macos-arm64` runner are proven active for this repo.
+Forgejo is now the source of truth for repository state. The explicit Forgejo fast gate lives at `.forgejo/workflows/ci.yml` and is the intended required merge gate once Forgejo Actions and a VPS Forgejo Runner are proven active for this repo. The repo workflow targets `ubuntu-latest`; the instance runner must advertise a matching Docker/Linux label (for example `ubuntu-latest:docker://...`) or the workflow label must be changed to the runner label that is actually registered.
 
 Until a live Forgejo run has been observed on the source branch, every PR/branch intended for the source of truth must still use the temporary local merge gate: `pnpm typecheck`, focused tests for touched areas, `pnpm lint`, a public-safe leak audit when publishing, and an independent review-agent pass. Do not cite a green GitHub mirror check as proof that the Forgejo source branch was gated.
 

@@ -39,7 +39,7 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 8. **F12 — Hydra washout reproduced in proof artifact** (near-white pastel fog). Same cure: render-measured score gate wired into proof/learn paths (#637 lane).
 9. **F11 — three.js lighting quality. FIXED (#696).** three.js invisible-subject guard landed; keep render visibility checks in the follow-up gate.
 10. **F7 — Taste model is starved. FIXED (#698; live-verified 2026-06-10).** Auto-feed produced 244 score-gap pairs from 0 human events, trained the model, and persisted it via SinterFS after the self-improve daemon was restarted so hourly `preferences train` actually runs. `~/.sinter/taste/taste-weights.json` is a legacy artifact referenced nowhere in `src/`; never use its mtime as training evidence.
-11. **F18 — Composite spec fidelity.** `background` in specs not honored when layer 0 paints over it (paper-signal spec'd paper-white, rendered dark; dusk-bloom spec'd dark dusk, rendered pale). Verify spec.background survives or flag.
+11. **F18 — Composite spec fidelity — FIXED with live receipt (2026-06-11).** `background` in specs was not surviving layered composition. The first F18 fix told the base layer the declared background; the live receipt then exposed the remaining blocker: foreground ASCII wrappers could still paint an opaque dark presentation shell over the light base. Current fix marks non-base visual wrappers as composition foreground and renders ASCII foregrounds transparent. Live receipt: paper-signal lum 0.719, dusk-bloom lum 0.100 — inversion gone.
 
 ### Tier 3 — important, larger or scoped work
 12. **F5 — Sing recording render is a stub** (`render-cli.ts`: "ffmpeg frame synthesis is the next implementation slice"). For the performance-instrument story this is the gap: record→MP4 no-ops. Implement frame synthesis or relabel the command until then.
@@ -66,6 +66,7 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 | F17 ascii/textgen presentation | **FIXED** (centered/scaled text-art presentation + transparent-skip handling) | #697 |
 | F7 taste auto-feed | **FIXED** (live-verified 2026-06-10: daemon restarted; hourly `preferences train` runs; 244 score-gap pairs from 0 human events; model persisted via SinterFS; legacy `taste-weights.json` mtime is not evidence) | #698 |
 | F4 sing tests | **IN REVIEW** on Forgejo branch `feat/f4-sing-wiring-test` @ `ce0b2011` (GitHub PR #699 closed unmerged) | forge |
+| F18 composite spec fidelity | **FIXED** (base background contract + transparent ASCII foregrounds; live receipt 2026-06-11: paper-signal lum 0.719, dusk-bloom lum 0.100) | pending |
 | Tier 2/3 remainder (F5 sing ffmpeg, F10 revideo render, F19 p5 contrast, F20 bridge split, F12/#637 render-measurement lane) | open | — |
 
 ## Open campaign state

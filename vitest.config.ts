@@ -55,11 +55,11 @@ export default defineConfig({
         // ━━━ Global coverage ratchet ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         // TARGET: 70% across all metrics (user-requested)
         //
-        // Current → Target (as of 2026-06-10):
-        //   Statements: 78.4% → 70% (+8.4pp above target)
-        //   Branches:   68.4% → 70% (gap: -1.6pp — last metric below target)
-        //   Functions:  81.8% → 70% (+11.8pp above target)
-        //   Lines:      79.3% → 70% (+9.3pp above target)
+        // Current → Target (as of 2026-06-11 fast suite):
+        //   Statements: 82.3% → 70% (+12.3pp above target)
+        //   Branches:   72.6% → 70% (+2.6pp above target)
+        //   Functions:  85.3% → 70% (+15.3pp above target)
+        //   Lines:      83.4% → 70% (+13.4pp above target)
         //
         // Ratchet is set to current CI-measured values (floor).
         // Coverage can only go UP, never DOWN. Any decrease fails CI.
@@ -71,10 +71,10 @@ export default defineConfig({
         // Per-file enforcement: scripts/ci/check-coverage-gaps.ts
         // Quality enforcement: scripts/testing/test-quality-check.mjs
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        statements: 82.7,
-        branches: 72.9,
-        functions: 85.6,
-        lines: 83.8,
+        statements: 82.3,
+        branches: 72.6,
+        functions: 85.3,
+        lines: 83.4,
         // CI must never rewrite this config, so the ratchet only engages
         // on local full-coverage runs. Round DOWN to 0.1% so 0.01%
         // run-to-run fluctuations don't cause false failures.

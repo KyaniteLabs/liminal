@@ -15,7 +15,10 @@ concurrency:
 jobs:
   fast-gate:
     name: fast-gate
-    runs-on: macos-arm64
+    # Forgejo Runner labels are instance-side configuration. During the Forgejo
+    # VPS migration, target the conventional Docker/Linux label documented by
+    # Forgejo instead of baking in the old Mac/nucbox runner assumption.
+    runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
       ANTHROPIC_AUTH_TOKEN: ""

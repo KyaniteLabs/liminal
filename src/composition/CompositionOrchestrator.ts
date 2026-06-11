@@ -123,7 +123,7 @@ export class CompositionOrchestrator {
 
     const title = spec.title ?? 'Sinter Composition';
     const results = await Promise.all(
-      spec.layers.map((layer, index) => this.generateLayer(layer, index)),
+      spec.layers.map((layer, index) => this.generateLayer(layer, index, spec.background)),
     );
 
     const html = this.assemble(title, spec.background ?? '#000', results, results.map(r => r.code));
@@ -293,6 +293,7 @@ export class CompositionOrchestrator {
   private static async generateLayer(
     spec: CompositionLayerSpec,
     index: number,
+    stageBackground?: string,
   ): Promise<{ spec: CompositionLayerSpec; code: string; generated: boolean; error?: string; opaqueBackground?: boolean }> {
     const entryName = DOMAIN_TO_ENTRY[spec.domain];
     if (!entryName) {
@@ -303,10 +304,11 @@ export class CompositionOrchestrator {
       return { spec, code: '', generated: false, error: `no generator registered for ${entryName}` };
     }
     try {
-      // Base layer (z=1) may paint an opaque full-stage background; every foreground
-      // layer is told to render on a transparent canvas so lower layers show through.
+      // Base layer (z=1) may paint an opaque full-stage background — anchored to the
+      // spec's declared background when one exists (F18); every foreground layer is
+      // told to render on a transparent canvas so lower layers show through.
       const isBase = index === 0;
-      const raw = await entry.generate(buildLayerPrompt(spec.prompt, { isBase, domain: spec.domain }));
+      const raw = await entry.generate(buildLayerPrompt(spec.prompt, { isBase, domain: spec.domain, stageBackground }));
       const code = typeof raw === 'string' ? raw : raw.code;
       Logger.info('CompositionOrchestrator', `Layer ${index} (${spec.domain}) generated ${code.length} chars`);
       // Deterministic guard: flag a foreground layer that violated the contract.
@@ -338,11 +340,11 @@ export class CompositionOrchestrator {
     for (const r of results) {
       if (!r.generated || !r.code) continue;
       const wrapDomain = DOMAIN_TO_WRAP[r.spec.domain] ?? 'p5';
-      const layerHtml = HTMLWrapper.wrap(r.code, { domain: wrapDomain });
-      const dataUri = `data:text/html;base64,${Buffer.from(layerHtml, 'utf-8').toString('base64')}`;
       const blend = r.spec.blendMode ?? 'normal';
       const opacity = r.spec.opacity ?? 1;
       const isAudio = AUDIO_DOMAINS.has(r.spec.domain);
+      const layerHtml = HTMLWrapper.wrap(r.code, { domain: wrapDomain, compositionForeground: z > 1 && !isAudio });
+      const dataUri = `data:text/html;base64,${Buffer.from(layerHtml, 'utf-8').toString('base64')}`;
       // Audio layers are invisible but must stay in the DOM to keep playing.
       const visualStyle = isAudio
         ? 'width:1px;height:1px;opacity:0;pointer-events:none;'

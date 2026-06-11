@@ -29,4 +29,10 @@ Remaining 18 usable rows (hydra/p5/glsl/three, machine verdict `ok`, qualityScor
 - `too-dark`: `meanLuminance ≤ 0.1 AND brightFraction < 0.02 AND brightnessStd < 5`
 - `low-contrast`: delete or rescale to ≈15 (0–255 units); never enable at 0.08.
 
-Re-run rule: the 6 labeled fixtures above are the regression table — any future threshold change must keep all six correct.
+## Addendum — live hydra probe (2026-06-11 08:08Z, post-H10)
+
+A fresh hydra generation ("ferrofluid chapel…", novel prompt) under the full new pipeline rendered as pastel fog (vision grade C-/D+) and **evaded the washout gate**: meanLuminance 0.731 (< 0.8), brightnessStd 4.76, **brightFraction 1.000**. The evaluator scored it honestly (0.65, threshold-not-met) so taste training treats it as a loser — but the deterministic gate misses this shape entirely, which matters in evaluator-offline mode.
+
+**Candidate rule for the next calibration batch (do NOT ship on n=1):** `washout-fog: brightFraction ≥ 0.98 AND brightnessStd < 10` — would catch this probe; verify it passes the vivid hydra marble (hyd_5f99: lum 0.747, std 12.42) and the labeled good high-key fixtures before enabling. Labeled sample saved: `.quality/f19-renders/hydra-probe-q0.65-hyd_317bfa18.png`.
+
+Re-run rule: the 6 labeled fixtures above (+ the addendum sample) are the regression table — any future threshold change must keep all of them correct.

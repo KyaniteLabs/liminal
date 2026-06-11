@@ -3,12 +3,27 @@ import {
   buildLayerPrompt,
   paintsOpaqueBackground,
   FOREGROUND_TRANSPARENCY_CONTRACT,
+  baseBackgroundContract,
 } from '../../../src/composition/LayerContract.js';
 
 describe('composition LayerContract — buildLayerPrompt', () => {
   it('leaves the base layer (z=1) prompt untouched — the base may render an opaque full-stage background', () => {
     const base = 'a dark tundra night sky with pine silhouettes';
     expect(buildLayerPrompt(base, { isBase: true, domain: 'three' })).toBe(base);
+  });
+
+  it('appends the spec background contract to the base layer when the composition declares one (audit F18)', () => {
+    const base = 'soft paper texture with faint ink veins';
+    const out = buildLayerPrompt(base, { isBase: true, domain: 'p5', stageBackground: '#fbfaf7' });
+    expect(out).toContain(base);
+    expect(out).toContain(baseBackgroundContract('#fbfaf7'));
+    expect(out).toContain('#fbfaf7');
+  });
+
+  it('does not give the foreground layers the base background contract even when a stage background is declared', () => {
+    const out = buildLayerPrompt('drifting ink glyphs', { isBase: false, domain: 'p5', stageBackground: '#fbfaf7' });
+    expect(out).not.toContain(baseBackgroundContract('#fbfaf7'));
+    expect(out).toContain(FOREGROUND_TRANSPARENCY_CONTRACT);
   });
 
   it('appends the transparency contract to a foreground layer prompt', () => {

@@ -37,15 +37,33 @@ const DOMAIN_TRANSPARENCY_HINT: Partial<Record<DomainType, string>> = {
 };
 
 /**
- * Build a layer's generation prompt. The base layer (z=1) is returned unchanged
- * — it is allowed to render an opaque full-stage background. Every foreground
- * layer gets the transparency contract (plus a domain-specific hint) appended.
+ * Background contract for the BASE layer (audit F18): the base is the only
+ * layer licensed to paint an opaque full-stage background, but the composition
+ * spec already declared what that background should be — without this line the
+ * generator never hears it, and the rendered composite inverts the spec
+ * (paper-white spec'd → dark base painted, and vice versa).
+ */
+export function baseBackgroundContract(stageBackground: string): string {
+  return 'COMPOSITION BASE LAYER: this is the bottom layer of a layered composite whose declared ' +
+    `background color is ${stageBackground}. Paint your full-stage background at or visibly near ` +
+    'that color — do not invert its lightness. Draw your subject so it reads against it.';
+}
+
+/**
+ * Build a layer's generation prompt. The base layer (z=1) is allowed to render
+ * an opaque full-stage background; when the composition declares a stage
+ * background, the base layer is told to honor it (otherwise it is returned
+ * unchanged). Every foreground layer gets the transparency contract (plus a
+ * domain-specific hint) appended.
  */
 export function buildLayerPrompt(
   basePrompt: string,
-  opts: { isBase: boolean; domain: DomainType },
+  opts: { isBase: boolean; domain: DomainType; stageBackground?: string },
 ): string {
-  if (opts.isBase) return basePrompt;
+  if (opts.isBase) {
+    if (!opts.stageBackground) return basePrompt;
+    return `${basePrompt}\n\n${baseBackgroundContract(opts.stageBackground)}`;
+  }
   const hint = DOMAIN_TRANSPARENCY_HINT[opts.domain] ?? '';
   return `${basePrompt}\n\n${FOREGROUND_TRANSPARENCY_CONTRACT}${hint}`;
 }

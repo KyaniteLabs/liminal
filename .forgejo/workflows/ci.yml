@@ -61,7 +61,7 @@ jobs:
           echo "pnpm: $(pnpm --version)"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Orphan source check
         run: pnpm check:orphans

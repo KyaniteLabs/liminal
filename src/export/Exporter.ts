@@ -59,7 +59,10 @@ export class Exporter {
     // Structural validation before wrapping
     const validation = CodeValidator.validate(code);
     if (!validation.valid) {
-      throw new ValidationError('Code validation failed', validation.errors);
+      throw new ValidationError(
+        `Code validation failed: ${validation.errors[0] ?? 'unknown error'}${validation.errors.length > 1 ? ` (+${validation.errors.length - 1} more)` : ''}`,
+        validation.errors,
+      );
     }
     code = validation.cleanedCode;
 
@@ -102,7 +105,10 @@ export class Exporter {
     // Structural validation before saving
     const validation = CodeValidator.validate(code);
     if (!validation.valid) {
-      throw new ValidationError('Code validation failed', validation.errors);
+      throw new ValidationError(
+        `Code validation failed: ${validation.errors[0] ?? 'unknown error'}${validation.errors.length > 1 ? ` (+${validation.errors.length - 1} more)` : ''}`,
+        validation.errors,
+      );
     }
     code = validation.cleanedCode;
 

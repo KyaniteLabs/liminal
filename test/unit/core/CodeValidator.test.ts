@@ -584,17 +584,21 @@ Allowed characters are plain ASCII.`;
       expect(result.cleanedCode).not.toContain('We need');
     });
 
-    it('should reject ASCII art with Unicode', () => {
+    it('should sanitize ASCII art with Unicode instead of rejecting it (df3b1f73 follow-up)', () => {
       const code = `/* ASCII Art with Unicode */
 +------+------+
 |  世界 |      |
 +------+------+
 | Hello|こん  |
 +------+------+
+| \u25C9\u25AE   |      |
++------+------+
       `;
       const result = CodeValidator.validate(code, 'ascii');
-      expect(result.valid).toBe(false);
-      expect(result.errors[0]).toContain('invalid characters');
+      expect(result.valid).toBe(true);
+      expect(result.cleanedCode).not.toMatch(/[世界こん\u25C9\u25AE]/);
+      expect(result.cleanedCode).toContain('| Hello|**  |'); // CJK → single-width fallback, alignment kept
+      expect(result.cleanedCode).toContain('| \u25CF*   |');
     });
 
     it('should reject ASCII art with only whitespace', () => {

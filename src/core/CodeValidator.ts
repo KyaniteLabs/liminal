@@ -332,13 +332,19 @@ export class CodeValidator {
 
     const detectedDomain = explicitDomain || detectDomain(cleaned);
 
+    // ASCII sanitation must live HERE, not only in ASCIIArtGenerator: RalphLoop's
+    // LLM-revised candidates reach validation without passing the generator's
+    // formatASCII (a sanitized first draft failed again within hours on a revised
+    // candidate's U+25C9/U+25AE glyphs). Sanitized text flows out as cleanedCode.
+    const finalCode = detectedDomain === 'ascii' ? ASCIIValidator.sanitize(cleaned) : cleaned;
+
     const allErrors = [
-      ...validateStructure(cleaned, detectedDomain),
-      ...validateSelfContained(cleaned, detectedDomain),
-      ...validateSize(cleaned, detectedDomain),
+      ...validateStructure(finalCode, detectedDomain),
+      ...validateSelfContained(finalCode, detectedDomain),
+      ...validateSize(finalCode, detectedDomain),
     ];
 
-    return { valid: allErrors.length === 0, cleanedCode: cleaned, errors: allErrors };
+    return { valid: allErrors.length === 0, cleanedCode: finalCode, errors: allErrors };
   }
 
   static detectDomain(code: string): string {

@@ -28,6 +28,15 @@ describe('LuminanceVerdict', () => {
     expect(verdictFromMeasure(measure(0.03, 0.5, 0.0))).toBe('too-dark'); // dead black render
   });
 
+  it('flags structureless full-bright fog even below the washout luminance bar (2026-06-11 addendum, n=39+probe)', () => {
+    expect(verdictFromMeasure(measure(0.5132, 7.363, 1.0))).toBe('washout'); // hydra fog, q0.65
+    expect(verdictFromMeasure(measure(0.7, 7.9085, 1.0))).toBe('washout'); // hydra fog, q0.65
+    expect(verdictFromMeasure(measure(0.731, 4.76, 1.0))).toBe('washout'); // live hydra probe (ferrofluid chapel)
+    expect(verdictFromMeasure(measure(0.7472, 12.422, 1.0))).toBe('ok'); // vivid hydra marble, q0.85
+    expect(verdictFromMeasure(measure(0.7415, 11.1868, 0.9988))).toBe('ok'); // three lanterns, q0.95 — nearest good work
+    expect(verdictFromMeasure({ meanLuminance: 0.7, brightFraction: 1.0, darkFraction: 0 })).toBe('ok'); // no std measured → conservative
+  });
+
   it('keeps threshold names and the luminance formula stable for callers', () => {
     expect(WASHOUT_MEAN_LUMINANCE).toBe(0.8);
     expect(DARK_LUMINANCE_THRESHOLD).toBe(0.12);

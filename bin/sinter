@@ -2644,6 +2644,18 @@ else if (cmd === 'garden' && cmdArgs[0] === 'tend') {
 
     console.log('');
     console.log(`=== Garden Tend (bounded, budget ${budget}, ${cells.length} cells) ===`);
+    // Hydrate the latest taste model so replay bias actually steers the
+    // autonomous loop: it trains hourly, but without this load isModelLoaded()
+    // is false in every daemon tend and the bias silently no-ops (the TUI
+    // bridge was the only consumer).
+    try {
+      const { TasteLearningService } = await import('../dist/learning/TasteLearningService.js');
+      const weights = new TasteLearningService(sinterFs).loadLatestModel();
+      if (weights) { gardener.loadTasteModel(weights); console.log('  taste model: loaded — replay bias ACTIVE'); }
+      else { console.log('  taste model: none persisted yet — replay bias inactive'); }
+    } catch (err) {
+      console.log(`  taste model: hydration unavailable (${err?.message ?? err})`);
+    }
     let cycles = 0;
     let lastHealth = 0;
     let result;

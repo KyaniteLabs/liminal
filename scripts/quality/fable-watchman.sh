@@ -37,10 +37,16 @@ run_kimi() {
 
 run_claude() {
   # Sanitize provider overrides (the repo env points ANTHROPIC_* at the GLM
-  # proxy / stale tokens — claude must use its own login).
+  # proxy / stale tokens). Headless auth: long-lived token from
+  # `claude setup-token`, stored at ~/.claude/watchman-token (chmod 600,
+  # never committed). Delegation policy (Simon, 2026-06-11): claude
+  # delegation runs HAIKU only — premium models are not for watchman passes.
+  local token=""
+  [ -f "$HOME/.claude/watchman-token" ] && token="$(cat "$HOME/.claude/watchman-token")"
   /usr/bin/env -u ANTHROPIC_AUTH_TOKEN -u ANTHROPIC_BASE_URL \
     -u ANTHROPIC_DEFAULT_HAIKU_MODEL -u ANTHROPIC_DEFAULT_OPUS_MODEL -u ANTHROPIC_DEFAULT_SONNET_MODEL \
-    claude -p "$(cat "$PROMPT_FILE")" --dangerously-skip-permissions --max-turns 40
+    ${token:+CLAUDE_CODE_OAUTH_TOKEN="$token"} \
+    claude -p "$(cat "$PROMPT_FILE")" --model haiku --dangerously-skip-permissions --max-turns 40
 }
 
 for runner in ${WATCHMAN_RUNNERS:-codex kimi claude}; do

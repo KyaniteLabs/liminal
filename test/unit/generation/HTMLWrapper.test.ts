@@ -63,6 +63,15 @@ describe("HTMLWrapper", () => {
 			expect(result).toBe(html);
 		});
 
+		it("adds a transparent foreground override for already wrapped ASCII composition layers", () => {
+			const html =
+				'<!DOCTYPE html><html><head></head><body style="background:#0a0a0f"><pre>ASCII</pre></body></html>';
+			const result = HTMLWrapper.wrap(html, { domain: "ascii", compositionForeground: true });
+			expect(result).toContain("data-sinter-composition-foreground");
+			expect(result).toContain("background: transparent !important");
+			expect(result).toContain("<pre>ASCII</pre>");
+		});
+
 		it("enhances already-wrapped Tone HTML with the Tone preview shell", () => {
 			const html =
 				'<!DOCTYPE html><html><body><button id="startButton">Play</button><script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script><script>const synth = new Tone.Synth();</script></body></html>';

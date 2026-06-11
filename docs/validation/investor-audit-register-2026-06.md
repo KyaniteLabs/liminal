@@ -39,7 +39,7 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 8. **F12 — Hydra washout reproduced in proof artifact** (near-white pastel fog). Same cure: render-measured score gate wired into proof/learn paths (#637 lane).
 9. **F11 — three.js lighting quality.** "visible lighting" yielded a near-black cube; ink-garden crystal also dim. Inject a minimum light rig / material-brightness mandate in the three wrapper or prompt contract; score renders for subject visibility.
 10. **F7 — Taste model is starved.** Built (#611) but no preference data exists (`preferences model` → none). Auto-feed the preference dataset from objective render measurements + archive scores so taste training has signal without manual pins.
-11. **F18 — Composite spec fidelity.** `background` in specs not honored when layer 0 paints over it (paper-signal spec'd paper-white, rendered dark; dusk-bloom spec'd dark dusk, rendered pale). Verify spec.background survives or flag.
+11. **F18 — Composite spec fidelity — FIXED with live receipt (2026-06-11).** `background` in specs was not surviving layered composition. The first F18 fix told the base layer the declared background; the live receipt then exposed the remaining blocker: foreground ASCII wrappers could still paint an opaque dark presentation shell over the light base. Current fix marks non-base visual wrappers as composition foreground and renders ASCII foregrounds transparent. Live receipt: paper-signal lum 0.719, dusk-bloom lum 0.100 — inversion gone.
 
 ### Tier 3 — important, larger or scoped work
 12. **F5 — Sing recording render is a stub** (`render-cli.ts`: "ffmpeg frame synthesis is the next implementation slice"). For the performance-instrument story this is the gap: record→MP4 no-ops. Implement frame synthesis or relabel the command until then.
@@ -62,6 +62,7 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 | F8 typo/quoted-phrase silent generations | **FIXED** (did-you-mean gate + `--prompt` escape hatch; both accident shapes repro'd live) | #693 |
 | F21 kinetic proof-path 60s inner cap | **RESOLVED** (stall gone post-#687: 28.7s live pass; env-tunable cap + honest abort telemetry + partial-run exit clarity) | #692 |
 | F16 composite washout/mud (Tier 2) | **FIXED** (CompositeRenderGate: measured verdict + one blend-demoted re-assembly; live probe lum 1.00→0.79 ok) | #694 |
+| F18 composite spec fidelity | **FIXED** (base background contract + transparent ASCII foregrounds; live receipt 2026-06-11: paper-signal lum 0.719, dusk-bloom lum 0.100) | pending |
 | Tier 2/3 remainder (three lighting F11, taste auto-feed F7, sing tests+ffmpeg F4/F5, ascii/textgen presentation F17, revideo render F10, bridge split F20) | open | — |
 
 ## Open campaign state

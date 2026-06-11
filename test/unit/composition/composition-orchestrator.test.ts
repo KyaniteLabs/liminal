@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => {
   return {
     entries: [] as Array<{ name: string; generate: (p: string) => Promise<string> | string }>,
     registerAllGenerators: vi.fn(async () => {}),
+    wrapCalls: [] as Array<{ domain?: string; compositionForeground?: boolean } | undefined>,
   };
 });
 
@@ -16,7 +17,10 @@ vi.mock('../../../src/generators/registerGenerators.js', () => ({
   registerAllGenerators: mocks.registerAllGenerators,
 }));
 vi.mock('../../../src/utils/htmlWrapper.js', () => ({
-  HTMLWrapper: { wrap: (code: string, opts: { domain?: string }) => `<html data-d="${opts?.domain}">${code}</html>` },
+  HTMLWrapper: { wrap: (code: string, opts: { domain?: string; compositionForeground?: boolean }) => {
+    mocks.wrapCalls.push(opts);
+    return `<html data-d="${opts?.domain}">${code}</html>`;
+  } },
 }));
 
 import { CompositionOrchestrator } from '../../../src/composition/CompositionOrchestrator.js';
@@ -39,6 +43,7 @@ describe('CompositionOrchestrator.compose', () => {
       { name: 'tone', generate: async () => 'const s=new Tone.Synth().toDestination();' },
     ];
     mocks.registerAllGenerators.mockClear();
+    mocks.wrapCalls = [];
   });
 
   it('throws when no layers are given', async () => {
@@ -80,6 +85,22 @@ describe('CompositionOrchestrator.compose', () => {
     expect(result.html).toContain('sinter-start');
     // Audio frame is rendered 1px/invisible rather than full-stage.
     expect(result.html).toContain('width:1px;height:1px;opacity:0');
+  });
+
+  it('marks non-base visual layers as composition foreground when wrapping them', async () => {
+    mocks.entries = [
+      { name: 'shader', generate: async () => 'void main(){gl_FragColor=vec4(1.0);}' },
+      { name: 'ascii', generate: async () => ' /\\\n/__\\' },
+    ];
+    await CompositionOrchestrator.compose({
+      layers: [
+        { domain: 'shader', prompt: 'paper wash' },
+        { domain: 'ascii', prompt: 'constellation text' },
+      ],
+    });
+
+    expect(mocks.wrapCalls[0]?.compositionForeground).toBe(false);
+    expect(mocks.wrapCalls[1]?.compositionForeground).toBe(true);
   });
 
   it('degrades gracefully when a layer generator throws', async () => {

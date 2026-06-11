@@ -24,6 +24,8 @@ export interface GenericWrapOptions {
   showPreview?: boolean;
   asciiWidth?: number;
   hydraResolution?: { width: number; height: number };
+  /** True when this output is stacked above another composition layer. */
+  compositionForeground?: boolean;
 }
 
 export class GenericWrapper {
@@ -235,7 +237,7 @@ export class GenericWrapper {
       case 'hyperframes':
         return this.wrapHyperframes(code, options.title ?? 'HyperFrames Preview');
       case 'ascii':
-        return this.wrapASCII(code, options.asciiWidth ?? 60);
+        return this.wrapASCII(code, options.asciiWidth ?? 60, options.compositionForeground ?? false);
       default:
         throw new Error(`Unknown domain: ${domain}`);
     }
@@ -738,11 +740,21 @@ ${safeCommentCode}
     return `${code}\n${runner}`;
   }
 
-  private static wrapASCII(code: string, _width: number): string {
+  private static wrapASCII(code: string, _width: number, compositionForeground = false): string {
     const escaped = code
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
+    const bodyBackground = compositionForeground
+      ? 'transparent'
+      : 'radial-gradient(circle at 18% 16%, rgba(34, 197, 94, 0.18), transparent 30%), #0a0a0f';
+    const preBackground = compositionForeground
+      ? 'transparent'
+      : 'linear-gradient(135deg, rgba(0,0,0,.95), rgba(15,23,42,.86))';
+    const preBoxShadow = compositionForeground ? 'none' : '0 28px 90px rgba(0,0,0,.42)';
+    const shellAttr = compositionForeground
+      ? ' data-composition-foreground-ascii'
+      : '';
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -754,7 +766,7 @@ ${safeCommentCode}
     <style>
         body {
             margin: 0;
-            background: radial-gradient(circle at 18% 16%, rgba(34, 197, 94, 0.18), transparent 30%), #0a0a0f;
+            background: ${bodyBackground};
             color: #86efac;
             font-family: 'Courier New', 'Courier', monospace;
             display: flex;
@@ -770,7 +782,7 @@ ${safeCommentCode}
         pre {
             font-size: clamp(18px, 2.2vw, 34px);
             line-height: 1.2;
-            background: linear-gradient(135deg, rgba(0,0,0,.95), rgba(15,23,42,.86));
+            background: ${preBackground};
             padding: clamp(24px, 5vw, 72px);
             border-radius: 24px;
             border: 1px solid rgba(134, 239, 172, 0.26);
@@ -778,7 +790,7 @@ ${safeCommentCode}
             min-width: min(760px, 92vw);
             min-height: min(360px, 62vh);
             text-shadow: 0 0 12px rgba(134, 239, 172, 0.6);
-            box-shadow: 0 28px 90px rgba(0,0,0,.42);
+            box-shadow: ${preBoxShadow};
         }
         .label {
             color: #bbf7d0;
@@ -791,7 +803,7 @@ ${safeCommentCode}
     </style>
 </head>
 <body>
-    <div class="container" data-ascii-preview-shell>
+    <div class="container" data-ascii-preview-shell${shellAttr}>
         <div class="label">ASCII Art</div>
         <pre>${escaped}</pre>
     </div>

@@ -162,6 +162,10 @@ function generationEvaluationFromQualityEvaluation(evaluation: RalphQualityEvalu
   };
 }
 
+function hasFailedRenderMeasure(evaluation: GenerationEvaluation): boolean {
+  return evaluation.renderMeasure !== undefined && evaluation.renderMeasure.verdict !== 'ok';
+}
+
 export class RalphLoop {
   /**
    * Run the Ralph-Wiggum Loop
@@ -716,19 +720,25 @@ export class RalphLoop {
                           'ERR_EVALUATOR_UNAVAILABLE',
                         );
                       }
-                      Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence scoring, falling back to legacy scoring for candidate');
-                      const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-                      const quickEvaluation = await scoringEngine.scoreReliable({
-                        output: candidate.code,
-                        criteria: normalizedOptions.evaluationCriteria,
-                        lirContext,
-                      });
-                      genEval = buildGenerationEvaluationFromReliableScore(quickEvaluation, {
-                        failureClass: 'scorer',
-                        reason: genEval.reasoning ?? 'Evaluator LLM is unavailable in auto evaluation mode.',
-                      });
-                      candidate.score = quickEvaluation.score;
-                      candidate.issues = quickEvaluation.issues ?? [];
+                      if (hasFailedRenderMeasure(genEval)) {
+                        Logger.warn('RalphLoop', 'Evaluator LLM unavailable but render measurement failed; keeping objective render penalty for candidate');
+                        candidate.score = genEval.score;
+                        candidate.issues = genEval.repairAdvice ? [genEval.repairAdvice.issue] : [];
+                      } else {
+                        Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence scoring, falling back to legacy scoring for candidate');
+                        const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                        const quickEvaluation = await scoringEngine.scoreReliable({
+                          output: candidate.code,
+                          criteria: normalizedOptions.evaluationCriteria,
+                          lirContext,
+                        });
+                        genEval = buildGenerationEvaluationFromReliableScore(quickEvaluation, {
+                          failureClass: 'scorer',
+                          reason: genEval.reasoning ?? 'Evaluator LLM is unavailable in auto evaluation mode.',
+                        });
+                        candidate.score = quickEvaluation.score;
+                        candidate.issues = quickEvaluation.issues ?? [];
+                      }
                     } else {
                       candidate.score = genEval.score;
                       candidate.issues = genEval.repairAdvice ? [genEval.repairAdvice.issue] : [];
@@ -837,6 +847,7 @@ export class RalphLoop {
             evaluatorReasoning: winner?.genEval?.reasoning,
             confidence: winner?.genEval?.confidence,
             failureClass: winner?.genEval?.failureClass,
+            renderMeasure: winner?.genEval?.renderMeasure,
           };
           if (normalizedOptions.chatMode) {
             normalizedOptions.onThought?.(`Using pre-evaluated score: ${evaluation.score.toFixed(2)}`);
@@ -919,23 +930,28 @@ export class RalphLoop {
                     'ERR_EVALUATOR_UNAVAILABLE',
                   );
                 }
-                Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence scoring, falling back to legacy scoring');
-                const legacyScoreStartedAt = Date.now();
-                const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-                const quickEvaluation = await scoringEngine.scoreReliable(
-                  {
-                    output: currentCode,
-                    criteria: normalizedOptions.evaluationCriteria,
-                    lirContext,
-                  },
-                );
-                logStageTiming(`iter${iteration}:evaluate:legacy-score(scorer)`, legacyScoreStartedAt);
-                evaluation = qualityEvaluationFromGenerationEvaluation(
-                  buildGenerationEvaluationFromReliableScore(quickEvaluation, {
-                    failureClass: 'scorer',
-                    reason: genEval.reasoning ?? 'Evaluator LLM is unavailable in auto evaluation mode.',
-                  }),
-                );
+                if (hasFailedRenderMeasure(genEval)) {
+                  Logger.warn('RalphLoop', 'Evaluator LLM unavailable but render measurement failed; keeping objective render penalty');
+                  evaluation = qualityEvaluationFromGenerationEvaluation(genEval);
+                } else {
+                  Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence scoring, falling back to legacy scoring');
+                  const legacyScoreStartedAt = Date.now();
+                  const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                  const quickEvaluation = await scoringEngine.scoreReliable(
+                    {
+                      output: currentCode,
+                      criteria: normalizedOptions.evaluationCriteria,
+                      lirContext,
+                    },
+                  );
+                  logStageTiming(`iter${iteration}:evaluate:legacy-score(scorer)`, legacyScoreStartedAt);
+                  evaluation = qualityEvaluationFromGenerationEvaluation(
+                    buildGenerationEvaluationFromReliableScore(quickEvaluation, {
+                      failureClass: 'scorer',
+                      reason: genEval.reasoning ?? 'Evaluator LLM is unavailable in auto evaluation mode.',
+                    }),
+                  );
+                }
               } else {
                 evaluation = qualityEvaluationFromGenerationEvaluation(genEval);
               }
@@ -1043,19 +1059,24 @@ export class RalphLoop {
                             'ERR_EVALUATOR_UNAVAILABLE',
                           );
                         }
-                        Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence repair scoring, falling back to legacy scoring');
-                        const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-                        const quickRepairEval = await scoringEngine.scoreReliable({
-                          output: repairCode,
-                          criteria: normalizedOptions.evaluationCriteria,
-                          lirContext: repairLirContext,
-                        });
-                        repairEval = qualityEvaluationFromGenerationEvaluation(
-                          buildGenerationEvaluationFromReliableScore(quickRepairEval, {
-                            failureClass: 'scorer',
-                            reason: genEvalRepair.reasoning ?? 'Evaluator LLM is unavailable during repair evaluation.',
-                          }),
-                        );
+                        if (hasFailedRenderMeasure(genEvalRepair)) {
+                          Logger.warn('RalphLoop', 'Evaluator LLM unavailable but repair render measurement failed; keeping objective render penalty');
+                          repairEval = qualityEvaluationFromGenerationEvaluation(genEvalRepair);
+                        } else {
+                          Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence repair scoring, falling back to legacy scoring');
+                          const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                          const quickRepairEval = await scoringEngine.scoreReliable({
+                            output: repairCode,
+                            criteria: normalizedOptions.evaluationCriteria,
+                            lirContext: repairLirContext,
+                          });
+                          repairEval = qualityEvaluationFromGenerationEvaluation(
+                            buildGenerationEvaluationFromReliableScore(quickRepairEval, {
+                              failureClass: 'scorer',
+                              reason: genEvalRepair.reasoning ?? 'Evaluator LLM is unavailable during repair evaluation.',
+                            }),
+                          );
+                        }
                       } else {
                         repairEval = qualityEvaluationFromGenerationEvaluation(genEvalRepair);
                       }

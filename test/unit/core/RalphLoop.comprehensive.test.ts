@@ -99,6 +99,7 @@ const mockScoreRenderedEvidence = vi.hoisted(() =>
     reasoning: 'rendered evaluator passed',
   }))
 );
+const mockArchiveLearningAddOutput = vi.hoisted(() => vi.fn(async () => {}));
 
 // ─── Mock registrations ────────────────────────────────────────────────────
 
@@ -244,7 +245,7 @@ vi.mock('../../../src/llm/LLMClient.js', () => ({
 }));
 
 vi.mock('../../../src/learning/index.js', () => ({
-  ArchiveLearning: class { getArchive = vi.fn(() => ({ load: vi.fn(async () => {}), save: vi.fn(async () => {}) })); addOutput = vi.fn(); },
+  ArchiveLearning: class { getArchive = vi.fn(() => ({ load: vi.fn(async () => {}), save: vi.fn(async () => {}) })); addOutput = mockArchiveLearningAddOutput; },
   QualityArchive: vi.fn(),
 }));
 
@@ -1262,6 +1263,39 @@ describe('RalphLoop — comprehensive', () => {
 
       expect(result.code).toContain('function setup()');
       // ArchiveLearning mock has addOutput that should be called for score >= 0.65
+    });
+
+    it('does not archive uncapped legacy fallback when rendered scorer reports a dead frame', async () => {
+      vi.mocked(getEvalMode).mockReturnValue('auto');
+      mockScoringEngineScoreReliable.mockResolvedValue({ score: 0.85, issues: [] });
+      mockScoreRenderedEvidence.mockResolvedValue({
+        score: 0.3,
+        confidence: 0,
+        failureClass: 'scorer',
+        reasoning: 'Measured render penalty applied.',
+        repairAdvice: {
+          issue: 'Rendered frame measured too-dark',
+          fix: 'Raise subject luminance.',
+          constraint: 'Rendered output must pass objective luminance measurement.',
+        },
+        renderMeasure: {
+          verdict: 'too-dark',
+          meanLuminance: 0.099,
+          brightFraction: 0,
+          darkFraction: 0.9,
+          brightnessStd: 4,
+        },
+      });
+
+      const result = await RalphLoop.run('create a sketch', {
+        maxIterations: 1,
+        useArchiveLearning: true,
+        _disableIterationExtension: true,
+      });
+
+      expect(result.finalScore).toBe(0.3);
+      expect(mockScoringEngineScoreReliable).not.toHaveBeenCalled();
+      expect(mockArchiveLearningAddOutput).not.toHaveBeenCalled();
     });
   });
 

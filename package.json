@@ -74,7 +74,7 @@
     "proof:git-ci-install": "node scripts/proof/git-ci-install.mjs",
     "proof:launch-risk": "tsx scripts/proof/launch-risk-proof.ts",
     "proof:studio-smoke": "tsx scripts/proof/studio-smoke.ts",
-    "test:ci:fast": "LIMINAL_CI_FAST=1 vitest run --coverage --pool=forks",
+    "test:ci:fast": "LIMINAL_CI_FAST=1 vitest run --coverage=false --pool=forks --maxWorkers=1 --no-file-parallelism",
     "test:ci:slow": "LIMINAL_CI_SLOW=1 vitest run --pool=forks",
     "check:orphans": "bash scripts/check-orphans.sh",
     "check:script-targets": "node scripts/ci/check-package-script-targets.mjs",

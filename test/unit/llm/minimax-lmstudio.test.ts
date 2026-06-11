@@ -9,11 +9,12 @@ import { detectProvider } from '../../../src/llm/ProviderFactory.js';
 import { MiniMaxProvider } from '../../../src/llm/providers/MiniMaxProvider.js';
 
 function createFetchStub(response: unknown) {
-  const stub = () =>
-    Promise.resolve({
+  const stub = () => {
+    return Promise.resolve({
       ok: true,
       json: () => Promise.resolve(response),
     } as Response);
+  };
   return { stub };
 }
 

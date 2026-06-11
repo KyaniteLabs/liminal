@@ -1908,10 +1908,18 @@ export class TuiBridgeService {
       });
       this.emitDomainTruth(sessionId, routeTruth);
       this.emitPriorRunReceiptLink(sessionId, options);
-      const memoryReceipts = await this.cognitiveWriter.prepareGeneration({
+      const memoryReceiptsPromise = this.cognitiveWriter.prepareGeneration({
         sessionId,
         userText,
         domain: routeTruth.selectedDomain,
+      });
+      void memoryReceiptsPromise.then((memoryReceipts) => {
+        this.emit(sessionId, {
+          type: 'generation.cognitive_receipt',
+          sessionId,
+          loop: 'creative',
+          receipts: memoryReceipts,
+        });
       });
       this.emitReasoningTrace(sessionId, {
         phase: 'domain-routing',
@@ -1948,7 +1956,7 @@ export class TuiBridgeService {
         receipts: [
           { organ: 'perception', status: 'observed', detail: `Captured ${intentBrief.requirements.length} requirement(s) from the prompt.` },
           { organ: 'intuition', status: 'observed', detail: `Selected route ${domainPlan.join(' -> ')} from prompt and selector context.` },
-          ...memoryReceipts,
+          { organ: 'memory', status: 'pending', detail: 'Memory retrieval is running in the background and will not block generation.' },
           { organ: 'compost', status: 'pending', detail: 'Compost write-back will run after a candidate is generated.' },
           { organ: 'dreaming', status: 'pending', detail: 'Dream recombination is a follow-up loop, not run during this foreground generation.' },
           { organ: 'evaluation', status: 'pending', detail: 'Evaluator receipt will update after candidate generation.' },

@@ -33,6 +33,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 1
+          lfs: false
+          filter: blob:none
 
       - name: Enable pnpm
         run: |
@@ -55,6 +58,9 @@ jobs:
 
       - name: Lint source
         run: pnpm lint
+
+      - name: Build workspace packages
+        run: pnpm --filter @sinter/audio-core build
 
       - name: Build project
         run: pnpm build

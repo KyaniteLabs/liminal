@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateRenderEvidencePerception } from '../../../src/perception/RenderEvidencePerception.js';
+import { evaluateRenderEvidencePerception, measureRenderEvidence } from '../../../src/perception/RenderEvidencePerception.js';
 import type { RenderEvidence } from '../../../src/core/types/GenerationEvaluation.js';
 
 async function getSharp() {
@@ -57,6 +57,24 @@ describe('render evidence perception mapping', () => {
     const noScreenshot = await evaluateRenderEvidencePerception({ timingMs: 120, infraUnavailable: false, candidateFailure: false }, 'p5');
     expect(noScreenshot.issues.map(i => i.id))
       .toContain('visual.no-visible-content');
+  });
+
+  it('surfaces decoded luminance measurement on render evidence', async () => {
+    const evidence: RenderEvidence = {
+      timingMs: 120,
+      infraUnavailable: false,
+      candidateFailure: false,
+      screenshot: { mimeType: 'image/png', dataBase64: await createPngBase64('varied'), width: 8, height: 8 },
+    };
+
+    const measure = await measureRenderEvidence(evidence);
+    await expect(evaluateRenderEvidencePerception(evidence, 'p5')).resolves.toMatchObject({ passed: true });
+
+    expect(measure?.verdict).toBe('ok');
+    expect(evidence.renderMeasure?.meanLuminance).toBeGreaterThan(0.2);
+    expect(evidence.renderMeasure?.meanLuminance).toBeLessThan(0.8);
+    expect(evidence.renderMeasure?.brightFraction).toBeLessThan(0.5);
+    expect(evidence.renderMeasure?.darkFraction).toBeLessThan(0.5);
   });
 
   it('rejects solid and transparent screenshots as invisible visual evidence', async () => {

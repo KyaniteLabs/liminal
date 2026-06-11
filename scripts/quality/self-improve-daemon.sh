@@ -24,9 +24,18 @@ export PATH="/opt/homebrew/bin:/usr/bin:/bin:${PATH:-}"
 
 cd "$REPO" || { echo "[daemon] FATAL: repo not found at $REPO"; exit 1; }
 
+SCRIPT_PATH="$0"
+SCRIPT_MTIME="$(stat -f %m "$SCRIPT_PATH" 2>/dev/null || stat -c %Y "$SCRIPT_PATH")"
+
 echo "[daemon $(date -u +%FT%TZ)] started — repo=$REPO count=$COUNT interval=${INTERVAL}s (GLM)"
 
 while true; do
+  current_mtime="$(stat -f %m "$SCRIPT_PATH" 2>/dev/null || stat -c %Y "$SCRIPT_PATH")"
+  if [ "$current_mtime" != "$SCRIPT_MTIME" ]; then
+    echo "[daemon $(date -u +%FT%TZ)] script changed on disk — re-exec"
+    exec "$SCRIPT_PATH" "$@"
+  fi
+
   # LLM-free gardener pass first: refresh health/stagnation telemetry and
   # persist the dream plan that the cycle below consumes (one dream per cycle).
   echo "[daemon $(date -u +%FT%TZ)] garden tend"

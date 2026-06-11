@@ -40,7 +40,7 @@ describe('sing pipeline wiring (audit F4)', () => {
   it('holds pitch across unvoiced gaps and releases it after reset', () => {
     const stabilizer = createSingStabilizer();
     const sung = stabilizer.stabilize(frame({ pitchHz: 220, voiced: 1, confidence: 0.9, elapsedSeconds: 0.0 }));
-    expect(sung.pitchHz).toBeGreaterThan(0);
+    expect(sung.pitchHz).toBeCloseTo(220, 5);
 
     const gap = stabilizer.stabilize(frame({ pitchHz: 0, voiced: 0, confidence: 0, elapsedSeconds: 0.016 }));
     expect(gap.pitchHz).toBeGreaterThan(150); // held near 220, not dropped to 0
@@ -63,12 +63,25 @@ describe('sing pipeline wiring (audit F4)', () => {
   it('maps a frame onto preset uniforms with the default semantic vocabulary', () => {
     const values = mapSingPresetUniforms(
       { mappings: [] },
-      frame({ rms: 0.1, centroid: 0.7, voiced: 1, elapsedSeconds: 1 }),
+      frame({
+        rms: 0.1,
+        centroid: 0.7,
+        voiced: 1,
+        elapsedSeconds: 1,
+        semantic: {
+          palette: { hue: 0.25, saturation: 0.5, value: 0.75, accentHue: 0.9 },
+          form: { family: 0.2, complexity: 0.4, symmetry: 0.6, sharpness: 0.8 },
+          motion: { flow: 0.3, turbulence: 0.1, shimmer: 0.65 },
+          texture: { grain: 0.15, glow: 0.55, softness: 0.45 },
+          density: { coverage: 0.7, spawn: 1 },
+          composition: { scale: 0.35, focalY: 0.45, depth: 0.85 },
+        },
+      }),
     );
-    expect(values.size).toBeGreaterThan(0);
-    for (const [target, value] of values) {
-      expect(typeof target).toBe('string');
-      expect(Number.isFinite(value)).toBe(true);
-    }
+    expect(values.get('u_rms')).toBe(0.1);
+    expect(values.get('u_hue')).toBeCloseTo(0.25, 5);
+    expect(values.get('u_shimmer')).toBeCloseTo(0.65, 5);
+    expect(values.get('u_spawn')).toBe(1);
+    expect(values.get('u_depth')).toBeCloseTo(0.85, 5);
   });
 });

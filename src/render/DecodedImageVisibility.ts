@@ -1,3 +1,9 @@
+import {
+  BRIGHT_LUMINANCE_THRESHOLD,
+  DARK_LUMINANCE_THRESHOLD,
+  luminanceFromRgb8,
+} from './LuminanceVerdict.js';
+
 export interface DecodedImagePixels {
   width: number;
   height: number;
@@ -14,6 +20,9 @@ export interface PixelVisibilityAnalysis {
   visibleRatio: number;
   uniqueColors: number;
   brightnessStd: number;
+  meanLuminance: number;
+  brightFraction: number;
+  darkFraction: number;
 }
 
 type SharpPipeline = {
@@ -95,6 +104,9 @@ export function analyzeDecodedPixels(decoded: DecodedImagePixels): PixelVisibili
   let opaquePixels = 0;
   let brightnessSum = 0;
   let brightnessSumSq = 0;
+  let luminanceSum = 0;
+  let brightPixels = 0;
+  let darkPixels = 0;
 
   for (let pixel = 0; pixel < pixelCount; pixel += step) {
     const idx = pixel * 4;
@@ -110,8 +122,12 @@ export function analyzeDecodedPixels(decoded: DecodedImagePixels): PixelVisibili
     const g = decoded.data[idx + 1] ?? 0;
     const b = decoded.data[idx + 2] ?? 0;
     const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+    const luminance = luminanceFromRgb8(r, g, b);
     brightnessSum += brightness;
     brightnessSumSq += brightness * brightness;
+    luminanceSum += luminance;
+    if (luminance > BRIGHT_LUMINANCE_THRESHOLD) brightPixels++;
+    if (luminance < DARK_LUMINANCE_THRESHOLD) darkPixels++;
     colors.add((r << 16) | (g << 8) | b);
   }
 
@@ -119,10 +135,13 @@ export function analyzeDecodedPixels(decoded: DecodedImagePixels): PixelVisibili
   const brightnessMean = opaquePixels > 0 ? brightnessSum / opaquePixels : 0;
   const brightnessVariance = opaquePixels > 0 ? Math.max(0, brightnessSumSq / opaquePixels - brightnessMean * brightnessMean) : 0;
   const brightnessStd = Math.sqrt(brightnessVariance);
+  const meanLuminance = opaquePixels > 0 ? luminanceSum / opaquePixels : 0;
+  const brightFraction = opaquePixels > 0 ? brightPixels / opaquePixels : 0;
+  const darkFraction = opaquePixels > 0 ? darkPixels / opaquePixels : 0;
 
   if (opaquePixels === 0 || visibleRatio < 0.01) {
     return {
-      ...baseAnalysis(decoded.width, decoded.height, sampledPixels, opaquePixels, visibleRatio, colors.size, brightnessStd),
+      ...baseAnalysis(decoded.width, decoded.height, sampledPixels, opaquePixels, visibleRatio, colors.size, brightnessStd, meanLuminance, brightFraction, darkFraction),
       hasVisibleContent: false,
       reason: 'decoded screenshot is transparent',
     };
@@ -130,14 +149,14 @@ export function analyzeDecodedPixels(decoded: DecodedImagePixels): PixelVisibili
 
   if (colors.size <= 1 || brightnessStd < 0.5) {
     return {
-      ...baseAnalysis(decoded.width, decoded.height, sampledPixels, opaquePixels, visibleRatio, colors.size, brightnessStd),
+      ...baseAnalysis(decoded.width, decoded.height, sampledPixels, opaquePixels, visibleRatio, colors.size, brightnessStd, meanLuminance, brightFraction, darkFraction),
       hasVisibleContent: false,
       reason: 'decoded screenshot is blank or solid',
     };
   }
 
   return {
-    ...baseAnalysis(decoded.width, decoded.height, sampledPixels, opaquePixels, visibleRatio, colors.size, brightnessStd),
+    ...baseAnalysis(decoded.width, decoded.height, sampledPixels, opaquePixels, visibleRatio, colors.size, brightnessStd, meanLuminance, brightFraction, darkFraction),
     hasVisibleContent: true,
   };
 }
@@ -153,6 +172,9 @@ function emptyAnalysis(reason: string, width = 0, height = 0): PixelVisibilityAn
     visibleRatio: 0,
     uniqueColors: 0,
     brightnessStd: 0,
+    meanLuminance: 0,
+    brightFraction: 0,
+    darkFraction: 0,
   };
 }
 
@@ -164,6 +186,9 @@ function baseAnalysis(
   visibleRatio: number,
   uniqueColors: number,
   brightnessStd: number,
+  meanLuminance: number,
+  brightFraction: number,
+  darkFraction: number,
 ): Omit<PixelVisibilityAnalysis, 'hasVisibleContent' | 'reason'> {
   return {
     width,
@@ -173,5 +198,8 @@ function baseAnalysis(
     visibleRatio,
     uniqueColors,
     brightnessStd,
+    meanLuminance,
+    brightFraction,
+    darkFraction,
   };
 }

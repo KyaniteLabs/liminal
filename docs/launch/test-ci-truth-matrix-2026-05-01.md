@@ -5,6 +5,12 @@
 
 This matrix maps commands to the claims they actually prove. Do not use a narrower command as evidence for a broader launch or browser/live-provider claim.
 
+## 2026-06-10 forge transition
+
+Forgejo is now the source of truth for repository state. The GitHub Actions gates listed below run on the GitHub mirror only, so they are historical/mirror evidence until Forgejo Actions and a runner are proven active for this repo.
+
+Until the Forgejo CI gate lands, every PR/branch intended for the source of truth must use the temporary local merge gate: `pnpm typecheck`, focused tests for touched areas, `pnpm lint`, a public-safe leak audit when publishing, and an independent review-agent pass. Do not cite a green GitHub mirror check as proof that the Forgejo source branch was gated.
+
 ## Default local gates
 
 | Claim proved | Command | Scope | Does not prove |

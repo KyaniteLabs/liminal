@@ -71,10 +71,10 @@ export default defineConfig({
         // Per-file enforcement: scripts/ci/check-coverage-gaps.ts
         // Quality enforcement: scripts/testing/test-quality-check.mjs
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        statements: 78.4,
-        branches: 68.4,
-        functions: 81.8,
-        lines: 79.3,
+        statements: 82.7,
+        branches: 72.9,
+        functions: 85.6,
+        lines: 83.8,
         // CI must never rewrite this config, so the ratchet only engages
         // on local full-coverage runs. Round DOWN to 0.1% so 0.01%
         // run-to-run fluctuations don't cause false failures.

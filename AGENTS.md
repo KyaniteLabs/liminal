@@ -1,6 +1,6 @@
 # AGENTS.md — Liminal Agent Instructions
 
-**Last Updated:** 2026-04-15
+**Last Updated:** 2026-06-10
 
 **Cross-agent rules:** See `~/.agents/rules/UNIVERSAL.md` for the 12 golden principles shared across all agents.
 
@@ -24,7 +24,7 @@ Codex should use only the active Matt Pocock subset: `setup-matt-pocock-skills`,
 
 ### Issue tracker
 
-Issues are tracked in GitHub Issues for `KyaniteLabs/liminal`; see `docs/agents/issue-tracker.md`.
+Issues have historically been tracked in GitHub Issues for `KyaniteLabs/liminal`; see `docs/agents/issue-tracker.md`. As of the 2026-06-10 Forgejo migration, repository source-of-truth and PR flow are moving to Forgejo; treat GitHub issue/PR state as mirror or legacy unless a current task says otherwise.
 
 ### Triage labels
 
@@ -320,7 +320,7 @@ The data stored in `~/.epoch/` (estimates.jsonl + feedback.jsonl) is the project
 
 ---
 
-**Last Updated:** 2026-04-15
+**Last Updated:** 2026-06-10
 
 <!-- EMPOWER_ORCHESTRATOR:START -->
 ## Empower the Orchestrator

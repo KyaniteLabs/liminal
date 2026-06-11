@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import puppeteer from 'puppeteer';
 import { HTMLWrapper } from '../../dist/utils/htmlWrapper.js';
+import { findRevideoArtifact, renderRevideoStill } from './revideo-render.mjs';
 
 const SRC = '.omx/proof/live-creative-domains';
 const OUT = '.quality/renders';
@@ -80,10 +81,32 @@ for (const job of JOBS) {
   await page.close();
 }
 await browser.close();
+const revideoArtifact = findRevideoArtifact(SRC);
+if (!revideoArtifact) {
+  results.push({ name: 'revideo', status: 'SKIPPED (revideo artifact missing)', errors: [] });
+} else {
+  try {
+    const out = path.join(OUT, 'revideo.png');
+    const revideo = await renderRevideoStill({
+      source: fs.readFileSync(revideoArtifact, 'utf-8'),
+      outputPath: out,
+      tempDir: path.join(OUT, '.revideo-tmp'),
+      width: 900,
+      height: 600,
+    });
+    results.push({ name: 'revideo', status: revideo.message, errors: [] });
+  } catch (e) {
+    results.push({ name: 'revideo', status: 'RENDER-FAIL: ' + String(e.message).slice(0, 100), errors: [] });
+  }
+}
 for (const r of results) {
-  console.log(`${r.status === 'ok' ? '✅' : '⚠️ '} ${r.name.padEnd(12)} ${r.status}${r.errors.length ? '  | console: ' + r.errors.join(' ; ') : ''}`);
+  const icon = r.status === 'ok' || r.status.startsWith('ok ')
+    ? '✅'
+    : r.status.startsWith('SKIPPED')
+      ? '⏭️ '
+      : '⚠️ ';
+  console.log(`${icon} ${r.name.padEnd(12)} ${r.status}${r.errors.length ? '  | console: ' + r.errors.join(' ; ') : ''}`);
 }
 // Coverage transparency (audit F10): say what this harness deliberately does
 // NOT render, so absent rows read as known gaps rather than silent omissions.
 console.log('⏭️  strudel      skipped (audio — cannot be vision-graded)');
-console.log('⏭️  revideo      skipped (video composition — needs the Revideo renderer, not a static screenshot)');

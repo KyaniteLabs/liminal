@@ -1,3 +1,7 @@
+import type { LuminanceMeasure, LuminanceVerdict } from '../../render/LuminanceVerdict.js';
+
+export type RenderMeasure = LuminanceMeasure & { verdict: LuminanceVerdict };
+
 export interface RenderEvidence {
   screenshotRef?: string;
   screenshot?: {
@@ -23,6 +27,7 @@ export interface RenderEvidence {
   timingMs: number;
   infraUnavailable: boolean;
   candidateFailure: boolean;
+  renderMeasure?: RenderMeasure;
 }
 
 export interface ConcreteRepairAdvice {
@@ -37,4 +42,5 @@ export interface GenerationEvaluation {
   failureClass: 'none' | 'render' | 'validator' | 'scorer' | 'infra';
   repairAdvice?: ConcreteRepairAdvice;
   reasoning?: string;
+  renderMeasure?: RenderMeasure;
 }

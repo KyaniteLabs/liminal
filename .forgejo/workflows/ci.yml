@@ -1,0 +1,68 @@
+name: Forgejo CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: liminal-forgejo-ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast-gate:
+    name: fast-gate
+    runs-on: macos-arm64
+    timeout-minutes: 25
+    env:
+      ANTHROPIC_AUTH_TOKEN: ""
+      ANTHROPIC_BASE_URL: ""
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: ""
+      ANTHROPIC_DEFAULT_OPUS_MODEL: ""
+      ANTHROPIC_DEFAULT_SONNET_MODEL: ""
+      MINIMAX_API_KEY: ""
+      OLLAMA_API_KEY: ""
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.30.1 --activate
+
+      - name: Verify toolchain
+        run: |
+          echo "Node: $(node --version)"
+          echo "pnpm: $(pnpm --version)"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Orphan source check
+        run: pnpm check:orphans
+
+      - name: Package script target check
+        run: pnpm check:script-targets
+
+      - name: Lint source
+        run: pnpm lint
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Fast test suite
+        run: pnpm test:ci:fast
+
+      - name: Test quality check
+        run: pnpm test:quality

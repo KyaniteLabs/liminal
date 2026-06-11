@@ -69,6 +69,14 @@ const gardenHealth = () => {
     const m = out.match(/Health:\s*([\d.]+)%/); return m ? parseFloat(m[1]) : null;
   } catch { return null; }
 };
+const codeSha = () => {
+  try { return execSync('git rev-parse HEAD', { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); }
+  catch { return null; }
+};
+const distBuiltAt = () => {
+  try { return fs.statSync('dist/index.js').mtime.toISOString(); }
+  catch { return null; }
+};
 
 const stamp = new Date().toISOString();
 const beforeDomains = readPerDomainCounts(ARCHIVE);
@@ -149,6 +157,7 @@ if (scores.length >= 4) {
 }
 const record = {
   ts: stamp, requested: COUNT, completed: scores.length,
+  codeSha: codeSha(), distBuiltAt: distBuiltAt(),
   before, after,
   archiveDelta: after.archive - before.archive,
   targetedDomains: targetDomains,

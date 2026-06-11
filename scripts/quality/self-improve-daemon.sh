@@ -36,6 +36,22 @@ while true; do
     exec "$SCRIPT_PATH" "$@"
   fi
 
+  mkdir -p .quality
+  head_sha="$(git rev-parse HEAD 2>/dev/null || true)"
+  build_marker=".quality/last-build-sha"
+  if [ -n "$head_sha" ]; then
+    last_build_sha="$(cat "$build_marker" 2>/dev/null || true)"
+    if [ "$head_sha" != "$last_build_sha" ]; then
+      echo "[daemon $(date -u +%FT%TZ)] HEAD moved ${last_build_sha:-none}→${head_sha} — rebuilding dist"
+      if pnpm build; then
+        printf '%s\n' "$head_sha" > "$build_marker"
+      else
+        rc=$?
+        echo "[daemon $(date -u +%FT%TZ)] build FAILED (rc=$rc) — running PREVIOUS dist"
+      fi
+    fi
+  fi
+
   # LLM-free gardener pass first: refresh health/stagnation telemetry and
   # persist the dream plan that the cycle below consumes (one dream per cycle).
   echo "[daemon $(date -u +%FT%TZ)] garden tend"

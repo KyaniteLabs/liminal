@@ -1,10 +1,24 @@
 import type { LuminanceMeasure, LuminanceVerdict } from '../../render/LuminanceVerdict.js';
 
-export type RenderMeasure = LuminanceMeasure & { verdict: LuminanceVerdict };
+export type RenderMeasure = LuminanceMeasure & {
+  verdict: LuminanceVerdict;
+  /** True when the late frame measured non-ok while the first frame was ok —
+   *  the animation decayed after capture (H13). */
+  temporalDecay?: boolean;
+};
 
 export interface RenderEvidence {
   screenshotRef?: string;
   screenshot?: {
+    mimeType: string;
+    dataBase64: string;
+    width?: number;
+    height?: number;
+  };
+  /** Second capture late in the render window (H13): one frame is a single
+   *  sample of a time-varying signal — the late frame is the steady state a
+   *  viewer actually sees. */
+  lateScreenshot?: {
     mimeType: string;
     dataBase64: string;
     width?: number;

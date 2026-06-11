@@ -642,7 +642,8 @@ const RENDER_MEASURE_SCORE_MULTIPLIER = 0.6;
 
 function renderMeasureSummary(measure: RenderMeasure): string {
   const std = measure.brightnessStd === undefined ? 'n/a' : measure.brightnessStd.toFixed(2);
-  return `verdict=${measure.verdict}, mean=${measure.meanLuminance.toFixed(3)}, bright=${measure.brightFraction.toFixed(3)}, dark=${measure.darkFraction.toFixed(3)}, std=${std}`;
+  const decay = measure.temporalDecay ? ', decays-after-capture' : '';
+  return `verdict=${measure.verdict}, mean=${measure.meanLuminance.toFixed(3)}, bright=${measure.brightFraction.toFixed(3)}, dark=${measure.darkFraction.toFixed(3)}, std=${std}${decay}`;
 }
 
 function repairAdviceForRenderMeasure(measure: RenderMeasure) {

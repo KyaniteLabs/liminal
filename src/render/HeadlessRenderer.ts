@@ -64,6 +64,8 @@ export interface RenderResult {
   page?: Page;
   /** Screenshot result */
   screenshot?: ScreenshotResult;
+  /** Second capture late in the render window (H13 steady-state frame) */
+  lateScreenshot?: ScreenshotResult;
   /** Audio capture result */
   audio?: AudioCaptureResult;
   /** Whether rendering succeeded */
@@ -321,6 +323,17 @@ export class HeadlessRenderer {
         errors.push(screenshot.error);
       }
 
+      // H13: capture a second frame late in the render window. One frame is a
+      // single sample of a time-varying signal — animated shaders that decay
+      // to black after capture (and sketches that paint late) are invisible to
+      // a single screenshot. The page is already open; cost is one screenshot.
+      let lateScreenshot: ScreenshotResult | undefined;
+      if (screenshot.success) {
+        await page.waitForTimeout(1500);
+        lateScreenshot = await this.captureScreenshot(page, opts);
+        if (!lateScreenshot.success) lateScreenshot = undefined;
+      }
+
       // Capture audio if applicable
       const audio = domain === 'tone' || domain === 'strudel'
         ? await this.captureAudio(page, opts)
@@ -340,6 +353,7 @@ export class HeadlessRenderer {
       return {
         page: opts.keepPageOpen ? page : undefined,
         screenshot,
+        lateScreenshot,
         audio,
         success: screenshot.success,
         error: screenshot.success ? undefined : screenshot.error || 'Screenshot failed',
@@ -430,6 +444,14 @@ export class HeadlessRenderer {
             dataBase64: result.screenshot.buffer.toString('base64'),
             width: result.screenshot.width,
             height: result.screenshot.height,
+          }
+        : undefined,
+      lateScreenshot: result.lateScreenshot?.success
+        ? {
+            mimeType: 'image/png',
+            dataBase64: result.lateScreenshot.buffer.toString('base64'),
+            width: result.lateScreenshot.width,
+            height: result.lateScreenshot.height,
           }
         : undefined,
       logRef: result.logs.length > 0 ? 'logs' : undefined,

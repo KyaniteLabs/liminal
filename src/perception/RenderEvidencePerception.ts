@@ -48,6 +48,21 @@ export async function measureRenderEvidence(evidence: RenderEvidence): Promise<R
   const visibility = await analyzeScreenshotBase64(evidence.screenshot.dataBase64);
   const measure = measureFromVisibility(visibility);
   if (!measure) return undefined;
+
+  // H13: when a late frame exists it is authoritative — it is the steady state
+  // a viewer actually sees (animated shaders decay to black after capture, and
+  // slow-starting sketches paint after a blank first frame). temporalDecay
+  // marks the ok→non-ok transition for scoring and audits.
+  if (evidence.lateScreenshot && (evidence.lateScreenshot.width ?? 0) > 0 && (evidence.lateScreenshot.height ?? 0) > 0) {
+    const lateVisibility = await analyzeScreenshotBase64(evidence.lateScreenshot.dataBase64);
+    const lateMeasure = measureFromVisibility(lateVisibility);
+    if (lateMeasure) {
+      if (lateMeasure.verdict !== 'ok' && measure.verdict === 'ok') {
+        lateMeasure.temporalDecay = true;
+      }
+      return cacheRenderMeasure(evidence, lateMeasure);
+    }
+  }
   return cacheRenderMeasure(evidence, measure);
 }
 

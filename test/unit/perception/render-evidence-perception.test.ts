@@ -152,4 +152,47 @@ describe('render evidence perception mapping', () => {
     const result = await evaluateRenderEvidencePerception(evidence, 'revideo');
     expect(result.issues.map(i => i.id)).toContain('video.fps-outside-useful-range');
   });
+
+  describe('H13 two-frame capture: the late frame is authoritative', () => {
+    it('pair A (decay): late dead frame wins and sets temporalDecay', async () => {
+      const evidence: RenderEvidence = {
+        timingMs: 120,
+        infraUnavailable: false,
+        candidateFailure: false,
+        screenshot: { mimeType: 'image/png', dataBase64: await createPngBase64('varied'), width: 8, height: 8 },
+        lateScreenshot: { mimeType: 'image/png', dataBase64: await createPngBase64('solid'), width: 8, height: 8 },
+      };
+      const measure = await measureRenderEvidence(evidence);
+      // The solid-white late frame measures washed/invisible; it is the steady state.
+      expect(measure?.temporalDecay).toBe(true);
+      expect(measure?.meanLuminance).toBeGreaterThan(0.9); // late (solid white) frame's measure, not the varied first frame's
+    });
+
+    it('pair B (loading flash): healthy late frame wins with no decay flag', async () => {
+      const evidence: RenderEvidence = {
+        timingMs: 120,
+        infraUnavailable: false,
+        candidateFailure: false,
+        screenshot: { mimeType: 'image/png', dataBase64: await createPngBase64('solid'), width: 8, height: 8 },
+        lateScreenshot: { mimeType: 'image/png', dataBase64: await createPngBase64('varied'), width: 8, height: 8 },
+      };
+      const measure = await measureRenderEvidence(evidence);
+      expect(measure?.temporalDecay).toBeUndefined();
+      expect(measure?.meanLuminance).toBeGreaterThan(0.2);
+      expect(measure?.meanLuminance).toBeLessThan(0.8); // the varied late frame's measure
+      expect(measure?.verdict).toBe('ok');
+    });
+
+    it('no late screenshot: behavior is byte-identical to single-frame', async () => {
+      const evidence: RenderEvidence = {
+        timingMs: 120,
+        infraUnavailable: false,
+        candidateFailure: false,
+        screenshot: { mimeType: 'image/png', dataBase64: await createPngBase64('varied'), width: 8, height: 8 },
+      };
+      const measure = await measureRenderEvidence(evidence);
+      expect(measure?.verdict).toBe('ok');
+      expect(measure?.temporalDecay).toBeUndefined();
+    });
+  });
 });

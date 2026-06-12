@@ -577,9 +577,10 @@ export class TuiBridgeService {
       return this.handleSkillCommand(sessionId, input.text, llm);
     }
 
-    // Handle review commands: /accept, /reject, /pin, /diff, /candidates
+    // Handle review commands: /accept, /reject, /pin, /diff, /candidates, /taste
     if (input.text.startsWith('/accept') || input.text.startsWith('/reject') ||
         input.text.startsWith('/pin') || input.text.startsWith('/diff') ||
+        input.text.startsWith('/taste') ||
         input.text.trim() === '/candidates') {
       return this.handleReviewCommand(sessionId, input.text);
     }
@@ -1132,7 +1133,7 @@ export class TuiBridgeService {
 
   /**
    * Handle review commands: /accept <id>, /reject <id>, /pin <id>,
-   * /diff <idA> <idB>, /candidates
+   * /taste <pin|reject> <artifactId>, /diff <idA> <idB>, /candidates
    */
   private async handleReviewCommand(sessionId: string, input: string): Promise<{ reviewRequired: boolean }> {
     const parts = input.trim().split(/\s+/);
@@ -1199,6 +1200,38 @@ export class TuiBridgeService {
         this.emit(sessionId, { type: 'review.favorite_pinned', sessionId, candidateId });
         this.emitCommandResponse(sessionId, `Pinned: ${candidateId}${saved ? '\nPreference saved.' : '\nPreference storage unavailable.'}`);
       }
+      return { reviewRequired: false };
+    }
+
+    if (cmd === '/taste') {
+      const action = parts[1];
+      const artifactId = parts[2];
+      if (action !== 'pin' && action !== 'reject') {
+        this.emitCommandResponse(sessionId, 'Usage: /taste <pin|reject> <artifact-id>');
+        return { reviewRequired: false };
+      }
+      if (!artifactId || artifactId.trim() === '') {
+        this.emitCommandResponse(sessionId, 'Usage: /taste <pin|reject> <artifact-id>');
+        return { reviewRequired: false };
+      }
+      // GUI / Showcase parity: ungated — accepts ANY artifactId (archive/showcase
+      // entries are not reviewManager candidates), so no ReviewManager lookup.
+      const saved = await this.recordReviewPreference(sessionId, action, artifactId);
+      // Cast: the `review.preference_recorded` event shape is new for the
+      // GUI parity contract; this file is the only producer and the type
+      // union lives in a sibling types file we are not allowed to edit.
+      this.emit(sessionId, {
+        type: 'review.preference_recorded',
+        sessionId,
+        action,
+        artifactId,
+        saved,
+      } as unknown as TuiBridgeEvent);
+      const label = action === 'pin' ? 'Pinned' : 'Rejected';
+      this.emitCommandResponse(
+        sessionId,
+        `${label}: ${artifactId}${saved ? '\nPreference saved.' : '\nPreference storage unavailable.'}`,
+      );
       return { reviewRequired: false };
     }
 

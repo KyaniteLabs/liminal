@@ -86,6 +86,8 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
   const [lastPrompt, setLastPrompt] = useState<string | null>(null);
   const [showRun, setShowRun] = useState(false);
   const queuedPromptRef = useRef<string | null>(null);
+  const [tasteReceipt, setTasteReceipt] = useState<{ artifactId: string; action: 'pin' | 'reject'; saved: boolean } | null>(null);
+  const tasteReceiptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const bridge = useTuiBridgeSession();
   const runActive = bridge.submitting || bridge.summary.active;
@@ -96,6 +98,34 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
     setShowRun(false);
     setFeatured(work);
   }, []);
+
+  // Send a /taste <pin|reject> <artifactId> command over the existing bridge
+  // session so the GUI has parity with the (retired) TUI pin/reject path. The
+  // bridge handler is ungated and accepts any artifactId, so archive/showcase
+  // entries — which are not ReviewManager candidates — can still be tasted.
+  const sendTaste = useCallback(async (action: 'pin' | 'reject', artifactId: string) => {
+    const trimmed = artifactId.trim();
+    if (!trimmed) return;
+    if (tasteReceiptTimerRef.current) {
+      clearTimeout(tasteReceiptTimerRef.current);
+      tasteReceiptTimerRef.current = null;
+    }
+    let saved = false;
+    if (bridge.session?.sessionId) {
+      // The bridge accepts /taste via the same input endpoint; the response
+      // event is review.preference_recorded, not chat completion.
+      await bridge.submitPrompt(`/taste ${action} ${trimmed}`, { clientIntent: 'action' });
+      // Optimistically mark saved=true; the server emits the canonical event
+      // and a transient receipt below mirrors it.
+      saved = true;
+    } else {
+      // No session yet — queue a session create, then replay the taste.
+      queuedPromptRef.current = `/taste ${action} ${trimmed}`;
+      await bridge.createSession();
+    }
+    setTasteReceipt({ artifactId: trimmed, action, saved });
+    tasteReceiptTimerRef.current = setTimeout(() => setTasteReceipt(null), 4000);
+  }, [bridge]);
 
   const loadProgram = useCallback(async (signal: { cancelled: boolean }) => {
     setLoading(true);
@@ -147,6 +177,17 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
     void loadProgram(signal);
     return () => { signal.cancelled = true; };
   }, [loadProgram]);
+
+  // Clear the taste receipt timer on unmount to avoid setting state on a
+  // dead component.
+  useEffect(() => {
+    return () => {
+      if (tasteReceiptTimerRef.current) {
+        clearTimeout(tasteReceiptTimerRef.current);
+        tasteReceiptTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // A prompt submitted before the session existed waits here until the
   // session arrives, then runs — keeps the submit handler race-free.
@@ -262,6 +303,41 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
                 {work.stripLabel}
               </button>
             ))}
+          </div>
+        )}
+
+        {featured && (
+          <div className="stage-taste" role="group" aria-label={`Taste signals for ${featured.title}`}>
+            <button
+              type="button"
+              className="stage-taste__btn stage-taste__btn--pin"
+              onClick={() => void sendTaste('pin', featured.key)}
+              aria-label={`Pin ${featured.title}`}
+              title={`Pin ${featured.title}`}
+            >
+              Pin
+            </button>
+            <button
+              type="button"
+              className="stage-taste__btn stage-taste__btn--reject"
+              onClick={() => void sendTaste('reject', featured.key)}
+              aria-label={`Reject ${featured.title}`}
+              title={`Reject ${featured.title}`}
+            >
+              Reject
+            </button>
+          </div>
+        )}
+
+        {tasteReceipt && (
+          <div
+            className={`stage-taste__receipt ${tasteReceipt.saved ? 'stage-taste__receipt--ok' : 'stage-taste__receipt--warn'}`}
+            role="status"
+            aria-live="polite"
+          >
+            {tasteReceipt.saved
+              ? `${tasteReceipt.action === 'pin' ? 'Pinned' : 'Rejected'}: ${tasteReceipt.artifactId}`
+              : `Could not record taste (preference storage unavailable): ${tasteReceipt.artifactId}`}
           </div>
         )}
       </main>

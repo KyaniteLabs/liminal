@@ -8,6 +8,7 @@ import {
   pickUnderfilledDomains,
   buildDomainPrompt,
   dreamThemeFromTask,
+  diffArchiveAdmissions,
   // @ts-expect-error — .mjs helper has no type declarations; imported for behavior only.
 } from '../../../scripts/quality/self-improve-domains.mjs';
 
@@ -187,5 +188,74 @@ describe('dreamThemeFromTask', () => {
     expect(dreamThemeFromTask({ sources: [{ id: 'a', descriptor: [], quality: 0.5 }] })).toBeNull();
     expect(dreamThemeFromTask(undefined)).toBeNull();
     expect(dreamThemeFromTask({})).toBeNull();
+  });
+});
+
+describe('diffArchiveAdmissions', () => {
+  const entry = (id: string, score: number) => ({ id, qualityScore: score });
+
+  it('counts a single admitted entry when one id is replaced in a domain', () => {
+    const before = { p5: [entry('a', 0.85), entry('b', 0.8)] };
+    const after = { p5: [entry('a', 0.85), entry('c', 0.82)] };
+
+    expect(diffArchiveAdmissions(before, after)).toEqual({
+      admitted: 1,
+      admittedIds: ['c'],
+      floors: { p5: 0.82 },
+      tops: { p5: 0.85 },
+    });
+  });
+
+  it('reports zero admissions for identical before and after archives', () => {
+    const arch = { p5: [entry('a', 0.85), entry('b', 0.8)] };
+
+    expect(diffArchiveAdmissions(arch, arch)).toEqual({
+      admitted: 0,
+      admittedIds: [],
+      floors: { p5: 0.8 },
+      tops: { p5: 0.85 },
+    });
+  });
+
+  it('handles empty and missing domains without throwing', () => {
+    expect(diffArchiveAdmissions({}, { p5: [] })).toEqual({
+      admitted: 0,
+      admittedIds: [],
+      floors: {},
+      tops: {},
+    });
+    expect(diffArchiveAdmissions(null as unknown as object, undefined as unknown as object)).toEqual({
+      admitted: 0,
+      admittedIds: [],
+      floors: {},
+      tops: {},
+    });
+  });
+
+  it('accepts full QualityArchive file objects with an archives wrapper', () => {
+    const before = { archives: { glsl: [entry('x', 0.9)] } };
+    const after = { archives: { glsl: [entry('x', 0.9), entry('y', 0.88)] } };
+
+    expect(diffArchiveAdmissions(before, after)).toEqual({
+      admitted: 1,
+      admittedIds: ['y'],
+      floors: { glsl: 0.88 },
+      tops: { glsl: 0.9 },
+    });
+  });
+
+  it('computes per-domain floors and tops rounded to three decimals', () => {
+    const before = { a: [entry('a1', 0.1234)], b: [entry('b1', 0.9999)] };
+    const after = {
+      a: [entry('a1', 0.1234), entry('a2', 0.1235)],
+      b: [entry('b1', 0.9999)],
+    };
+
+    expect(diffArchiveAdmissions(before, after)).toEqual({
+      admitted: 1,
+      admittedIds: ['a2'],
+      floors: { a: 0.123, b: 1 },
+      tops: { a: 0.124, b: 1 },
+    });
   });
 });

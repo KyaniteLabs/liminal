@@ -48,6 +48,76 @@ export function readPerDomainCounts(archivePath) {
   }
 }
 
+/** Read the per-domain archives map from a QualityArchive JSON file.
+ *  Missing/corrupt → {}. Returns the raw `archives` object. */
+export function readDomainArchives(archivePath) {
+  try {
+    const data = JSON.parse(fs.readFileSync(archivePath, 'utf-8'));
+    return data && typeof data.archives === 'object' && data.archives ? data.archives : {};
+  } catch {
+    return {};
+  }
+}
+
+function normalizeArchives(input) {
+  if (input == null || typeof input !== 'object') return {};
+  if (input.archives && typeof input.archives === 'object') return input.archives;
+  return input;
+}
+
+function domainEntries(map, domain) {
+  const arr = map[domain];
+  return Array.isArray(arr) ? arr : [];
+}
+
+const round3 = (n) => Math.round(n * 1000) / 1000;
+
+/**
+ * Diff two per-domain archive maps (or full QualityArchive file objects) to
+ * compute how many entries were admitted by the cycle, their ids, and the
+ * post-cycle per-domain score floors/ceilings. Pure function: safe to call from
+ * tests without touching the real archive file.
+ */
+export function diffArchiveAdmissions(beforeArchives, afterArchives) {
+  const before = normalizeArchives(beforeArchives);
+  const after = normalizeArchives(afterArchives);
+  const domains = new Set([...Object.keys(before), ...Object.keys(after)]);
+  const beforeIds = new Set();
+  const afterIds = new Set();
+  const floors = {};
+  const tops = {};
+
+  for (const domain of domains) {
+    const beforeEntries = domainEntries(before, domain);
+    const afterEntries = domainEntries(after, domain);
+
+    for (const e of beforeEntries) {
+      if (e && e.id) beforeIds.add(e.id);
+    }
+    for (const e of afterEntries) {
+      if (e && e.id) afterIds.add(e.id);
+    }
+
+    if (afterEntries.length > 0) {
+      const scores = afterEntries
+        .map((e) => (e && typeof e.qualityScore === 'number' ? e.qualityScore : NaN))
+        .filter((s) => !Number.isNaN(s));
+      if (scores.length > 0) {
+        floors[domain] = round3(Math.min(...scores));
+        tops[domain] = round3(Math.max(...scores));
+      }
+    }
+  }
+
+  const admittedIds = [];
+  for (const id of afterIds) {
+    if (!beforeIds.has(id)) admittedIds.push(id);
+  }
+  admittedIds.sort();
+
+  return { admitted: admittedIds.length, admittedIds, floors, tops };
+}
+
 /**
  * Pick `n` domains to generate for this cycle from those below the cap (a full domain
  * can't accumulate), ordered emptiest-first with a domains-list tiebreak.

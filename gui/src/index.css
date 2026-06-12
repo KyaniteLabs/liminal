@@ -2510,6 +2510,47 @@ body::before {
 }
 .stage-strip__item:hover { color: var(--sinter-text); border-color: var(--sinter-line-strong); }
 .stage-strip__item--active { color: var(--sinter-cyan); border-color: var(--sinter-cyan); }
+.stage-taste {
+  position: absolute;
+  left: 28px;
+  bottom: 104px;
+  display: flex;
+  gap: 6px;
+  z-index: 2;
+}
+.stage-taste__btn {
+  appearance: none;
+  font: inherit;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--sinter-line);
+  background: rgba(13, 17, 24, 0.85);
+  color: var(--sinter-muted);
+  cursor: pointer;
+}
+.stage-taste__btn:hover { color: var(--sinter-text); border-color: var(--sinter-line-strong); }
+.stage-taste__btn:focus-visible { outline: 2px solid var(--sinter-cyan); outline-offset: 1px; }
+.stage-taste__btn--pin { color: var(--sinter-cyan); border-color: rgba(94, 234, 212, 0.35); }
+.stage-taste__btn--pin:hover { border-color: var(--sinter-cyan); background: rgba(94, 234, 212, 0.08); }
+.stage-taste__btn--reject { color: #f7a4a4; border-color: rgba(247, 164, 164, 0.35); }
+.stage-taste__btn--reject:hover { border-color: #f7a4a4; background: rgba(247, 164, 164, 0.08); }
+.stage-taste__receipt {
+  position: absolute;
+  left: 28px;
+  bottom: 64px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: rgba(18, 23, 32, 0.92);
+  border: 1px solid var(--sinter-line);
+  z-index: 2;
+}
+.stage-taste__receipt--ok { color: var(--sinter-cyan); border-color: rgba(94, 234, 212, 0.45); }
+.stage-taste__receipt--warn { color: #f7a4a4; border-color: rgba(247, 164, 164, 0.45); }
 .stage-chat {
   position: absolute;
   left: 50%;

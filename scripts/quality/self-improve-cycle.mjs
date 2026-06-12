@@ -20,6 +20,8 @@ import {
   TARGET_DOMAINS,
   MAX_PER_DOMAIN,
   readPerDomainCounts,
+  readDomainArchives,
+  diffArchiveAdmissions,
   pickUnderfilledDomains,
   buildDomainPrompt,
   dreamThemeFromTask,
@@ -78,10 +80,21 @@ const distBuiltAt = () => {
   try { return fs.statSync('dist/index.js').mtime.toISOString(); }
   catch { return null; }
 };
+const gitPorcelain = () => {
+  try { return execSync('git status --porcelain', { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); }
+  catch { return ''; }
+};
+const gitBranch = () => {
+  try { return execSync('git branch --show-current', { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); }
+  catch { return null; }
+};
 
 const stamp = new Date().toISOString();
 const beforeDomains = readPerDomainCounts(ARCHIVE);
+const beforeArchives = readDomainArchives(ARCHIVE);
 const before = { archive: readArchive(), health: gardenHealth() };
+const dirty = gitPorcelain().length > 0;
+const branch = gitBranch();
 // Route each gen to a least-populated domain so the archive diversifies instead of
 // collapsing every abstract theme onto the 'p5' fallback (the stall: detectPromptDomain
 // returns null for abstract prompts, so all --learn outputs landed in one domain).
@@ -152,7 +165,9 @@ for (let i = 0; i < COUNT; i++) {
 }
 
 const afterDomains = readPerDomainCounts(ARCHIVE);
+const afterArchives = readDomainArchives(ARCHIVE);
 const after = { archive: readArchive(), health: gardenHealth() };
+const { admitted, floors, tops } = diffArchiveAdmissions(beforeArchives, afterArchives);
 const mean = scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
 // trend = mean(second half) - mean(first half): positive ⇒ later gens scoring higher
 let trend = null;
@@ -164,14 +179,16 @@ if (scores.length >= 4) {
 const record = {
   ts: stamp, requested: COUNT, completed: scores.length,
   codeSha: codeSha(), distBuiltAt: distBuiltAt(),
+  branch, dirty,
   before, after,
   archiveDelta: after.archive - before.archive,
+  admitted, floors, tops,
   targetedDomains: targetDomains,
   beforeDomains, afterDomains,
   scores, meanScore: mean, intraCycleTrend: trend,
 };
 fs.appendFileSync(LEDGER, JSON.stringify(record) + '\n');
 
-console.log(`after:  archive=${after.archive} (Δ+${record.archiveDelta}) health=${after.health}%`);
+console.log(`after:  archive=${after.archive} (Δ+${record.archiveDelta}) admitted=${admitted} health=${after.health}%`);
 console.log(`scores: [${scores.map(s => s.toFixed(2)).join(', ')}]  mean=${mean?.toFixed(3) ?? 'n/a'}  intra-trend=${trend?.toFixed(3) ?? 'n/a'}`);
 console.log(`ledger: appended to ${LEDGER} (${fs.readFileSync(LEDGER, 'utf-8').trim().split('\n').length} cycles total)`);

@@ -90,12 +90,23 @@ export class HydraGenerator extends TierBasedGenerator {
     const sourceLines = code.split('\n')
       .map(line => line.trim())
       .filter(line => line && !line.startsWith('//'));
-    for (let i = 1; i < sourceLines.length; i++) {
-      if (/^(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(sourceLines[i])) {
+    // Track paren depth across lines: a source call at the start of a line is
+    // only a NEW chain when no enclosing call is still open. Without this,
+    // valid multi-line arguments — `.modulate(\n  voronoi(...), 0.4\n)` — are
+    // misread as chain breaks (live false positives, 2026-06-12).
+    let parenDepth = 0;
+    for (let i = 0; i < sourceLines.length; i++) {
+      const line = sourceLines[i];
+      if (i > 0 && parenDepth === 0 && /^(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(line)) {
         const previous = sourceLines[i - 1];
         if (!/\.out\s*\(|render\s*\(/.test(previous)) {
-          return { valid: false, error: 'Hydra output starts a new source in the middle of an unfinished chain; combine it with .add(), .blend(), or finish the prior chain with .out()' };
+          return { valid: false, error: `Hydra output starts a new source in the middle of an unfinished chain (after "${previous.slice(0, 60)}"); combine it with .add(), .blend(), or finish the prior chain with .out()` };
         }
+      }
+      const codePart = line.replace(/\/\/.*$/, '');
+      for (const ch of codePart) {
+        if (ch === '(') parenDepth += 1;
+        else if (ch === ')') parenDepth = Math.max(0, parenDepth - 1);
       }
     }
     if (/\.(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {

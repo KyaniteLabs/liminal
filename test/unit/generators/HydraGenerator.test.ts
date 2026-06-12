@@ -147,6 +147,56 @@ describe('HydraGenerator', () => {
     const result = gen.validateForTest('osc(4, 0.1, 1.0)\n.brightness(1.2)\nosc(0.05, 0.05, 0.05)\n.out()');
     expect(result.valid).toBe(false);
     expect(result.error).toContain('middle of an unfinished chain');
+    expect(result.error).toContain('after ".brightness(1.2)"');
+  });
+
+  it('accepts sources on their own lines inside multi-line call arguments', () => {
+    // Live false positive 2026-06-12: providers format .modulate()/.blend()
+    // arguments across lines, so a source at line start is NOT a new chain
+    // while an enclosing call is still open.
+    const gen = new TestableHydraGenerator();
+    const code = [
+      'osc(20, 0.05, 1.1)',
+      '.modulate(',
+      'voronoi(8, 0.18, 0.25).color(0.85, 0.22, 0.18), // crimson accent',
+      '0.4',
+      ')',
+      '.color(1, 0.2, 0.8)',
+      '.out(o0)',
+      'noise(4, 0.25).color(0.9, 0.4, 0.1).blend(osc(2, 0.05, 1)).out(o1)',
+      'render(o0)',
+    ].join('\n');
+    const result = gen.validateForTest(code);
+    expect(result.valid).toBe(true);
+  });
+
+  it('still rejects a bare source after a multi-line call closes without .out()', () => {
+    const gen = new TestableHydraGenerator();
+    const code = [
+      'osc(4, 0.1, 1.0)',
+      '.modulate(',
+      'noise(3, 0.2),',
+      '0.4',
+      ')',
+      'voronoi(5, 0.3, 0.2)',
+      '.color(1, 0.2, 0.8)',
+      '.out()',
+    ].join('\n');
+    const result = gen.validateForTest(code);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('middle of an unfinished chain');
+    expect(result.error).toContain('after ")"');
+  });
+
+  it('ignores parens inside trailing comments when tracking call depth', () => {
+    const gen = new TestableHydraGenerator();
+    const code = [
+      'osc(4, 0.1, 1).color(1, 0.2, 0.8).out(o0) // warm base (see notes',
+      'noise(3, 0.2).color(0.9, 0.4, 0.1).blend(osc(2, 0.05, 1)).out(o1)',
+      'render(o0)',
+    ].join('\n');
+    const result = gen.validateForTest(code);
+    expect(result.valid).toBe(true);
   });
 
   it('auto-fixes s0 chain roots during sanitize', () => {

@@ -3,25 +3,44 @@ import type { WorkbenchMode } from '../gui/workbenchState';
 import { useTuiBridgeSession } from '../gui/useTuiBridgeSession';
 
 /**
- * ShowcaseStage — the A+C entry view: a near-black room where the newest
- * gallery work renders live and large. The chat line is a real bench: prompts
- * run through the bridge session without leaving the room, and when a run
- * produces a preview the stage hangs the fresh work. The art is the only
- * thing that moves; chrome stays still.
+ * ShowcaseStage — the A+C entry view: a near-black room where Sinter's best
+ * work renders live and large. The program comes from the quality archive
+ * (each domain's top-scored piece first); the gallery's newest projects are
+ * the fallback when the archive is empty. The chat line is a real bench:
+ * prompts run through the bridge session without leaving the room, and when
+ * a run produces a preview the stage hangs the fresh work. The art is the
+ * only thing that moves; chrome stays still.
  */
 
 const API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASEURL)
   ? import.meta.env.VITE_API_BASEURL
   : '/api';
 
+/** Audio domains can't hang on a visual stage. */
+const AUDIO_DOMAINS = new Set(['strudel', 'tone', 'music', 'audio']);
+
 interface StageProps {
   modes: WorkbenchMode[];
   onNavigate: (modeId: string) => void;
 }
 
-interface FeaturedWork {
-  project: string;
-  iterationCount: number;
+interface ArchiveTop {
+  id: string;
+  domain: string;
+  prompt: string;
+  qualityScore: number;
+  createdAt: string;
+}
+
+interface StageWork {
+  /** Stable identity for strip selection. */
+  key: string;
+  /** Headline shown in the caption. */
+  title: string;
+  /** Provenance line under the title. */
+  meta: string;
+  /** Short label for the program strip. */
+  stripLabel: string;
   previewUrl: string;
 }
 
@@ -32,9 +51,35 @@ function prettifyProject(name: string): string {
     .trim() || name;
 }
 
+function prettifyPrompt(prompt: string): string {
+  // Archive prompts carry cycle/timestamp suffixes; the stage shows the idea.
+  return prompt.replace(/\s+[—–-]+\s*(cycle|archivefix).*$/i, '').trim() || prompt;
+}
+
+function archiveWork(top: ArchiveTop): StageWork {
+  const title = prettifyPrompt(top.prompt);
+  return {
+    key: top.id,
+    title,
+    meta: `${top.domain} · scored ${top.qualityScore.toFixed(2)} · archive`,
+    stripLabel: top.domain,
+    previewUrl: `${API}/archive/${encodeURIComponent(top.id)}/render`,
+  };
+}
+
+function galleryWork(project: string, iterationCount: number): StageWork {
+  return {
+    key: project,
+    title: prettifyProject(project),
+    meta: `${iterationCount} iteration${iterationCount === 1 ? '' : 's'} · gallery`,
+    stripLabel: prettifyProject(project),
+    previewUrl: `${API}/gallery/${encodeURIComponent(project)}/render`,
+  };
+}
+
 export function ShowcaseStage({ modes, onNavigate }: StageProps) {
-  const [projects, setProjects] = useState<string[]>([]);
-  const [featured, setFeatured] = useState<FeaturedWork | null>(null);
+  const [program, setProgram] = useState<StageWork[]>([]);
+  const [featured, setFeatured] = useState<StageWork | null>(null);
   const [stageError, setStageError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [prompt, setPrompt] = useState('');
@@ -47,41 +92,47 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
   const runPreview = bridge.preview;
   const pending = bridge.session?.pendingAction ?? null;
 
-  const featureProject = useCallback(async (project: string) => {
-    setLoading(true);
-    setStageError(null);
+  const featureWork = useCallback((work: StageWork) => {
     setShowRun(false);
-    try {
-      const res = await fetch(`${API}/gallery/${encodeURIComponent(project)}`);
-      if (!res.ok) throw new Error(`gallery/${project}: ${res.status}`);
-      const data = await res.json();
-      const iterations = Array.isArray(data.iterations) ? data.iterations : [];
-      if (iterations.length === 0) throw new Error('no iterations');
-      setFeatured({
-        project,
-        iterationCount: iterations.length,
-        previewUrl: `${API}/gallery/${encodeURIComponent(project)}/render`,
-      });
-    } catch (e) {
-      setStageError(e instanceof Error ? e.message : String(e));
-      setFeatured(null);
-    } finally {
-      setLoading(false);
-    }
+    setFeatured(work);
   }, []);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
+        // The archive's curated tops are the program; gallery is the fallback.
+        const tops: ArchiveTop[] = await fetch(`${API}/archive/tops?limit=12`)
+          .then((r) => (r.ok ? r.json() : { tops: [] }))
+          .then((d) => (Array.isArray(d.tops) ? d.tops : []))
+          .catch(() => []);
+        const visualTops = tops.filter((t) => !AUDIO_DOMAINS.has(t.domain));
+        if (!cancelled && visualTops.length > 0) {
+          const works = visualTops.map(archiveWork);
+          setProgram(works);
+          setFeatured(works[0]);
+          setLoading(false);
+          return;
+        }
         const res = await fetch(`${API}/gallery`);
         if (!res.ok) throw new Error(`gallery list: ${res.status}`);
         const data = await res.json();
         if (cancelled) return;
         const list: string[] = Array.isArray(data.projects) ? [...data.projects].sort().reverse() : [];
-        setProjects(list.slice(0, 8));
-        if (list.length > 0) void featureProject(list[0]);
-        else setLoading(false);
+        const works: StageWork[] = [];
+        for (const project of list.slice(0, 8)) {
+          try {
+            const detail = await fetch(`${API}/gallery/${encodeURIComponent(project)}`).then((r) => r.json());
+            const iterations = Array.isArray(detail.iterations) ? detail.iterations : [];
+            if (iterations.length > 0) works.push(galleryWork(project, iterations.length));
+          } catch {
+            // Skip unreadable projects; the stage shows what it can.
+          }
+          if (cancelled) return;
+        }
+        setProgram(works);
+        setFeatured(works[0] ?? null);
+        setLoading(false);
       } catch (e) {
         if (!cancelled) {
           setStageError(e instanceof Error ? e.message : String(e));
@@ -90,7 +141,7 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
       }
     })();
     return () => { cancelled = true; };
-  }, [featureProject]);
+  }, []);
 
   // A prompt submitted before the session existed waits here until the
   // session arrives, then runs — keeps the submit handler race-free.
@@ -155,7 +206,7 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
           <iframe
             className="stage-frame"
             src={featured.previewUrl}
-            title={`Featured work: ${prettifyProject(featured.project)}`}
+            title={`Featured work: ${featured.title}`}
             sandbox="allow-scripts"
           />
         ))}
@@ -184,23 +235,23 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
           </div>
         ) : featured && (
           <div className="stage-caption">
-            <strong>{prettifyProject(featured.project)}</strong>
-            <span>{featured.iterationCount} iteration{featured.iterationCount === 1 ? '' : 's'} · gallery</span>
+            <strong>{featured.title}</strong>
+            <span>{featured.meta}</span>
           </div>
         )}
 
-        {projects.length > 1 && (
-          <div className="stage-strip" role="listbox" aria-label="Recent works">
-            {projects.map((p) => (
+        {program.length > 1 && (
+          <div className="stage-strip" role="listbox" aria-label="Program of works">
+            {program.map((work) => (
               <button
-                key={p}
+                key={work.key}
                 type="button"
                 role="option"
-                aria-selected={!showRun && featured?.project === p}
-                className={!showRun && featured?.project === p ? 'stage-strip__item stage-strip__item--active' : 'stage-strip__item'}
-                onClick={() => void featureProject(p)}
+                aria-selected={!showRun && featured?.key === work.key}
+                className={!showRun && featured?.key === work.key ? 'stage-strip__item stage-strip__item--active' : 'stage-strip__item'}
+                onClick={() => featureWork(work)}
               >
-                {prettifyProject(p)}
+                {work.stripLabel}
               </button>
             ))}
           </div>

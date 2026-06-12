@@ -861,6 +861,9 @@ body::before {
 .sinter-rail-meta-details summary {
   color: var(--sinter-dim);
   cursor: pointer;
+  min-height: 24px;
+  display: flex;
+  align-items: center;
   font-size: 0.82rem;
   list-style: none;
 }
@@ -2430,7 +2433,7 @@ body::before {
   background: none;
   border: 0;
   border-radius: 7px;
-  color: var(--sinter-dim);
+  color: var(--sinter-muted);
   font: inherit;
   font-size: 13px;
   text-align: left;
@@ -2439,6 +2442,7 @@ body::before {
 }
 .stage-rail__item:hover { color: var(--sinter-text); background: rgba(145, 161, 190, 0.08); }
 .stage-rail__item:focus-visible { outline: 2px solid var(--sinter-cyan); outline-offset: 1px; }
+.stage-strip__item:focus-visible { outline: 2px solid var(--sinter-cyan); outline-offset: 1px; }
 .stage-rail__item--active { color: var(--sinter-cyan); }
 .stage-canvas {
   position: relative;

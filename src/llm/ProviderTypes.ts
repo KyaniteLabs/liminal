@@ -57,6 +57,8 @@ export interface ProviderRequest {
   toolResults?: ToolResultMessage[];
   /** Images attached to the user prompt for multimodal-capable evaluators/providers. */
   imageInputs?: ProviderImageInput[];
+  /** Ask the provider to constrain output to valid JSON (e.g. ollama format:'json'). */
+  jsonMode?: boolean;
 }
 
 // ── Response ──

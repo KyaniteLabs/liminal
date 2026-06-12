@@ -11,8 +11,8 @@ import {
 } from '../../gui/src/gui/liveOrganismState.js';
 
 describe('GUI live organism state', () => {
-  it('initial state has activeTab config and no sandboxUrl', () => {
-    expect(INITIAL_LIVE_ORGANISM_STATE.activeTab).toBe('create');
+  it('initial state starts on showcase and has no sandboxUrl', () => {
+    expect(INITIAL_LIVE_ORGANISM_STATE.activeTab).toBe('showcase');
     expect(INITIAL_LIVE_ORGANISM_STATE.previewUrl).toBeNull();
     expect(INITIAL_LIVE_ORGANISM_STATE.runError).toBeNull();
   });

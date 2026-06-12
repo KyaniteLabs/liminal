@@ -13,6 +13,7 @@ describe('workbenchState', () => {
     expect(getWorkbenchMode('activity').id).toBe('observe');
     expect(getWorkbenchMode('config').id).toBe('settings');
     expect(WORKBENCH_MODES.map((mode) => mode.id)).toEqual([
+      'showcase',
       'generate',
       'improve',
       'review',
@@ -22,10 +23,10 @@ describe('workbenchState', () => {
     ]);
   });
 
-  it('keeps Generate as the front door and Settings as a secondary destination', () => {
-    expect(WORKBENCH_MODES[0]).toMatchObject({ id: 'generate', label: 'Generate' });
+  it('keeps Showcase as the front door and Settings as a secondary destination', () => {
+    expect(WORKBENCH_MODES[0]).toMatchObject({ id: 'showcase', label: 'Showcase' });
     expect(WORKBENCH_MODES.at(-1)).toMatchObject({ id: 'settings', label: 'Settings' });
-    expect(getWorkbenchMode('unknown-tab')).toMatchObject({ id: 'generate' });
+    expect(getWorkbenchMode('unknown-tab')).toMatchObject({ id: 'showcase' });
   });
 
   it('keeps primary generate out of the legacy panel while preserving migration panels', () => {

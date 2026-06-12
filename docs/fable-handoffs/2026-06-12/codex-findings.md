@@ -62,3 +62,33 @@
   - `pnpm exec vitest run test/unit/ledger/TaskRunner.test.ts test/unit/ledger/TaskRunner.prompt.test.ts --coverage.enabled=false` → 2 files passed, 11 tests passed.
   - `pnpm typecheck` → passed.
   - `pnpm build` → passed.
+
+## FLOOR RESCORE — Worker handoff `worker-rescore-floors.md`
+- Branch: `codex/rescore-floors`
+- PR: (see "Outcome" below)
+- Outcome: extended `scripts/quality/rescore-tops.mjs` with a `--floors` flag that re-scores the BOTTOM-2 non-quarantined entries per visual domain and emits `{id, domain, position: "floor", stored, fresh, delta}` JSON records; the default top-2 code path is preserved unchanged and the script never calls `QualityArchive.save()`. Added an optional `quality:rescore:floors` package.json alias. Touched ONLY: `scripts/quality/rescore-tops.mjs`, `package.json` (one line), and this `codex-findings.md` entry. The run was performed exactly once from the isolated worktree `.claude/worktrees/rescore-floors` (off `origin/main` at `57ad52f5`).
+- Verification (from `.claude/worktrees/rescore-floors`):
+  - `node --check scripts/quality/rescore-tops.mjs` → passed.
+  - `pnpm build` (`tsc --incremental false`) → passed.
+  - `pnpm install` (workspace install, lockfile in sync) → passed.
+  - `node scripts/quality/rescore-tops.mjs --floors` → 16 newline-delimited JSON records, no exceptions (full output below).
+- 16-line output (captured 2026-06-12, single run):
+  ```
+  {"id":"p5_6c7eb20e","domain":"p5","stored":0.65,"fresh":0.72,"delta":0.07,"position":"floor"}
+  {"id":"p5_83ffe00b","domain":"p5","stored":0.75,"fresh":0.72,"delta":-0.03,"position":"floor"}
+  {"id":"gls_ebf85a55","domain":"glsl","stored":0.65,"fresh":0.68,"delta":0.03,"position":"floor"}
+  {"id":"gls_d7029ffd","domain":"glsl","stored":0.65,"fresh":0.62,"delta":-0.03,"position":"floor"}
+  {"id":"thr_1653e2a6","domain":"three","stored":0.65,"fresh":0.372,"delta":-0.278,"position":"floor"}
+  {"id":"thr_bf6fc1ff","domain":"three","stored":0.75,"fresh":0.68,"delta":-0.07,"position":"floor"}
+  {"id":"hyd_e6b82c2a","domain":"hydra","stored":0.65,"fresh":0.252,"delta":-0.398,"position":"floor"}
+  {"id":"hyd_ee3732f1","domain":"hydra","stored":0.68,"fresh":0.78,"delta":0.1,"position":"floor"}
+  {"id":"svg_ed4da0f1","domain":"svg","stored":0.78,"fresh":0.78,"delta":0,"position":"floor"}
+  {"id":"svg_2a402b4b","domain":"svg","stored":0.78,"fresh":0.68,"delta":-0.1,"position":"floor"}
+  {"id":"asc_b203e616","domain":"ascii","stored":0.82,"fresh":0.78,"delta":-0.04,"position":"floor"}
+  {"id":"asc_02221a6a","domain":"ascii","stored":0.82,"fresh":0.72,"delta":-0.1,"position":"floor"}
+  {"id":"tex_ccd3d63b","domain":"textgen","stored":0.85,"fresh":0.82,"delta":-0.03,"position":"floor"}
+  {"id":"tex_450bf30d","domain":"textgen","stored":0.85,"fresh":0.82,"delta":-0.03,"position":"floor"}
+  {"id":"kin_08cecb7a","domain":"kinetic","stored":0.85,"fresh":0.82,"delta":-0.03,"position":"floor"}
+  {"id":"kin_a85243e6","domain":"kinetic","stored":0.85,"fresh":0.78,"delta":-0.07,"position":"floor"}
+  ```
+- 3-sentence summary: across the 16 floor entries the mean `delta = fresh − stored` is **−0.0629** (sum −1.006 / 16) and every domain except `p5` shows a negative mean, confirming the stored floor scores are systematically inflated versus the banded-rubric fresh judge; the **worst domain is `three`** with mean delta −0.174 (entry `thr_1653e2a6` at −0.278) and the single worst entry is `hyd_e6b82c2a` at −0.398, so floor inflation is real and `three`/`hydra` are the highest-priority targets for re-scoring or floor-relaxation work before the next admission cycle.

@@ -2609,3 +2609,56 @@ body::before {
   .stage-bench__pulse { animation: none; opacity: 0.8; }
 }
 .stage-frame--img { object-fit: contain; }
+
+/* Real views (slice 3): a dedicated view owns the main surface — no chat
+   scaffolding above it, and without a stage the view spans the preview column. */
+.sinter-workbench--view {
+  grid-template-areas:
+    "command command"
+    "rail chat";
+  grid-template-columns: minmax(138px, 0.14fr) minmax(0, 1fr);
+}
+
+.sinter-view-surface {
+  grid-area: chat;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--sinter-surface-1);
+  border: 1px solid var(--sinter-line);
+  border-radius: 14px;
+  padding: 20px 24px;
+}
+
+.sinter-view-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  border-bottom: 1px solid var(--sinter-line);
+  padding-bottom: 12px;
+}
+
+.sinter-view-head h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--sinter-text);
+  letter-spacing: -0.01em;
+}
+
+.sinter-view-head p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--sinter-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.sinter-view-body {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}

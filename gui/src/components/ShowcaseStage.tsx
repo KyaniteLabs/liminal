@@ -1,10 +1,12 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { WorkbenchMode } from '../gui/workbenchState';
+import { useTuiBridgeSession } from '../gui/useTuiBridgeSession';
 
 /**
  * ShowcaseStage — the A+C entry view: a near-black room where the newest
- * gallery work renders live and large, with a ghost rail for real views and a
- * single chat line that hands a prompt to the Create flow. The art is the only
+ * gallery work renders live and large. The chat line is a real bench: prompts
+ * run through the bridge session without leaving the room, and when a run
+ * produces a preview the stage hangs the fresh work. The art is the only
  * thing that moves; chrome stays still.
  */
 
@@ -15,7 +17,6 @@ const API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BAS
 interface StageProps {
   modes: WorkbenchMode[];
   onNavigate: (modeId: string) => void;
-  onCreate: (prompt: string) => void;
 }
 
 interface FeaturedWork {
@@ -31,16 +32,25 @@ function prettifyProject(name: string): string {
     .trim() || name;
 }
 
-export function ShowcaseStage({ modes, onNavigate, onCreate }: StageProps) {
+export function ShowcaseStage({ modes, onNavigate }: StageProps) {
   const [projects, setProjects] = useState<string[]>([]);
   const [featured, setFeatured] = useState<FeaturedWork | null>(null);
   const [stageError, setStageError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [prompt, setPrompt] = useState('');
+  const [lastPrompt, setLastPrompt] = useState<string | null>(null);
+  const [showRun, setShowRun] = useState(false);
+  const queuedPromptRef = useRef<string | null>(null);
+
+  const bridge = useTuiBridgeSession();
+  const runActive = bridge.submitting || bridge.summary.active;
+  const runPreview = bridge.preview;
+  const pending = bridge.session?.pendingAction ?? null;
 
   const featureProject = useCallback(async (project: string) => {
     setLoading(true);
     setStageError(null);
+    setShowRun(false);
     try {
       const res = await fetch(`${API}/gallery/${encodeURIComponent(project)}`);
       if (!res.ok) throw new Error(`gallery/${project}: ${res.status}`);
@@ -82,11 +92,46 @@ export function ShowcaseStage({ modes, onNavigate, onCreate }: StageProps) {
     return () => { cancelled = true; };
   }, [featureProject]);
 
+  // A prompt submitted before the session existed waits here until the
+  // session arrives, then runs — keeps the submit handler race-free.
+  useEffect(() => {
+    if (bridge.session?.sessionId && queuedPromptRef.current) {
+      const queued = queuedPromptRef.current;
+      queuedPromptRef.current = null;
+      void bridge.submitPrompt(queued, { clientIntent: 'creative' });
+    }
+  }, [bridge.session?.sessionId, bridge]);
+
+  // When a run yields a visual preview, the stage hangs the fresh work.
+  useEffect(() => {
+    if (runPreview && (runPreview.type === 'html' || runPreview.type === 'music' || runPreview.type === 'image')) {
+      setShowRun(true);
+    }
+  }, [runPreview]);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const value = prompt.trim();
-    if (value) onCreate(value);
+    if (!value || runActive) return;
+    setLastPrompt(value);
+    setPrompt('');
+    if (bridge.session?.sessionId) {
+      // The stage bench is a creative surface: route straight to generation
+      // instead of letting the classifier file poetic prompts under chat.
+      void bridge.submitPrompt(value, { clientIntent: 'creative' });
+    } else {
+      queuedPromptRef.current = value;
+      void bridge.createSession();
+    }
   };
+
+  const runFrame = showRun && runPreview
+    ? runPreview.type === 'image' && runPreview.src
+      ? <img className="stage-frame stage-frame--img" src={runPreview.src} alt={lastPrompt ?? runPreview.label} />
+      : typeof runPreview.content === 'string'
+        ? <iframe className="stage-frame" srcDoc={runPreview.content} title={lastPrompt ?? runPreview.label} sandbox="allow-scripts" />
+        : null
+    : null;
 
   return (
     <div className="stage-room">
@@ -106,15 +151,15 @@ export function ShowcaseStage({ modes, onNavigate, onCreate }: StageProps) {
       </nav>
 
       <main className="stage-canvas" aria-label="Featured work">
-        {featured && (
+        {runFrame ?? (featured && (
           <iframe
             className="stage-frame"
             src={featured.previewUrl}
             title={`Featured work: ${prettifyProject(featured.project)}`}
             sandbox="allow-scripts"
           />
-        )}
-        {!featured && !loading && (
+        ))}
+        {!runFrame && !featured && !loading && (
           <div className="stage-empty">
             {stageError ? (
               <>
@@ -130,9 +175,14 @@ export function ShowcaseStage({ modes, onNavigate, onCreate }: StageProps) {
             )}
           </div>
         )}
-        {loading && <div className="stage-empty"><p>Hanging the work…</p></div>}
+        {!runFrame && loading && <div className="stage-empty"><p>Hanging the work…</p></div>}
 
-        {featured && (
+        {runFrame ? (
+          <div className="stage-caption">
+            <strong>{lastPrompt ?? 'New work'}</strong>
+            <span>fresh from this session · unsaved</span>
+          </div>
+        ) : featured && (
           <div className="stage-caption">
             <strong>{prettifyProject(featured.project)}</strong>
             <span>{featured.iterationCount} iteration{featured.iterationCount === 1 ? '' : 's'} · gallery</span>
@@ -146,8 +196,8 @@ export function ShowcaseStage({ modes, onNavigate, onCreate }: StageProps) {
                 key={p}
                 type="button"
                 role="option"
-                aria-selected={featured?.project === p}
-                className={featured?.project === p ? 'stage-strip__item stage-strip__item--active' : 'stage-strip__item'}
+                aria-selected={!showRun && featured?.project === p}
+                className={!showRun && featured?.project === p ? 'stage-strip__item stage-strip__item--active' : 'stage-strip__item'}
                 onClick={() => void featureProject(p)}
               >
                 {prettifyProject(p)}
@@ -157,16 +207,35 @@ export function ShowcaseStage({ modes, onNavigate, onCreate }: StageProps) {
         )}
       </main>
 
-      <form id="stage-chat" className="stage-chat" onSubmit={submit}>
-        <input
-          type="text"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="What should we make?"
-          aria-label="Describe what to create"
-        />
-        <button type="submit" disabled={!prompt.trim()}>Create</button>
-      </form>
+      <div className="stage-bench">
+        {bridge.error && (
+          <p className="stage-bench__line stage-bench__line--error" role="alert">{bridge.error}</p>
+        )}
+        {pending && (
+          <div className="stage-bench__line stage-bench__pending">
+            <span>{pending.title}{pending.description ? ` — ${pending.description}` : ''}</span>
+            <button type="button" onClick={() => void bridge.confirmPending()}>Confirm</button>
+            <button type="button" className="stage-bench__ghost" onClick={() => void bridge.cancelPending()}>Cancel</button>
+          </div>
+        )}
+        {runActive && !pending && (
+          <div className="stage-bench__line" aria-live="polite">
+            <span className="stage-bench__pulse" aria-hidden="true" />
+            <span>{bridge.summary.phase || 'working'}{lastPrompt ? ` — ${lastPrompt}` : ''}</span>
+            <button type="button" className="stage-bench__ghost" onClick={() => void bridge.cancelCurrent()}>Stop</button>
+          </div>
+        )}
+        <form id="stage-chat" className="stage-chat" onSubmit={submit}>
+          <input
+            type="text"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder={runActive ? 'Working — you can queue the next idea' : 'What should we make?'}
+            aria-label="Describe what to create"
+          />
+          <button type="submit" disabled={!prompt.trim() || runActive}>Create</button>
+        </form>
+      </div>
     </div>
   );
 }

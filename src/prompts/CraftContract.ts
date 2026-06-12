@@ -30,3 +30,33 @@ Exhibition grade required:
 - Max 3 hues + 1 accent.
 - If animated: eased, purposeful motion.
 </craft_contract>`;
+
+/**
+ * SVG-specific contract — keeps the craft intent but is worded for a domain whose
+ * validator requires a raw `<svg>...</svg>` document and no markdown/prose.
+ */
+export const SVG_CRAFT_CONTRACT = `<craft_contract domain="svg">
+Exhibition-grade SVG, delivered as a raw <svg>...</svg> document only.
+- ROOT: output must start with <svg and end with </svg>. No markdown fences, no prose, no HTML wrappers, no text outside the root element.
+- COMPACT FIRST: the design must be small enough to close the </svg> tag. Prefer 8-14 purposeful visible elements. If a detailed plan does not fit, simplify shapes rather than truncate.
+- COMPOSITION: one dominant focal point or a deliberately structured field; use asymmetry, grouping, or leading lines.
+- DEPTH: at least two distinct spatial layers (foreground/background) via scale, overlap, or value separation.
+- LIGHT & VALUE: dark anchors, mid tones, and reserved highlights; avoid uniform brightness.
+- PALETTE: at most 3 related hues plus 1 accent. Put any palette note in an XML comment inside <defs>.
+- MOTION (if animated): eased, purposeful movement with rhythm and rest.
+- NEGATIVE SPACE: leave deliberate emptiness.
+- FINISH: one small refinement a viewer notices on second look.
+The bar: a curator would hang this. A complete simple SVG beats an unfinished detailed one.
+</craft_contract>`;
+
+/** SVG-specific compact contract — local/tiny tiers. */
+export const SVG_CRAFT_CONTRACT_COMPACT = `<craft_contract domain="svg">
+Raw <svg>...</svg> document only — no fences, no prose, no text outside the root.
+Keep it compact (8-14 visible elements) and always close </svg>.
+Exhibition grade:
+- One focal point; structured composition.
+- Two depth layers (scale/overlap/value).
+- Designed contrast: dark anchors + reserved highlights.
+- Max 3 hues + 1 accent; palette note (if any) inside <defs>.
+- If animated: eased motion.
+</craft_contract>`;

@@ -92,6 +92,7 @@
     "proof:visual-output-previews": "tsx scripts/proof/visual-output-preview-contract.ts",
     "proof:studio-launch-gauntlet": "node scripts/proof/studio-launch-gauntlet.mjs",
     "proof:route-performance": "tsx scripts/proof/route-performance-budget.ts",
+    "quality:rescore": "node scripts/quality/rescore-tops.mjs",
     "quality:render": "node scripts/quality/render.mjs",
     "quality:render-gallery": "node scripts/quality/render-gallery.mjs",
     "quality:matrix": "node scripts/quality/matrix.mjs"

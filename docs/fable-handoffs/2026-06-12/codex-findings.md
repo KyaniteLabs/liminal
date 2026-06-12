@@ -45,3 +45,11 @@
   - `pnpm exec vitest run test/unit/llm/CapabilityRegistry.test.ts --coverage.enabled=false` → 28 passed.
   - `pnpm typecheck` → passed.
   - `pnpm build && npx vitest run --changed origin/main --coverage=false --retry=0 --testTimeout=10000` → 167 files passed, 2878 tests passed.
+
+## TASK 5 — Archive top re-score script
+- Branch: `codex/rescore-tops`
+- Outcome: added a read-only `scripts/quality/rescore-tops.mjs` report and wired `quality:rescore`; it selects the top-2 non-quarantined entries for each visual domain, re-renders with `HeadlessRenderer.renderWithEvidence`, re-scores with `scoreRenderedEvidence`, and prints `{id, domain, stored, fresh, delta}` JSON records without saving archive data.
+- Verification:
+  - `node --check scripts/quality/rescore-tops.mjs` → passed.
+  - `pnpm build` → passed.
+  - `pnpm quality:rescore` → completed with 16 JSON records and no exceptions (`grep -c '^{' < captured output` → 16).

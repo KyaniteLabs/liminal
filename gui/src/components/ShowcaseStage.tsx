@@ -186,6 +186,7 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
 
   return (
     <div className="stage-room">
+      <h1 className="sr-only">Sinter Studio — Showcase</h1>
       <a className="sinter-skip-link" href="#stage-chat">Skip to prompt</a>
       <nav className="stage-rail" aria-label="Studio views">
         <span className="stage-rail__mark" aria-hidden="true">S</span>
@@ -241,13 +242,12 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
         )}
 
         {program.length > 1 && (
-          <div className="stage-strip" role="listbox" aria-label="Program of works">
+          <div className="stage-strip" role="group" aria-label="Program of works">
             {program.map((work) => (
               <button
                 key={work.key}
                 type="button"
-                role="option"
-                aria-selected={!showRun && featured?.key === work.key}
+                aria-pressed={!showRun && featured?.key === work.key}
                 className={!showRun && featured?.key === work.key ? 'stage-strip__item stage-strip__item--active' : 'stage-strip__item'}
                 onClick={() => featureWork(work)}
               >

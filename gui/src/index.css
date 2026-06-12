@@ -2544,3 +2544,68 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .stage-frame { content-visibility: auto; }
 }
+
+/* Stage bench: the chat line plus live run status, pending-action prompts,
+   and error surface — the conversation without leaving the room. */
+.stage-bench {
+  position: absolute;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(640px, calc(100vw - 160px));
+  z-index: 2;
+}
+.stage-bench .stage-chat {
+  position: static;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  width: 100%;
+}
+.stage-bench__line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(18, 23, 32, 0.92);
+  border: 1px solid var(--sinter-line);
+  color: var(--sinter-muted);
+  font-size: 13px;
+  margin: 0;
+}
+.stage-bench__line--error { color: #f0a3a3; border-color: rgba(240, 163, 163, 0.4); }
+.stage-bench__pending span { flex: 1; color: var(--sinter-text); }
+.stage-bench__line button {
+  appearance: none;
+  border: 0;
+  border-radius: 7px;
+  background: var(--sinter-cyan);
+  color: #04344a;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.stage-bench__line .stage-bench__ghost {
+  background: none;
+  border: 1px solid var(--sinter-line);
+  color: var(--sinter-muted);
+}
+.stage-bench__pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sinter-cyan);
+  animation: stage-pulse 1.6s ease-in-out infinite;
+  flex: none;
+}
+@keyframes stage-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .stage-bench__pulse { animation: none; opacity: 0.8; }
+}
+.stage-frame--img { object-fit: contain; }

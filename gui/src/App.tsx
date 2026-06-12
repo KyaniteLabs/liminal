@@ -1378,10 +1378,6 @@ export default function App() {
           const target = WORKBENCH_MODES.find((m) => m.id === modeId);
           dispatchLive(switchToLiveOrganismView((target?.legacyTabs[0] ?? 'create') as GuiTab));
         }}
-        onCreate={(value) => {
-          setCreatePrompt(value);
-          dispatchLive(switchToLiveOrganismView('create'));
-        }}
       />
     );
   }

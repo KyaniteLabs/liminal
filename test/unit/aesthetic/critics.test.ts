@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { analyzeColorHarmony, analyzeColorHarmonyLIR } from '../../../src/aesthetic/critics/ColorHarmonyCritic.js';
 import { analyzeWithLLMJudge } from '../../../src/aesthetic/critics/LLMJudgeCritic.js';
 import { analyzeLayout, analyzeLayoutLIR } from '../../../src/aesthetic/critics/LayoutCritic.js';
@@ -252,6 +252,46 @@ VIOLATIONS: none`,
       expect(result.dimensionScores?.color).toBe(0.9);
       expect(result.dimensionScores?.layout).toBe(0.8);
       expect(result.violations).toHaveLength(0);
+    });
+
+    it('uses the full banded prompt for frontier judge models', async () => {
+      const generate = vi.fn(async () => ({ code: 'SCORE: 0.8\nVIOLATIONS: none', success: true }));
+      const mockLLM = {
+        generate,
+        getConfig: () => ({ model: 'glm-5v', provider: 'glm', baseUrl: '' }),
+      };
+
+      await analyzeWithLLMJudge('frontier judge code', 'p5.js', mockLLM, DEFAULT_DESIGN_CONSTRAINTS);
+
+      expect(generate).toHaveBeenCalledWith(
+        expect.stringContaining('Score bands (anchor your score in a band first'),
+        expect.any(String),
+        undefined,
+        true,
+        undefined,
+        { jsonMode: false },
+      );
+      expect(generate.mock.calls[0][0]).toContain('DIMENSIONS: color=<0-1>');
+      expect(generate.mock.calls[0][0]).not.toContain('ONE line of flat JSON only');
+    });
+
+    it('uses compact flat JSON mode for local judge base URLs', async () => {
+      const generate = vi.fn(async () => ({
+        code: '{"score":0.72,"color":0.7,"composition":0.8,"creativity":0.74,"coherence":0.69,"reasoning":"coherent","violations":["low contrast"]}',
+        success: true,
+      }));
+      const mockLLM = {
+        generate,
+        getConfig: () => ({ model: 'glm-5v', baseUrl: 'http://localhost:11434/v1' }),
+      };
+
+      const result = await analyzeWithLLMJudge('compact judge code', 'p5.js', mockLLM, DEFAULT_DESIGN_CONSTRAINTS);
+
+      expect(generate.mock.calls[0][0]).toContain('ONE line of flat JSON only');
+      expect(generate.mock.calls[0][0]).toContain('"score":0.0,"color":0.0,"composition":0.0');
+      expect(generate.mock.calls[0][5]).toEqual({ jsonMode: true });
+      expect(result.dimensionScores?.composition).toBe(0.8);
+      expect(result.violations[0].message).toBe('low contrast');
     });
 
     it('parses violations from LLM response', async () => {

@@ -116,11 +116,12 @@ describe('GUI progress dashboard', () => {
     expect(html).toContain('admitted 1');
     expect(html).toContain('admitted 5');
     expect(html).toContain('model (era-derived): MiniMax-M3');
-    expect(html).toContain('newest first, top 3 per domain');
-    expect(html).toContain('showing 3 of 9 visible archive entries');
-    expect((html.match(/\ssrc="\/api\/archive\/p5_test_/g) || [])).toHaveLength(3);
-    expect((html.match(/\ssrc="\/api\/archive\/glsl_test_/g) || [])).toHaveLength(3);
-    expect(html).not.toContain('data-src="/api/archive/');
+    expect(html).toContain('open a domain to load its top 3');
+    expect(html).toContain('open to load 3 of 9 visible archive entries');
+    expect((html.match(/\ssrc="\/api\/archive\/p5_test_/g) || [])).toHaveLength(0);
+    expect((html.match(/\ssrc="\/api\/archive\/glsl_test_/g) || [])).toHaveLength(0);
+    expect((html.match(/data-src="\/api\/archive\/p5_test_/g) || [])).toHaveLength(3);
+    expect((html.match(/data-src="\/api\/archive\/glsl_test_/g) || [])).toHaveLength(3);
     expect(html).not.toContain('show all');
   });
 });

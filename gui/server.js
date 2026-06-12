@@ -839,17 +839,17 @@ export function createApp(configPath, port = 5174) {
 
   function contactSheetHtml(data) {
     return `<section class="progress-panel" aria-label="Archive contact sheet">
-      <div class="section-heading"><h2>Contact sheet</h2><span>newest first, top ${CONTACT_SHEET_LIMIT} per domain</span></div>
+      <div class="section-heading"><h2>Contact sheet</h2><span>open a domain to load its top ${CONTACT_SHEET_LIMIT}</span></div>
       ${PROGRESS_DOMAINS.map((domain) => {
         const entries = data.entriesByDomain[domain] || [];
         const shownEntries = entries.slice(0, CONTACT_SHEET_LIMIT);
-        return `<section class="domain-section" data-domain="${escapeHtml(domain)}">
-          <div class="domain-section__heading"><h3>${escapeHtml(domain)}</h3><span>showing ${shownEntries.length} of ${entries.length} visible archive entries</span></div>
+        return `<details class="domain-section" data-domain="${escapeHtml(domain)}">
+          <summary class="domain-section__heading"><h3>${escapeHtml(domain)}</h3><span>open to load ${shownEntries.length} of ${entries.length} visible archive entries</span></summary>
           <div class="cards">
             ${shownEntries.map((entry) => {
               const prompt = entry.prompt.length > 140 ? `${entry.prompt.slice(0, 140)}…` : entry.prompt;
               return `<article class="piece-card">
-                <iframe loading="lazy" sandbox="allow-scripts" title="${escapeHtml(`${entry.domain} ${entry.id}`)}" src="/api/archive/${encodeURIComponent(entry.id)}/render"></iframe>
+                <iframe loading="lazy" sandbox="allow-scripts" title="${escapeHtml(`${entry.domain} ${entry.id}`)}" data-src="/api/archive/${encodeURIComponent(entry.id)}/render"></iframe>
                 <div class="piece-card__meta">
                   <span class="score">score ${fmtScore(entry.qualityScore)}</span>
                   ${entry.rescore ? `<span class="rescore">${fmtScore(entry.rescore.priorScore)} → ${fmtScore(entry.rescore.currentScore)}</span>` : ''}
@@ -861,7 +861,7 @@ export function createApp(configPath, port = 5174) {
               </article>`;
             }).join('')}
           </div>
-        </section>`;
+        </details>`;
       }).join('')}
     </section>`;
   }
@@ -877,7 +877,7 @@ export function createApp(configPath, port = 5174) {
         .progress-header{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}.domain-strip,.progress-panel{background:var(--sinter-surface-1);border:1px solid rgba(145,161,190,.18);border-radius:14px}.domain-strip{min-height:124px;padding:12px}.domain-strip__top,.domain-strip__stats,.section-heading,.domain-section__heading,.piece-card__meta{display:flex;justify-content:space-between;gap:10px}.domain-strip strong,.section-heading h2,.domain-section h3{font-family:var(--font-display)}.domain-strip span,.section-heading span,.domain-section span{color:var(--sinter-muted);font-size:.82rem}.admitted-total{display:grid;place-content:center;text-align:center}.admitted-total strong{font-size:3rem;color:var(--sinter-cyan)}
         .spark{width:100%;height:42px}.spark polyline{fill:none;stroke:var(--sinter-cyan);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.progress-empty{display:grid;place-items:center;height:42px;color:var(--sinter-muted);font:12px var(--font-mono)}
         .progress-panel{padding:16px;margin:18px 0}.section-heading{align-items:baseline;margin-bottom:14px}.section-heading h2,.domain-section h3{margin:0}.timeline{display:grid;gap:8px}.cycle{display:grid;grid-template-columns:minmax(210px,.9fr) minmax(160px,1fr) minmax(160px,1fr) 110px;gap:10px;align-items:center;padding:10px 12px;background:var(--sinter-surface-2);border-radius:10px;color:var(--sinter-muted);font-family:var(--font-mono);font-size:.82rem}.cycle--win{border:1px solid var(--sinter-cyan);box-shadow:0 0 0 1px rgba(89,225,255,.18)}.cycle--win strong{color:var(--sinter-cyan)}.renorm-divider{margin:10px 0;padding:8px 12px;border-left:3px solid var(--sinter-cyan);color:var(--sinter-cyan);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.12em;font-size:.72rem}
-        .domain-section{margin:22px 0}.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}.piece-card{background:var(--sinter-surface-2);border:1px solid rgba(145,161,190,.18);border-radius:12px;overflow:hidden}.piece-card iframe{width:100%;height:180px;border:0;background:#05070b}.piece-card__meta{flex-direction:column;padding:12px;font-size:.82rem;color:var(--sinter-muted)}.score{color:var(--sinter-text);font-weight:700}.rescore{color:var(--sinter-cyan);font-family:var(--font-mono)}.piece-card p{margin:0;color:var(--sinter-text)}code{font-family:var(--font-mono);color:var(--sinter-muted);word-break:break-all}
+        .domain-section{margin:22px 0}.domain-section__heading{display:grid;grid-template-columns:auto 1fr auto;cursor:pointer;align-items:center;list-style:none}.domain-section__heading::-webkit-details-marker{display:none}.domain-section__heading::before{content:'▸';color:var(--sinter-cyan);font-family:var(--font-mono)}.domain-section[open]>.domain-section__heading::before{content:'▾'}.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-top:12px}.piece-card{background:var(--sinter-surface-2);border:1px solid rgba(145,161,190,.18);border-radius:12px;overflow:hidden}.piece-card iframe{width:100%;height:180px;border:0;background:#05070b}.piece-card__meta{flex-direction:column;padding:12px;font-size:.82rem;color:var(--sinter-muted)}.score{color:var(--sinter-text);font-weight:700}.rescore{color:var(--sinter-cyan);font-family:var(--font-mono)}.piece-card p{margin:0;color:var(--sinter-text)}code{font-family:var(--font-mono);color:var(--sinter-muted);word-break:break-all}
         @media (max-width:760px){.hero,.cycle{display:block}.cycle>*{display:block;margin:3px 0}}
       </style></head><body><main class="progress-page">
         <header class="hero"><div><h1>Progress</h1><p>Visual proof of Sinter's self-improvement loop: score trend, daemon admissions, rescored honesty deltas, and archive provenance.</p></div><div id="last-updated">last updated ${escapeHtml(data.generatedAt)}</div></header>
@@ -887,8 +887,10 @@ export function createApp(configPath, port = 5174) {
       </main><script>
         window.__PROGRESS_DATA__=${initialJson};
         const fmt=n=>Number.isFinite(Number(n))?Number(n).toFixed(2):'—';
+        function loadDomain(section){section.querySelectorAll('iframe[data-src]').forEach(frame=>{if(!frame.src){frame.src=frame.dataset.src;frame.removeAttribute('data-src');}});}
+        function attachDomainPanels(){document.querySelectorAll('details.domain-section').forEach(section=>section.addEventListener('toggle',()=>{if(section.open)loadDomain(section);}));}
         async function refreshProgress(){try{const res=await fetch('/api/progress/data',{cache:'no-store'});if(!res.ok)return;const data=await res.json();document.getElementById('last-updated').textContent='last updated '+data.generatedAt;}catch{}}
-        setInterval(refreshProgress,60000);
+        attachDomainPanels(); setInterval(refreshProgress,60000);
       </script></body></html>`;
   }
 

@@ -1001,9 +1001,18 @@ export class RalphLoop {
           }
         }
 
-        // DF3 Phase 2: Single-Round Repair
+        // DF3 Phase 2: Single-Round Repair — extended to rubric climbing.
+        // Below the quality floor it repairs; in the competent band
+        // (floor..elevationBand) it runs ONE elevation pass against the
+        // judge's named weakest craft dimension. Keep-best below adopts the
+        // revision only if it scores >= the original. Bounded cost: +1
+        // gen/eval per competent generation.
         const repairMode = getRepairMode();
-        if (repairMode === 'single-round' && evaluation.score < normalizedOptions.minQualityScore) {
+        const elevationBand = (() => {
+          const v = Number.parseFloat(process.env.SINTER_ELEVATION_BAND ?? '');
+          return Number.isFinite(v) && v > 0 && v <= 1 ? v : 0.9;
+        })();
+        if (repairMode === 'single-round' && evaluation.score < Math.max(normalizedOptions.minQualityScore, elevationBand)) {
           const repairStartedAt = Date.now();
           if (normalizedOptions.chatMode) {
             normalizedOptions.onThought?.('Attempting single-round repair...');

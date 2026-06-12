@@ -137,3 +137,16 @@
   - `pnpm typecheck` → passed
   - `pnpm build` → passed
 - Note: a temporary netrc file `/tmp/netrc-svg` containing the git credential token was created during the attempted PR creation and could not be removed by this executor; the operator should delete it.
+
+## GUI TASTE PARITY — Worker handoff `worker-gui-taste-parity.md`
+- Branch: `codex/gui-taste-parity`
+- PR: `#30`
+- Outcome: closed ADR 0005 GUI review pin/reject parity gate. Added an ungated `/taste <pin|reject> <artifactId>` bridge command that records real human taste via the existing `recordReviewPreference` and emits a `review.preference_recorded` event with `{ type, sessionId, action, artifactId, saved }`. The GUI `ShowcaseStage` now shows Pin and Reject taste buttons per featured artifact that send `/taste` over the existing bridge session (`useTuiBridgeSession.submitPrompt`) and render a transient aria-live receipt. Existing `/pin`/`/reject` semantics unchanged; reviewManager gating intentionally bypassed because archive/showcase entries are not reviewManager candidates. Touched ONLY: `src/tui-bridge/TuiBridgeService.ts`, `gui/src/components/ShowcaseStage.tsx`, `gui/src/index.css`, and the two new test files. Did NOT touch `src/core/**`, `src/llm/**`, daemon, vitest thresholds, or `~/.sinter`.
+- Verification (all from `.claude/worktrees/gui-taste-parity`):
+  - `pnpm exec vitest run test/unit/tui-bridge/tasteCommand.test.ts --coverage.enabled=false` → 9 passed (mocked TasteLearningService boundary: pin, reject, missing action, invalid action, missing/whitespace artifactId, storage failure, SinterFS unavailable).
+  - `pnpm exec vitest run test/unit/tui-bridge/tasteCommand.e2e.test.ts --coverage.enabled=false` → 2 passed (real TasteLearningService + SinterFS temp dir: preference event artifact exists at `.sinter/preferences/`, SinterFS `preference` ref contains `archive-piece-99/pin` and `archive-piece-7/reject`, `trainFromProject()` reports `preferenceEventCount >= 1`).
+  - `pnpm exec vitest run test/unit/tui-bridge --coverage.enabled=false` → 118 passed across 16 files.
+  - `tsc --noEmit` → clean.
+  - `tsc --incremental false` (`pnpm build`) → clean.
+  - `git merge-base --is-ancestor f5454f4d origin/main` → passed (PR merged as `3079ad8f`).
+- Notes: GUI has no vitest config so GUI unit tests were skipped per the brief ("check gui/ for vitest config; if none, skip GUI unit tests and say so"). The `/taste` event is cast through `TuiBridgeEvent` because the task constraint forbids touching `src/tui-bridge/types.ts`; the runtime event shape is correct and consumed via `getEvents(sessionId)`.

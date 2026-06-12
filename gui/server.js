@@ -694,6 +694,9 @@ export function createApp(configPath, port = 5174) {
 
   const PROGRESS_DOMAINS = ['p5', 'glsl', 'three', 'hydra', 'svg', 'ascii', 'textgen', 'kinetic'];
   const RENORMALIZATION_AT = Date.parse('2026-06-12T00:00:00Z');
+  const DEFAULT_IFRAME_CAP = 8;
+  const WEBGL_IFRAME_CAP = 2;
+  const WEBGL_DOMAINS = new Set(['glsl', 'three', 'hydra']);
 
   function score(value) {
     const n = Number(value);
@@ -838,14 +841,15 @@ export function createApp(configPath, port = 5174) {
 
   function contactSheetHtml(data) {
     return `<section class="progress-panel" aria-label="Archive contact sheet">
-      <div class="section-heading"><h2>Contact sheet</h2><span>newest first, capped to 8 live iframes per domain</span></div>
+      <div class="section-heading"><h2>Contact sheet</h2><span>newest first, capped to avoid exhausting live WebGL contexts</span></div>
       ${PROGRESS_DOMAINS.map((domain) => {
         const entries = data.entriesByDomain[domain] || [];
+        const iframeCap = WEBGL_DOMAINS.has(domain) ? WEBGL_IFRAME_CAP : DEFAULT_IFRAME_CAP;
         return `<section class="domain-section" data-domain="${escapeHtml(domain)}">
           <div class="domain-section__heading"><h3>${escapeHtml(domain)}</h3><span>${entries.length} visible archive entries</span></div>
           <div class="cards">
             ${entries.map((entry, index) => {
-              const hidden = index >= 8;
+              const hidden = index >= iframeCap;
               const srcAttr = hidden ? `data-src="/api/archive/${encodeURIComponent(entry.id)}/render"` : `src="/api/archive/${encodeURIComponent(entry.id)}/render"`;
               const prompt = entry.prompt.length > 140 ? `${entry.prompt.slice(0, 140)}…` : entry.prompt;
               return `<article class="piece-card ${hidden ? 'piece-card--hidden' : ''}" ${hidden ? 'hidden' : ''}>
@@ -861,7 +865,7 @@ export function createApp(configPath, port = 5174) {
               </article>`;
             }).join('')}
           </div>
-          ${entries.length > 8 ? `<button class="show-all" type="button" data-domain="${escapeHtml(domain)}">show all ${entries.length}</button>` : ''}
+          ${entries.length > iframeCap ? `<button class="show-all" type="button" data-domain="${escapeHtml(domain)}">show all ${entries.length}</button>` : ''}
         </section>`;
       }).join('')}
     </section>`;

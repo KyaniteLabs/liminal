@@ -37,6 +37,15 @@ describe('GUI progress dashboard', () => {
       createdAt: '2026-06-12T16:01:00.000Z',
       metadata: {},
     });
+    entries.push(...Array.from({ length: 4 }, (_, i) => ({
+      id: `glsl_test_${i}`,
+      domain: 'glsl',
+      prompt: `glsl prompt ${i}`,
+      output: 'void main(){ gl_FragColor = vec4(1.0); }',
+      qualityScore: 0.76 + i / 100,
+      createdAt: `2026-06-12T16:1${i}:00.000Z`,
+      metadata: {},
+    })));
     entries.push({
       id: 'p5_quarantined',
       domain: 'p5',
@@ -46,7 +55,13 @@ describe('GUI progress dashboard', () => {
       createdAt: '2026-06-12T16:02:00.000Z',
       metadata: { quarantinedAt: '2026-06-12T16:03:00.000Z' },
     });
-    await fs.writeFile(path.join(archiveDir, 'quality_archive.json'), JSON.stringify({ archives: { p5: entries.filter((e) => e.domain === 'p5'), three: entries.filter((e) => e.domain === 'three') } }), 'utf8');
+    await fs.writeFile(path.join(archiveDir, 'quality_archive.json'), JSON.stringify({
+      archives: {
+        p5: entries.filter((e) => e.domain === 'p5'),
+        glsl: entries.filter((e) => e.domain === 'glsl'),
+        three: entries.filter((e) => e.domain === 'three'),
+      },
+    }), 'utf8');
 
     const ledgerPath = path.join(tempDir, 'self-improve-ledger.jsonl');
     process.env.SINTER_PROGRESS_LEDGER_PATH = ledgerPath;
@@ -103,5 +118,7 @@ describe('GUI progress dashboard', () => {
     expect(html).toContain('model (era-derived): MiniMax-M3');
     expect((html.match(/\ssrc="\/api\/archive\/p5_test_/g) || [])).toHaveLength(8);
     expect((html.match(/data-src="\/api\/archive\/p5_test_/g) || [])).toHaveLength(1);
+    expect((html.match(/\ssrc="\/api\/archive\/glsl_test_/g) || [])).toHaveLength(2);
+    expect((html.match(/data-src="\/api\/archive\/glsl_test_/g) || [])).toHaveLength(2);
   });
 });

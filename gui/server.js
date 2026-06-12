@@ -692,6 +692,226 @@ export function createApp(configPath, port = 5174) {
     );
   }
 
+  const PROGRESS_DOMAINS = ['p5', 'glsl', 'three', 'hydra', 'svg', 'ascii', 'textgen', 'kinetic'];
+  const RENORMALIZATION_AT = Date.parse('2026-06-12T00:00:00Z');
+
+  function score(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function readProgressLedgerEntries() {
+    const ledgerPath = process.env.SINTER_PROGRESS_LEDGER_PATH || path.join(cwd, 'docs', 'validation', 'self-improve-ledger.jsonl');
+    try {
+      return fs.readFileSync(ledgerPath, 'utf-8')
+        .split('\n')
+        .filter((line) => line.trim())
+        .map((line) => {
+          try { return JSON.parse(line); } catch { return null; }
+        })
+        .filter(Boolean);
+    } catch (err) {
+      if (err.code === 'ENOENT') return [];
+      throw err;
+    }
+  }
+
+  function modelEraForEntry(entry) {
+    const recorded = entry?.metadata?.generatorModel;
+    if (typeof recorded === 'string' && recorded.trim()) return { label: recorded.trim(), source: 'recorded' };
+    const created = Date.parse(entry.createdAt || '');
+    if (entry.domain === 'three' && Number.isFinite(created) && created >= Date.parse('2026-06-12T16:00:00Z')) {
+      return { label: 'MiniMax-M3', source: 'era-derived' };
+    }
+    return { label: 'glm-5v-turbo', source: 'era-derived' };
+  }
+
+  function progressEntry(entry) {
+    const model = modelEraForEntry(entry);
+    const prior = score(entry?.metadata?.rescore?.priorScore);
+    const current = score(entry.qualityScore) ?? 0;
+    return {
+      id: entry.id,
+      domain: entry.domain,
+      prompt: typeof entry.prompt === 'string' ? entry.prompt : '',
+      qualityScore: current,
+      createdAt: entry.createdAt || '',
+      modelLabel: model.label,
+      modelSource: model.source,
+      rescore: prior == null ? null : {
+        priorScore: prior,
+        currentScore: current,
+        rescoredAt: entry.metadata?.rescore?.rescoredAt || null,
+        provenance: entry.metadata?.rescore?.provenance || null,
+      },
+      renderMeasure: entry.metadata?.renderMeasure || null,
+    };
+  }
+
+  function collectProgressData() {
+    const archiveEntries = readArchiveEntries()
+      .filter((entry) => PROGRESS_DOMAINS.includes(entry.domain))
+      .filter((entry) => !entry.metadata?.quarantinedAt)
+      .map(progressEntry);
+    const entriesByDomain = {};
+    const domains = PROGRESS_DOMAINS.map((domain) => {
+      const entries = archiveEntries
+        .filter((entry) => entry.domain === domain)
+        .sort((a, b) => Date.parse(b.createdAt || '') - Date.parse(a.createdAt || ''));
+      entriesByDomain[domain] = entries;
+      const ordered = [...entries].sort((a, b) => Date.parse(a.createdAt || '') - Date.parse(b.createdAt || ''));
+      const values = entries.map((entry) => entry.qualityScore).filter((n) => Number.isFinite(n));
+      return {
+        domain,
+        count: entries.length,
+        top: values.length ? Math.max(...values) : null,
+        floor: values.length ? Math.min(...values) : null,
+        sparkline: ordered.map((entry) => ({ ts: entry.createdAt, score: entry.qualityScore })),
+      };
+    });
+    const ledger = readProgressLedgerEntries();
+    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const admittedLast24h = ledger.reduce((sum, line) => {
+      const ts = Date.parse(line.ts || '');
+      const admitted = typeof line.admitted === 'number' ? line.admitted : null;
+      return admitted != null && Number.isFinite(ts) && ts >= dayAgo ? sum + admitted : sum;
+    }, 0);
+    const timeline = ledger.slice(-40).map((line) => ({
+      ts: line.ts || '',
+      targetedDomains: Array.isArray(line.targetedDomains) ? line.targetedDomains : [],
+      scores: Array.isArray(line.scores) ? line.scores.filter((n) => Number.isFinite(Number(n))).map(Number) : [],
+      admitted: typeof line.admitted === 'number' ? line.admitted : null,
+      archive: line.after?.archive ?? null,
+      honestScoresDivider: Number.isFinite(Date.parse(line.ts || '')) && Date.parse(line.ts) >= RENORMALIZATION_AT,
+    }));
+    return { generatedAt: new Date().toISOString(), admittedLast24h, domains, timeline, entriesByDomain };
+  }
+
+  function fmtScore(value) {
+    return Number.isFinite(Number(value)) ? Number(value).toFixed(2) : '—';
+  }
+
+  function sparklineSvg(points) {
+    const values = points.map((p) => Number(p.score)).filter(Number.isFinite);
+    if (values.length < 2) return '<span class="progress-empty">not enough data</span>';
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+    const coords = points.map((p, i) => {
+      const x = values.length === 1 ? 40 : (i / (points.length - 1)) * 120;
+      const y = 34 - ((Number(p.score) - min) / range) * 28;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    return `<svg class="spark" viewBox="0 0 120 40" role="img" aria-label="score trend"><polyline points="${coords}" /></svg>`;
+  }
+
+  function progressHeaderHtml(data) {
+    return `<section class="progress-header" aria-label="Domain improvement summary">
+      ${data.domains.map((domain) => `<article class="domain-strip">
+        <div class="domain-strip__top"><strong>${escapeHtml(domain.domain)}</strong><span>${domain.count} pieces</span></div>
+        ${sparklineSvg(domain.sparkline)}
+        <div class="domain-strip__stats"><span>top ${fmtScore(domain.top)}</span><span>floor ${fmtScore(domain.floor)}</span></div>
+      </article>`).join('')}
+      <article class="domain-strip admitted-total"><div>admitted / 24h</div><strong>${data.admittedLast24h}</strong></article>
+    </section>`;
+  }
+
+  function progressTimelineHtml(data) {
+    let dividerShown = false;
+    return `<section class="progress-panel" aria-label="Self-improvement cycle timeline">
+      <div class="section-heading"><h2>Cycle timeline</h2><span>last ${data.timeline.length} daemon cycles</span></div>
+      <div class="timeline">
+        ${data.timeline.map((line) => {
+          const showDivider = line.honestScoresDivider && !dividerShown;
+          if (showDivider) dividerShown = true;
+          return `${showDivider ? '<div class="renorm-divider">scores became honest here</div>' : ''}
+            <article class="cycle ${line.admitted > 0 ? 'cycle--win' : ''}">
+              <time>${escapeHtml(line.ts || 'unknown time')}</time>
+              <span>${escapeHtml(line.targetedDomains.join(', ') || 'untargeted')}</span>
+              <span>scores ${escapeHtml(line.scores.map(fmtScore).join(' / ') || '—')}</span>
+              <strong>admitted ${line.admitted == null ? '—' : line.admitted}</strong>
+            </article>`;
+        }).join('')}
+      </div>
+    </section>`;
+  }
+
+  function contactSheetHtml(data) {
+    return `<section class="progress-panel" aria-label="Archive contact sheet">
+      <div class="section-heading"><h2>Contact sheet</h2><span>newest first, capped to 8 live iframes per domain</span></div>
+      ${PROGRESS_DOMAINS.map((domain) => {
+        const entries = data.entriesByDomain[domain] || [];
+        return `<section class="domain-section" data-domain="${escapeHtml(domain)}">
+          <div class="domain-section__heading"><h3>${escapeHtml(domain)}</h3><span>${entries.length} visible archive entries</span></div>
+          <div class="cards">
+            ${entries.map((entry, index) => {
+              const hidden = index >= 8;
+              const srcAttr = hidden ? `data-src="/api/archive/${encodeURIComponent(entry.id)}/render"` : `src="/api/archive/${encodeURIComponent(entry.id)}/render"`;
+              const prompt = entry.prompt.length > 140 ? `${entry.prompt.slice(0, 140)}…` : entry.prompt;
+              return `<article class="piece-card ${hidden ? 'piece-card--hidden' : ''}" ${hidden ? 'hidden' : ''}>
+                <iframe loading="lazy" sandbox="allow-scripts" title="${escapeHtml(`${entry.domain} ${entry.id}`)}" ${srcAttr}></iframe>
+                <div class="piece-card__meta">
+                  <span class="score">score ${fmtScore(entry.qualityScore)}</span>
+                  ${entry.rescore ? `<span class="rescore">${fmtScore(entry.rescore.priorScore)} → ${fmtScore(entry.rescore.currentScore)}</span>` : ''}
+                  <span>model (era-derived): ${escapeHtml(entry.modelSource === 'recorded' ? `${entry.modelLabel} recorded` : entry.modelLabel)}</span>
+                  <time>${escapeHtml(entry.createdAt || 'unknown date')}</time>
+                  <p title="${escapeHtml(entry.prompt)}">${escapeHtml(prompt || 'untitled generation')}</p>
+                  <code>${escapeHtml(entry.id)}</code>
+                </div>
+              </article>`;
+            }).join('')}
+          </div>
+          ${entries.length > 8 ? `<button class="show-all" type="button" data-domain="${escapeHtml(domain)}">show all ${entries.length}</button>` : ''}
+        </section>`;
+      }).join('')}
+    </section>`;
+  }
+
+  function progressDashboardHtml(data) {
+    const initialJson = escapeScript(JSON.stringify(data));
+    return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>Sinter Progress</title>
+      <style>
+        :root{color-scheme:dark;--sinter-bg-void:#07090d;--sinter-surface-1:#121720;--sinter-surface-2:#191f2b;--sinter-text:#eef3ff;--sinter-muted:#9aa7bd;--sinter-cyan:#59e1ff;--font-display:'JetBrains Mono',ui-monospace,Menlo,monospace;--font-mono:'JetBrains Mono',ui-monospace,monospace}
+        *{box-sizing:border-box} body{margin:0;background:var(--sinter-bg-void);color:var(--sinter-text);font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif} .progress-page{max-width:1480px;margin:0 auto;padding:24px}
+        .hero{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:22px}.hero h1{margin:0;font:700 clamp(2rem,5vw,4.5rem)/.9 var(--font-display);letter-spacing:-.06em}.hero p{max-width:760px;color:var(--sinter-muted)}.hero a{color:var(--sinter-cyan)}#last-updated{font-family:var(--font-mono);color:var(--sinter-muted)}
+        .progress-header{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}.domain-strip,.progress-panel{background:var(--sinter-surface-1);border:1px solid rgba(145,161,190,.18);border-radius:14px}.domain-strip{min-height:124px;padding:12px}.domain-strip__top,.domain-strip__stats,.section-heading,.domain-section__heading,.piece-card__meta{display:flex;justify-content:space-between;gap:10px}.domain-strip strong,.section-heading h2,.domain-section h3{font-family:var(--font-display)}.domain-strip span,.section-heading span,.domain-section span{color:var(--sinter-muted);font-size:.82rem}.admitted-total{display:grid;place-content:center;text-align:center}.admitted-total strong{font-size:3rem;color:var(--sinter-cyan)}
+        .spark{width:100%;height:42px}.spark polyline{fill:none;stroke:var(--sinter-cyan);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.progress-empty{display:grid;place-items:center;height:42px;color:var(--sinter-muted);font:12px var(--font-mono)}
+        .progress-panel{padding:16px;margin:18px 0}.section-heading{align-items:baseline;margin-bottom:14px}.section-heading h2,.domain-section h3{margin:0}.timeline{display:grid;gap:8px}.cycle{display:grid;grid-template-columns:minmax(210px,.9fr) minmax(160px,1fr) minmax(160px,1fr) 110px;gap:10px;align-items:center;padding:10px 12px;background:var(--sinter-surface-2);border-radius:10px;color:var(--sinter-muted);font-family:var(--font-mono);font-size:.82rem}.cycle--win{border:1px solid var(--sinter-cyan);box-shadow:0 0 0 1px rgba(89,225,255,.18)}.cycle--win strong{color:var(--sinter-cyan)}.renorm-divider{margin:10px 0;padding:8px 12px;border-left:3px solid var(--sinter-cyan);color:var(--sinter-cyan);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.12em;font-size:.72rem}
+        .domain-section{margin:22px 0}.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}.piece-card{background:var(--sinter-surface-2);border:1px solid rgba(145,161,190,.18);border-radius:12px;overflow:hidden}.piece-card iframe{width:100%;height:180px;border:0;background:#05070b}.piece-card__meta{flex-direction:column;padding:12px;font-size:.82rem;color:var(--sinter-muted)}.score{color:var(--sinter-text);font-weight:700}.rescore{color:var(--sinter-cyan);font-family:var(--font-mono)}.piece-card p{margin:0;color:var(--sinter-text)}code{font-family:var(--font-mono);color:var(--sinter-muted);word-break:break-all}.show-all{margin-top:12px;background:transparent;color:var(--sinter-cyan);border:1px solid var(--sinter-cyan);border-radius:999px;padding:8px 13px;font:700 .82rem var(--font-mono);cursor:pointer}
+        @media (max-width:760px){.hero,.cycle{display:block}.cycle>*{display:block;margin:3px 0}}
+      </style></head><body><main class="progress-page">
+        <header class="hero"><div><h1>Progress</h1><p>Visual proof of Sinter's self-improvement loop: score trend, daemon admissions, rescored honesty deltas, and archive provenance.</p></div><div id="last-updated">last updated ${escapeHtml(data.generatedAt)}</div></header>
+        <div id="progress-header">${progressHeaderHtml(data)}</div>
+        <div id="progress-timeline">${progressTimelineHtml(data)}</div>
+        ${contactSheetHtml(data)}
+      </main><script>
+        window.__PROGRESS_DATA__=${initialJson};
+        const fmt=n=>Number.isFinite(Number(n))?Number(n).toFixed(2):'—';
+        function attachShowAll(){document.querySelectorAll('.show-all').forEach(button=>button.addEventListener('click',()=>{const section=document.querySelector('.domain-section[data-domain="'+button.dataset.domain+'"]');section.querySelectorAll('.piece-card[hidden]').forEach(card=>{card.hidden=false;const frame=card.querySelector('iframe[data-src]');if(frame&&!frame.src)frame.src=frame.dataset.src;});button.remove();}));}
+        async function refreshProgress(){try{const res=await fetch('/api/progress/data',{cache:'no-store'});if(!res.ok)return;const data=await res.json();document.getElementById('last-updated').textContent='last updated '+data.generatedAt;}catch{}}
+        attachShowAll(); setInterval(refreshProgress,60000);
+      </script></body></html>`;
+  }
+
+  app.get('/api/progress/data', (_req, res) => {
+    try {
+      res.json(collectProgressData());
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/progress', (_req, res) => {
+    try {
+      setStudioCommonSecurityHeaders(res);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.send(progressDashboardHtml(collectProgressData()));
+    } catch (err) {
+      res.status(500).send(`Progress dashboard failed: ${escapeHtml(err.message)}`);
+    }
+  });
+
   app.get('/api/archive/tops', (req, res) => {
     try {
       const entries = readArchiveEntries();

@@ -20,6 +20,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': { target: process.env.VITE_API_TARGET || 'http://localhost:5174', changeOrigin: true },
+      '/preview': { target: process.env.VITE_API_TARGET || 'http://localhost:5174', changeOrigin: true },
     },
   },
 });

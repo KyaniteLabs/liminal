@@ -3,7 +3,7 @@
  * Used by GUI to show "Live organism" tab and iframe URL after Run in preview.
  */
 
-export type GuiTab = 'config' | 'create' | 'improve' | 'cockpit' | 'live' | 'liveMusic' | 'curator' | 'activity' | 'compost';
+export type GuiTab = 'showcase' | 'config' | 'create' | 'improve' | 'cockpit' | 'live' | 'liveMusic' | 'curator' | 'activity' | 'compost';
 
 export interface LiveOrganismState {
   activeTab: GuiTab;
@@ -12,7 +12,7 @@ export interface LiveOrganismState {
 }
 
 export const INITIAL_LIVE_ORGANISM_STATE: LiveOrganismState = {
-  activeTab: 'create',
+  activeTab: 'showcase',
   previewUrl: null,
   runError: null,
 };

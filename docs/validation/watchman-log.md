@@ -7,3 +7,12 @@
 - Archive check: measured 52 recent visual entries with the F19 production screenshot style; 45 ok, 2 high-score p5 too-dark admissions, 2 hydra washout/fog hits, 3 hydra render timeouts. Recorded `FAB-023`; no archive mutation.
 - Action taken: validation-entry ASCII sanitation fix in `CodeValidator` plus finding `FAB-023`.
 - Next watch item: confirm post-fix cycles have zero ASCII invalid-character failures; track high-score p5 too-dark admissions and Hydra proof brightness failures without reopening closed `FAB-019`..`FAB-022`.
+
+## 2026-06-12T05:22:00Z
+- Cycles seen: 29 (`2026-06-11T15:15:24.581Z` through `2026-06-12T04:58:20.206Z`).
+- Completion rate: 64/87 (73.6%); archive 169 -> 200 (+31); health 84.4 -> 84.4; mean score 0.676; last-five cycle means 0.750, 0.583, 0.817, 0.850, 0.820.
+- Failures diagnosed: 21 total. Breakdown: 10 `All generation candidates failed`, 7 SVG bounded direct-attempt failures (`SVG output must...` / provider invalid), 2 kinetic HTML mismatch validation retries, 1 Hydra proof too-dark failure, 1 kinetic LLM timeout. The repeated classes do not have a safe <=30-line deterministic fix from the available log evidence; the broad `All generation candidates failed` bucket needs sharper per-candidate naming before a causal fix.
+- Render-infra check: exact `0.68` clumped 3x during the known FAB-028 window (`2026-06-11T22:33:15.981Z`, `22:55:14.591Z`, `23:17:48.072Z`). A live HeadlessRenderer p5 probe produced a screenshot in 4820ms with no current infra failure; no browser reinstall or daemon restart.
+- Archive check: measured 41 archive entries created after the previous watch window with the F19-style rendered-pixel path; 23 ok, 3 washout, 15 too-dark, 0 render failures. Recorded `FAB-029` for SVG black-frame admissions plus Hydra washouts; textgen too-dark hits are noted as calibration-sensitive. No archive mutation.
+- Action taken: finding `FAB-029`; no code change.
+- Next watch item: prioritize SVG black-frame admissions (`svg_8f6582e5`, `svg_2b3e0a57`, `svg_08a9a9fe`) and repeated SVG bounded-attempt failures; keep watching for any new post-FAB-028 `0.68` clumps.

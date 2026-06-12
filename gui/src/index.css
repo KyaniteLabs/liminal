@@ -1,6 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
+  /* Single committed dark theme — the studio is a near-black gallery room.
+     color-scheme makes native controls (selects, scrollbars) follow it. */
+  color-scheme: dark;
   --sinter-bg-void: #07090d;
   --sinter-bg-shell: #0d1118;
   --sinter-surface-1: #121720;
@@ -44,10 +47,17 @@
 
 * { box-sizing: border-box; }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
   font-weight: 400;
+  font-synthesis: none;
   background: var(--sinter-bg-void);
   color: var(--sinter-text);
   min-height: 100vh;
@@ -435,12 +445,12 @@ body::before {
 
 .sinter-recourse-card__copy strong {
   margin-top: 4px;
-  color: #fee2e2;
+  color: var(--sinter-red-soft);
 }
 
 .sinter-recourse-card__copy small {
   margin-top: 5px;
-  color: #fecaca;
+  color: var(--sinter-red-soft);
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -457,7 +467,7 @@ body::before {
   border: 1px solid rgba(254, 226, 226, 0.36);
   border-radius: 8px;
   background: rgba(127, 29, 29, 0.42);
-  color: #fee2e2;
+  color: var(--sinter-red-soft);
   font-weight: 700;
   cursor: pointer;
 }
@@ -694,7 +704,7 @@ body::before {
 
 .sinter-audio-button--recording {
   border-color: var(--sinter-red-soft);
-  color: #fecaca;
+  color: var(--sinter-red-soft);
   background: rgba(127, 29, 29, 0.45);
 }
 
@@ -713,7 +723,7 @@ body::before {
   border: 1px solid rgba(252, 165, 165, 0.72);
   border-radius: 8px;
   background: rgba(127, 29, 29, 0.52);
-  color: #fee2e2;
+  color: var(--sinter-red-soft);
   font-weight: 700;
   cursor: pointer;
 }
@@ -790,7 +800,7 @@ body::before {
   display: flex;
   align-items: center;
   padding: 0 12px;
-  color: var(--sinter-dim);
+  color: var(--sinter-muted);
   cursor: pointer;
   font-size: 0.82rem;
   list-style: none;
@@ -838,7 +848,7 @@ body::before {
   border-radius: 8px;
   padding: 0 8px;
   background: transparent;
-  color: var(--sinter-dim);
+  color: var(--sinter-muted);
   font: inherit;
   font-size: 0.8rem;
   cursor: pointer;
@@ -859,7 +869,7 @@ body::before {
 }
 
 .sinter-rail-meta-details summary {
-  color: var(--sinter-dim);
+  color: var(--sinter-muted);
   cursor: pointer;
   min-height: 24px;
   display: flex;
@@ -1123,7 +1133,7 @@ body::before {
   border: 1px solid rgba(250, 204, 21, 0.5);
   border-radius: 6px;
   background: rgba(250, 204, 21, 0.12);
-  color: #fef3c7;
+  color: var(--sinter-amber-soft);
   font-family: var(--font-mono);
   font-size: 0.72rem;
   cursor: pointer;
@@ -2032,19 +2042,19 @@ body::before {
 .sinter-alert--error {
   background: var(--sinter-red-bg);
   border: 1px solid rgba(199, 93, 93, 0.3);
-  color: #e8a0a0;
+  color: var(--sinter-red-soft);
 }
 
 .sinter-alert--success {
   background: var(--sinter-green-bg);
   border: 1px solid rgba(90, 155, 110, 0.3);
-  color: #8bc49d;
+  color: var(--sinter-green-soft);
 }
 
 .sinter-alert--warn {
   background: var(--sinter-amber-bg);
   border: 1px solid rgba(201, 162, 39, 0.3);
-  color: #e8c95a;
+  color: var(--sinter-amber-soft);
 }
 
 /* ── Accessibility ─────────────────────────────────────────── */
@@ -2382,7 +2392,7 @@ body::before {
 .cockpit-review-check small { color: var(--sinter-muted); }
 .cockpit-review-check--ready { border-left: 3px solid var(--sinter-green); }
 .cockpit-review-check--blocked { border-left: 3px solid var(--sinter-red); }
-.cockpit-review-check--waiting { border-left: 3px solid #e8c95a; }
+.cockpit-review-check--waiting { border-left: 3px solid var(--sinter-amber-soft); }
 
 
 /* Backend-down remedy banner: floats above the layout so the workbench grid
@@ -2538,7 +2548,7 @@ body::before {
 .stage-empty { text-align: center; color: var(--sinter-muted); max-width: 420px; }
 .stage-empty h2 { color: var(--sinter-text); font-size: 20px; margin: 0 0 8px; font-family: var(--font-display); letter-spacing: -0.02em; }
 .stage-empty p { margin: 0 0 6px; line-height: 1.5; }
-.stage-empty__detail { font-family: var(--font-mono); font-size: 12px; color: var(--sinter-dim); }
+.stage-empty__detail { font-family: var(--font-mono); font-size: 12px; color: var(--sinter-muted); }
 @media (prefers-reduced-motion: reduce) {
   .stage-frame { content-visibility: auto; }
 }
@@ -2575,7 +2585,7 @@ body::before {
   font-size: 13px;
   margin: 0;
 }
-.stage-bench__line--error { color: #f0a3a3; border-color: rgba(240, 163, 163, 0.4); }
+.stage-bench__line--error { color: var(--sinter-red-soft); border-color: rgba(252, 165, 165, 0.4); }
 .stage-bench__pending span { flex: 1; color: var(--sinter-text); }
 .stage-bench__line button {
   appearance: none;
@@ -2660,4 +2670,33 @@ body::before {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+
+/* Windows High Contrast / forced-colors: let system colors win; keep focus visible. */
+@media (forced-colors: active) {
+  .sinter-rail-button,
+  .sinter-subnav-button,
+  .stage-rail__item,
+  .stage-strip__item {
+    border: 1px solid ButtonText;
+  }
+  :focus-visible {
+    outline: 2px solid Highlight;
+  }
+}
+
+
+/* Typography pass: readable measures and tidy rag (progressive enhancement). */
+.sinter-chat-message p,
+.sinter-view-body p,
+.stage-empty p {
+  max-width: 66ch;
+  text-wrap: pretty;
+}
+
+.sinter-chat-message h2,
+.sinter-view-head h2,
+.stage-empty h2 {
+  text-wrap: balance;
 }

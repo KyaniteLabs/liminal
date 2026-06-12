@@ -26,7 +26,7 @@ describe('GUI progress dashboard', () => {
       output: 'function setup(){} function draw(){}',
       qualityScore: 0.7 + i / 100,
       createdAt: `2026-06-12T15:0${i}:00.000Z`,
-      metadata: i === 0 ? { rescore: { priorScore: 0.95, rescoredAt: '2026-06-12T15:30:00.000Z', provenance: 'test' } } : {},
+      metadata: i === 0 || i === 8 ? { rescore: { priorScore: 0.95, rescoredAt: '2026-06-12T15:30:00.000Z', provenance: 'test' } } : {},
     }));
     entries.push({
       id: 'three_minimax',
@@ -105,20 +105,22 @@ describe('GUI progress dashboard', () => {
     expect(data.timeline.map((line) => line.admitted)).toEqual([null, 1, 5]);
   });
 
-  it('server-renders the progress page with lazy capped iframes and honesty markers', async () => {
+  it('server-renders the progress page with top-three contact sheets and honesty markers', async () => {
     const res = await fetch(`http://127.0.0.1:${port}/progress`);
     expect(res.status).toBe(200);
     const html = await res.text();
 
     expect(html).toContain('--sinter-bg-void');
     expect(html).toContain('scores became honest here');
-    expect(html).toContain('0.95 → 0.70');
+    expect(html).toContain('0.95 → 0.78');
     expect(html).toContain('admitted 1');
     expect(html).toContain('admitted 5');
     expect(html).toContain('model (era-derived): MiniMax-M3');
-    expect((html.match(/\ssrc="\/api\/archive\/p5_test_/g) || [])).toHaveLength(8);
-    expect((html.match(/data-src="\/api\/archive\/p5_test_/g) || [])).toHaveLength(1);
-    expect((html.match(/\ssrc="\/api\/archive\/glsl_test_/g) || [])).toHaveLength(2);
-    expect((html.match(/data-src="\/api\/archive\/glsl_test_/g) || [])).toHaveLength(2);
+    expect(html).toContain('newest first, top 3 per domain');
+    expect(html).toContain('showing 3 of 9 visible archive entries');
+    expect((html.match(/\ssrc="\/api\/archive\/p5_test_/g) || [])).toHaveLength(3);
+    expect((html.match(/\ssrc="\/api\/archive\/glsl_test_/g) || [])).toHaveLength(3);
+    expect(html).not.toContain('data-src="/api/archive/');
+    expect(html).not.toContain('show all');
   });
 });

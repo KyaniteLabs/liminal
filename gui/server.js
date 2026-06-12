@@ -694,9 +694,7 @@ export function createApp(configPath, port = 5174) {
 
   const PROGRESS_DOMAINS = ['p5', 'glsl', 'three', 'hydra', 'svg', 'ascii', 'textgen', 'kinetic'];
   const RENORMALIZATION_AT = Date.parse('2026-06-12T00:00:00Z');
-  const DEFAULT_IFRAME_CAP = 8;
-  const WEBGL_IFRAME_CAP = 2;
-  const WEBGL_DOMAINS = new Set(['glsl', 'three', 'hydra']);
+  const CONTACT_SHEET_LIMIT = 3;
 
   function score(value) {
     const n = Number(value);
@@ -841,19 +839,17 @@ export function createApp(configPath, port = 5174) {
 
   function contactSheetHtml(data) {
     return `<section class="progress-panel" aria-label="Archive contact sheet">
-      <div class="section-heading"><h2>Contact sheet</h2><span>newest first, capped to avoid exhausting live WebGL contexts</span></div>
+      <div class="section-heading"><h2>Contact sheet</h2><span>newest first, top ${CONTACT_SHEET_LIMIT} per domain</span></div>
       ${PROGRESS_DOMAINS.map((domain) => {
         const entries = data.entriesByDomain[domain] || [];
-        const iframeCap = WEBGL_DOMAINS.has(domain) ? WEBGL_IFRAME_CAP : DEFAULT_IFRAME_CAP;
+        const shownEntries = entries.slice(0, CONTACT_SHEET_LIMIT);
         return `<section class="domain-section" data-domain="${escapeHtml(domain)}">
-          <div class="domain-section__heading"><h3>${escapeHtml(domain)}</h3><span>${entries.length} visible archive entries</span></div>
+          <div class="domain-section__heading"><h3>${escapeHtml(domain)}</h3><span>showing ${shownEntries.length} of ${entries.length} visible archive entries</span></div>
           <div class="cards">
-            ${entries.map((entry, index) => {
-              const hidden = index >= iframeCap;
-              const srcAttr = hidden ? `data-src="/api/archive/${encodeURIComponent(entry.id)}/render"` : `src="/api/archive/${encodeURIComponent(entry.id)}/render"`;
+            ${shownEntries.map((entry) => {
               const prompt = entry.prompt.length > 140 ? `${entry.prompt.slice(0, 140)}…` : entry.prompt;
-              return `<article class="piece-card ${hidden ? 'piece-card--hidden' : ''}" ${hidden ? 'hidden' : ''}>
-                <iframe loading="lazy" sandbox="allow-scripts" title="${escapeHtml(`${entry.domain} ${entry.id}`)}" ${srcAttr}></iframe>
+              return `<article class="piece-card">
+                <iframe loading="lazy" sandbox="allow-scripts" title="${escapeHtml(`${entry.domain} ${entry.id}`)}" src="/api/archive/${encodeURIComponent(entry.id)}/render"></iframe>
                 <div class="piece-card__meta">
                   <span class="score">score ${fmtScore(entry.qualityScore)}</span>
                   ${entry.rescore ? `<span class="rescore">${fmtScore(entry.rescore.priorScore)} → ${fmtScore(entry.rescore.currentScore)}</span>` : ''}
@@ -865,7 +861,6 @@ export function createApp(configPath, port = 5174) {
               </article>`;
             }).join('')}
           </div>
-          ${entries.length > iframeCap ? `<button class="show-all" type="button" data-domain="${escapeHtml(domain)}">show all ${entries.length}</button>` : ''}
         </section>`;
       }).join('')}
     </section>`;
@@ -882,7 +877,7 @@ export function createApp(configPath, port = 5174) {
         .progress-header{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}.domain-strip,.progress-panel{background:var(--sinter-surface-1);border:1px solid rgba(145,161,190,.18);border-radius:14px}.domain-strip{min-height:124px;padding:12px}.domain-strip__top,.domain-strip__stats,.section-heading,.domain-section__heading,.piece-card__meta{display:flex;justify-content:space-between;gap:10px}.domain-strip strong,.section-heading h2,.domain-section h3{font-family:var(--font-display)}.domain-strip span,.section-heading span,.domain-section span{color:var(--sinter-muted);font-size:.82rem}.admitted-total{display:grid;place-content:center;text-align:center}.admitted-total strong{font-size:3rem;color:var(--sinter-cyan)}
         .spark{width:100%;height:42px}.spark polyline{fill:none;stroke:var(--sinter-cyan);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.progress-empty{display:grid;place-items:center;height:42px;color:var(--sinter-muted);font:12px var(--font-mono)}
         .progress-panel{padding:16px;margin:18px 0}.section-heading{align-items:baseline;margin-bottom:14px}.section-heading h2,.domain-section h3{margin:0}.timeline{display:grid;gap:8px}.cycle{display:grid;grid-template-columns:minmax(210px,.9fr) minmax(160px,1fr) minmax(160px,1fr) 110px;gap:10px;align-items:center;padding:10px 12px;background:var(--sinter-surface-2);border-radius:10px;color:var(--sinter-muted);font-family:var(--font-mono);font-size:.82rem}.cycle--win{border:1px solid var(--sinter-cyan);box-shadow:0 0 0 1px rgba(89,225,255,.18)}.cycle--win strong{color:var(--sinter-cyan)}.renorm-divider{margin:10px 0;padding:8px 12px;border-left:3px solid var(--sinter-cyan);color:var(--sinter-cyan);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.12em;font-size:.72rem}
-        .domain-section{margin:22px 0}.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}.piece-card{background:var(--sinter-surface-2);border:1px solid rgba(145,161,190,.18);border-radius:12px;overflow:hidden}.piece-card iframe{width:100%;height:180px;border:0;background:#05070b}.piece-card__meta{flex-direction:column;padding:12px;font-size:.82rem;color:var(--sinter-muted)}.score{color:var(--sinter-text);font-weight:700}.rescore{color:var(--sinter-cyan);font-family:var(--font-mono)}.piece-card p{margin:0;color:var(--sinter-text)}code{font-family:var(--font-mono);color:var(--sinter-muted);word-break:break-all}.show-all{margin-top:12px;background:transparent;color:var(--sinter-cyan);border:1px solid var(--sinter-cyan);border-radius:999px;padding:8px 13px;font:700 .82rem var(--font-mono);cursor:pointer}
+        .domain-section{margin:22px 0}.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}.piece-card{background:var(--sinter-surface-2);border:1px solid rgba(145,161,190,.18);border-radius:12px;overflow:hidden}.piece-card iframe{width:100%;height:180px;border:0;background:#05070b}.piece-card__meta{flex-direction:column;padding:12px;font-size:.82rem;color:var(--sinter-muted)}.score{color:var(--sinter-text);font-weight:700}.rescore{color:var(--sinter-cyan);font-family:var(--font-mono)}.piece-card p{margin:0;color:var(--sinter-text)}code{font-family:var(--font-mono);color:var(--sinter-muted);word-break:break-all}
         @media (max-width:760px){.hero,.cycle{display:block}.cycle>*{display:block;margin:3px 0}}
       </style></head><body><main class="progress-page">
         <header class="hero"><div><h1>Progress</h1><p>Visual proof of Sinter's self-improvement loop: score trend, daemon admissions, rescored honesty deltas, and archive provenance.</p></div><div id="last-updated">last updated ${escapeHtml(data.generatedAt)}</div></header>
@@ -892,9 +887,8 @@ export function createApp(configPath, port = 5174) {
       </main><script>
         window.__PROGRESS_DATA__=${initialJson};
         const fmt=n=>Number.isFinite(Number(n))?Number(n).toFixed(2):'—';
-        function attachShowAll(){document.querySelectorAll('.show-all').forEach(button=>button.addEventListener('click',()=>{const section=document.querySelector('.domain-section[data-domain="'+button.dataset.domain+'"]');section.querySelectorAll('.piece-card[hidden]').forEach(card=>{card.hidden=false;const frame=card.querySelector('iframe[data-src]');if(frame&&!frame.src)frame.src=frame.dataset.src;});button.remove();}));}
         async function refreshProgress(){try{const res=await fetch('/api/progress/data',{cache:'no-store'});if(!res.ok)return;const data=await res.json();document.getElementById('last-updated').textContent='last updated '+data.generatedAt;}catch{}}
-        attachShowAll(); setInterval(refreshProgress,60000);
+        setInterval(refreshProgress,60000);
       </script></body></html>`;
   }
 

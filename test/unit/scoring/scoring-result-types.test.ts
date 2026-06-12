@@ -112,6 +112,7 @@ function makeMockLLM() {
       const result = await mockGenerate();
       return { content: result?.code ?? '', toolCalls: [], success: result?.success ?? false };
     }),
+    getConfig: vi.fn(() => ({ model: 'glm-5v', provider: 'glm', baseUrl: '' })),
   };
 }
 

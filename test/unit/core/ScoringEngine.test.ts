@@ -143,6 +143,7 @@ describe('ScoringEngine', () => {
     mockAestheticCriticInstance.critique.mockReturnValue(AESTHETIC_REPORT);
     mockHeuristicScoreOutput.mockReturnValue(HEURISTIC_DIMS);
     mockQuickScore.mockReturnValue(0.65);
+    mockLLMClientInstance.getConfig.mockReturnValue({ model: 'glm-5v', provider: 'glm', baseUrl: '' });
     mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
       success: true,
       content: '{"score":0.85,"technical":0.9,"creative":0.8,"novelty":0.7,"reasoning":"Strong output","suggestions":["Add comments"]}',
@@ -675,6 +676,44 @@ describe('ScoringEngine', () => {
       expect(result.dimensions.novelty).toBe(0.7);
       expect(result.issues).toEqual(['Add docs']);
       expect(result.report).toEqual({ reasoning: 'Strong' });
+    });
+
+    it('uses the full banded rubric for frontier evaluator models', async () => {
+      const engine = new ScoringEngine('llm');
+      await engine.score({ output: 'frontier scorer sample', domain: Domain.P5 });
+
+      const call = mockLLMClientInstance.generateWithToolLoop.mock.calls[0][0];
+      expect(call.systemPrompt).toContain('Score bands (anchor your score in a band first');
+      expect(call.systemPrompt).toContain('"technical": <number 0-1>');
+      expect(call.systemPrompt).not.toContain('ONE line of flat JSON only');
+      expect(call.jsonMode).toBe(false);
+    });
+
+    it('uses a compact flat JSON rubric for local evaluator models', async () => {
+      mockLLMClientInstance.getConfig.mockReturnValue({ model: 'qwen2.5:7b', provider: 'ollama', baseUrl: '' });
+      const engine = new ScoringEngine('llm');
+      await engine.score({ output: 'compact scorer sample', domain: Domain.GLSL });
+
+      const call = mockLLMClientInstance.generateWithToolLoop.mock.calls[0][0];
+      expect(call.systemPrompt).toContain('Score bands (anchor your score in a band first');
+      expect(call.systemPrompt).toContain('ONE line of flat JSON only');
+      expect(call.systemPrompt).toContain('"score":0.0,"technical":0.0,"creative":0.0,"novelty":0.0');
+      expect(call.systemPrompt).toContain('No nested objects');
+      expect(call.jsonMode).toBe(true);
+    });
+
+    it('accepts nested dimension scores from full evaluator responses', async () => {
+      mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
+        success: true,
+        content: '{"score":0.77,"dimensions":{"technical":0.74,"creative":0.81,"novelty":0.69}}',
+      });
+      const engine = new ScoringEngine('llm');
+      const result = await engine.score({ output: 'nested dimension sample', domain: Domain.SVG });
+
+      expect(result.score).toBe(0.77);
+      expect(result.dimensions.technical).toBe(0.74);
+      expect(result.dimensions.creative).toBe(0.81);
+      expect(result.dimensions.novelty).toBe(0.69);
     });
 
     it('returns 0.5 fallback when LLM call fails', async () => {

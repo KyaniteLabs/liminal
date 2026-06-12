@@ -1122,6 +1122,7 @@ export class LLMClient {
     maxTokens?: number;
     temperature?: number;
     signal?: AbortSignal;
+    jsonMode?: boolean;
   }): Promise<LLMCompleteResult> {
     const {
       prompt,
@@ -1129,6 +1130,7 @@ export class LLMClient {
       maxTokens = TOKEN_LIMIT_XL,
       temperature = 0.7,
       signal,
+      jsonMode,
     } = options;
 
     // Auto-detect model on first use (for local endpoints like LM Studio)
@@ -1153,6 +1155,7 @@ export class LLMClient {
           temperature,
           maxTokens,
           signal,
+          jsonMode,
         };
 
         const genResult = await provider.generate(req);
@@ -1315,6 +1318,7 @@ export class LLMClient {
     maxTokens?: number;
     temperature?: number;
     signal?: AbortSignal;
+    jsonMode?: boolean;
   }): Promise<{
     content: string;
     toolCalls?: import('./ProviderTypes.js').ToolCallResult[];
@@ -1337,6 +1341,7 @@ export class LLMClient {
           maxTokens: options.maxTokens,
           temperature: options.temperature,
           signal: options.signal,
+          jsonMode: options.jsonMode,
         });
         return {
           content: result.text,
@@ -1354,6 +1359,7 @@ export class LLMClient {
         temperature: options.temperature ?? this.config.temperature,
         maxTokens: options.maxTokens ?? this.config.maxTokens,
         signal: options.signal,
+        jsonMode: options.jsonMode,
       };
 
       const genResult = await provider.generate(req);
@@ -1394,6 +1400,7 @@ export class LLMClient {
     maxTokens?: number;
     temperature?: number;
     signal?: AbortSignal;
+    jsonMode?: boolean;
   }): Promise<{
     content: string;
     iterations: number;
@@ -1417,6 +1424,7 @@ export class LLMClient {
         maxTokens: options.maxTokens,
         temperature: options.temperature,
         signal: options.signal,
+        jsonMode: options.jsonMode,
       });
 
       if (result.content && result.content.trim().length > 0) {

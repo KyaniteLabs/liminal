@@ -178,4 +178,27 @@ describe('KineticGenerator', () => {
       expect(KineticGenerator.directAttemptTimeoutMs()).toBe(60_000);
     });
   });
+
+  describe('normalizeKineticHtml', () => {
+    it('balances unclosed <head> tags so validation can pass', () => {
+      const gen = new KineticGenerator();
+      const raw = '<!DOCTYPE html><html><head><style>@keyframes drift { to { transform: translateX(10px); } }</style><body><div style="animation: drift 2s infinite">x</div></body></html>';
+      const normalized = (gen as any).normalizeKineticHtml(raw);
+      const headOpens = (normalized.match(/<head\b/gi) || []).length;
+      const headCloses = (normalized.match(/<\/head>/gi) || []).length;
+      expect(headOpens).toBe(1);
+      expect(headCloses).toBe(1);
+      expect(normalized).toContain('<!DOCTYPE html>');
+      expect(normalized).toContain('@keyframes drift');
+      expect(normalized).toContain('<body>');
+    });
+
+    it('injects a head section when the LLM omits one entirely', () => {
+      const gen = new KineticGenerator();
+      const raw = '<!DOCTYPE html><html><body><div style="animation: spin 2s infinite">x</div></body></html>';
+      const normalized = (gen as any).normalizeKineticHtml(raw);
+      expect(normalized).toMatch(/<head\b[^>]*>.*?<\/head>/i);
+      expect((normalized.match(/<head\b/gi) || []).length).toBe(1);
+    });
+  });
 });

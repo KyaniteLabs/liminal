@@ -1,4 +1,4 @@
-import { sanitizeSVG } from './SVGSanitizer.js';
+import { salvageSVG, sanitizeSVG } from './SVGSanitizer.js';
 import { SVG_MODE_PROFILES, type SVGMode } from './SVGModeProfiles.js';
 
 export interface SVGValidationOptions {
@@ -47,7 +47,12 @@ export function validateSVG(input: string, options: SVGValidationOptions = {}): 
     return { valid: false, error: 'SVG contains unsafe content that must not be accepted silently' };
   }
 
-  const sanitized = sanitizeSVG(input);
+  // Deterministic salvage BEFORE the rejection check: strip markdown fences
+  // and extract the first complete <svg>...</svg> from prose. Truncated
+  // output (no closing </svg>) is left for the rejection check below —
+  // we never fabricate closing tags.
+  const salvaged = salvageSVG(input);
+  const sanitized = sanitizeSVG(salvaged);
   if (!/^<svg\b/i.test(sanitized) || !/<\/svg>$/i.test(sanitized)) {
     return { valid: false, error: 'SVG output must be a raw <svg> document', sanitized };
   }

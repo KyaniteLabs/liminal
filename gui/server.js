@@ -657,9 +657,90 @@ export function createApp(configPath, port = 5174) {
       if (!last?.code) return res.status(404).json({ error: 'No renderable iteration' });
       const { HTMLWrapper } = await import('../dist/utils/htmlWrapper.js');
       const html = HTMLWrapper.wrap(last.code, { domain: undefined });
-      setPreviewSecurityHeaders(res);
-      res.send(html);
+      setStageRenderHeaders(res);
+      res.send(stageWrap(html));
     } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  const ARCHIVE_PATH = path.join(os.homedir(), '.sinter', 'archive', 'quality_archive.json');
+
+  // The stage hangs works in a near-black room; the wrapper's default white
+  // page would flood the frame when a piece draws smaller than the window.
+  // Endpoint-level only — the vision-audit wrapper output must stay untouched.
+  const STAGE_STYLE = '<style>html,body{background:#05070b !important;margin:0;min-height:100vh;display:grid;place-items:center;}</style>';
+  function stageWrap(html) {
+    return html.includes('</head>') ? html.replace('</head>', `${STAGE_STYLE}</head>`) : STAGE_STYLE + html;
+  }
+
+  // Stage renders ship the wrapper's own per-domain meta CSP (three/hydra need
+  // jsdelivr/unpkg/eval, which the preview header CSP forbids). The header only
+  // pins framing — meta CSP cannot set frame-ancestors.
+  function setStageRenderHeaders(res) {
+    setStudioCommonSecurityHeaders(res);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'self'");
+  }
+
+  function readArchiveEntries() {
+    const raw = fs.readFileSync(ARCHIVE_PATH, 'utf-8');
+    const data = JSON.parse(raw);
+    const archives = data?.archives && typeof data.archives === 'object' ? data.archives : {};
+    return Object.values(archives).flat().filter(
+      (e) => e && typeof e.id === 'string' && typeof e.output === 'string' && typeof e.qualityScore === 'number',
+    );
+  }
+
+  app.get('/api/archive/tops', (req, res) => {
+    try {
+      const entries = readArchiveEntries();
+      const limit = Math.min(Number(req.query.limit) || 12, 50);
+      // Curate for diversity: each domain's best first, then fill by score.
+      const byScore = [...entries].sort((a, b) => b.qualityScore - a.qualityScore);
+      const seen = new Set();
+      const domainBests = byScore.filter((e) => !seen.has(e.domain) && seen.add(e.domain));
+      const rest = byScore.filter((e) => !domainBests.includes(e));
+      const tops = [...domainBests, ...rest].slice(0, limit).map((e) => ({
+        id: e.id,
+        domain: e.domain,
+        prompt: e.prompt,
+        qualityScore: e.qualityScore,
+        createdAt: e.createdAt,
+      }));
+      res.json({ tops });
+    } catch (err) {
+      if (err.code === 'ENOENT') return res.json({ tops: [] });
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/archive/:id/render', async (req, res) => {
+    try {
+      const id = decodeURIComponent(req.params.id || '');
+      const entry = readArchiveEntries().find((e) => e.id === id);
+      if (!entry) return res.status(404).json({ error: 'Archive entry not found' });
+      // Same domain mapping as scripts/quality/archive-measure.mjs: ascii and
+      // textgen are plain text (pre), kinetic entries are already full HTML,
+      // and the wrapper's name for glsl is 'shader'.
+      let html;
+      if (entry.domain === 'ascii' || entry.domain === 'textgen') {
+        const text = entry.output;
+        const lines = text.split('\n');
+        const longest = Math.max(1, ...lines.map((line) => line.length));
+        const fontPx = Math.max(14, Math.min(34, Math.floor(Math.min((900 * 0.9) / (longest * 0.6), (600 * 0.9) / (lines.length * 1.25)))));
+        html = `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#06080f;color:#cfe;font:${fontPx}px ui-monospace,Menlo,monospace;display:flex;align-items:center;justify-content:center}pre{padding:18px;white-space:pre;line-height:1.25}</style></head><body><pre>${escapeHtml(text)}</pre></body></html>`;
+      } else if (entry.domain === 'kinetic') {
+        html = entry.output;
+      } else {
+        const { HTMLWrapper } = await import('../dist/utils/htmlWrapper.js');
+        const wrapperDomain = entry.domain === 'glsl' ? 'shader' : entry.domain;
+        html = HTMLWrapper.wrap(entry.output, { domain: wrapperDomain });
+      }
+      setStageRenderHeaders(res);
+      res.send(stageWrap(html));
+    } catch (err) {
+      if (err.code === 'ENOENT') return res.status(404).json({ error: 'Archive not found' });
       res.status(500).json({ error: err.message });
     }
   });

@@ -12,8 +12,9 @@
 
 ## TASK 1 — Band + tier the ScoringEngine LLM strategy
 - Branch: `codex/scoring-llm-tier`
-- PR: pending.
+- PR: `#23`
 - Outcome: shared the evaluator rubric, tiered the LLM scoring strategy prompt, threaded compact `jsonMode` through the tool-loop path, and added focused prompt/parser tests.
 - Verification:
   - `pnpm exec vitest run test/unit/core/ScoringEngine.test.ts test/unit/prompts/PromptTier.test.ts --coverage.enabled=false` → 96 passed.
+  - `pnpm exec vitest run test/unit/scoring/scoring-result-types.test.ts --coverage.enabled=false` → 10 passed.
   - `pnpm build` → passed.

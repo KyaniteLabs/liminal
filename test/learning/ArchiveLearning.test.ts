@@ -84,7 +84,7 @@ describe('ArchiveLearning', () => {
   it('addOutput respects maxExamplesPerDomain limit', async () => {
     // Add 10 items (max is 5)
     for (let i = 0; i < 10; i++) {
-      await archive.addOutput(`prompt ${i}`, `output ${i}`, 'p5', 0.7 + i * 0.02);
+      await archive.addOutput(`prompt ${i}`, `output ${i}`, 'p5', 0.85 + i * 0.01);
     }
 
     const examples = archive.getExamples('p5', 10);
@@ -92,19 +92,19 @@ describe('ArchiveLearning', () => {
 
     // Should keep the highest quality ones
     const qualities = examples.map(e => e.qualityScore).sort((a, b) => b - a);
-    expect(qualities[0]).toBeCloseTo(0.88, 1); // Highest
-    expect(qualities[4]).toBeCloseTo(0.80, 1); // 5th highest
+    expect(qualities[0]).toBeCloseTo(0.94, 2); // Highest
+    expect(qualities[4]).toBeCloseTo(0.90, 2); // 5th highest
   });
 
   it('getExamples returns items sorted by quality', async () => {
-    await archive.addOutput('prompt1', 'output1', 'p5', 0.75);
-    await archive.addOutput('prompt2', 'output2', 'p5', 0.85);
-    await archive.addOutput('prompt3', 'output3', 'p5', 0.80);
+    await archive.addOutput('prompt1', 'output1', 'p5', 0.86);
+    await archive.addOutput('prompt2', 'output2', 'p5', 0.90);
+    await archive.addOutput('prompt3', 'output3', 'p5', 0.88);
 
     const examples = archive.getExamples('p5', 3);
-    expect(examples[0].qualityScore).toBe(0.85);
-    expect(examples[1].qualityScore).toBe(0.80);
-    expect(examples[2].qualityScore).toBe(0.75);
+    expect(examples[0].qualityScore).toBe(0.90);
+    expect(examples[1].qualityScore).toBe(0.88);
+    expect(examples[2].qualityScore).toBe(0.86);
   });
 
   it('getExamples respects minScore parameter', async () => {
@@ -119,7 +119,7 @@ describe('ArchiveLearning', () => {
 
   it('getExamples respects n parameter', async () => {
     for (let i = 0; i < 10; i++) {
-      await archive.addOutput(`prompt ${i}`, `output ${i}`, 'p5', 0.8);
+      await archive.addOutput(`prompt ${i}`, `output ${i}`, 'p5', 0.9);
     }
 
     const examples = archive.getExamples('p5', 3);
@@ -127,15 +127,15 @@ describe('ArchiveLearning', () => {
   });
 
   it('getFewshotPrompt returns formatted string with examples', async () => {
-    await archive.addOutput('draw a circle', 'circle code', 'p5', 0.8);
-    await archive.addOutput('draw a square', 'square code', 'p5', 0.85);
+    await archive.addOutput('draw a circle', 'circle code', 'p5', 0.86);
+    await archive.addOutput('draw a square', 'square code', 'p5', 0.90);
 
     const fewshot = archive.getFewshotPrompt('p5', 2);
 
-    expect(fewshot).toContain('Example 1 (Quality: 0.85)');
+    expect(fewshot).toContain('Example 1 (Quality: 0.90)');
     expect(fewshot).toContain('Prompt: draw a square');
     expect(fewshot).toContain('Output:\nsquare code');
-    expect(fewshot).toContain('Example 2 (Quality: 0.80)');
+    expect(fewshot).toContain('Example 2 (Quality: 0.86)');
     expect(fewshot).toContain('Prompt: draw a circle');
   });
 
@@ -145,7 +145,7 @@ describe('ArchiveLearning', () => {
   });
 
   it('buildEnhancedPrompt prepends fewshot examples', async () => {
-    await archive.addOutput('example prompt', 'example output', 'p5', 0.8);
+    await archive.addOutput('example prompt', 'example output', 'p5', 0.9);
 
     const enhanced = archive.buildEnhancedPrompt('new prompt', 'p5');
 
@@ -296,9 +296,9 @@ describe('ArchiveLearning', () => {
   });
 
   it('handles multiple domains independently', async () => {
-    await archive.addOutput('p5 prompt', 'p5 output', 'p5', 0.8);
+    await archive.addOutput('p5 prompt', 'p5 output', 'p5', 0.86);
     await archive.addOutput('glsl prompt', 'glsl output', 'glsl', 0.85);
-    await archive.addOutput('music prompt', 'music output', 'music', 0.75);
+    await archive.addOutput('music prompt', 'music output', 'music', 0.86);
 
     const p5Examples = archive.getExamples('p5');
     const glslExamples = archive.getExamples('glsl');

@@ -853,13 +853,15 @@ Return ONLY a JSON object with this exact structure:
     "constraint": "<one-sentence boundary condition>"
   }
 }
-Include repairAdvice only when score is below 0.7. If score is 0.7 or above, omit repairAdvice or set it to null.
+Include repairAdvice whenever score is below 0.9. Below 0.7 it is a repair (what is broken).
+For 0.7-0.89 it is an ELEVATION: issue names the single weakest craft dimension (composition, depth, light/value, palette, motion, negative space, or finish) and fix gives one concrete change that would lift the work into the 0.90 band.
+If score is 0.9 or above, omit repairAdvice or set it to null.
 If an image is attached, evaluate the visible rendered artifact first and use the code only to diagnose repair advice.`,
     compact: `Score the rendered artifact (image attached) against the brief.
 ${RUBRIC_BANDS}
 Reply with ONE line of flat JSON, nothing else:
 {"score": 0.0, "confidence": 0.0, "reasoning": "...", "issue": "...", "fix": "..."}
-issue and fix only when score < 0.7, otherwise omit them. No nested objects. No markdown.`,
+issue and fix whenever score < 0.9: name the weakest craft dimension (composition, depth, light, palette, motion, space, finish) and one concrete change to lift it. No nested objects. No markdown.`,
   }, promptTier);
 
   const screenshotNote = evidence.screenshot

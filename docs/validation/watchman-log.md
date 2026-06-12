@@ -25,3 +25,31 @@
 - Archive check: archive delta stayed 0 across completed rows; no new admissions needed F19-style measurement and no finding was appended.
 - Action taken: watchman log only; no code change and no finding.
 - Next watch item: keep watching broad candidate-exhaustion until per-candidate `lastError` or generator/domain evidence makes it fixable; also check the in-progress 07:15 UTC cycle after it lands for renewed `0.68` or `infra` symptoms.
+
+## 2026-06-12T11:27:09Z
+- Cycles seen: 8 (`2026-06-12T07:41:45.609Z` through `2026-06-12T10:54:07.621Z`; the `07:15:46.595Z` cycle predates the previous watchman entry and is not double-counted).
+- Completion rate: 7/24 (29.2%); archive 200 -> 200 (+0); health 84.3 -> 84.3; completed-cycle mean score 0.720.
+- Failures diagnosed: 17 generation failures across the window.
+  - 4 Kinetic HTML head-balance failures: validation retry reported `HTML document has mismatched <head> tags` (07:41, 08:09, 08:57) or single-round repair failed with the same mismatch (09:27).
+  - 5 SVG bounded direct-attempt failures: `SVGGenerator: provider returned no valid SVG after 2 bounded direct attempts` (08:09, 08:57, 09:27, 09:59, 10:29). The log truncates the validator detail, so a deterministic prompt/validator fix is not available from this evidence.
+  - 4 broad `All generation candidates failed` buckets (07:41 third target, 09:27 second target, 10:29 first target, 10:54 third target). Per-candidate `lastError` is not yet named in the log; the bucket needs sharper instrumentation before a causal fix.
+  - 1 RalphLoop high-priority ambiguity rejection: pronoun "that" flagged as missing_context (10:54 second target).
+  - 1 provider rate-limit stop: `RATE-LIMITED — stopping cycle early` at 08:36, aborting the remaining 2 generation slots.
+- Render-infra check: no exact `0.68` score clumps in this window (last known clump was 05:24 UTC in the previous window). A live HeadlessRenderer textgen probe scored 0.78 with `failureClass:none`; no browser cache reinstall or daemon restart.
+- Archive check: archive delta stayed 0 across all 8 cycles; no new admissions required F19-style measurement and no finding was appended.
+- Action taken: implemented a ≤30-line deterministic fix for the repeated Kinetic `<head>` mismatch class in `src/generators/kinetic/KineticGenerator.ts` (inject missing `</head>` before `<body>` and add a minimal `<head>` when absent), with regression tests in `test/unit/generators/KineticGenerator.test.ts`. Committed as `96824bc6`. No finding appended because no archive admissions occurred.
+- Merge hygiene: local `main` was behind Forgejo `origin/main` by 9 commits (PRs #30-#33) at the start of the pass. After stashing pre-existing uncommitted codex/rubric-climbing changes, `origin/main` was merged into `main` and the Kinetic fix was pushed. The stashed changes were restored after the push so no work was lost.
+- Next watch item: confirm the Kinetic head-mismatch class disappears in the next cycles; continue watching SVG bounded-attempt failures for a reproducible validator/prompt cause; monitor for renewed `0.68` clumps or `infra` failureClass; if rate-limit stops repeat, consider a bounded backoff policy.
+
+## 2026-06-12T13:20:11Z
+- Cycles seen: 4 (`2026-06-12T11:27:05.387Z` through `2026-06-12T13:00:38.524Z`).
+- Completion rate: 9/12 (75.0%); archive 200 → 200 (+0); health 84.3 → 84.3; completed-cycle mean score 0.794; cycle means n/a, 0.820, 0.773, 0.800.
+- Failures diagnosed: 5 generation failures across the window.
+  - 3 Hydra-target failures: 11:27 target3 explicitly reported `Hydra image proof brightness() is too dark for headless proof`; 12:03 target1 and 13:00 target3 both collapsed to the broad bucket `All generation candidates failed`. The shared domain and the explicit brightness rejection suggest the two broad failures are the same Hydra reliability validator rejecting every candidate, but the daemon currently surfaces only the final aggregate error, so a deterministic ≤30-line prompt/validator fix cannot be verified from this evidence.
+  - 1 RalphLoop ambiguity rejection at 11:27 target2: `[missing_context] Pronoun "that" used without a c` — single occurrence, not repeated; no safe deterministic fix.
+  - 1 candidate-pool empty indication at 11:27 target1: the daemon's captured stderr tail ended with `...ors] Registered 0 static generators` (truncated `[Generators]`/`[registerGenerators]` info log). Single occurrence in this window; no deterministic fix.
+- Render-infra check: no exact `0.68` score clumps and no `infra` failureClass in this window. Successful visual renders occurred at 12:03 (svg 0.82, ascii 0.82) and 13:00 (ascii 0.78, kinetic 0.82), so no render probe or browser reinstall was required.
+- Archive check: archive delta stayed 0 across all 4 cycles; no admissions and no new visual entries requiring F19-style measurement. No finding appended.
+- Action taken: watchman log only; no code change and no finding.
+- Next watch item: improve per-candidate `lastError` surfacing in the self-improve cycle log so Hydra brightness/reliability rejections are named instead of collapsing to `All generation candidates failed`; continue to monitor Hydra-target cycles for a reproducible validator/prompt cause.
+- Push note: `git push origin main` was rejected by the Forgejo protected-branch pre-receive hook (`Not allowed to push to protected branch main`) even after rebasing for linear history. As a result, local `main` now leads `origin/main` by the kinetic `<head>`-balance fix and two watchman-log commits; the changes are committed but not yet on the source-of-truth branch.

@@ -235,7 +235,7 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
             )}
           </div>
         )}
-        {!runFrame && loading && <div className="stage-empty" role="status"><p>Hanging the work…</p></div>}
+        {!runFrame && loading && <div className="stage-empty" role="status"><p>Loading the artwork…</p></div>}
 
         {runFrame ? (
           <div className="stage-caption">

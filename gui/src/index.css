@@ -4,6 +4,9 @@
   /* Single committed dark theme — the studio is a near-black gallery room.
      color-scheme makes native controls (selects, scrollbars) follow it. */
   color-scheme: dark;
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --sinter-bg-void: #07090d;
   --sinter-bg-shell: #0d1118;
   --sinter-surface-1: #121720;
@@ -100,7 +103,7 @@ body::before {
   color: var(--sinter-text);
   font-weight: 700;
   text-decoration: none;
-  transition: transform 0.15s ease;
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 
 .sinter-skip-link:focus {
@@ -1488,7 +1491,7 @@ body::before {
   border-radius: inherit;
   background: linear-gradient(90deg, var(--sinter-cyan), var(--sinter-violet));
   box-shadow: 0 0 16px rgba(89, 225, 255, 0.42);
-  transition: width 220ms ease;
+  transition: width var(--dur-base) var(--ease-out);
 }
 
 .sinter-process-rail {
@@ -1808,7 +1811,7 @@ body::before {
   border: 1px solid var(--sinter-line);
   border-radius: var(--sinter-radius-sm);
   color: var(--sinter-text);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
 }
 
 .sinter-input::placeholder,
@@ -1832,7 +1835,7 @@ body::before {
   border: none;
   border-radius: var(--sinter-radius-sm);
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
+  transition: background var(--dur-fast) var(--ease-out), transform 100ms var(--ease-out);
 }
 
 .sinter-btn:active { transform: scale(0.98); }
@@ -1876,7 +1879,7 @@ body::before {
   background: var(--sinter-surface-1);
   color: var(--sinter-muted);
   cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
 
 .sinter-tab:hover {
@@ -1943,7 +1946,7 @@ body::before {
   height: 100%;
   min-width: 8px;
   background: linear-gradient(90deg, var(--sinter-cyan), var(--sinter-violet));
-  transition: width 300ms ease;
+  transition: width 300ms var(--ease-out);
 }
 
 .cockpit-metrics {
@@ -2257,7 +2260,7 @@ body::before {
   background: var(--sinter-surface-1);
   color: var(--sinter-muted);
   cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
   -webkit-appearance: none;
 }
 
@@ -2762,3 +2765,11 @@ body::before {
 .stage-empty__retry:hover { border-color: var(--sinter-cyan); color: var(--sinter-cyan); }
 .stage-empty__retry:focus-visible { outline: 2px solid var(--sinter-cyan); outline-offset: 1px; }
 .stage-empty__retry:active { transform: scale(0.97); }
+
+/* Data-viz pass: numerals align in columns on metric readouts. */
+.cockpit-big,
+.cockpit-muted,
+.sinter-process-meter,
+.stage-caption span {
+  font-variant-numeric: tabular-nums;
+}

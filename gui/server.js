@@ -642,6 +642,28 @@ export function createApp(configPath, port = 5174) {
     }
   });
 
+  app.get('/api/gallery/:project/render', async (req, res) => {
+    try {
+      const cfgPath = getConfigPath();
+      const userConfigResult = await loadConfig(cfgPath);
+      const userConfig = userConfigResult.match(c => c, () => null);
+      const galleryPath = userConfig?.galleryPath ?? DEFAULTS.galleryPath;
+      let resolvedPath;
+      try { resolvedPath = validateGalleryPath(galleryPath); } catch { return res.status(400).json({ error: 'Invalid gallery path' }); }
+      const gallery = new Gallery(resolvedPath);
+      const projectDirName = decodeURIComponent(req.params.project || '');
+      const iterations = await gallery.loadHistoryFromDir(projectDirName);
+      const last = iterations[iterations.length - 1];
+      if (!last?.code) return res.status(404).json({ error: 'No renderable iteration' });
+      const { HTMLWrapper } = await import('../dist/utils/htmlWrapper.js');
+      const html = HTMLWrapper.wrap(last.code, { domain: undefined });
+      setPreviewSecurityHeaders(res);
+      res.send(html);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.post('/api/config', async (req, res) => {
     try {
       const cfgPath = getConfigPath();

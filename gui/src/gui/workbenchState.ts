@@ -1,4 +1,4 @@
-export type WorkbenchModeId = 'generate' | 'improve' | 'review' | 'evolve' | 'observe' | 'settings';
+export type WorkbenchModeId = 'showcase' | 'generate' | 'improve' | 'review' | 'evolve' | 'observe' | 'settings';
 
 export interface WorkbenchMode {
   id: WorkbenchModeId;
@@ -7,6 +7,7 @@ export interface WorkbenchMode {
 }
 
 export const WORKBENCH_MODES: WorkbenchMode[] = [
+  { id: 'showcase', label: 'Showcase', legacyTabs: ['showcase'] },
   { id: 'generate', label: 'Generate', legacyTabs: ['create', 'cockpit', 'liveMusic'] },
   { id: 'improve', label: 'Improve', legacyTabs: ['improve'] },
   { id: 'review', label: 'Review', legacyTabs: ['live', 'curator'] },

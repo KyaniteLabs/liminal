@@ -23,6 +23,7 @@ import { summarizeAudioSync, type AudioSyncFrame } from './gui/audioSync';
 import { buildSyncPreviewHtml } from './gui/syncPreview';
 import { formatMicCaptureError } from '../../src/shared/micPermission';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
+import { ShowcaseStage } from './components/ShowcaseStage';
 import { latestClarificationRequest, latestCognitiveReceipt, latestRunReceipt } from './gui/workbenchTelemetry';
 import { buildStudioComposerSubmission } from './gui/studioConversation';
 import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
@@ -1366,6 +1367,22 @@ export default function App() {
       <div style={{ padding: 48, textAlign: 'center', color: 'var(--atelier-text-muted)', fontFamily: 'var(--font-body)' }}>
         Loading…
       </div>
+    );
+  }
+
+  if (activeMode.id === 'showcase') {
+    return (
+      <ShowcaseStage
+        modes={WORKBENCH_MODES}
+        onNavigate={(modeId) => {
+          const target = WORKBENCH_MODES.find((m) => m.id === modeId);
+          dispatchLive(switchToLiveOrganismView((target?.legacyTabs[0] ?? 'create') as GuiTab));
+        }}
+        onCreate={(value) => {
+          setCreatePrompt(value);
+          dispatchLive(switchToLiveOrganismView('create'));
+        }}
+      />
     );
   }
 

@@ -3,7 +3,7 @@ import { PromptBuilder } from '../../llm/PromptBuilder.js';
 import { detectModelTier, trimContext } from '../../llm/ModelTier.js';
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 import { SVG_MODE_PROFILES, inferSVGMode, type SVGMode } from './SVGModeProfiles.js';
-import { sanitizeSVG } from './SVGSanitizer.js';
+import { salvageSVG, sanitizeSVG } from './SVGSanitizer.js';
 import { validateSVG } from './SVGValidator.js';
 
 export interface SVGGeneratorOptions extends TierBasedGeneratorOptions {
@@ -54,7 +54,12 @@ export class SVGGenerator extends TierBasedGenerator {
   }
 
   private validateCandidate(text: string, mode: SVGMode): { svg: string | null; error?: string } {
-    const sanitized = sanitizeSVG(text);
+    // Deterministic salvage first: strip fences + extract first complete
+    // <svg>...</svg> from prose before any rejection path runs. Truncated
+    // output (no closing </svg>) is rejected by validateSVG — we never
+    // fabricate closing tags.
+    const salvaged = salvageSVG(text);
+    const sanitized = sanitizeSVG(salvaged);
     const validation = validateSVG(sanitized, { mode });
     if (validation.valid) {
       return { svg: validation.sanitized ?? sanitized };

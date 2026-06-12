@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SVGGenerator } from '../../../src/generators/svg/SVGGenerator.js';
-import { sanitizeSVG } from '../../../src/generators/svg/SVGSanitizer.js';
+import { salvageSVG, sanitizeSVG } from '../../../src/generators/svg/SVGSanitizer.js';
 import { validateSVG } from '../../../src/generators/svg/SVGValidator.js';
 import { LLMClient } from '../../../src/llm/LLMClient.js';
 import {
@@ -62,6 +62,119 @@ describe('SVGSanitizer', () => {
 
     expect(sanitized).not.toMatch(/script|foreignObject|iframe|javascript:|<image|onload/i);
     expect(sanitized).toContain('<circle');
+  });
+});
+
+describe('SVG salvage (fence-strip + prose-extract)', () => {
+  const COMPLETE_SVG = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="20" fill="#06b6d4"/></svg>';
+
+  it('salvages an ```svg``` fenced valid SVG to a clean document', () => {
+    const fenced = '```svg\n' + COMPLETE_SVG + '\n```';
+    const salvaged = salvageSVG(fenced);
+    const result = validateSVG(salvaged, { mode: 'icon' });
+
+    expect(salvaged).toBe(COMPLETE_SVG);
+    expect(result.valid).toBe(true);
+    expect(result.sanitized).toContain('xmlns="http://www.w3.org/2000/svg"');
+    expect(result.sanitized).toContain('viewBox="0 0 64 64"');
+    expect(result.sanitized).toContain('<circle');
+  });
+
+  it('salvages a bare ``` fence (no language) around a valid SVG', () => {
+    const fenced = '```\n' + COMPLETE_SVG + '\n```';
+    const salvaged = salvageSVG(fenced);
+
+    expect(salvaged).toBe(COMPLETE_SVG);
+    expect(validateSVG(salvaged, { mode: 'icon' }).valid).toBe(true);
+  });
+
+  it('salvages an ```xml fence around a valid SVG (mixed provider convention)', () => {
+    const fenced = '```xml\n' + COMPLETE_SVG + '\n```';
+    const salvaged = salvageSVG(fenced);
+
+    expect(salvaged).toBe(COMPLETE_SVG);
+    expect(validateSVG(salvaged, { mode: 'icon' }).valid).toBe(true);
+  });
+
+  it('salvages an ```html fence around a valid SVG (case-insensitive)', () => {
+    const fenced = '```HTML\n' + COMPLETE_SVG + '\n```';
+    const salvaged = salvageSVG(fenced);
+
+    expect(salvaged).toBe(COMPLETE_SVG);
+    expect(validateSVG(salvaged, { mode: 'icon' }).valid).toBe(true);
+  });
+
+  it('extracts a valid SVG from surrounding prose', () => {
+    const proseWrapped = [
+      'Here is the SVG you asked for:',
+      '',
+      COMPLETE_SVG,
+      '',
+      'Hope you like it!',
+    ].join('\n');
+    const salvaged = salvageSVG(proseWrapped);
+    const result = validateSVG(salvaged, { mode: 'icon' });
+
+    expect(salvaged).toBe(COMPLETE_SVG);
+    expect(result.valid).toBe(true);
+    expect(result.sanitized).toContain('xmlns="http://www.w3.org/2000/svg"');
+  });
+
+  it('extracts a valid SVG from a single-line prose wrapper', () => {
+    const prose = 'Sure! Here you go: ' + COMPLETE_SVG + ' Cheers!';
+    const salvaged = salvageSVG(prose);
+
+    expect(salvaged).toBe(COMPLETE_SVG);
+    expect(validateSVG(salvaged, { mode: 'icon' }).valid).toBe(true);
+  });
+
+  it('leaves an already-raw SVG unchanged (no fence, no prose)', () => {
+    const salvaged = salvageSVG(COMPLETE_SVG);
+
+    expect(salvaged).toBe(COMPLETE_SVG);
+    expect(validateSVG(salvaged, { mode: 'icon' }).valid).toBe(true);
+  });
+
+  it('STILL rejects truncated SVG with no closing </svg> (no fabricated tag)', () => {
+    const truncated = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="20" fill="#06b6d4"/></svg';
+    const salvaged = salvageSVG(truncated);
+    const result = validateSVG(salvaged, { mode: 'icon' });
+
+    expect(salvaged).toBe(truncated);
+    expect(salvaged).not.toMatch(/<\/svg>$/);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('raw <svg> document');
+  });
+
+  it('STILL rejects fenced-truncated SVG (fence stripped, but still no </svg>)', () => {
+    const truncated = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="20" fill="#06b6d4"/></svg';
+    const fencedTruncated = '```svg\n' + truncated + '\n```';
+    const salvaged = salvageSVG(fencedTruncated);
+    const result = validateSVG(salvaged, { mode: 'icon' });
+
+    expect(salvaged).toBe(truncated);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('raw <svg> document');
+  });
+
+  it('STILL rejects prose-wrapped truncated SVG (extraction yields truncated body)', () => {
+    const truncated = '<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="20" fill="#06b6d4"/></svg';
+    const prose = 'Here is the SVG: ' + truncated + ' (cut off)';
+    const salvaged = salvageSVG(prose);
+    const result = validateSVG(salvaged, { mode: 'icon' });
+
+    // No closing </svg> means the prose-extraction regex finds nothing, so
+    // salvage leaves the prose intact and the validator rejects it.
+    expect(salvaged).toBe(prose);
+    expect(salvaged).not.toMatch(/<\/svg>$/);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('raw <svg> document');
+  });
+
+  it('returns an empty string for empty or non-string input', () => {
+    expect(salvageSVG('')).toBe('');
+    // @ts-expect-error exercising defensive guard against non-string callers
+    expect(salvageSVG(undefined)).toBe('');
   });
 });
 
@@ -210,6 +323,55 @@ describe('SVGGenerator', () => {
     expect(complete.mock.calls[0]?.[0].signal).toBeInstanceOf(AbortSignal);
     expect(svg).toContain('<circle');
     expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
+  });
+
+  it('salvages a fenced valid SVG returned by the provider end-to-end', async () => {
+    process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
+    const llm = new LLMClient({ baseUrl: 'http://localhost:1234/v1', model: 'svg-test-model' });
+    const complete = vi.spyOn(llm, 'complete').mockResolvedValue({
+      text: '```svg\n<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="18" fill="#f59e0b"/></svg>\n```',
+      success: true,
+    });
+    const toolLoop = vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValue({
+      content: '',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: false,
+    });
+
+    const gen = new SVGGenerator(llm);
+    const svg = await gen.generate('orange SVG circle icon');
+
+    expect(toolLoop).not.toHaveBeenCalled();
+    expect(complete).toHaveBeenCalledOnce();
+    expect(svg).toContain('<circle');
+    expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
+    expect(svg).toContain('viewBox="0 0 64 64"');
+    expect(svg).not.toMatch(/^```/);
+  });
+
+  it('salvages a prose-wrapped valid SVG returned by the provider end-to-end', async () => {
+    process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
+    const llm = new LLMClient({ baseUrl: 'http://localhost:1234/v1', model: 'svg-test-model' });
+    const complete = vi.spyOn(llm, 'complete').mockResolvedValue({
+      text: 'Here is the icon: <svg viewBox="0 0 64 64"><rect width="64" height="64" fill="#10b981"/></svg> enjoy!',
+      success: true,
+    });
+    const toolLoop = vi.spyOn(llm, 'generateWithToolLoop').mockResolvedValue({
+      content: '',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: false,
+    });
+
+    const gen = new SVGGenerator(llm);
+    const svg = await gen.generate('green square icon');
+
+    expect(toolLoop).not.toHaveBeenCalled();
+    expect(complete).toHaveBeenCalledOnce();
+    expect(svg).toContain('<rect');
+    expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
+    expect(svg).not.toMatch(/Here is the icon/);
   });
 
   it('falls back to a compact SVG prompt when the first direct path is empty', async () => {

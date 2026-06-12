@@ -184,9 +184,13 @@ export class CompositionOrchestrator {
       const retryHtml = this.assemble(title, background, demoted, demoted.map(r => r.code));
       const measureAfter = await measureCompositeHtml(retryHtml);
       const verdictAfter = verdictFromMeasure(measureAfter);
+      // A muddy frame is already mid-luminance, so distance-from-0.5 cannot
+      // judge the retry — the spread (brightnessStd) is what mud lacks.
       const applied = verdictAfter === 'ok'
-        || Math.abs(measureAfter.meanLuminance - 0.5) < Math.abs(measure.meanLuminance - 0.5);
-      Logger.info('CompositionOrchestrator', `[render-gate] ${verdict} (lum ${measure.meanLuminance.toFixed(2)}) → demoted layers [${demote.join(',')}] → ${verdictAfter} (lum ${measureAfter.meanLuminance.toFixed(2)}); ${applied ? 'kept demoted variant' : 'kept original'}`);
+        || (verdict === 'muddy'
+          ? (measureAfter.brightnessStd ?? 0) > (measure.brightnessStd ?? 0)
+          : Math.abs(measureAfter.meanLuminance - 0.5) < Math.abs(measure.meanLuminance - 0.5));
+      Logger.info('CompositionOrchestrator', `[render-gate] ${verdict} (lum ${measure.meanLuminance.toFixed(2)}, std ${(measure.brightnessStd ?? 0).toFixed(1)}) → demoted layers [${demote.join(',')}] → ${verdictAfter} (lum ${measureAfter.meanLuminance.toFixed(2)}, std ${(measureAfter.brightnessStd ?? 0).toFixed(1)}); ${applied ? 'kept demoted variant' : 'kept original'}`);
       return {
         report: { verdict, measure, remediation: { demotedLayers: demote, verdictAfter, measureAfter, applied } },
         html: applied ? retryHtml : html,

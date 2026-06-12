@@ -14,6 +14,8 @@
 
 import type { AestheticReport, AestheticViolation, DesignConstraints } from '../types.js';
 import { Logger } from '../../utils/Logger.js';
+import { detectProviderFromUrl } from '../../harness/MultiProviderConfig.js';
+import { resolvePromptTier, tiered } from '../../prompts/PromptTier.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -42,7 +44,15 @@ export interface LLMJudgeResult extends AestheticReport {
 }
 
 export interface LLMClientLike {
-  generate(systemPrompt: string, userPrompt: string, signal?: AbortSignal): Promise<{ code: string; success: boolean }>;
+  generate(
+    systemPrompt: string,
+    userPrompt: string,
+    signal?: AbortSignal,
+    bypassCache?: boolean,
+    imageInputs?: unknown[],
+    opts?: { jsonMode?: boolean },
+  ): Promise<{ code: string; success: boolean }>;
+  getConfig?: () => { model?: string; provider?: string; baseUrl?: string };
 }
 
 // ---------------------------------------------------------------------------
@@ -60,7 +70,16 @@ const DEFAULT_JUDGE_CONFIG: LLMJudgeConfig = {
 // Prompt templates
 // ---------------------------------------------------------------------------
 
+const RUBRIC_BANDS = `Score bands (anchor your score in a band first, then refine):
+- 0.90-1.00: gallery-grade — strong composition AND deliberate palette AND evident craft; nothing broken.
+- 0.75-0.89: competent — coherent and intentional, but missing one dimension (flat lighting, no focal point, sparse).
+- 0.60-0.74: weak — renders something relevant but visually thin, muddled, or accidental-looking.
+- 0.40-0.59: poor — barely related to the brief, severe visual defects, or mostly empty.
+- 0.00-0.39: broken — blank, black, garbled, or unrelated to the brief.
+Most competent work belongs in 0.75-0.89. Reserve 0.90+ for work you would exhibit.`;
+
 const SYSTEM_PROMPT = `You are an expert aesthetic judge for creative code. Evaluate the provided code on a 0.0-1.0 scale.
+${RUBRIC_BANDS}
 
 You MUST respond in this exact format:
 SCORE: <number between 0.0 and 1.0>
@@ -76,6 +95,9 @@ Scoring guidelines:
 - 0.85-1.0: Exceptional — striking, well-composed, creative, visually memorable
 
 Evaluate based on: color harmony, layout balance, visual coherence, creativity, and overall impact.`;
+
+const COMPACT_SYSTEM_PROMPT = `${RUBRIC_BANDS}
+Reply with ONE line of flat JSON only: {"score":0.0,"color":0.0,"composition":0.0,"creativity":0.0,"coherence":0.0,"reasoning":"...","violations":["..."]}. No markdown. No nested objects.`;
 
 function buildJudgePrompt(code: string, domain: string, constraints: DesignConstraints): string {
   const constraintHints: string[] = [];
@@ -117,6 +139,38 @@ function parseJudgeResponse(response: string): {
   let reasoning = '';
   const violations: AestheticViolation[] = [];
   const dimensionScores: Record<string, number> = {};
+
+  const jsonMatch = response.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+      if (typeof parsed.score === 'number') {
+        score = Math.max(0, Math.min(1, parsed.score));
+      }
+      for (const key of ['color', 'layout', 'composition', 'creativity', 'coherence']) {
+        if (typeof parsed[key] === 'number') {
+          dimensionScores[key] = Math.max(0, Math.min(1, parsed[key]));
+        }
+      }
+      if (typeof parsed.reasoning === 'string') {
+        reasoning = parsed.reasoning;
+      }
+      const parsedViolations = parsed.violations;
+      const violationItems = Array.isArray(parsedViolations)
+        ? parsedViolations
+        : typeof parsedViolations === 'string' && parsedViolations.toLowerCase() !== 'none'
+          ? parsedViolations.split(',')
+          : [];
+      for (const item of violationItems) {
+        if (typeof item === 'string' && item.trim()) {
+          violations.push({ rule: 'llm-judge', severity: 'warning' as const, message: item.trim() });
+        }
+      }
+      return { score, reasoning, violations, dimensionScores };
+    } catch {
+      // Fall through to legacy text parsing.
+    }
+  }
 
   // Parse SCORE
   const scoreMatch = response.match(/SCORE:\s*([\d.]+)/i);
@@ -189,7 +243,12 @@ export async function analyzeWithLLMJudge(
 
   try {
     const prompt = buildJudgePrompt(code, domain, constraints);
-    const result = await llm.generate(SYSTEM_PROMPT, prompt);
+    const llmConfig = llm.getConfig?.();
+    const provider = llmConfig?.provider
+      ?? (llmConfig?.baseUrl ? detectProviderFromUrl(llmConfig.baseUrl) : undefined);
+    const promptTier = resolvePromptTier(llmConfig?.model ?? '', provider);
+    const systemPrompt = tiered({ full: SYSTEM_PROMPT, compact: COMPACT_SYSTEM_PROMPT }, promptTier);
+    const result = await llm.generate(systemPrompt, prompt, undefined, true, undefined, { jsonMode: promptTier === 'compact' });
 
     if (!result.success || !result.code) {
       Logger.warn('LLMJudgeCritic', 'LLM judge call failed, returning neutral score');

@@ -22,6 +22,7 @@
 import { getEvalMode, getRepairMode } from '../config/FeatureFlags.js';
 import type { GenerationEvaluation, ConcreteRepairAdvice } from '../core/types/GenerationEvaluation.js';
 import { GeneratorHarnessTools } from '../generators/GeneratorHarnessTools.js';
+import { CRAFT_CONTRACT } from '../prompts/CraftContract.js';
 import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
 import type { EntropyResult } from '../entropy/types.js';
 import { Domain } from '../types/domains.js';
@@ -458,6 +459,12 @@ export class RalphLoop {
         let usedPrompt = PromptStore.injectContext(loadedPrompt, contextForInjection);
         if (usedPrompt === loadedPrompt) {
           usedPrompt = loadedPrompt + '\n\n---\nContext from previous iterations:\n' + contextForInjection;
+        }
+        // Every generation carries the craft contract — the generation-side
+        // mirror of the judge's rubric bands. This is the daemon's prompt
+        // chokepoint (PromptBuilder does NOT sit on this path).
+        if (!usedPrompt.includes('<craft_contract>')) {
+          usedPrompt = `${usedPrompt}\n\n${CRAFT_CONTRACT}`;
         }
 
         if (normalizedOptions.chatMode) {

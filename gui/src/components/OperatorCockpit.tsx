@@ -153,7 +153,14 @@ export function OperatorCockpit() {
 
         <section className="cockpit-card cockpit-card--wide">
           <h3 className="sinter-heading">Run Progress</h3>
-          <div className="cockpit-progress" aria-label={`Generation progress ${Math.round(derived.progressPercent * 100)} percent`}>
+          <div
+            className="cockpit-progress"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(derived.progressPercent * 100)}
+            aria-label={`Generation progress ${Math.round(derived.progressPercent * 100)} percent`}
+          >
             <div className="cockpit-progress__fill" style={{ width: `${Math.round(derived.progressPercent * 100)}%` }} />
           </div>
           <div className="cockpit-metrics">

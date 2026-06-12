@@ -972,7 +972,7 @@ export default function App() {
         <small>{improveError || improveReport?.summary || 'Green systems can still improve.'}</small>
       </div>
       <div className="sinter-improve-proposals">
-        {improveError && <div className="sinter-alert sinter-alert--error">{improveError}</div>}
+        {improveError && <div className="sinter-alert sinter-alert--error" role="alert">{improveError}</div>}
         {!improveError && !improveReport && !improveLoading && (
           <button type="button" className="sinter-btn sinter-btn--primary" onClick={() => void scanImproveOpportunities()}>
             Scan opportunities
@@ -1133,7 +1133,7 @@ export default function App() {
       )}
       {activeTab === 'create' && (
         <div className="sinter-control-panel">
-          {bridge.error && <div className="sinter-alert sinter-alert--error">{bridge.error}</div>}
+          {bridge.error && <div className="sinter-alert sinter-alert--error" role="alert">{bridge.error}</div>}
           {bridge.session?.pendingAction && (
             <div className="sinter-pending-action-card" role="group" aria-label="Pending action review">
               <span>Pending review</span>
@@ -1419,10 +1419,10 @@ export default function App() {
       {activeTab === 'config' && (
         <form id="sinter-config-form" onSubmit={(e: React.FormEvent) => e.preventDefault()} className="sinter-panel" style={{ maxWidth: 560 }} autoComplete="off">
           {error && (
-            <div className="sinter-alert sinter-alert--error" style={{ marginBottom: 12 }}>{error}</div>
+            <div className="sinter-alert sinter-alert--error" style={{ marginBottom: 12 }} role="alert">{error}</div>
           )}
           {message && (
-            <div className="sinter-alert sinter-alert--success" style={{ marginBottom: 12 }}>{message}</div>
+            <div className="sinter-alert sinter-alert--success" style={{ marginBottom: 12 }} role="status">{message}</div>
           )}
 
           <section style={{ marginBottom: 24 }}>
@@ -1784,7 +1784,7 @@ export default function App() {
             </div>
           </div>
           {mergeApiError && (
-            <div className="sinter-alert sinter-alert--error">{mergeApiError}</div>
+            <div className="sinter-alert sinter-alert--error" role="alert">{mergeApiError}</div>
           )}
           {mergeProposal && (
             <div className="sinter-panel sinter-panel--raised" style={{ borderColor: 'rgba(90, 155, 110, 0.3)' }}>
@@ -1819,7 +1819,7 @@ export default function App() {
             );
           })()}
           {runError && (
-            <div className="sinter-alert sinter-alert--error">{runError}</div>
+            <div className="sinter-alert sinter-alert--error" role="alert">{runError}</div>
           )}
           {previewUrl && (
             <div style={{ flex: 1, minHeight: 400, border: '1px solid var(--sinter-line)', borderRadius: 'var(--sinter-radius)', overflow: 'hidden', position: 'relative' }}>

@@ -132,6 +132,26 @@ describe('LLMClient OpenAI (W0-L)', () => {
     expect(body.messages).not.toBeNull();
     expect(Array.isArray(body.messages)).toBe(true);
   });
+
+  it('keeps glm-5v on the full p5 PromptLibrary path', async () => {
+    const { stub, getLastOpts } = createFetchStub(openAIResponse);
+    global.fetch = stub as any;
+
+    const client = new LLMClient({
+      provider: 'openai',
+      baseUrl: 'https://api.openai.com/v1',
+      apiKey: 'test-key-not-real',
+      model: 'glm-5v',
+    });
+
+    await client.generateP5Sketch('kinetic amber reed field');
+
+    const body = JSON.parse((getLastOpts()?.body as string) ?? '{}');
+    const messages = JSON.stringify(body.messages);
+    expect(messages).toContain('senior creative technologist specializing in p5.js');
+    expect(messages).toContain('Create a p5.js sketch: kinetic amber reed field');
+    expect(messages).not.toContain('<rules>');
+  });
 });
 
 describe('LLMClient MiniMax', () => {

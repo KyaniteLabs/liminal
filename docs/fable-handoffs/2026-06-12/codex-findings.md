@@ -27,3 +27,12 @@
   - `pnpm exec vitest run test/unit/aesthetic --coverage.enabled=false` → 101 passed.
   - `pnpm typecheck` → passed.
   - `pnpm build && npx vitest run --changed origin/main --coverage=false --reporter=verbose --retry=0 --testTimeout=10000` → 77 files passed, 1182 tests passed.
+
+## TASK 3 — Fold generateP5Sketch's bespoke check into PromptTier
+- Branch: `codex/p5-prompt-tier`
+- PR: `#25`
+- Outcome: replaced the bespoke capability/context-window condition with PromptTier routing, kept the simplified prompt as the compact variant, and asserted `glm-5v` stays on the full PromptLibrary path.
+- Verification:
+  - `pnpm exec vitest run test/unit --coverage.enabled=false -t p5` → 58 files passed, 182 tests passed.
+  - `pnpm typecheck` → passed.
+  - `pnpm build && npx vitest run --changed origin/main --coverage=false --retry=0 --testTimeout=10000` → 146 files passed, 2298 tests passed.

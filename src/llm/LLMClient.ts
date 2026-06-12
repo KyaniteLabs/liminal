@@ -8,6 +8,7 @@ import { CircuitBreaker } from './CircuitBreaker.js';
 
 import { SERVICE_DEFAULTS } from '../constants.js';
 import { PromptLibrary } from '../prompts/index.js';
+import { resolvePromptTier, tiered } from '../prompts/PromptTier.js';
 import { CapabilityRegistry } from './CapabilityRegistry.js';
 import { RetryManager } from './RetryManager.js';
 import { TIMEOUT_OLLAMA_MS, TRUNCATE_SHORT, TRUNCATE_LONG, TOKEN_LIMIT_XL } from '../constants/limits.js';
@@ -15,6 +16,7 @@ import { CacheManager } from './CacheManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 import { failureLogger } from '../harness/FailureLogger.js';
+import { detectProviderFromUrl } from '../harness/MultiProviderConfig.js';
 import { env } from '../utils/env.js';
 import { Logger } from '../utils/Logger.js';
 import { Provider } from '../types/providers.js';
@@ -1067,12 +1069,8 @@ export class LLMClient {
   }
 
   async generateP5Sketch(prompt: string, context?: string, signal?: AbortSignal, bypassCache?: boolean): Promise<LLMResponse> {
-    // Capability-based prompt adaptation (replaces model-name-based Qwen hack)
-    const capabilities = CapabilityRegistry.getCapabilities(this.config.model);
-
-    // Small/local models that lack strong instruction following get simplified prompts
-    if (!capabilities.jsonMode || capabilities.maxContextTokens < 8192) {
-      const simplifiedSystem = `You are a creative coder specializing in p5.js.
+    const promptTier = resolvePromptTier(this.config.model, detectProviderFromUrl(this.config.baseUrl));
+    const simplifiedSystem = `You are a creative coder specializing in p5.js.
 
 <rules>
 - Output raw JavaScript only
@@ -1081,18 +1079,20 @@ export class LLMClient {
 - No markdown fences or explanations
 </rules>`;
 
-      const simplifiedUser = [
-        '<request>',
-        `Create a p5.js sketch: ${prompt}`,
-        '</request>',
-        context ? `<context>\n${context}\n</context>` : '',
-      ].filter(Boolean).join('\n');
-
-      return this.generate(simplifiedSystem, simplifiedUser, signal, bypassCache);
-    }
+    const simplifiedUser = [
+      '<request>',
+      `Create a p5.js sketch: ${prompt}`,
+      '</request>',
+      context ? `<context>\n${context}\n</context>` : '',
+    ].filter(Boolean).join('\n');
 
     const rendered = PromptLibrary.render('p5.generate', { prompt, context: context || '' });
-    return this.generate(rendered.system, rendered.user, signal, bypassCache);
+    return this.generate(
+      tiered({ full: rendered.system, compact: simplifiedSystem }, promptTier),
+      tiered({ full: rendered.user, compact: simplifiedUser }, promptTier),
+      signal,
+      bypassCache,
+    );
   }
 
   async improveP5Sketch(currentCode: string): Promise<LLMResponse> {

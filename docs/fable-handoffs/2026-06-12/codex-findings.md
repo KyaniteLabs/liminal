@@ -39,7 +39,7 @@
 
 ## TASK 4 — gemma vision pattern in CapabilityRegistry
 - Branch: `codex/gemma-vision`
-- PR: pending.
+- PR: `#26`
 - Outcome: added `gemma4*` and `gemma3*` to multimodal vision model patterns and asserted `gemma4:12b` supports vision while `glm-5.1` remains text-only.
 - Verification:
   - `pnpm exec vitest run test/unit/llm/CapabilityRegistry.test.ts --coverage.enabled=false` → 28 passed.

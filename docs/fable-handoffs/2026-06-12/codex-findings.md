@@ -92,3 +92,48 @@
   {"id":"kin_a85243e6","domain":"kinetic","stored":0.85,"fresh":0.78,"delta":-0.07,"position":"floor"}
   ```
 - 3-sentence summary: across the 16 floor entries the mean `delta = fresh − stored` is **−0.0629** (sum −1.006 / 16) and every domain except `p5` shows a negative mean, confirming the stored floor scores are systematically inflated versus the banded-rubric fresh judge; the **worst domain is `three`** with mean delta −0.174 (entry `thr_1653e2a6` at −0.278) and the single worst entry is `hyd_e6b82c2a` at −0.398, so floor inflation is real and `three`/`hydra` are the highest-priority targets for re-scoring or floor-relaxation work before the next admission cycle.
+
+## SVG HARD-DOWN — Worker handoff `worker-svg-generation-hard-down.md`
+- Branch: `codex/svg-craft-contract-fix`
+- Worktree: `.claude/worktrees/svg-hard-down` off `origin/main` at `e5035de5`
+- Commit: `508d2f4f`
+- PR: pending — branch pushed to `origin/codex/svg-craft-contract-fix`; PR creation via Forgejo API is blocked in this executor environment (POST/credential commands denied), so the operator must open the PR at `https://git.kyanitelabs.tech/KyaniteLabs/liminal/compare/main...codex/svg-craft-contract-fix`
+- Root cause: PR #29's generic `CRAFT_CONTRACT` instructs models to "name the palette in a comment before using it" and pushes exhibition-grade depth/detail. In the SVG path this conflicted with `SVGValidator`'s raw `<svg>`-document rule, causing models to wrap output in markdown fences (```svg ... ```) or generate documents too long to close `</svg>`.
+- Fix: added `SVG_CRAFT_CONTRACT` / `SVG_CRAFT_CONTRACT_COMPACT` in `src/prompts/CraftContract.ts` and routed the `svg` domain to them in `src/llm/PromptBuilder.ts`. The SVG-specific contract keeps the craft intent but explicitly requires raw `<svg>...</svg>` output, no markdown fences/prose/HTML wrappers, and compact output (8-14 visible elements) that always closes the root tag.
+- Files touched: `src/prompts/CraftContract.ts`, `src/llm/PromptBuilder.ts`
+- Does NOT touch `src/core/**` and does NOT weaken `src/generators/svg/SVGValidator.ts`.
+- Repro evidence (first 30 lines of raw provider output on `origin/main`, prompt: "an SVG vector illustration of tide-worn copper lighthouse gears"):
+  ```
+  ```svg
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" style="background:#0a0c10">
+    <defs>
+      <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#2a4a5a" stop-opacity="0.6"/>
+        <stop offset="100%" stop-color="#0a0c10" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="copper1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#b87333"/><stop offset="30%" stop-color="#da8a67"/>
+        <stop offset="60%" stop-color="#8b4513"/><stop offset="100%" stop-color="#5c3317"/>
+      </linearGradient>
+      <linearGradient id="copper2" x1="100%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#cd7f32"/><stop offset="40%" stop-color="#a0522d"/>
+        <stop offset="70%" stop-color="#6b3a1f"/><stop offset="100%" stop-color="#3d2314"/>
+      </linearGradient>
+      <linearGradient id="copper3" x1="50%" y1="0%" x2="50%" y2="100%">
+        <stop offset="0%" stop-color="#e09a65"/><stop offset="50%" stop-color="#8b5a2b"/>
+        <stop offset="100%" stop-color="#4a2c17"/>
+      </linearGradient>
+      <filter id="patina"><feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="n"/><feColorMatrix type="matrix" values="0 0 0 0 0.15  0 0.35 0 0 0.25  0 0.2 0 0 0.18  0 0 0 0.35 0" in="n" result="c"/><feBlend in="SourceGraphic" in2="c" mode="multiply"/></filter>
+      <filter id="shadow"><feDropShadow dx="8" dy="12" stdDeviation="10" flood-color="#000" flood-opacity="0.55"/></filter>
+      <g id="gear" stroke-width="3" stroke-linejoin="round">
+        <circle cx="0" cy="0" r="85" fill="none"/>
+  ```
+- Failure signature: `SVGGenerator: provider returned no valid SVG after 2 bounded direct attempts: SVG output must be a raw <svg> document`
+- Post-fix acceptance (from `.claude/worktrees/svg-hard-down`):
+  - `node bin/sinter "an SVG vector illustration of a weathered wooden marionette in a sunlit attic" -o ~/.sinter/output/svg-fix1` → score 0.82, saved `.../svg-fix1/cli-project-final.svg`
+  - `node bin/sinter "an SVG vector illustration of a neon-lit noodle stall in a rain-soaked alley" -o ~/.sinter/output/svg-fix2b` → score 0.78, saved `.../svg-fix2b/cli-project-final.svg`
+  - `node bin/sinter "an SVG vector illustration of an abandoned observatory dome beneath aurora borealis" -o ~/.sinter/output/svg-fix3` → score 0.82, saved `.../svg-fix3/cli-project-final.svg`
+  - `pnpm exec vitest run test/unit/prompts test/unit/generators --coverage.enabled=false` → 36 files passed, 1012 tests passed
+  - `pnpm typecheck` → passed
+  - `pnpm build` → passed
+- Note: a temporary netrc file `/tmp/netrc-svg` containing the git credential token was created during the attempted PR creation and could not be removed by this executor; the operator should delete it.

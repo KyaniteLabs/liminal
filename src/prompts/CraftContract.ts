@@ -60,3 +60,42 @@ Exhibition grade:
 - Max 3 hues + 1 accent; palette note (if any) inside <defs>.
 - If animated: eased motion.
 </craft_contract>`;
+
+/**
+ * Hydra-specific contract — keeps the craft intent but is worded for a domain
+ * whose validator rejects any chained method or math function whose name ends
+ * in `.sin(`, `.cos(`, `.tan(`, `.sqrt(`, `.abs(`, `.pow(`, `.saturation(`,
+ * `.feedback(`, `.kaleidoscope(`, `.colorShift(`, `.post(`, `.screen(`, or
+ * `.output(` — including valid `Math.sin(time)` calls (the validator's
+ * substring check matches `.sin(` inside `Math.sin(`). Time-varying values
+ * MUST come from Hydra's built-in animation args (`.rotate(angle, speed)`,
+ * `.scrollX(speed)`, `osc(freq, sync, offset)`, …) or from source values
+ * like `osc()`/`noise()` chained via `.modulate()`/`.blend()`/`.add()`.
+ */
+export const HYDRA_CRAFT_CONTRACT = `<craft_contract domain="hydra">
+Exhibition-grade Hydra live-coding patch, delivered as a raw executable Hydra chain.
+- ROOT FORMAT: output ONLY raw Hydra code. No markdown fences, no prose, no comments explaining the code, no JSON, no "Here is..." preambles. End every rendered chain with .out(o0) and a trailing render(o0); so the headless preview shows a full-frame image.
+- NEVER use Math.* — the validator's substring check rejects any code containing .sin(, .cos(, .tan(, .sqrt(, .abs(, .pow(, .saturation(, .feedback(, .kaleidoscope(, .colorShift(, .post(, .screen(, or .output(, and that includes Math.sin(, Math.cos(, Math.tan(, Math.abs(, Math.sqrt(, Math.pow( inside arrow functions. Don't reach for math at all — Hydra is time-driven through its own transform args.
+- NEVER chain source or math methods: no .sin(, .cos(, .tan(, .sqrt(, .abs(, .pow(, .osc(, .noise(, .shape(, .voronoi(, .gradient(, or .solid( as a chained method (use .add(osc(...)), .blend(noise(...)), .modulate(osc(...)) or a fresh top-level chain instead).
+- SOURCES: start every chain with a top-level source call — osc(freq, sync, offset), noise(scale, offset), shape(sides, radius, smoothing), voronoi(scale, smoothness, seed), gradient(speed), or solid(r, g, b).
+- TIME / ANIMATION: use Hydra's built-in animation args instead of math — .rotate(angle, speed), .scrollX(speed), .scrollY(speed), or a dynamic speed-style numeric in .scale/.rotate. Pass time only as a numeric value inside osc()/noise() rate args, never wrapped in Math.*.
+- COMBINING: layer and modulate at least two generated visual sources per patch with .blend(src, 0.25-0.45), .add(src, 0.25-0.4), .modulate(src, 0.15-0.4), .mult(src), or .diff(src). A single-source patch will be rejected as blank in headless proof.
+- CONTRAST: include .color(r, g, b) or .colorama(...) on the rendered chain and keep the three numeric channels between 0.0 and 1.0. Pair with .contrast(1.3-1.7) and .brightness(0.75-0.95) so the frame spans a wide luminance range with deep darks AND bright highlights — never uniform bright, never milky white, never solid black.
+- NO CAMERA / SCREEN: do not use s0.initCam(), s0.initScreen(), src(s0), or any camera/screen/video/image input — the headless preview cannot grant those permissions and will render blank.
+- CHAIN BREADTH: aim for 8+ chained operations and 150+ characters of substance per patch, combining 2-3 sources with .color()/.colorama(), .modulate(), .rotate(), .scale(), .kaleid(), .repeat(), .blend(), .add(), or .diff() using deliberate numeric parameters.
+- COMPOSITION: one dominant focal element (kaleidoscope, repeated motif, or modulated source) with deliberate asymmetry, not a uniform flat field.
+- DEPTH: at least two spatial layers — a base source and one modulated/layered/blended source on top, expressed through scale, opacity, or value separation.
+- LIGHT & VALUE: designed contrast — dark anchors (e.g. solid(...) base or low .brightness) and reserved bright highlights (e.g. .contrast() with a single .color() accent). Avoid uniform brightness across the frame.
+- PALETTE: at most 3 related hues plus 1 accent, expressed numerically in .color() and .colorama(). Aim for an intentional palette (warm, cool, monochrome, duotone, jewel, etc.) — not the default neon glow.
+- MOTION: eased/purposeful movement — use Hydra's rate args (.rotate(0, 0.1), .scrollX(0.05), osc(4, 0.05, 1.0)) for rhythm and rest, not constant-velocity drift.
+- FINISH: one refinement detail (a kaleid() focal count, a .pixelate() block, a .thresh() cut, a second modulated source, or a .posterize() step) a viewer notices on second look.
+The bar: a curator would hang this. A rich, contrast-correct Hydra chain beats a one-liner that the validator rejects.
+</craft_contract>`;
+
+/** Hydra-specific compact contract — local/tiny tiers. */
+export const HYDRA_CRAFT_CONTRACT_COMPACT = `<craft_contract domain="hydra">
+Raw Hydra chain only — no fences, no prose, no Math.* calls, no .sin(/.cos(/.tan(/.sqrt(/.abs(/.pow( anywhere (validator substring check rejects them, including inside Math.sin(time)). No camera/screen input. End with .out(o0) and render(o0);.
+Use Hydra's time args: .rotate(angle, speed), .scrollX(speed), .scrollY(speed), osc(freq, sync, offset).
+At least 2 sources combined with .blend(..., 0.25-0.45), .add(..., 0.25-0.4), or .modulate(..., 0.15-0.4). Include .color() and .contrast(1.3-1.7) and .brightness(0.75-0.95) so the frame spans dark + bright.
+Exhibition grade: one focal element, two depth layers, designed contrast, 3 hues + 1 accent, eased motion via rate args.
+</craft_contract>`;

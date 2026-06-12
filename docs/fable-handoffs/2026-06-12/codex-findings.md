@@ -36,3 +36,12 @@
   - `pnpm exec vitest run test/unit --coverage.enabled=false -t p5` → 58 files passed, 182 tests passed.
   - `pnpm typecheck` → passed.
   - `pnpm build && npx vitest run --changed origin/main --coverage=false --retry=0 --testTimeout=10000` → 146 files passed, 2298 tests passed.
+
+## TASK 4 — gemma vision pattern in CapabilityRegistry
+- Branch: `codex/gemma-vision`
+- PR: pending.
+- Outcome: added `gemma4*` and `gemma3*` to multimodal vision model patterns and asserted `gemma4:12b` supports vision while `glm-5.1` remains text-only.
+- Verification:
+  - `pnpm exec vitest run test/unit/llm/CapabilityRegistry.test.ts --coverage.enabled=false` → 28 passed.
+  - `pnpm typecheck` → passed.
+  - `pnpm build && npx vitest run --changed origin/main --coverage=false --retry=0 --testTimeout=10000` → 167 files passed, 2878 tests passed.

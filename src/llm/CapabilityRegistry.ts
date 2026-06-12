@@ -34,7 +34,7 @@ const DEFAULT_CAPABILITIES: ModelCapabilities = {
 const VISION_MODEL_PATTERNS: string[] = [
   'claude-*', 'gpt-5*', 'gpt-4o*', 'o3*', 'o4*',
   'gemini*', 'glm-5v*', 'glm-4v*', 'glm-4.1v*',
-  'minimax-m3*', '*-vl*', '*-vision*', '*vl-*',
+  'minimax-m3*', 'gemma4*', 'gemma3*', '*-vl*', '*-vision*', '*vl-*',
 ];
 
 // Static model database — update with new model releases

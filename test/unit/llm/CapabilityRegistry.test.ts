@@ -239,7 +239,7 @@ describe('CapabilityRegistry', () => {
 
   describe('supportsVision', () => {
     it('returns true for known multimodal families', () => {
-      for (const m of ['glm-5v-turbo', 'MiniMax-M3', 'claude-opus-4-1', 'gpt-5.4', 'gemini-2.5-flash']) {
+      for (const m of ['glm-5v-turbo', 'MiniMax-M3', 'claude-opus-4-1', 'gpt-5.4', 'gemini-2.5-flash', 'gemma4:12b']) {
         expect(CapabilityRegistry.supportsVision(m)).toBe(true);
       }
     });

@@ -8,7 +8,7 @@ const { mockToolLoop, mockComplete, mockGetConfig } = vi.hoisted(() => ({
     success: true,
   }),
   mockComplete: vi.fn().mockResolvedValue({
-    text: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1.0).color(0.95, 0.61, 0.62), 0.3).blend(voronoi(5, 0.3, 0.2).color(0.37, 0.92, 0.95), 0.35).modulate(noise(3, 0.2), 0.2).contrast(1.4).kaleid(5).rotate(0.1).scale(1.02).brightness(0.85).out(o0); render(o0);',
+    text: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1.0).color(0.95, 0.61, 0.62), 0.3).blend(voronoi(5, 0.3, 0.2).color(0.37, 0.92, 0.95), 0.35).modulate(noise(3, 0.2), 0.2).contrast(1.4).kaleid(5).rotate(0.1).scale(1.02).brightness(0.35).out(o0); render(o0);',
     success: true,
   }),
   mockGetConfig: vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' }),
@@ -65,7 +65,7 @@ describe('HydraGenerator', () => {
     mockToolLoop.mockClear();
     mockComplete.mockClear();
     mockComplete.mockResolvedValue({
-      text: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1.0).color(0.95, 0.61, 0.62), 0.3).blend(voronoi(5, 0.3, 0.2).color(0.37, 0.92, 0.95), 0.35).modulate(noise(3, 0.2), 0.2).contrast(1.4).kaleid(5).rotate(0.1).scale(1.02).brightness(0.85).out(o0); render(o0);',
+      text: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1.0).color(0.95, 0.61, 0.62), 0.3).blend(voronoi(5, 0.3, 0.2).color(0.37, 0.92, 0.95), 0.35).modulate(noise(3, 0.2), 0.2).contrast(1.4).kaleid(5).rotate(0.1).scale(1.02).brightness(0.35).out(o0); render(o0);',
       success: true,
     });
   });
@@ -196,7 +196,7 @@ describe('HydraGenerator', () => {
     const code = [
       'let k = kaleid(6)',
       'let pattern = osc(4, 0.1, 1.0).add(src(osc(6, 0.2, 0.8))).modulate(k)',
-      'pattern.color(0.95, 0.61, 0.62).saturate(1.2).brightness(0.9).out()',
+      'pattern.color(0.95, 0.61, 0.62).saturate(1.2).brightness(0.35).out()',
       'render()',
     ].join('\n');
 
@@ -404,7 +404,7 @@ describe('HydraGenerator', () => {
 
   it('sanitizeCode appends render(o0) for repeated default output chains', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 'osc(1, 0.1, 1.0).add(noise(2, 0.3)).color(0.95, 0.61, 0.62).brightness(0.85).out();\nosc(3, 0.2, 1.0).mult(shape(1, 0.5)).color(0.37, 0.93, 0.95).brightness(0.85).out();',
+      content: 'osc(1, 0.1, 1.0).add(noise(2, 0.3)).color(0.95, 0.61, 0.62).brightness(0.35).out();\nosc(3, 0.2, 1.0).mult(shape(1, 0.5)).color(0.37, 0.93, 0.95).brightness(0.35).out();',
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
@@ -492,7 +492,7 @@ describe('HydraGenerator', () => {
       success: true,
     });
     mockComplete.mockResolvedValueOnce({
-      text: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1).color(1, 0.2, 0.8), 0.3).blend(noise(3, 0.2).color(0.2, 1, 0.8), 0.35).modulate(voronoi(5, 0.3, 0.2), 0.2).contrast(1.4).kaleid(5).rotate(0.1).scale(1.02).brightness(0.85).out(o0); render(o0);',
+      text: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1).color(1, 0.2, 0.8), 0.3).blend(noise(3, 0.2).color(0.2, 1, 0.8), 0.35).modulate(voronoi(5, 0.3, 0.2), 0.2).contrast(1.4).kaleid(5).rotate(0.1).scale(1.02).brightness(0.35).out(o0); render(o0);',
       success: true,
     });
 
@@ -512,7 +512,7 @@ describe('HydraGenerator', () => {
       success: true,
     });
     mockComplete.mockResolvedValueOnce({
-      text: '<think>`solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1).color(1, 0.2, 0.8), 0.3).blend(noise(3, 0.2).color(0.2, 1, 0.8), 0.35).modulate(voronoi(5, 0.3, 0.2), 0.2).contrast(1.4).kaleid(5).rotate(0.1).scale(1.02).brightness(0.85).out(o0); render(o0);`</think>',
+      text: '<think>`solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1).color(1, 0.2, 0.8), 0.3).blend(noise(3, 0.2).color(0.2, 1, 0.8), 0.35).modulate(voronoi(5, 0.3, 0.2), 0.2).contrast(1.4).kaleid(5).rotate(0.1).scale(1.02).brightness(0.35).out(o0); render(o0);`</think>',
       success: true,
     });
 
@@ -525,13 +525,13 @@ describe('HydraGenerator', () => {
 
   it('retries directly when generated Hydra code is valid but below the minimum gallery size', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 'osc(4).add(noise(2), 0.3).color(1, 0.2, 0.8).brightness(0.85).out(o0); render(o0);',
+      content: 'osc(4).add(noise(2), 0.3).color(1, 0.2, 0.8).brightness(0.35).out(o0); render(o0);',
       iterations: 1,
       toolCallsMade: 0,
       success: true,
     });
     mockComplete.mockResolvedValueOnce({
-      text: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1).color(1, 0.2, 0.8), 0.3).blend(noise(3, 0.2).color(0.2, 1, 0.8), 0.35).modulate(voronoi(5, 0.3, 0.2), 0.2).contrast(1.4).kaleid(5).rotate(0.1).scale(1.02).brightness(0.85).out(o0); render(o0);',
+      text: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1).color(1, 0.2, 0.8), 0.3).blend(noise(3, 0.2).color(0.2, 1, 0.8), 0.35).modulate(voronoi(5, 0.3, 0.2), 0.2).contrast(1.4).kaleid(5).rotate(0.1).scale(1.02).brightness(0.35).out(o0); render(o0);',
       success: true,
     });
 
@@ -551,27 +551,27 @@ describe('HydraGenerator', () => {
       success: true,
     });
     mockComplete.mockResolvedValueOnce({
-      text: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1).color(1, 0.2, 0.8), 0.3).blend(noise(3, 0.2).color(0.2, 1, 0.8), 0.35).modulate(voronoi(5, 0.3, 0.2), 0.2).contrast(1.4).kaleid(5).rotate(0.1).scale(1.02).brightness(0.85).out(o0); render(o0);',
+      text: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1).color(1, 0.2, 0.8), 0.3).blend(noise(3, 0.2).color(0.2, 1, 0.8), 0.35).modulate(voronoi(5, 0.3, 0.2), 0.2).contrast(1.4).kaleid(5).rotate(0.1).scale(1.02).brightness(0.35).out(o0); render(o0);',
       success: true,
     });
 
     const gen = new HydraGenerator();
     const result = await gen.generate('avoid dark hydra render');
 
-    expect(result).toContain('brightness(0.85)');
+    expect(result).toContain('brightness(0.35)');
     expect(result).not.toContain('color(1.2');
     expect(mockComplete).toHaveBeenCalledOnce();
   });
 
   it('fails cleanly when provider returns undersized Hydra code twice', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 'osc(4).add(noise(2), 0.3).color(1, 0.2, 0.8).brightness(0.85).out(o0); render(o0);',
+      content: 'osc(4).add(noise(2), 0.3).color(1, 0.2, 0.8).brightness(0.35).out(o0); render(o0);',
       iterations: 1,
       toolCallsMade: 0,
       success: true,
     });
     mockComplete.mockResolvedValueOnce({
-      text: 'osc(4).add(noise(2), 0.3).color(1, 0.2, 0.8).brightness(0.85).out(o0); render(o0);',
+      text: 'osc(4).add(noise(2), 0.3).color(1, 0.2, 0.8).brightness(0.35).out(o0); render(o0);',
       success: true,
     });
 

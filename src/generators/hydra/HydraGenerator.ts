@@ -181,7 +181,7 @@ export class HydraGenerator extends TierBasedGenerator {
     }
     const tooDark = brightnesses.find(value => value < 0.1);
     if (tooDark !== undefined) {
-      return `Hydra image proof brightness() is too dark for headless proof; found brightness(${tooDark})`;
+      return `Hydra brightness() below 0.1 renders near-black in headless proof — use brightness(0.15-0.45); found brightness(${tooDark})`;
     }
     // brightness() is additive in hydra (rgb + amount): a lift above ~0.55 pushes
     // even pure-black bases past mid-grey, leaving no dark anchor anywhere in the

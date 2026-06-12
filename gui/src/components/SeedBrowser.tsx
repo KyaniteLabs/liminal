@@ -24,18 +24,18 @@ interface SeedBrowserProps {
 }
 
 const DOMAIN_COLORS: Record<string, string> = {
-  text: '#7eb8da',
-  code: '#a8d8a8',
-  audio: '#f0c674',
-  image: '#cc99cd',
-  video: '#f99157',
+  text: 'var(--sinter-code-blue)',
+  code: 'var(--sinter-code-green)',
+  audio: 'var(--sinter-code-gold)',
+  image: 'var(--sinter-code-purple)',
+  video: 'var(--sinter-code-orange)',
   unknown: '#888',
 };
 
 function scoreColor(score: number): string {
-  if (score >= 6) return '#a8d8a8';
-  if (score >= 4) return '#7eb8da';
-  return '#f0c674';
+  if (score >= 6) return 'var(--sinter-code-green)';
+  if (score >= 4) return 'var(--sinter-code-blue)';
+  return 'var(--sinter-code-gold)';
 }
 
 export function SeedBrowser({ apiBase }: SeedBrowserProps) {
@@ -109,7 +109,7 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
 
   if (loading) {
     return (
-      <div style={{ padding: 48, textAlign: 'center', color: 'var(--atelier-text-muted)', fontFamily: 'var(--font-body)' }}>
+      <div style={{ padding: 48, textAlign: 'center', color: 'var(--sinter-muted)', fontFamily: 'var(--font-body)' }}>
         Loading seeds...
       </div>
     );
@@ -117,7 +117,7 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
 
   if (error) {
     return (
-      <div className="atelier-alert atelier-alert--warn">
+      <div className="sinter-alert sinter-alert--warn">
         Could not load seeds: {error}. Run <code>sinter compost digest</code> first.
       </div>
     );
@@ -134,34 +134,34 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
         gap: 12,
       }}>
         {[
-          { label: 'Total seeds', value: seeds.length, color: 'var(--atelier-accent)' },
-          { label: 'High (6+)', value: scoreDist.high, color: '#a8d8a8' },
-          { label: 'Mid (4-6)', value: scoreDist.mid, color: '#7eb8da' },
-          { label: 'Low (<4)', value: scoreDist.low, color: '#f0c674' },
-          { label: 'Domains', value: domains.length - 1, color: 'var(--atelier-text-muted)' },
+          { label: 'Total seeds', value: seeds.length, color: 'var(--sinter-cyan)' },
+          { label: 'High (6+)', value: scoreDist.high, color: 'var(--sinter-code-green)' },
+          { label: 'Mid (4-6)', value: scoreDist.mid, color: 'var(--sinter-code-blue)' },
+          { label: 'Low (<4)', value: scoreDist.low, color: 'var(--sinter-code-gold)' },
+          { label: 'Domains', value: domains.length - 1, color: 'var(--sinter-muted)' },
         ].map(stat => (
-          <div key={stat.label} className="atelier-panel" style={{ padding: '12px 16px', textAlign: 'center' }}>
+          <div key={stat.label} className="sinter-panel" style={{ padding: '12px 16px', textAlign: 'center' }}>
             <div style={{ fontSize: 22, fontWeight: 700, color: stat.color }}>{stat.value}</div>
-            <div style={{ fontSize: 12, color: 'var(--atelier-text-muted)', marginTop: 2 }}>{stat.label}</div>
+            <div style={{ fontSize: 12, color: 'var(--sinter-muted)', marginTop: 2 }}>{stat.label}</div>
           </div>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="atelier-panel" style={{ padding: '12px 16px' }}>
+      <div className="sinter-panel" style={{ padding: '12px 16px' }}>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <input
             type="text"
             placeholder="Search content, tags..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="atelier-input"
+            className="sinter-input"
             style={{ flex: 1, minWidth: 160 }}
           />
           <select
             value={filterDomain}
             onChange={e => setFilterDomain(e.target.value)}
-            className="atelier-select"
+            className="sinter-select"
             style={{ width: 'auto', minWidth: 100 }}
           >
             {domains.map(d => (
@@ -171,7 +171,7 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
           <select
             value={filterMinScore}
             onChange={e => setFilterMinScore(Number(e.target.value))}
-            className="atelier-select"
+            className="sinter-select"
             style={{ width: 'auto', minWidth: 80 }}
           >
             <option value={0}>Score: all</option>
@@ -183,14 +183,14 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value as 'score' | 'domain' | 'date')}
-            className="atelier-select"
+            className="sinter-select"
             style={{ width: 'auto', minWidth: 100 }}
           >
             <option value="score">Sort: score</option>
             <option value="domain">Sort: domain</option>
             <option value="date">Sort: date</option>
           </select>
-          <span style={{ fontSize: 12, color: 'var(--atelier-text-muted)' }}>
+          <span style={{ fontSize: 12, color: 'var(--sinter-muted)' }}>
             {filtered.length} of {seeds.length}
           </span>
         </div>
@@ -198,9 +198,9 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
 
       {/* Expanded seed detail */}
       {expanded && (
-        <div className="atelier-panel atelier-panel--raised" style={{ padding: 16 }}>
+        <div className="sinter-panel sinter-panel--raised" style={{ padding: 16 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h3 className="atelier-heading" style={{ margin: 0 }}>
+            <h3 className="sinter-heading" style={{ margin: 0 }}>
               <span style={{
                 display: 'inline-block',
                 width: 10,
@@ -211,7 +211,7 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
               }} />
               {expanded.id}
             </h3>
-            <button type="button" onClick={() => setExpandedId(null)} className="atelier-btn atelier-btn--secondary" style={{ padding: '4px 10px', fontSize: 12 }}>
+            <button type="button" onClick={() => setExpandedId(null)} className="sinter-btn sinter-btn--secondary" style={{ padding: '4px 10px', fontSize: 12 }}>
               Close
             </button>
           </div>
@@ -227,18 +227,18 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
               {expanded.source.fragments.map(frag => (
                 <span key={frag} style={{
                   background: 'rgba(255,255,255,0.08)',
-                  border: '1px solid var(--atelier-border)',
+                  border: '1px solid var(--sinter-line)',
                   borderRadius: 4,
                   padding: '2px 8px',
                   fontSize: 11,
-                  color: 'var(--atelier-text-muted)',
+                  color: 'var(--sinter-muted)',
                 }}>
                   {frag.slice(0, 20)}
                 </span>
               ))}
             </div>
           )}
-          <pre className="atelier-code" style={{ maxHeight: 320, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+          <pre className="sinter-code" style={{ maxHeight: 320, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
             {expanded.content ?? '(no content)'}
           </pre>
         </div>
@@ -247,7 +247,7 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
       {/* Seed list */}
       <div style={{ maxHeight: 500, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
         {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', color: 'var(--atelier-text-muted)', padding: 24 }}>
+          <div style={{ textAlign: 'center', color: 'var(--sinter-muted)', padding: 24 }}>
             No seeds match your filters.
           </div>
         )}
@@ -265,14 +265,14 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
                 alignItems: 'center',
                 gap: 12,
                 padding: '10px 14px',
-                background: expandedId === seed.id ? 'var(--atelier-accent-dim)' : 'var(--atelier-surface)',
-                border: '1px solid var(--atelier-border)',
-                borderRadius: 'var(--atelier-radius-sm)',
+                background: expandedId === seed.id ? 'var(--sinter-cyan-dim)' : 'var(--sinter-surface-1)',
+                border: '1px solid var(--sinter-line)',
+                borderRadius: 'var(--sinter-radius-sm)',
                 cursor: 'pointer',
                 textAlign: 'left',
                 width: '100%',
                 fontFamily: 'var(--font-body)',
-                color: 'var(--atelier-text)',
+                color: 'var(--sinter-text)',
                 transition: 'background 0.15s',
               }}
             >
@@ -296,7 +296,7 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
               </span>
               <span style={{
                 fontSize: 12,
-                color: 'var(--atelier-text-muted)',
+                color: 'var(--sinter-muted)',
                 minWidth: 60,
                 flexShrink: 0,
                 textTransform: 'uppercase',
@@ -317,10 +317,10 @@ export function SeedBrowser({ apiBase }: SeedBrowserProps) {
                 <span style={{
                   fontSize: 10,
                   background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid var(--atelier-border)',
+                  border: '1px solid var(--sinter-line)',
                   borderRadius: 4,
                   padding: '2px 6px',
-                  color: 'var(--atelier-text-muted)',
+                  color: 'var(--sinter-muted)',
                   flexShrink: 0,
                 }}>
                   {seed.source.collisionType}

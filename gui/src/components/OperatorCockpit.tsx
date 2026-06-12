@@ -118,41 +118,41 @@ export function OperatorCockpit() {
   const roles = session?.roles ? Object.values(session.roles) : [];
 
   return (
-    <div className="atelier-panel cockpit-shell">
+    <div className="sinter-panel cockpit-shell">
       <div className="cockpit-header">
         <div>
-          <h2 className="atelier-heading" style={{ marginBottom: 4 }}>Operator Cockpit</h2>
+          <h2 className="sinter-heading" style={{ marginBottom: 4 }}>Operator Cockpit</h2>
           <div className="cockpit-muted">{status}</div>
         </div>
-        <button className="atelier-btn atelier-btn--secondary" type="button" onClick={() => void createSession()}>New session</button>
+        <button className="sinter-btn sinter-btn--secondary" type="button" onClick={() => void createSession()}>New session</button>
       </div>
 
-      {error && <div className="atelier-alert atelier-alert--error" style={{ marginBottom: 12 }}>{error}</div>}
+      {error && <div className="sinter-alert sinter-alert--error" style={{ marginBottom: 12 }}>{error}</div>}
 
       <div className="cockpit-grid">
         <section className="cockpit-card cockpit-card--wide">
-          <label className="atelier-label">Prompt</label>
-          <textarea className="atelier-textarea" rows={4} value={prompt} onChange={(event) => setPrompt(event.target.value)} />
+          <label className="sinter-label">Prompt</label>
+          <textarea className="sinter-textarea" rows={4} value={prompt} onChange={(event) => setPrompt(event.target.value)} />
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-            <button className="atelier-btn atelier-btn--primary" type="button" onClick={() => void submitPrompt()} disabled={!session}>Send to bridge</button>
-            {session?.pendingAction && <button className="atelier-btn" type="button" onClick={() => void confirmPending()}>Confirm: {session.pendingAction.title}</button>}
+            <button className="sinter-btn sinter-btn--primary" type="button" onClick={() => void submitPrompt()} disabled={!session}>Send to bridge</button>
+            {session?.pendingAction && <button className="sinter-btn" type="button" onClick={() => void confirmPending()}>Confirm: {session.pendingAction.title}</button>}
           </div>
         </section>
 
         <section className="cockpit-card">
-          <h3 className="atelier-heading">Domain Plan</h3>
+          <h3 className="sinter-heading">Domain Plan</h3>
           <div className="cockpit-flow">{derived.plan.length ? derived.plan.join(' -> ') : 'waiting'}</div>
           <div className="cockpit-muted">Current: {derived.activeDomain || 'idle'}</div>
         </section>
 
         <section className="cockpit-card">
-          <h3 className="atelier-heading">Phase</h3>
+          <h3 className="sinter-heading">Phase</h3>
           <div className="cockpit-big">{derived.phase}</div>
           <div className="cockpit-muted">{derived.latestMessage || 'waiting for activity'}</div>
         </section>
 
         <section className="cockpit-card cockpit-card--wide">
-          <h3 className="atelier-heading">Run Progress</h3>
+          <h3 className="sinter-heading">Run Progress</h3>
           <div className="cockpit-progress" aria-label={`Generation progress ${Math.round(derived.progressPercent * 100)} percent`}>
             <div className="cockpit-progress__fill" style={{ width: `${Math.round(derived.progressPercent * 100)}%` }} />
           </div>
@@ -164,7 +164,7 @@ export function OperatorCockpit() {
         </section>
 
         <section className="cockpit-card cockpit-card--wide">
-          <h3 className="atelier-heading">Model Roles</h3>
+          <h3 className="sinter-heading">Model Roles</h3>
           <div className="cockpit-roles">
             {roles.length === 0 && <span className="cockpit-muted">No role map yet.</span>}
             {roles.map((role) => (
@@ -180,7 +180,7 @@ export function OperatorCockpit() {
         </section>
 
         <section className="cockpit-card cockpit-card--wide">
-          <h3 className="atelier-heading">Attempts</h3>
+          <h3 className="sinter-heading">Attempts</h3>
           <div className="cockpit-attempts">
             {derived.attempts.length === 0 && <span className="cockpit-muted">No attempts yet.</span>}
             {derived.attempts.map((attempt) => (
@@ -196,7 +196,7 @@ export function OperatorCockpit() {
 
         {runReceipt && (
           <section className="cockpit-card cockpit-card--wide cockpit-run-receipt">
-            <h3 className="atelier-heading">Run Receipt</h3>
+            <h3 className="sinter-heading">Run Receipt</h3>
             <div className="cockpit-metrics">
               <span>Phase: {runReceipt.phase}</span>
               <span>Domain: {runReceipt.creativeDomain}</span>
@@ -211,7 +211,7 @@ export function OperatorCockpit() {
 
         {cognitiveReceipt && (
           <section className="cockpit-card cockpit-card--wide cockpit-cognitive-receipt">
-            <h3 className="atelier-heading">Cognitive Loop Receipt</h3>
+            <h3 className="sinter-heading">Cognitive Loop Receipt</h3>
             <div className="cockpit-metrics">
               <span>Loop: {cognitiveReceipt.loop}</span>
               <span>Write-back: {cognitiveReceipt.writeBackStatus}</span>
@@ -230,7 +230,7 @@ export function OperatorCockpit() {
         )}
 
         <section className="cockpit-card cockpit-card--wide">
-          <h3 className="atelier-heading">Failure Receipts</h3>
+          <h3 className="sinter-heading">Failure Receipts</h3>
           {derived.failureReceipts.length === 0 && <div className="cockpit-muted">No provider failures yet.</div>}
           <div className="cockpit-failure-receipts">
             {derived.failureReceipts.map((receipt, index) => (
@@ -245,7 +245,7 @@ export function OperatorCockpit() {
         </section>
 
         <section className="cockpit-card cockpit-card--wide">
-          <h3 className="atelier-heading">Artifacts</h3>
+          <h3 className="sinter-heading">Artifacts</h3>
           {derived.artifacts.length === 0 && <div className="cockpit-muted">No artifacts yet.</div>}
           {derived.artifacts.map((artifact) => (
             <div className="cockpit-artifact" key={`${artifact.label}-${artifact.path}`}>
@@ -257,9 +257,9 @@ export function OperatorCockpit() {
 
         <section className="cockpit-card cockpit-card--wide">
           <div className="cockpit-card-heading">
-            <h3 className="atelier-heading">Human Review Readiness</h3>
+            <h3 className="sinter-heading">Human Review Readiness</h3>
             <button
-              className="atelier-btn atelier-btn--secondary"
+              className="sinter-btn sinter-btn--secondary"
               type="button"
               onClick={() => {
                 void navigator.clipboard?.writeText(derived.humanReview.issueReport);
@@ -285,7 +285,7 @@ export function OperatorCockpit() {
         </section>
 
         <section className="cockpit-card cockpit-card--wide">
-          <h3 className="atelier-heading">Timeline</h3>
+          <h3 className="sinter-heading">Timeline</h3>
           <div className="cockpit-timeline">
             {events.slice(-24).map((event, index) => (
               <div key={`${index}-${event.type}`} className="cockpit-event">
@@ -297,7 +297,7 @@ export function OperatorCockpit() {
         </section>
 
         <section className="cockpit-card cockpit-card--wide">
-          <h3 className="atelier-heading">System Map</h3>
+          <h3 className="sinter-heading">System Map</h3>
           <div className="cockpit-system-map">
             <div><strong>Cortex</strong><span>Watches live system state, stuck work, goals, and budget.</span></div>
             <div><strong>Gardener</strong><span>Runs taste-learning and archive recombination cycles in the background.</span></div>

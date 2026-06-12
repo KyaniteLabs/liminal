@@ -19,9 +19,9 @@ export function LLMStatus({ events }: LLMStatusProps) {
 
   if (calls.length === 0) {
     return (
-      <div className="atelier-panel" style={{ padding: 16 }}>
-        <h3 className="atelier-heading">LLM Health</h3>
-        <p style={{ color: 'var(--atelier-text-muted)', fontSize: 13, margin: 0 }}>
+      <div className="sinter-panel" style={{ padding: 16 }}>
+        <h3 className="sinter-heading">LLM Health</h3>
+        <p style={{ color: 'var(--sinter-muted)', fontSize: 13, margin: 0 }}>
           No LLM calls recorded yet.
         </p>
       </div>
@@ -36,34 +36,34 @@ export function LLMStatus({ events }: LLMStatusProps) {
     ? Math.round(recent.reduce((sum, c) => sum + c.latencyMs, 0) / recent.length)
     : 0;
 
-  const statusColor = successRate >= 0.9 ? 'var(--atelier-success)' : successRate >= 0.5 ? 'var(--atelier-warn)' : 'var(--atelier-error)';
+  const statusColor = successRate >= 0.9 ? 'var(--sinter-green)' : successRate >= 0.5 ? 'var(--sinter-amber)' : 'var(--sinter-red)';
 
   return (
-    <div className="atelier-panel" style={{ padding: 16 }}>
-      <h3 className="atelier-heading">LLM Health</h3>
+    <div className="sinter-panel" style={{ padding: 16 }}>
+      <h3 className="sinter-heading">LLM Health</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--atelier-text-muted)' }}>Provider / Model</span>
+          <span style={{ color: 'var(--sinter-muted)' }}>Provider / Model</span>
           <span style={{ fontWeight: 500 }}>{last.provider} / {last.model}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--atelier-text-muted)' }}>Last call</span>
-          <span style={{ color: last.success ? 'var(--atelier-success)' : 'var(--atelier-error)' }}>
+          <span style={{ color: 'var(--sinter-muted)' }}>Last call</span>
+          <span style={{ color: last.success ? 'var(--sinter-green)' : 'var(--sinter-red)' }}>
             {last.latencyMs}ms {last.success ? 'ok' : last.error}
           </span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--atelier-text-muted)' }}>Avg latency (20)</span>
+          <span style={{ color: 'var(--sinter-muted)' }}>Avg latency (20)</span>
           <span>{avgLatency}ms</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--atelier-text-muted)' }}>Success rate (20)</span>
+          <span style={{ color: 'var(--sinter-muted)' }}>Success rate (20)</span>
           <span style={{ color: statusColor, fontWeight: 600 }}>
             {(successRate * 100).toFixed(0)}%
           </span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--atelier-text-muted)' }}>Total calls</span>
+          <span style={{ color: 'var(--sinter-muted)' }}>Total calls</span>
           <span>{calls.length}</span>
         </div>
       </div>

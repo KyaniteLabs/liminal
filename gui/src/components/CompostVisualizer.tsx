@@ -13,11 +13,11 @@ interface CompostVisualizerProps {
 }
 
 const DOMAIN_COLORS: Record<string, string> = {
-  text: '#7eb8da',
-  code: '#a8d8a8',
-  audio: '#f0c674',
-  image: '#cc99cd',
-  video: '#f99157',
+  text: 'var(--sinter-code-blue)',
+  code: 'var(--sinter-code-green)',
+  audio: 'var(--sinter-code-gold)',
+  image: 'var(--sinter-code-purple)',
+  video: 'var(--sinter-code-orange)',
   unknown: '#8892a6',
 };
 
@@ -120,7 +120,7 @@ export function CompostVisualizer({ events, connected }: CompostVisualizerProps)
         context.roundRect(x - 48, zoneY - 18, 96, 36, 8);
         context.fill();
         context.stroke();
-        context.fillStyle = isActive ? '#eef3ff' : '#9aa7bd';
+        context.fillStyle = isActive ? 'var(--sinter-text)' : 'var(--sinter-muted)';
         context.fillText(STAGE_LABELS[i], x, zoneY);
         if (i < STAGE_LABELS.length - 1) {
           context.strokeStyle = 'rgba(145, 161, 190, 0.26)';
@@ -163,11 +163,11 @@ export function CompostVisualizer({ events, connected }: CompostVisualizerProps)
       }
       context.globalAlpha = 1;
 
-      context.fillStyle = connected ? '#58c777' : '#d95763';
+      context.fillStyle = connected ? 'var(--sinter-green)' : 'var(--sinter-red)';
       context.textAlign = 'left';
       context.font = '12px JetBrains Mono, ui-monospace, monospace';
       context.fillText(connected ? 'compost stream connected' : 'compost stream offline', 18, 24);
-      context.fillStyle = '#9aa7bd';
+      context.fillStyle = 'var(--sinter-muted)';
       context.fillText(`${particles.length} recent events`, 18, 42);
 
       frame = requestAnimationFrame(draw);
@@ -183,7 +183,7 @@ export function CompostVisualizer({ events, connected }: CompostVisualizerProps)
   }, [connected, particles]);
 
   return (
-    <div className="atelier-panel" style={{ padding: 0, overflow: 'hidden' }}>
+    <div className="sinter-panel" style={{ padding: 0, overflow: 'hidden' }}>
       <canvas ref={canvasRef} aria-label="Compost pipeline event visualization" style={{ display: 'block', width: '100%' }} />
     </div>
   );

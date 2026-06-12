@@ -145,7 +145,7 @@ function base64UrlCode(str: string): string {
 }
 
 const tabStyle = (active: boolean): React.CSSProperties => ({
-  /* Visual state handled by .atelier-tab / .atelier-tab--active in CSS.
+  /* Visual state handled by .sinter-tab / .sinter-tab--active in CSS.
      Only active flag drives className; this object is kept minimal
      for any dynamic overrides that CSS custom properties can't express. */
 });
@@ -330,7 +330,7 @@ export default function App() {
     el.appendChild(notice);
 
     const pre = document.createElement('pre');
-    pre.style.color = 'var(--atelier-success)';
+    pre.style.color = 'var(--sinter-green)';
     pre.style.padding = '12px';
     pre.style.fontFamily = 'var(--font-mono)';
     pre.style.fontSize = '12px';
@@ -972,9 +972,9 @@ export default function App() {
         <small>{improveError || improveReport?.summary || 'Green systems can still improve.'}</small>
       </div>
       <div className="sinter-improve-proposals">
-        {improveError && <div className="atelier-alert atelier-alert--error">{improveError}</div>}
+        {improveError && <div className="sinter-alert sinter-alert--error">{improveError}</div>}
         {!improveError && !improveReport && !improveLoading && (
-          <button type="button" className="atelier-btn atelier-btn--primary" onClick={() => void scanImproveOpportunities()}>
+          <button type="button" className="sinter-btn sinter-btn--primary" onClick={() => void scanImproveOpportunities()}>
             Scan opportunities
           </button>
         )}
@@ -1012,7 +1012,7 @@ export default function App() {
               <span>Preview</span>
               <strong>Image preview failed to load</strong>
               <small>{bridgeImagePreview.label}</small>
-              <button type="button" className="atelier-btn atelier-btn--secondary" onClick={() => setFailedPreviewSrc(null)}>
+              <button type="button" className="sinter-btn sinter-btn--secondary" onClick={() => setFailedPreviewSrc(null)}>
                 Retry preview
               </button>
             </div>
@@ -1133,24 +1133,24 @@ export default function App() {
       )}
       {activeTab === 'create' && (
         <div className="sinter-control-panel">
-          {bridge.error && <div className="atelier-alert atelier-alert--error">{bridge.error}</div>}
+          {bridge.error && <div className="sinter-alert sinter-alert--error">{bridge.error}</div>}
           {bridge.session?.pendingAction && (
             <div className="sinter-pending-action-card" role="group" aria-label="Pending action review">
               <span>Pending review</span>
               <strong>{bridge.session.pendingAction.title}</strong>
               {bridge.session.pendingAction.description && <small>{bridge.session.pendingAction.description}</small>}
               <div className="sinter-control-row">
-                <button type="button" className="atelier-btn atelier-btn--primary" onClick={() => void bridge.confirmPending()}>
+                <button type="button" className="sinter-btn sinter-btn--primary" onClick={() => void bridge.confirmPending()}>
                   Confirm
                 </button>
-                <button type="button" className="atelier-btn atelier-btn--secondary" onClick={() => void bridge.cancelPending()}>
+                <button type="button" className="sinter-btn sinter-btn--secondary" onClick={() => void bridge.cancelPending()}>
                   Cancel
                 </button>
               </div>
             </div>
           )}
           {bridgeSummary.active && (
-            <button type="button" className="atelier-btn atelier-btn--secondary" onClick={() => void bridge.cancelCurrent()}>
+            <button type="button" className="sinter-btn sinter-btn--secondary" onClick={() => void bridge.cancelCurrent()}>
               Stop
             </button>
           )}
@@ -1215,7 +1215,7 @@ export default function App() {
           )}
         </div>
       )}
-      <button type="button" className="atelier-btn atelier-btn--secondary" onClick={() => dispatchLive(switchToLiveOrganismView('config'))}>
+      <button type="button" className="sinter-btn sinter-btn--secondary" onClick={() => dispatchLive(switchToLiveOrganismView('config'))}>
         Settings
       </button>
     </div>
@@ -1364,7 +1364,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div style={{ padding: 48, textAlign: 'center', color: 'var(--atelier-text-muted)', fontFamily: 'var(--font-body)' }}>
+      <div style={{ padding: 48, textAlign: 'center', color: 'var(--sinter-muted)', fontFamily: 'var(--font-body)' }}>
         Loading…
       </div>
     );
@@ -1414,141 +1414,141 @@ export default function App() {
       recourseState={runStoppedBeforePreview ? 'stopped' : runFailedBeforePreview ? 'failed' : undefined}
     >
       {shouldRenderLegacyPanel(activeTab) && (
-      <Suspense fallback={<div className="atelier-panel">Loading Studio surface…</div>}>
+      <Suspense fallback={<div className="sinter-panel">Loading Studio surface…</div>}>
       <>
       {activeTab === 'config' && (
-        <form id="atelier-config-form" onSubmit={(e: React.FormEvent) => e.preventDefault()} className="atelier-panel" style={{ maxWidth: 560 }} autoComplete="off">
+        <form id="sinter-config-form" onSubmit={(e: React.FormEvent) => e.preventDefault()} className="sinter-panel" style={{ maxWidth: 560 }} autoComplete="off">
           {error && (
-            <div className="atelier-alert atelier-alert--error" style={{ marginBottom: 12 }}>{error}</div>
+            <div className="sinter-alert sinter-alert--error" style={{ marginBottom: 12 }}>{error}</div>
           )}
           {message && (
-            <div className="atelier-alert atelier-alert--success" style={{ marginBottom: 12 }}>{message}</div>
+            <div className="sinter-alert sinter-alert--success" style={{ marginBottom: 12 }}>{message}</div>
           )}
 
           <section style={{ marginBottom: 24 }}>
-            <h2 className="atelier-heading">Generator</h2>
+            <h2 className="sinter-heading">Generator</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <label>
-            <span className="atelier-label">Provider</span>
+            <span className="sinter-label">Provider</span>
             <select
               value={provider}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => chooseProvider(e.target.value)}
-              className="atelier-select"
+              className="sinter-select"
             >
               {PROVIDER_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
           <label>
-            <span className="atelier-label">Base URL</span>
+            <span className="sinter-label">Base URL</span>
             <input
               type="url"
               value={baseUrl}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setBaseUrl(e.target.value)}
               placeholder="https://…"
-              className="atelier-input"
+              className="sinter-input"
             />
           </label>
           <label>
-            <span className="atelier-label">Model</span>
+            <span className="sinter-label">Model</span>
             <input
               type="text"
               value={model}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setModel(e.target.value)}
-              className="atelier-input"
+              className="sinter-input"
             />
           </label>
           <label>
-            <span className="atelier-label">API key (masked)</span>
+            <span className="sinter-label">API key (masked)</span>
             <input
               type="password"
-              form="atelier-config-form"
+              form="sinter-config-form"
               value={apiKey}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApiKey(e.target.value)}
               placeholder="••••••••"
               autoComplete="off"
-              className="atelier-input"
+              className="sinter-input"
             />
           </label>
-          <p style={{ fontSize: 12, color: 'var(--atelier-text-muted)', marginTop: 4, lineHeight: 1.4 }}>
+          <p style={{ fontSize: 12, color: 'var(--sinter-muted)', marginTop: 4, lineHeight: 1.4 }}>
             Keys are stored locally in ~/.liminal/config.json. Never sent to the frontend after saving.
           </p>
         </div>
       </section>
 
       <section style={{ marginBottom: 24 }}>
-        <h2 className="atelier-heading">Evaluator</h2>
+        <h2 className="sinter-heading">Evaluator</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <label>
-            <span className="atelier-label">Provider</span>
+            <span className="sinter-label">Provider</span>
             <select
               value={evaluatorProvider}
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => chooseEvaluatorProvider(e.target.value)}
-              className="atelier-select"
+              className="sinter-select"
             >
               {PROVIDER_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
           <label>
-            <span className="atelier-label">Base URL</span>
+            <span className="sinter-label">Base URL</span>
             <input
               type="url"
               value={evaluatorBaseUrl}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEvaluatorBaseUrl(e.target.value)}
               placeholder="https://…"
-              className="atelier-input"
+              className="sinter-input"
             />
           </label>
           <label>
-            <span className="atelier-label">Model</span>
+            <span className="sinter-label">Model</span>
             <input
               type="text"
               value={evaluatorModel}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEvaluatorModel(e.target.value)}
-              className="atelier-input"
+              className="sinter-input"
             />
           </label>
           <label>
-            <span className="atelier-label">API key (masked)</span>
+            <span className="sinter-label">API key (masked)</span>
             <input
               type="password"
-              form="atelier-config-form"
+              form="sinter-config-form"
               value={evaluatorApiKey}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEvaluatorApiKey(e.target.value)}
               placeholder="••••••••"
               autoComplete="off"
-              className="atelier-input"
+              className="sinter-input"
             />
           </label>
         </div>
       </section>
 
       <section style={{ marginBottom: 24 }}>
-        <h2 className="atelier-heading">Loop</h2>
+        <h2 className="sinter-heading">Loop</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <label>
-            <span className="atelier-label">Max iterations</span>
+            <span className="sinter-label">Max iterations</span>
             <input
               type="number"
               min={1}
               max={100}
               value={maxIterations}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaxIterations(Number(e.target.value))}
-              className="atelier-input"
+              className="sinter-input"
             />
           </label>
           <label>
-            <span className="atelier-label">Timeout (minutes)</span>
+            <span className="sinter-label">Timeout (minutes)</span>
             <input
               type="number"
               min={1}
               max={120}
               value={timeoutMinutes}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTimeoutMinutes(Number(e.target.value))}
-              className="atelier-input"
+              className="sinter-input"
             />
           </label>
           <label>
-            <span className="atelier-label">Min quality score (0–1)</span>
+            <span className="sinter-label">Min quality score (0–1)</span>
             <input
               type="number"
               min={0}
@@ -1556,22 +1556,22 @@ export default function App() {
               step={0.1}
               value={minQualityScore}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMinQualityScore(Number(e.target.value))}
-              className="atelier-input"
+              className="sinter-input"
             />
           </label>
         </div>
       </section>
 
       <section style={{ marginBottom: 24 }}>
-        <h2 className="atelier-heading">Gallery</h2>
+        <h2 className="sinter-heading">Gallery</h2>
         <label>
-          <span className="atelier-label">Gallery path</span>
+          <span className="sinter-label">Gallery path</span>
           <input
             type="text"
             value={galleryPath}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGalleryPath(e.target.value)}
             placeholder="gallery"
-            className="atelier-input"
+            className="sinter-input"
           />
         </label>
       </section>
@@ -1580,7 +1580,7 @@ export default function App() {
         type="button"
         onClick={handleSave}
         disabled={saving}
-        className="atelier-btn atelier-btn--primary"
+        className="sinter-btn sinter-btn--primary"
       >
         {saving ? 'Saving…' : 'Save config'}
       </button>
@@ -1589,19 +1589,19 @@ export default function App() {
 
 
       {activeTab === 'liveMusic' && (
-        <div className="atelier-panel" style={{ maxWidth: 960, width: '100%' }}>
-          <h2 className="atelier-heading">Live AV</h2>
-          <p style={{ color: 'var(--atelier-text-muted)', fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>
+        <div className="sinter-panel" style={{ maxWidth: 960, width: '100%' }}>
+          <h2 className="sinter-heading">Live AV</h2>
+          <p style={{ color: 'var(--sinter-muted)', fontSize: 14, marginBottom: 16, lineHeight: 1.5 }}>
             Generate Strudel music and Hydra video-synth code. Strudel runs in the embedded REPL; Hydra remains read-only here.
           </p>
           <label style={{ display: 'block', marginBottom: 12 }}>
-            <span className="atelier-label">Prompt</span>
+            <span className="sinter-label">Prompt</span>
             <input
               type="text"
               value={liveMusicPrompt}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLiveMusicPrompt(e.target.value)}
               placeholder="e.g. ambient glitch, anxious build"
-              className="atelier-input"
+              className="sinter-input"
               style={{ maxWidth: 400 }}
             />
           </label>
@@ -1610,7 +1610,7 @@ export default function App() {
               type="button"
               onClick={handleGenerateMusic}
               disabled={liveMusicLoading.music}
-              className="atelier-btn atelier-btn--music"
+              className="sinter-btn sinter-btn--music"
             >
               {liveMusicLoading.music ? '…' : 'Generate music (Strudel)'}
             </button>
@@ -1618,7 +1618,7 @@ export default function App() {
               type="button"
               onClick={handleGenerateVisuals}
               disabled={liveMusicLoading.visuals}
-              className="atelier-btn atelier-btn--visual"
+              className="sinter-btn sinter-btn--visual"
             >
               {liveMusicLoading.visuals ? '…' : 'Generate visuals (Hydra)'}
             </button>
@@ -1627,10 +1627,10 @@ export default function App() {
           {musicCode && (
             <div style={{ marginBottom: 24 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, flexWrap: 'wrap' }}>
-                <h3 style={{ fontSize: 13, color: 'var(--atelier-music)', margin: 0, fontFamily: 'var(--font-body)', fontWeight: 600 }}>Strudel — music runs here</h3>
+                <h3 style={{ fontSize: 13, color: 'var(--sinter-cyan)', margin: 0, fontFamily: 'var(--font-body)', fontWeight: 600 }}>Strudel — music runs here</h3>
                 <button
                   type="button"
-                  className="atelier-btn atelier-btn--secondary"
+                  className="sinter-btn sinter-btn--secondary"
                   style={{ padding: '6px 12px', fontSize: 12 }}
                   onClick={() => {
                     try {
@@ -1641,12 +1641,12 @@ export default function App() {
                 >
                   Play
                 </button>
-                <span style={{ fontSize: 12, color: 'var(--atelier-text-dim)' }}>Click inside the Strudel box below to allow sound.</span>
+                <span style={{ fontSize: 12, color: 'var(--sinter-dim)' }}>Click inside the Strudel box below to allow sound.</span>
               </div>
               <iframe
                 title="Strudel REPL"
                 src={`https://strudel.cc/embed/#${base64UrlCode(musicCode)}`}
-                style={{ width: '100%', height: 380, border: '1px solid var(--atelier-border)', borderRadius: 'var(--atelier-radius-sm)', background: '#0a090c' }}
+                style={{ width: '100%', height: 380, border: '1px solid var(--sinter-line)', borderRadius: 'var(--sinter-radius-sm)', background: '#0a090c' }}
                 allow="autoplay; clipboard-write; encrypted-media"
                 sandbox="allow-scripts allow-same-origin allow-forms"
               />
@@ -1655,14 +1655,14 @@ export default function App() {
 
           {visualsCode && (
             <div style={{ marginBottom: 16 }}>
-              <h3 style={{ fontSize: 13, color: 'var(--atelier-visual)', marginBottom: 8, fontFamily: 'var(--font-body)', fontWeight: 600 }}>Hydra — read-only video synth code</h3>
+              <h3 style={{ fontSize: 13, color: 'var(--sinter-orchid)', marginBottom: 8, fontFamily: 'var(--font-body)', fontWeight: 600 }}>Hydra — read-only video synth code</h3>
               <div
                 style={{
                   overflow: 'hidden',
                   height: 52,
                   background: '#0a090c',
-                  border: '1px solid var(--atelier-border)',
-                  borderRadius: 'var(--atelier-radius-sm)',
+                  border: '1px solid var(--sinter-line)',
+                  borderRadius: 'var(--sinter-radius-sm)',
                   marginBottom: 8,
                   display: 'flex',
                   alignItems: 'center',
@@ -1672,10 +1672,10 @@ export default function App() {
                   style={{
                     display: 'inline-block',
                     whiteSpace: 'nowrap',
-                    animation: 'atelier-scroll-code 15s linear infinite',
+                    animation: 'sinter-scroll-code 15s linear infinite',
                     fontFamily: 'var(--font-mono)',
                     fontSize: 13,
-                    color: 'var(--atelier-success)',
+                    color: 'var(--sinter-green)',
                   }}
                 >
                   <span style={{ marginRight: 120 }}>{visualsCode.replace(/\s+/g, ' ')}</span>
@@ -1688,8 +1688,8 @@ export default function App() {
                   width: '100%',
                   minHeight: 320,
                   background: '#000',
-                  border: '1px solid var(--atelier-border)',
-                  borderRadius: 'var(--atelier-radius-sm)',
+                  border: '1px solid var(--sinter-line)',
+                  borderRadius: 'var(--sinter-radius-sm)',
                   overflow: 'hidden',
                 }}
               />
@@ -1721,18 +1721,18 @@ export default function App() {
       {activeTab === 'live' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {galleryApiFailed && (
-            <div className="atelier-alert atelier-alert--warn">
+            <div className="sinter-alert sinter-alert--warn">
               Gallery API not reachable. Start the backend: <code style={{ background: 'rgba(0,0,0,0.2)', padding: '2px 6px', borderRadius: 4 }}>pnpm gui</code> (then reload). Backend must run on port 5174.
             </div>
           )}
-          <div className="atelier-panel" style={{ padding: 16 }}>
+          <div className="sinter-panel" style={{ padding: 16 }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
               <label>
-                <span style={{ marginRight: 8, color: 'var(--atelier-text-muted)', fontSize: 13 }}>Project</span>
+                <span style={{ marginRight: 8, color: 'var(--sinter-muted)', fontSize: 13 }}>Project</span>
                 <select
                   value={selectedProject}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedProject(e.target.value)}
-                  className="atelier-select"
+                  className="sinter-select"
                   style={{ width: 'auto', minWidth: 180 }}
                 >
                   <option value="">—</option>
@@ -1742,11 +1742,11 @@ export default function App() {
                 </select>
               </label>
               <label>
-                <span style={{ marginRight: 8, color: 'var(--atelier-text-muted)', fontSize: 13 }}>Iteration</span>
+                <span style={{ marginRight: 8, color: 'var(--sinter-muted)', fontSize: 13 }}>Iteration</span>
                 <select
                   value={selectedIterationIndex}
                   onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSelectedIterationIndex(Number(e.target.value))}
-                  className="atelier-select"
+                  className="sinter-select"
                   style={{ width: 'auto', minWidth: 80 }}
                 >
                   {iterations.map((it, i) => (
@@ -1758,7 +1758,7 @@ export default function App() {
                 type="button"
                 onClick={handleRunInPreview}
                 disabled={previewRunning || !iterations.length}
-                className="atelier-btn atelier-btn--primary"
+                className="sinter-btn sinter-btn--primary"
               >
                 {previewRunning ? 'Running…' : 'Run preview'}
               </button>
@@ -1766,7 +1766,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleMerge}
-                  className="atelier-btn atelier-btn--secondary"
+                  className="sinter-btn sinter-btn--secondary"
                 >
                   Merge with…
                 </button>
@@ -1775,8 +1775,8 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleMutate}
-                  className="atelier-btn"
-                  style={{ background: 'var(--atelier-warn)', color: 'var(--atelier-bg)' }}
+                  className="sinter-btn"
+                  style={{ background: 'var(--sinter-amber)', color: 'var(--sinter-bg-void)' }}
                 >
                   Mutate
                 </button>
@@ -1784,21 +1784,21 @@ export default function App() {
             </div>
           </div>
           {mergeApiError && (
-            <div className="atelier-alert atelier-alert--error">{mergeApiError}</div>
+            <div className="sinter-alert sinter-alert--error">{mergeApiError}</div>
           )}
           {mergeProposal && (
-            <div className="atelier-panel atelier-panel--raised" style={{ borderColor: 'rgba(90, 155, 110, 0.3)' }}>
-              <h3 className="atelier-heading" style={{ color: 'var(--atelier-success)' }}>Proposed (merge/mutate) <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--atelier-text-muted)', marginLeft: 8 }}>AI-generated — verify before approving</span></h3>
-              <pre className="atelier-code" style={{ maxHeight: 160 }}>
+            <div className="sinter-panel sinter-panel--raised" style={{ borderColor: 'rgba(90, 155, 110, 0.3)' }}>
+              <h3 className="sinter-heading" style={{ color: 'var(--sinter-green)' }}>Proposed (merge/mutate) <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--sinter-muted)', marginLeft: 8 }}>AI-generated — verify before approving</span></h3>
+              <pre className="sinter-code" style={{ maxHeight: 160 }}>
                 {mergeProposal.proposed.type === 'organism'
                   ? (mergeProposal.proposed.musicCode || '') + '\n---\n' + (mergeProposal.proposed.visualCode || '')
                   : (mergeProposal.proposed.code || '')}
               </pre>
               <div style={{ marginTop: 12, display: 'flex', gap: 10 }}>
-                <button type="button" onClick={handleApprove} disabled={approveLoading} className="atelier-btn atelier-btn--primary">
+                <button type="button" onClick={handleApprove} disabled={approveLoading} className="sinter-btn sinter-btn--primary">
                   {approveLoading ? '…' : 'Approve'}
                 </button>
-                <button type="button" onClick={() => setMergeProposal(null)} className="atelier-btn atelier-btn--secondary">
+                <button type="button" onClick={() => setMergeProposal(null)} className="sinter-btn sinter-btn--secondary">
                   Reject
                 </button>
               </div>
@@ -1810,19 +1810,19 @@ export default function App() {
               ? (it.musicCode || '') + '\n\n--- visual ---\n\n' + (it.visualCode || '')
               : (it?.code ?? '');
             return (
-              <div className="atelier-panel">
-                <h3 className="atelier-heading">Code (v{(it?.version ?? selectedIterationIndex + 1)}) <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--atelier-text-muted)', marginLeft: 8 }}>generated — review before executing</span></h3>
-                <pre className="atelier-code" style={{ maxHeight: 280 }}>
+              <div className="sinter-panel">
+                <h3 className="sinter-heading">Code (v{(it?.version ?? selectedIterationIndex + 1)}) <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--sinter-muted)', marginLeft: 8 }}>generated — review before executing</span></h3>
+                <pre className="sinter-code" style={{ maxHeight: 280 }}>
                   <code>{code || '(empty)'}</code>
                 </pre>
               </div>
             );
           })()}
           {runError && (
-            <div className="atelier-alert atelier-alert--error">{runError}</div>
+            <div className="sinter-alert sinter-alert--error">{runError}</div>
           )}
           {previewUrl && (
-            <div style={{ flex: 1, minHeight: 400, border: '1px solid var(--atelier-border)', borderRadius: 'var(--atelier-radius)', overflow: 'hidden', position: 'relative' }}>
+            <div style={{ flex: 1, minHeight: 400, border: '1px solid var(--sinter-line)', borderRadius: 'var(--sinter-radius)', overflow: 'hidden', position: 'relative' }}>
               <iframe
                 title="Live organism"
                 src={previewUrl}
@@ -1835,7 +1835,7 @@ export default function App() {
                 top: 8,
                 right: 8,
                 background: 'rgba(0,0,0,0.7)',
-                color: 'var(--atelier-text-muted)',
+                color: 'var(--sinter-muted)',
                 fontSize: 11,
                 padding: '3px 8px',
                 borderRadius: 4,
@@ -1848,7 +1848,7 @@ export default function App() {
             </div>
           )}
           {!previewUrl && !runError && activeTab === 'live' && (
-            <p style={{ color: 'var(--atelier-text-muted)', fontSize: 14 }}>Select a project and iteration, then click Run preview to see the live sketch.</p>
+            <p style={{ color: 'var(--sinter-muted)', fontSize: 14 }}>Select a project and iteration, then click Run preview to see the live sketch.</p>
           )}
         </div>
       )}

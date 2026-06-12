@@ -67,6 +67,12 @@ export function WorkbenchShell({
   const activeSurfaceLabel = formatLegacyTab(activeTab);
   const [secondaryToolsOpen, setSecondaryToolsOpen] = React.useState(activeMode !== primaryMode.id);
   const userPrompt = prompt.trim();
+  // A dedicated view (Settings, Cockpit, Curator…) owns the main surface
+  // outright — no chat scaffolding stacked above it. Only the Live gallery
+  // still routes its preview through the stage aside.
+  const isRealView = Boolean(children);
+  const viewKeepsStage = activeTab === 'live';
+  const showStageAside = !isRealView || viewKeepsStage;
   const showRecovery = Boolean(recourseSlot);
   const showStopped = recourseState === 'stopped';
   const showGeneratePreviewReady = activeMode === 'generate' && artifactReady;
@@ -101,10 +107,10 @@ export function WorkbenchShell({
   }, [activeMode, primaryMode.id]);
 
   return (
-    <div className="sinter-workbench sinter-workbench--chat-first">
+    <div className={showStageAside ? 'sinter-workbench sinter-workbench--chat-first' : 'sinter-workbench sinter-workbench--chat-first sinter-workbench--view'}>
       <a className="sinter-skip-link" href="#main-content">Skip to main content</a>
       {backendDown && (
-        <div className="atelier-alert atelier-alert--warn sinter-backend-banner" role="alert">
+        <div className="sinter-alert sinter-alert--warn sinter-backend-banner" role="alert">
           Studio backend isn&apos;t reachable — generation and live data are paused.
           Start it from a terminal: <code>sinter studio</code>
         </div>
@@ -210,6 +216,15 @@ export function WorkbenchShell({
         </details>
       </aside>
 
+      {isRealView ? (
+        <main id="main-content" className="sinter-view-surface" aria-label={`${activeSurfaceLabel} view`}>
+          <header className="sinter-view-head">
+            <h2>{activeSurfaceLabel}</h2>
+            <p>{activeModeLabel}</p>
+          </header>
+          <div className="sinter-view-body">{children}</div>
+        </main>
+      ) : (
       <main id="main-content" className="sinter-chat-surface" aria-label="Creative coding conversation">
         <div className="sinter-chat-timeline" aria-live="polite">
           <article className="sinter-chat-message sinter-chat-message--assistant">
@@ -244,12 +259,6 @@ export function WorkbenchShell({
           </article>
 
           {recourseSlot}
-
-          {children ? (
-            <section className="sinter-legacy-panel" aria-label="Supplemental panel">
-              {children}
-            </section>
-          ) : null}
 
           <details className="sinter-receipt-details" open={stageBusy || Boolean(recourseSlot)}>
             <summary>
@@ -311,7 +320,9 @@ export function WorkbenchShell({
           </div>
         </section>
       </main>
+      )}
 
+      {showStageAside && (
       <aside id="sinter-preview-panel" className="sinter-preview-panel" aria-label="Live preview and artifact panel" aria-busy={stageBusy}>
         <div className="sinter-preview-panel__header">
           <span>Preview</span>
@@ -322,6 +333,7 @@ export function WorkbenchShell({
           {stageSlot}
         </div>
       </aside>
+      )}
     </div>
   );
 }

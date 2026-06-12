@@ -21,6 +21,8 @@ import { Logger } from '../utils/Logger.js';
 
 const PROMPT_BUILDER_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '../..');
 
+import { CRAFT_CONTRACT, CRAFT_CONTRACT_COMPACT } from '../prompts/CraftContract.js';
+
 export interface PromptContext {
   // Core identity
   soul?: string;           // From SOUL.md
@@ -151,6 +153,8 @@ export class PromptBuilder {
       ctx.rules || 'Output valid code only.',
       '</rules>',
       '',
+      CRAFT_CONTRACT,
+      '',
       ctx.domainDocs ? `<${ctx.domain}_docs>\n${ctx.domainDocs}\n</${ctx.domain}_docs>` : '',
       '',
       ctx.userPreferences ? `<user_prefs>\n${ctx.userPreferences}\n</user_prefs>` : '',
@@ -183,6 +187,8 @@ export class PromptBuilder {
       '2. Output code only unless the caller explicitly asks for explanation.',
       '3. Include necessary imports and setup.',
       '</rules>',
+      '',
+      CRAFT_CONTRACT,
       '',
       ctx.domainDocs ? `<domain_knowledge name="${ctx.domain}">\n${ctx.domainDocs}\n</domain_knowledge>` : '',
     ].filter(Boolean).join('\n');
@@ -219,6 +225,8 @@ export class PromptBuilder {
       '- Valid ' + ctx.domain + ' code',
       '</rules>',
       '',
+      CRAFT_CONTRACT_COMPACT,
+      '',
       ctx.domainDocs ? `<domain_summary name="${ctx.domain}">\n${this.summarizeDocs(ctx.domainDocs, 500)}\n</domain_summary>` : '',
     ].filter(Boolean).join('\n');
 
@@ -251,6 +259,7 @@ export class PromptBuilder {
       ctx.userRequest,
       '</task>',
       '<rules>code only; no explanations</rules>',
+      CRAFT_CONTRACT_COMPACT,
     ].join('\n');
 
     return {

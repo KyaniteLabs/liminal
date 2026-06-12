@@ -16,3 +16,12 @@
 - Archive check: measured 41 archive entries created after the previous watch window with the F19-style rendered-pixel path; 23 ok, 3 washout, 15 too-dark, 0 render failures. Recorded `FAB-029` for SVG black-frame admissions plus Hydra washouts; textgen too-dark hits are noted as calibration-sensitive. No archive mutation.
 - Action taken: finding `FAB-029`; no code change.
 - Next watch item: prioritize SVG black-frame admissions (`svg_8f6582e5`, `svg_2b3e0a57`, `svg_08a9a9fe`) and repeated SVG bounded-attempt failures; keep watching for any new post-FAB-028 `0.68` clumps.
+
+## 2026-06-12T07:20:38Z
+- Cycles seen: 4 (`2026-06-12T05:24:32.551Z` through `2026-06-12T06:46:53.287Z`).
+- Completion rate: 9/12 (75.0%); archive 200 -> 200 (+0); health 84.4 -> 84.3; mean score 0.731; cycle means 0.680, 0.693, 0.800, 0.750.
+- Failures diagnosed: 3 total. Breakdown: 1 SVG bounded direct-attempt failure at 05:24 UTC (`SVG output must...`) and 2 `All generation candidates failed` at 06:19 and 06:46 UTC. The repeated class is the broad candidate-exhaustion bucket; the daemon evidence did not name a deterministic validator, prompt-contract, or timeout cause, so no <=30-line fix was safe.
+- Render-infra check: exact `0.68` clumped 2x in the 05:24 UTC cycle (kinetic + hydra). A live HeadlessRenderer p5 probe produced screenshot and late screenshot in 3029ms with `infraUnavailable:false`; no browser reinstall and no daemon restart.
+- Archive check: archive delta stayed 0 across completed rows; no new admissions needed F19-style measurement and no finding was appended.
+- Action taken: watchman log only; no code change and no finding.
+- Next watch item: keep watching broad candidate-exhaustion until per-candidate `lastError` or generator/domain evidence makes it fixable; also check the in-progress 07:15 UTC cycle after it lands for renewed `0.68` or `infra` symptoms.

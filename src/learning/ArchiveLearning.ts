@@ -144,11 +144,17 @@ export class ArchiveLearning {
    * @returns Array of archived items
    */
   getExamples(domain: string, n?: number, minScore?: number): ArchivedItem[] {
+    // Exemplars teach the next generation — a mediocre exemplar is worse than
+    // none (the 2026-06-12 rescore showed the system few-shotting from
+    // 0.72-grade work). Default floor: only genuinely strong entries teach.
     return this.archive.query(domain, {
       limit: n ?? this.config.examplesPerGeneration,
-      minQuality: minScore ?? 0,
+      minQuality: minScore ?? ArchiveLearning.DEFAULT_EXEMPLAR_FLOOR,
     });
   }
+
+  /** Minimum quality for an entry to be used as a teaching exemplar. */
+  static readonly DEFAULT_EXEMPLAR_FLOOR = 0.85;
 
   /**
    * Generate a few-shot prompt with best examples.

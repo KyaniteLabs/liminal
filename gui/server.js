@@ -731,7 +731,11 @@ export function createApp(configPath, port = 5174) {
         const fontPx = Math.max(14, Math.min(34, Math.floor(Math.min((900 * 0.9) / (longest * 0.6), (600 * 0.9) / (lines.length * 1.25)))));
         html = `<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;height:100%;background:#06080f;color:#cfe;font:${fontPx}px ui-monospace,Menlo,monospace;display:flex;align-items:center;justify-content:center}pre{padding:18px;white-space:pre;line-height:1.25}</style></head><body><pre>${escapeHtml(text)}</pre></body></html>`;
       } else if (entry.domain === 'kinetic') {
-        html = entry.output;
+        // Kinetic entries are complete HTML pages with their own layout —
+        // injecting the stage's grid/centering body style collapses them to
+        // black. Serve untouched.
+        setStageRenderHeaders(res);
+        return res.send(entry.output);
       } else {
         const { HTMLWrapper } = await import('../dist/utils/htmlWrapper.js');
         const wrapperDomain = entry.domain === 'glsl' ? 'shader' : entry.domain;

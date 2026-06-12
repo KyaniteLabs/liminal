@@ -21,8 +21,9 @@
 
 ## TASK 2 — Band + tier LLMJudgeCritic
 - Branch: `codex/llm-judge-tier`
-- PR: pending.
+- PR: `#24`
 - Outcome: added banded full/compact judge prompts, resolved compact tier from LLM config/base URL, enabled compact JSON mode, and parsed flat compact JSON responses without dropping legacy text responses.
 - Verification:
   - `pnpm exec vitest run test/unit/aesthetic --coverage.enabled=false` → 101 passed.
   - `pnpm typecheck` → passed.
+  - `pnpm build && npx vitest run --changed origin/main --coverage=false --reporter=verbose --retry=0 --testTimeout=10000` → 77 files passed, 1182 tests passed.

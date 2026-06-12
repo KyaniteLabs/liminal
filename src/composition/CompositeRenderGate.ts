@@ -26,7 +26,7 @@ import {
 
 export type CompositeMeasure = LuminanceMeasure;
 
-export type CompositeVerdict = 'ok' | 'washout' | 'too-dark';
+export type CompositeVerdict = 'ok' | 'washout' | 'too-dark' | 'muddy';
 
 export interface CompositeGateReport {
   verdict: CompositeVerdict;
@@ -63,9 +63,15 @@ export function layersToDemote(
   blendModes: ReadonlyArray<string>,
 ): number[] {
   if (verdict === 'ok') return [];
-  const offending = verdict === 'washout'
-    ? (mode: string) => LIGHTENING_BLENDS.has(mode) || WASHOUT_ALSO.has(mode)
-    : (mode: string) => DARKENING_BLENDS.has(mode);
+  // Mud (flat mid-grey, no anchors) comes from semi-opaque layers averaging
+  // each other toward the middle, not from one blend direction. Squeeze every
+  // non-base layer (demote + reduced opacity) so the base layer's value
+  // structure shows through; the spread comparison decides if it helped.
+  const offending = verdict === 'muddy'
+    ? () => true
+    : verdict === 'washout'
+      ? (mode: string) => LIGHTENING_BLENDS.has(mode) || WASHOUT_ALSO.has(mode)
+      : (mode: string) => DARKENING_BLENDS.has(mode);
   const picks: number[] = [];
   for (let i = 1; i < blendModes.length; i++) {
     if (offending(blendModes[i])) picks.push(i);
@@ -78,8 +84,8 @@ export function layersToDemote(
 export const DEMOTED_OPACITY_FACTOR = 0.75;
 
 export function verdictFromMeasure(measure: CompositeMeasure): CompositeVerdict {
-  const verdict = sharedVerdictFromMeasure(measure, { lowContrast: false });
-  return verdict === 'low-contrast' ? 'ok' : verdict;
+  const verdict = sharedVerdictFromMeasure(measure, { lowContrast: true });
+  return verdict === 'low-contrast' ? 'muddy' : verdict;
 }
 
 /**
@@ -122,20 +128,27 @@ export async function measureCompositeHtml(
       let sum = 0;
       let bright = 0;
       let dark = 0;
+      let luma255Sum = 0;
+      let luma255SumSq = 0;
       const pixels = data.length / 4;
       for (let i = 0; i < data.length; i += 4) {
         // Inline rec601 luma: page.evaluate serializes this callback, so module
         // imports (luminanceFromRgb8) do not exist in browser scope — the gate
         // silently skipped on every composite from 5a158156 until this fix.
-        const lum = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255;
+        const luma255 = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        const lum = luma255 / 255;
         sum += lum;
+        luma255Sum += luma255;
+        luma255SumSq += luma255 * luma255;
         // Inline thresholds for the same serialization reason (values pinned
         // to BRIGHT_LUMINANCE_THRESHOLD=0.5 / DARK_LUMINANCE_THRESHOLD=0.12 by
         // the assertion below this evaluate call).
         if (lum > 0.5) bright++;
         if (lum < 0.12) dark++;
       }
-      return { meanLuminance: sum / pixels, brightFraction: bright / pixels, darkFraction: dark / pixels };
+      const luma255Mean = luma255Sum / pixels;
+      const brightnessStd = Math.sqrt(Math.max(0, luma255SumSq / pixels - luma255Mean * luma255Mean));
+      return { meanLuminance: sum / pixels, brightFraction: bright / pixels, darkFraction: dark / pixels, brightnessStd };
     }, shot);
   } finally {
     await browser.close();

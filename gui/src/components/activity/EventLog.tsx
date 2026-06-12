@@ -8,11 +8,11 @@ interface EventLogProps {
 }
 
 const SOURCE_COLORS: Record<string, string> = {
-  RalphLoop: 'var(--atelier-accent)',
-  CompostMill: 'var(--atelier-success)',
-  CompostSoup: 'var(--atelier-success)',
-  LLMClient: 'var(--atelier-warn)',
-  SwarmOrchestrator: 'var(--atelier-visual)',
+  RalphLoop: 'var(--sinter-cyan)',
+  CompostMill: 'var(--sinter-green)',
+  CompostSoup: 'var(--sinter-green)',
+  LLMClient: 'var(--sinter-amber)',
+  SwarmOrchestrator: 'var(--sinter-orchid)',
 };
 
 const TYPE_ICONS: Record<string, string> = {
@@ -46,16 +46,16 @@ export function EventLog({ events, connected, onClear }: EventLogProps) {
   const displayEvents = events.slice(-200);
 
   return (
-    <div className="atelier-panel" style={{ padding: 16, display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="sinter-panel" style={{ padding: 16, display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <h3 className="atelier-heading" style={{ margin: 0 }}>
+        <h3 className="sinter-heading" style={{ margin: 0 }}>
           Event Log
           <span style={{
             display: 'inline-block',
             width: 8,
             height: 8,
             borderRadius: '50%',
-            background: connected ? 'var(--atelier-success)' : 'var(--atelier-error)',
+            background: connected ? 'var(--sinter-green)' : 'var(--sinter-red)',
             marginLeft: 8,
             verticalAlign: 'middle',
           }} />
@@ -64,7 +64,7 @@ export function EventLog({ events, connected, onClear }: EventLogProps) {
           <button
             type="button"
             onClick={() => setPaused(!paused)}
-            className="atelier-btn atelier-btn--secondary"
+            className="sinter-btn sinter-btn--secondary"
             style={{ padding: '4px 10px', fontSize: 12 }}
           >
             {paused ? '▶ Resume' : '⏸ Pause'}
@@ -72,7 +72,7 @@ export function EventLog({ events, connected, onClear }: EventLogProps) {
           <button
             type="button"
             onClick={onClear}
-            className="atelier-btn atelier-btn--secondary"
+            className="sinter-btn sinter-btn--secondary"
             style={{ padding: '4px 10px', fontSize: 12 }}
           >
             Clear
@@ -89,14 +89,14 @@ export function EventLog({ events, connected, onClear }: EventLogProps) {
           fontSize: 12,
           lineHeight: 1.6,
           background: 'rgba(0,0,0,0.15)',
-          borderRadius: 'var(--atelier-radius-sm)',
+          borderRadius: 'var(--sinter-radius-sm)',
           padding: 8,
         }}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
         {displayEvents.length === 0 && (
-          <div style={{ color: 'var(--atelier-text-dim)', padding: 8 }}>
+          <div style={{ color: 'var(--sinter-dim)', padding: 8 }}>
             Waiting for events...
           </div>
         )}
@@ -114,16 +114,16 @@ export function EventLog({ events, connected, onClear }: EventLogProps) {
                 background: expandedIndex === i ? 'rgba(255,255,255,0.05)' : 'transparent',
               }}
             >
-              <span style={{ color: 'var(--atelier-text-dim)', flexShrink: 0, width: 72 }}>
+              <span style={{ color: 'var(--sinter-dim)', flexShrink: 0, width: 72 }}>
                 {ev.timestamp.split('T')[1]?.slice(0, 12) ?? ''}
               </span>
-              <span style={{ color: SOURCE_COLORS[ev.source] ?? 'var(--atelier-text-muted)', flexShrink: 0, width: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ color: SOURCE_COLORS[ev.source] ?? 'var(--sinter-muted)', flexShrink: 0, width: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {ev.source}
               </span>
               <span style={{ flexShrink: 0, width: 18, textAlign: 'center' }}>
                 {TYPE_ICONS[ev.type] ?? '·'}
               </span>
-              <span style={{ color: 'var(--atelier-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ color: 'var(--sinter-text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {formatEventMessage(ev)}
               </span>
             </div>
@@ -132,7 +132,7 @@ export function EventLog({ events, connected, onClear }: EventLogProps) {
                 margin: '0 0 4px 198px',
                 padding: '6px 8px',
                 fontSize: 11,
-                color: 'var(--atelier-text-dim)',
+                color: 'var(--sinter-dim)',
                 background: 'rgba(0,0,0,0.2)',
                 borderRadius: 3,
                 overflow: 'auto',

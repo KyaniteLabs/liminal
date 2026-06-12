@@ -19,9 +19,9 @@ export function ProcessCard({ events }: ProcessCardProps) {
 
   if (active.length === 0) {
     return (
-      <div className="atelier-panel" style={{ padding: 16 }}>
-        <h3 className="atelier-heading">Active Processes</h3>
-        <p style={{ color: 'var(--atelier-text-muted)', fontSize: 13, margin: 0 }}>
+      <div className="sinter-panel" style={{ padding: 16 }}>
+        <h3 className="sinter-heading">Active Processes</h3>
+        <p style={{ color: 'var(--sinter-muted)', fontSize: 13, margin: 0 }}>
           No processes running.
         </p>
       </div>
@@ -29,26 +29,26 @@ export function ProcessCard({ events }: ProcessCardProps) {
   }
 
   return (
-    <div className="atelier-panel" style={{ padding: 16 }}>
-      <h3 className="atelier-heading">Active Processes</h3>
+    <div className="sinter-panel" style={{ padding: 16 }}>
+      <h3 className="sinter-heading">Active Processes</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {active.map((proc) => (
           <div key={`${proc.source}-${proc.startTime}`} style={{ fontSize: 13 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <span style={{ fontWeight: 600, color: 'var(--atelier-accent)' }}>{proc.process}</span>
-              <span style={{ color: 'var(--atelier-text-dim)', fontSize: 12 }}>{proc.stage}</span>
+              <span style={{ fontWeight: 600, color: 'var(--sinter-cyan)' }}>{proc.process}</span>
+              <span style={{ color: 'var(--sinter-dim)', fontSize: 12 }}>{proc.stage}</span>
             </div>
             {proc.progress > 0 && (
               <div style={{
                 height: 4,
-                background: 'var(--atelier-border)',
+                background: 'var(--sinter-line)',
                 borderRadius: 2,
                 overflow: 'hidden',
               }}>
                 <div style={{
                   height: '100%',
                   width: `${Math.min(100, proc.progress * 100)}%`,
-                  background: 'var(--atelier-accent)',
+                  background: 'var(--sinter-cyan)',
                   borderRadius: 2,
                   transition: 'width 0.3s ease',
                 }} />

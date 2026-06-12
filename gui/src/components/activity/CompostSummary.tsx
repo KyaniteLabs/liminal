@@ -8,9 +8,9 @@ interface CompostSummaryProps {
 export function CompostSummary({ status }: CompostSummaryProps) {
   if (!status) {
     return (
-      <div className="atelier-panel" style={{ padding: 16 }}>
-        <h3 className="atelier-heading">Compost Stats</h3>
-        <p style={{ color: 'var(--atelier-text-muted)', fontSize: 13, margin: 0 }}>
+      <div className="sinter-panel" style={{ padding: 16 }}>
+        <h3 className="sinter-heading">Compost Stats</h3>
+        <p style={{ color: 'var(--sinter-muted)', fontSize: 13, margin: 0 }}>
           Loading...
         </p>
       </div>
@@ -18,30 +18,30 @@ export function CompostSummary({ status }: CompostSummaryProps) {
   }
 
   return (
-    <div className="atelier-panel" style={{ padding: 16 }}>
-      <h3 className="atelier-heading">Compost Stats</h3>
+    <div className="sinter-panel" style={{ padding: 16 }}>
+      <h3 className="sinter-heading">Compost Stats</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--atelier-text-muted)' }}>Heap files</span>
+          <span style={{ color: 'var(--sinter-muted)' }}>Heap files</span>
           <span>{status.heapFileCount}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--atelier-text-muted)' }}>Heap size</span>
+          <span style={{ color: 'var(--sinter-muted)' }}>Heap size</span>
           <span>{formatBytes(status.heapSize)}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--atelier-text-muted)' }}>Seeds</span>
-          <span style={{ fontWeight: 600, color: 'var(--atelier-success)' }}>{status.seedCount}</span>
+          <span style={{ color: 'var(--sinter-muted)' }}>Seeds</span>
+          <span style={{ fontWeight: 600, color: 'var(--sinter-green)' }}>{status.seedCount}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--atelier-text-muted)' }}>Soup running</span>
-          <span style={{ color: status.soupRunning ? 'var(--atelier-success)' : 'var(--atelier-text-dim)' }}>
+          <span style={{ color: 'var(--sinter-muted)' }}>Soup running</span>
+          <span style={{ color: status.soupRunning ? 'var(--sinter-green)' : 'var(--sinter-dim)' }}>
             {status.soupRunning ? 'yes' : 'no'}
           </span>
         </div>
         {status.loopProgress && (
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: 'var(--atelier-text-muted)' }}>Loop</span>
+            <span style={{ color: 'var(--sinter-muted)' }}>Loop</span>
             <span>
               iter {status.loopProgress.iteration}
               {status.loopProgress.maxIterations ? ` / ${status.loopProgress.maxIterations}` : ''}

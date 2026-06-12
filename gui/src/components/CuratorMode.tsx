@@ -81,16 +81,16 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
 
   return (
     <div className="curator-mode" style={{ maxWidth: 960, margin: '0 auto' }}>
-      <div className="atelier-panel" style={{ marginBottom: 16 }}>
-        <h2 className="atelier-heading">Curator Mode</h2>
-        <p style={{ color: 'var(--atelier-text-muted)', fontSize: 14, margin: '0 0 16px', lineHeight: 1.5 }}>
+      <div className="sinter-panel" style={{ marginBottom: 16 }}>
+        <h2 className="sinter-heading">Curator Mode</h2>
+        <p style={{ color: 'var(--sinter-muted)', fontSize: 14, margin: '0 0 16px', lineHeight: 1.5 }}>
           Rate creations to train the aesthetic model. Select a parent to evolve from.
         </p>
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <button
             type="button"
-            className="atelier-btn atelier-btn--secondary"
+            className="sinter-btn sinter-btn--secondary"
             onClick={loadCandidates}
             disabled={loading}
           >
@@ -98,7 +98,7 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
           </button>
           <button
             type="button"
-            className="atelier-btn atelier-btn--primary"
+            className="sinter-btn sinter-btn--primary"
             onClick={handleEvolve}
             disabled={!selectedId}
           >
@@ -108,19 +108,19 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
       </div>
 
       {fetchError && (
-        <div className="atelier-alert atelier-alert--warn" style={{ marginBottom: 16 }}>
+        <div className="sinter-alert sinter-alert--warn" style={{ marginBottom: 16 }}>
           {fetchError}
         </div>
       )}
 
       {candidates.length === 0 && !loading && !fetchError ? (
-        <div className="atelier-panel" style={{
+        <div className="sinter-panel" style={{
           padding: '32px',
           textAlign: 'center',
-          color: 'var(--atelier-text-dim)',
+          color: 'var(--sinter-dim)',
           borderStyle: 'dashed',
         }}>
-          <p style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--atelier-text-muted)' }}>
+          <p style={{ margin: '0 0 8px', fontSize: 15, color: 'var(--sinter-muted)' }}>
             No candidates yet.
           </p>
           <p style={{ margin: 0, fontSize: 13 }}>
@@ -139,11 +139,11 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
               className={`curator-card ${selectedId === candidate.id ? 'curator-card--selected' : ''}`}
               onClick={() => setSelectedId(candidate.id)}
               style={{
-                background: 'var(--atelier-surface)',
+                background: 'var(--sinter-surface-1)',
                 border: selectedId === candidate.id
-                  ? '2px solid var(--atelier-accent)'
-                  : '1px solid var(--atelier-border)',
-                borderRadius: 'var(--atelier-radius)',
+                  ? '2px solid var(--sinter-cyan)'
+                  : '1px solid var(--sinter-line)',
+                borderRadius: 'var(--sinter-radius)',
                 padding: 12,
                 cursor: 'pointer',
                 transition: 'border-color 0.15s ease, background 0.15s ease',
@@ -158,7 +158,7 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
                     width: '100%',
                     height: 120,
                     objectFit: 'cover',
-                    borderRadius: 'var(--atelier-radius-sm)',
+                    borderRadius: 'var(--sinter-radius-sm)',
                     marginBottom: 8,
                   }}
                 />
@@ -166,13 +166,13 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
                 <div style={{
                   width: '100%',
                   height: 80,
-                  background: 'var(--atelier-surface-raised)',
-                  borderRadius: 'var(--atelier-radius-sm)',
+                  background: 'var(--sinter-surface-2)',
+                  borderRadius: 'var(--sinter-radius-sm)',
                   marginBottom: 8,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: 'var(--atelier-text-dim)',
+                  color: 'var(--sinter-dim)',
                   fontSize: 12,
                 }}>
                   no preview
@@ -180,7 +180,7 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
               )}
 
               {/* ID */}
-              <div style={{ fontSize: 11, color: 'var(--atelier-text-dim)', marginBottom: 4 }}>
+              <div style={{ fontSize: 11, color: 'var(--sinter-dim)', marginBottom: 4 }}>
                 {candidate.id}
               </div>
 
@@ -193,7 +193,7 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
               {candidate.aestheticPrediction !== undefined && (
                 <div style={{
                   fontSize: 12,
-                  color: 'var(--atelier-accent)',
+                  color: 'var(--sinter-cyan)',
                   marginTop: 4,
                 }}>
                   Aesthetic: {candidate.aestheticPrediction.toFixed(2)}
@@ -204,7 +204,7 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
               {candidate.behavior.length > 0 && (
                 <div style={{
                   fontSize: 11,
-                  color: 'var(--atelier-text-dim)',
+                  color: 'var(--sinter-dim)',
                   marginTop: 4,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -229,8 +229,8 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
                       padding: '0 1px',
                       lineHeight: 1,
                       color: (candidate.rating ?? 0) >= star
-                        ? 'var(--atelier-accent)'
-                        : 'var(--atelier-text-dim)',
+                        ? 'var(--sinter-cyan)'
+                        : 'var(--sinter-dim)',
                       opacity: (candidate.rating ?? 0) >= star ? 1 : 0.4,
                     }}
                     aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
@@ -246,24 +246,24 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
 
       {/* Selected candidate detail */}
       {selected && (
-        <div className="atelier-panel atelier-panel--raised" style={{ marginTop: 16 }}>
-          <h3 className="atelier-heading">Selected: {selected.id}</h3>
+        <div className="sinter-panel sinter-panel--raised" style={{ marginTop: 16 }}>
+          <h3 className="sinter-heading">Selected: {selected.id}</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 13 }}>
             <div>
-              <span style={{ color: 'var(--atelier-text-muted)' }}>Fitness: </span>
+              <span style={{ color: 'var(--sinter-muted)' }}>Fitness: </span>
               <span style={{ fontWeight: 600 }}>{selected.fitness.toFixed(4)}</span>
             </div>
             {selected.aestheticPrediction !== undefined && (
               <div>
-                <span style={{ color: 'var(--atelier-text-muted)' }}>Aesthetic: </span>
-                <span style={{ fontWeight: 600, color: 'var(--atelier-accent)' }}>
+                <span style={{ color: 'var(--sinter-muted)' }}>Aesthetic: </span>
+                <span style={{ fontWeight: 600, color: 'var(--sinter-cyan)' }}>
                   {selected.aestheticPrediction.toFixed(4)}
                 </span>
               </div>
             )}
             {selected.behavior.length > 0 && (
               <div style={{ gridColumn: '1 / -1' }}>
-                <span style={{ color: 'var(--atelier-text-muted)' }}>Behavior: </span>
+                <span style={{ color: 'var(--sinter-muted)' }}>Behavior: </span>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>
                   [{selected.behavior.map(b => b.toFixed(3)).join(', ')}]
                 </span>
@@ -271,8 +271,8 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
             )}
             {selected.rating !== undefined && (
               <div>
-                <span style={{ color: 'var(--atelier-text-muted)' }}>Your rating: </span>
-                <span style={{ color: 'var(--atelier-accent)' }}>
+                <span style={{ color: 'var(--sinter-muted)' }}>Your rating: </span>
+                <span style={{ color: 'var(--sinter-cyan)' }}>
                   {'★'.repeat(selected.rating)}{'☆'.repeat(5 - selected.rating)}
                 </span>
               </div>
@@ -281,7 +281,7 @@ export const CuratorMode: React.FC<CuratorModeProps> = ({ apiBase = '/api', onEv
           <div style={{ marginTop: 12 }}>
             <button
               type="button"
-              className="atelier-btn atelier-btn--primary"
+              className="sinter-btn sinter-btn--primary"
               onClick={handleEvolve}
             >
               Evolve from this candidate

@@ -110,7 +110,7 @@ export function WorkbenchShell({
     <div className={showStageAside ? 'sinter-workbench sinter-workbench--chat-first' : 'sinter-workbench sinter-workbench--chat-first sinter-workbench--view'}>
       <a className="sinter-skip-link" href="#main-content">Skip to main content</a>
       {backendDown && (
-        <div className="atelier-alert atelier-alert--warn sinter-backend-banner" role="alert">
+        <div className="sinter-alert sinter-alert--warn sinter-backend-banner" role="alert">
           Studio backend isn&apos;t reachable — generation and live data are paused.
           Start it from a terminal: <code>sinter studio</code>
         </div>

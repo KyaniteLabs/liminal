@@ -53,3 +53,12 @@
   - `node --check scripts/quality/rescore-tops.mjs` → passed.
   - `pnpm build` → passed.
   - `pnpm quality:rescore` → completed with 16 JSON records and no exceptions (`grep -c '^{' < captured output` → 16).
+
+## TASK 6 — Full-tier guard for agentic prompts
+- Branch: `codex/agentic-full-tier`
+- Outcome: added explicit compact-tier warnings for `LLMModeAgent` planning and ledger `TaskRunner` prompts; both keep the existing full agentic prompt path and name the compact-resolved model in the warning.
+- Verification:
+  - `pnpm exec vitest run test/unit/LLMModeAgent.test.ts --coverage.enabled=false` → 1 file passed, 68 tests passed.
+  - `pnpm exec vitest run test/unit/ledger/TaskRunner.test.ts test/unit/ledger/TaskRunner.prompt.test.ts --coverage.enabled=false` → 2 files passed, 11 tests passed.
+  - `pnpm typecheck` → passed.
+  - `pnpm build` → passed.

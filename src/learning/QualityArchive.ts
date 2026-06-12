@@ -198,6 +198,39 @@ export class QualityArchive {
   }
 
   /**
+   * Re-score an existing entry in place (archive re-normalization).
+   *
+   * Stale gen-time scores freeze the displacement ratchet once the judge
+   * improves: honest new scores can't beat old inflated ones. This updates the
+   * entry's qualityScore through the class (never hand-edit the JSON), records
+   * the prior score in metadata for auditability, restores the domain bucket's
+   * sorted-by-quality invariant, and persists.
+   *
+   * @returns true when the entry was found and updated.
+   */
+  async rescoreEntry(itemId: string, freshScore: number, provenance: string): Promise<boolean> {
+    const clamped = Math.max(0, Math.min(1, freshScore));
+    for (const [domain, entries] of this.cache.entries()) {
+      const entry = entries.find((e) => e.id === itemId);
+      if (!entry) continue;
+      entry.metadata = {
+        ...entry.metadata,
+        rescore: {
+          priorScore: entry.qualityScore,
+          rescoredAt: new Date().toISOString(),
+          provenance,
+        },
+      };
+      entry.qualityScore = clamped;
+      entries.sort((a, b) => b.qualityScore - a.qualityScore);
+      this.cache.set(domain, entries);
+      await this.save();
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Query entries by domain with filters.
    * @param domain - Domain to query
    * @param options - Query options

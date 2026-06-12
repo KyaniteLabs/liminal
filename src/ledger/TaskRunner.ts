@@ -7,6 +7,9 @@
  */
 
 import { RalphLoop } from '../core/RalphLoop.js';
+import { loadRoleConfig } from '../config/RoleConfig.js';
+import { resolvePromptTier } from '../prompts/PromptTier.js';
+import { Logger } from '../utils/Logger.js';
 import type { TaskLedger } from './TaskLedger.js';
 import type { TaskManifest, TaskAttempt } from './types.js';
 
@@ -22,6 +25,7 @@ export class TaskRunner {
 
   async runTask(task: TaskManifest, options?: TaskRunnerOptions): Promise<TaskAttempt> {
     const attemptId = `att-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    await this.warnIfCompactAgenticModel();
     const prompt = this.buildPrompt(task);
     const startTime = Date.now();
 
@@ -59,6 +63,12 @@ export class TaskRunner {
 
     this.ledger.recordAttempt(attempt);
     return attempt;
+  }
+
+  private async warnIfCompactAgenticModel(): Promise<void> {
+    const config = (await loadRoleConfig()).generator;
+    if (resolvePromptTier(config.model, config.provider) === 'compact')
+      Logger.warn('TaskRunner', `Ledger agentic prompt requires full-tier prompts; model "${config.model}" resolved compact, proceeding with full prompt.`);
   }
 
   private buildPrompt(task: TaskManifest): string {

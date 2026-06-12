@@ -123,6 +123,7 @@ vi.mock('../../src/harness/RunStateStore.js', () => ({
 import { LLMModeAgent, createLLMModeAgent } from '../../src/harness/agent/LLMModeAgent.js';
 import eventBus, { EventTypes, type BusEvent } from '../../src/core/EventBus.js';
 import { rateLimiter } from '../../src/harness/tools/RateLimiter.js';
+import { Logger } from '../../src/utils/Logger.js';
 import { Status } from '../../src/types/status.js';
 
 function queuePlans(...responses: string[]): void {
@@ -237,6 +238,17 @@ describe('LLMModeAgent', () => {
 
     expect(progressMessages).toContain('asking MiniMax-M2.7 for next tool call');
     expect(progressMessages).not.toContain('asking GLM for next tool call');
+  });
+
+  it('warns and keeps the full planning prompt for compact-tier models', async () => {
+    mockLLM.getConfig.mockReturnValue({ model: 'gemma4:12b', provider: 'ollama' });
+    queuePlans('{"tool":"complete","params":{},"thought":"done","expectedResult":"done"}');
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    await agent.executeTask({ id: 't-compact-agentic', title: 'Compact', description: 'Use full agentic prompt', approved: true, maxSteps: 1 });
+
+    expect(Logger.warn).toHaveBeenCalledWith('LLMModeAgent', expect.stringContaining('gemma4:12b'));
+    expect(mockComplete.mock.calls[0][0].prompt).toContain('What is your next tool call? Respond with JSON only.');
   });
 
   // ── Task execution behavior ────────────────────────────────────────

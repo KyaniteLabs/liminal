@@ -10,6 +10,7 @@
 
 import { LLMClient } from '../../llm/LLMClient.js';
 import { ContextCompactor } from '../../llm/ContextCompactor.js';
+import { resolvePromptTier } from '../../prompts/PromptTier.js';
 import { Logger } from '../../utils/Logger.js';
 import { failureLogger } from '../FailureLogger.js';
 import { Status } from '../../types/status.js';
@@ -734,6 +735,9 @@ When the task is complete and build passes, respond with tool "complete".`;
       const conversation = messages.map(m => `${m.role}: ${m.content}`).join('\n\n---\n\n');
 
       // Call LLM
+      const llmConfig = this.llmClient.getConfig();
+      if (resolvePromptTier(llmConfig.model, llmConfig.provider) === 'compact')
+        Logger.warn('LLMModeAgent', `Agentic planning requires full-tier prompts; model "${llmConfig.model}" resolved compact, proceeding with full prompt.`);
       const response = await this.llmClient.complete({
         systemPrompt,
         prompt: conversation + '\n\nWhat is your next tool call? Respond with JSON only.',

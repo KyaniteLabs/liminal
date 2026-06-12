@@ -30,7 +30,7 @@
 
 ## TASK 3 — Fold generateP5Sketch's bespoke check into PromptTier
 - Branch: `codex/p5-prompt-tier`
-- PR: pending.
+- PR: `#25`
 - Outcome: replaced the bespoke capability/context-window condition with PromptTier routing, kept the simplified prompt as the compact variant, and asserted `glm-5v` stays on the full PromptLibrary path.
 - Verification:
   - `pnpm exec vitest run test/unit --coverage.enabled=false -t p5` → 58 files passed, 182 tests passed.

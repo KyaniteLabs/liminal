@@ -27,6 +27,14 @@ import type { RenderEvidence, GenerationEvaluation, RenderMeasure } from './type
 import { evaluateRenderEvidencePerception, measureRenderEvidence } from '../perception/RenderEvidencePerception.js';
 import { DomainEvaluatorRegistry } from './evaluators/DomainEvaluatorRegistry.js';
 
+const RUBRIC_BANDS = `Score bands (anchor your score in a band first, then refine):
+- 0.90-1.00: gallery-grade — strong composition AND deliberate palette AND evident craft; nothing broken.
+- 0.75-0.89: competent — coherent and intentional, but missing one dimension (flat lighting, no focal point, sparse).
+- 0.60-0.74: weak — renders something relevant but visually thin, muddled, or accidental-looking.
+- 0.40-0.59: poor — barely related to the brief, severe visual defects, or mostly empty.
+- 0.00-0.39: broken — blank, black, garbled, or unrelated to the brief.
+Most competent work belongs in 0.75-0.89. Reserve 0.90+ for work you would exhibit.`;
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -345,7 +353,12 @@ export class LLMScoringStrategy implements ScoringStrategy {
    */
   async scoreWithResult(input: ScoringInput): Promise<Result<ScoringResult, LLMError>> {
     const criteria = input.criteria?.join(', ') ?? 'technical quality, creativity, novelty';
-    const systemPrompt = `You are an expert creative artifact evaluator. Score the artifact against the given criteria.
+    const config = this.llm.getConfig();
+    const provider = config.provider ?? (config.baseUrl ? detectProviderFromUrl(config.baseUrl) : undefined);
+    const promptTier = resolvePromptTier(config.model, provider);
+    const systemPrompt = tiered({
+      full: `You are an expert creative artifact evaluator. Score the artifact against the given criteria.
+${RUBRIC_BANDS}
 	Return ONLY a JSON object with this exact structure:
 	{
 	  "score": <number 0-1>,
@@ -354,7 +367,10 @@ export class LLMScoringStrategy implements ScoringStrategy {
 	  "novelty": <number 0-1>,
 	  "reasoning": "<brief explanation>",
 	  "suggestions": ["<suggestion1>", ...]
-	}`;
+	}`,
+      compact: `${RUBRIC_BANDS}
+Reply with ONE line of flat JSON only: {"score":0.0,"technical":0.0,"creative":0.0,"novelty":0.0,"reasoning":"...","suggestions":["..."]}. No markdown. No nested objects.`,
+    }, promptTier);
 
     const userPrompt = `Criteria: ${criteria}\nDomain: ${input.domain ?? 'general'}\n${input.prompt ? `Prompt: ${input.prompt}\n` : ''}Artifact:\n${input.output}`;
 
@@ -366,6 +382,7 @@ export class LLMScoringStrategy implements ScoringStrategy {
         toolExecutor: createGeneratorToolExecutor(String(input.domain ?? 'general')),
         maxIterations: 2,
         signal: input.signal,
+        jsonMode: promptTier === 'compact',
       });
       const responseText = toolResult.content;
 
@@ -380,9 +397,13 @@ export class LLMScoringStrategy implements ScoringStrategy {
 
       const parsed = JSON.parse(jsonMatch[0]);
       const dimensions: Partial<Record<ScoreDimension, number>> = {};
-      if (typeof parsed.technical === 'number') dimensions.technical = Math.max(0, Math.min(1, parsed.technical));
-      if (typeof parsed.creative === 'number') dimensions.creative = Math.max(0, Math.min(1, parsed.creative));
-      if (typeof parsed.novelty === 'number') dimensions.novelty = Math.max(0, Math.min(1, parsed.novelty));
+      const parsedDimensions = typeof parsed.dimensions === 'object' && parsed.dimensions ? parsed.dimensions : {};
+      const technical = typeof parsed.technical === 'number' ? parsed.technical : parsedDimensions.technical;
+      const creative = typeof parsed.creative === 'number' ? parsed.creative : parsedDimensions.creative;
+      const novelty = typeof parsed.novelty === 'number' ? parsed.novelty : parsedDimensions.novelty;
+      if (typeof technical === 'number') dimensions.technical = Math.max(0, Math.min(1, technical));
+      if (typeof creative === 'number') dimensions.creative = Math.max(0, Math.min(1, creative));
+      if (typeof novelty === 'number') dimensions.novelty = Math.max(0, Math.min(1, novelty));
 
       return ok({
         score: Math.max(0, Math.min(1, typeof parsed.score === 'number' ? parsed.score : 0.5)),
@@ -818,13 +839,6 @@ export async function scoreRenderedEvidence(
   const evalProvider = evalConfig.provider
     ?? (evalConfig.baseUrl ? detectProviderFromUrl(evalConfig.baseUrl) : undefined);
   const promptTier = resolvePromptTier(evalConfig.model, evalProvider);
-  const RUBRIC_BANDS = `Score bands (anchor your score in a band first, then refine):
-- 0.90-1.00: gallery-grade — strong composition AND deliberate palette AND evident craft; nothing broken.
-- 0.75-0.89: competent — coherent and intentional, but missing one dimension (flat lighting, no focal point, sparse).
-- 0.60-0.74: weak — renders something relevant but visually thin, muddled, or accidental-looking.
-- 0.40-0.59: poor — barely related to the brief, severe visual defects, or mostly empty.
-- 0.00-0.39: broken — blank, black, garbled, or unrelated to the brief.
-Most competent work belongs in 0.75-0.89. Reserve 0.90+ for work you would exhibit.`;
   const systemPrompt = tiered({
     full: `You are an expert creative artifact evaluator. Evaluate the rendered output of the provided code against the brief.
 ${RUBRIC_BANDS}

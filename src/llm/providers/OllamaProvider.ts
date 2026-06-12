@@ -64,6 +64,7 @@ export class OllamaProvider extends BaseProvider {
         system: req.systemPrompt,
         prompt: req.userPrompt,
         stream: false,
+        ...(req.jsonMode ? { format: 'json' } : {}),
         images: req.imageInputs?.map(image => image.dataBase64),
         options: {
           num_predict: maxTokens,
@@ -255,6 +256,7 @@ export class OllamaProvider extends BaseProvider {
       system: req.systemPrompt,
       prompt: req.userPrompt,
       stream: true,
+      ...(req.jsonMode ? { format: 'json' } : {}),
       options: {
         num_predict: maxTokens,
         num_ctx: numCtx,

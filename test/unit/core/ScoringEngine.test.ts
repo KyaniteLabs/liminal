@@ -19,7 +19,7 @@ const { mockCreativeEvaluatorAssess, mockAestheticCriticInstance, mockHeuristicS
   const criticInstance = { critique: vi.fn(), setLLMClient: vi.fn() };
   const scoreOutput = vi.fn();
   const quickScoreFn = vi.fn();
-  const llmInstance = { generate: vi.fn(), generateWithImages: vi.fn(), generateWithToolLoop: vi.fn() };
+  const llmInstance = { generate: vi.fn(), generateWithImages: vi.fn(), generateWithToolLoop: vi.fn(), getConfig: vi.fn(() => ({ model: 'mock-frontier', provider: 'glm', baseUrl: '' })) };
   const warn = vi.fn();
   return {
     mockCreativeEvaluatorAssess: assess,
@@ -62,14 +62,17 @@ vi.mock('../../../src/collab/Scoring.js', () => ({
 }));
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
-  return {
-    LLMClient: vi.fn(function (this: any, _config?: any) {
-      this.generate = mockLLMClientInstance.generate;
-      this.generateWithImages = mockLLMClientInstance.generateWithImages;
-      this.generateWithToolLoop = mockLLMClientInstance.generateWithToolLoop;
-      return this;
-    }),
-  };
+  const LLMClient = vi.fn(function (this: any, _config?: any) {
+    this.generate = mockLLMClientInstance.generate;
+    this.generateWithImages = mockLLMClientInstance.generateWithImages;
+    this.generateWithToolLoop = mockLLMClientInstance.generateWithToolLoop;
+    this.getConfig = mockLLMClientInstance.getConfig;
+    return this;
+  });
+  // Real LLMClient exposes a static async role preloader; scoreRenderedEvidence
+  // awaits it before constructing the evaluator client.
+  (LLMClient as any).loadRoles = vi.fn(async () => undefined);
+  return { LLMClient };
 });
 
 vi.mock('../../../src/utils/Logger.js', () => ({
@@ -1072,6 +1075,9 @@ describe('ScoringEngine', () => {
         expect.any(String),
         expect.stringContaining('Render measure: verdict=washout, mean=0.880, bright=0.950, dark=0.000, std=0.04'),
         expect.any(AbortSignal),
+        true,
+        undefined,
+        { jsonMode: false },
       );
     });
 
@@ -1174,6 +1180,8 @@ describe('ScoringEngine', () => {
           label: 'rendered-artifact',
         }],
         expect.any(AbortSignal),
+        true,
+        { jsonMode: false },
       );
     });
 

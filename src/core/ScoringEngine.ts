@@ -11,6 +11,8 @@
 
 import { CreativeEvaluator } from './CreativeEvaluator.js';
 import { AestheticCritic } from '../aesthetic/AestheticCritic.js';
+import { resolvePromptTier, tiered } from '../prompts/PromptTier.js';
+import { detectProviderFromUrl } from '../harness/MultiProviderConfig.js';
 import { Logger } from '../utils/Logger.js';
 import { HeuristicScorer } from '../swarm/HeuristicScorer.js';
 import { quickScore } from '../collab/Scoring.js';
@@ -632,10 +634,15 @@ function reliableScoreBoostTimeoutMs(): number {
 // evaluator endpoint compounds through RetryManager (6 attempts x 120s provider
 // timeout + 62s backoff ≈ 13min worst case) — the observed multi-minute hydra
 // stalls. On timeout the caller falls back to legacy scoring (8s-bounded).
-function renderedEvidenceScoreTimeoutMs(): number {
+function renderedEvidenceScoreTimeoutMs(localEvaluator = false): number {
   const configured = Number.parseInt(process.env.LIMINAL_RENDERED_SCORE_TIMEOUT_MS ?? '', 10);
   if (Number.isFinite(configured) && configured > 0) return configured;
-  return process.env.NODE_ENV === 'test' ? 1_000 : 45_000;
+  if (process.env.NODE_ENV === 'test') return 1_000;
+  // Local inference (ollama/lmstudio on the nucbox) prefills large vision
+  // payloads far slower than cloud endpoints — the 45s cloud default produced
+  // false 'scorer' failures (measured: gemma4 answered the same artifact in
+  // 7.5s warm, but timed out inside the full scoring payload at 45s).
+  return localEvaluator ? 120_000 : 45_000;
 }
 
 const RENDER_MEASURE_SCORE_MULTIPLIER = 0.6;
@@ -777,13 +784,18 @@ export async function scoreRenderedEvidence(
     };
   }
 
-  const llm = llmClient ?? (() => {
+  let llm = llmClient;
+  if (!llm) {
     try {
-      return new LLMClient({ role: 'evaluator' });
+      // Role configs load async into a static cache; without this the
+      // constructor falls back to defaults and tier/timeout resolution
+      // sees model 'auto' instead of the real evaluator.
+      await LLMClient.loadRoles();
+      llm = new LLMClient({ role: 'evaluator' });
     } catch {
-      return undefined;
+      llm = undefined;
     }
-  })();
+  }
 
   if (!llm) {
     return applyRenderMeasurePenalty({
@@ -798,7 +810,24 @@ export async function scoreRenderedEvidence(
     }, renderMeasure);
   }
 
-  const systemPrompt = `You are an expert creative artifact evaluator. Evaluate the rendered output of the provided code against the brief.
+  // Tiered judge prompt: frontier models get the rich rubric + nested repair
+  // structure; small/local models get a flat, banded, one-line-JSON variant
+  // (nested objects and anchor-free rubrics measurably break 12B-class judges:
+  // gemma4 parsed 6/8 and ceiling-pinned 0.95 before this).
+  const evalConfig = llm.getConfig();
+  const evalProvider = evalConfig.provider
+    ?? (evalConfig.baseUrl ? detectProviderFromUrl(evalConfig.baseUrl) : undefined);
+  const promptTier = resolvePromptTier(evalConfig.model, evalProvider);
+  const RUBRIC_BANDS = `Score bands (anchor your score in a band first, then refine):
+- 0.90-1.00: gallery-grade — strong composition AND deliberate palette AND evident craft; nothing broken.
+- 0.75-0.89: competent — coherent and intentional, but missing one dimension (flat lighting, no focal point, sparse).
+- 0.60-0.74: weak — renders something relevant but visually thin, muddled, or accidental-looking.
+- 0.40-0.59: poor — barely related to the brief, severe visual defects, or mostly empty.
+- 0.00-0.39: broken — blank, black, garbled, or unrelated to the brief.
+Most competent work belongs in 0.75-0.89. Reserve 0.90+ for work you would exhibit.`;
+  const systemPrompt = tiered({
+    full: `You are an expert creative artifact evaluator. Evaluate the rendered output of the provided code against the brief.
+${RUBRIC_BANDS}
 Return ONLY a JSON object with this exact structure:
 {
   "score": <number 0-1>,
@@ -811,7 +840,13 @@ Return ONLY a JSON object with this exact structure:
   }
 }
 Include repairAdvice only when score is below 0.7. If score is 0.7 or above, omit repairAdvice or set it to null.
-If an image is attached, evaluate the visible rendered artifact first and use the code only to diagnose repair advice.`;
+If an image is attached, evaluate the visible rendered artifact first and use the code only to diagnose repair advice.`,
+    compact: `Score the rendered artifact (image attached) against the brief.
+${RUBRIC_BANDS}
+Reply with ONE line of flat JSON, nothing else:
+{"score": 0.0, "confidence": 0.0, "reasoning": "...", "issue": "...", "fix": "..."}
+issue and fix only when score < 0.7, otherwise omit them. No nested objects. No markdown.`,
+  }, promptTier);
 
   const screenshotNote = evidence.screenshot
     ? `\nScreenshot: attached ${evidence.screenshot.mimeType}${evidence.screenshot.width && evidence.screenshot.height ? ` ${evidence.screenshot.width}x${evidence.screenshot.height}` : ''}`
@@ -819,7 +854,8 @@ If an image is attached, evaluate the visible rendered artifact first and use th
   const renderMeasureNote = renderMeasure ? `\nRender measure: ${renderMeasureSummary(renderMeasure)}` : '';
   const userPrompt = `Brief: ${brief}\nCode:\n${code}\nTiming: ${evidence.timingMs}ms${screenshotNote}${renderMeasureNote}`;
 
-  const scoreTimeoutMs = renderedEvidenceScoreTimeoutMs();
+  const localEvaluator = ['ollama', 'lmstudio'].includes((evalProvider ?? '').toLowerCase());
+  const scoreTimeoutMs = renderedEvidenceScoreTimeoutMs(localEvaluator);
   const timeoutController = createTimeoutController(undefined, scoreTimeoutMs);
   const scoreStartedAt = Date.now();
   try {
@@ -835,8 +871,10 @@ If an image is attached, evaluate the visible rendered artifact first and use th
             label: 'rendered-artifact',
           }],
           timeoutController.signal,
+          true,
+          { jsonMode: promptTier === 'compact' },
         )
-      : llm.generate(systemPrompt, userPrompt, timeoutController.signal);
+      : llm.generate(systemPrompt, userPrompt, timeoutController.signal, true, undefined, { jsonMode: promptTier === 'compact' });
     // Observe the late rejection if the timeout wins the race — the aborted
     // call still rejects afterwards and would otherwise crash the process.
     void llmCall.catch(() => undefined);
@@ -862,7 +900,11 @@ If an image is attached, evaluate the visible rendered artifact first and use th
     const score = typeof parsed.score === 'number' ? Math.max(0, Math.min(1, parsed.score)) : 0.5;
     const confidence = typeof parsed.confidence === 'number' ? Math.max(0, Math.min(1, parsed.confidence)) : 0.5;
 
-    const rawAdvice = parsed.repairAdvice;
+    // Compact tier returns flat issue/fix; normalize to the nested shape.
+    const rawAdvice = parsed.repairAdvice
+      ?? ((typeof parsed.issue === 'string' || typeof parsed.fix === 'string')
+        ? { issue: parsed.issue, fix: parsed.fix, constraint: undefined }
+        : undefined);
     const repairAdvice =
       rawAdvice && typeof rawAdvice === 'object' && rawAdvice !== null
         ? {

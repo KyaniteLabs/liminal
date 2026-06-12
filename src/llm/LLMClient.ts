@@ -858,6 +858,7 @@ export class LLMClient {
     signal?: AbortSignal,
     bypassCache?: boolean,
     imageInputs?: ProviderImageInput[],
+    opts?: { jsonMode?: boolean },
   ): Promise<LLMResponse> {
     const llmStartTime = Date.now();
 
@@ -900,6 +901,7 @@ export class LLMClient {
             maxTokens: this.config.maxTokens,
             signal,
             imageInputs,
+            jsonMode: opts?.jsonMode,
           };
 
         const genResult = await provider.generate(req);
@@ -946,6 +948,7 @@ export class LLMClient {
           maxTokens: this.config.maxTokens,
           signal,
           imageInputs,
+          jsonMode: opts?.jsonMode,
         };
 
         const fallbackFailures: string[] = [];
@@ -1058,8 +1061,9 @@ export class LLMClient {
     imageInputs: ProviderImageInput[],
     signal?: AbortSignal,
     bypassCache = true,
+    opts?: { jsonMode?: boolean },
   ): Promise<LLMResponse> {
-    return this.generate(systemPrompt, userPrompt, signal, bypassCache, imageInputs);
+    return this.generate(systemPrompt, userPrompt, signal, bypassCache, imageInputs, opts);
   }
 
   async generateP5Sketch(prompt: string, context?: string, signal?: AbortSignal, bypassCache?: boolean): Promise<LLMResponse> {

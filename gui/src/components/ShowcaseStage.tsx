@@ -97,17 +97,18 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
     setFeatured(work);
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
+  const loadProgram = useCallback(async (signal: { cancelled: boolean }) => {
+    setLoading(true);
+    setStageError(null);
+    const cancelled = () => signal.cancelled;
+    try {
         // The archive's curated tops are the program; gallery is the fallback.
         const tops: ArchiveTop[] = await fetch(`${API}/archive/tops?limit=12`)
           .then((r) => (r.ok ? r.json() : { tops: [] }))
           .then((d) => (Array.isArray(d.tops) ? d.tops : []))
           .catch(() => []);
         const visualTops = tops.filter((t) => !AUDIO_DOMAINS.has(t.domain));
-        if (!cancelled && visualTops.length > 0) {
+        if (!cancelled() && visualTops.length > 0) {
           const works = visualTops.map(archiveWork);
           setProgram(works);
           setFeatured(works[0]);
@@ -117,7 +118,7 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
         const res = await fetch(`${API}/gallery`);
         if (!res.ok) throw new Error(`gallery list: ${res.status}`);
         const data = await res.json();
-        if (cancelled) return;
+        if (cancelled()) return;
         const list: string[] = Array.isArray(data.projects) ? [...data.projects].sort().reverse() : [];
         const works: StageWork[] = [];
         for (const project of list.slice(0, 8)) {
@@ -128,20 +129,24 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
           } catch {
             // Skip unreadable projects; the stage shows what it can.
           }
-          if (cancelled) return;
+          if (cancelled()) return;
         }
         setProgram(works);
         setFeatured(works[0] ?? null);
         setLoading(false);
-      } catch (e) {
-        if (!cancelled) {
-          setStageError(e instanceof Error ? e.message : String(e));
-          setLoading(false);
-        }
+    } catch (e) {
+      if (!cancelled()) {
+        setStageError(e instanceof Error ? e.message : String(e));
+        setLoading(false);
       }
-    })();
-    return () => { cancelled = true; };
+    }
   }, []);
+
+  useEffect(() => {
+    const signal = { cancelled: false };
+    void loadProgram(signal);
+    return () => { signal.cancelled = true; };
+  }, [loadProgram]);
 
   // A prompt submitted before the session existed waits here until the
   // session arrives, then runs — keeps the submit handler race-free.
@@ -212,12 +217,15 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
           />
         ))}
         {!runFrame && !featured && !loading && (
-          <div className="stage-empty">
+          <div className="stage-empty" role={stageError ? 'alert' : 'status'}>
             {stageError ? (
               <>
                 <h2>The gallery isn&apos;t reachable</h2>
                 <p>Start the studio backend from a terminal: <code>sinter studio</code></p>
                 <p className="stage-empty__detail">{stageError}</p>
+                <button type="button" className="stage-empty__retry" onClick={() => void loadProgram({ cancelled: false })}>
+                  Try again
+                </button>
               </>
             ) : (
               <>
@@ -227,7 +235,7 @@ export function ShowcaseStage({ modes, onNavigate }: StageProps) {
             )}
           </div>
         )}
-        {!runFrame && loading && <div className="stage-empty"><p>Hanging the work…</p></div>}
+        {!runFrame && loading && <div className="stage-empty" role="status"><p>Hanging the work…</p></div>}
 
         {runFrame ? (
           <div className="stage-caption">

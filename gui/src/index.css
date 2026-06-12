@@ -2523,6 +2523,7 @@ body::before {
 }
 .stage-chat input {
   flex: 1;
+  min-width: 0;
   background: none;
   border: 0;
   color: var(--sinter-text);
@@ -2700,3 +2701,64 @@ body::before {
 .stage-empty h2 {
   text-wrap: balance;
 }
+
+
+/* Stage at narrow widths: the bench takes the room's width minus margins
+   (the desktop formula left a 160px sliver), and the rail tucks tighter. */
+@media (max-width: 40em) {
+  .stage-bench,
+  .stage-chat {
+    width: min(640px, calc(100vw - 24px));
+  }
+  .stage-strip {
+    max-width: calc(100vw - 56px);
+  }
+}
+
+/* Component-states pass: full matrix on the bench controls. */
+.stage-chat button:hover:not(:disabled) { background: var(--sinter-cyan-hover); }
+.stage-chat button:focus-visible { outline: 2px solid var(--sinter-cyan); outline-offset: 2px; }
+.stage-chat button:active:not(:disabled) { transform: scale(0.97); }
+
+.stage-bench__ghost:hover { color: var(--sinter-text); border-color: var(--sinter-line-strong); }
+.stage-bench__ghost:focus-visible { outline: 2px solid var(--sinter-cyan); outline-offset: 1px; }
+.stage-bench__ghost:active { transform: scale(0.97); }
+
+.stage-bench__pending button:first-of-type {
+  background: var(--sinter-cyan);
+  color: #04344a;
+  border: 0;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.stage-bench__pending button:first-of-type:hover { background: var(--sinter-cyan-hover); }
+.stage-bench__pending button:focus-visible { outline: 2px solid var(--sinter-cyan); outline-offset: 1px; }
+.stage-bench__pending button:active { transform: scale(0.97); }
+
+.stage-strip__item:active,
+.stage-rail__item:active { transform: scale(0.97); }
+
+@media (prefers-reduced-motion: reduce) {
+  .stage-chat button:active:not(:disabled),
+  .stage-bench__ghost:active,
+  .stage-bench__pending button:active,
+  .stage-strip__item:active,
+  .stage-rail__item:active { transform: none; }
+}
+
+.stage-empty__retry {
+  margin-top: 14px;
+  border: 1px solid var(--sinter-line-strong);
+  border-radius: 8px;
+  background: var(--sinter-surface-2);
+  color: var(--sinter-text);
+  font: inherit;
+  padding: 8px 18px;
+  cursor: pointer;
+}
+.stage-empty__retry:hover { border-color: var(--sinter-cyan); color: var(--sinter-cyan); }
+.stage-empty__retry:focus-visible { outline: 2px solid var(--sinter-cyan); outline-offset: 1px; }
+.stage-empty__retry:active { transform: scale(0.97); }

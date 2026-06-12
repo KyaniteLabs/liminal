@@ -238,6 +238,18 @@ Regenerate a complete CSS-kinetic artwork:
       cleaned = `<!DOCTYPE html>\n${cleaned}`;
     }
 
+    // Balance the <head> section: LLMs often omit the closing </head> tag,
+    // which causes HTMLValidator to report mismatched <head> tags.
+    if (!/<head\b/i.test(cleaned)) {
+      cleaned = cleaned.replace(/<html\b[^>]*>/i, '$&\n<head><meta charset="utf-8"></head>');
+    }
+    if (!/<\/head>/i.test(cleaned)) {
+      cleaned = cleaned.replace(/<body\b/i, '</head>\n$&');
+      if (!/<\/head>/i.test(cleaned)) {
+        cleaned = cleaned.replace(/<\/html>/i, '</head>\n</html>');
+      }
+    }
+
     const styleClose = cleaned.lastIndexOf('</style>');
     const bodyOpen = cleaned.search(/<body\b/i);
     if (styleClose >= 0 && bodyOpen >= 0 && styleClose < bodyOpen) {

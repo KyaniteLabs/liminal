@@ -9,6 +9,8 @@ import {
   buildDomainPrompt,
   dreamThemeFromTask,
   diffArchiveAdmissions,
+  classifyFailure,
+  FAILURE_CLASSES,
   // @ts-expect-error — .mjs helper has no type declarations; imported for behavior only.
 } from '../../../scripts/quality/self-improve-domains.mjs';
 
@@ -257,5 +259,48 @@ describe('diffArchiveAdmissions', () => {
       floors: { a: 0.123, b: 1 },
       tops: { a: 0.124, b: 1 },
     });
+  });
+});
+
+describe('classifyFailure', () => {
+  // Each case maps a REAL failure-message signature (drawn from the daemon log and
+  // the generator error strings) to its stable class. These are the strings the
+  // reliability work measures against, so the mapping is the contract.
+  it.each([
+    ['SVGGenerator: provider returned no valid SVG after 2 bounded direct attempts', 'svg_no_raw'],
+    ['SVG output must be a raw <svg> document', 'svg_no_raw'],
+    ['Code validation failed: Code is empty after stripping LLM reasoning text', 'empty_after_strip'],
+    ["ShaderGenerator: GLSL: Undefined function 'rot()' - must be defined before use", 'glsl_undefined_fn'],
+    ['Hydra image proof brightness() is too dark for headless proof', 'brightness_dark'],
+    ['Error: All generation candidates failed', 'candidate_pool_empty'],
+    ['[Generators] Registered 0 static generators', 'candidate_pool_empty'],
+    ['[missing_context] Pronoun "that" used without a clear referent', 'ambiguity_reject'],
+    ['TIMEOUT — domain=hydra exceeded 480s and was killed', 'timeout'],
+    ['429 Too Many Requests: usage limit reached', 'rate_limited'],
+    ['RATE-LIMITED — stopping cycle early', 'rate_limited'],
+    ['Generated code is too short (0 chars)', 'validation_other'],
+    ['some unrecognized provider hiccup', 'other'],
+  ])('classifies %j as %s', (message, expected) => {
+    expect(classifyFailure(message)).toBe(expected);
+  });
+
+  it('returns "other" for empty / null / undefined input (never throws)', () => {
+    expect(classifyFailure('')).toBe('other');
+    expect(classifyFailure(null)).toBe('other');
+    expect(classifyFailure(undefined)).toBe('other');
+  });
+
+  it('prioritizes rate_limited and timeout over co-occurring signatures', () => {
+    // A timeout kill whose stdout tail also mentions an SVG error must still be a
+    // timeout (the kill is the real cause), not svg_no_raw.
+    expect(classifyFailure('TIMEOUT — killed; tail: no valid SVG')).toBe('timeout');
+    expect(classifyFailure('429 rate limit; also Undefined function rot()')).toBe('rate_limited');
+  });
+
+  it('every returned class is a member of the declared FAILURE_CLASSES vocabulary', () => {
+    const samples = ['no valid SVG', 'empty after stripping', 'whatever', '', 'TIMEOUT'];
+    for (const s of samples) {
+      expect(FAILURE_CLASSES).toContain(classifyFailure(s));
+    }
   });
 });

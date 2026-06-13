@@ -26,6 +26,7 @@ import {
   buildDomainPrompt,
   dreamThemeFromTask,
   readPerDomainTopQuality,
+  classifyFailure,
 } from './self-improve-domains.mjs';
 import { DreamQueue } from '../../dist/dreaming/DreamQueue.js';
 
@@ -113,6 +114,10 @@ console.log(`before: archive=${before.archive} health=${before.health}% targets=
 const dreamQueue = new DreamQueue({ persistPath: DREAM_QUEUE_PATH });
 
 const scores = [];
+// Per-failure {domain, failureClass} so the ledger records WHY gens fail, not
+// just how many (Phase-0 reliability instrumentation). Aggregated into a count
+// map on the ledger record below.
+const failures = [];
 for (let i = 0; i < COUNT; i++) {
   const dreamTask = i === 0 ? dreamQueue.dequeue() ?? null : null;
   const dreamTheme = dreamTask ? dreamThemeFromTask(dreamTask) : null;
@@ -166,7 +171,11 @@ for (let i = 0; i < COUNT; i++) {
       : timedOut
         ? `TIMEOUT — domain=${domain} exceeded ${GEN_TIMEOUT_MS / 1000}s and was killed${lastStage ? ` (last completed stage: ${lastStage.slice(0, 80)})` : ''}`
         : (errLine || errTail || outTail || String(e.message || '')).slice(0, 120);
-    console.log(`  [${i + 1}/${COUNT}] FAILED${dreamTask ? ` (dream=${dreamTask.id})` : ''}: ${reason}`);
+    // Classify from the richest available text so the class is precise even when
+    // `reason` was truncated to 120 chars.
+    const failureClass = classifyFailure(`${reason} ${errLine ?? ''} ${errTail} ${outTail}`);
+    failures.push({ domain, failureClass });
+    console.log(`  [${i + 1}/${COUNT}] FAILED${dreamTask ? ` (dream=${dreamTask.id})` : ''} [${failureClass}]: ${reason}`);
     if (rateLimited) break;
   }
 }
@@ -183,6 +192,12 @@ if (scores.length >= 4) {
   const a = scores.slice(0, h), b = scores.slice(h);
   trend = (b.reduce((x, y) => x + y, 0) / b.length) - (a.reduce((x, y) => x + y, 0) / a.length);
 }
+// Aggregate failures into a stable count map (class → n) for the ledger, so a
+// cheap aggregator can trend WHY gens fail over time without re-parsing logs.
+const failureClasses = failures.reduce((acc, f) => {
+  acc[f.failureClass] = (acc[f.failureClass] ?? 0) + 1;
+  return acc;
+}, {});
 const record = {
   ts: stamp, requested: COUNT, completed: scores.length,
   codeSha: codeSha(), distBuiltAt: distBuiltAt(),
@@ -193,9 +208,14 @@ const record = {
   targetedDomains: targetDomains,
   beforeDomains, afterDomains,
   scores, meanScore: mean, intraCycleTrend: trend,
+  failureClasses, failures,
 };
 fs.appendFileSync(LEDGER, JSON.stringify(record) + '\n');
 
 console.log(`after:  archive=${after.archive} (Δ+${record.archiveDelta}) admitted=${admitted} health=${after.health}%`);
 console.log(`scores: [${scores.map(s => s.toFixed(2)).join(', ')}]  mean=${mean?.toFixed(3) ?? 'n/a'}  intra-trend=${trend?.toFixed(3) ?? 'n/a'}`);
+if (failures.length) {
+  const fc = Object.entries(failureClasses).map(([k, v]) => `${k}×${v}`).join(', ');
+  console.log(`failures: ${failures.length} [${fc}]`);
+}
 console.log(`ledger: appended to ${LEDGER} (${fs.readFileSync(LEDGER, 'utf-8').trim().split('\n').length} cycles total)`);

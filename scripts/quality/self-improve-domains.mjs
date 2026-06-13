@@ -244,3 +244,35 @@ export function dreamThemeFromTask(task, axes = DESCRIPTOR_AXES) {
   }
   return `${distinct[0] ?? 'balanced'} forms recombined from its own archive lineage`;
 }
+
+// Map a generation-failure message (stderr/stdout tail or the cycle's `reason`
+// string) to a stable failure CLASS so the loop can count *why* gens fail, not
+// just how many. Order matters: most-specific signatures first. Used by the
+// self-improve cycle (ledger `failureClasses`) and the reliability probe so both
+// speak one vocabulary. Add a class here when a new recurring signature appears.
+export const FAILURE_CLASSES = [
+  'rate_limited',
+  'timeout',
+  'svg_no_raw',
+  'empty_after_strip',
+  'glsl_undefined_fn',
+  'brightness_dark',
+  'candidate_pool_empty',
+  'ambiguity_reject',
+  'validation_other',
+  'other',
+];
+
+export function classifyFailure(text) {
+  const s = String(text ?? '');
+  if (/429|rate.?limit|usage limit/i.test(s)) return 'rate_limited';
+  if (/TIMEOUT|exceeded .*s and was killed|SIGTERM/i.test(s)) return 'timeout';
+  if (/no valid SVG|raw <svg>|must be a raw <svg>/i.test(s)) return 'svg_no_raw';
+  if (/empty after stripping/i.test(s)) return 'empty_after_strip';
+  if (/Undefined function|must be defined before use/i.test(s)) return 'glsl_undefined_fn';
+  if (/too dark for headless|brightness\(\) is too dark|is too dark/i.test(s)) return 'brightness_dark';
+  if (/All generation candidates failed|Registered 0 static generators/i.test(s)) return 'candidate_pool_empty';
+  if (/\[missing_context\]|\[ambiguity|Pronoun .* used without/i.test(s)) return 'ambiguity_reject';
+  if (/validation failed|too short|no usable content|LLM returned empty code/i.test(s)) return 'validation_other';
+  return 'other';
+}

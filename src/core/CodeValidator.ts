@@ -323,11 +323,25 @@ export class CodeValidator {
     const explicitDomain = domain as Domain | undefined;
     const preserveTextOutput = explicitDomain === 'textgen' ||
       (ASCIIValidator.detectASCII(decontaminated) && !REASONING_PATTERNS.some(pattern => pattern.test(firstContentLine)));
-    const cleaned = preserveTextOutput
+    let cleaned = preserveTextOutput
       ? decontaminated.replace(/^\s*\n/, '').trimEnd()
       : stripReasoningText(decontaminated);
     if (!cleaned.trim()) {
-      return { valid: false, cleanedCode: '', errors: ['Code is empty after stripping LLM reasoning text'] };
+      // Safety net: the code-oriented stripper emptied the content. When a
+      // generation's domain is misattributed (e.g. a concrete poem validated
+      // under the RalphLoop 'p5' fallback), stripReasoningText treats the prose
+      // as reasoning and nukes the whole legitimate output. Preserve the original
+      // text ONLY when it does not look like reasoning — a real poem/text-art has
+      // no reasoning markers, whereas "The user wants…"/"We need to…" does. This
+      // rescues misjudged text output while still rejecting reasoning-only
+      // responses (which then have no valid artifact). Uses the same
+      // first-content-line heuristic as preserveTextOutput above.
+      const preserved = decontaminated.replace(/^\s*\n/, '').trimEnd();
+      const looksLikeReasoning = REASONING_PATTERNS.some(pattern => pattern.test(firstContentLine));
+      if (!preserved.trim() || looksLikeReasoning) {
+        return { valid: false, cleanedCode: '', errors: ['Code is empty after stripping LLM reasoning text'] };
+      }
+      cleaned = preserved;
     }
 
     const detectedDomain = explicitDomain || detectDomain(cleaned);

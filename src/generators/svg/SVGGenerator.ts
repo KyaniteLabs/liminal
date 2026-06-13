@@ -10,8 +10,15 @@ export interface SVGGeneratorOptions extends TierBasedGeneratorOptions {
   mode?: SVGMode;
 }
 
-const SVG_PRIMARY_ATTEMPT_TIMEOUT_MS = 32_000;
-const SVG_EMPTY_RETRY_TIMEOUT_MS = 44_000;
+// SVG path/transform data is extremely token-dense (every number and comma is a
+// token), so a detailed illustration spends ~2200 tokens before closing </svg>
+// and gets truncated — the live svg_no_raw failure class was 100% truncation
+// (openSvg=true, closeSvg=false). These budgets give a complete document room to
+// finish; the timeouts scale with the larger output.
+const SVG_PRIMARY_ATTEMPT_TIMEOUT_MS = 48_000;
+const SVG_EMPTY_RETRY_TIMEOUT_MS = 60_000;
+const SVG_PRIMARY_MAX_TOKENS = 4_000;
+const SVG_RETRY_MAX_TOKENS = 4_000;
 
 export class SVGGenerator extends TierBasedGenerator {
   private currentMode: SVGMode = 'generative-art';
@@ -101,6 +108,7 @@ export class SVGGenerator extends TierBasedGenerator {
       'Do not return markdown fences, prose, HTML wrappers, scripts, event handlers, foreignObject, external images, external fonts, or remote hrefs.',
       'Use self-contained vector geometry only.',
       'Keep the SVG compact: no comments, no repeated decorative boilerplate, and prefer 6-18 purposeful visible elements.',
+      'Completion is mandatory: finish the entire document and close </svg>. A complete, simpler SVG is far better than an unfinished ornate one — if you are running long, reduce detail (fewer path nodes, fewer elements) rather than truncate. Keep the whole document under ~6000 characters.',
       'End with </svg>.',
       this.transparentBackgroundGuidance(prompt),
       ...profile.promptGuidance,
@@ -117,11 +125,11 @@ export class SVGGenerator extends TierBasedGenerator {
     const mode = this.currentMode;
     let lastError: string | undefined;
     const prompts: Array<{ systemPrompt: string; prompt: string; maxTokens: number; timeoutMs: number; temperature?: number }> = [
-      { systemPrompt: primaryPrompt.systemPrompt, prompt: primaryPrompt.userPrompt, maxTokens: options?.maxTokens ?? 2200, timeoutMs: SVG_PRIMARY_ATTEMPT_TIMEOUT_MS },
+      { systemPrompt: primaryPrompt.systemPrompt, prompt: primaryPrompt.userPrompt, maxTokens: options?.maxTokens ?? SVG_PRIMARY_MAX_TOKENS, timeoutMs: SVG_PRIMARY_ATTEMPT_TIMEOUT_MS },
       {
         systemPrompt: this.buildEmptyCodeRetrySystemPrompt(primaryPrompt.systemPrompt),
         prompt: this.buildEmptyCodeRetryPrompt(prompt, primaryPrompt.userPrompt),
-        maxTokens: options?.maxTokens ?? 1600,
+        maxTokens: options?.maxTokens ?? SVG_RETRY_MAX_TOKENS,
         timeoutMs: SVG_EMPTY_RETRY_TIMEOUT_MS,
       },
     ];
@@ -141,6 +149,10 @@ export class SVGGenerator extends TierBasedGenerator {
       const candidate = this.validateCandidate(result.text, mode);
       if (candidate.svg) return candidate;
       lastError = candidate.error;
+      if (process.env.SVG_DIAGNOSE) {
+        const t = (result.text ?? '').trim();
+        console.error(`[svg-diagnose] maxTokens=${attempt.maxTokens} len=${t.length} openSvg=${/<svg\b/i.test(t)} closeSvg=${/<\/svg>\s*$/i.test(t)} err="${candidate.error}" tail=${JSON.stringify(t.slice(-70))}`);
+      }
     }
 
     return { svg: null, error: lastError ?? 'provider returned no valid SVG candidate' };

@@ -88,6 +88,26 @@ function setup() {
       expect(result.valid).toBe(true);
       expect(result.cleanedCode).toContain('function setup()');
     });
+
+    it('preserves a text-art poem instead of emptying it under a misattributed domain', () => {
+      // A concrete poem is legitimate textgen output, but it has none of the code
+      // markers stripReasoningText looks for, so the code-oriented stripper reduces
+      // it to empty. When the domain is misattributed (the RalphLoop validate path
+      // falls back to 'p5'), this used to fail as "Code is empty after stripping LLM
+      // reasoning text", silently discarding the poem. The safety net now preserves it.
+      const poem = [
+        'moonlight spills across the tin roof',
+        'a slow tide of silver breathing',
+        'nothing here remembers the noise',
+        'only the long blue patience of dawn',
+        'and the cat that is not a cat',
+      ].join('\n');
+
+      const result = CodeValidator.validate(poem, 'p5');
+      expect(result.cleanedCode).toContain('moonlight spills across the tin roof');
+      expect(result.cleanedCode).toContain('long blue patience of dawn');
+      expect(result.errors).not.toContain('Code is empty after stripping LLM reasoning text');
+    });
   });
 
   describe('p5.js structural validation', () => {

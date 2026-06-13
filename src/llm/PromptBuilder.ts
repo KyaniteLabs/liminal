@@ -21,7 +21,7 @@ import { Logger } from '../utils/Logger.js';
 
 const PROMPT_BUILDER_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '../..');
 
-import { CRAFT_CONTRACT, CRAFT_CONTRACT_COMPACT, SVG_CRAFT_CONTRACT, SVG_CRAFT_CONTRACT_COMPACT } from '../prompts/CraftContract.js';
+import { CRAFT_CONTRACT, CRAFT_CONTRACT_COMPACT, SVG_CRAFT_CONTRACT, SVG_CRAFT_CONTRACT_COMPACT, HYDRA_CRAFT_CONTRACT, HYDRA_CRAFT_CONTRACT_COMPACT } from '../prompts/CraftContract.js';
 
 export interface PromptContext {
   // Core identity
@@ -91,6 +91,23 @@ export class PromptBuilder {
   }
 
   /**
+   * Single routing point for domain-specific craft contracts. Each prompt
+   * tier (flagship/medium → full, local/tiny → compact) pulls from this helper
+   * so future per-domain contracts (e.g. 'three', 'shader', 'p5') plug in
+   * here instead of growing another inline ternary at every call site.
+   * Domains without a dedicated contract fall through to the generic one,
+   * so all other domains are unchanged. The match is case-insensitive on
+   * the domain and tolerant of surrounding whitespace.
+   */
+  static contractFor(domain: string | undefined, tier: ModelTier): string {
+    const d = (domain ?? '').trim().toLowerCase();
+    const compact = tier === 'local' || tier === 'tiny';
+    if (d === 'svg') return compact ? SVG_CRAFT_CONTRACT_COMPACT : SVG_CRAFT_CONTRACT;
+    if (d === 'hydra') return compact ? HYDRA_CRAFT_CONTRACT_COMPACT : HYDRA_CRAFT_CONTRACT;
+    return compact ? CRAFT_CONTRACT_COMPACT : CRAFT_CONTRACT;
+  }
+
+  /**
    * Aesthetic directive injected into every creative generation. Pushes palette
    * diversity, strong figure/ground contrast, and deliberate composition —
    * tailored to visual / audio / text domains.
@@ -153,7 +170,7 @@ export class PromptBuilder {
       ctx.rules || 'Output valid code only.',
       '</rules>',
       '',
-      (ctx.domain === 'svg' ? SVG_CRAFT_CONTRACT : CRAFT_CONTRACT),
+      PromptBuilder.contractFor(ctx.domain, 'flagship'),
       '',
       ctx.domainDocs ? `<${ctx.domain}_docs>\n${ctx.domainDocs}\n</${ctx.domain}_docs>` : '',
       '',
@@ -188,7 +205,7 @@ export class PromptBuilder {
       '3. Include necessary imports and setup.',
       '</rules>',
       '',
-      (ctx.domain === 'svg' ? SVG_CRAFT_CONTRACT : CRAFT_CONTRACT),
+      PromptBuilder.contractFor(ctx.domain, 'medium'),
       '',
       ctx.domainDocs ? `<domain_knowledge name="${ctx.domain}">\n${ctx.domainDocs}\n</domain_knowledge>` : '',
     ].filter(Boolean).join('\n');
@@ -225,7 +242,7 @@ export class PromptBuilder {
       '- Valid ' + ctx.domain + ' code',
       '</rules>',
       '',
-      (ctx.domain === 'svg' ? SVG_CRAFT_CONTRACT_COMPACT : CRAFT_CONTRACT_COMPACT),
+      PromptBuilder.contractFor(ctx.domain, 'local'),
       '',
       ctx.domainDocs ? `<domain_summary name="${ctx.domain}">\n${this.summarizeDocs(ctx.domainDocs, 500)}\n</domain_summary>` : '',
     ].filter(Boolean).join('\n');
@@ -259,7 +276,7 @@ export class PromptBuilder {
       ctx.userRequest,
       '</task>',
       '<rules>code only; no explanations</rules>',
-      (ctx.domain === 'svg' ? SVG_CRAFT_CONTRACT_COMPACT : CRAFT_CONTRACT_COMPACT),
+      PromptBuilder.contractFor(ctx.domain, 'tiny'),
     ].join('\n');
 
     return {

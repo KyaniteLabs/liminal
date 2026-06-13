@@ -26,6 +26,17 @@ export const DARK_MAX_STD = 5;
 // false positives; nearest good work measures std 11.19.
 export const FOG_MIN_BRIGHT_FRACTION = 0.98;
 export const FOG_MAX_STD = 10;
+// Mud shape (2026-06-12 fog audit): a mid-tone frame with no dark anchors, no
+// highlights, and a collapsed spread — grey mush that evades both the washout
+// and too-dark bars. Calibrated on the audit set: flat-slate three measured
+// std 9.1 / darkF ~0 (mud); good dark abyss work measures std ~13 but darkF
+// 0.8+ (safe); the flat-shaded meadow measures std 28 (safe). Opt-in via
+// verdictFromMeasure's lowContrast option so existing single-domain callers
+// keep their behavior.
+export const MUD_MAX_STD = 12;
+export const MUD_MIN_MEAN_LUMINANCE = 0.15;
+export const MUD_MAX_DARK_FRACTION = 0.05;
+export const MUD_MAX_BRIGHT_FRACTION = 0.9;
 
 export function luminanceFromRgb8(r: number, g: number, b: number): number {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
@@ -33,7 +44,7 @@ export function luminanceFromRgb8(r: number, g: number, b: number): number {
 
 export function verdictFromMeasure(
   measure: LuminanceMeasure,
-  _options: { lowContrast?: boolean } = {},
+  options: { lowContrast?: boolean } = {},
 ): LuminanceVerdict {
   const std = validStd(measure.brightnessStd);
   if (
@@ -52,6 +63,18 @@ export function verdictFromMeasure(
     && (std === undefined || std < DARK_MAX_STD)
   ) {
     return 'too-dark';
+  }
+  // Mud needs a measured std for the same conservatism reason as fog.
+  if (
+    options.lowContrast
+    && std !== undefined
+    && std < MUD_MAX_STD
+    && measure.meanLuminance > MUD_MIN_MEAN_LUMINANCE
+    && measure.meanLuminance < WASHOUT_MEAN_LUMINANCE
+    && measure.darkFraction < MUD_MAX_DARK_FRACTION
+    && measure.brightFraction < MUD_MAX_BRIGHT_FRACTION
+  ) {
+    return 'low-contrast';
   }
   return 'ok';
 }

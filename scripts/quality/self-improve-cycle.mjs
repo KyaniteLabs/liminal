@@ -120,9 +120,16 @@ for (let i = 0; i < COUNT; i++) {
   const domain = targetDomains[i];
   const prompt = `${buildDomainPrompt(domain, idea)} — cycle ${stamp} #${i + 1}`; // domain-routed + novel
   const tag = `${OUTROOT}/g_${Date.now()}_${i + 1}`;
+  // Per-domain generator routing (Simon-approved 2026-06-12): MiniMax-M3
+  // composes three scenes measurably better than GLM (judge-swap lanes C/D:
+  // cathedral B+/A-, orrery A-/A vs GLM's flat meadows). --provider sets the
+  // LIMINAL_LLM_* env that getEffectiveConfig honors for the GENERATOR;
+  // the evaluator role stays config-pinned (GLM) because role config outranks
+  // env in the LLMClient constructor.
+  const generatorFlags = domain === 'three' ? ' --provider minimax --model MiniMax-M3' : '';
   try {
     const out = execSync(
-      `node bin/sinter --prompt ${JSON.stringify(prompt)} --learn --intuition -o ${JSON.stringify(tag)}`,
+      `node bin/sinter --prompt ${JSON.stringify(prompt)} --learn --intuition${generatorFlags} -o ${JSON.stringify(tag)}`,
       {
         encoding: 'utf-8',
         stdio: ['ignore', 'pipe', 'pipe'],

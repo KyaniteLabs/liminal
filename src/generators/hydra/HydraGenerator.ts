@@ -27,7 +27,7 @@ export class HydraGenerator extends TierBasedGenerator {
       'For image-proof visibility, include explicit .color(...) or .colorama(...) on the rendered chain.',
       'Use numeric color values like .color(0.95, 0.61, 0.62); do not pass osc(), noise(), or other sources into color().',
       'Target a MID-range overall exposure with a FULL tonal range: include both bright highlights and clear dark/shadow regions. Do NOT force every channel bright (that washes the frame white) and do NOT let the whole frame go black — aim for balanced mid-tones with real darks and lights.',
-      'Use numeric transform values like .brightness(0.85); include .brightness(0.75-0.95), keep brightness() at or below 1.0, and do not pass osc(), noise(), or other sources into brightness(), saturate(), scale(), rotate(), or kaleid().',
+      'Use numeric transform values like .brightness(0.35); include .brightness(0.2-0.45) as a gentle lift — hydra brightness() is ADDITIVE (it adds the value to every pixel), so values above ~0.5 wash the whole frame to fog. Do not pass osc(), noise(), or other sources into brightness(), saturate(), scale(), rotate(), or kaleid().',
       'CONTRAST IS REQUIRED — the frame must span a WIDE luminance range with deep DARK / shadow regions AND bright highlights, never a uniform bright, milky, or near-white field. Add .contrast(1.3-1.7) and shape tone with .luma(...) (or start from a darker base) so a meaningful portion of the frame reads dark. Do not let blended sources wash the whole frame to white.',
       'Use visible numeric source rates such as osc(4, 0.1, 1.0), noise(3, 0.2), or voronoi(5, 0.3, 0.2); avoid all-near-zero source values.',
       'For screenshot proof, combine at least two generated visual sources with .blend(..., 0.25-0.45), .mult(), .modulate(), .diff(), or weighted .add(..., 0.25-0.45); do not use unweighted .add(...).',
@@ -90,12 +90,23 @@ export class HydraGenerator extends TierBasedGenerator {
     const sourceLines = code.split('\n')
       .map(line => line.trim())
       .filter(line => line && !line.startsWith('//'));
-    for (let i = 1; i < sourceLines.length; i++) {
-      if (/^(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(sourceLines[i])) {
+    // Track paren depth across lines: a source call at the start of a line is
+    // only a NEW chain when no enclosing call is still open. Without this,
+    // valid multi-line arguments — `.modulate(\n  voronoi(...), 0.4\n)` — are
+    // misread as chain breaks (live false positives, 2026-06-12).
+    let parenDepth = 0;
+    for (let i = 0; i < sourceLines.length; i++) {
+      const line = sourceLines[i];
+      if (i > 0 && parenDepth === 0 && /^(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(line)) {
         const previous = sourceLines[i - 1];
         if (!/\.out\s*\(|render\s*\(/.test(previous)) {
-          return { valid: false, error: 'Hydra output starts a new source in the middle of an unfinished chain; combine it with .add(), .blend(), or finish the prior chain with .out()' };
+          return { valid: false, error: `Hydra output starts a new source in the middle of an unfinished chain (after "${previous.slice(0, 60)}"); combine it with .add(), .blend(), or finish the prior chain with .out()` };
         }
+      }
+      const codePart = line.replace(/\/\/.*$/, '');
+      for (const ch of codePart) {
+        if (ch === '(') parenDepth += 1;
+        else if (ch === ')') parenDepth = Math.max(0, parenDepth - 1);
       }
     }
     if (/\.(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
@@ -177,11 +188,19 @@ export class HydraGenerator extends TierBasedGenerator {
       .map(match => Number(match[1]))
       .filter(Number.isFinite);
     if (brightnesses.length === 0) {
-      return 'Hydra image proof must include brightness(0.75-0.95) to avoid dark/blank headless renders';
+      return 'Hydra image proof must include brightness(0.15-0.45) to avoid dark/blank headless renders';
     }
-    const tooDark = brightnesses.find(value => value < 0.6);
+    const tooDark = brightnesses.find(value => value < 0.1);
     if (tooDark !== undefined) {
-      return `Hydra image proof brightness() is too dark for headless proof; found brightness(${tooDark})`;
+      return `Hydra brightness() below 0.1 renders near-black in headless proof — use brightness(0.15-0.45); found brightness(${tooDark})`;
+    }
+    // brightness() is additive in hydra (rgb + amount): a lift above ~0.55 pushes
+    // even pure-black bases past mid-grey, leaving no dark anchor anywhere in the
+    // frame (measured: brightness(0.84) -> mean luminance 0.69, brightFraction 1.0;
+    // the same patch at 0.35 -> luminance 0.20 with full value structure).
+    const foggy = brightnesses.find(value => value > 0.55);
+    if (foggy !== undefined) {
+      return `Hydra brightness() is additive; values above 0.55 wash the frame to uniform fog — use brightness(0.15-0.45); found brightness(${foggy})`;
     }
     return null;
   }
@@ -525,9 +544,9 @@ export class HydraGenerator extends TierBasedGenerator {
         `Create a visible Hydra patch for: ${prompt}`,
         'Use one complete chain that combines at least two generated sources.',
         'Return a substantial 150+ character patch with at least 8 chained operations, not a tiny one-liner.',
-        'Safe shape: solid(...).add(osc(...), 0.3).blend(voronoi(...), 0.35).modulate(noise(...), 0.2).color(...).contrast(...).kaleid(...).rotate(...).scale(...).brightness(0.85).out(o0); render(o0);',
+        'Safe shape: solid(...).add(osc(...), 0.3).blend(voronoi(...), 0.35).modulate(noise(...), 0.2).color(...).contrast(...).kaleid(...).rotate(...).scale(...).brightness(0.35).out(o0); render(o0);',
         'Use numeric arguments only inside color(), brightness(), saturate(), scale(), rotate(), and kaleid().',
-        'Keep color() channels between 0.0 and 1.0 and include brightness(0.75-0.95).',
+        'Keep color() channels between 0.0 and 1.0 and include brightness(0.2-0.45) — brightness() is additive, higher values wash the frame to fog.',
         'No camera/screen input, no prose, no markdown, no separate unfinished source chains.',
       ].join('\n'),
       maxTokens: options?.maxTokens ?? 1400,

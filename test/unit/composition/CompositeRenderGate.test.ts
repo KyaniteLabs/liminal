@@ -31,6 +31,17 @@ describe('CompositeRenderGate', () => {
     it('passes balanced frames', () => {
       expect(verdictFromMeasure(measure(0.47))).toBe('ok'); // the graded showpiece
     });
+
+    it('flags mid-grey mud when the spread collapses with no anchors (fog-audit calibration)', () => {
+      // Flat slate stack: mid luminance, no darks, no highlights, std 9.
+      expect(verdictFromMeasure({ meanLuminance: 0.48, brightFraction: 0.01, darkFraction: 0.0, brightnessStd: 9 })).toBe('muddy');
+      // Same stats without a measured std: conservative, stays ok.
+      expect(verdictFromMeasure(measure(0.48, 0.01, 0.0))).toBe('ok');
+      // Healthy spread at the same luminance stays ok.
+      expect(verdictFromMeasure({ meanLuminance: 0.48, brightFraction: 0.01, darkFraction: 0.0, brightnessStd: 28 })).toBe('ok');
+      // Dark-anchored frames are never mud regardless of spread.
+      expect(verdictFromMeasure({ meanLuminance: 0.4, brightFraction: 0.01, darkFraction: 0.3, brightnessStd: 9 })).toBe('ok');
+    });
   });
 
   describe('layersToDemote', () => {
@@ -40,6 +51,10 @@ describe('CompositeRenderGate', () => {
 
     it('demotes darkening blends on too-dark, never the base layer', () => {
       expect(layersToDemote('too-dark', ['multiply', 'multiply', 'darken', 'screen'])).toEqual([1, 2]);
+    });
+
+    it('squeezes every non-base layer on mud so the base value structure shows through', () => {
+      expect(layersToDemote('muddy', ['normal', 'screen', 'normal', 'overlay'])).toEqual([1, 2, 3]);
     });
 
     it('returns nothing for ok frames or when no blend is in the failed direction', () => {

@@ -524,6 +524,10 @@ export class RalphLoop {
         let numCandidates = adjustedNumCandidates;
         const candidates: Array<{ code: string; score: number; issues: string[]; index: number; thinking?: string; model?: string; genEval?: GenerationEvaluation }> = [];
         let lastGenerationError: Error | undefined;
+        // The last per-candidate VALIDATION failure (vs a generation throw).
+        // Captured so an all-candidates-failed error can name a validation cause
+        // (e.g. kinetic <head> mismatch) instead of collapsing to the generic bucket.
+        let lastValidationError: string | undefined;
         let winnerIndex = 0; // track winner index for evaluation phase
 
         // Harvest entropy before generation if enabled
@@ -585,6 +589,7 @@ export class RalphLoop {
                   );
 
                   if (!validation.valid) {
+                    lastValidationError = validation.errors.join('; ');
                     Logger.warn('RalphLoop', `Candidate ${index} validation failed: ${validation.errors.join('; ')}`);
                     // Report validation failure to Meta-Harness (skip during tests to avoid log pollution)
                     if (process.env.NODE_ENV !== 'test') {
@@ -643,12 +648,20 @@ export class RalphLoop {
 
         // Select the best candidate or fail if none valid
         if (candidates.length === 0) {
+          // Surface the specific per-candidate reason in the MESSAGE, not only in
+          // the details. The daemon/probe classify failures from the error text;
+          // a bare 'All generation candidates failed' collapses every real cause
+          // (svg truncation, glsl undefined fn, brightness reject, …) into one
+          // generic 'candidate_pool_empty' bucket, hiding what actually broke.
+          const innerReason = lastGenerationError?.message ?? lastValidationError;
           throw new SinterError(
-            'All generation candidates failed',
+            innerReason
+              ? `All generation candidates failed: ${innerReason}`
+              : 'All generation candidates failed',
             'ERR_ALL_CANDIDATES_FAILED',
             {
               attempts: numCandidates,
-              lastError: lastGenerationError?.message,
+              lastError: innerReason,
             }
           );
         } else {

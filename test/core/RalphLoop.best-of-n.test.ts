@@ -380,6 +380,10 @@ describe('RalphLoop Best-of-N', () => {
       _disableIterationExtension: true,
     })).rejects.toMatchObject({
       code: 'ERR_ALL_CANDIDATES_FAILED',
+      // The specific per-candidate reason is surfaced in the message, not just the
+      // details — so the daemon's failure classifier sees the real cause instead
+      // of collapsing every failure into one generic 'candidate_pool_empty' bucket.
+      message: 'All generation candidates failed: Syntax error',
     });
   });
 

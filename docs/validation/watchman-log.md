@@ -80,3 +80,42 @@
 - Action taken: appended finding `FAB-031` to `docs/fable-handoffs/2026-06-10/findings-ledger.jsonl` for the new SVG black-frame admissions; no code change.
 - Push note: `git push origin main` rejected by the Forgejo protected-branch pre-receive hook (`Not allowed to push to protected branch main`). The watchman-log and findings-ledger commit is local-only, matching the previous watchman pass state.
 - Next watch item: continue monitoring `candidate_pool_empty` for per-candidate `lastError` surfacing that turns the broad bucket into a fixable validator/prompt/timeout cause; watch new SVG admissions and the two black-frame entries for a reproducible admission-path regression.
+
+## 2026-06-13T09:27:46Z
+- Cycles seen: 3 since the previous marker (`2026-06-13T07:46:48.970Z` through `2026-06-13T09:00:30.743Z`; the in-progress `07:14:34.221Z` cycle is covered by the previous watchman entry and is not double-counted).
+- Completion rate: 3/9 (33.3%); archive 200 → 200 (+0); health 84.2 → 84.2; completed-cycle scores [0.82, 0.62, 0.42], mean 0.620.
+- Failures diagnosed: 6 generation failures across the window.
+  - 5 `candidate_pool_empty` (`All generation candidates failed` / bare `[Generators]` registration tail): 07:46 svg, 08:22 glsl, 08:22 p5, 09:00 p5, 09:00 ascii. The per-candidate `lastError` is still not surfaced in the cycle log, so the broad bucket masks domain-specific causes (glsl truncation, p5 tiny-tier 1000-token budget, ascii registration tail). No deterministic ≤30-line validator/prompt/timeout fix is safe from this evidence.
+  - 1 `other` textgen failure at 07:46: `TextGenerativeGenerator: LLM failed before returning code: [500]['utf-8' codec can't encode...]`. Single occurrence; no safe deterministic fix.
+- Render-infra check: no exact `0.68` score clump within a single cycle and no `infra` failureClass in this window. A live Playwright probe captured a 6475-byte screenshot in <2s; no browser cache reinstall and no daemon restart.
+- Archive check: measured 7 visual archive entries with `createdAt` after the previous marker using the F19-style production decoded-pixel path (p5×2, glsl×1, three×1, hydra×1, svg×2); all measured `ok`, no dead/washed admissions. No finding appended.
+- Action taken: watchman log only; no code change and no finding. Also staged the pre-existing untracked `docs/fable-handoffs/2026-06-12/diagnose-and-fix-plan.md` to keep the worktree clean.
+- Push note: `git push origin main` rejected by the Forgejo protected-branch pre-receive hook (`Not allowed to push to protected branch main`). The watchman-log commit is local-only, matching the previous watchman pass state.
+- Next watch item: continue monitoring `candidate_pool_empty` for per-candidate `lastError` surfacing that turns the broad bucket into a fixable validator/prompt/timeout cause; watch post-09:00 cycles for any renewed `0.68` clumps or `infra` symptoms.
+
+## 2026-06-13T11:15:00Z
+- Cycles seen: 3 since the previous marker (`2026-06-13T09:27:46Z`): `2026-06-13T09:38:13.538Z`, `2026-06-13T10:13:32.868Z`, `2026-06-13T10:51:01.571Z`.
+- Completion rate: 5/9 (55.6%); archive 200 → 200 (+0); health 84.2 → 84.2; completed-cycle scores [0.62, 0.72, 0.62, 0.78, 0.78], mean 0.704.
+- Failures diagnosed: 4 generation failures, all `candidate_pool_empty` (`All generation candidates failed`).
+  - 09:38 p5: stderr tail shows `[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools` before the bucket swallowed the per-candidate `lastError`.
+  - 10:13 glsl: stderr tail shows `[ShaderGenerator] Code may be truncated, attempting to use anyway` plus render-score timing fragments; per-candidate error not surfaced.
+  - 10:13 p5: stderr tail shows `rendered-score: 11581ms` and `Registered 0 static generators`; per-candidate error not surfaced.
+  - 10:51 svg: stderr tail shows a short `k` fragment followed by `rendered-evidence-score: 4773ms`; per-candidate error not surfaced.
+  The class repeats but the broad bucket still masks domain-specific causes (tiny-tier p5 budget, glsl truncation, svg validator/timeout). No deterministic ≤30-line validator/prompt/timeout fix is safe without per-candidate `lastError` surfacing, so left red.
+- Render-infra check: no exact `0.68` score clump within a single cycle and no `infra` failureClass in this window. A live `.quality/render.mjs` probe rendered all 10 domains successfully; infra is available. No browser cache reinstall and no daemon restart.
+- Archive check: measured the 3 visual archive entries admitted since the previous marker (`p5_2b24d826` q=0.86, `p5_0aa679ac` q=0.86, `gls_086de6d5` q=0.78) with the F19-style production decoded-pixel path. All measured `ok` (mean luminance 0.14–0.33, no washout or dead-frame verdict). No finding appended.
+- Action taken: watchman log only; no code change and no finding.
+- Push note: `git push origin main` attempted after committing the watchman-log and daemon ledger updates.
+- Next watch item: continue monitoring `candidate_pool_empty` for per-candidate `lastError` surfacing that turns the broad bucket into a fixable validator/prompt/timeout cause; watch the next few cycles for any `0.68` clumps or `infra` symptoms.
+- Push result: rejected by Forgejo protected-branch pre-receive hook (`Not allowed to push to protected branch main`). The watchman-log and daemon-ledger commit is local-only, matching the previous watchman pass state.
+
+## 2026-06-13T13:19:45Z
+- Cycles seen: 3 since the previous marker (`2026-06-13T11:15:00Z`): `2026-06-13T11:32:02.387Z`, `2026-06-13T12:10:19.564Z`, `2026-06-13T12:48:19.334Z`.
+- Completion rate: 7/9 (77.8%); archive 200 → 200 (+0 capped, 8 admissions/displacements); health 84.2 → 84.2; completed-cycle scores [0.82, 0.82, 0.78], [0.82, 0.68], [0.86, 0.62]; window mean 0.747.
+- Failures diagnosed: 2 generation failures across the window.
+  - 1 Kinetic HTML head-mismatch failure at 12:10 UTC: validation retry reported `HTML document has mismatched <head> tags`. This is the first recurrence of the class since the `96824bc6` head-balancing fix. The daemon does not surface the raw candidate HTML, so a deterministic extension of the normalizer cannot be verified within the 30-line budget; left red.
+  - 1 `candidate_pool_empty` failure at 12:48 UTC on glsl: stderr tail shows `[ShaderGenerator] Code may be truncated, attempting to use anyway`. The broad bucket still masks per-candidate `lastError`, so no domain-specific deterministic fix is safe.
+- Render-infra check: no exact `0.68` score clumps within a single cycle and no `infra` failureClass in this window. A live read-only F19-style archive probe rendered all 8 admitted entries successfully; no browser cache reinstall and no daemon restart.
+- Archive check: measured the 8 visual archive entries admitted since the previous marker using the production `dist/render/DecodedImageVisibility.js` path. 4 entries measured `ok` (p5_307e4c3c q0.86, gls_e2d584be q0.86, kin_74d9b1e8 q0.82, thr_a71f9721 q0.82). 3 SVG entries rendered as solid dark frames: svg_9b58bac6 q0.82, svg_9dbe1af1 q0.82, svg_41f536f3 q0.82 (all lum 0.0322, brightFraction 0, std 0). `tex_b67d76f2` q0.82 measured `washout` (lum 0.9412, brightFraction 1), consistent with intentional dark-background textgen rendered bright. Appended finding `FAB-032`; no archive mutation.
+- Action taken: finding `FAB-032`; no code change.
+- Next watch item: continue monitoring `candidate_pool_empty` for per-candidate `lastError` surfacing; prioritize the SVG admission-path regression now that 5 black-frame entries exist across `FAB-031`/`FAB-032`; watch for renewed Kinetic head-mismatch repeats that would justify extending the normalizer with a raw-candidate regression.

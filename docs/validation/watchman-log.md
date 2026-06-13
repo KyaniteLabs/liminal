@@ -53,3 +53,18 @@
 - Action taken: watchman log only; no code change and no finding.
 - Next watch item: improve per-candidate `lastError` surfacing in the self-improve cycle log so Hydra brightness/reliability rejections are named instead of collapsing to `All generation candidates failed`; continue to monitor Hydra-target cycles for a reproducible validator/prompt cause.
 - Push note: `git push origin main` was rejected by the Forgejo protected-branch pre-receive hook (`Not allowed to push to protected branch main`) even after rebasing for linear history. As a result, local `main` now leads `origin/main` by the kinetic `<head>`-balance fix and two watchman-log commits; the changes are committed but not yet on the source-of-truth branch.
+
+## 2026-06-13T05:24:27Z
+- Cycles seen: 27 (`2026-06-12T13:26:38.586Z` through `2026-06-13T04:50:08.451Z`).
+- Completion rate: 44/81 (54.3%); archive 200 -> 200 (+0 capped, 62 admissions/displacements); health 84.3 -> 84.2; completed-cycle mean score 0.740; last-five cycle means 0.750, 0.720, 0.620, 0.750, 0.753.
+- Failures diagnosed: 37 generation failures across the window.
+  - 7 SVG bounded direct-attempt failures (`SVGGenerator: provider returned no valid SVG after 2 bounded direct attempts`; validator detail still log-truncated as `SVG output mus...`).
+  - 6 empty-after-reasoning-strip failures (`Code validation failed: Code is empty after stripping LLM reasoning text`).
+  - 6 GLSL helper failures: 4 direct `rot()` undefined, 1 `rot2D()` undefined, and 1 single-round repair that still failed on missing `rot()`.
+  - 3 Hydra unfinished-chain failures (`Hydra output starts a new source in the middle of an unfinished chain`).
+  - 2 Kinetic head-mismatch failures despite the earlier head-balancing fix, 2 broad `All generation candidates failed`, 2 RalphLoop ambiguity rejections, 2 p5 tool-loop-empty failures, 3 truncated stderr-tail failures logged only as rendered-score timing/screenshot fragments, 1 Hydra proof too-dark failure, 1 p5 syntax failure, 1 Three placeholder-comment failure, and 1 rendered-evidence scoring JSON parse failure.
+- Deterministic-fix check: no code change. The repeated classes either need raw candidate evidence/per-candidate error surfacing (SVG, empty-strip, log-tail fragments, broad buckets), would risk weakening validators without a reproducer (Kinetic/Hydra), or need a helper-injection contract decision with a focused shader fixture before patching (`rot`/`rot2D`). Left red rather than silencing checks.
+- Render-infra check: exact `0.68` appeared 4 times but was spread across cycles, not same-cycle clumped. A live HeadlessRenderer p5 probe completed in 4461ms with `infraUnavailable:false` and `candidateFailure:false`; no browser reinstall and no daemon restart.
+- Archive check: measured 31 current visual archive entries created after the previous watchman marker with the F19-style production decoded-pixel path; 23 ok, 6 too-dark, 2 washout, 0 render failures. Recorded `FAB-030` for the new p5 too-dark, SVG black-frame, Hydra washout, and Three washout admissions; no archive mutation.
+- Action taken: finding `FAB-030`; no code change.
+- Next watch item: confirm the newly rebased Phase 0 reliability instrumentation names the formerly truncated stderr-tail/SVG validator failures in future cycles; then add a focused admission-path regression for p5 too-dark / SVG black-frame entries before any archive mutation.

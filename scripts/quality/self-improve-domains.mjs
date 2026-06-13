@@ -40,7 +40,13 @@ export function readPerDomainCounts(archivePath) {
     const archives = data && typeof data.archives === 'object' && data.archives ? data.archives : {};
     const counts = {};
     for (const [domain, entries] of Object.entries(archives)) {
-      counts[domain] = Array.isArray(entries) ? entries.length : 0;
+      const n = Array.isArray(entries) ? entries.length : 0;
+      // Quarantine phantom domains: a domain the loop neither targets nor has
+      // ever populated (e.g. the historical `music` key — no generator, stuck at
+      // 0 forever) is noise that clutters every ledger line. Tracked domains
+      // (even at 0) and any non-empty domain are always kept.
+      if (n === 0 && !TARGET_DOMAINS.includes(domain)) continue;
+      counts[domain] = n;
     }
     return counts;
   } catch {

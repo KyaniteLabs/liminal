@@ -6,16 +6,19 @@ set -euo pipefail
 orphans=0
 for file in $(find src -name '*.ts' -not -name 'index.ts' -not -name '*.d.ts' 2>/dev/null || true); do
     basename=$(basename "$file" .ts)
-    pattern="from\s+['\"][^'\"]*/$basename(\.js|\.ts)?['\"]|import\s+[^'\"]*['\"][^'\"]*/$basename(\.js|\.ts)?['\"]|import\s*\(\s*['\"][^'\"]*/$basename(\.js|\.ts)?['\"]"
+    # Portable scan with grep (ERE). The CI runner's node:22 container has no ripgrep,
+    # and `rg ... 2>/dev/null || true` would silently match nothing → every file flagged
+    # as an orphan (587 false orphans broke the gate). grep is always present.
+    pattern="from[[:space:]]+['\"][^'\"]*/$basename(\.js|\.ts)?['\"]|import[[:space:]]+[^'\"]*['\"][^'\"]*/$basename(\.js|\.ts)?['\"]|import[[:space:]]*\([[:space:]]*['\"][^'\"]*/$basename(\.js|\.ts)?['\"]"
     matches=$(
-        rg -l "$pattern" src bin scripts test gui \
-          --glob "*.ts" \
-          --glob "*.tsx" \
-          --glob "*.js" \
-          --glob "*.mjs" \
-          --glob "!**/node_modules/**" \
-          --glob "!**/dist/**" \
-          --glob "!**/coverage/**" \
+        grep -rlE "$pattern" src bin scripts test gui \
+          --include="*.ts" \
+          --include="*.tsx" \
+          --include="*.js" \
+          --include="*.mjs" \
+          --exclude-dir=node_modules \
+          --exclude-dir=dist \
+          --exclude-dir=coverage \
           2>/dev/null || true
     )
     refs=$(printf '%s\n' "$matches" | grep -v "^$file$" | grep -c . || true)

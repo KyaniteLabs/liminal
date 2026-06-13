@@ -1451,6 +1451,25 @@ else if (cmd === 'compose') {
     console.log('');
     console.log('✅ ' + result.successCount + '/' + result.layers.length + ' layers composed');
     console.log('✅ Saved: ' + htmlPath);
+    // Surface the measured-frame grade (luminance + seam) the composite render gate computed.
+    if (result.renderGate) {
+      const g = result.renderGate;
+      if (g.skipped) {
+        console.log('🔎 Render gate: skipped (' + g.skipped + ')');
+      } else if (g.measure) {
+        console.log('🔎 Render gate: ' + String(g.verdict).toUpperCase()
+          + ' — luminance ' + g.measure.meanLuminance.toFixed(3)
+          + ', spread ' + (g.measure.brightnessStd ?? 0).toFixed(1));
+        if (g.remediation) {
+          console.log('   remediation: demoted layers [' + g.remediation.demotedLayers.join(',') + '] → '
+            + g.remediation.verdictAfter + (g.remediation.applied ? ' (applied)' : ' (reverted)'));
+        }
+      }
+    }
+    const seamLayers = result.layers.filter(l => l.opaqueBackground).map(l => l.domain);
+    if (seamLayers.length) {
+      console.log('⚠️  Seam risk: foreground layer(s) paint an opaque background — ' + seamLayers.join(', '));
+    }
     // Persist to the gallery so composed works are first-class citizens — browsable
     // and versioned alongside single-domain generations (e.g. via `sinter serve`).
     if (result.successCount > 0) {

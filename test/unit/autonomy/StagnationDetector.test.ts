@@ -129,4 +129,34 @@ describe('StagnationDetector', () => {
       expect(rec.length).toBeGreaterThan(10);
     }
   });
+
+  describe('full archive (saturation) — no false stagnation', () => {
+    it('does NOT flag stagnation when the archive is full but quality is improving', () => {
+      const detector = new StagnationDetector();
+      // Full archive: occupancy 1, size pinned at 200 (admissions replace, not grow),
+      // fertility flat — the OLD detector fired both signal 1 (fertility flat) and
+      // signal 5 (size unchanged) → 2 signals → false stagnation. With qualityHealth
+      // rising, signal 1 doesn't fire and signal 5 is gated on room-to-grow.
+      const history = [
+        makeMetrics({ nicheOccupancy: 1, archiveSize: 200, fertilityYield: 0.8, qualityHealth: 0.70 }),
+        makeMetrics({ nicheOccupancy: 1, archiveSize: 200, fertilityYield: 0.8, qualityHealth: 0.80 }),
+      ];
+      const result = detector.detect(history);
+      expect(result.isStagnant).toBe(false);
+      expect(result.signals.find(s => s.metric === 'qualityHealth')).toBeUndefined();
+      expect(result.signals.find(s => s.metric === 'archiveSize')).toBeUndefined();
+    });
+
+    it('DOES surface a quality-plateau signal when a full archive stops improving', () => {
+      const detector = new StagnationDetector();
+      const history = [
+        makeMetrics({ nicheOccupancy: 1, archiveSize: 200, fertilityYield: 0.8, qualityHealth: 0.80 }),
+        makeMetrics({ nicheOccupancy: 1, archiveSize: 200, fertilityYield: 0.8, qualityHealth: 0.80 }),
+      ];
+      const result = detector.detect(history);
+      const qualitySignal = result.signals.find(s => s.metric === 'qualityHealth');
+      expect(qualitySignal).not.toBeUndefined();
+      expect(qualitySignal?.value).toBeCloseTo(0, 5);
+    });
+  });
 });

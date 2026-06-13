@@ -57,6 +57,25 @@ describe('GardenHealthMonitor', () => {
     expect(metrics.avgLineageDepth).toBe(1); // No parents
   });
 
+  it('computes qualityHealth as the mean elite quality score (non-saturating axis)', () => {
+    const monitor = new GardenHealthMonitor();
+    const metrics = monitor.measure([makeCell('a', 0.8, 0.5), makeCell('b', 0.7, 0.5)]);
+    expect(metrics.qualityHealth).toBeCloseTo(0.75, 2);
+  });
+
+  it('reports qualityHealth 0 for an empty archive', () => {
+    const monitor = new GardenHealthMonitor();
+    expect(monitor.measure([]).qualityHealth).toBe(0);
+  });
+
+  it('qualityHealth rises with better elites even when occupancy stays full', () => {
+    const monitor = new GardenHealthMonitor();
+    const before = monitor.measure([makeCell('a', 0.70), makeCell('b', 0.72)]);
+    const after = monitor.measure([makeCell('a', 0.85), makeCell('b', 0.88)]); // same 2 niches, better elites
+    expect(after.nicheOccupancy).toBe(before.nicheOccupancy); // occupancy unchanged
+    expect(after.qualityHealth).toBeGreaterThan(before.qualityHealth + 0.1); // quality moved
+  });
+
   it('tracks taste alignment', () => {
     const monitor = new GardenHealthMonitor();
     const cells = [makeCell('a', 0.8), makeCell('b', 0.7)];

@@ -33,23 +33,21 @@ export interface StagnationDetectorConfig {
   stagnationWindow?: number;
   /** Minimum quality improvement per cycle to avoid stagnation (default: 0.01) */
   minQualityDelta?: number;
-  /** Minimum novelty to avoid stagnation (default: 0.15) */
+  /** Reserved: accepted for backward compatibility but not yet consumed (no
+   * novelty axis in GardenHealthMetrics). */
   minNovelty?: number;
 }
 
 const DEFAULT_WINDOW = 5;
 const DEFAULT_MIN_DELTA = 0.01;
-const DEFAULT_MIN_NOVELTY = 0.15;
 
 export class StagnationDetector {
   private readonly stagnationWindow: number;
   private readonly minQualityDelta: number;
-  private readonly minNovelty: number;
 
   constructor(config: StagnationDetectorConfig = {}) {
     this.stagnationWindow = config.stagnationWindow ?? DEFAULT_WINDOW;
     this.minQualityDelta = config.minQualityDelta ?? DEFAULT_MIN_DELTA;
-    this.minNovelty = config.minNovelty ?? DEFAULT_MIN_NOVELTY;
   }
 
   /**
@@ -71,14 +69,18 @@ export class StagnationDetector {
     const first = recent[0];
     const last = recent[recent.length - 1];
 
-    // 1. Quality plateau: no improvement
-    const qualityDelta = last.fertilityYield - first.fertilityYield;
+    // 1. Quality plateau: no improvement. Uses qualityHealth (mean evaluator
+    // score), NOT fertilityYield — fertility is flat at a full archive even while
+    // higher-scoring entries keep replacing lower ones, so the old proxy reported
+    // a permanent false plateau at capacity. qualityHealth rises whenever the work
+    // genuinely improves, so a flat qualityHealth is a real plateau.
+    const qualityDelta = (last.qualityHealth ?? last.fertilityYield) - (first.qualityHealth ?? first.fertilityYield);
     if (qualityDelta < this.minQualityDelta) {
       signals.push({
-        metric: 'fertility',
+        metric: 'qualityHealth',
         value: qualityDelta,
         threshold: this.minQualityDelta,
-        description: `Fertility ${qualityDelta >= 0 ? 'flat' : 'declining'} over ${recent.length} cycles (below ${this.minNovelty} novelty threshold)`,
+        description: `Mean quality ${qualityDelta >= 0 ? 'flat' : 'declining'} over ${recent.length} cycles`,
       });
       recommendations.push('Increase exploration ratio to find new fertile niches');
     }
@@ -118,13 +120,17 @@ export class StagnationDetector {
       recommendations.push('Retrain taste model with recent preference data');
     }
 
-    // 5. Archive size stagnation
-    if (last.archiveSize === first.archiveSize && last.archiveSize > 0) {
+    // 5. Archive size stagnation — only meaningful when there is still room to
+    // grow. A FULL archive (high occupancy) is supposed to hold its size while
+    // admissions replace weaker entries; flagging that as stagnation produced a
+    // permanent false signal at capacity. Gate on occupancy below the thriving
+    // band so this fires only when the archive should be growing but isn't.
+    if (last.archiveSize === first.archiveSize && last.archiveSize > 0 && last.nicheOccupancy < 0.7) {
       signals.push({
         metric: 'archiveSize',
         value: last.archiveSize,
         threshold: first.archiveSize + 1,
-        description: `Archive size unchanged at ${last.archiveSize} entries`,
+        description: `Archive size unchanged at ${last.archiveSize} entries with room to grow`,
       });
       recommendations.push('Run fresh exploration tasks to grow the archive');
     }

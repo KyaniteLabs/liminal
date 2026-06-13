@@ -78,6 +78,7 @@
     "test:ci:slow": "LIMINAL_CI_SLOW=1 vitest run --pool=forks",
     "check:orphans": "bash scripts/check-orphans.sh",
     "check:script-targets": "node scripts/ci/check-package-script-targets.mjs",
+    "dispatch:worker": "bash scripts/dispatch/cli-worker.sh",
     "proof:cognitive-loop": "tsx scripts/proof/cognitive-loop-proof.ts",
     "proof:model-assimilation": "tsx scripts/proof/model-assimilation-proof.ts",
     "proof:live-provider-smoke": "tsx scripts/proof/live-provider-smoke.ts",

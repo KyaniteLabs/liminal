@@ -9,6 +9,7 @@
 //   --floors   re-score the BOTTOM-2 non-quarantined entries per visual domain
 //              and emit each record with `position: "floor"`.
 //   --all      re-score EVERY non-quarantined entry per visual domain.
+//   --domain <d[,d2]>  restrict to the given visual domain(s) (default: all).
 //   --persist  write fresh scores back via QualityArchive.rescoreEntry.
 //              PAUSE the self-improve daemon first — concurrent saves race.
 //              (Simon-approved re-normalization, 2026-06-12.)
@@ -24,6 +25,17 @@ const TOP_N = 2;
 const FLOORS_MODE = process.argv.includes('--floors');
 const ALL_MODE = process.argv.includes('--all');
 const PERSIST = process.argv.includes('--persist');
+const domainArgIndex = process.argv.indexOf('--domain');
+const DOMAIN_FILTER = domainArgIndex >= 0
+  ? (process.argv[domainArgIndex + 1] ?? '').split(',').map((s) => s.trim()).filter(Boolean)
+  : null;
+const DOMAINS = DOMAIN_FILTER && DOMAIN_FILTER.length
+  ? VISUAL_DOMAINS.filter((d) => DOMAIN_FILTER.includes(d))
+  : VISUAL_DOMAINS;
+if (DOMAIN_FILTER && DOMAINS.length === 0) {
+  console.error(`[rescore] --domain matched no known visual domain (known: ${VISUAL_DOMAINS.join(', ')})`);
+  process.exit(1);
+}
 
 // EventBus normally mirrors LLM timing events to stdout; this report's stdout
 // contract is newline-delimited JSON, so suppress those process-wide event logs.
@@ -82,7 +94,7 @@ if (PERSIST) {
 }
 
 try {
-  for (const domain of VISUAL_DOMAINS) {
+  for (const domain of DOMAINS) {
     const entries = ALL_MODE
       ? (Array.isArray(archives[domain]) ? archives[domain] : []).filter(isNonQuarantined)
       : FLOORS_MODE

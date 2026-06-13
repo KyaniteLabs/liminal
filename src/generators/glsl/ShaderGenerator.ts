@@ -6,6 +6,32 @@ import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBased
 import { Logger } from '../../utils/Logger.js';
 import { GLSLValidator } from '../../core/validators/GLSLValidator.js';
 
+// Common shader helper functions that LLMs idiomatically CALL without defining
+// (e.g. rot/noise/fbm from shadertoy). The validator rejects these as undefined,
+// so when a shader uses one without defining it we inject a vetted definition.
+// `deps` are other helpers a definition itself calls. HELPER_ORDER lists every
+// helper with its dependencies BEFORE its dependents so the emitted block compiles.
+const HELPER_PRELUDE: Record<string, { def: string; deps: string[] }> = {
+  rot: { def: 'mat2 rot(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }', deps: [] },
+  hash: {
+    def: 'float hash(float n){ return fract(sin(n) * 43758.5453123); }\n'
+      + 'float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }',
+    deps: [],
+  },
+  hash21: { def: 'float hash21(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }', deps: [] },
+  noise: {
+    def: 'float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);'
+      + ' float a = hash21(i), b = hash21(i+vec2(1.0,0.0)), c = hash21(i+vec2(0.0,1.0)), d = hash21(i+vec2(1.0,1.0));'
+      + ' return mix(mix(a,b,f.x), mix(c,d,f.x), f.y); }',
+    deps: ['hash21'],
+  },
+  fbm: { def: 'float fbm(vec2 p){ float v = 0.0, a = 0.5; for(int i = 0; i < 5; i++){ v += a * noise(p); p *= 2.0; a *= 0.5; } return v; }', deps: ['noise'] },
+  palette: { def: 'vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d){ return a + b * cos(6.28318 * (c * t + d)); }', deps: [] },
+};
+
+// Dependency-safe emission order: hash21 before noise before fbm; others independent.
+const HELPER_ORDER = ['rot', 'hash', 'hash21', 'noise', 'fbm', 'palette'];
+
 export class ShaderGenerator extends TierBasedGenerator {
   constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {
     super('shader', llmOrConfig);
@@ -197,42 +223,73 @@ export class ShaderGenerator extends TierBasedGenerator {
   private injectCommonHelpers(code: string): string {
     code = this.repairCommonLocalModelIssues(code);
     code = this.ensureMainEntrypoint(code);
-    const usesFbm = /\bfbm\s*\(/.test(code);
-    const definesFbm = /\b(?:float|vec[234])\s+fbm\s*\(/.test(code);
-    if (!usesFbm || definesFbm) return code;
+    return this.injectKnownHelperPrelude(code);
+  }
 
-    const helper = [
-      'float hash(vec2 p) {',
-      '  p = fract(p * vec2(123.34, 345.45));',
-      '  p += dot(p, p + 34.345);',
-      '  return fract(p.x * p.y);',
-      '}',
-      'float noise(vec2 p) {',
-      '  vec2 i = floor(p);',
-      '  vec2 f = fract(p);',
-      '  vec2 u = f * f * (3.0 - 2.0 * f);',
-      '  return mix(mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),',
-      '             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);',
-      '}',
-      'float fbm(vec2 p) {',
-      '  float value = 0.0;',
-      '  float amplitude = 0.5;',
-      '  for (int i = 0; i < 5; i++) {',
-      '    value += amplitude * noise(p);',
-      '    p *= 2.0;',
-      '    amplitude *= 0.5;',
-      '  }',
-      '  return value;',
-      '}',
-      '',
-    ].join('\n');
+  /**
+   * Inject vetted definitions for common shader helpers (rot/hash/noise/fbm/
+   * palette) that the shader CALLS but does not DEFINE. This rescues the most
+   * frequent `glsl_undefined_fn` generation failure: LLMs use these idioms from
+   * shadertoy without including their definitions, and GLSLValidator rejects the
+   * whole shader. Genuinely-unknown functions still fail validation (we only
+   * inject from the known allowlist). Idempotent: a helper that is already
+   * defined is never re-injected, so a shader with its own `rot` keeps it.
+   */
+  private injectKnownHelperPrelude(code: string): string {
+    const RETURN_TYPES = '(?:float|vec2|vec3|vec4|int|void|mat2|mat3|mat4)';
+    const isDefined = (name: string) => new RegExp(`\\b${RETURN_TYPES}\\s+${name}\\s*\\(`).test(code);
+    const isCalled = (name: string) => new RegExp(`\\b${name}\\s*\\(`).test(code);
 
-    const precisionMatch = code.match(/^\s*precision\s+(?:lowp|mediump|highp)\s+float\s*;\s*/m);
-    if (precisionMatch?.index !== undefined) {
-      const insertAt = precisionMatch.index + precisionMatch[0].length;
-      return `${code.slice(0, insertAt)}\n${helper}${code.slice(insertAt)}`;
+    // Collect called-but-undefined known helpers, then pull in transitive deps.
+    const needed = new Set<string>();
+    const queue: string[] = [];
+    for (const name of HELPER_ORDER) {
+      if (isCalled(name) && !isDefined(name)) {
+        needed.add(name);
+        queue.push(name);
+      }
     }
-    return `${helper}${code}`;
+    for (let i = 0; i < queue.length; i++) {
+      for (const dep of HELPER_PRELUDE[queue[i]].deps) {
+        if (!isDefined(dep) && !needed.has(dep)) {
+          needed.add(dep);
+          queue.push(dep);
+        }
+      }
+    }
+    if (needed.size === 0) return code;
+
+    // HELPER_ORDER lists deps before dependents, so filtering preserves a
+    // compile-safe emission order.
+    const block = HELPER_ORDER.filter((name) => needed.has(name)).map((name) => HELPER_PRELUDE[name].def).join('\n');
+
+    // Insert after the leading preamble (version/precision/uniforms/comments) and
+    // before the first real declaration or function — never above #version/precision.
+    const lines = code.split('\n');
+    let insertAt = lines.length;
+    let inBlockComment = false;
+    for (let i = 0; i < lines.length; i++) {
+      const trimmed = lines[i].trim();
+      if (inBlockComment) {
+        if (trimmed.includes('*/')) inBlockComment = false;
+        continue;
+      }
+      if (trimmed === '') continue;
+      if (trimmed.startsWith('//')) continue;
+      if (trimmed.startsWith('/*')) {
+        if (!trimmed.includes('*/')) inBlockComment = true;
+        continue;
+      }
+      if (/^#version\b/.test(trimmed) || /^precision\b/.test(trimmed) || /^uniform\b/.test(trimmed)
+        || /^varying\b/.test(trimmed) || /^attribute\b/.test(trimmed) || /^#define\b/.test(trimmed)) {
+        continue;
+      }
+      insertAt = i;
+      break;
+    }
+
+    if (insertAt === lines.length) return `${code}\n${block}\n`;
+    return [...lines.slice(0, insertAt), block, ...lines.slice(insertAt)].join('\n');
   }
 
   private ensureMainEntrypoint(code: string): string {

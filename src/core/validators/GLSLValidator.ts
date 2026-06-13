@@ -113,7 +113,9 @@ export class GLSLValidator {
 
     // Extract all function definitions
     const functionDefs = new Set<string>();
-    const funcDefMatches = trimmed.matchAll(/(?:float|vec2|vec3|vec4|int|void)\s+(\w+)\s*\(/g);
+    // Includes mat2/mat3/mat4 so matrix-returning helpers (e.g. `mat2 rot(...)`)
+    // are recognized as local definitions, not flagged as undefined.
+    const funcDefMatches = trimmed.matchAll(/(?:float|vec2|vec3|vec4|int|void|mat2|mat3|mat4)\s+(\w+)\s*\(/g);
     for (const match of funcDefMatches) {
       functionDefs.add(match[1]);
     }

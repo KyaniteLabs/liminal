@@ -249,4 +249,77 @@ describe('ShaderGenerator', () => {
     expect(sanitized).not.toContain('#ifdef GL_ES');
     expect(sanitized).not.toContain('#endif');
   });
+
+  describe('known helper prelude injection (glsl_undefined_fn fix)', () => {
+    const countOccurrences = (haystack: string, needle: string): number => haystack.split(needle).length - 1;
+
+    it('injects rot/noise (and noise dep hash21) when called but not defined, and the shader validates', () => {
+      const gen = new ShaderGenerator();
+      const shader = [
+        'precision mediump float;',
+        'uniform vec2 u_resolution;',
+        'uniform float u_time;',
+        'void main(){',
+        '  vec2 uv = gl_FragCoord.xy / u_resolution;',
+        '  uv = rot(u_time) * uv;',
+        '  float n = noise(uv * 4.0);',
+        '  gl_FragColor = vec4(vec3(n), 1.0);',
+        '}',
+      ].join('\n');
+      const sanitized = (gen as unknown as { sanitizeShaderCode(c: string): string }).sanitizeShaderCode(shader);
+      expect(sanitized).toContain('mat2 rot(');
+      expect(sanitized).toContain('float noise(');
+      expect(sanitized).toContain('float hash21('); // transitive dependency of noise
+      expect(new ExposedShaderGenerator().validate(sanitized)).toEqual({ valid: true });
+    });
+
+    it('does not duplicate a helper the shader already defines', () => {
+      const gen = new ShaderGenerator();
+      const shader = [
+        'precision mediump float;',
+        'uniform vec2 u_resolution;',
+        'uniform float u_time;',
+        'mat2 rot(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }',
+        'void main(){',
+        '  vec2 uv = gl_FragCoord.xy / u_resolution;',
+        '  uv = rot(u_time) * uv;',
+        '  gl_FragColor = vec4(uv, 0.0, 1.0);',
+        '}',
+      ].join('\n');
+      const sanitized = (gen as unknown as { sanitizeShaderCode(c: string): string }).sanitizeShaderCode(shader);
+      expect(countOccurrences(sanitized, 'mat2 rot(')).toBe(1);
+    });
+
+    it('still rejects a genuinely unknown function (only the allowlist is injected)', () => {
+      const shader = [
+        'precision mediump float;',
+        'uniform vec2 u_resolution;',
+        'void main(){',
+        '  vec2 uv = gl_FragCoord.xy / u_resolution;',
+        '  gl_FragColor = frobnicate(uv);',
+        '}',
+      ].join('\n');
+      const result = new ExposedShaderGenerator().validate(shader);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('frobnicate');
+    });
+
+    it('is idempotent — sanitizing twice does not re-inject helpers', () => {
+      const gen = new ShaderGenerator();
+      const sanitize = (gen as unknown as { sanitizeShaderCode(c: string): string }).sanitizeShaderCode.bind(gen);
+      const shader = [
+        'precision mediump float;',
+        'uniform vec2 u_resolution;',
+        'uniform float u_time;',
+        'void main(){',
+        '  float n = noise(gl_FragCoord.xy / u_resolution + u_time);',
+        '  gl_FragColor = vec4(vec3(n), 1.0);',
+        '}',
+      ].join('\n');
+      const once = sanitize(shader);
+      const twice = sanitize(once);
+      expect(countOccurrences(twice, 'float noise(')).toBe(1);
+      expect(countOccurrences(twice, 'float hash21(')).toBe(1);
+    });
+  });
 });

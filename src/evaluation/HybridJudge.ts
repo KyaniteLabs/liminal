@@ -53,11 +53,8 @@ export class HybridJudge {
       previousOutputs: candidate.previousOutputs,
     };
 
-    // Run both paths in parallel
-    const [scoringResult, aestheticReport] = await Promise.all([
-      this.scoringEngine.score(scoringInput, this.strategy),
-      this.scoreAesthetic(candidate.code),
-    ]);
+    const aestheticReport = this.scoreAesthetic(candidate.code);
+    const scoringResult = await this.scoringEngine.score(scoringInput, this.strategy);
 
     // Synthesize into confidence report
     // Map hybrid weights to synthesizer weights

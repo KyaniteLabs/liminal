@@ -93,7 +93,7 @@ export class SearchTool extends Tool {
         },
       };
 
-    } catch (error) {
+    } catch {
       // Fallback to grep if ripgrep not available
       return this.fallbackGrep(pattern, searchPath, maxResults);
     }

@@ -22,7 +22,7 @@ export function normalizePath(baseDir: string, subPath: string): string {
   let baseReal: string;
   try {
     baseReal = fs.realpathSync(baseAbs);
-  } catch (realpathError) {
+  } catch {
     baseReal = baseAbs;
   }
 

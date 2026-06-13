@@ -1,5 +1,6 @@
 import type { AudioFeatures } from './types.js';
 import { Logger } from '../utils/Logger.js';
+import { createRequire } from 'module';
 
 /**
  * Meyda extraction result with known feature types
@@ -63,15 +64,12 @@ let meydaLoaded = false;
 function getMeydaSync(): MeydaModule | null {
   if (meydaLoaded) return MeydaSync;
   try {
-    // Dynamic require via createRequire for ESM compatibility
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { createRequire } = require('module') as { createRequire: (url: string) => (id: string) => unknown };
     const req = createRequire(import.meta.url);
     const mod = req('meyda') as { default?: MeydaModule } & MeydaModule;
     MeydaSync = mod.default ?? mod;
     meydaLoaded = true;
     return MeydaSync;
-  } catch (err) {
+  } catch {
     Logger.warn('AudioExtractor', 'Meyda not available. Using lightweight built-in audio feature fallback. Install with: npm install meyda for richer features.');
     return null;
   }

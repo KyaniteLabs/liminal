@@ -50,7 +50,7 @@ export function detectPitch(
     const clarity = Math.min(1, rms * 3); // rough clarity estimate
 
     return { frequency: clampedFreq, clarity, midi, noteName };
-  } catch (err) {
+  } catch {
     Logger.warn('PitchExtractor', 'pitchfinder not available. Pitch detection disabled. Install with: npm install pitchfinder');
     return null;
   }

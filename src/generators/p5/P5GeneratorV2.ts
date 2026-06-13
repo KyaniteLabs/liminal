@@ -8,9 +8,7 @@ import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBased
 import { P5Validator } from '../../core/validators/P5Validator.js';
 import { Logger } from '../../utils/Logger.js';
 
-export interface P5GeneratorV2Options extends TierBasedGeneratorOptions {
-  // P5-specific options can be added here
-}
+export type P5GeneratorV2Options = TierBasedGeneratorOptions;
 
 export class P5GeneratorV2 extends TierBasedGenerator {
   constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {

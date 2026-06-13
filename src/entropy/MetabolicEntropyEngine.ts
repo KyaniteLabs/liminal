@@ -35,7 +35,7 @@ export class MetabolicEntropyEngine {
       };
       this.lastResult = result;
       return result;
-    } catch (err) {
+    } catch {
       this.crashLog.push(Date.now());
       try {
         return this.genesis();

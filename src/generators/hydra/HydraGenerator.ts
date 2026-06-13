@@ -10,7 +10,7 @@ const HYDRA_DEFAULT_ADD_WEIGHT = 0.3; // weight given to an otherwise-unweighted
 const HYDRA_MAX_ADD_WEIGHT = 0.4; // .add weights above this are clamped down
 const HYDRA_MAX_BLEND_WEIGHT = 0.5; // .blend weights above this are clamped down
 
-export interface HydraGeneratorOptions extends TierBasedGeneratorOptions {}
+export type HydraGeneratorOptions = TierBasedGeneratorOptions;
 
 export class HydraGenerator extends TierBasedGenerator {
   constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {

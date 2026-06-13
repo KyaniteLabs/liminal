@@ -11,7 +11,7 @@ import { KineticWrapper } from './KineticWrapper.js';
 import { Logger } from '../../utils/Logger.js';
 import { GenerationError } from '../../errors/GenerationError.js';
 
-export interface KineticGeneratorOptions extends TierBasedGeneratorOptions {}
+export type KineticGeneratorOptions = TierBasedGeneratorOptions;
 
 export class KineticGenerator extends TierBasedGenerator {
   constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {

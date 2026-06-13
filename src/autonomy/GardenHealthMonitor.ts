@@ -17,6 +17,14 @@ export interface GardenHealthMetrics {
   avgLineageDepth: number;
   /** Average fertility of archived entries */
   fertilityYield: number;
+  /**
+   * Average evaluator quality score across occupied cells (0–1). Unlike
+   * nicheOccupancy/healthScore, this does NOT saturate when the archive is full:
+   * it keeps rising as higher-scoring entries replace lower ones, so it is the
+   * honest "is the work getting better?" signal at archive capacity. Consumed by
+   * StagnationDetector to tell real quality plateaus from a merely-full archive.
+   */
+  qualityHealth: number;
   /** Fraction of recent entries aligned with user taste (if taste model loaded) */
   tasteAlignment: number;
   /** Overall health score (0–1) */
@@ -65,6 +73,11 @@ export class GardenHealthMonitor {
       ? occupied.reduce((sum, c) => sum + (c.elite?.signals.fertility ?? 0), 0) / occupied.length
       : 0;
 
+    // Average evaluator quality — the non-saturating "getting better?" axis.
+    const qualityHealth = occupied.length > 0
+      ? occupied.reduce((sum, c) => sum + (c.elite?.qualityScore ?? 0), 0) / occupied.length
+      : 0;
+
     // Taste alignment
     let tasteAlignment = 0;
     if (tasteAlignedIds && tasteAlignedIds.size > 0 && occupied.length > 0) {
@@ -81,6 +94,7 @@ export class GardenHealthMonitor {
       nicheOccupancy,
       avgLineageDepth,
       fertilityYield,
+      qualityHealth,
       tasteAlignment,
       healthScore,
       healthLevel,

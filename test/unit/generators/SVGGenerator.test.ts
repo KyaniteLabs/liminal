@@ -319,7 +319,9 @@ describe('SVGGenerator', () => {
 
     expect(toolLoop).not.toHaveBeenCalled();
     expect(complete).toHaveBeenCalledOnce();
-    expect(complete.mock.calls[0]?.[0].maxTokens).toBe(2200);
+    // Raised from 2200: SVG path data is token-dense and detailed illustrations
+    // were truncating before </svg> (the svg_no_raw failure class).
+    expect(complete.mock.calls[0]?.[0].maxTokens).toBe(4000);
     expect(complete.mock.calls[0]?.[0].signal).toBeInstanceOf(AbortSignal);
     expect(svg).toContain('<circle');
     expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');
@@ -401,7 +403,9 @@ describe('SVGGenerator', () => {
     );
     expect(complete).toHaveBeenCalledTimes(2);
     expect(complete.mock.calls[1]?.[0].prompt).toContain('previous model call returned no final artifact');
-    expect(complete.mock.calls[1]?.[0].maxTokens).toBe(1600);
+    // Raised from 1600: the retry used a LOWER budget than the primary, which
+    // made truncation worse — now matches the primary so the retry can complete.
+    expect(complete.mock.calls[1]?.[0].maxTokens).toBe(4000);
     expect(complete.mock.calls[1]?.[0].signal).toBeInstanceOf(AbortSignal);
     expect(svg).toContain('<path');
     expect(svg).toContain('xmlns="http://www.w3.org/2000/svg"');

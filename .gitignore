@@ -172,3 +172,6 @@ test-gallery-temp/
 
 # Quality/QA verification artifacts (baselines, render matrices, compose-verify logs)
 /.quality/
+
+# Weekly read-only re-score reports (ops output written by the rescore cadence; Phase 4.G2)
+/docs/validation/rescore/

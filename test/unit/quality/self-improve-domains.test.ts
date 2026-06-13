@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 // The self-improvement cycle's domain-targeting helpers (pure module, no side effects).
 import {
@@ -11,6 +14,7 @@ import {
   diffArchiveAdmissions,
   classifyFailure,
   FAILURE_CLASSES,
+  readPerDomainCounts,
   // @ts-expect-error — .mjs helper has no type declarations; imported for behavior only.
 } from '../../../scripts/quality/self-improve-domains.mjs';
 
@@ -259,6 +263,38 @@ describe('diffArchiveAdmissions', () => {
       floors: { a: 0.123, b: 1 },
       tops: { a: 0.124, b: 1 },
     });
+  });
+});
+
+describe('readPerDomainCounts (music phantom-domain quarantine)', () => {
+  const writeArchive = (archives: Record<string, unknown[]>): string => {
+    const file = path.join(os.tmpdir(), `qa-${Math.random().toString(36).slice(2)}.json`);
+    fs.writeFileSync(file, JSON.stringify({ archives, lastUpdated: '2026-06-13T00:00:00Z' }));
+    return file;
+  };
+
+  it('drops a phantom empty domain (music) but keeps populated and tracked domains', () => {
+    const file = writeArchive({
+      p5: [{ id: 'a' }, { id: 'b' }],
+      music: [], // phantom: no generator, never populated
+      tone: [],  // tracked (in TARGET_DOMAINS) but empty — must stay visible
+    });
+    const counts = readPerDomainCounts(file);
+    fs.unlinkSync(file);
+
+    expect(counts).toEqual({ p5: 2, tone: 0 });
+    expect(counts).not.toHaveProperty('music');
+  });
+
+  it('keeps a non-empty non-tracked domain (never hides real data)', () => {
+    const file = writeArchive({ music: [{ id: 'x' }] });
+    const counts = readPerDomainCounts(file);
+    fs.unlinkSync(file);
+    expect(counts).toEqual({ music: 1 });
+  });
+
+  it('returns {} for a missing or corrupt archive file', () => {
+    expect(readPerDomainCounts('/no/such/file.json')).toEqual({});
   });
 });
 

@@ -295,7 +295,7 @@ export async function run(prompt: string, options: {
       // Export as ZIP
       zipPath = path.join(outputResolved, `${project}-archive.zip`);
       await exporter.exportZIP(projectData, zipPath);
-    } catch (error) {
+    } catch {
       // If gallery loading fails, create a simple ZIP with just the final code
       const simpleProject: Project = {
         name: project,

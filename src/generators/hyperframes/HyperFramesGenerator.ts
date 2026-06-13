@@ -11,7 +11,7 @@ import { HyperFramesValidator } from '../../core/validators/HyperFramesValidator
 import { GenerationError } from '../../errors/GenerationError.js';
 import type { LLMResponse } from '../../llm/LLMClient.js';
 
-export interface HyperFramesGeneratorOptions extends TierBasedGeneratorOptions {}
+export type HyperFramesGeneratorOptions = TierBasedGeneratorOptions;
 
 export class HyperFramesGenerator extends TierBasedGenerator {
   constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {

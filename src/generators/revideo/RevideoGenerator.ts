@@ -7,7 +7,7 @@
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 import { RevideoValidator } from '../../core/validators/RevideoValidator.js';
 
-export interface RevideoGeneratorOptions extends TierBasedGeneratorOptions {}
+export type RevideoGeneratorOptions = TierBasedGeneratorOptions;
 
 export class RevideoGenerator extends TierBasedGenerator {
   constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {

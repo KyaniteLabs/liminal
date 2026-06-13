@@ -139,7 +139,7 @@ export class MapElites {
         useEmbeddings: false,
         embeddingWeight: 0.5,
       };
-    } catch (loadError) {
+    } catch {
       // File doesn't exist or is invalid — start fresh
     }
   }

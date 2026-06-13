@@ -73,7 +73,7 @@ export class Renderer {
     const outputDir = path.dirname(outputPath);
     try {
       await fs.access(outputDir);
-    } catch (accessError) {
+    } catch {
       throw new Error(`Output directory does not exist: ${outputDir}`);
     }
 
@@ -175,7 +175,7 @@ export class Renderer {
   private async waitForP5Initialization(page: Page): Promise<void> {
     try {
       await page.waitForSelector('canvas', { timeout: 10000 });
-    } catch (waitError) {
+    } catch {
       await this.delay(500);
     }
   }

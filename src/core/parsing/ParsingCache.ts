@@ -98,7 +98,7 @@ export class ParsingCache {
     try {
       const content = await fs.readFile(filePath, 'utf-8');
       return crypto.createHash('sha256').update(content).digest('hex');
-    } catch (error) {
+    } catch {
       // File doesn't exist or can't be read
       return null;
     }
@@ -155,7 +155,7 @@ export class ParsingCache {
         this.memoryCache.set(currentHash, parsedEntry);
         return parsedEntry.token;
       }
-    } catch (error) {
+    } catch {
       // Cache file doesn't exist or is corrupted
     }
 

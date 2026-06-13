@@ -92,3 +92,19 @@
 - Action taken: watchman log only; no code change and no finding. Also staged the pre-existing untracked `docs/fable-handoffs/2026-06-12/diagnose-and-fix-plan.md` to keep the worktree clean.
 - Push note: `git push origin main` rejected by the Forgejo protected-branch pre-receive hook (`Not allowed to push to protected branch main`). The watchman-log commit is local-only, matching the previous watchman pass state.
 - Next watch item: continue monitoring `candidate_pool_empty` for per-candidate `lastError` surfacing that turns the broad bucket into a fixable validator/prompt/timeout cause; watch post-09:00 cycles for any renewed `0.68` clumps or `infra` symptoms.
+
+## 2026-06-13T11:15:00Z
+- Cycles seen: 3 since the previous marker (`2026-06-13T09:27:46Z`): `2026-06-13T09:38:13.538Z`, `2026-06-13T10:13:32.868Z`, `2026-06-13T10:51:01.571Z`.
+- Completion rate: 5/9 (55.6%); archive 200 → 200 (+0); health 84.2 → 84.2; completed-cycle scores [0.62, 0.72, 0.62, 0.78, 0.78], mean 0.704.
+- Failures diagnosed: 4 generation failures, all `candidate_pool_empty` (`All generation candidates failed`).
+  - 09:38 p5: stderr tail shows `[TierBasedGenerator] p5 tool loop returned empty code; retrying once without tools` before the bucket swallowed the per-candidate `lastError`.
+  - 10:13 glsl: stderr tail shows `[ShaderGenerator] Code may be truncated, attempting to use anyway` plus render-score timing fragments; per-candidate error not surfaced.
+  - 10:13 p5: stderr tail shows `rendered-score: 11581ms` and `Registered 0 static generators`; per-candidate error not surfaced.
+  - 10:51 svg: stderr tail shows a short `k` fragment followed by `rendered-evidence-score: 4773ms`; per-candidate error not surfaced.
+  The class repeats but the broad bucket still masks domain-specific causes (tiny-tier p5 budget, glsl truncation, svg validator/timeout). No deterministic ≤30-line validator/prompt/timeout fix is safe without per-candidate `lastError` surfacing, so left red.
+- Render-infra check: no exact `0.68` score clump within a single cycle and no `infra` failureClass in this window. A live `.quality/render.mjs` probe rendered all 10 domains successfully; infra is available. No browser cache reinstall and no daemon restart.
+- Archive check: measured the 3 visual archive entries admitted since the previous marker (`p5_2b24d826` q=0.86, `p5_0aa679ac` q=0.86, `gls_086de6d5` q=0.78) with the F19-style production decoded-pixel path. All measured `ok` (mean luminance 0.14–0.33, no washout or dead-frame verdict). No finding appended.
+- Action taken: watchman log only; no code change and no finding.
+- Push note: `git push origin main` attempted after committing the watchman-log and daemon ledger updates.
+- Next watch item: continue monitoring `candidate_pool_empty` for per-candidate `lastError` surfacing that turns the broad bucket into a fixable validator/prompt/timeout cause; watch the next few cycles for any `0.68` clumps or `infra` symptoms.
+- Push result: rejected by Forgejo protected-branch pre-receive hook (`Not allowed to push to protected branch main`). The watchman-log and daemon-ledger commit is local-only, matching the previous watchman pass state.

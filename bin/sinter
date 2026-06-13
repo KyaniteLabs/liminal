@@ -2602,19 +2602,25 @@ else if (cmd === 'garden' && cmdArgs[0] === 'tend') {
       console.log(`  [cycle ${result.cycle}] actions=${result.actions} health=${(result.health.healthScore * 100).toFixed(1)}% budget=${result.budgetRemaining}${stag}`);
     }
 
-    // Persist the dream plan from the same planner the gardener uses, deduped
-    // against pairings already in the queue so hourly tends don't fill the cap
-    // with repeats.
+    // Persist the dream plan from the same planner the gardener uses. The planner
+    // is told which pairings are already in the queue (queued/completed/failed) so
+    // it proposes FRESH recombinations from the unexplored pair space instead of
+    // re-proposing completed pairs — which dedup to +0 and starve dreaming.
     const queuePath = path.join(process.env.HOME || '/tmp', '.sinter', 'dreams', 'queue.json');
     const dreams = new DreamQueue({ persistPath: queuePath });
-    const plan = new DreamPlanner().plan(cells, axes);
     const seen = new Set(dreams.getTasks().map((t) => `${t.strategy}:${t.sources.map((s) => s.id).sort().join('+')}`));
+    // Reclaim queue slots held by FINISHED dreams (completed/failed). Without this
+    // the queue saturates at maxQueueSize (50) with history and enqueue is blocked
+    // forever (dreams: +0), so the gardener can never feed new recombinations to
+    // the loop. `seen` was captured first so this plan still avoids re-proposing
+    // already-tried pairings.
+    const pruned = dreams.prune();
+    const plan = new DreamPlanner().plan(cells, axes, { excludeKeys: seen });
     let enqueued = 0;
     for (const t of plan.tasks) {
-      const key = `${t.strategy}:${t.sources.map((s) => s.id).sort().join('+')}`;
-      if (seen.has(key)) continue;
-      if (dreams.enqueue(t.strategy, t.sources, t.priority)) { enqueued++; seen.add(key); }
+      if (dreams.enqueue(t.strategy, t.sources, t.priority)) { enqueued++; }
     }
+    if (pruned > 0) console.log(`  pruned ${pruned} finished dream(s) to free queue slots`);
     const status = dreams.getStatus();
     console.log(`  done: cycles=${cycles} finalHealth=${(lastHealth * 100).toFixed(1)}%`);
     console.log(`  dreams: +${enqueued} new (queued=${status.queued} completed=${status.completed}) → ${queuePath}`);

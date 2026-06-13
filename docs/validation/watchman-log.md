@@ -80,3 +80,15 @@
 - Action taken: appended finding `FAB-031` to `docs/fable-handoffs/2026-06-10/findings-ledger.jsonl` for the new SVG black-frame admissions; no code change.
 - Push note: `git push origin main` rejected by the Forgejo protected-branch pre-receive hook (`Not allowed to push to protected branch main`). The watchman-log and findings-ledger commit is local-only, matching the previous watchman pass state.
 - Next watch item: continue monitoring `candidate_pool_empty` for per-candidate `lastError` surfacing that turns the broad bucket into a fixable validator/prompt/timeout cause; watch new SVG admissions and the two black-frame entries for a reproducible admission-path regression.
+
+## 2026-06-13T09:27:46Z
+- Cycles seen: 3 since the previous marker (`2026-06-13T07:46:48.970Z` through `2026-06-13T09:00:30.743Z`; the in-progress `07:14:34.221Z` cycle is covered by the previous watchman entry and is not double-counted).
+- Completion rate: 3/9 (33.3%); archive 200 → 200 (+0); health 84.2 → 84.2; completed-cycle scores [0.82, 0.62, 0.42], mean 0.620.
+- Failures diagnosed: 6 generation failures across the window.
+  - 5 `candidate_pool_empty` (`All generation candidates failed` / bare `[Generators]` registration tail): 07:46 svg, 08:22 glsl, 08:22 p5, 09:00 p5, 09:00 ascii. The per-candidate `lastError` is still not surfaced in the cycle log, so the broad bucket masks domain-specific causes (glsl truncation, p5 tiny-tier 1000-token budget, ascii registration tail). No deterministic ≤30-line validator/prompt/timeout fix is safe from this evidence.
+  - 1 `other` textgen failure at 07:46: `TextGenerativeGenerator: LLM failed before returning code: [500]['utf-8' codec can't encode...]`. Single occurrence; no safe deterministic fix.
+- Render-infra check: no exact `0.68` score clump within a single cycle and no `infra` failureClass in this window. A live Playwright probe captured a 6475-byte screenshot in <2s; no browser cache reinstall and no daemon restart.
+- Archive check: measured 7 visual archive entries with `createdAt` after the previous marker using the F19-style production decoded-pixel path (p5×2, glsl×1, three×1, hydra×1, svg×2); all measured `ok`, no dead/washed admissions. No finding appended.
+- Action taken: watchman log only; no code change and no finding. Also staged the pre-existing untracked `docs/fable-handoffs/2026-06-12/diagnose-and-fix-plan.md` to keep the worktree clean.
+- Push note: `git push origin main` rejected by the Forgejo protected-branch pre-receive hook (`Not allowed to push to protected branch main`). The watchman-log commit is local-only, matching the previous watchman pass state.
+- Next watch item: continue monitoring `candidate_pool_empty` for per-candidate `lastError` surfacing that turns the broad bucket into a fixable validator/prompt/timeout cause; watch post-09:00 cycles for any renewed `0.68` clumps or `infra` symptoms.

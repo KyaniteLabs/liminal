@@ -14,7 +14,7 @@ Primary development now happens on Forgejo; this CI badge reflects the GitHub mi
 
 Sinter is a model-agnostic creative coding system. You describe what you want — "a quiet moonlit garden with blue-green fireflies" or "glitch techno beats with feedback loops" — and Sinter helps choose a medium, generates the artifact, shows an inline/side-panel preview, and keeps the conversation open for revision. It works with any OpenAI-compatible API, Ollama, LM Studio, Anthropic-style providers, and GLM.
 
-Sinter Studio is the artist-facing workbench: clean chat on the left, live preview on the right, and advanced receipts hidden until you ask for them. Bubble Tea remains the keyboard-first operator cockpit for deeper diagnostics and review actions.
+Sinter Studio is the artist-facing workbench: clean chat on the left, live preview on the right, and advanced receipts hidden until you ask for them.
 
 ---
 
@@ -56,10 +56,6 @@ pnpm gui
 # Desktop Studio — Electron shell around the same local Studio
 pnpm desktop
 # package a local macOS app: pnpm desktop:package:mac
-
-# Bubble Tea operator cockpit (requires Go >= 1.21)
-pnpm tui
-# or: sinter tui
 
 # Read-only self-healing opportunity scan
 sinter improve scan
@@ -157,7 +153,6 @@ sinter -p "ambient glitch set" --mode live-music  # Live AV mode
 # Interactive
 pnpm gui                                            # GUI workbench
 sinter chat                                        # Conversational creative session
-pnpm tui                                            # Bubble Tea operator cockpit
 sinter improve scan                                # Read-only repair/hardening/optimization proposals
 sinter improve run <proposal-id>                   # Run one proposal from an isolated worktree
 
@@ -222,7 +217,7 @@ LLM_MODEL=MiniMax-M2.7
 LLM_BASE_URL=https://api.minimax.io/anthropic
 
 # Or swap models on the fly
-SINTER_LLM_MODEL='google/gemini-3.1-pro-preview' sinter bubbletea
+SINTER_LLM_MODEL='google/gemini-3.1-pro-preview' sinter studio
 ```
 
 ---
@@ -253,8 +248,8 @@ src/
 ├── dreaming/       Dream recombinations — queue planning, cross-modal transfer
 ├── autonomy/       Autonomous Gardener — garden health, stagnation detection, policies
 ├── evaluation/     Evaluation fabric — hybrid judges, holdout critics, scoring engines
-├── tui/            Terminal UI utilities, text sanitization, preview safety
-├── tui-bridge/     HTTP/SSE bridge for Bubble Tea runtime
+├── tui/            Terminal text sanitization utilities
+├── tui-bridge/     HTTP/SSE bridge runtime (backs the Studio GUI and launch-proof gates)
 ├── render/         Rendering pipeline
 ├── security/       SSRF protection, rate limiting, sandbox
 ├── sandbox/        Sandboxed code execution

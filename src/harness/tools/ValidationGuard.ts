@@ -40,7 +40,6 @@ export class ValidationGuard {
       path.join(cwd, 'test'),
       path.join(cwd, 'docs'),
       path.join(cwd, 'scripts'),
-      path.join(cwd, 'bubbletea'),
       path.join(cwd, 'harness-tasks'),
       path.join(cwd, '.omx'),
       path.join(cwd, 'package.json'),

@@ -23,7 +23,6 @@ const FILES_WITH_CONSOLE_USAGE = [
   'src/compost/SemanticExtractor.ts',
   'src/compost/CompostMill.ts',
   'src/plugins/HookSystem.ts',
-  'src/tui/preview/AudioPlayer.ts',
   'src/security/SandboxConfig.ts',
   'src/generators/TierBasedGenerator.ts',
   'src/generators/glsl/ShaderGenerator.ts',

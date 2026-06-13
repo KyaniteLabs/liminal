@@ -17,7 +17,6 @@ const evidence: ImprovementOpportunityEvidence = {
     { name: 'lint', status: 'pass', command: 'pnpm lint', detail: 'zero errors, warning budget documented' },
     { name: 'fast tests', status: 'pass', command: 'pnpm test:ci:fast', detail: 'verified in release pass' },
     { name: 'slow tests', status: 'pass', command: 'pnpm test:ci:slow', detail: 'verified in release pass' },
-    { name: 'go tests', status: 'pass', command: 'cd bubbletea && go test ./...', detail: 'verified in release pass' },
   ],
   lintWarnings: 93,
   skippedTests: 3,

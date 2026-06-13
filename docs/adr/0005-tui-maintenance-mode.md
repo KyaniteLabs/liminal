@@ -1,6 +1,6 @@
 # ADR 0005 — TUI enters maintenance mode; the Studio GUI is the product surface
 
-**Status:** Accepted (Simon, 2026-06-11)
+**Status:** Accepted (Simon, 2026-06-11) · **TUI removed** (2026-06-13 — full retirement; Go Bubble Tea cockpit + launcher path + legacy Ink fallback deleted, `src/tui-bridge/` retained)
 **Context:** docs/validation/product-ux-audit-2026-06-11.md
 
 ## Decision
@@ -19,7 +19,7 @@ Sinter keeps ONE invested user surface: the **Studio GUI** (plus the CLI, which 
 - **F20 (split TuiBridgeService) is retired, not split** — the register row closes as obsoleted by this ADR. (The bridge server itself still backs parts of the GUI/agents; only the split-for-the-TUI's-sake refactor dies.)
 - The product-UX audit's TUI P0s (Go-missing crash, rebuild-on-launch) are downgraded to documentation: "requires Go; first launch builds (~90s)". No code is fixed on a frozen surface.
 - No code is deleted now (repo rule: unfinished ≠ orphaned; the surface still works for those who use it).
-- **Retirement gate:** when the GUI Review tab has pin/reject parity (the TUI's one exclusive feature), the Go TUI + its launcher path may be removed in a dedicated PR.
+- **Retirement gate (MET → removed):** GUI Review pin/reject parity shipped (#30), satisfying the gate. The Go Bubble Tea cockpit (`bubbletea/`), its launcher path, the `tui`/`bubbletea`/`operator` commands, the `--interactive` readline picker, and the legacy Ink fallback (`src/tui/` except `sanitizeTerminalText.ts`) were removed in a dedicated PR (2026-06-13). `src/tui-bridge/` (the bridge server) is **retained** — it backs the Studio GUI and the launch-proof gates.
 - Entry points print a one-line maintenance notice; help text tags the commands.
 
 ## What future agents must NOT do

@@ -71,6 +71,13 @@ export class KineticGenerator extends TierBasedGenerator {
       response.code = this.normalizeKineticHtml(response.code ?? '');
       const revalidated = this.validateOutput(response.code);
       if (!revalidated.valid) {
+        if (process.env.KINETIC_DIAGNOSE) {
+          const c = (response.code ?? '').trim();
+          const headOpen = (c.match(/<head\b/gi) || []).length;
+          const headClose = (c.match(/<\/head>/gi) || []).length;
+          const bodyOpen = (c.match(/<body\b/gi) || []).length;
+          console.error(`[kinetic-diagnose] len=${c.length} headOpen=${headOpen} headClose=${headClose} bodyOpen=${bodyOpen} hasCloseHtml=${/<\/html>/i.test(c)} err="${revalidated.error}"`);
+        }
         return this.buildFailedKineticResponse(`Validation retry returned invalid CSS kinetic HTML: ${revalidated.error}`, response.code);
       }
     }
@@ -103,7 +110,11 @@ export class KineticGenerator extends TierBasedGenerator {
         'If you use CSS variables for backgrounds, --bg must resolve to a bright or mid-tone hex, not #0f172a, #08101c, #0a0a0f, or other near-black values.',
         'Keep it compact enough to finish in one response.',
       ].join('\n'),
-      maxTokens: Math.min(options?.maxTokens ?? 2500, 2800),
+      // A full kinetic HTML doc (DOCTYPE + head + @keyframes + animated body)
+      // overran the old 2800 cap and truncated before </head>/</html> and before
+      // the animation CSS — the live kinetic failure ("1 opening, 0 closing
+      // <head>" + "must define animation"). Raised so it can finish.
+      maxTokens: Math.min(options?.maxTokens ?? 4000, 4500),
       temperature: 0.1,
       // The compact-direct attempt runs BEFORE the main path and its budget
       // comes out of the caller's overall window — under provider slowness a
@@ -159,7 +170,7 @@ export class KineticGenerator extends TierBasedGenerator {
         apiKey: config.apiKey,
         model: config.model,
         temperature: 0.1,
-        maxTokens: 2500,
+        maxTokens: 4000,
       });
     }
     return this.llm;

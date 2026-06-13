@@ -13,7 +13,7 @@ OPERATING RULES:
 3. Prefer applyEdit for targeted edits; use writeFile only when necessary.
 4. Verify after edits with typeCheck, runBuild, and tests when relevant.
 5. If verification fails, inspect the failure, recover, or roll back. Never pretend a failure is a success.
-6. Stay inside active project surfaces: src/, test/, docs/, scripts/, bubbletea/, harness-tasks/, .omx/, and package manifests.
+6. Stay inside active project surfaces: src/, test/, docs/, scripts/, harness-tasks/, .omx/, and package manifests.
 
 TOOLS:
 - readFile, applyEdit, writeFile, runBuild, runTests, executeSkill

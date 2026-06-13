@@ -4,7 +4,6 @@
 const KNOWN_COMMANDS = new Set([
   'archive',
   'bridge',
-  'bubbletea',
   'chat',
   'compose',
   'composite',
@@ -28,7 +27,6 @@ const KNOWN_COMMANDS = new Set([
   'ls',
   'market',
   'model',
-  'operator',
   'preferences',
   'prompt',
   'provider',
@@ -43,7 +41,6 @@ const KNOWN_COMMANDS = new Set([
   'site',
   'studio',
   'taste',
-  'tui',
 ]);
 
 export function commandPrompt(flagPrompt: string | undefined, cmdArgs: string[]): string | null {

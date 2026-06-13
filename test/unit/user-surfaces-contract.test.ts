@@ -26,9 +26,8 @@ describe('user-facing TUI/GUI surface contract', () => {
     }
   });
 
-  it('keeps stale GUI/TUI copy and unreachable legacy create UI out of source', () => {
+  it('keeps stale GUI copy and unreachable legacy create UI out of source', () => {
     const app = read('gui/src/App.tsx');
-    const bubbleReadme = read('bubbletea/README.md');
 
     expect(app).not.toContain('node scripts/start-gui.js');
     expect(app).not.toContain('Run the Ralph loop: same prompt every iteration');
@@ -36,8 +35,6 @@ describe('user-facing TUI/GUI surface contract', () => {
     expect(app).toContain('pnpm gui');
     expect(app).toContain('Hydra remains read-only here');
     expect(app).not.toContain('visuals are shown as sandbox-pending code');
-    expect(bubbleReadme).not.toContain('Bubble Tea MVP Shell');
-    expect(bubbleReadme).toContain('Bubble Tea Operator Cockpit');
   });
 
   it('marks the standalone cockpit prompt path as explicit creative workbench input', () => {

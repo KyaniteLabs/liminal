@@ -142,19 +142,14 @@ describe('Error Formatting Patterns (Characterization)', () => {
         'scripts/test-qwen-models.ts:165',
         'src/render/CanvasRecorder.ts:116',
         'src/plugins/PluginLoader.ts:123',
-        'src/tui/preview/AudioPlayer.ts:111',
-        'src/tui/NaturalInterface.ts:281',
-        'src/tui/NaturalInterface.ts:374',
-        'src/tui/commands.ts:180',
-        'src/tui/HarnessTUI.tsx:503',
         'src/guardrails/SemanticValidator.ts:99',
         'src/guardrails/AccessibilityGuardrails.ts:175',
         'src/guardrails/RuntimeHealthMonitor.ts:229',
         'src/core/RalphLoop.ts:520',
       ];
 
-      // Verify we have documented all 24 locations
-      expect(locations.length).toBe(24);
+      // Verify we have documented all 19 locations
+      expect(locations.length).toBe(19);
 
       // All should follow the pattern (file path with line number)
       locations.forEach(location => {

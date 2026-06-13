@@ -278,8 +278,6 @@ for (let i = 0; i < args.length; i++) {
     flags.favorite = args[++i];
   } else if (arg === '--favorites') {
     flags.favorites = true;
-  } else if (arg === '--interactive' || arg === '-i') {
-    flags.interactive = true;
   } else if (arg === '--mode') {
     flags.mode = args[++i];
   } else if (arg === '--use-swarm') {
@@ -392,12 +390,9 @@ function printHelp() {
   console.log('COMMANDS:');
   console.log('  <prompt>                    Natural-language creative request (no magic verb required)');
   console.log('  generate, gen, g <prompt>   Create art/code from prompt');
-  console.log('  tui                         Launch Bubble Tea operator cockpit (maintenance mode — prefer: studio)');
   console.log('  bridge [port]               Start TUI bridge server (default: 3000)');
   console.log('  studio                     Launch GUI workbench (backend + browser app)');
   console.log('  provider <help|list|status> Show provider setup and missing key diagnostics');
-  console.log('  bubbletea [port]            Launch Bubble Tea operator cockpit with bridge');
-  console.log('  operator [port]             Alias for Bubble Tea operator cockpit');
   console.log('  serve, s [port]             Start preview server (default: 3456)');
   console.log('  list, ls                    Show saved sketches');
   console.log('  compost <subcommand>        Compost Mill: add, digest, soup, seeds, status');
@@ -441,7 +436,6 @@ function printHelp() {
   console.log('  --recent [n]                Show recent prompts (default: 10)');
   console.log('  --favorite <prompt>         Add prompt to favorites');
   console.log('  --favorites                 List favorite prompts');
-  console.log('  --interactive, -i           Interactive TUI mode');
   console.log('  --mode <mode>              Mode: live-music (Live AV Strudel + Hydra to --output)');
   console.log('  --learn                     Feed generation results into the quality archive');
   console.log('  --use-swarm                Use Sinter swarm (5 default personas) for generation');
@@ -680,7 +674,6 @@ if (cmd === 'improve') {
       { name: 'lint', status: 'pass', command: 'pnpm lint', detail: 'caller asserted after running release gates' },
       { name: 'fast tests', status: 'pass', command: 'pnpm test:ci:fast', detail: 'caller asserted after running release gates' },
       { name: 'slow tests', status: 'pass', command: 'pnpm test:ci:slow', detail: 'caller asserted after running release gates' },
-      { name: 'go tests', status: 'pass', command: 'cd bubbletea && go test ./...', detail: 'caller asserted after running release gates' },
     ];
   }
   const report = scanGreenSystemOpportunities(evidence);
@@ -761,7 +754,6 @@ const [
   { run, PreviewServer, generateMusic, generateVisuals, metaHarness },
   { getEffectiveConfig, saveConfig, loadProjectConfig },
   { PromptHistory },
-  { InteractiveMode },
   { CompostMill },
   { parseArgs, execute },
   { handleGitCommand },
@@ -775,7 +767,6 @@ const [
   import('../dist/index.js'),
   import('../dist/config/ConfigLoader.js'),
   import('../dist/config/PromptHistory.js'),
-  import('../dist/tui/InteractiveMode.js'),
   import('../dist/compost/CompostMill.js'),
   import('../dist/compost/cli.js'),
   import('../dist/git/index.js'),
@@ -867,21 +858,6 @@ if (flags.provider) {
 }
 if (flags.model) {
   process.env.LIMINAL_LLM_MODEL = flags.model;
-}
-
-// Handle --interactive flag
-if (flags.interactive) {
-  const mode = new InteractiveMode(history);
-  try {
-    const { prompt: interactivePrompt, options } = await mode.run();
-    flags.prompt = interactivePrompt;
-    if (options.provider) {
-      process.env.LIMINAL_LLM_PROVIDER = options.provider;
-    }
-  } catch (err) {
-    console.error('Interactive mode cancelled');
-    process.exit(0);
-  }
 }
 
 // Handle --recent flag
@@ -1584,23 +1560,7 @@ else if (cmd === 'consolidate' || flags.consolidate) {
   console.log('✅ Consolidation complete');
   console.log('');
   process.exit(0);
-} else if (cmd === 'tui') {
-  const { spawn } = await import('child_process');
-  const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  console.log('⚠ TUI is in maintenance mode (ADR 0005) — the Studio GUI is the supported surface: sinter studio');
-  console.log('Launching Bubble Tea operator cockpit...');
-  const tui = spawn(npmCmd, ['run', 'tui'], {
-    cwd: repoRoot,
-    stdio: 'inherit',
-    env: process.env,
-  });
-  tui.on('exit', (code) => process.exit(code ?? 0));
-  tui.on('error', (err) => {
-    console.error('TUI error:', err.message);
-    process.exit(1);
-  });
-}
-else if (cmd === 'bridge') {
+} else if (cmd === 'bridge') {
   // Standalone bridge server (no TUI launched)
   const port = parseInt(cmdArgs[0]) || 3000;
   import('../dist/tui-bridge/TuiBridgeServer.js').then(async ({ TuiBridgeServer }) => {
@@ -1618,8 +1578,6 @@ else if (cmd === 'bridge') {
     console.log('Sinter TUI Bridge');
     console.log(`  Listening: ${server.address}`);
     console.log(`  LLM: ${llmProvider} / ${llmModel}`);
-    console.log('');
-    console.log('  Connect Bubble Tea: SINTER_BRIDGE_URL=http://localhost:' + port + ' ./dist/bubbletea');
     console.log('');
     const shutdown = async () => {
       console.log('\nShutting down bridge...');
@@ -1733,48 +1691,6 @@ else if (cmd === 'quality') {
     console.log(`  Suite passed: ${result.aggregate.suitePassed}`);
     console.log('');
     process.exit(result.aggregate.suitePassed ? 0 : 1);
-  }
-}
-else if (cmd === 'bubbletea' || cmd === 'operator') {
-  // All-in-one: start bridge server, then launch Go Bubble Tea TUI
-  const { spawn } = await import('child_process');
-  const port = parseInt(cmdArgs[0]) || 3000;
-
-  const { TuiBridgeServer } = await import('../dist/tui-bridge/TuiBridgeServer.js');
-  const { TuiBridgeService } = await import('../dist/tui-bridge/TuiBridgeService.js');
-  const bridge = new TuiBridgeService();
-
-  await LLMClient.loadRoles();
-  const llm = new LLMClient({ role: 'generator' });
-
-  const server = new TuiBridgeServer(bridge, { port, llm });
-  await server.start();
-
-  // Find the Bubble Tea binary
-  const binPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'bubbletea');
-  if (!fs.existsSync(binPath)) {
-    console.log('  Note: Bubble Tea TUI not built — bridge-only mode (HTTP API active)');
-    console.log('  Build TUI: cd bubbletea && go build -o ../dist/bubbletea .');
-    console.log('');
-    const shutdown = async () => { try { await server.stop(); } catch { /* already closing */ } process.exit(0); };
-    process.once('SIGINT', shutdown);
-    process.once('SIGTERM', shutdown);
-  } else {
-    const tui = spawn(binPath, [], {
-      env: { ...process.env, SINTER_BRIDGE_URL: `http://localhost:${port}`, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
-      stdio: 'inherit',
-    });
-
-    tui.on('exit', async (code) => {
-      await server.stop();
-      process.exit(code ?? 0);
-    });
-
-    tui.on('error', async (err) => {
-      console.error('Failed to launch Bubble Tea:', err.message);
-      await server.stop();
-      process.exit(1);
-    });
   }
 }
 else if (cmd === 'fix') {

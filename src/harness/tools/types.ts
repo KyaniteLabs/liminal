@@ -191,15 +191,12 @@ export abstract class Tool {
     const resolved = path.resolve(filePath);
     const cwd = process.cwd();
     
-    // Allow project implementation and verification surfaces. Bubble Tea is
-    // part of the active TUI, so the meta-harness must be able to inspect and
-    // patch it instead of falsely reporting that tools cannot touch the UI.
+    // Allow project implementation and verification surfaces.
     const allowedPrefixes = [
       path.join(cwd, 'src'),
       path.join(cwd, 'test'),
       path.join(cwd, 'docs'),
       path.join(cwd, 'scripts'),
-      path.join(cwd, 'bubbletea'),
       path.join(cwd, 'harness-tasks'),
       path.join(cwd, '.omx'),
     ];

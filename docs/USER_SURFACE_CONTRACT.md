@@ -1,11 +1,11 @@
 # Sinter User Surface Contract — Chat First, Preview First
 
-Sinter has one generation engine with two user-facing surfaces:
+Sinter keeps one generation engine and one invested user surface, the Studio GUI (ADR 0005). The operator/bridge substrate sits behind it:
 
 - **Studio GUI** — the artist-facing workbench: clean conversation, same-screen preview, quick revision, optional details.
-- **Operator TUI** — the keyboard-first cockpit for deeper diagnostics, review actions, stop controls, and proof/debug work.
+- **Operator TUI** — retired as a standalone terminal cockpit (ADR 0005); its operator review, diagnostics, stop controls, and proof/debug work now run through the Studio GUI and the bridge event stream.
 
-Both surfaces must preserve the same run truth. Studio should feel like Codex for creative coding; the TUI can stay denser for operators.
+Studio and the bridge event stream must preserve the same run truth. Studio should feel like Codex for creative coding.
 
 ## Artist-facing run model
 
@@ -48,9 +48,8 @@ The default Studio surface should explain a run in human language:
 ## Canonical launch commands
 
 - Studio GUI: `pnpm gui` launches the backend and browser workbench together.
-- Operator TUI: `pnpm tui` launches the Bubble Tea operator cockpit with its bridge.
 - Backend-only GUI API remains `node gui/start.js` for tests and focused debugging.
-- Legacy Ink TUI is compatibility-only; use `pnpm run tui:ink` only with `LIMINAL_ENABLE_LEGACY_INK_TUI=1` for comparison or migration debugging.
+- The Bubble Tea operator cockpit and the legacy Ink TUI were retired (ADR 0005); the bridge event stream remains as the operator/agent substrate behind the Studio GUI.
 
 ## Current launch-candidate proof
 

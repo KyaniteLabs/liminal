@@ -66,7 +66,6 @@ describe('Provider string characterization', () => {
       'src/harness/MultiProviderConfig.ts',  // ProviderType, PROVIDER_TEMPLATES
       'src/config/ConfigLoader.ts',          // providerMap with 'lmstudio' defaults
       'src/core/RalphLoop.ts',               // || 'lmstudio'
-      'src/tui/InteractiveMode.ts',          // ['lmstudio', 'minimax', 'ollama', ...]
       'src/config/schema.ts',                // z.enum([...]).default('lmstudio')
       'src/llm/LLMClient.ts',                // detectProvider() returns strings
     ];

@@ -404,25 +404,6 @@ describe('Security regression — Wave 4 TUI hardening', () => {
     expect(sanitizeTerminalText('plain text no escapes')).toBe('plain text no escapes');
   });
 
-  it('TuiDebugger redactSensitive redacts API keys from debug output', async () => {
-    // TuiDebugger.redactSensitive is private, so we test via the public
-    // formatLogEntry method which calls redactSensitive internally.
-    // We can verify the class exists and the SENSITIVE_KEYS behavior by
-    // checking that the compiled output contains the redaction logic.
-    const dbgSrc = await fs.readFile(
-      path.resolve(process.cwd(), 'dist/tui/TuiDebugger.js'),
-      'utf-8',
-    );
-
-    // The compiled code must contain the sensitive key set
-    expect(dbgSrc).toContain('apiKey');
-    expect(dbgSrc).toContain('password');
-    expect(dbgSrc).toContain('token');
-    expect(dbgSrc).toContain('authorization');
-
-    // The formatLogEntry method must call the redaction
-    expect(dbgSrc).toMatch(/redactSensitive/);
-  });
 });
 
 // ===========================================================================

@@ -10,8 +10,6 @@ export interface RunFocusedTestsParams {
   path?: string;
   /** Single test pattern alias for models that provide pattern instead of targets. */
   pattern?: string;
-  /** Optional Go test name/pattern passed to `go test -run`. */
-  testNamePattern?: string;
   timeoutMs?: number;
 }
 
@@ -23,7 +21,7 @@ export interface RunFocusedTestsResult {
 
 export class RunFocusedTestsTool extends Tool {
   readonly name = 'runFocusedTests';
-  readonly description = 'Run focused Vitest or Bubble Tea Go tests for specific files or patterns';
+  readonly description = 'Run focused Vitest tests for specific files or patterns';
 
   constructor(
     private readonly runner: CommandRunner = (command, args, options) =>
@@ -44,12 +42,7 @@ export class RunFocusedTestsTool extends Tool {
       };
     }
 
-    const mixedTargetError = this.getMixedTargetError(targets);
-    if (mixedTargetError) {
-      return { success: false, error: mixedTargetError };
-    }
-
-    const execution = this.buildExecution(targets, rawParams);
+    const execution = this.buildExecution(targets);
 
     try {
       const { stdout, stderr } = await this.runner(execution.command, execution.args, {
@@ -70,20 +63,7 @@ export class RunFocusedTestsTool extends Tool {
     }
   }
 
-  private buildExecution(targets: string[], params: RunFocusedTestsParams | null | undefined) {
-    const goTestPattern = this.normalizeGoTestPattern(params);
-    if (this.isGoTarget(targets)) {
-      const packagePaths = Array.from(new Set(targets.map(target => this.resolveGoPackagePath(target))));
-      const args = ['test', ...packagePaths];
-      if (goTestPattern) args.push('-run', goTestPattern);
-      return {
-        command: 'go',
-        args,
-        cwd: 'bubbletea',
-        displayCommand: `go ${args.join(' ')}`,
-      };
-    }
-
+  private buildExecution(targets: string[]) {
     const args = ['vitest', 'run', ...targets, '--coverage=false'];
     return {
       command: 'npx',
@@ -91,36 +71,6 @@ export class RunFocusedTestsTool extends Tool {
       cwd: process.cwd(),
       displayCommand: `npx ${args.join(' ')}`,
     };
-  }
-
-  private isGoTarget(targets: string[]): boolean {
-    return targets.some(target => this.isSingleGoTarget(target));
-  }
-
-  private isSingleGoTarget(target: string): boolean {
-    return target.startsWith('bubbletea/') || target.endsWith('.go');
-  }
-
-  private getMixedTargetError(targets: string[]): string | null {
-    const goTargets = targets.filter(target => this.isSingleGoTarget(target));
-    if (goTargets.length === 0 || goTargets.length === targets.length) return null;
-    return 'runFocusedTests cannot mix Bubble Tea Go targets with Vitest targets in one call. Run Go and JS/TS focused tests separately.';
-  }
-
-  private resolveGoPackagePath(target: string): string {
-    const normalized = target.replace(/\\/g, '/');
-    const relative = normalized.startsWith('bubbletea/') ? normalized.slice('bubbletea/'.length) : normalized;
-    const lastSlash = relative.lastIndexOf('/');
-    const dir = lastSlash >= 0 ? relative.slice(0, lastSlash) : '.';
-    return dir === '.' ? './' : `./${dir}`;
-  }
-
-  private normalizeGoTestPattern(params: RunFocusedTestsParams | null | undefined): string | undefined {
-    if (!params) return undefined;
-    if (typeof params.testNamePattern === 'string' && params.testNamePattern.trim() !== '') {
-      return params.testNamePattern.trim();
-    }
-    return undefined;
   }
 
   private normalizeTargets(params: RunFocusedTestsParams | null | undefined): string[] {

@@ -96,7 +96,6 @@ describe('final QA surface gate', () => {
 
     expect(pkg.scripts['final-qa:surface']).toBe('node scripts/ci/final-qa-surface-gate.mjs');
     expect(pkg.scripts['gui:build']).toBe('pnpm --dir gui build');
-    expect(pkg.scripts['bubbletea:test']).toBe('cd bubbletea && go test ./...');
     expect(pkg.scripts['proof:live-creative-domains']).toBe('tsx scripts/proof/live-creative-domain-execution.ts');
   });
 
@@ -118,7 +117,6 @@ describe('final QA surface gate', () => {
 
       expect(output).toContain('Included surfaces');
       expect(output).toContain('GUI production build');
-      expect(output).toContain('Bubble Tea Go tests');
       expect(output).toContain('Creative domains: 12/12 covered');
       expect(output).toContain('Pending tests open: 0');
       expect(output).toContain('Skipped/gated tests classified');

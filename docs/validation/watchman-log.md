@@ -68,3 +68,15 @@
 - Archive check: measured 31 current visual archive entries created after the previous watchman marker with the F19-style production decoded-pixel path; 23 ok, 6 too-dark, 2 washout, 0 render failures. Recorded `FAB-030` for the new p5 too-dark, SVG black-frame, Hydra washout, and Three washout admissions; no archive mutation.
 - Action taken: finding `FAB-030`; no code change.
 - Next watch item: confirm the newly rebased Phase 0 reliability instrumentation names the formerly truncated stderr-tail/SVG validator failures in future cycles; then add a focused admission-path regression for p5 too-dark / SVG black-frame entries before any archive mutation.
+
+## 2026-06-13T07:15:12Z
+- Cycles seen: 4 since the previous marker (`2026-06-13T04:50:08.451Z`): `2026-06-13T05:23:10.863Z`, `2026-06-13T05:59:41.777Z`, `2026-06-13T06:36:52.793Z`, and the in-progress `2026-06-13T07:14:34.221Z` cycle.
+- Completion rate: 4/10 (40.0%) across the logged slots; archive 200 → 200; health 84.2 → 84.2; completed-cycle scores [0.88, 0.68] and [0.82, 0.82].
+- Failures diagnosed: 5 generation failures.
+  - 4 `candidate_pool_empty` (`All generation candidates failed`): 05:23 hydra, 05:59 three, 06:36 ascii + three, 07:14 hydra (partial). The class is now named in the ledger, but the per-candidate `lastError` is not yet surfaced, so no deterministic ≤30-line validator/prompt/timeout fix is safe.
+  - 1 `svg_no_raw`: 06:36 svg (`SVGGenerator: provider returned no valid SVG after 2 bounded direct attempts`). Single occurrence this window; no safe deterministic fix.
+- Render-infra check: no exact `0.68` score clump within a single cycle (one isolated 0.68 ascii score at 05:23). No `infra` failureClass. A live `.quality/render.mjs` probe rendered all 10 domains successfully; infra is available.
+- Archive check: measured the 5 visual archive entries admitted since the previous marker with the F19-style production decoded-pixel path: p5_5b907e37 ok, hyd_d1097236 ok, tex_00be9a5a too-dark (textgen's intentional dark background), svg_cb4280e6 and svg_3c4b7952 are solid dark frames (lum=0.0322, brightFraction=0, std=0) despite qualityScore 0.82. No archive mutation.
+- Action taken: appended finding `FAB-031` to `docs/fable-handoffs/2026-06-10/findings-ledger.jsonl` for the new SVG black-frame admissions; no code change.
+- Push note: `git push origin main` rejected by the Forgejo protected-branch pre-receive hook (`Not allowed to push to protected branch main`). The watchman-log and findings-ledger commit is local-only, matching the previous watchman pass state.
+- Next watch item: continue monitoring `candidate_pool_empty` for per-candidate `lastError` surfacing that turns the broad bucket into a fixable validator/prompt/timeout cause; watch new SVG admissions and the two black-frame entries for a reproducible admission-path regression.

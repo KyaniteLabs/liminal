@@ -91,4 +91,44 @@ describe('DreamPlanner', () => {
     const plan = planner.plan([], []);
     expect(plan.tasks).toHaveLength(0);
   });
+
+  const sig = (t: { strategy: string; sources: { id: string }[] }) =>
+    `${t.strategy}:${t.sources.map(s => s.id).sort().join('+')}`;
+
+  it('proposes fresh recombinations not already in the queue via excludeKeys', () => {
+    const planner = new DreamPlanner();
+    const axes: DescriptorAxis[] = ['order-chaos', 'sparse-dense'];
+    const cells = Array.from({ length: 10 }, (_, i) =>
+      makeCell(`e${i}`, { 'order-chaos': i / 10, 'sparse-dense': (9 - i) / 10 }, 0.9 - i * 0.04),
+    );
+
+    // First plan with nothing excluded fills to maxTasks (the deterministic top pairs).
+    const first = planner.plan(cells, axes);
+    expect(first.tasks).toHaveLength(8);
+    const firstKeys = new Set(first.tasks.map(sig));
+
+    // Re-planning while excluding every pairing already proposed must yield only NEW ones.
+    const second = planner.plan(cells, axes, { excludeKeys: firstKeys });
+    expect(second.tasks).toHaveLength(8);
+    for (const t of second.tasks) {
+      expect(firstKeys.has(sig(t))).toBe(false);
+    }
+  });
+
+  it('does not re-propose an excluded elite-x-elite pairing', () => {
+    const planner = new DreamPlanner();
+    const axes: DescriptorAxis[] = ['order-chaos', 'sparse-dense'];
+    const cells = Array.from({ length: 6 }, (_, i) =>
+      makeCell(`e${i}`, { 'order-chaos': i / 6, 'sparse-dense': (5 - i) / 6 }, 0.8 - i * 0.05),
+    );
+
+    const baselineElite = planner.plan(cells, axes).tasks.find(t => t.strategy === 'elite-x-elite');
+    const excludedKey = sig(baselineElite!);
+
+    const replan = planner.plan(cells, axes, { excludeKeys: new Set([excludedKey]) });
+    expect(replan.tasks.map(sig)).not.toContain(excludedKey);
+    // A fresh elite-x-elite pairing is still proposed (just a different one).
+    const replanElite = replan.tasks.find(t => t.strategy === 'elite-x-elite');
+    expect(sig(replanElite!)).not.toBe(excludedKey);
+  });
 });

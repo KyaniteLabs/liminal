@@ -30,20 +30,27 @@ jobs:
       OLLAMA_API_KEY: ""
     steps:
       - name: Checkout
+        # Use the Actions-provided context (token + server URL), which act_runner
+        # always injects — instead of FORGEJO_TOKEN/FORGEJO_INTERNAL_URL, which were
+        # never configured on the runner and made every run fail at checkout since
+        # e0fc787e. The runner registered with (and can reach) the public URL.
         env:
           CHECKOUT_SHA: ${{ github.sha }}
+          SERVER_URL: ${{ github.server_url }}
+          REPOSITORY: ${{ github.repository }}
+          JOB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          if [ -z "${FORGEJO_TOKEN:-}" ] || [ -z "${FORGEJO_INTERNAL_URL:-}" ]; then
-            echo "Forgejo checkout environment is missing on the runner" >&2
+          if [ -z "${JOB_TOKEN:-}" ] || [ -z "${SERVER_URL:-}" ] || [ -z "${REPOSITORY:-}" ]; then
+            echo "Actions checkout context (token/server URL/repository) is missing on the runner" >&2
             exit 1
           fi
           find . -mindepth 1 -maxdepth 1 -exec rm -rf {} +
           git init .
-          git remote add origin "$FORGEJO_INTERNAL_URL"
+          git remote add origin "${SERVER_URL}/${REPOSITORY}.git"
           GIT_CONFIG_COUNT=1 \
             GIT_CONFIG_KEY_0=http.extraHeader \
-            GIT_CONFIG_VALUE_0="Authorization: token ${FORGEJO_TOKEN}" \
+            GIT_CONFIG_VALUE_0="Authorization: token ${JOB_TOKEN}" \
             git fetch --no-tags --prune --depth=1 origin "$CHECKOUT_SHA"
           git checkout --detach FETCH_HEAD
 

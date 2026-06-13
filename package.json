@@ -94,6 +94,8 @@
     "proof:route-performance": "tsx scripts/proof/route-performance-budget.ts",
     "quality:rescore": "node scripts/quality/rescore-tops.mjs",
     "quality:rescore:floors": "node scripts/quality/rescore-tops.mjs --floors",
+    "reliability:probe": "node scripts/quality/reliability-probe.mjs",
+    "quality:failures": "node scripts/quality/failure-class-report.mjs",
     "quality:render": "node scripts/quality/render.mjs",
     "quality:render-gallery": "node scripts/quality/render-gallery.mjs",
     "quality:matrix": "node scripts/quality/matrix.mjs"

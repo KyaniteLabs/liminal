@@ -27,6 +27,7 @@ import { CRAFT_CONTRACT } from '../prompts/CraftContract.js';
 import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
 import type { EntropyResult } from '../entropy/types.js';
 import { Domain } from '../types/domains.js';
+import { isCodeComplete } from './isCodeComplete.js';
 import { PromptStore } from './PromptStore.js';
 import path from 'node:path';
 import { ContextAccumulation } from './ContextAccumulation.js';
@@ -103,6 +104,39 @@ type RalphQualityEvaluation = {
 
 function logStageTiming(stage: string, startedAt: number): void {
   Logger.info('RalphLoop', `[stage-timing] ${stage}: ${Date.now() - startedAt}ms`);
+}
+
+/**
+ * Honest aesthetic-penalty multiplier based on the threshold gap.
+ *
+ * Returns a factor in [0, 1] applied to the evaluation score:
+ *   - 1.0 (no penalty) when `score` is at or above `threshold`.
+ *   - shrinks toward 0 as the score falls further BELOW the threshold.
+ *
+ * The previous implementation multiplied the score by the raw aesthetic score,
+ * which is not a function of the threshold gap at all: a candidate further below
+ * threshold did not reliably get a larger penalty. This makes the magnitude
+ * honest — the bigger the shortfall, the bigger the penalty.
+ */
+export function aestheticPenaltyFactor(score: number, threshold: number): number {
+  if (threshold <= 0) return 1;
+  if (score >= threshold) return 1;
+  const gap = threshold - Math.max(0, score);
+  return Math.max(0, 1 - gap / threshold);
+}
+
+/**
+ * Whether a GLSL fragment shader has a runtime entry point AND a fragment-output
+ * marker. Accepts BOTH the legacy `gl_FragColor` builtin and the GLSL ES 3.0
+ * `out vec4 <name>;` form (any name) — the same output markers GLSLValidator
+ * treats as valid. The previous gl_FragColor-only check false-rejected a valid
+ * `#version 300 es` shader whose only output is `out vec4 <name>;`.
+ */
+export function glslHasRuntimeOutput(code: string): boolean {
+  const hasMain = /void\s+main\s*\(/.test(code);
+  const hasFragColor = /gl_FragColor/.test(code);
+  const hasOutVec4 = /\bout\s+(?:(?:lowp|mediump|highp)\s+)?vec4\s+\w+\s*;/.test(code);
+  return hasMain && (hasFragColor || hasOutVec4);
 }
 
 function extractScoringReasoning(result: { report?: unknown }): string | undefined {
@@ -618,8 +652,11 @@ export class RalphLoop {
 
                   const candidateCode = validation.cleanedCode;
 
-                  // Check code completeness (structural - braces, parens balanced)
-                  const isComplete = RalphLoop.isCodeComplete(candidateCode);
+                  // Check code completeness (domain-aware: balance + terminal marker)
+                  const isComplete = RalphLoop.isCodeComplete(
+                    candidateCode,
+                    normalizedOptions.collabDomain,
+                  );
 
                   // Quick score for candidate selection (simpler than full evaluation)
                   // We'll do full evaluation on the best candidate
@@ -833,8 +870,8 @@ export class RalphLoop {
         generationDurationMs = Math.max(0, Date.now() - generationPhaseStartedAt);
         logStageTiming(`iter${iteration}:generate`, generationPhaseStartedAt);
 
-        // Check code completeness (structural - braces, parens balanced)
-        const isComplete = RalphLoop.isCodeComplete(currentCode);
+        // Check code completeness (domain-aware: balance + terminal marker)
+        const isComplete = RalphLoop.isCodeComplete(currentCode, normalizedOptions.collabDomain);
 
         // Runtime validation: test if code actually works
         let runtimeValid = true;
@@ -843,16 +880,20 @@ export class RalphLoop {
         // Detect output type and run appropriate runtime test
         const outputType = detectOutputType(currentCode);
         if (outputType === Domain.GLSL) {
-          // For GLSL, we can't easily test in Node, but we can check syntax
-          const hasMain = /void\s+main\s*\(/.test(currentCode);
-          const hasFragColor = /gl_FragColor/.test(currentCode);
-          if (!hasMain || !hasFragColor) {
+          // For GLSL we can't run a real GL context in Node, so we check for the
+          // required entry point and a fragment-output marker. glslHasRuntimeOutput
+          // accepts both the legacy gl_FragColor builtin AND the ES 3.0
+          // `out vec4 <name>;` form, so a valid `#version 300 es` shader is no
+          // longer false-rejected for lacking gl_FragColor.
+          if (!glslHasRuntimeOutput(currentCode)) {
             runtimeValid = false;
-            runtimeError = 'Missing main() or gl_FragColor';
+            runtimeError = 'Missing main() or a fragment output (gl_FragColor / out vec4 <name>;)';
           }
         }
 
-        // Log runtime validation results
+        // Log runtime validation results. The runtimeValid flag is enforced below
+        // (after evaluation) so an invalid runtime result fails the candidate
+        // instead of being silently accepted.
         if (!runtimeValid) {
           Logger.warn('RalphLoop', `Runtime validation failed: ${runtimeError}`);
           if (normalizedOptions.chatMode) {
@@ -1175,6 +1216,19 @@ export class RalphLoop {
         evaluationDurationMs = Math.max(0, Date.now() - evaluationPhaseStartedAt);
         logStageTiming(`iter${iteration}:evaluate(total)`, evaluationPhaseStartedAt);
 
+        // Enforce the runtime-validity gate. An invalid runtime result (e.g. a
+        // GLSL shader with no main()/fragment output) must FAIL the candidate so
+        // the loop retries — not be silently accepted. Cap the score to a failing
+        // value and tag it 'validator' so the iteration gate cannot break on it.
+        if (!runtimeValid) {
+          evaluation.score = Math.min(evaluation.score, 0.2);
+          evaluation.failureClass = 'validator';
+          evaluation.issues = [
+            ...(evaluation.issues ?? []),
+            `[runtime] ${runtimeError}`,
+          ];
+        }
+
         // Record evaluation for repeated-failure detection
         repairHistory.push(generationEvaluationFromQualityEvaluation(evaluation));
 
@@ -1203,10 +1257,20 @@ export class RalphLoop {
             );
             aestheticScore = aestheticReport.score;
 
-            // Apply penalty if violations detected
+            // Apply penalty if violations detected. The penalty scales with how
+            // far the aesthetic score falls BELOW the threshold — a worse score
+            // gets a bigger penalty (the old code multiplied by the raw score,
+            // which did not track the threshold gap honestly).
             if (!aestheticReport.passed) {
-              const penalty = aestheticReport.score;
-              evaluation.score = evaluation.score * penalty;
+              const { DEFAULT_DESIGN_CONSTRAINTS } = await import('../aesthetic/index.js');
+              const configThreshold = (normalizedOptions.aestheticConfig as
+                | { constraints?: { general?: { minAestheticScore?: number } } }
+                | undefined)?.constraints?.general?.minAestheticScore;
+              const threshold = typeof configThreshold === 'number'
+                ? configThreshold
+                : DEFAULT_DESIGN_CONSTRAINTS.general.minAestheticScore;
+              const penaltyFactor = aestheticPenaltyFactor(aestheticReport.score, threshold);
+              evaluation.score = evaluation.score * penaltyFactor;
 
               // Append violations to issues for next iteration feedback
               const aestheticIssues = aestheticReport.violations
@@ -1912,33 +1976,13 @@ export class RalphLoop {
   }
 
   /**
-   * Check if code is structurally complete (not cut off mid-function)
-   * Validates brace/paren/bracket balance and common cutoff patterns
+   * Check if code is structurally complete (not cut off mid-function).
+   * Delegates to the shared domain-aware helper so RalphLoop and LLMClient
+   * agree on what "complete" means. When a domain is known, the check also
+   * verifies a domain-appropriate terminal marker (e.g. p5 draw(), glsl main()).
    */
-  static isCodeComplete(code: string): boolean {
-    // Count opening and closing braces
-    const openBraces = (code.match(/\{/g) || []).length;
-    const closeBraces = (code.match(/\}/g) || []).length;
-
-    // Count opening and closing parentheses
-    const openParens = (code.match(/\(/g) || []).length;
-    const closeParens = (code.match(/\)/g) || []).length;
-
-    // Count opening and closing brackets
-    const openBrackets = (code.match(/\[/g) || []).length;
-    const closeBrackets = (code.match(/\]/g) || []).length;
-
-    // Check for common cutoff patterns after harmless trailing whitespace is removed.
-    const trimmedCode = code.trimEnd();
-    const tail = trimmedCode.slice(-200);
-    const endsMidFunction = /function\s+\w+\s*\([^)]*\)\s*\{[^}]*$/.test(tail);
-    const endsMidClass = /class\s+\w+.*\{[^}]*$/.test(tail);
-
-    return openBraces === closeBraces &&
-           openParens === closeParens &&
-           openBrackets === closeBrackets &&
-           !endsMidFunction &&
-           !endsMidClass;
+  static isCodeComplete(code: string, domain?: string): boolean {
+    return isCodeComplete(code, domain);
   }
 }
 

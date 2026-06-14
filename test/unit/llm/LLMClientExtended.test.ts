@@ -199,8 +199,8 @@ describe('isCodeComplete', () => {
     expect(isCodeComplete('const x = 1;')).toBe(true);
   });
 
-  it('returns true for empty string (0 === 0)', () => {
-    expect(isCodeComplete('')).toBe(true);
+  it('returns false for empty string (empty code is not complete)', () => {
+    expect(isCodeComplete('')).toBe(false);
   });
 
   it('handles nested balanced structures', () => {

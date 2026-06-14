@@ -14,6 +14,7 @@ import { RetryManager } from './RetryManager.js';
 import { TIMEOUT_OLLAMA_MS, TRUNCATE_SHORT, TRUNCATE_LONG, TOKEN_LIMIT_XL } from '../constants/limits.js';
 import { CacheManager } from './CacheManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
+import { isCodeComplete as isCodeCompleteShared } from '../core/isCodeComplete.js';
 import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 import { failureLogger } from '../harness/FailureLogger.js';
 import { detectProviderFromUrl } from '../harness/MultiProviderConfig.js';
@@ -1860,12 +1861,13 @@ export function sanitizeOutput(content: string): { code: string; success: boolea
   };
 }
 
-/** Check if code is structurally complete */
+/**
+ * Check if code is structurally complete.
+ *
+ * Delegates to the shared domain-aware helper. Output sanitization runs on raw
+ * model text before a domain is resolved, so no domain is passed here and the
+ * helper applies its universal structural (brace/paren/bracket balance) check.
+ */
 export function isCodeComplete(code: string): boolean {
-  const openBraces = (code.match(/\{/g) || []).length;
-  const closeBraces = (code.match(/\}/g) || []).length;
-  const openParens = (code.match(/\(/g) || []).length;
-  const closeParens = (code.match(/\)/g) || []).length;
-
-  return openBraces === closeBraces && openParens === closeParens;
+  return isCodeCompleteShared(code);
 }

@@ -418,8 +418,8 @@ describe('RalphLoop — comprehensive', () => {
       expect(RalphLoop.isCodeComplete('const arr = [1, 2;')).toBe(false);
     });
 
-    it('returns true for empty string', () => {
-      expect(RalphLoop.isCodeComplete('')).toBe(true);
+    it('returns false for empty string (empty code is not complete)', () => {
+      expect(RalphLoop.isCodeComplete('')).toBe(false);
     });
   });
 

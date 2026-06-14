@@ -329,8 +329,8 @@ describe('RalphLoop', () => {
       expect(RalphLoop.isCodeComplete(code)).toBe(false);
     });
 
-    it('returns true for empty string', () => {
-      expect(RalphLoop.isCodeComplete('')).toBe(true);
+    it('returns false for empty string (empty code is not complete)', () => {
+      expect(RalphLoop.isCodeComplete('')).toBe(false);
     });
 
     it('returns true for simple balanced code', () => {

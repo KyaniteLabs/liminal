@@ -18,11 +18,19 @@ You are the overnight Fable watchman for the Sinter repo (cwd). One bounded pass
 ## Render-infra alarm
 Scores clumping at exactly 0.68 (or repeated failureClass 'infra') mean the renderer cannot launch — usually purged browser caches (~/.cache/puppeteer, ~/Library/Caches/ms-playwright). Verify with one render probe; remedy: `npx puppeteer browsers install chrome && pnpm exec playwright install chromium`. Cache cleanups DELETE the evidence pipeline's eyes (FAB-028, 2026-06-11).
 
-## Do
+## Do (primary — daemon health)
 1. Diagnose every FAILED generation since the last watchman entry (reasons are now named in the log). If a failure class repeats ≥2x and has a ≤30-line deterministic fix (validator sanitation, prompt contract, timeout knob), implement it test-first.
 2. Check score trend + archive growth. If the archive admitted anything that measures dead/washed (use `.quality/f19-calibrate.mjs` measurement style, read-only), append a finding to the findings ledger instead of mutating the archive.
 3. Append one entry to `docs/validation/watchman-log.md`: timestamp, cycles seen, completion rate, failures diagnosed, action taken (fix SHA / finding id / none-needed), next watch item.
 4. Commit + push whatever you changed (docs included). Leave the worktree clean apart from the daemon-owned ledger and SinterPrompt1fable.md.
 
+## Then (secondary — zero-debt campaign, only if no urgent daemon failure needs you)
+The verified debt register is `docs/validation/organism-audit-triplecheck-2026-06-14.md` (closure plan in `organism-audit-2026-06-13.md`). If primary work is clear, you MAY advance the campaign with ONE fix per pass, under STRICT eligibility:
+- ELIGIBLE only if ALL hold: (a) ≤30 lines and obviously correct; (b) needs NO product/architecture decision; (c) you write a focused test first; (d) does NOT touch any file in an open PR (`git fetch`, check; the active Tier-0 PR owns `src/llm/providers/**`, `RalphLoop.ts`, `LoopConfig.ts`, `fitnessHonesty.ts`, `atomicWrite.ts`, `SinterFS.ts`, `QualityArchive.ts`, `HarnessMemory.ts`, `RoutingData.ts`, `bin/sinter`); (e) does NOT touch domain-type files (`src/types/domains.ts`, `src/core/types/*`, `BehaviorVectors.ts`) — RESERVED for the 0.1 domain-consolidation PR a human is doing.
+- Good first candidates (re-verify eligibility each time): D6 (GLSLValidator allowlist), P2 (CompositionOrchestrator washout-log wording), E5 (SiteCommand self-scheduling setTimeout), D9 (stripReasoningText skip ascii/textgen).
+- INELIGIBLE — file a handoff under `docs/fable-handoffs/2026-06-14/worker-handoffs/` (next number) instead, NEVER attempt: anything >30 lines; the 0.1 domain consolidation; any retire-vs-rehome or wire-vs-delete decision (Guardrails, music engines, routing bandit, IntuitionEngine, plugins, model-assimilation, ArtKnowledgeGraph); the security network-deny work (needs review); anything touching the reserved files above.
+- Same discipline as primary: `pnpm typecheck` + focused vitest green BEFORE commit, and treat parallel-load test timeouts as flakes (re-run the single file isolated before believing a failure).
+
 ## Don't
 - No mass refactors, no dependency changes, no archive mutations, no daemon restarts, no GitHub operations, no new branches (commit docs/small fixes directly on main per current flow).
+- Do NOT claim the campaign is "finished" — you advance it one safe fix at a time; the judgment-heavy remainder is explicitly a human's.

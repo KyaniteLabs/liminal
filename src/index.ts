@@ -254,16 +254,17 @@ export async function run(prompt: string, options: {
     }
     const finalCode = finalValidation.cleanedCode;
 
-    // Export final code as HTML
+    // Export final code as HTML. Pass the known domain so the exporter gate
+    // validates against it rather than re-detecting from content.
     const htmlPath = path.join(outputResolved, `${project}-final.html`);
-    await exporter.exportHTML(finalCode, htmlPath);
+    await exporter.exportHTML(finalCode, htmlPath, options.collabDomain);
 
     // Export final source with the right extension for non-JS artifact types.
     const sourcePath = path.join(outputResolved, `${project}-final.${getSourceFileExtension(finalCode)}`);
     if (sourcePath.endsWith('.svg')) {
       await fs.writeFile(sourcePath, finalCode, 'utf-8');
     } else {
-      await exporter.exportJS(finalCode, sourcePath);
+      await exporter.exportJS(finalCode, sourcePath, options.collabDomain);
     }
 
     // Load project history from gallery for ZIP export

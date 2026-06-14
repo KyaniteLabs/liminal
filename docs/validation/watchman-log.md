@@ -144,3 +144,16 @@
 - Action taken: finding `FAB-034`; no code change.
 - Next watch item: continue monitoring `candidate_pool_empty` for per-candidate `lastError` surfacing that turns the broad bucket into a fixable validator/prompt/timeout cause; prioritize the SVG black-frame admission-path regression now that 16 black-frame entries exist across `FAB-030`..`FAB-034`; investigate whether ASCII too-dark admissions are calibration-sensitive or a true admission-gate miss.
 - Push note: `git push origin main` rejected by the Forgejo protected-branch pre-receive hook (`Not allowed to push to protected branch main`). The watchman-log, findings-ledger, and daemon-ledger commit is local-only; `main` now leads `origin/main` by one commit.
+
+## 2026-06-14T13:30:33Z
+- Cycles seen: 3 complete since the previous marker (`2026-06-14T11:20:07Z`): `2026-06-14T11:44:51.022Z`, `2026-06-14T12:24:57.799Z`, `2026-06-14T12:57:09.727Z`.
+- Completion rate: 4/9 (44.4%); archive 200 → 200 (+0); health 84.1 → 84.1; completed-cycle scores [0.82, 0.82, 0.78, 0.62], mean 0.760.
+- Failures diagnosed: 6 generation failures across the window.
+  - 3 `other` kinetic failures (`HTML document has mismatched <head> tags`). The class recurs, but the daemon still does not surface the raw candidate HTML, so a deterministic extension of `normalizeKineticHtml` cannot be verified within the 30-line budget; left red.
+  - 1 `validation_other` textgen failure at 11:44 (`Code validation failed: p5.js code has invalid JavaScript syntax`). Root cause: `Exporter.exportHTML/exportJS` re-validates content without the known domain, so textgen prose falls through to the p5 default and fails. Fixed by threading an optional `domain` argument through the exporter and passing `options.collabDomain` from `src/index.ts`.
+  - 1 `other` textgen failure at 12:24 (`['utf-8' codec can't encode ...]`). Single provider-encoding occurrence; no safe deterministic fix.
+  - 1 `candidate_pool_empty` kinetic failure at 11:44 (`missing_context` pronoun ambiguity). Broad bucket with no per-candidate `lastError` surfacing; no safe deterministic fix.
+- Render-infra check: no exact `0.68` score clump within a single cycle and no `infra` failureClass in this window. A live `.quality/render.mjs` probe rendered all 10 domains successfully; no browser cache reinstall and no daemon restart.
+- Archive check: measured the 1 visual archive entry admitted since the previous marker (`kin_caa15785` q0.82) using the production `dist/render/DecodedImageVisibility.js` path. It measured `ok` (mean luminance 0.4376, brightnessStd 12.5092, brightFraction 0.0706). No dead/washed admissions; no finding appended.
+- Action taken: committed fix for textgen exporter misrouting (`src/export/Exporter.ts`, `src/index.ts`, `test/unit/exporter.test.ts`); left kinetic head-mismatch red pending raw-candidate evidence.
+- Next watch item: confirm post-fix textgen `validation_other` stops recurring; continue monitoring kinetic head-mismatch for raw-candidate regression that would justify a ≤30-line normalizer extension; continue monitoring `candidate_pool_empty` for per-candidate `lastError` surfacing.

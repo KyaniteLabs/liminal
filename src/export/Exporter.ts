@@ -51,13 +51,14 @@ export class Exporter {
    * @param outputPath - Path where HTML file will be saved
    * @throws Error if validation fails or file system error occurs
    */
-  async exportHTML(code: string, outputPath: string): Promise<void> {
+  async exportHTML(code: string, outputPath: string, domain?: string): Promise<void> {
     // Validate inputs
     validateCode(code);
     validateOutputPath(outputPath);
 
-    // Structural validation before wrapping
-    const validation = CodeValidator.validate(code);
+    // Structural validation before wrapping. Pass the known domain so a valid
+    // non-p5 artifact (e.g. textgen prose) is not re-detected and rejected as p5.
+    const validation = CodeValidator.validate(code, domain);
     if (!validation.valid) {
       throw new ValidationError(
         `Code validation failed: ${validation.errors[0] ?? 'unknown error'}${validation.errors.length > 1 ? ` (+${validation.errors.length - 1} more)` : ''}`,
@@ -97,13 +98,14 @@ export class Exporter {
    * @param outputPath - Path where JS file will be saved
    * @throws Error if validation fails or file system error occurs
    */
-  async exportJS(code: string, outputPath: string): Promise<void> {
+  async exportJS(code: string, outputPath: string, domain?: string): Promise<void> {
     // Validate inputs
     validateCode(code);
     validateOutputPath(outputPath);
 
-    // Structural validation before saving
-    const validation = CodeValidator.validate(code);
+    // Structural validation before saving. Pass the known domain so a valid
+    // non-p5 artifact (e.g. textgen prose) is not re-detected and rejected as p5.
+    const validation = CodeValidator.validate(code, domain);
     if (!validation.valid) {
       throw new ValidationError(
         `Code validation failed: ${validation.errors[0] ?? 'unknown error'}${validation.errors.length > 1 ? ` (+${validation.errors.length - 1} more)` : ''}`,

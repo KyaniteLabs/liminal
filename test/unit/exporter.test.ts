@@ -891,4 +891,44 @@ ${P5_DRAW_BODY}}
       expect(file3Exists).toBe(true);
     });
   });
+
+  // ── Domain passthrough (watchman 2026-06-14) ───────────────────────
+  describe('domain passthrough', () => {
+    // Plain prose with no ASCII-art punctuation so auto-detection falls through
+    // to the p5 default and fails syntax validation.
+    const TEXTGEN_POEM = [
+      'A single thread of silver light unspools across the quiet page',
+      'short line',
+      'another longer line of amber light stretching toward the horizon',
+      'tiny',
+      'the shadow of every word we left unspoken reaches the margin',
+      'a',
+      'final broader sweep of pale gold settles over the empty lines',
+      'ok',
+      'whispers fade into the paper where the ink has dried',
+      'end',
+    ].join('\n');
+
+    it('exportHTML accepts an explicit domain so textgen output is not misvalidated as p5', async () => {
+      const exporter = new Exporter();
+      const out = path.join(TEST_EXPORT_DIR, 'poem.html');
+      await expect(exporter.exportHTML(TEXTGEN_POEM, out, 'textgen')).resolves.not.toThrow();
+      const stat = await fs.stat(out);
+      expect(stat.isFile()).toBe(true);
+    });
+
+    it('exportHTML rejects textgen output when no domain is provided (p5 misdetection)', async () => {
+      const exporter = new Exporter();
+      const out = path.join(TEST_EXPORT_DIR, 'poem-undetected.html');
+      await expect(exporter.exportHTML(TEXTGEN_POEM, out)).rejects.toThrow(/p5\.js code has invalid JavaScript syntax/);
+    });
+
+    it('exportJS accepts an explicit domain so textgen output is not misvalidated as p5', async () => {
+      const exporter = new Exporter();
+      const out = path.join(TEST_EXPORT_DIR, 'poem.txt');
+      await expect(exporter.exportJS(TEXTGEN_POEM, out, 'textgen')).resolves.not.toThrow();
+      const written = await fs.readFile(out, 'utf-8');
+      expect(written).toContain('silver light');
+    });
+  });
 });

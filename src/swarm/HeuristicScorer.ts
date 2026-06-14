@@ -4,7 +4,21 @@ interface HeuristicScoreResult {
   scores: Map<string, number>;
   winnerId: string;
   votes: Map<string, Vote>;
+  /**
+   * True because this scorer is a deterministic PROXY, not a quality judge. Its
+   * constraint dimension is naive token-overlap (presence of constraint keywords
+   * in the output), which says nothing about whether the constraint is *honored*
+   * well — only that the words appear. Consumers must treat these scores as a
+   * cheap ranking heuristic for non-final rounds, never as a quality measure.
+   */
+  degraded: true;
+  /** What makes the score degraded — surfaced so it is never mistaken for a real grade. */
+  degradedReason: string;
 }
+
+/** Why the heuristic score is a proxy, not a quality measure. */
+const DEGRADED_REASON =
+  'token-overlap proxy: constraint scored by keyword presence, not adherence quality';
 
 interface DimensionScores {
   constraint: number;
@@ -85,7 +99,9 @@ export class HeuristicScorer {
         voterId: personaId,
         firstChoice: personaId,
         secondChoice: '',
-        reasoning: `Heuristic: score=${score.toFixed(2)} (con=${dims.constraint.toFixed(2)} nov=${dims.novelty.toFixed(2)} len=${dims.length.toFixed(2)} voc=${dims.vocabulary.toFixed(2)} code=${dims.codeStructure.toFixed(2)})`,
+        // Marked [degraded] so the reasoning never reads as a quality verdict —
+        // the constraint dimension is token-overlap, a presence proxy only.
+        reasoning: `Heuristic [degraded: ${DEGRADED_REASON}]: score=${score.toFixed(2)} (con=${dims.constraint.toFixed(2)} nov=${dims.novelty.toFixed(2)} len=${dims.length.toFixed(2)} voc=${dims.vocabulary.toFixed(2)} code=${dims.codeStructure.toFixed(2)})`,
       });
     }
 
@@ -99,11 +115,15 @@ export class HeuristicScorer {
       weightedScores.set(personaId, score * power);
     }
 
-    return { scores: weightedScores, winnerId, votes };
+    return { scores: weightedScores, winnerId, votes, degraded: true, degradedReason: DEGRADED_REASON };
   }
 
   /**
-   * Constraint adherence: keyword overlap between constraint text and output.
+   * Constraint PROXY (not adherence): fraction of constraint keywords that
+   * appear anywhere in the output. This measures keyword *presence*, not whether
+   * the constraint is honored — it is a cheap deterministic ranking signal for
+   * non-final rounds, deliberately flagged `degraded` on the result so it is
+   * never reported as a quality score.
    */
   static scoreConstraint(output: string, constraint: string): number {
     const constraintTokens = this.tokenize(constraint).filter(t => t.length > 3);

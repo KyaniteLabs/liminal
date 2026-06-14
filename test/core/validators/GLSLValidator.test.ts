@@ -67,7 +67,7 @@ describe('GLSLValidator', () => {
 
       const result = GLSLValidator.validate(code);
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('GLSL shader must contain void main(), gl_FragColor/fragColor, or gl_Position/gl_FragCoord');
+      expect(result.errors).toContain('GLSL shader must contain void main(), gl_FragColor/fragColor, gl_Position/gl_FragCoord, or an out vec4 fragment output');
     });
 
     it('should reject empty code', () => {
@@ -277,6 +277,91 @@ describe('GLSLValidator', () => {
 
       const result = GLSLValidator.validate(code);
       expect(result.errors).not.toContain('GLSL: texture2D() used but no sampler2D uniform declared');
+    });
+  });
+
+  describe('D6 — complete standard built-in allowlist (no false undefined-function rejections)', () => {
+    it('accepts standard GLSL built-ins that the old allowlist omitted', () => {
+      const code = `
+        precision highp float;
+        uniform float u_time;
+        void main() {
+          float a = radians(45.0);
+          float b = degrees(a);
+          float s = sinh(u_time) + cosh(u_time) + tanh(u_time);
+          float r = round(s) + trunc(s);
+          vec3 c = transpose(mat3(1.0)) * vec3(a, b, s);
+          gl_FragColor = vec4(c, 1.0);
+        }
+      `;
+      const result = GLSLValidator.validate(code);
+      const undefinedErrors = result.errors.filter(e => e.includes('Undefined function'));
+      expect(undefinedErrors).toHaveLength(0);
+    });
+
+    it('accepts ES 3.0 derivative and vector-relational built-ins', () => {
+      const code = `
+        #version 300 es
+        precision highp float;
+        uniform float u_time;
+        out vec4 outColor;
+        void main() {
+          vec3 p = vec3(sin(u_time), 0.4, 0.6);
+          vec3 g = fwidth(p) + dFdx(p) + dFdy(p);
+          bvec3 cmp = greaterThan(p, vec3(0.5));
+          float lit = any(cmp) ? 1.0 : 0.0;
+          outColor = vec4(g * lit, 1.0);
+        }
+      `;
+      const result = GLSLValidator.validate(code);
+      const undefinedErrors = result.errors.filter(e => e.includes('Undefined function'));
+      expect(undefinedErrors).toHaveLength(0);
+    });
+
+    it('still flags a genuinely undefined function (allowlist is not a blanket pass)', () => {
+      const code = `
+        uniform float u_time;
+        void main() {
+          float v = totallyMadeUpHelper(u_time);
+          gl_FragColor = vec4(vec3(v), 1.0);
+        }
+      `;
+      const result = GLSLValidator.validate(code);
+      expect(result.errors.some(e => e.includes("Undefined function 'totallyMadeUpHelper()'"))).toBe(true);
+    });
+  });
+
+  describe('D10 — GLSL ES 3.0 out vec4 fragment output is accepted', () => {
+    it('accepts a #version 300 es shader whose only output marker is a custom-named out vec4', () => {
+      const code = `
+        #version 300 es
+        precision highp float;
+        out vec4 myFragColor;
+        uniform float u_time;
+        uniform vec2 u_resolution;
+        void main() {
+          vec2 uv = gl_FragCoord.xy / u_resolution;
+          vec3 col = vec3(sin(u_time), uv.x, uv.y);
+          myFragColor = vec4(col, 1.0);
+        }
+      `;
+      const result = GLSLValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('does not emit the structure error for an out vec4 shader (no legacy gl_FragColor needed)', () => {
+      // No gl_FragColor, no gl_FragCoord, no fragColor — only `out vec4 result;`.
+      const code = `
+        out vec4 result;
+        uniform float u_time;
+        void main() {
+          vec3 c = vec3(sin(u_time), 0.3, 0.7);
+          result = vec4(c, 1.0);
+        }
+      `;
+      const result = GLSLValidator.validate(code);
+      expect(result.errors).not.toContain('GLSL shader must contain void main(), gl_FragColor/fragColor, gl_Position/gl_FragCoord, or an out vec4 fragment output');
     });
   });
 

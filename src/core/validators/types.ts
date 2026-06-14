@@ -83,7 +83,20 @@ export function stripContamination(code: string): string {
   return cleaned.trim();
 }
 
-export function stripReasoningText(code: string): string {
+/**
+ * Domains whose legitimate artifact IS prose/text-art. The code-oriented
+ * reasoning stripper mistakes their content for LLM reasoning ("Here is a…",
+ * leading "- " bullets, markdown-looking lines) and truncates it. For these
+ * domains the text must pass through intact — stripping is domain-aware.
+ */
+const TEXT_OUTPUT_DOMAINS = new Set<string>(['ascii', 'textgen']);
+
+export function stripReasoningText(code: string, domain?: string): string {
+  // Domain-aware: ascii/textgen art is the artifact, not reasoning. Return it
+  // unchanged (trimmed only) so concrete poems / ASCII renderings survive.
+  if (domain !== undefined && TEXT_OUTPUT_DOMAINS.has(domain)) {
+    return code.replace(/^\s*\n/, '').trimEnd();
+  }
   const lines = code.split('\n');
   const kept: string[] = [];
   let insideFence = false;

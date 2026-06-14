@@ -51,9 +51,14 @@ export class GLSLValidator {
     const hasMain = /void\s+main\s*\(/.test(code);
     const hasFrag = /gl_FragColor|fragColor/.test(code);
     const hasGLPos = /gl_Position|gl_FragCoord/.test(code);
+    // GLSL ES 3.0 declares its fragment output as `out vec4 <name>;` (any name,
+    // not just `fragColor`). Recognize it as a valid output marker so a modern
+    // #version 300 es shader is NOT false-rejected for lacking the legacy
+    // gl_FragColor builtin.
+    const hasOutVec4 = /\bout\s+(?:(?:lowp|mediump|highp)\s+)?vec4\s+\w+\s*;/.test(code);
 
-    if (!hasMain && !hasFrag && !hasGLPos) {
-      errors.push('GLSL shader must contain void main(), gl_FragColor/fragColor, or gl_Position/gl_FragCoord');
+    if (!hasMain && !hasFrag && !hasGLPos && !hasOutVec4) {
+      errors.push('GLSL shader must contain void main(), gl_FragColor/fragColor, gl_Position/gl_FragCoord, or an out vec4 fragment output');
     }
 
     return errors;
@@ -120,20 +125,40 @@ export class GLSLValidator {
       functionDefs.add(match[1]);
     }
 
-    // GLSL built-in functions (common ones)
+    // GLSL built-in functions. Must cover the full ES 1.00/3.00 standard library
+    // — an incomplete allowlist FALSE-rejects valid shaders (e.g. a runnable
+    // shader using `radians`/`sinh`/`round`/`transpose` was flagged as calling
+    // "undefined functions"). Sourced from the GLSL ES spec built-in function set.
     const builtInFunctions = new Set([
-      // Trigonometry
+      // Angle & trigonometry
+      'radians', 'degrees',
       'sin', 'cos', 'tan', 'asin', 'acos', 'atan',
+      'sinh', 'cosh', 'tanh', 'asinh', 'acosh', 'atanh',
       // Exponential
       'pow', 'exp', 'log', 'exp2', 'log2', 'sqrt', 'inversesqrt',
       // Common
-      'abs', 'sign', 'floor', 'ceil', 'fract', 'mod', 'min', 'max', 'clamp', 'mix', 'step', 'smoothstep',
+      'abs', 'sign', 'floor', 'ceil', 'fract', 'mod', 'modf', 'min', 'max',
+      'clamp', 'mix', 'step', 'smoothstep',
+      'round', 'roundEven', 'trunc', 'isnan', 'isinf',
+      // Floating-point bit manipulation (ES 3.0)
+      'floatBitsToInt', 'floatBitsToUint', 'intBitsToFloat', 'uintBitsToFloat',
       // Geometric
       'length', 'distance', 'dot', 'cross', 'normalize', 'faceforward', 'reflect', 'refract',
-      // Texture
-      'texture2D', 'texture', 'textureLod',
-      // Constructor-like
-      'vec2', 'vec3', 'vec4', 'mat2', 'mat3', 'mat4', 'int', 'float', 'bool'
+      // Matrix
+      'matrixCompMult', 'outerProduct', 'transpose', 'determinant', 'inverse',
+      // Vector relational (return bvec / bool)
+      'lessThan', 'lessThanEqual', 'greaterThan', 'greaterThanEqual',
+      'equal', 'notEqual', 'any', 'all', 'not',
+      // Derivatives & fragment helpers (ES 3.0 / OES_standard_derivatives)
+      'dFdx', 'dFdy', 'fwidth',
+      // Texture lookup
+      'texture2D', 'texture2DProj', 'texture2DLod', 'textureCube', 'textureCubeLod',
+      'texture', 'textureProj', 'textureLod', 'textureGrad', 'textureProjLod',
+      'textureOffset', 'texelFetch', 'textureSize',
+      // Constructor-like (types usable as conversions)
+      'vec2', 'vec3', 'vec4', 'ivec2', 'ivec3', 'ivec4',
+      'uvec2', 'uvec3', 'uvec4', 'bvec2', 'bvec3', 'bvec4',
+      'mat2', 'mat3', 'mat4', 'int', 'uint', 'float', 'bool'
     ]);
 
     // Extract all function calls (but not variable declarations like 'float x = ...')

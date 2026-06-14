@@ -67,6 +67,10 @@ export interface ComposedLayer {
   error?: string;
   /** True if a FOREGROUND layer painted an opaque full-canvas background (seam risk; contract violation). */
   opaqueBackground?: boolean;
+  /** True when the seam guard ACTED on an opaqueBackground foreground layer
+   *  (forced its blend to a brightening mode so its opaque band no longer
+   *  hard-occludes the layers beneath). */
+  seamGuarded?: boolean;
 }
 
 export interface CompositionResult {
@@ -149,6 +153,7 @@ export class CompositionOrchestrator {
       generated: r.generated,
       error: r.error,
       opaqueBackground: r.opaqueBackground,
+      seamGuarded: r.seamGuarded,
     }));
 
     return { html: finalHtml, title, layers, successCount: results.filter(r => r.generated).length, renderGate };
@@ -256,7 +261,10 @@ export class CompositionOrchestrator {
    */
   static parseSpec(raw: string, originalPrompt: string): CompositionSpec {
     const validDomains = new Set<DomainType>(Object.keys(DOMAIN_TO_ENTRY) as DomainType[]);
-    const validBlends = new Set<BlendMode>(['normal', 'screen', 'multiply', 'overlay', 'lighten', 'darken']);
+    // The full BlendMode union — 'difference'/'exclusion' are valid CSS mix-blend
+    // modes (supported by blendModes.ts + the BlendBudget table) and must NOT be
+    // silently dropped to 'normal'; dropping them loses a deliberate creative choice.
+    const validBlends = new Set<BlendMode>(['normal', 'screen', 'multiply', 'overlay', 'lighten', 'darken', 'difference', 'exclusion']);
     let parsed: unknown;
     try {
       const json = raw.replace(/^[\s\S]*?```(?:json)?/i, '').replace(/```[\s\S]*$/i, '').trim() || raw.trim();
@@ -298,7 +306,7 @@ export class CompositionOrchestrator {
     spec: CompositionLayerSpec,
     index: number,
     stageBackground?: string,
-  ): Promise<{ spec: CompositionLayerSpec; code: string; generated: boolean; error?: string; opaqueBackground?: boolean }> {
+  ): Promise<{ spec: CompositionLayerSpec; code: string; generated: boolean; error?: string; opaqueBackground?: boolean; seamGuarded?: boolean }> {
     const entryName = DOMAIN_TO_ENTRY[spec.domain];
     if (!entryName) {
       return { spec, code: '', generated: false, error: `unsupported layer domain: ${spec.domain}` };
@@ -317,10 +325,26 @@ export class CompositionOrchestrator {
       Logger.info('CompositionOrchestrator', `Layer ${index} (${spec.domain}) generated ${code.length} chars`);
       // Deterministic guard: flag a foreground layer that violated the contract.
       const opaqueBackground = !isBase && paintsOpaqueBackground(code, spec.domain);
+      let actedSpec = spec;
+      let seamGuarded = false;
       if (opaqueBackground) {
-        Logger.warn('CompositionOrchestrator', `Layer ${index} (${spec.domain}) paints an opaque full-canvas background — violates the transparency contract (seam risk)`);
+        // ACT on the detected seam (do not just observe): a foreground layer's
+        // opaque full-canvas band hard-occludes everything beneath it under a
+        // 'normal'/'multiply'/'darken'/'overlay' blend, producing the visible
+        // seam. Force a brightening blend ('screen') so the opaque band adds
+        // light instead of occluding — the seam disappears without regenerating
+        // the art. Brightening blends ('screen'/'lighten') already let lower
+        // layers through, so leave those untouched.
+        const blend = spec.blendMode ?? 'normal';
+        if (blend !== 'screen' && blend !== 'lighten') {
+          actedSpec = { ...spec, blendMode: 'screen' };
+          seamGuarded = true;
+          Logger.warn('CompositionOrchestrator', `Layer ${index} (${spec.domain}) paints an opaque full-canvas background — seam guard forced blend '${blend}' → 'screen' so it no longer occludes lower layers`);
+        } else {
+          Logger.warn('CompositionOrchestrator', `Layer ${index} (${spec.domain}) paints an opaque full-canvas background under a brightening blend ('${blend}') — already non-occluding, seam guard left it as-is`);
+        }
       }
-      return { spec, code, generated: true, opaqueBackground };
+      return { spec: actedSpec, code, generated: true, opaqueBackground, seamGuarded };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       Logger.warn('CompositionOrchestrator', `Layer ${index} (${spec.domain}) failed: ${message}`);

@@ -164,6 +164,19 @@ describe('CompositionOrchestrator.parseSpec (NL decomposition parsing)', () => {
     expect(spec.layers[0].blendMode).toBe('normal');
     expect(spec.layers[0].opacity).toBe(1);
   });
+
+  it('D11 — preserves difference/exclusion blend modes instead of dropping them to normal', () => {
+    const raw = JSON.stringify({
+      title: 'Phase', background: '#000',
+      layers: [
+        { domain: 'shader', prompt: 'field', blendMode: 'normal', opacity: 1 },
+        { domain: 'p5', prompt: 'inverted edges', blendMode: 'difference', opacity: 1 },
+        { domain: 'hydra', prompt: 'soft inversion', blendMode: 'exclusion', opacity: 0.8 },
+      ],
+    });
+    const spec = CompositionOrchestrator.parseSpec(raw, 'phase inversion');
+    expect(spec.layers.map(l => l.blendMode)).toEqual(['normal', 'difference', 'exclusion']);
+  });
 });
 
 describe('CompositionOrchestrator — foreground transparency contract', () => {
@@ -212,6 +225,44 @@ describe('CompositionOrchestrator — foreground transparency contract', () => {
       layers: [{ domain: 'p5', prompt: 'opaque base' }],
     });
     expect(result.layers[0].opaqueBackground).toBe(false);
+  });
+
+  it('D11 — seam guard ACTS: forces an opaque foreground layer to a brightening blend (not observe-only)', async () => {
+    mocks.entries = [
+      { name: 'shader', generate: async () => 'void main(){gl_FragColor=vec4(1.0);}' },
+      // Foreground p5 paints an opaque full-canvas background → seam risk under 'normal'.
+      { name: 'p5', generate: async () => 'function draw(){ background(20, 30, 40); ellipse(1,1,1); }' },
+    ];
+    const result = await CompositionOrchestrator.compose({
+      layers: [
+        { domain: 'shader', prompt: 'bg', blendMode: 'normal', opacity: 1 },
+        { domain: 'p5', prompt: 'opaque foreground', blendMode: 'normal', opacity: 1 },
+      ],
+    });
+    // Detection still reported.
+    expect(result.layers[1].opaqueBackground).toBe(true);
+    // The guard ACTED on it — blend was changed from 'normal' to a brightening mode.
+    expect(result.layers[1].seamGuarded).toBe(true);
+    expect(result.layers[1].blendMode).toBe('screen');
+    // And the assembled composite carries the acted-on blend, not the original 'normal'.
+    expect(result.html).toContain('mix-blend-mode:screen');
+  });
+
+  it('D11 — seam guard leaves an already-brightening opaque foreground untouched (no needless change)', async () => {
+    mocks.entries = [
+      { name: 'shader', generate: async () => 'void main(){gl_FragColor=vec4(1.0);}' },
+      { name: 'p5', generate: async () => 'function draw(){ background(20, 30, 40); ellipse(1,1,1); }' },
+    ];
+    const result = await CompositionOrchestrator.compose({
+      layers: [
+        { domain: 'shader', prompt: 'bg', blendMode: 'normal', opacity: 1 },
+        { domain: 'p5', prompt: 'opaque foreground', blendMode: 'lighten', opacity: 1 },
+      ],
+    });
+    expect(result.layers[1].opaqueBackground).toBe(true);
+    // 'lighten' already lets lower layers through → not occluding → no action taken.
+    expect(result.layers[1].seamGuarded).toBe(false);
+    expect(result.layers[1].blendMode).toBe('lighten');
   });
 });
 

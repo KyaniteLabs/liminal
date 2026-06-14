@@ -251,11 +251,11 @@ export async function analyzeWithLLMJudge(
     const result = await llm.generate(systemPrompt, prompt, undefined, true, undefined, { jsonMode: promptTier === 'compact' });
 
     if (!result.success || !result.code) {
-      Logger.warn('LLMJudgeCritic', 'LLM judge call failed, returning neutral score');
+      Logger.warn('LLMJudgeCritic', 'LLM judge call failed, failing closed (passed=false)');
       return {
         score: 0.5,
         violations: [],
-        passed: true,
+        passed: false,
         timestamp: Date.now(),
         usedLLM: false,
       };
@@ -277,11 +277,11 @@ export async function analyzeWithLLMJudge(
       usedLLM: true,
     };
   } catch (error) {
-    Logger.error('LLMJudgeCritic', 'LLM judge error:', error);
+    Logger.error('LLMJudgeCritic', 'LLM judge error, failing closed (passed=false):', error);
     return {
       score: 0.5,
       violations: [],
-      passed: true,
+      passed: false,
       timestamp: Date.now(),
       usedLLM: false,
     };

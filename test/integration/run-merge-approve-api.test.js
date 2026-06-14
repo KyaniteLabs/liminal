@@ -117,6 +117,11 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
       expect(body.result).not.toBeNull();
       expect(body.projectDirName).toContain(projectName);
 
+      // H8: organism runs perform no evaluation, so they must NOT emit a
+      // fabricated numeric fitness (was hardcoded finalScore:1 → UI "score 1.00").
+      expect(body.result.finalScore).toBeNull();
+      expect(body.result.unscored).toBe(true);
+
       const dateStr = new Date().toISOString().split('T')[0];
       const dirName = `${dateStr}--${projectName}`;
       const iterations = await get(`/api/gallery/${encodeURIComponent(dirName)}`);

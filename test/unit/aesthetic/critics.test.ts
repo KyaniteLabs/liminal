@@ -220,7 +220,7 @@ describe('LLMJudgeCritic', () => {
       expect(result.passed).toBe(false);
     });
 
-    it('returns neutral score when LLM call fails', async () => {
+    it('fails closed (passed=false) when the LLM call returns failure', async () => {
       const mockLLM = {
         generate: async () => ({ code: '', success: false }),
       };
@@ -229,7 +229,8 @@ describe('LLMJudgeCritic', () => {
 
       expect(result.score).toBe(0.5);
       expect(result.usedLLM).toBe(false);
-      expect(result.passed).toBe(true);
+      // A judge that could not evaluate must NOT report a pass (H9 fail-closed).
+      expect(result.passed).toBe(false);
     });
 
     it('parses a well-formed LLM judge response', async () => {
@@ -313,7 +314,7 @@ VIOLATIONS: too many colors, no focal point`,
       expect(result.violations[0].message).toContain('too many colors');
     });
 
-    it('returns neutral on LLM exception', async () => {
+    it('fails closed (passed=false) on an LLM exception', async () => {
       const mockLLM = {
         generate: async () => { throw new Error('Network timeout'); },
       };
@@ -322,7 +323,8 @@ VIOLATIONS: too many colors, no focal point`,
 
       expect(result.score).toBe(0.5);
       expect(result.usedLLM).toBe(false);
-      expect(result.passed).toBe(true);
+      // A thrown judge error must NOT silently report a pass (H9 fail-closed).
+      expect(result.passed).toBe(false);
     });
 
     it('respects custom passingThreshold', async () => {

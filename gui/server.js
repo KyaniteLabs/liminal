@@ -1129,9 +1129,12 @@ export function createApp(configPath, port = 5174) {
         }
         const dateStr = new Date().toISOString().split('T')[0];
         const projectDirName = `${dateStr}--${projectName}`;
+        // Organism runs assemble music+visual layers but do NOT score the
+        // output, so we must not fabricate a numeric fitness. Emit a null
+        // score with an explicit `unscored` marker instead of a hardcoded 1.0.
         return res.status(200).json({
           ok: true,
-          result: { code: '', iterations: maxIterations, completed: true, reason: 'organism run', finalScore: 1, project: projectName },
+          result: { code: '', iterations: maxIterations, completed: true, reason: 'organism run', finalScore: null, unscored: true, project: projectName },
           projectDirName,
         });
       }

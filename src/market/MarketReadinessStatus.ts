@@ -38,14 +38,13 @@ export function collectRepositoryMarketReadinessStatus(repoRoot = process.cwd())
   const cliReceipt = read(path.join(repoRoot, 'src', 'cli', 'CognitiveReceiptReporter.ts'));
   const wrappers = read(path.join(repoRoot, 'src', 'core', 'wrappers', 'GenericWrapper.ts'));
   const level6Gate = read(path.join(repoRoot, 'src', 'runtime-core', 'Level6ReleaseGate.ts'));
-  const packageJson = read(path.join(repoRoot, 'package.json'));
 
   const checks: MarketReadinessCheck[] = [
     sourceCheck('natural-cli', 'Natural CLI front door', bin, ['inferNaturalLanguagePrompt', 'sinter "natural language prompt"']),
     sourceCheck('creative-wrappers', 'Creative domain wrapper breadth', wrappers, ['strudel-editor', 'wrapRevideo', 'Hydra', 'Tone']),
     sourceCheck('studio-cognition', 'Studio learning receipts', `${telemetry}\n${app}`, ['latestCognitiveReceipt', 'What Sinter learned', 'sinter-cognitive-receipt']),
     sourceCheck('cli-cognition', 'CLI learning receipts', `${bin}\n${cliReceipt}`, ['writeCliCognitiveReceipt', 'What Sinter learned']),
-    sourceCheck('studio-smoke-script', 'Studio smoke script', packageJson, ['proof:studio-smoke']),
+    studioSmokeReceiptCheck(repoRoot),
     sourceCheck('level6-gate', 'Level 6 release gate', `${bin}\n${level6Gate}`, ['release gate', 'runLevel6ReleaseGate', 'self-improvement-gauntlet', 'creative-domain-gauntlet']),
     liveProviderSmokeCheck(repoRoot),
   ];
@@ -132,6 +131,54 @@ function liveProviderSmokeCheck(repoRoot: string): MarketReadinessCheck {
       label: 'Live provider smoke',
       status: 'fail',
       evidence: `Live provider smoke receipt is unreadable: ${reason}`,
+    };
+  }
+}
+
+function studioSmokeReceiptCheck(repoRoot: string): MarketReadinessCheck {
+  const receiptPath = path.join(repoRoot, '.omx', 'proof', 'studio-smoke.json');
+  if (!fs.existsSync(receiptPath)) {
+    return {
+      id: 'studio-smoke',
+      label: 'Studio smoke',
+      status: 'fail',
+      evidence: 'No studio smoke receipt found — run pnpm proof:studio-smoke',
+    };
+  }
+  try {
+    const receipt = JSON.parse(fs.readFileSync(receiptPath, 'utf8')) as { status?: unknown; generatedAt?: unknown; blockers?: unknown };
+    if (receipt.status === 'pass') {
+      const validation = validateProofReceipt(repoRoot, receipt);
+      if (!validation.ok) {
+        return {
+          id: 'studio-smoke',
+          label: 'Studio smoke',
+          status: 'fail',
+          evidence: `Studio smoke receipt is not release-proof: ${validation.failures.join('; ')}`,
+        };
+      }
+      const generatedAt = typeof receipt.generatedAt === 'string' ? ` (${receipt.generatedAt})` : '';
+      return {
+        id: 'studio-smoke',
+        label: 'Studio smoke',
+        status: 'pass',
+        evidence: `Found passing ${path.relative(repoRoot, receiptPath)}${generatedAt}`,
+      };
+    }
+    const blockers = Array.isArray(receipt.blockers) && receipt.blockers.length > 0 ? ` (failed: ${receipt.blockers.join(', ')})` : '';
+    return {
+      id: 'studio-smoke',
+      label: 'Studio smoke',
+      status: 'fail',
+      evidence: `Studio smoke receipt status ${String(receipt.status ?? 'unknown')}${blockers}`,
+    };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return {
+      id: 'studio-smoke',
+      label: 'Studio smoke',
+      status: 'fail',
+      evidence: `Studio smoke receipt is unreadable: ${reason}`,
     };
   }
 }

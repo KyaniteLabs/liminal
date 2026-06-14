@@ -49,7 +49,7 @@ describe('collectRepositoryMarketReadinessStatus', () => {
       'creative-wrappers',
       'studio-cognition',
       'cli-cognition',
-      'studio-smoke-script',
+      'studio-smoke',
       'live-provider-smoke',
     ]));
     expect(status.checks.find((check) => check.id === 'live-provider-smoke')).not.toBeNull();
@@ -109,5 +109,43 @@ describe('collectRepositoryMarketReadinessStatus', () => {
 
     expect(liveSmoke?.status).toBe('pass');
     expect(liveSmoke?.evidence).toContain('glm/glm-5v-turbo');
+  });
+
+  it('does not accept a missing or failed studio-smoke receipt as market-ready', () => {
+    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sinter-market-'));
+
+    // No receipt at all → the gate can no longer pass on the script merely existing.
+    let status = collectRepositoryMarketReadinessStatus(repoRoot);
+    let studio = status.checks.find((check) => check.id === 'studio-smoke');
+    expect(studio?.status).toBe('fail');
+    expect(studio?.evidence).toContain('No studio smoke receipt found');
+
+    // A failed run is honestly reported as failing.
+    const proofDir = path.join(repoRoot, '.omx', 'proof');
+    fs.mkdirSync(proofDir, { recursive: true });
+    fs.writeFileSync(path.join(proofDir, 'studio-smoke.json'), JSON.stringify({ status: 'fail', blockers: ['noConsoleErrors'] }));
+    status = collectRepositoryMarketReadinessStatus(repoRoot);
+    studio = status.checks.find((check) => check.id === 'studio-smoke');
+    expect(studio?.status).toBe('fail');
+    expect(studio?.evidence).toContain('Studio smoke receipt status fail');
+  });
+
+  it('accepts a fresh studio-smoke receipt bound to the current commit', () => {
+    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sinter-market-'));
+    const gitCommit = writeFakeGitHead(repoRoot);
+    const proofDir = path.join(repoRoot, '.omx', 'proof');
+    fs.mkdirSync(proofDir, { recursive: true });
+    fs.writeFileSync(path.join(proofDir, 'studio-smoke.json'), JSON.stringify({
+      status: 'pass',
+      generatedAt: new Date().toISOString(),
+      gitCommit,
+      checks: { backendHealth: true, noConsoleErrors: true, studioHeading: true, stageNav: true },
+      blockers: [],
+    }));
+
+    const status = collectRepositoryMarketReadinessStatus(repoRoot);
+    const studio = status.checks.find((check) => check.id === 'studio-smoke');
+    expect(studio?.status).toBe('pass');
+    expect(studio?.evidence).toContain('studio-smoke.json');
   });
 });

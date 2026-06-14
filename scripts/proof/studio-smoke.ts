@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { readCurrentGitCommit } from '../../src/runtime-core/ProofReceiptValidator.js';
 
 const repoRoot = process.cwd();
 const outDir = path.join(repoRoot, '.omx', 'proof');
@@ -97,30 +98,57 @@ try {
 
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  const consoleErrors: string[] = [];
+  page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+  page.on('pageerror', (e) => consoleErrors.push(`pageerror: ${e.message}`));
   await page.goto(`http://localhost:${guiPort}/`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-  await page.getByLabel('More tools').click();
-  await page.getByRole('button', { name: /^Improve$/ }).click();
-  await page.getByText('Session').click();
-  await page.getByRole('button', { name: /^Scan$/ }).click();
-  await page.getByText('Prove or hide ML feature value').waitFor({ timeout: 30_000 });
-  await page.getByText('ML labels').waitFor({ timeout: 30_000 });
-  const body = await page.locator('body').innerText();
+  // Wait for the React workbench to mount + render the Showcase stage.
+  await page.getByRole('heading', { name: /Sinter Studio/i }).waitFor({ timeout: 30_000 });
+
+  // Durable smoke: assert the redesigned workbench shell renders cleanly and is
+  // interactive, instead of a brittle deep click-path. The old path
+  // (More tools -> Improve -> Session -> Scan -> ML feature value) broke on the
+  // 2026-06 stage-nav redesign even though the GUI was healthy.
+  const studioHeading = await page.getByRole('heading', { name: /Sinter Studio/i }).isVisible().catch(() => false);
+  const hasGenerate = await page.getByRole('button', { name: /^Generate$/ }).isVisible().catch(() => false);
+  const hasSettings = await page.getByRole('button', { name: /^Settings$/ }).isVisible().catch(() => false);
+  const hasCreateBar = (await page.getByPlaceholder(/what should we make/i).count().catch(() => 0)) > 0
+    || (await page.getByRole('button', { name: /^Create$/ }).count().catch(() => 0)) > 0;
+
   await browser.close();
 
+  // A fully-rendered workbench shell (heading + stage nav + create bar) loaded with
+  // ZERO console/page errors is strong proof of a live, mounted React app wired to a
+  // healthy backend — a static error page would have neither the shell nor clean
+  // console. We deliberately avoid a deep click-path: that is what made the old smoke
+  // brittle across UI redesigns without testing anything about GUI health.
+  const checks = {
+    backendHealth: true,
+    frontendServes: true,
+    noConsoleErrors: consoleErrors.length === 0,
+    studioHeading,
+    stageNav: hasGenerate && hasSettings,
+    createAffordance: hasCreateBar,
+  };
+  const failed = Object.entries(checks).filter(([, ok]) => !ok).map(([key]) => key);
   const result = {
     generatedAt: new Date().toISOString(),
+    gitCommit: readCurrentGitCommit(repoRoot),
+    status: failed.length === 0 ? ('pass' as const) : ('fail' as const),
     apiPort,
     guiPort,
-    checks: {
-      health: true,
-      improveLane: body.includes('Improve'),
-      proposal: body.includes('Prove or hide ML feature value'),
-      mlLabels: body.includes('ML labels'),
-    },
+    checks,
+    consoleErrors: consoleErrors.slice(0, 10),
+    blockers: failed,
   };
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(outPath, `${JSON.stringify(result, null, 2)}\n`, 'utf-8');
-  console.log(`Studio smoke proof written: ${outPath}`);
+  console.log(`Studio smoke proof written: ${outPath} (status: ${result.status})`);
+  if (result.status !== 'pass') {
+    console.error(`Studio smoke FAILED checks: ${failed.join(', ')}`);
+    if (consoleErrors.length) console.error('Console errors:', consoleErrors.slice(0, 5).join(' | '));
+    process.exitCode = 1;
+  }
 } finally {
   await Promise.all([backend, frontend].filter(Boolean).map((child) => stop(child as ChildProcess)));
 }

@@ -30,7 +30,8 @@ import { BaseProvider } from './providers/BaseProvider.js';
 import { anthropicMessagesEndpoint } from './providers/AnthropicProvider.js';
 import type { ProviderImageInput, ProviderRequest, ProviderResponse } from './ProviderTypes.js';
 import type { ModelRole, ResolvedRoleConfig, RoleConfigFile } from '../config/RoleConfig.js';
-import { loadRoleConfig, getFallbacks } from '../config/RoleConfig.js';
+import { loadRoleConfig, getFallbacks, resolveUserConfigPath } from '../config/RoleConfig.js';
+import { getActiveGeneratorOverride } from './generatorOverrideContext.js';
 import { selectApiKeyForEndpoint } from '../config/ProviderKeyResolver.js';
 import {
   PROVIDER_ORDER,
@@ -233,7 +234,16 @@ export class LLMClient {
     return content && content.trim().length > 0 ? content : fallbackCode || '';
   }
 
-  constructor(config?: Partial<LLMConfig>) {
+  constructor(rawConfig?: Partial<LLMConfig>) {
+    // Hybrid router: a role:'generator' client with no explicit endpoint may be
+    // redirected to a local (e.g. nucbox) generator for the current generation
+    // (see generatorOverrideContext). No active override → behavior unchanged.
+    const override = rawConfig?.role === 'generator' && !rawConfig?.baseUrl
+      ? getActiveGeneratorOverride()
+      : undefined;
+    const config: Partial<LLMConfig> | undefined = override
+      ? { ...rawConfig, baseUrl: override.baseUrl, model: override.model, ...(override.apiKey ? { apiKey: override.apiKey } : {}) }
+      : rawConfig;
     this.role = config?.role;
     this.explicitEndpointConfig = Boolean(config?.baseUrl || config?.model || config?.apiKey || env('LLM_BASE_URL') || env('LLM_MODEL'));
     this.explicitTemperatureConfig = config?.temperature !== undefined;
@@ -373,6 +383,15 @@ export class LLMClient {
     LLMClient.roleConfigFile = null;
   }
 
+  /**
+   * The raw loaded role config file (cached by {@link loadRoles}), or null if not
+   * loaded. Lets the hybrid router read `roles.generatorLocal` without reaching
+   * into RoleConfig's async loader on a hot path.
+   */
+  static getRawRoleConfig(): RoleConfigFile | null {
+    return LLMClient.roleConfigFile;
+  }
+
   private async resolveRoleConfigForRequest(): Promise<void> {
     if (!this.role || this.explicitEndpointConfig) return;
 
@@ -445,10 +464,10 @@ export class LLMClient {
     let rawFile: RoleConfigFile | null = null;
     try {
       const { readFile } = await import('fs/promises');
-      const { join } = await import('path');
-      const { homedir } = await import('os');
-      const userPath = join(homedir(), '.sinter', 'config.json');
-      const content = await readFile(userPath, 'utf-8');
+      // Honor SINTER_CONFIG_PATH (matches loadRoleConfig) so the raw file —
+      // fallbacks and roles.generatorLocal — comes from the SAME config a daemon
+      // or test points at, not always ~/.sinter/config.json.
+      const content = await readFile(resolveUserConfigPath(), 'utf-8');
       rawFile = JSON.parse(content) as RoleConfigFile;
     } catch (err) {
       Logger.debug('LLMClient', 'No config file found, fallbacks come from env or are empty:', err);

@@ -16,6 +16,8 @@ import { Domain } from '../types/domains.js';
 import { generatorRegistry } from '../generators/GeneratorRegistry.js';
 import type { GeneratorEntry, GeneratorResult as GeneratorResultType } from '../generators/GeneratorRegistry.js';
 import { registerAllGenerators } from '../generators/registerGenerators.js';
+import { resolveLocalGeneratorOverride } from '../generators/resolveLocalGenerator.js';
+import { runWithGeneratorOverride } from '../llm/generatorOverrideContext.js';
 import { Gallery } from '../gallery/Gallery.js';
 import { CollaborationEngine, type PhaseUpdate } from '../collab/CollaborationEngine.js';
 import { SwarmOrchestrator } from '../swarm/SwarmOrchestrator.js';
@@ -124,8 +126,25 @@ export class GenerationOrchestrator {
 
   /**
    * Generate code using the appropriate strategy based on options.
+   *
+   * Hybrid routing: resolve a local (nucbox) generator override for this domain
+   * and run the whole dispatch inside it, so any `role:'generator'` client built
+   * by the selected generator picks up the local endpoint. Inert (null override)
+   * until `roles.generatorLocal` is configured.
    */
   async generate(
+    usedPrompt: string,
+    _loadedPrompt: string,
+    bypassCache?: boolean,
+    signal?: AbortSignal,
+  ): Promise<GenerationResult> {
+    const override = resolveLocalGeneratorOverride(this.options.collabDomain);
+    return runWithGeneratorOverride(override, () =>
+      this.generateInner(usedPrompt, _loadedPrompt, bypassCache, signal),
+    );
+  }
+
+  private async generateInner(
     usedPrompt: string,
     _loadedPrompt: string,
     bypassCache?: boolean,

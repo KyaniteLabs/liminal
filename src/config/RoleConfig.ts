@@ -65,6 +65,12 @@ export interface RoleConfigFile {
     evaluator?: RoleProviderConfig;
     harness?: RoleProviderConfig;
     studio?: RoleProviderConfig;
+    /**
+     * Optional local (e.g. nucbox) generator endpoint. When set, the hybrid
+     * router sends local-favored domains here instead of the cloud `generator`;
+     * absent → everything stays on `generator` (no behavior change).
+     */
+    generatorLocal?: RoleProviderConfig;
   };
   /** Fallback chain per role — try these if primary fails */
   fallbacks?: Partial<Record<ModelRole, RoleProviderConfig[]>>;

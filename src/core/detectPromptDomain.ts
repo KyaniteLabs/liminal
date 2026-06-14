@@ -1,6 +1,6 @@
 import { generatorRegistry } from '../generators/GeneratorRegistry.js';
 import { registerAllGenerators } from '../generators/registerGenerators.js';
-import { Domain } from '../types/domains.js';
+import { Domain, normalizeDomain } from '../types/domains.js';
 
 /**
  * Map a generator-registry entry name to the loop's Domain value.
@@ -14,7 +14,7 @@ const ENTRY_TO_DOMAIN: Record<string, Domain> = {
   strudel: Domain.STRUDEL,
   ascii: Domain.ASCII,
   kinetic: Domain.KINETIC,
-  revideo: Domain.REVIEWD,
+  revideo: Domain.REVIDEO,
   hyperframes: Domain.HYPERFRAMES,
   p5: Domain.P5,
 };
@@ -38,5 +38,5 @@ export async function detectPromptDomain(
   const dispatched = generatorRegistry.dispatch(prompt);
   if (!dispatched || dispatched.confidence < minConfidence) return undefined;
   const name = dispatched.entry.name;
-  return ENTRY_TO_DOMAIN[name] ?? (name as Domain);
+  return ENTRY_TO_DOMAIN[name] ?? normalizeDomain(name);
 }

@@ -40,7 +40,7 @@ export function inferCreativeDomain(prompt: string): Domain {
   const explicitlyHyperframes = /\bhyperframes?\b/.test(lower);
   const explicitlyRevideo = hasRevideoHandle || /\brevideo\b/.test(lower);
   if (explicitlyHyperframes) return Domain.HYPERFRAMES;
-  if (!forbidsRevideo && explicitlyRevideo) return Domain.REVIEWD;
+  if (!forbidsRevideo && explicitlyRevideo) return Domain.REVIDEO;
   if (/\b(promo|trailer|slideshow|title\s*card|subtitle|caption|social\s*media)\b|\b(composite|assemble|overlay|watermark|intro|outro)\b/.test(lower)) {
     return Domain.HYPERFRAMES;
   }
@@ -125,7 +125,7 @@ export function previewDomainForCode(code: string, requestedDomain: Domain): Pre
   if (requestedDomain === Domain.GLSL || requestedDomain === Domain.SHADER || requestedDomain === Domain.WEBGL) return 'shader';
   if (requestedDomain === Domain.HYDRA) return 'hydra';
   if (requestedDomain === Domain.TONE) return 'tone';
-  if (requestedDomain === Domain.REVIEWD) return 'revideo';
+  if (requestedDomain === Domain.REVIDEO) return 'revideo';
   if (requestedDomain === Domain.HYPERFRAMES) return 'hyperframes';
   if (requestedDomain === Domain.KINETIC) return 'html';
   if (requestedDomain === Domain.STRUDEL || requestedDomain === Domain.MUSIC) return 'strudel';
@@ -147,7 +147,7 @@ export function expectedPreviewDomainsForCreativeDomain(domain: Domain): Preview
   if (domain === Domain.HYDRA) return ['hydra'];
   if (domain === Domain.TONE) return ['tone'];
   if (domain === Domain.STRUDEL || domain === Domain.MUSIC) return ['strudel'];
-  if (domain === Domain.REVIEWD) return ['revideo'];
+  if (domain === Domain.REVIDEO) return ['revideo'];
   if (domain === Domain.HYPERFRAMES) return ['hyperframes'];
   if (domain === Domain.KINETIC) return ['html'];
   if (domain === Domain.ASCII) return ['ascii'];

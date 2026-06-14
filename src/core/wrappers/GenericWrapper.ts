@@ -4,6 +4,7 @@
  */
 
 import { SECURITY_HEADERS } from './SecurityHeaders.js';
+import type { DomainString } from '../../types/domains.js';
 
 const STRUDEL_CDN = 'https://unpkg.com/@strudel/repl@1.0.2';
 const HYDRA_CDN = 'https://unpkg.com/hydra-synth';
@@ -15,7 +16,7 @@ const HYDRA_SECURITY_HEADERS = SECURITY_HEADERS
 const TONE_SECURITY_HEADERS = SECURITY_HEADERS
   .replace("media-src 'self';", "media-src 'self'; worker-src blob:;");
 
-export type GenericDomain = 'strudel' | 'hydra' | 'tone' | 'shader' | 'revideo' | 'ascii' | 'hyperframes';
+export type GenericDomain = Extract<DomainString, 'strudel' | 'hydra' | 'tone' | 'shader' | 'revideo' | 'ascii' | 'hyperframes'>;
 
 export interface GenericWrapOptions {
   domain: GenericDomain;

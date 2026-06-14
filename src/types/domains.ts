@@ -16,17 +16,50 @@ export enum Domain {
   ASCII = 'ascii',
   MUSIC = 'music',
   CODE = 'code',
-  REVIEWD = 'revideo', // Revideo v0.12+ active video composition framework
+  REVIDEO = 'revideo', // Revideo v0.12+ active video composition framework
   HYPERFRAMES = 'hyperframes', // HTML+GSAP asset compositing via @hyperframes/producer
   KINETIC = 'kinetic',
+  SVG = 'svg',
+  HTML = 'html',
+  TEXTGEN = 'textgen',
   EMPTY = ''
 }
+
+/**
+ * The canonical Domain values as a string union — for modules that need a string
+ * type instead of the enum. Derived from the enum so the two can never drift; this
+ * is the single source other modules should import instead of re-declaring their own
+ * `type Domain = '...'` unions (the audit found 9 incompatible copies).
+ */
+export type DomainString = `${Domain}`;
 
 /**
  * Type guard for Domain enum
  */
 export function isValidDomain(value: string): value is Domain {
   return Object.values(Domain).includes(value as Domain);
+}
+
+/**
+ * Synonyms some generators/labels use for the same underlying domain. Intentionally
+ * narrow — only true aliases, NOT distinct generators (`tone` and `strudel` are both
+ * music but are different generators and must stay distinct).
+ */
+const DOMAIN_SYNONYMS: Record<string, Domain> = {
+  webgl: Domain.WEBGL,
+  fragment: Domain.GLSL,
+};
+
+/**
+ * Map an arbitrary domain label to a canonical Domain: validate membership and
+ * resolve known synonyms, returning Domain.UNKNOWN for anything unrecognized instead
+ * of lying via `as Domain`. Use this in place of unchecked `someString as Domain` casts.
+ */
+export function normalizeDomain(value: string | undefined | null): Domain {
+  if (!value) return Domain.UNKNOWN;
+  const lower = value.toLowerCase().trim();
+  if (lower in DOMAIN_SYNONYMS) return DOMAIN_SYNONYMS[lower];
+  return isValidDomain(lower) ? (lower as Domain) : Domain.UNKNOWN;
 }
 
 /**
@@ -54,4 +87,4 @@ export const MUSIC_DOMAINS = [Domain.TONE, Domain.STRUDEL, Domain.HYDRA];
 /**
  * Domains for video composition
  */
-export const VIDEO_DOMAINS = [Domain.REVIEWD, Domain.HYPERFRAMES];
+export const VIDEO_DOMAINS = [Domain.REVIDEO, Domain.HYPERFRAMES];

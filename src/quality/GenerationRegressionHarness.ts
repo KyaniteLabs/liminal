@@ -12,17 +12,12 @@ import { HTMLWebGenerator } from '../generators/html/HTMLWebGenerator.js';
 import { ASCIIArtGenerator } from '../generators/ascii/ASCIIArtGenerator.js';
 import { RevideoGenerator } from '../generators/revideo/RevideoGenerator.js';
 import { PROVIDER_DEFAULTS, resolveProviderAlias } from '../config/ProviderRuntime.js';
+import type { DomainString } from '../types/domains.js';
 
-export type RegressionDomain =
-  | 'p5'
-  | 'glsl'
-  | 'three'
-  | 'strudel'
-  | 'hydra'
-  | 'tone'
-  | 'html'
-  | 'ascii'
-  | 'revideo';
+export type RegressionDomain = Extract<
+  DomainString,
+  'p5' | 'glsl' | 'three' | 'strudel' | 'hydra' | 'tone' | 'html' | 'ascii' | 'revideo'
+>;
 
 export interface RegressionRequest {
   provider: string;

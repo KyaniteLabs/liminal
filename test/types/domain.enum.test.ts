@@ -54,8 +54,8 @@ describe('Domain enum', () => {
     expect(Domain.CODE).toBe('code');
   });
   
-  it('should have REVIEWD = revideo', () => {
-    expect(Domain.REVIEWD).toBe('revideo');
+  it('should have REVIDEO = revideo', () => {
+    expect(Domain.REVIDEO).toBe('revideo');
   });
   
   it('should have EMPTY = ""', () => {

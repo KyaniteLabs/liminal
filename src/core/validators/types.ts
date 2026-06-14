@@ -1,6 +1,7 @@
 /**
  * Shared types and constants for validators
  */
+import type { DomainString } from '../../types/domains.js';
 
 export interface ValidationResult {
   valid: boolean;
@@ -13,23 +14,12 @@ export interface DomainValidationResult {
   errors: string[];
 }
 
-export type Domain =
-  | 'p5'
-  | 'shader'
-  | 'glsl'
-  | 'three'
-  | 'revideo'
-  | 'hyperframes'
-  | 'music'
-  | 'hydra'
-  | 'strudel'
-  | 'tone'
-  | 'svg'
-  | 'kinetic'
-  | 'html'
-  | 'ascii'
-  | 'textgen'
-  | 'unknown';
+export type Domain = Extract<
+  DomainString,
+  | 'p5' | 'shader' | 'glsl' | 'three' | 'revideo' | 'hyperframes' | 'music'
+  | 'hydra' | 'strudel' | 'tone' | 'svg' | 'kinetic' | 'html' | 'ascii'
+  | 'textgen' | 'unknown'
+>;
 
 // -----------------------------------------------------------------------------
 // Reasoning-text patterns (lines to strip from LLM output)

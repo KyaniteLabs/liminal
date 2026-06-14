@@ -35,7 +35,7 @@ function entryNameForDomain(domain?: Domain | string): string | null {
   const value = String(domain || '').toLowerCase();
   if (!value) return null;
   if (value === Domain.GLSL || value === Domain.SHADER || value === Domain.WEBGL) return 'shader';
-  if (value === Domain.REVIEWD) return 'revideo';
+  if (value === Domain.REVIDEO) return 'revideo';
   if (value === Domain.KINETIC) return 'kinetic';
   if (value === Domain.HYPERFRAMES) return 'hyperframes';
   if (value === Domain.P5 || value === Domain.THREE || value === Domain.HYDRA || value === Domain.TONE || value === Domain.STRUDEL || value === Domain.ASCII) return value;

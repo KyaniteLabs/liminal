@@ -113,22 +113,22 @@ describe('TuiBridgeService creative domain routing', () => {
   it('honors explicit Revideo even when broad video words look HyperFrames-like', () => {
     const prompt = 'Create a Revideo composition: a 4-second cinematic title card saying LIMINAL REVIDEO.';
 
-    expect(inferCreativeDomain(prompt)).toBe(Domain.REVIEWD);
-    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.REVIEWD]);
+    expect(inferCreativeDomain(prompt)).toBe(Domain.REVIDEO);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.REVIDEO]);
   });
 
   it('routes explicit Revideo prompts to the Revideo composition domain', () => {
     const prompt = 'Create a Revideo title-card composition with layered animated captions.';
 
-    expect(inferCreativeDomain(prompt)).toBe(Domain.REVIEWD);
-    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.REVIEWD]);
+    expect(inferCreativeDomain(prompt)).toBe(Domain.REVIDEO);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.REVIDEO]);
   });
 
   it('routes explicit @revideo package prompts to the Revideo composition domain', () => {
     const prompt = 'Create an @revideo title-card composition with layered animated captions.';
 
-    expect(inferCreativeDomain(prompt)).toBe(Domain.REVIEWD);
-    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.REVIEWD]);
+    expect(inferCreativeDomain(prompt)).toBe(Domain.REVIDEO);
+    expect(buildCreativeDomainPlan(prompt)).toEqual([Domain.REVIDEO]);
   });
 
   it('rejects generated Three.js when the prompt locked the route to p5', () => {

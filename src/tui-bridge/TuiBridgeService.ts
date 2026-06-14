@@ -3147,7 +3147,7 @@ export class TuiBridgeService {
     const value = String(domain);
     if (value === Domain.GLSL || value === Domain.WEBGL) return 'shader';
     if (value === Domain.TONE) return 'music';
-    if (value === Domain.REVIEWD || value === Domain.HYPERFRAMES) return 'revideo';
+    if (value === Domain.REVIDEO || value === Domain.HYPERFRAMES) return 'revideo';
     if (['p5', 'shader', 'three', 'music', 'hydra', 'strudel', 'revideo'].includes(value)) {
       return value as ChatDomain;
     }

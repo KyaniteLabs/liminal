@@ -19,6 +19,18 @@ jobs:
     # Bring-up problems get fixed at the cause (or reported), never silenced
     # with `|| true` / continue-on-error. (Reverted exactly that in 526071c4.)
     runs-on: self-hosted
+    # Pin the job to a container so it ALWAYS runs as root in node:22. The runner
+    # otherwise intermittently falls back to host execution (as the unprivileged runner
+    # user), where the "Install headless Chrome system deps" apt-get step fails on the
+    # apt lock with "Permission denied" (e.g. task 1157 / PR #94). Docker is healthy on
+    # the runner; pinning makes the environment deterministic and matches the known-good
+    # container runs (#91).
+    container: node:22
+    # Run steps with bash (node:22's default `sh` is dash, which rejects the
+    # `set -o pipefail` the checkout step relies on). bash ships in the image.
+    defaults:
+      run:
+        shell: bash
     timeout-minutes: 30
     env:
       ANTHROPIC_AUTH_TOKEN: ""

@@ -45,7 +45,7 @@ import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
 import { ArchiveLearning } from '../learning/index.js';
 import { QualityArchive } from '../learning/index.js';
 import { AestheticModel } from '../evolution/AestheticModel.js';
-import { recordRoutingOutcome } from '../routing/RoutingData.js';
+import { recordRoutingOutcome, domainToRoutingType } from '../routing/RoutingData.js';
 import { eventBus, EventTypes } from './EventBus.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { Logger } from '../utils/Logger.js';
@@ -1544,7 +1544,7 @@ export class RalphLoop {
         // Record routing outcome for dynamic routing
         try {
           await recordRoutingOutcome({
-            domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual',
+            domain: domainToRoutingType(normalizedOptions.collabDomain),
             model: normalizedOptions.useSwarm ? 'hybrid' : 'local',
             qualityScore: evaluation.score,
             timestamp: new Date().toISOString(),

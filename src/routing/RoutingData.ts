@@ -124,6 +124,30 @@ export function getBanditStats(domain: DomainType) {
 export type DomainType = 'ascii' | 'music' | 'code' | 'visual' | 'revideo' | 'html' | 'webdev';
 
 /**
+ * Map a creative {@link Domain} (p5/hydra/strudel/…) to the coarse routing
+ * bucket the smart router/bandit keys on. Replaces the old lying cast
+ * (`collabDomain as 'ascii'|'music'|'code'|'visual'`) which excluded
+ * revideo/html/webdev and force-bucketed every visual domain. Unknown/empty
+ * domains fall back to 'visual' (the most common creative output).
+ */
+const DOMAIN_TO_ROUTING_TYPE: Record<string, DomainType> = {
+  // visual / graphics
+  p5: 'visual', glsl: 'visual', shader: 'visual', webgl: 'visual', three: 'visual',
+  hydra: 'visual', kinetic: 'visual', svg: 'visual', hyperframes: 'visual', generic: 'visual',
+  // music / audio
+  tone: 'music', strudel: 'music', music: 'music',
+  // text art
+  ascii: 'ascii', textgen: 'ascii',
+  // code / web / video
+  code: 'code', html: 'html', webdev: 'webdev', revideo: 'revideo',
+};
+
+export function domainToRoutingType(domain: string | null | undefined): DomainType {
+  if (!domain) return 'visual';
+  return DOMAIN_TO_ROUTING_TYPE[domain.toLowerCase()] ?? 'visual';
+}
+
+/**
  * Model choice for routing.
  */
 export type ModelChoice = 'local' | 'cloud' | 'hybrid';

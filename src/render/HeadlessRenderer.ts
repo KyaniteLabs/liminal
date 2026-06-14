@@ -11,6 +11,7 @@ import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { Logger } from '../utils/Logger.js';
 import { RenderEvidence } from '../core/types/GenerationEvaluation.js';
 import { getLocalP5ScriptForUrl } from '../utils/browserAssetFallbacks.js';
+import { getChromeArgs } from '../security/SandboxConfig.js';
 import type { DomainString } from '../types/domains.js';
 
 export type RenderDomain = Extract<DomainString, 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'tone' | 'svg' | 'html' | 'ascii' | 'kinetic' | 'textgen' | 'unknown'>;
@@ -117,6 +118,50 @@ function domainRequiresCanvas(domain: RenderDomain): boolean {
 }
 
 /**
+ * Hosts the generated artifacts legitimately fetch from. Mirrors the CDN hosts
+ * declared in HTMLWrapper's CSP (p5/three/hydra/tone libraries + PostHog).
+ * Everything else is denied by default so artifact code can't call out to
+ * arbitrary network destinations.
+ */
+const ALLOWED_RENDER_HOSTS: ReadonlySet<string> = new Set([
+  'cdnjs.cloudflare.com',
+  'cdn.jsdelivr.net',
+  'unpkg.com',
+  'raw.githubusercontent.com',
+  'puenteworks.com',
+]);
+
+/**
+ * Decide whether a request URL may proceed. Allows the CDN allowlist plus
+ * non-network schemes (data:/blob:/about:/file:) and localhost loopback. Any
+ * other host is blocked. Unparseable URLs are blocked.
+ */
+export function isAllowedRenderRequestUrl(rawUrl: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return false;
+  }
+
+  // Non-network schemes are inert (inline data, blobs, the wrapped document).
+  if (url.protocol === 'data:' || url.protocol === 'blob:' || url.protocol === 'about:' || url.protocol === 'file:') {
+    return true;
+  }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return false;
+  }
+
+  const host = url.hostname.toLowerCase();
+  if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1') {
+    return true;
+  }
+
+  return ALLOWED_RENDER_HOSTS.has(host);
+}
+
+/**
  * Headless renderer for creative coding outputs
  */
 export class HeadlessRenderer {
@@ -180,10 +225,13 @@ export class HeadlessRenderer {
     try {
       if (!this.browser) {
         const executablePath = HeadlessRenderer.resolveChromiumExecutable();
+        // Respect SandboxConfig: launch sandboxed by default; only pass
+        // --no-sandbox when LIMINAL_DISABLE_SANDBOX=true (containerized/CI).
+        const disableSandbox = process.env.LIMINAL_DISABLE_SANDBOX === 'true';
         this.browser = await chromium.launch({
           headless: true,
           executablePath,
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          args: getChromeArgs({ forceDisableSandbox: disableSandbox }),
         });
       }
 
@@ -390,8 +438,9 @@ export class HeadlessRenderer {
     if (typeof page.route !== 'function') return;
 
     await page.route('**/*', async (route) => {
+      const url = route.request().url();
       try {
-        const localScript = await getLocalP5ScriptForUrl(route.request().url());
+        const localScript = await getLocalP5ScriptForUrl(url);
         if (localScript) {
           await route.fulfill({
             status: 200,
@@ -401,11 +450,22 @@ export class HeadlessRenderer {
           return;
         }
 
+        // Deny-by-default: generated artifact code must not reach arbitrary
+        // hosts. Only the explicit CDN allowlist (and inert/loopback schemes)
+        // may continue; everything else is aborted and logged.
+        if (!isAllowedRenderRequestUrl(url)) {
+          Logger.warn('HeadlessRenderer', `Blocked off-allowlist request: ${url}`);
+          await route.abort('blockedbyclient').catch((abortErr) => {
+            Logger.debug('HeadlessRenderer', 'Route abort failed:', abortErr);
+          });
+          return;
+        }
+
         await route.continue();
       } catch (err) {
         Logger.debug('HeadlessRenderer', 'Asset fallback route handling failed:', err);
-        await route.continue().catch((continueErr) => {
-          Logger.debug('HeadlessRenderer', 'Route continue failed:', continueErr);
+        await route.abort('failed').catch((abortErr) => {
+          Logger.debug('HeadlessRenderer', 'Route abort failed:', abortErr);
         });
       }
     });

@@ -7,6 +7,8 @@ import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { Domain } from '../types/domains.js';
 import { Logger } from '../utils/Logger.js';
 import { ValidationError } from '../errors/ValidationError.js';
+import { getChromeArgs } from '../security/SandboxConfig.js';
+import { isAllowedRenderRequestUrl } from './HeadlessRenderer.js';
 
 export interface RecordingOptions {
   fps: number;
@@ -55,10 +57,33 @@ export class CanvasRecorder {
     const framesDir = await fs.mkdtemp(path.join(os.tmpdir(), 'sinter-frames-'));
 
     try {
-      const browser = await puppeteer.default.launch({ headless: true });
+      // Respect SandboxConfig: launch sandboxed by default; only pass
+      // --no-sandbox when LIMINAL_DISABLE_SANDBOX=true (containerized/CI).
+      const disableSandbox = process.env.LIMINAL_DISABLE_SANDBOX === 'true';
+      const browser = await puppeteer.default.launch({
+        headless: true,
+        args: getChromeArgs({ forceDisableSandbox: disableSandbox }),
+      });
       try {
         const page = await browser.newPage();
         await page.setViewport({ width: this.config.width, height: this.config.height });
+
+        // Deny-by-default network egress: generated code may only fetch from
+        // the CDN allowlist; arbitrary callouts are aborted and logged.
+        await page.setRequestInterception(true);
+        page.on('request', (request) => {
+          const url = request.url();
+          if (isAllowedRenderRequestUrl(url)) {
+            void request.continue().catch((err) => {
+              Logger.debug('CanvasRecorder', 'Request continue failed:', err);
+            });
+            return;
+          }
+          Logger.warn('CanvasRecorder', `Blocked off-allowlist request: ${url}`);
+          void request.abort('blockedbyclient').catch((err) => {
+            Logger.debug('CanvasRecorder', 'Request abort failed:', err);
+          });
+        });
 
         // Wrap code for rendering
         const html = this.wrapForDomain(code, domain);

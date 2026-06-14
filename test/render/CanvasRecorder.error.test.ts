@@ -9,9 +9,11 @@ vi.mock('puppeteer', () => ({
     launch: vi.fn().mockResolvedValue({
       newPage: vi.fn().mockResolvedValue({
         setViewport: vi.fn().mockResolvedValue(undefined),
+        setRequestInterception: vi.fn().mockResolvedValue(undefined),
         setContent: vi.fn().mockResolvedValue(undefined),
         waitForSelector: vi.fn().mockResolvedValue(undefined),
         evaluate: vi.fn().mockResolvedValue(undefined),
+        on: vi.fn(),
         $: vi.fn().mockResolvedValue({
           screenshot: vi.fn().mockResolvedValue(undefined),
         }),

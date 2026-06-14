@@ -14,6 +14,8 @@ import { Logger } from '../utils/Logger.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { validateString } from '../utils/validation.js';
 import { getLocalP5ScriptForUrl } from '../utils/browserAssetFallbacks.js';
+import { getChromeArgs } from '../security/SandboxConfig.js';
+import { isAllowedRenderRequestUrl } from './HeadlessRenderer.js';
 
 export class Renderer {
   private readonly RENDER_TIMEOUT = 30000;
@@ -30,9 +32,12 @@ export class Renderer {
   private static async getBrowser(): Promise<Browser> {
     if (Renderer.browser) return Renderer.browser;
     if (Renderer.browserLaunching) return Renderer.browserLaunching;
+    // Respect SandboxConfig: launch sandboxed by default; only pass
+    // --no-sandbox when LIMINAL_DISABLE_SANDBOX=true (containerized/CI).
+    const disableSandbox = process.env.LIMINAL_DISABLE_SANDBOX === 'true';
     Renderer.browserLaunching = puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: getChromeArgs({ forceDisableSandbox: disableSandbox }),
     });
     try {
       // eslint-disable-next-line require-atomic-updates
@@ -151,8 +156,9 @@ export class Renderer {
 
     await page.setRequestInterception(true);
     page.on('request', (request) => {
+      const url = request.url();
       void (async () => {
-        const localScript = await getLocalP5ScriptForUrl(request.url());
+        const localScript = await getLocalP5ScriptForUrl(url);
         if (localScript) {
           await request.respond({
             status: 200,
@@ -162,11 +168,20 @@ export class Renderer {
           return;
         }
 
+        // Deny-by-default: generated sketch code must not reach arbitrary
+        // hosts. Only the explicit CDN allowlist (and inert/loopback schemes)
+        // may continue; everything else is aborted and logged.
+        if (!isAllowedRenderRequestUrl(url)) {
+          Logger.warn('Renderer', `Blocked off-allowlist request: ${url}`);
+          await request.abort('blockedbyclient');
+          return;
+        }
+
         await request.continue();
       })().catch((err) => {
         Logger.debug('Renderer', 'Asset fallback request handling failed:', err);
-        void request.continue().catch((continueErr) => {
-          Logger.debug('Renderer', 'Request continue failed:', continueErr);
+        void request.abort('failed').catch((abortErr) => {
+          Logger.debug('Renderer', 'Request abort failed:', abortErr);
         });
       });
     });

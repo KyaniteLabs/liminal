@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { PostHogClient } from "../../../src/analytics/PostHogClient.js";
+import {
+	PostHogClient,
+	ENGAGEMENT_EVENTS,
+	ENGAGEMENT_PROPS,
+} from "../../../src/analytics/PostHogClient.js";
 
 describe("PostHogClient", () => {
 	const originalEnv = process.env;
@@ -123,6 +127,34 @@ describe("PostHogClient", () => {
 			const client = new PostHogClient();
 
 			await expect(client.getVariantEngagementMetrics("variant-a")).resolves.toBeNull();
+		});
+	});
+
+	describe("buildVariantEngagementQuery", () => {
+		it("reads back the canonical liminal_ schema, never the legacy sinter_ keys", () => {
+			const client = new PostHogClient();
+			const query = client.buildVariantEngagementQuery();
+
+			expect(query).toContain(`properties.${ENGAGEMENT_PROPS.dwellSeconds}`);
+			expect(query).toContain(`properties.${ENGAGEMENT_PROPS.scrollDepth}`);
+			expect(query).toContain(`properties.${ENGAGEMENT_PROPS.variantId} = {variantId}`);
+			expect(query).toContain(ENGAGEMENT_EVENTS.view);
+			expect(query).toContain(ENGAGEMENT_EVENTS.interaction);
+			expect(query).toContain(ENGAGEMENT_EVENTS.bounce);
+
+			// The defect this guards: emit wrote liminal_*, query read sinter_* → zero rows.
+			expect(query).not.toContain("sinter_dwell_seconds");
+			expect(query).not.toContain("sinter_scroll_depth");
+			expect(query).not.toContain("sinter_variant_id");
+		});
+
+		it("exposes a liminal_ canonical prefix on every engagement key", () => {
+			for (const key of Object.values(ENGAGEMENT_PROPS)) {
+				expect(key.startsWith("liminal_")).toBe(true);
+			}
+			for (const event of Object.values(ENGAGEMENT_EVENTS)) {
+				expect(event.startsWith("liminal_")).toBe(true);
+			}
 		});
 	});
 

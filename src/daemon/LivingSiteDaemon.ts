@@ -18,7 +18,11 @@ import {
 } from "../site/SlotManager.js";
 import { EngagementFitness } from "../evolution/EngagementFitness.js";
 import { FitnessCombiner } from "../evolution/FitnessCombiner.js";
-import { PostHogClient } from "../analytics/PostHogClient.js";
+import {
+	PostHogClient,
+	ENGAGEMENT_EVENTS,
+	ENGAGEMENT_PROPS,
+} from "../analytics/PostHogClient.js";
 import { HTMLWrapper } from "../utils/htmlWrapper.js";
 import { MapElites } from "../evolution/MapElites.js";
 import { RenderAndScorePipeline } from "../render/RenderAndScorePipeline.js";
@@ -304,36 +308,36 @@ export class LivingSiteDaemon {
 	 */
 	injectVariantEngagementTracking(html: string, slot: SiteSlot, variantId: string): string {
 		const payload = JSON.stringify({
-			liminal_slot_id: slot.id,
-			liminal_page: slot.page,
-			liminal_variant_id: variantId,
+			[ENGAGEMENT_PROPS.slotId]: slot.id,
+			[ENGAGEMENT_PROPS.page]: slot.page,
+			[ENGAGEMENT_PROPS.variantId]: variantId,
 		});
 		const script = `<script>
-+(function(){
-+  var base = ${payload};
-+  var started = Date.now();
-+  var maxScroll = 0;
-+  function depth(){
-+    var doc = document.documentElement;
-+    var body = document.body || doc;
-+    var scrollTop = window.scrollY || doc.scrollTop || body.scrollTop || 0;
-+    var max = Math.max(1, (doc.scrollHeight || body.scrollHeight || 1) - window.innerHeight);
-+    return Math.max(0, Math.min(1, scrollTop / max));
-+  }
-+  function capture(event, extra){
-+    if (!window.posthog || typeof window.posthog.capture !== 'function') return;
-+    window.posthog.capture(event, Object.assign({}, base, extra || {}));
-+  }
-+  window.addEventListener('scroll', function(){ maxScroll = Math.max(maxScroll, depth()); }, { passive: true });
-+  document.addEventListener('click', function(){ capture('liminal_slot_interaction', { liminal_scroll_depth: maxScroll }); }, { passive: true });
-+  window.addEventListener('load', function(){ capture('liminal_slot_view', { liminal_scroll_depth: maxScroll }); });
-+  window.addEventListener('pagehide', function(){
-+    var dwell = Math.max(0, Math.round((Date.now() - started) / 1000));
-+    var event = dwell < 10 ? 'liminal_slot_bounce' : 'liminal_slot_view';
-+    capture(event, { liminal_dwell_seconds: dwell, liminal_scroll_depth: maxScroll });
-+  });
-+})();
-+</script>`;
+(function(){
+  var base = ${payload};
+  var started = Date.now();
+  var maxScroll = 0;
+  function depth(){
+    var doc = document.documentElement;
+    var body = document.body || doc;
+    var scrollTop = window.scrollY || doc.scrollTop || body.scrollTop || 0;
+    var max = Math.max(1, (doc.scrollHeight || body.scrollHeight || 1) - window.innerHeight);
+    return Math.max(0, Math.min(1, scrollTop / max));
+  }
+  function capture(event, extra){
+    if (!window.posthog || typeof window.posthog.capture !== 'function') return;
+    window.posthog.capture(event, Object.assign({}, base, extra || {}));
+  }
+  window.addEventListener('scroll', function(){ maxScroll = Math.max(maxScroll, depth()); }, { passive: true });
+  document.addEventListener('click', function(){ capture('${ENGAGEMENT_EVENTS.interaction}', { ${ENGAGEMENT_PROPS.scrollDepth}: maxScroll }); }, { passive: true });
+  window.addEventListener('load', function(){ capture('${ENGAGEMENT_EVENTS.view}', { ${ENGAGEMENT_PROPS.scrollDepth}: maxScroll }); });
+  window.addEventListener('pagehide', function(){
+    var dwell = Math.max(0, Math.round((Date.now() - started) / 1000));
+    var event = dwell < 10 ? '${ENGAGEMENT_EVENTS.bounce}' : '${ENGAGEMENT_EVENTS.view}';
+    capture(event, { ${ENGAGEMENT_PROPS.dwellSeconds}: dwell, ${ENGAGEMENT_PROPS.scrollDepth}: maxScroll });
+  });
+})();
+</script>`;
 		return html.includes("</body>")
 			? html.replace("</body>", `${script}\n</body>`)
 			: `${html}\n${script}`;

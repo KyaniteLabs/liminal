@@ -8,7 +8,11 @@ import {
 	type SiteSlot,
 	type SlotVariant,
 } from "../../../src/site/SlotManager.js";
-import { PostHogClient } from "../../../src/analytics/PostHogClient.js";
+import {
+	PostHogClient,
+	ENGAGEMENT_EVENTS,
+	ENGAGEMENT_PROPS,
+} from "../../../src/analytics/PostHogClient.js";
 import { Domain } from "../../../src/types/domains.js";
 import { mkdtempSync, rmSync, existsSync } from "node:fs";
 import { join } from "node:path";
@@ -282,6 +286,62 @@ describe("LivingSiteDaemon", () => {
 			expect(html).toContain("liminal_slot_bounce");
 			expect(html).toContain("liminal_variant_id");
 			expect(html).toContain("sinter-home-hero-abc123");
+			cleanup();
+		});
+
+		it("injects a parseable script (no '+'-prefix corruption that becomes a SyntaxError)", () => {
+			const sm = new SlotManager(statePath);
+			const ph = new PostHogClient();
+			const daemon = new LivingSiteDaemon(sm, ph);
+			const html = daemon.injectVariantEngagementTracking(
+				"<html><head></head><body><main>visual</main></body></html>",
+				makeSlot(),
+				"sinter-home-hero-abc123",
+			);
+
+			const inner = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+			expect(inner).toBeTypeOf("string");
+			// A literal '+' at the start of each line (leftover diff artifact) makes
+			// this a SyntaxError → zero events ever fire. Parsing must not throw.
+			expect(() => new Function(inner as string)).not.toThrow();
+			// Guard against the specific regression: no line begins with '+'.
+			expect((inner as string).split("\n").some((line) => line.startsWith("+"))).toBe(false);
+			cleanup();
+		});
+
+		it("emits the exact event names and property keys the readback query reads (no prefix drift)", () => {
+			const sm = new SlotManager(statePath);
+			const ph = new PostHogClient();
+			const daemon = new LivingSiteDaemon(sm, ph);
+			const html = daemon.injectVariantEngagementTracking(
+				"<html><head></head><body><main>visual</main></body></html>",
+				makeSlot(),
+				"sinter-home-hero-abc123",
+			);
+			const query = ph.buildVariantEngagementQuery();
+
+			// Property keys read by the query MUST appear verbatim in the emit script.
+			for (const key of [
+				ENGAGEMENT_PROPS.variantId,
+				ENGAGEMENT_PROPS.dwellSeconds,
+				ENGAGEMENT_PROPS.scrollDepth,
+			]) {
+				expect(html).toContain(key);
+				expect(query).toContain(key);
+			}
+			// Event names read by the query MUST appear verbatim in the emit script.
+			for (const event of [
+				ENGAGEMENT_EVENTS.view,
+				ENGAGEMENT_EVENTS.interaction,
+				ENGAGEMENT_EVENTS.bounce,
+			]) {
+				expect(html).toContain(event);
+				expect(query).toContain(event);
+			}
+			// The old defect: query read 'sinter_*' while emit wrote 'liminal_*'.
+			expect(query).not.toContain("sinter_dwell_seconds");
+			expect(query).not.toContain("sinter_scroll_depth");
+			expect(query).not.toContain("sinter_variant_id");
 			cleanup();
 		});
 	});

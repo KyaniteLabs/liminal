@@ -19,6 +19,29 @@ const ENV_API_HOST = "LIMINAL_POSTHOG_API_HOST";
 const DEFAULT_HOST = "https://puenteworks.com/ph";
 const DEFAULT_API_HOST = "https://app.posthog.com";
 
+/**
+ * Canonical PostHog event/property schema for living-site engagement.
+ *
+ * The browser injects events with these names/keys (see
+ * LivingSiteDaemon.injectVariantEngagementTracking) and the HogQL readback
+ * (buildVariantEngagementQuery) reads the same keys. Both sides MUST import
+ * from here — a literal mismatch (e.g. emit `liminal_*`, query `sinter_*`)
+ * produces a zero-row match and silently breaks the engagement sensorium.
+ */
+export const ENGAGEMENT_EVENTS = {
+	view: "liminal_slot_view",
+	interaction: "liminal_slot_interaction",
+	bounce: "liminal_slot_bounce",
+} as const;
+
+export const ENGAGEMENT_PROPS = {
+	slotId: "liminal_slot_id",
+	page: "liminal_page",
+	variantId: "liminal_variant_id",
+	dwellSeconds: "liminal_dwell_seconds",
+	scrollDepth: "liminal_scroll_depth",
+} as const;
+
 export interface PostHogEventProperties {
 	[key: string]: string | number | boolean | null | undefined;
 }
@@ -139,17 +162,22 @@ export class PostHogClient {
 		}
 	}
 
-	private buildVariantEngagementQuery(): string {
+	/**
+	 * HogQL query that reads back living-site engagement metrics. Keyed entirely
+	 * off ENGAGEMENT_EVENTS / ENGAGEMENT_PROPS so it can never drift from the
+	 * browser-side emit schema. Public so tests can assert emit/query parity.
+	 */
+	buildVariantEngagementQuery(): string {
 		return `
 SELECT
 	uniq(distinct_id) AS visitors,
-	avg(if(toFloat(properties.sinter_dwell_seconds) >= 10, 1, 0)) AS dwell_rate,
-	avg(least(greatest(toFloat(properties.sinter_scroll_depth), 0), 1)) AS scroll_depth,
-	avg(if(event = 'liminal_slot_interaction', 1, 0)) AS interaction_rate,
-	avg(if(event = 'liminal_slot_bounce', 0, 1)) AS retention_score
+	avg(if(toFloat(properties.${ENGAGEMENT_PROPS.dwellSeconds}) >= 10, 1, 0)) AS dwell_rate,
+	avg(least(greatest(toFloat(properties.${ENGAGEMENT_PROPS.scrollDepth}), 0), 1)) AS scroll_depth,
+	avg(if(event = '${ENGAGEMENT_EVENTS.interaction}', 1, 0)) AS interaction_rate,
+	avg(if(event = '${ENGAGEMENT_EVENTS.bounce}', 0, 1)) AS retention_score
 FROM events
-WHERE properties.sinter_variant_id = {variantId}
-	AND event IN ('liminal_slot_view', 'liminal_slot_interaction', 'liminal_slot_bounce')
+WHERE properties.${ENGAGEMENT_PROPS.variantId} = {variantId}
+	AND event IN ('${ENGAGEMENT_EVENTS.view}', '${ENGAGEMENT_EVENTS.interaction}', '${ENGAGEMENT_EVENTS.bounce}')
 `;
 	}
 

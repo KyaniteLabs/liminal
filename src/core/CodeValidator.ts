@@ -13,6 +13,7 @@
  * - ASCIIValidator: src/core/validators/ASCIIValidator.ts
  */
 
+import path from 'path';
 import { P5Validator } from './validators/P5Validator.js';
 import { GLSLValidator } from './validators/GLSLValidator.js';
 import { ThreeValidator } from './validators/ThreeValidator.js';
@@ -26,6 +27,7 @@ import { ASCIIValidator } from './validators/ASCIIValidator.js';
 import { HyperFramesValidator } from './validators/HyperFramesValidator.js';
 import { TextGenValidator } from './validators/TextGenValidator.js';
 import { validateSVG } from '../generators/svg/SVGValidator.js';
+import { validateImportPath, ImportValidationError } from '../security/ImportValidator.js';
 import {
   type ValidationResult,
   type Domain,
@@ -35,6 +37,100 @@ import {
   detectContamination,
   REASONING_PATTERNS,
 } from './validators/types.js';
+
+// -----------------------------------------------------------------------------
+// Executable-JS security screen
+//
+// The HTMLValidator screens the 'html' domain for dangerous JS patterns, but
+// p5/three/hydra/shader/tone/kinetic/strudel code also runs in a browser and
+// was never screened. These domains share the same threat surface, so apply
+// the same dangerous-pattern checks to every executable JS art domain.
+// -----------------------------------------------------------------------------
+const EXECUTABLE_JS_DOMAINS: ReadonlySet<Domain> = new Set<Domain>([
+  'p5', 'three', 'hydra', 'tone', 'kinetic', 'strudel', 'shader', 'glsl',
+]);
+
+// Always-dangerous in raw JS regardless of markup context.
+const DANGEROUS_JS_PATTERNS: ReadonlyArray<{ pattern: RegExp; msg: string }> = [
+  { pattern: /\beval\s*\(/i, msg: 'Dangerous eval() detected' },
+  { pattern: /new\s+Function\s*\(/i, msg: 'Dangerous new Function() detected' },
+  { pattern: /document\.write\s*\(/i, msg: 'document.write() is discouraged' },
+];
+
+// HTML-attribute injection sinks. Only meaningful when the artifact contains
+// markup (HTML-wrapped); flagging ` one = 5` style raw-JS would be a false
+// positive, so these only run against wrapped artifacts.
+const DANGEROUS_MARKUP_PATTERNS: ReadonlyArray<{ pattern: RegExp; msg: string }> = [
+  { pattern: /\son\w+\s*=\s*["']/i, msg: 'Event handler attributes (on*) are not allowed' },
+  { pattern: /javascript:/i, msg: 'javascript: URLs are not allowed' },
+];
+
+// Node-only / non-browser module specifiers must never appear in browser art
+// code. A generated sketch that imports these is either malicious or broken.
+const FORBIDDEN_IMPORT_SPECIFIERS: ReadonlyArray<RegExp> = [
+  /^node:/i,
+  /^(?:fs|path|child_process|os|net|http|https|crypto|process|vm|module|worker_threads|cluster|dgram|tls|repl)$/i,
+];
+
+function validateJSSecurity(code: string, domain: Domain): string[] {
+  if (!EXECUTABLE_JS_DOMAINS.has(domain)) return [];
+
+  const errors: string[] = [];
+  for (const { pattern, msg } of DANGEROUS_JS_PATTERNS) {
+    if (pattern.test(code)) {
+      errors.push(`JS Security: ${msg}`);
+    }
+  }
+  if (isAlreadyWrapped(code)) {
+    for (const { pattern, msg } of DANGEROUS_MARKUP_PATTERNS) {
+      if (pattern.test(code)) {
+        errors.push(`JS Security: ${msg}`);
+      }
+    }
+  }
+  errors.push(...validateImportSources(code));
+  return errors;
+}
+
+/**
+ * Reject disallowed imports in generated art code. Wires the ImportValidator
+ * (filesystem path-traversal control) into the live validation path: any
+ * relative/local import specifier is resolved against a virtual artifact root
+ * and rejected if it escapes that root (e.g. ../../../etc/passwd). Bare
+ * node-builtin specifiers are rejected outright.
+ */
+function validateImportSources(code: string): string[] {
+  const errors: string[] = [];
+  // Match both `import ... from 'x'` and bare `import 'x'` / dynamic import('x').
+  const specifierRe = /\bimport\s*(?:[^'";]*?\bfrom\s*)?\(?\s*['"]([^'"]+)['"]/g;
+  const ARTIFACT_ROOT = '/__sinter_artifact_root__';
+  let match: RegExpExecArray | null;
+  while ((match = specifierRe.exec(code)) !== null) {
+    const spec = match[1].trim();
+    if (!spec) continue;
+
+    if (FORBIDDEN_IMPORT_SPECIFIERS.some(p => p.test(spec))) {
+      errors.push(`Import Security: disallowed module import "${spec}" - node/runtime modules are not available in browser art`);
+      continue;
+    }
+
+    // Only local/relative/absolute filesystem-style specifiers are traversal
+    // candidates. Bare package names and URLs (http(s)://, //cdn) are not.
+    const isLocal = spec.startsWith('./') || spec.startsWith('../') || spec.startsWith('/');
+    if (!isLocal || /^\/\//.test(spec) || /^[a-z]+:\/\//i.test(spec)) continue;
+
+    try {
+      validateImportPath(path.join(ARTIFACT_ROOT, spec), ARTIFACT_ROOT);
+    } catch (error) {
+      if (error instanceof ImportValidationError) {
+        errors.push(`Import Security: import path "${spec}" escapes the artifact root`);
+      } else {
+        throw error;
+      }
+    }
+  }
+  return errors;
+}
 
 // -----------------------------------------------------------------------------
 // Size validation
@@ -174,6 +270,7 @@ function validateStructure(code: string, domain: Domain): string[] {
 
   errors.push(...detectContamination(trimmed));
   errors.push(...validateNoGuaranteedRuntimeThrow(trimmed, domain));
+  errors.push(...validateJSSecurity(trimmed, domain));
 
   switch (domain) {
     case 'p5': {

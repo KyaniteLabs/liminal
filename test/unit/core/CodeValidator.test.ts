@@ -938,4 +938,127 @@ function render(){ requestAnimationFrame(render); }
       expect(CodeValidator.getMinSize('svg')).toBe(40);
     });
   });
+
+  // F3: the dangerous-pattern security screen used to run only for the html
+  // domain. p5/three/hydra/shader/tone/strudel/kinetic JS also runs in a
+  // browser and must be screened too. Before the fix these samples were ALLOWED.
+  describe('executable-JS security screen (F3)', () => {
+    it('flags eval() in a p5 sketch', () => {
+      const code = `function setup() {
+  createCanvas(400, 400);
+}
+function draw() {
+  background(0);
+  const f = eval("alert(1)");
+  ellipse(200, 200, f, f);
+}`;
+      const result = CodeValidator.validate(code, 'p5');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('JS Security: Dangerous eval() detected');
+    });
+
+    it('flags new Function() in a three.js scene', () => {
+      const code = `import * as THREE from 'three';
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+const geometry = new THREE.BoxGeometry();
+const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+const sneaky = new Function('return process')();
+function animate() {
+  requestAnimationFrame(animate);
+  cube.rotation.x += 0.01;
+  renderer.render(scene, camera);
+}
+animate();`;
+      const result = CodeValidator.validate(code, 'three');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('JS Security: Dangerous new Function() detected');
+    });
+
+    it('flags eval() in a hydra patch', () => {
+      const code = `osc(10, 0.1, 0.8).rotate(0.5).kaleid(4).color(1, 0.5, 0.2).out();
+const payload = eval(atob("YWxlcnQoMSk="));`;
+      const result = CodeValidator.validate(code, 'hydra');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('JS Security: Dangerous eval() detected');
+    });
+
+    it('does not flag a clean p5 sketch with a variable named like an event handler', () => {
+      // ` one =` must NOT trip the markup on*= rule for raw JS.
+      const code = `function setup() {
+  createCanvas(400, 400);
+}
+function draw() {
+  background(20);
+  let one = 1;
+  let online = 2;
+  ellipse(width / 2, height / 2, one * 50, online * 50);
+}`;
+      const result = CodeValidator.validate(code, 'p5');
+      expect(result.errors.filter(e => e.startsWith('JS Security:'))).toEqual([]);
+    });
+  });
+
+  // F5: ImportValidator was a dead control (never invoked). It is now wired into
+  // the live validation path so disallowed imports in generated art are rejected.
+  describe('import-source security wiring (F5)', () => {
+    it('rejects a node-builtin import in p5 art through the live validate() path', () => {
+      const code = `import fs from 'fs';
+function setup() {
+  createCanvas(400, 400);
+}
+function draw() {
+  background(0);
+  ellipse(200, 200, 40, 40);
+}`;
+      const result = CodeValidator.validate(code, 'p5');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain(
+        'Import Security: disallowed module import "fs" - node/runtime modules are not available in browser art'
+      );
+    });
+
+    it('rejects a node: scheme import in a hydra patch', () => {
+      const code = `import cp from 'node:child_process';
+osc(20, 0.1, 0.9).color(0.8, 0.2, 0.5).out();`;
+      const result = CodeValidator.validate(code, 'hydra');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain(
+        'Import Security: disallowed module import "node:child_process" - node/runtime modules are not available in browser art'
+      );
+    });
+
+    it('rejects a relative import that traverses out of the artifact root', () => {
+      const code = `import secret from '../../../etc/passwd';
+function setup() { createCanvas(400, 400); }
+function draw() { background(0); ellipse(200, 200, 40, 40); }`;
+      const result = CodeValidator.validate(code, 'p5');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain(
+        'Import Security: import path "../../../etc/passwd" escapes the artifact root'
+      );
+    });
+
+    it('allows a legitimate bare-package import (three) through the live path', () => {
+      const code = `import * as THREE from 'three';
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+const geometry = new THREE.SphereGeometry(1, 32, 32);
+const material = new THREE.MeshStandardMaterial({ color: 0x3366ff });
+const mesh = new THREE.Mesh(geometry, material);
+scene.add(mesh);
+function animate() {
+  requestAnimationFrame(animate);
+  mesh.rotation.y += 0.01;
+  renderer.render(scene, camera);
+}
+animate();`;
+      const result = CodeValidator.validate(code, 'three');
+      expect(result.errors.filter(e => e.startsWith('Import Security:'))).toEqual([]);
+    });
+  });
 });

@@ -17,14 +17,17 @@ export function detectDomain(code: string): Domain {
     return 'three';
   }
 
-  // 3. Hydra: video synth patterns
-  if (/\.out\(|osc\(|shape\(|kaleid\(|scrollX|scrollY/.test(code)) {
-    return 'hydra';
-  }
-
-  // 4. Strudel: pattern language
+  // 3. Strudel before Hydra (#618): Strudel audio chains can use .shape()/.out()
+  //    too, so a Hydra-first check misroutes works like `.sound("bd*4").out()`.
+  //    Mirror the canonical detector (CodeValidator.detectDomain) ordering: the
+  //    Strudel-specific calls (sound/note/seq/stack/s-pattern/.cpm) win first.
   if (/\bs\s+\(|stack\s*\(|seq\s*\(|note\s*\(|sound\s*\(|\.cpm\b/.test(code)) {
     return 'strudel';
+  }
+
+  // 4. Hydra: video synth patterns (only reached when no Strudel call matched).
+  if (/\.out\(|osc\(|shape\(|kaleid\(|scrollX|scrollY/.test(code)) {
+    return 'hydra';
   }
 
   // 5. ASCII Art: box-drawing and block characters (Unicode only — avoid false positives from %, *, @ in code)

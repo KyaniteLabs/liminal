@@ -84,6 +84,31 @@ describe('detectDomain', () => {
   it('defaults to p5 for unknown code', () => {
     expect(detectDomain(unknownCode)).toBe('p5');
   });
+
+  // ── #618: Strudel-before-Hydra ordering ──
+  // A Strudel audio chain that also matches Hydra's `.out(`/`shape(` patterns
+  // must classify as strudel, not hydra. Pre-fix the Hydra check ran first and
+  // misrouted these works, giving them the wrong feature extractor.
+  it('classifies a Strudel work that uses .out() as strudel, not hydra', () => {
+    expect(detectDomain('sound("bd*4").out()')).toBe('strudel');
+  });
+
+  it('classifies a Strudel note chain using shape() as strudel, not hydra', () => {
+    expect(detectDomain('note("c3 e3 g3").shape(0.2).out()')).toBe('strudel');
+  });
+
+  it('still classifies genuine Hydra (osc + .out, no Strudel call) as hydra', () => {
+    expect(detectDomain('osc(10).out(o0)')).toBe('hydra');
+  });
+});
+
+describe('extractBehavior — Strudel work routing (#618)', () => {
+  it('gives a Strudel-with-.out() work the strudel extractor, not the hydra one', () => {
+    // Strudel block = offsets 56-63, Hydra block = offsets 48-55.
+    const vec = extractBehavior('sound("bd*4").out()');
+    expect(vec[60]).toBe(1); // strudel usesSound (offset 56+4)
+    expect(vec.slice(48, 56).every(v => v === 0)).toBe(true); // hydra block all zero
+  });
 });
 
 // ── extractBehavior tests ──

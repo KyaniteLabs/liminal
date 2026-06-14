@@ -2,7 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { validateProofReceipt } from '../runtime-core/ProofReceiptValidator.js';
 
-export type MarketReadinessCheckStatus = 'pass' | 'fail' | 'unknown';
+// 'advisory' checks are source-presence signals only (grep hits). They are
+// reported for context but never gate the READY verdict — a verdict that can be
+// satisfied by string literals existing in source is a fabricated verdict.
+export type MarketReadinessCheckStatus = 'pass' | 'fail' | 'unknown' | 'advisory';
 
 export interface MarketReadinessCheck {
   id: string;
@@ -18,11 +21,18 @@ export interface MarketReadinessStatus {
   blockers: string[];
 }
 
+function isExecutionVerified(check: MarketReadinessCheck): boolean {
+  return check.status !== 'advisory';
+}
+
 export function buildMarketReadinessStatus(input: { checks: MarketReadinessCheck[] }): MarketReadinessStatus {
-  const blockers = input.checks
+  const gating = input.checks.filter(isExecutionVerified);
+  const blockers = gating
     .filter((check) => check.status !== 'pass')
     .map((check) => `${check.label}: ${check.evidence}`);
-  const ready = blockers.length === 0;
+  // READY requires at least one execution-verified check that passes; an all-advisory
+  // report (source-presence only) is never market-ready.
+  const ready = gating.length > 0 && blockers.length === 0;
   return {
     ready,
     verdict: ready ? 'ready' : 'not-ready',
@@ -53,12 +63,19 @@ export function collectRepositoryMarketReadinessStatus(repoRoot = process.cwd())
 }
 
 export function formatMarketReadinessStatus(status: MarketReadinessStatus): string {
+  const verified = status.checks.filter((check) => check.status !== 'advisory');
+  const advisory = status.checks.filter((check) => check.status === 'advisory');
+
   const lines = [
     `Market readiness: ${status.ready ? 'READY' : 'NOT READY'}`,
     '',
-    'Checks:',
-    ...status.checks.map((check) => `- ${check.label}: ${check.status} — ${check.evidence}`),
+    'Execution-verified checks (gate the verdict):',
+    ...verified.map((check) => `- ${check.label}: ${check.status} — ${check.evidence}`),
   ];
+
+  if (advisory.length > 0) {
+    lines.push('', 'Source-presence checks (advisory — do NOT gate the verdict):', ...advisory.map((check) => `- ${check.label}: ${check.status} — ${check.evidence}`));
+  }
 
   if (status.blockers.length > 0) {
     lines.push('', 'Blocking gaps:', ...status.blockers.map((blocker) => `- ${blocker}`));
@@ -69,11 +86,15 @@ export function formatMarketReadinessStatus(status: MarketReadinessStatus): stri
 
 function sourceCheck(id: string, label: string, source: string, needles: string[]): MarketReadinessCheck {
   const missing = needles.filter((needle) => !source.includes(needle));
+  // Source-presence only: this never gates the READY verdict (advisory). Grep hits
+  // prove a literal exists, not that the surface executes.
   return {
     id,
     label,
-    status: missing.length === 0 ? 'pass' : 'fail',
-    evidence: missing.length === 0 ? `Found ${needles.join(', ')}` : `Missing ${missing.join(', ')}`,
+    status: 'advisory',
+    evidence: missing.length === 0
+      ? `source-presence (not execution-verified): found ${needles.join(', ')}`
+      : `source-presence (not execution-verified): missing ${missing.join(', ')}`,
   };
 }
 

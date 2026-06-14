@@ -30,6 +30,50 @@ describe('MarketReadinessStatus', () => {
     expect(formatMarketReadinessStatus(status)).toContain('Market readiness: NOT READY');
     expect(formatMarketReadinessStatus(status)).toContain('B: unknown — not checked');
   });
+
+  it('does not let source-presence (advisory) checks gate the READY verdict', () => {
+    // All advisory "pass" signals — grep hits only, no execution-verified check.
+    const status = buildMarketReadinessStatus({
+      checks: [
+        { id: 'natural-cli', label: 'Natural CLI front door', status: 'advisory', evidence: 'source-presence (not execution-verified): found x' },
+        { id: 'creative-wrappers', label: 'Creative wrappers', status: 'advisory', evidence: 'source-presence (not execution-verified): found y' },
+      ],
+    });
+
+    expect(status.ready).toBe(false);
+    expect(status.verdict).toBe('not-ready');
+    expect(status.blockers).toEqual([]);
+  });
+
+  it('marks the READY verdict solely on execution-verified receipt checks', () => {
+    const status = buildMarketReadinessStatus({
+      checks: [
+        // Advisory source checks are present but must not count toward the verdict.
+        { id: 'natural-cli', label: 'Natural CLI front door', status: 'advisory', evidence: 'source-presence (not execution-verified): missing z' },
+        { id: 'studio-smoke', label: 'Studio smoke', status: 'pass', evidence: 'Found passing receipt' },
+        { id: 'live-provider-smoke', label: 'Live provider smoke', status: 'pass', evidence: 'Found passing receipt' },
+      ],
+    });
+
+    expect(status.ready).toBe(true);
+    expect(status.verdict).toBe('ready');
+    expect(status.blockers).toEqual([]);
+  });
+
+  it('separates execution-verified checks from advisory source-presence checks in the output', () => {
+    const status = buildMarketReadinessStatus({
+      checks: [
+        { id: 'natural-cli', label: 'Natural CLI front door', status: 'advisory', evidence: 'source-presence (not execution-verified): found x' },
+        { id: 'live-provider-smoke', label: 'Live provider smoke', status: 'fail', evidence: 'No current live provider smoke receipt found' },
+      ],
+    });
+
+    const formatted = formatMarketReadinessStatus(status);
+    expect(formatted).toContain('Execution-verified checks (gate the verdict):');
+    expect(formatted).toContain('Source-presence checks (advisory — do NOT gate the verdict):');
+    expect(formatted).toContain('Natural CLI front door: advisory — source-presence (not execution-verified): found x');
+    expect(formatted).toContain('Live provider smoke: fail — No current live provider smoke receipt found');
+  });
 });
 
 describe('collectRepositoryMarketReadinessStatus', () => {
@@ -53,6 +97,64 @@ describe('collectRepositoryMarketReadinessStatus', () => {
       'live-provider-smoke',
     ]));
     expect(status.checks.find((check) => check.id === 'live-provider-smoke')).not.toBeNull();
+  });
+
+  it('keeps the source-presence checks advisory so grep hits cannot fabricate READY', () => {
+    // The worktree's source contains every literal the five grep checks look for,
+    // but ships no proof receipts. The verdict must come ONLY from the receipts.
+    const status = collectRepositoryMarketReadinessStatus(process.cwd());
+
+    const sourceCheckIds = ['natural-cli', 'creative-wrappers', 'studio-cognition', 'cli-cognition', 'level6-gate'];
+    for (const id of sourceCheckIds) {
+      const check = status.checks.find((c) => c.id === id);
+      expect(check?.status).toBe('advisory');
+      // An advisory check never appears as a blocker, even when its literals are present.
+      expect(status.blockers).not.toContain(`${check?.label}: ${check?.evidence}`);
+    }
+
+    // No fresh receipts in this worktree → not ready, blocked only by the receipt checks.
+    expect(status.ready).toBe(false);
+    expect(status.blockers.some((b) => b.startsWith('Live provider smoke'))).toBe(true);
+    expect(status.blockers.some((b) => b.startsWith('Studio smoke'))).toBe(true);
+  });
+
+  it('reaches READY only when both receipt-backed checks pass, regardless of source presence', () => {
+    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'sinter-market-'));
+    const gitCommit = writeFakeGitHead(repoRoot);
+    const proofDir = path.join(repoRoot, '.omx', 'proof');
+    fs.mkdirSync(proofDir, { recursive: true });
+
+    // Live provider smoke receipt bound to the commit with a real artifact.
+    const artifactPath = path.join(proofDir, 'live-provider-smoke', 'p5.js');
+    fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
+    fs.writeFileSync(artifactPath, 'function setup() { createCanvas(100, 100); }\n');
+    fs.writeFileSync(path.join(proofDir, 'live-provider-smoke.json'), JSON.stringify({
+      status: 'pass',
+      generatedAt: new Date().toISOString(),
+      gitCommit,
+      provider: 'glm',
+      model: 'glm-5v-turbo',
+      artifactPath: '.omx/proof/live-provider-smoke/p5.js',
+    }));
+
+    // Studio smoke receipt bound to the commit.
+    fs.writeFileSync(path.join(proofDir, 'studio-smoke.json'), JSON.stringify({
+      status: 'pass',
+      generatedAt: new Date().toISOString(),
+      gitCommit,
+      checks: { backendHealth: true, noConsoleErrors: true, studioHeading: true, stageNav: true },
+      blockers: [],
+    }));
+
+    const status = collectRepositoryMarketReadinessStatus(repoRoot);
+
+    // This temp repo has NO source literals at all → the advisory checks "miss" them,
+    // yet the verdict is READY because both receipt-backed checks pass.
+    expect(status.checks.find((c) => c.id === 'natural-cli')?.status).toBe('advisory');
+    expect(status.checks.find((c) => c.id === 'live-provider-smoke')?.status).toBe('pass');
+    expect(status.checks.find((c) => c.id === 'studio-smoke')?.status).toBe('pass');
+    expect(status.ready).toBe(true);
+    expect(status.blockers).toEqual([]);
   });
 
   it('does not accept a stale or failed live-provider receipt as market-ready', () => {

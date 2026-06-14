@@ -131,8 +131,12 @@ const strudelConfidence = (prompt: string): number => {
   // Strong pattern-based music indicators
   if (/\b(techno|drum|beat|rhythm|sequencer|pattern)\b.*\bmusic\b/.test(lower)) return 0.85;
   if (/\bcycle\b|\bnote\b|\bchord\b|\bmelody\b.*\bsequence/.test(lower)) return 0.75;
-  // Moderate music pattern matches
-  if (/pattern|beat|drum|bass|synth.*sequence/.test(lower)) return 0.65;
+  // Moderate music matches. Bare "pattern" is dropped: it hijacked visual
+  // prompts ("flowing pattern of hexagons") into the music generator (D1). The
+  // music sense of "pattern" is still caught at 0.85 above when paired with
+  // "music". Word boundaries keep "beat"/"bass" from substring-matching
+  // "heartbeat"/non-music words; explicit "pattern + music" stays at 0.85.
+  if (/\b(beat|drum|bass)\b|synth.*sequence/.test(lower)) return 0.65;
   return 0;
 };
 

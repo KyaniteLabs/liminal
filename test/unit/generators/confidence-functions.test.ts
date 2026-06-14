@@ -322,12 +322,25 @@ describe('strudelConfidence', () => {
     expect(strudelConfidence('melody sequence generator')).toBe(0.75);
   });
 
-  it('returns 0.65 for pattern/beat/drum/bass/synth+sequence', () => {
-    expect(strudelConfidence('a cool pattern')).toBe(0.65);
+  it('returns 0.65 for beat/drum/bass/synth+sequence', () => {
     expect(strudelConfidence('heavy beat')).toBe(0.65);
     expect(strudelConfidence('drum pattern')).toBe(0.65);
     expect(strudelConfidence('bass line')).toBe(0.65);
     expect(strudelConfidence('synth sequence loop')).toBe(0.65);
+  });
+
+  // D1 regression: bare "pattern" must NOT route a visual prompt to the music
+  // generator. The music sense of "pattern" still scores 0.85 when paired with
+  // "music" (see the 0.85 case above).
+  it('returns 0 for bare "pattern" in a visual prompt (D1 misroute)', () => {
+    expect(strudelConfidence('flowing pattern of hexagons')).toBe(0);
+    expect(strudelConfidence('a cool pattern')).toBe(0);
+    expect(strudelConfidence('geometric pattern of triangles')).toBe(0);
+  });
+
+  // Word boundaries: weak music keywords must not substring-match non-music words.
+  it('returns 0 when a music keyword only appears as a substring', () => {
+    expect(strudelConfidence('heartbeat visualization')).toBe(0);
   });
 
   it('returns 0 for unrelated prompt', () => {

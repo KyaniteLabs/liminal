@@ -14,6 +14,7 @@ import { eventBus, EventTypes } from '../core/EventBus.js';
 import type { LLMClientLike } from './SemanticExtractor.js';
 import { Logger } from '../utils/Logger.js';
 import { SymbolicCreativeLanguage } from '../brain/SymbolicCreativeLanguage.js';
+import { expandNotation } from '../swarm/CreativeNotation.js';
 import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
 
 export class CompostSoup {
@@ -201,13 +202,39 @@ export class CompostSoup {
       throw new Error(`Cannot merge fragments: no LLM client available (${a.id} + ${b.id})`);
     }
 
+    const systemPrompt =
+      'You are a creative evolution engine. Combine these two fragments from different domains into a novel offspring. Be surprising and specific.'
+      + this.learnedNotationHint();
+
     const result = await this.llm.generate(
-      'You are a creative evolution engine. Combine these two fragments from different domains into a novel offspring. Be surprising and specific.',
+      systemPrompt,
       `[Parent A — domain: ${a.domain}]\n${a.content.slice(0, 1000)}\n\n[Parent B — domain: ${b.domain}]\n${b.content.slice(0, 1000)}\n\nCreate a novel offspring idea:`
     );
     if (!result.success) {
       throw new Error(`LLM merge failed for ${a.id} + ${b.id}: generation unsuccessful`);
     }
     return result.code;
+  }
+
+  /**
+   * Build a prompt suffix biasing the merge toward notation tokens the soup has
+   * learned correlate with winning offspring (EMA above the 0.5 neutral
+   * baseline). Returns '' when nothing has been learned yet, leaving the merge
+   * prompt unchanged.
+   */
+  private learnedNotationHint(): string {
+    const NEUTRAL = 0.5;
+    const MAX_TOKENS = 4;
+    const stats = this.notationLang.getNotationStats();
+    const favored = [...stats.entries()]
+      .filter(([, score]) => score > NEUTRAL)
+      .sort((x, y) => y[1] - x[1])
+      .slice(0, MAX_TOKENS)
+      .map(([token]) => token);
+    if (favored.length === 0) {
+      return '';
+    }
+    const guidance = expandNotation(favored.join(' '));
+    return ` Past winning offspring favored these creative qualities — lean into them: ${guidance}.`;
   }
 }

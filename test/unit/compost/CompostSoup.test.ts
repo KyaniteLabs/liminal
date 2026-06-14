@@ -13,12 +13,14 @@ const {
   mockScorerScore,
   mockSeedBankAdd,
   mockEmit,
+  mockNotationStats,
 } = vi.hoisted(() => ({
   mockStateLoad: vi.fn<() => Promise<SoupState>>(),
   mockStateSave: vi.fn<(state: SoupState) => Promise<void>>(),
   mockScorerScore: vi.fn(),
   mockSeedBankAdd: vi.fn(),
   mockEmit: vi.fn(),
+  mockNotationStats: vi.fn<() => Map<string, number>>(),
 }));
 
 const defaultState: SoupState = {
@@ -156,10 +158,12 @@ vi.mock('../../../src/utils/Logger.js', () => ({
   },
 }));
 
-// Mock SymbolicCreativeLanguage
+// Mock SymbolicCreativeLanguage — evolveNotation is a no-op; getNotationStats
+// is the learned-signal reader that mergeViaLLM now consumes.
 vi.mock('../../../src/brain/SymbolicCreativeLanguage.js', () => ({
   SymbolicCreativeLanguage: class MockSymbolicCreativeLanguage {
     evolveNotation = vi.fn();
+    getNotationStats = mockNotationStats;
   },
 }));
 
@@ -181,6 +185,7 @@ describe('CompostSoup', () => {
     mockSeedBankAdd.mockResolvedValue(undefined);
     mockStateSave.mockResolvedValue(undefined);
     mockEmit.mockReturnValue(undefined);
+    mockNotationStats.mockReturnValue(new Map());
   });
 
   it('throws when entropy engine is missing', () => {
@@ -365,6 +370,71 @@ describe('CompostSoup', () => {
       // null LLM → mergeViaLLM throws → cycle returns state without incrementing
       const result = await soup.cycle(fragments);
       expect(result.generation).toBe(0);
+    });
+
+    it('biases the merge prompt toward high-EMA notation tokens', async () => {
+      // notationEma favors organic style + dark mood (above 0.5 baseline);
+      // a flat-0.5 token must NOT leak into the prompt.
+      mockNotationStats.mockReturnValue(new Map<string, number>([
+        ['~s:organic', 0.92],
+        ['~m:dark', 0.81],
+        ['~m:calm', 0.50],
+      ]));
+
+      const soup = new CompostSoup(config, llm, mockEntropy);
+      mockStateLoad.mockResolvedValue({ ...defaultState });
+
+      await soup.cycle([
+        makeFragment('music', 'harmonic motif'),
+        makeFragment('visual', 'gradient field'),
+      ]);
+
+      const systemPrompt = llm.generate.mock.calls[0][0] as string;
+      // expandNotation('~s:organic') === 'flowing, natural, biomorphic forms'
+      expect(systemPrompt).toContain('flowing, natural, biomorphic forms');
+      // expandNotation('~m:dark') === 'shadowy, heavy, ominous'
+      expect(systemPrompt).toContain('shadowy, heavy, ominous');
+      // ~m:calm sits exactly at the neutral baseline → excluded
+      expect(systemPrompt).not.toContain('peaceful, slow, meditative');
+    });
+
+    it('orders the prompt bias by descending EMA score', async () => {
+      // ~m:dark (0.97) outranks ~s:organic (0.55); higher score appears first.
+      mockNotationStats.mockReturnValue(new Map<string, number>([
+        ['~s:organic', 0.55],
+        ['~m:dark', 0.97],
+      ]));
+
+      const soup = new CompostSoup(config, llm, mockEntropy);
+      mockStateLoad.mockResolvedValue({ ...defaultState });
+
+      await soup.cycle([
+        makeFragment('music', 'low drone'),
+        makeFragment('visual', 'ink wash'),
+      ]);
+
+      const systemPrompt = llm.generate.mock.calls[0][0] as string;
+      const darkIdx = systemPrompt.indexOf('shadowy, heavy, ominous');
+      const organicIdx = systemPrompt.indexOf('flowing, natural, biomorphic forms');
+      expect(darkIdx).toBeGreaterThan(-1);
+      expect(organicIdx).toBeGreaterThan(darkIdx);
+    });
+
+    it('leaves the merge prompt unchanged when notation EMA is empty', async () => {
+      mockNotationStats.mockReturnValue(new Map());
+
+      const soup = new CompostSoup(config, llm, mockEntropy);
+      mockStateLoad.mockResolvedValue({ ...defaultState });
+
+      await soup.cycle([
+        makeFragment('music', 'sparse pulse'),
+        makeFragment('visual', 'pale wash'),
+      ]);
+
+      const systemPrompt = llm.generate.mock.calls[0][0] as string;
+      expect(systemPrompt).toBe(
+        'You are a creative evolution engine. Combine these two fragments from different domains into a novel offspring. Be surprising and specific.',
+      );
     });
   });
 

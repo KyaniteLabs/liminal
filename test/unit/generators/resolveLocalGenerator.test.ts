@@ -3,7 +3,7 @@
  * (a) roles.generatorLocal is configured AND (b) the smart router prefers local
  * for the domain's bucket. Otherwise null → the cloud generator is used.
  */
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -82,5 +82,22 @@ describe('resolveLocalGeneratorOverride (hybrid router)', () => {
     const res = resolveLocalGeneratorOverride(localDomain!);
     expect(res).not.toBeNull();
     expect('apiKey' in res!).toBe(false);
+  });
+
+  it('falls back to cloud (null) instead of throwing if routing resolution fails', async () => {
+    // The resolver runs on the hot generation path; a throw here would break/hang
+    // generation (it did — an incomplete GeneratorRegistry mock in a RalphLoop test
+    // made route() throw and timed the run out). Any error must degrade to cloud.
+    process.env.SINTER_CONFIG_PATH = writeConfig(true);
+    LLMClient.clearGlobalCache();
+    await LLMClient.loadRoles();
+    const spy = vi.spyOn(generatorRegistry, 'route').mockImplementation(() => {
+      throw new Error('routing exploded');
+    });
+    try {
+      expect(resolveLocalGeneratorOverride('music')).toBeNull();
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

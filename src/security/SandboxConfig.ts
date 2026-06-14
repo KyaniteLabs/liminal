@@ -65,3 +65,18 @@ export function getChromeArgs(options?: { forceDisableSandbox?: boolean }): stri
 export function isSandboxEnabled(args: string[]): boolean {
   return !args.includes('--no-sandbox');
 }
+
+/**
+ * Whether the strongest network-isolated executor (Puppeteer `runInSandbox`,
+ * which denies ALL network requests except locally-fulfilled library scripts)
+ * should gate the live render path.
+ *
+ * Default OFF: the normal render path uses the Playwright HeadlessRenderer with
+ * its CDN allowlist. When LIMINAL_NETWORK_ISOLATED_RENDER=true (hardened
+ * deployments), candidate code is first vetted in the fully network-isolated
+ * sandbox before it is rendered for scoring, so artifact code that hangs or
+ * cannot run under deny-all networking is rejected up front.
+ */
+export function isNetworkIsolatedRenderEnabled(): boolean {
+  return process.env.LIMINAL_NETWORK_ISOLATED_RENDER === 'true';
+}

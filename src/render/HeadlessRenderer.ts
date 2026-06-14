@@ -11,7 +11,8 @@ import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { Logger } from '../utils/Logger.js';
 import { RenderEvidence } from '../core/types/GenerationEvaluation.js';
 import { getLocalP5ScriptForUrl } from '../utils/browserAssetFallbacks.js';
-import { getChromeArgs } from '../security/SandboxConfig.js';
+import { getChromeArgs, isNetworkIsolatedRenderEnabled } from '../security/SandboxConfig.js';
+import { runInSandbox } from '../sandbox/index.js';
 import type { DomainString } from '../types/domains.js';
 
 export type RenderDomain = Extract<DomainString, 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'tone' | 'svg' | 'html' | 'ascii' | 'kinetic' | 'textgen' | 'unknown'>;
@@ -479,6 +480,26 @@ export class HeadlessRenderer {
    */
   async renderWithEvidence(code: string, options: RenderOptions = {}): Promise<RenderEvidence> {
     const startTime = Date.now();
+
+    // Hardened deployments (LIMINAL_NETWORK_ISOLATED_RENDER=true) vet candidate
+    // code in the fully network-isolated Puppeteer sandbox FIRST. runInSandbox
+    // denies all network requests except locally-fulfilled library scripts —
+    // stronger than this renderer's CDN allowlist. It is purpose-built for p5
+    // sketches (injects p5, waits for <canvas>), so the gate only applies to
+    // the p5 domain; every other domain keeps the normal path. Default OFF, so
+    // the standard render path is byte-for-byte unchanged.
+    const domainHint = options.domain ?? HeadlessRenderer.detectDomain(code);
+    if (isNetworkIsolatedRenderEnabled() && domainHint === 'p5') {
+      const sandboxResult = await runInSandbox(code, { timeoutMs: options.timeout });
+      if (!sandboxResult.completed) {
+        return {
+          timingMs: Date.now() - startTime,
+          infraUnavailable: false,
+          candidateFailure: true,
+        };
+      }
+    }
+
     const result = await this.render(code, options);
     const timingMs = Date.now() - startTime;
 

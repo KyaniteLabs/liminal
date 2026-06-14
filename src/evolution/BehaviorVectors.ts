@@ -202,9 +202,39 @@ function extractStrudelFeatures(code: string): number[] {
   ];
 }
 
+/**
+ * Map an arbitrary domain label to the 8 feature-extraction domains, collapsing
+ * synonyms (`shader`/`webgl` → `glsl`, `tone` → `music`). Returns `undefined` for
+ * labels with no extractor (`svg`/`kinetic`/`textgen`/`revideo`/unknown) so the
+ * caller falls back to detecting the domain from the code rather than producing an
+ * all-zero vector. Without this, passing a synonym (e.g. `shader`) matched none of
+ * the branches in {@link extractBehavior} and zeroed the whole vector — so novelty
+ * and aesthetic scores were computed on garbage for every shader/tone work.
+ */
+function normalizeFeatureDomain(domain?: string): Domain | undefined {
+  switch (domain) {
+    case 'shader':
+    case 'webgl':
+      return 'glsl';
+    case 'tone':
+      return 'music';
+    case 'p5':
+    case 'glsl':
+    case 'three':
+    case 'music':
+    case 'html':
+    case 'ascii':
+    case 'hydra':
+    case 'strudel':
+      return domain;
+    default:
+      return undefined;
+  }
+}
+
 /** Extract a 32-dim behavior feature vector from code. Each value in [0, 1]. */
-export function extractBehavior(code: string, domain?: Domain): number[] {
-  const detected = domain ?? detectDomain(code);
+export function extractBehavior(code: string, domain?: string): number[] {
+  const detected = normalizeFeatureDomain(domain) ?? detectDomain(code);
 
   const p5Features       = detected === 'p5'       ? extractP5Features(code)       : new Array(8).fill(0);
   const glslFeatures     = detected === 'glsl'     ? extractGLSLFeatures(code)     : new Array(8).fill(0);

@@ -370,7 +370,7 @@ export class CreativeEvaluator {
     let noveltyScore: number | undefined;
     let aestheticScore: number | undefined;
     if (options?.noveltyArchive || options?.aestheticModel) {
-      const behavior = options?.behaviorVector ?? extractBehavior(output, (options?.domain as 'p5' | 'glsl' | 'three' | 'music') || undefined);
+      const behavior = options?.behaviorVector ?? extractBehavior(output, options?.domain || undefined);
       if (options?.noveltyArchive) {
         noveltyScore = options.noveltyArchive.noveltyScore(behavior);
       }

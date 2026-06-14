@@ -28,6 +28,10 @@ jobs:
       ANTHROPIC_DEFAULT_SONNET_MODEL: ""
       MINIMAX_API_KEY: ""
       OLLAMA_API_KEY: ""
+      # The runner executes jobs as root in a container; Chrome's OS sandbox can't run
+      # as root, so the puppeteer-backed sandbox tests need --no-sandbox here (a
+      # containerized env, per SandboxConfig). Never set this outside CI.
+      LIMINAL_DISABLE_SANDBOX: "true"
     steps:
       - name: Checkout
         # Use the Actions-provided context (token + server URL), which act_runner
@@ -84,6 +88,16 @@ jobs:
 
       - name: Build project
         run: pnpm build
+
+      - name: Install headless Chrome system deps
+        # puppeteer's bundled Chrome needs system shared libs (libnspr4.so, etc.) that the
+        # node:22 image lacks, so the sandbox tests' headless Chrome fails to launch.
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            libnss3 libnspr4 libatk1.0-0 libatk-bridge2.0-0 libcups2 libdrm2 libdbus-1-3 \
+            libxkbcommon0 libxcomposite1 libxdamage1 libxext6 libxfixes3 libxrandr2 libgbm1 \
+            libpango-1.0-0 libcairo2 libasound2 libatspi2.0-0
 
       - name: Fast test suite
         run: pnpm test:ci:fast

@@ -69,7 +69,11 @@ export async function runInSandbox(
   options?: SandboxOptions
 ): Promise<SandboxResult> {
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const disableSandbox = options?.disableSandbox ?? false;
+  // Complete the LIMINAL_DISABLE_SANDBOX toggle: when no explicit option is given,
+  // honor the env. Chrome refuses to run as root with its OS sandbox (CI containers
+  // run as root), and SandboxConfig sanctions --no-sandbox in containerized envs.
+  // getChromeArgs still double-gates on the env, so production (env unset) stays secure.
+  const disableSandbox = options?.disableSandbox ?? (process.env.LIMINAL_DISABLE_SANDBOX === 'true');
   let browser: Browser | null = null;
 
   try {

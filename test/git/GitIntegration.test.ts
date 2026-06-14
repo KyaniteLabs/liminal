@@ -330,7 +330,10 @@ describe('GitIntegration', () => {
         score: 0.5,
         iteration: 1,
         code: '// code',
-        filePath: '/nonexistent/deeply/nested/path/test.js',
+        // '/dev/null' is a file, so the recursive mkdir under it fails with ENOTDIR for
+        // ANY user — '/nonexistent/...' is writable by root (CI), which recursively
+        // creates it, so the error path wouldn't trigger there.
+        filePath: '/dev/null/cannot/test.js',
       });
 
       // Should return Err, not throw

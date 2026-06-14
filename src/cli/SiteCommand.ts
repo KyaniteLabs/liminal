@@ -27,6 +27,38 @@ export interface SiteEvolveOptions {
 
 const DEFAULT_STATE_DIR = join(homedir(), ".sinter", "site");
 
+/**
+ * Schedule a recurring async tick with a re-entrancy guard.
+ *
+ * If a tick is still running when the next interval fires, that tick is
+ * SKIPPED rather than stacked — long cycles can no longer pile up overlapping
+ * runs. Returns a `stop()` that clears the underlying interval (no leak).
+ */
+export function startSiteEvolveLoop(
+	tick: () => Promise<void>,
+	intervalMs: number,
+): { stop: () => void } {
+	let running = false;
+
+	const timer = setInterval(() => {
+		if (running) {
+			Logger.info(
+				"SiteCommand",
+				"Previous cycle still running, skipping this tick",
+			);
+			return;
+		}
+		running = true;
+		void tick().finally(() => {
+			running = false;
+		});
+	}, intervalMs);
+
+	return {
+		stop: () => clearInterval(timer),
+	};
+}
+
 export async function runSiteEvolve(
 	options: SiteEvolveOptions = {},
 ): Promise<void> {
@@ -68,15 +100,14 @@ export async function runSiteEvolve(
 	// Run first cycle immediately
 	await run();
 
-	// Schedule subsequent cycles
-	const timer = setInterval(() => {
-		void run();
-	}, config.cycleIntervalMs);
+	// Schedule subsequent cycles with a re-entrancy guard so a slow cycle
+	// cannot stack overlapping ticks.
+	const loop = startSiteEvolveLoop(run, config.cycleIntervalMs);
 
 	// Graceful shutdown
 	const shutdown = () => {
 		Logger.info("SiteCommand", "Shutting down...");
-		clearInterval(timer);
+		loop.stop();
 		void posthog.shutdown().then(() => process.exit(0));
 	};
 

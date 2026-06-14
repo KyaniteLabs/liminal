@@ -62,6 +62,9 @@ export class EmbeddingService {
   private static readonly DEFAULT_OPENAI_MODEL =
     'text-embedding-ada-002';
   private static readonly DEFAULT_MAX_LENGTH = 512;
+  // Bound parallel embeddings in embedBatch so a large input doesn't issue
+  // unbounded concurrent inference calls.
+  private static readonly DEFAULT_BATCH_CONCURRENCY = 8;
 
   constructor(config: EmbeddingConfig = {}) {
     this.config = {
@@ -177,21 +180,38 @@ export class EmbeddingService {
 
   /**
    * Generate embeddings for multiple texts in batch.
-   * More efficient than calling embed() multiple times.
+   *
+   * Texts are processed in bounded-concurrency chunks (Promise.all per chunk)
+   * so a large input no longer blocks on a fully serial loop, while still
+   * capping the number of in-flight inference calls. Order is preserved.
+   *
    * @param texts - Array of texts to embed
-   * @returns Array of embedding results
+   * @param concurrency - Max embeddings computed in parallel per chunk (default 8)
+   * @returns Array of embedding results, in the same order as `texts`
    */
-  async embedBatch(texts: string[]): Promise<EmbeddingResult[]> {
-    // Ensure initialization
+  async embedBatch(
+    texts: string[],
+    concurrency = EmbeddingService.DEFAULT_BATCH_CONCURRENCY,
+  ): Promise<EmbeddingResult[]> {
+    // Ensure initialization once, before fanning out, so concurrent embed()
+    // calls don't each race on doInitialize().
     if (!this.initialized) {
       await this.initialize();
     }
 
-    // Process sequentially for now (batch support can be added later)
-    const results: EmbeddingResult[] = [];
-    for (const text of texts) {
-      results.push(await this.embed(text));
+    const batchSize = Math.max(1, concurrency);
+    const results: EmbeddingResult[] = new Array(texts.length);
+
+    for (let start = 0; start < texts.length; start += batchSize) {
+      const chunk = texts.slice(start, start + batchSize);
+      const chunkResults = await Promise.all(
+        chunk.map((text) => this.embed(text)),
+      );
+      for (let i = 0; i < chunkResults.length; i++) {
+        results[start + i] = chunkResults[i];
+      }
     }
+
     return results;
   }
 

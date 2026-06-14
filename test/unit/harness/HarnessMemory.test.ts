@@ -315,4 +315,72 @@ describe('HarnessMemory', () => {
       expect(status.initialized).toBe(true);
     });
   });
+
+  describe('timer lifecycle and shutdown flush (E7)', () => {
+    it('unrefs the 30s auto-save interval so it does not keep the process alive', async () => {
+      const { promises: fs } = await import('node:fs');
+      vi.mocked(fs).readFile.mockRejectedValue(
+        Object.assign(new Error('ENOENT'), { code: 'ENOENT' }),
+      );
+
+      // Capture the timer handle returned by the auto-save setInterval and
+      // spy on its unref() so we can assert it was invoked.
+      const realSetInterval = global.setInterval;
+      const unrefSpy = vi.fn();
+      const setIntervalSpy = vi
+        .spyOn(global, 'setInterval')
+        .mockImplementation(((fn: () => void, ms?: number) => {
+          const handle = realSetInterval(fn, ms);
+          (handle as NodeJS.Timeout).unref = unrefSpy as never;
+          return handle;
+        }) as never);
+
+      const mem = new HarnessMemory();
+      await mem.initialize();
+
+      // The 30s auto-save interval must have been created and unref'd exactly once.
+      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 30000);
+      expect(unrefSpy).toHaveBeenCalledTimes(1);
+
+      await mem.shutdown();
+      setIntervalSpy.mockRestore();
+    });
+
+    it('flushes pending dirty state to disk on shutdown', async () => {
+      const { writeFileAtomic } = await import('../../../src/utils/atomicWrite.js');
+
+      // Initialize wrote once (initial save); clear so we only see the flush.
+      vi.mocked(writeFileAtomic).mockClear();
+
+      // Make in-flight memory that has NOT yet been auto-saved.
+      memory.recordEpisode({
+        type: 'generation',
+        domain: 'hydra',
+        prompt: 'unflushed-on-purpose',
+        score: 0.42,
+      });
+
+      await memory.shutdown();
+
+      // Shutdown must have persisted exactly once, and the persisted payload
+      // must contain the pending episode (real state, not a stub).
+      expect(writeFileAtomic).toHaveBeenCalledTimes(1);
+      const [, payload] = vi.mocked(writeFileAtomic).mock.calls[0];
+      const persisted = JSON.parse(payload as string);
+      expect(persisted.episodes).toHaveLength(1);
+      expect(persisted.episodes[0].prompt).toBe('unflushed-on-purpose');
+      expect(persisted.episodes[0].score).toBe(0.42);
+    });
+
+    it('does not write again on shutdown when there is nothing pending', async () => {
+      const { writeFileAtomic } = await import('../../../src/utils/atomicWrite.js');
+
+      // Persist current state, then clear the spy so a no-op shutdown is visible.
+      await memory.save();
+      vi.mocked(writeFileAtomic).mockClear();
+
+      await memory.shutdown();
+      expect(writeFileAtomic).not.toHaveBeenCalled();
+    });
+  });
 });

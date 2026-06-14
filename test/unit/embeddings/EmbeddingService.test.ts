@@ -172,7 +172,7 @@ describe('EmbeddingService', () => {
   // -------------------------------------------------------------------------
 
   describe('embedBatch', () => {
-    it('embeds multiple texts sequentially', async () => {
+    it('embeds every text and reports them all as freshly computed', async () => {
       const svc = new EmbeddingService({ useLocal: true });
       const results = await svc.embedBatch(['one', 'two', 'three']);
 
@@ -187,6 +187,107 @@ describe('EmbeddingService', () => {
       const svc = new EmbeddingService({ useLocal: true });
       const results = await svc.embedBatch([]);
       expect(results).toEqual([]);
+    });
+
+    it('runs embeddings concurrently within a chunk (E6 — not a serial loop)', async () => {
+      // Instrument the pipeline callable to record peak concurrency: each call
+      // blocks on a manual resolver until ALL pending calls have started.
+      let inFlight = 0;
+      let peak = 0;
+      const resolvers: Array<() => void> = [];
+      mockPipelineFn.mockImplementation(() => {
+        inFlight++;
+        peak = Math.max(peak, inFlight);
+        return new Promise((resolve) => {
+          resolvers.push(() => {
+            inFlight--;
+            resolve(fakeTensorOutput(384, 0.5));
+          });
+        });
+      });
+
+      const svc = new EmbeddingService({ useLocal: true });
+      // Initialize first so the only awaits left in embedBatch are the embeds.
+      await svc.initialize();
+
+      const texts = ['a', 'b', 'c', 'd'];
+      const batchPromise = svc.embedBatch(texts, 4);
+
+      // Flush microtasks until all 4 embeds have entered the pipeline (bounded
+      // so a serial implementation can't hang the test).
+      for (let i = 0; i < 30 && resolvers.length < texts.length; i++) {
+        await Promise.resolve();
+      }
+
+      // If embedBatch were serial, only ONE call would ever be in flight.
+      // With bounded-parallel (concurrency 4), all 4 start before any resolves.
+      expect(peak).toBe(4);
+
+      // Drain — resolve all in-flight calls so the batch completes.
+      for (const r of resolvers) r();
+      const results = await batchPromise;
+      expect(results).toHaveLength(4);
+    });
+
+    it('bounds concurrency to the requested chunk size', async () => {
+      let inFlight = 0;
+      let peak = 0;
+      const resolvers: Array<() => void> = [];
+      mockPipelineFn.mockImplementation(() => {
+        inFlight++;
+        peak = Math.max(peak, inFlight);
+        return new Promise((resolve) => {
+          resolvers.push(() => {
+            inFlight--;
+            resolve(fakeTensorOutput(384, 0.5));
+          });
+        });
+      });
+
+      const svc = new EmbeddingService({ useLocal: true });
+      await svc.initialize();
+      // 5 texts, concurrency 2 → at most 2 in flight at any time.
+      const texts = ['a', 'b', 'c', 'd', 'e'];
+      const batchPromise = svc.embedBatch(texts, 2);
+
+      // Drain in waves; resolve whatever has started so the next chunk runs.
+      // Bounded loop guards against a hang if concurrency were unbounded.
+      let settled = false;
+      batchPromise.then(() => {
+        settled = true;
+      });
+      for (let i = 0; i < 100 && !settled; i++) {
+        await Promise.resolve();
+        while (resolvers.length > 0) {
+          const r = resolvers.shift()!;
+          r();
+        }
+      }
+
+      const results = await batchPromise;
+      expect(results).toHaveLength(5);
+      // Peak in-flight must never exceed the requested concurrency of 2.
+      expect(peak).toBeLessThanOrEqual(2);
+    });
+
+    it('preserves input order in the returned results', async () => {
+      // Distinct vector value per text → identify which result is which.
+      const valueByText: Record<string, number> = {
+        first: 0.1,
+        second: 0.2,
+        third: 0.3,
+      };
+      mockPipelineFn.mockImplementation((text: string) =>
+        Promise.resolve(fakeTensorOutput(384, valueByText[text])),
+      );
+
+      const svc = new EmbeddingService({ useLocal: true });
+      const results = await svc.embedBatch(['first', 'second', 'third'], 8);
+
+      expect(results).toHaveLength(3);
+      expect(results[0].vector[0]).toBeCloseTo(0.1, 5);
+      expect(results[1].vector[0]).toBeCloseTo(0.2, 5);
+      expect(results[2].vector[0]).toBeCloseTo(0.3, 5);
     });
   });
 

@@ -184,6 +184,9 @@ export class HarnessMemory {
           });
         }
       }, 30000);
+      // Don't let the auto-save timer keep the process alive; shutdown()
+      // flushes any pending state explicitly.
+      this.saveInterval.unref?.();
 
     } catch (err) {
       Logger.error('HarnessMemory', `Initialization failed: ${err}`);

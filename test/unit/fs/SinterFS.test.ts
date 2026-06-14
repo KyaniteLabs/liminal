@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { SinterFS } from '../../../src/fs/SinterFS.js';
@@ -197,6 +197,26 @@ describe('SinterFS', () => {
 
   it('readRef — returns null for non-existent ref', () => {
     expect(liminalFs.readRef('does-not-exist')).toBeNull();
+  });
+
+  it('readRef — returns null (does not throw) for a truncated/corrupt ref file (E3)', () => {
+    // Simulate a pre-atomic-write crash that left a half-written ref on disk.
+    const refsDir = join(tempDir, '.sinter', 'refs');
+    mkdirSync(refsDir, { recursive: true });
+    writeFileSync(join(refsDir, 'truncated.json'), '{"uri":"sinter://artifact/abc","ha');
+
+    // Must not crash the gallery server or taste-model loader — treat as absent.
+    expect(() => liminalFs.readRef('truncated')).not.toThrow();
+    expect(liminalFs.readRef('truncated')).toBeNull();
+  });
+
+  it('readManifest — returns null (does not throw) for a truncated/corrupt manifest file (E3)', () => {
+    const manifestsDir = join(tempDir, '.sinter', 'manifests');
+    mkdirSync(manifestsDir, { recursive: true });
+    writeFileSync(join(manifestsDir, 'truncated.json'), '{"name":"Half writt');
+
+    expect(() => liminalFs.readManifest('truncated')).not.toThrow();
+    expect(liminalFs.readManifest('truncated')).toBeNull();
   });
 
   it('writeManifest — writes a manifest and the file exists at .sinter/manifests/<name>.json', () => {

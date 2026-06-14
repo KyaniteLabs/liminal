@@ -389,29 +389,53 @@ function registerMissingStaticGenerators(): number {
   return registered;
 }
 
+let initInFlight: Promise<void> | null = null;
+
 /**
  * Register all generators with the singleton registry.
  * Call once at application startup.
- * 
+ *
  * First tries to load from plugins/, falls back to static registration.
+ *
+ * Cold-start is awaited through a single shared promise (`initInFlight`) so that
+ * N concurrent callers (e.g. parallel candidates) run plugin loading once instead
+ * of racing the registry and double-loading. The promise is cleared on completion,
+ * after which the cheap `alreadyRegistered` short-circuit handles subsequent calls.
  */
 export async function registerAllGenerators(): Promise<void> {
-  const alreadyRegistered = generatorRegistry.getAll().length > 0;
-
-  // Try to load plugins first on an empty registry.
-  if (!alreadyRegistered) {
-    pluginsLoaded = await loadPlugins();
+  if (generatorRegistry.getAll().length > 0) {
+    return;
+  }
+  if (initInFlight) {
+    return initInFlight;
   }
 
-  const missingStaticCount = registerMissingStaticGenerators();
-  
-  if (!pluginsLoaded) {
-    Logger.info('registerGenerators', `Registered ${missingStaticCount} static generators`);
-  } else {
-    Logger.info(
-      'registerGenerators',
-      `Loaded ${pluginLoader.getAllPlugins().length} plugins and registered ${missingStaticCount} missing static generators`,
-    );
+  // Await a local handle (not the shared mutable) and only clear the shared slot
+  // if it still points at our promise — this coalesces concurrent cold-starts
+  // without the `require-atomic-updates` race of reassigning across an await.
+  const pending = (async () => {
+    // Try to load plugins first on an empty registry.
+    pluginsLoaded = await loadPlugins();
+
+    const missingStaticCount = registerMissingStaticGenerators();
+
+    if (!pluginsLoaded) {
+      Logger.info('registerGenerators', `Registered ${missingStaticCount} static generators`);
+    } else {
+      Logger.info(
+        'registerGenerators',
+        `Loaded ${pluginLoader.getAllPlugins().length} plugins and registered ${missingStaticCount} missing static generators`,
+      );
+    }
+  })();
+  initInFlight = pending;
+
+  try {
+    await pending;
+  } finally {
+    if (initInFlight === pending) {
+      initInFlight = null;
+    }
   }
 }
 

@@ -313,6 +313,33 @@ describe('registerGenerators', () => {
       ]);
     });
 
+    it('runs init exactly once when two cold-start callers race (E4)', async () => {
+      // Defer loadAll so both concurrent callers enter before either init completes.
+      let resolveLoad: (value: Array<{ success: boolean }>) => void = () => {};
+      const loadStarted = new Promise<void>((resolveStarted) => {
+        mockLoadAll.mockImplementationOnce(
+          () =>
+            new Promise<Array<{ success: boolean }>>((resolve) => {
+              resolveLoad = resolve;
+              resolveStarted();
+            }),
+        );
+      });
+      mockGetAll.mockReturnValue([]);
+
+      const first = registerAllGenerators();
+      await loadStarted; // first caller is now parked inside loadPlugins()
+      const second = registerAllGenerators(); // races the in-flight init
+
+      resolveLoad([{ success: false }]);
+      await Promise.all([first, second]);
+
+      // Without the guard, the second caller would re-enter loadPlugins().
+      expect(mockLoadAll).toHaveBeenCalledTimes(1);
+      // Static generators are registered exactly once, not twice.
+      expect(mockRegister.mock.calls.map(([entry]) => entry.name)).toEqual(staticGeneratorNames);
+    });
+
     it('backfills site-compatible static generators that are not provided by loaded plugins', async () => {
       const mockPlugin = {
         manifest: { id: 'html' },

@@ -61,6 +61,12 @@ while true; do
   # `preferences train` is the PERSISTING path (TasteLearningService → SinterFS).
   echo "[daemon $(date -u +%FT%TZ)] preferences train"
   node bin/sinter preferences train || echo "[daemon $(date -u +%FT%TZ)] preferences train FAILED (rc=$?) — continuing"
+  # Studio reflection: distill persisted human chat sessions into taste signals
+  # (studio model → HarnessMemory → GuidanceEngine). The chat's human-preference
+  # signal entering the flywheel. Idempotent (per-session reflected marker), so a
+  # session is reflected once. Also runnable on demand: `sinter chat reflect`.
+  echo "[daemon $(date -u +%FT%TZ)] chat reflect"
+  node bin/sinter chat reflect || echo "[daemon $(date -u +%FT%TZ)] chat reflect FAILED (rc=$?) — continuing"
   echo "[daemon $(date -u +%FT%TZ)] cycle start"
   if node scripts/quality/self-improve-cycle.mjs "$COUNT"; then
     echo "[daemon $(date -u +%FT%TZ)] cycle ok"

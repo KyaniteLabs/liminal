@@ -1511,6 +1511,32 @@ else if (cmd === 'compose') {
     process.exit(1);
   }
 }
+else if (cmd === 'chat' && cmdArgs[0] === 'reflect') {
+  // Studio reflection: the studio model distills persisted chat sessions into a
+  // taste signal and writes it to HarnessMemory, which GuidanceEngine reads forward
+  // into future generations. The chat's human signal feeding the self-improvement
+  // flywheel — runnable by any user (not only the background daemon).
+  const { SinterFS } = await import('../dist/fs/index.js');
+  const { LLMClient } = await import('../dist/llm/LLMClient.js');
+  const { reflectUnreflectedSessions } = await import('../dist/learning/StudioReflection.js');
+  const sinterFs = SinterFS.open(process.cwd());
+  try {
+    await LLMClient.loadRoles();
+    const llm = new LLMClient({ role: 'studio' });
+    const limit = Math.max(1, parseInt(cmdArgs[1] || '10', 10) || 10);
+    console.log('');
+    console.log('=== Chat Reflect (studio model distills persisted sessions → taste signal) ===');
+    const res = await reflectUnreflectedSessions(sinterFs, llm, { limit });
+    console.log(`  reflected ${res.reflected} session(s), skipped ${res.skipped}`);
+    for (const s of res.signals) {
+      console.log(`  [${s.sessionId.slice(0, 8)}] intent="${s.intentSummary.slice(0, 48)}" likes=${JSON.stringify(s.likes.slice(0, 3))} satisfaction=${s.satisfaction.toFixed(2)}`);
+    }
+    console.log('  → recorded to HarnessMemory (GuidanceEngine reads these forward into future generations)');
+  } finally {
+    sinterFs.close();
+  }
+  process.exit(0);
+}
 else if (cmd === 'chat') {
   // Chat command - conversational creative coding mode
   chatCommand({ verbose: flags.verbose || false }).catch(err => {

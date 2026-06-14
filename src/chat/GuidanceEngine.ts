@@ -115,6 +115,9 @@ export class GuidanceEngine {
     const archiveSuggestion = this.createArchiveSuggestion();
     if (archiveSuggestion) suggestions.push(archiveSuggestion);
 
+    const sessionTasteSuggestion = this.createSessionTasteSuggestion();
+    if (sessionTasteSuggestion) suggestions.push(sessionTasteSuggestion);
+
     const creativePreferenceSuggestion = createCreativePreferenceSuggestion(ctx);
     if (creativePreferenceSuggestion) suggestions.push(creativePreferenceSuggestion);
 
@@ -263,6 +266,42 @@ export class GuidanceEngine {
         // Enable archive learning for next iteration
         // This would be wired into the generation pipeline via PromptEnhancer
       }
+    };
+  }
+
+  /**
+   * Create a learned-taste suggestion from StudioReflection signals. The studio
+   * model distilled past sessions into `session-taste` feedback episodes; surfacing
+   * the aggregated likes here is how the chat's human-preference signal feeds
+   * forward into the next generation — closing the reflection loop.
+   */
+  private createSessionTasteSuggestion(): Suggestion | null {
+    const tasteEpisodes = harnessMemory
+      .getRecentEpisodes(50)
+      .filter(ep => ep.type === 'feedback' && (ep.tags?.includes('session-taste') ?? false));
+
+    if (tasteEpisodes.length === 0) {
+      return null;
+    }
+
+    const likes = [...new Set(
+      tasteEpisodes.flatMap(ep =>
+        (ep.tags ?? []).filter(t => t !== 'session-taste' && t !== 'studio-reflection'),
+      ),
+    )].slice(0, 5);
+
+    if (likes.length === 0) {
+      return null;
+    }
+
+    return {
+      type: 'archive',
+      title: 'Apply learned taste',
+      description: `From past sessions you've favored: ${likes.join(', ')}. I'll lean toward these.`,
+      priority: 'medium',
+      action: async () => {
+        // Surfaced into generation context via the suggestion pipeline.
+      },
     };
   }
 

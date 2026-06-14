@@ -359,10 +359,23 @@ Respond with a JSON object:
             Logger.warn('MetaHarnessIntegration', `Failed to persist insight: ${(writeErr as Error).message}`);
           }
           
-          // If high confidence suggestion, could auto-adapt prompt templates
-          if (analysis.confidence > 0.8 && analysis.systemImprovement) {
-            Logger.debug('MetaHarnessIntegration', 'High-confidence system improvement suggested:');
-            Logger.debug('MetaHarnessIntegration', `${analysis.systemImprovement}`);
+          // High-confidence "communicate better" guidance is fed FORWARD as a
+          // real adaptation (B3). Previously this branch only Logger.debug'd, so
+          // the most expensive feed-forward channel had zero downstream effect.
+          // Recording a successful 'prompt' adaptation routes the guidance through
+          // the existing path that already reaches the next generation:
+          //   getSuccessfulAdaptations() -> TierBasedGenerator.getRecentAdaptations()
+          //   -> PromptContext.recentAdaptations -> PromptBuilder <learned_guidance>.
+          const guidance = (analysis.howToCommunicateBetter || analysis.systemImprovement || '').trim();
+          if (analysis.confidence > 0.8 && guidance) {
+            harnessMemory.recordAdaptation({
+              patternName: `thinking-analysis:${result.domain}`,
+              patternSeverity: 'low',
+              fixType: 'prompt',
+              description: guidance,
+              success: true,
+            });
+            Logger.debug('MetaHarnessIntegration', `High-confidence guidance fed forward: ${guidance.slice(0, 80)}`);
           }
         }
       }

@@ -144,6 +144,24 @@ export class PromptBuilder {
   }
 
   /**
+   * Render recent harness adaptations / thinking-analysis guidance as a prompt
+   * block. These are short, model-facing "communicate better" notes the
+   * Meta-Harness learned from past generator reasoning (B3). Without this the
+   * `recentAdaptations` channel reached PromptContext but was dropped before the
+   * prompt — the most expensive feed-forward signal was paid for and discarded.
+   * Returns '' when there is nothing to add so existing prompts are unchanged.
+   */
+  private learnedGuidanceBlock(ctx: PromptContext): string {
+    const items = (ctx.recentAdaptations ?? []).map(s => s.trim()).filter(Boolean);
+    if (items.length === 0) return '';
+    return [
+      '<learned_guidance>',
+      ...items.map(g => `- ${g}`),
+      '</learned_guidance>',
+    ].join('\n');
+  }
+
+  /**
    * Build a prompt for the detected tier
    */
   build(context: PromptContext): BuiltPrompt {
@@ -175,6 +193,7 @@ export class PromptBuilder {
       ctx.domainDocs ? `<${ctx.domain}_docs>\n${ctx.domainDocs}\n</${ctx.domain}_docs>` : '',
       '',
       ctx.userPreferences ? `<user_prefs>\n${ctx.userPreferences}\n</user_prefs>` : '',
+      this.learnedGuidanceBlock(ctx),
     ].filter(Boolean).join('\n');
 
     const user = [
@@ -208,6 +227,7 @@ export class PromptBuilder {
       PromptBuilder.contractFor(ctx.domain, 'medium'),
       '',
       ctx.domainDocs ? `<domain_knowledge name="${ctx.domain}">\n${ctx.domainDocs}\n</domain_knowledge>` : '',
+      this.learnedGuidanceBlock(ctx),
     ].filter(Boolean).join('\n');
 
     const user = [

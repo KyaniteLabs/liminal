@@ -220,6 +220,39 @@ describe('PromptBuilder.build() — flagship tier', () => {
 
     expect(result.combined).toBeUndefined();
   });
+
+  // B3: harness thinking-analysis guidance (recentAdaptations) must reach the
+  // prompt. Before the fix this field was carried on PromptContext but never
+  // rendered — the expensive feed-forward channel was paid for and discarded.
+  it('renders recentAdaptations as a <learned_guidance> block in the system prompt', () => {
+    setupTier('flagship', 200000);
+    const builder = new PromptBuilder(makeConfig());
+
+    const result = builder.build(FULL_CONTEXT);
+
+    expect(result.system).toContain('<learned_guidance>');
+    expect(result.system).toContain('- adaptation-1');
+    expect(result.system).toContain('- adaptation-2');
+    expect(result.system).toContain('</learned_guidance>');
+  });
+
+  it('omits the learned_guidance block when there are no recentAdaptations', () => {
+    setupTier('flagship', 200000);
+    const builder = new PromptBuilder(makeConfig());
+
+    const result = builder.build(MINIMAL_CONTEXT);
+
+    expect(result.system).not.toContain('<learned_guidance>');
+  });
+
+  it('omits the learned_guidance block when recentAdaptations is empty/blank', () => {
+    setupTier('flagship', 200000);
+    const builder = new PromptBuilder(makeConfig());
+
+    const result = builder.build({ ...MINIMAL_CONTEXT, recentAdaptations: ['', '   '] });
+
+    expect(result.system).not.toContain('<learned_guidance>');
+  });
 });
 
 // ── build() — medium tier ───────────────────────────────────────────────
@@ -307,6 +340,16 @@ describe('PromptBuilder.build() — medium tier', () => {
     const result = builder.build(FULL_CONTEXT);
 
     expect(result.combined).toBeUndefined();
+  });
+
+  it('renders recentAdaptations as a <learned_guidance> block (B3)', () => {
+    setupTier('medium', 100000);
+    const builder = new PromptBuilder(makeConfig());
+
+    const result = builder.build(FULL_CONTEXT);
+
+    expect(result.system).toContain('<learned_guidance>');
+    expect(result.system).toContain('- adaptation-1');
   });
 });
 

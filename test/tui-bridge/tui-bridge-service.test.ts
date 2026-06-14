@@ -4,6 +4,7 @@ import {
   TUI_SYSTEM_PROMPT,
   TuiBridgeService,
 } from '../../src/tui-bridge/TuiBridgeService.js';
+import { BehaviorDescriptorExtractor } from '../../src/emergence/BehaviorDescriptorExtractor.js';
 import type { LLMSession } from '../../src/harness/agent/index.js';
 
 type BridgeEvent = ReturnType<TuiBridgeService['getEvents']>[number];
@@ -72,6 +73,27 @@ describe('TuiBridgeService', () => {
     expect(guidance.description).toContain('color/motion');
     expect(guidance.questions.length).toBeGreaterThan(0);
     expect(serialized).not.toMatch(/\b(guardrail|proof|harness)\b/i);
+  });
+
+  it('sources the real 6 behavior axes for the background gardener, not an empty null space', () => {
+    const service = new TuiBridgeService();
+
+    // The seam wired into gardener.start() as the descriptor-axes provider.
+    const axes = (service as any).gardenerAxes() as string[];
+
+    // Must match the canonical axis source the rest of the system uses, so the
+    // GUI gardener runs dream/novelty over the same descriptor space the CLI does.
+    const canonical = new BehaviorDescriptorExtractor().getAvailableAxes();
+    expect(axes).toEqual(canonical);
+    expect(axes).toEqual([
+      'order-chaos',
+      'sparse-dense',
+      'symmetry-asymmetry',
+      'smooth-bursty',
+      'static-evolving',
+      'harmonic-dissonant',
+    ]);
+    expect(axes.length).toBe(6);
   });
 
   it('creates a session with default chat mode', () => {

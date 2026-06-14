@@ -36,6 +36,8 @@ import { TasteLearningService } from '../learning/TasteLearningService.js';
 import { SinterFS } from '../fs/SinterFS.js';
 import { resolveSinterProjectRoot } from '../fs/projectRoot.js';
 import { EmergenceHooks } from '../emergence/EmergenceHooks.js';
+import { BehaviorDescriptorExtractor } from '../emergence/BehaviorDescriptorExtractor.js';
+import type { DescriptorAxis } from '../emergence/types.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
 import { buildCreativePreferencePromptHints, createCreativePreferenceSuggestion } from '../chat/CreativePreferenceGuide.js';
@@ -265,7 +267,7 @@ export class TuiBridgeService {
     this.hydrateLatestTasteModel();
     void this.gardener.start(
       () => this.getEmergenceHooks()?.hydrateArchive() ?? [],   // Archive cells hydrated from SinterFS
-      () => [],   // Descriptor axes — populated by emergence pipeline at runtime
+      () => this.gardenerAxes(),   // The real 6 behavior axes (same source the CLI garden path uses)
       (result: GardenerCycleResult) => {
         for (const sid of this.sessions.list()) {
           this.stream.publishEphemeral(sid, {
@@ -1513,6 +1515,18 @@ export class TuiBridgeService {
       }
     }
     return this.emergenceHooks;
+  }
+
+  /**
+   * The descriptor axes the background gardener searches over. Sources the real
+   * 6 behavior axes from the same canonical place the rest of the system uses
+   * (BehaviorDescriptorExtractor's defaults, derived from the DescriptorAxis
+   * union) — matching the CLI `garden` path, which passes the identical 6 axes.
+   * Without this the GUI gardener would run dream/novelty over a null (empty)
+   * descriptor space.
+   */
+  private gardenerAxes(): DescriptorAxis[] {
+    return new BehaviorDescriptorExtractor().getAvailableAxes();
   }
 
   /**

@@ -49,6 +49,38 @@ run_claude() {
     claude -p "$(cat "$PROMPT_FILE")" --model haiku --dangerously-skip-permissions --max-turns 40
 }
 
+# Land a pass via a branch + PR, never a direct push to main. Branch-protected CI
+# rejects direct pushes to main, so the agent's commit (made on the root worktree's
+# local main) would otherwise pile up unpushed and re-diverge the shared daemon
+# worktree. This converts any local-ahead commit into a review-gated PR (NOT auto-merged
+# — see the 2026-06-14 Hydra-clamp lesson) and restores the root to clean main. The
+# agent's work is pushed to the branch BEFORE any reset, so it is never lost.
+land_via_pr() {
+  git -C "$REPO" fetch origin main --quiet 2>/dev/null || return 0
+  local ahead
+  ahead=$(git -C "$REPO" rev-list --count origin/main..HEAD 2>/dev/null || echo 0)
+  [ "${ahead:-0}" -gt 0 ] || return 0
+  local br="watchman/auto-$(date -u +%Y%m%d-%H%M%S)"
+  if ! git -C "$REPO" push origin "HEAD:refs/heads/$br" 2>>"$LOG"; then
+    echo "[watchman $(date -u +%FT%TZ)] branch push FAILED — leaving commits local" >> "$LOG"
+    return 0
+  fi
+  local token api
+  token=$(printf 'protocol=https\nhost=git.kyanitelabs.tech\n\n' | git credential fill 2>/dev/null | awk -F= '/^password=/{print $2}')
+  api="https://git.kyanitelabs.tech/api/v1/repos/KyaniteLabs/liminal"
+  if [ -n "$token" ]; then
+    curl -s -X POST -H "Authorization: token $token" -H "Content-Type: application/json" "$api/pulls" \
+      -d "{\"title\":\"watchman: automated pass ($br)\",\"head\":\"$br\",\"base\":\"main\",\"body\":\"Automated overnight watchman pass. REVIEW before merge — do not auto-merge code changes (2026-06-14 Hydra-clamp lesson).\"}" \
+      >> "$LOG" 2>&1
+  fi
+  echo "[watchman $(date -u +%FT%TZ)] landed pass as branch $br + PR (review-gated)" >> "$LOG"
+  # Restore root to clean main; the daemon-owned ledger (telemetry) is reset to origin's.
+  git -C "$REPO" stash push -q -u -- docs/validation/self-improve-ledger.jsonl 2>/dev/null
+  git -C "$REPO" reset --hard origin/main >> "$LOG" 2>&1
+  git -C "$REPO" checkout HEAD -- docs/validation/self-improve-ledger.jsonl 2>/dev/null
+  git -C "$REPO" stash drop 2>/dev/null || true
+}
+
 for runner in ${WATCHMAN_RUNNERS:-codex kimi claude}; do
   case "$runner" in
     codex) bin=codex ;;
@@ -64,7 +96,7 @@ for runner in ${WATCHMAN_RUNNERS:-codex kimi claude}; do
   "run_$runner" < /dev/null >> "$LOG" 2>&1
   rc=$?
   echo "[watchman $(date -u +%FT%TZ)] pass end runner=$runner rc=$rc" >> "$LOG"
-  [ $rc -eq 0 ] && exit 0
+  if [ $rc -eq 0 ]; then land_via_pr; exit 0; fi
 done
 echo "[watchman $(date -u +%FT%TZ)] ALL RUNNERS FAILED" >> "$LOG"
 exit 1

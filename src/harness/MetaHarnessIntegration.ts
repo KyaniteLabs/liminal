@@ -84,17 +84,28 @@ export class MetaHarnessIntegration {
     Logger.debug('MetaHarnessIntegration', `Available providers: ${providers.join(', ') || 'none'}`);
     Logger.debug('MetaHarnessIntegration', `Active provider: ${activeProvider}`);
     
-    // Initialize LLM client with harness-specific config
-    // Note: We pass role:'harness' so LLMClient resolves temperature from RoleConfig (0.5).
-    // We only spread provider-level fields (baseUrl, model, apiKey) — NOT temperature,
-    // because the role system should own that setting.
-    const config = getHarnessProviderConfig() || getActiveProviderConfig();
-    if (config) {
-      const { temperature: _ignoreTemp, maxTokens: _ignoreTokens, ...providerFields } = config;
+    // Resolve the harness client through the ROLE system so it uses
+    // `roles.harness` (e.g. MiniMax-M3), NOT the active generator provider.
+    // The previous code spread getActiveProviderConfig()'s baseUrl/model into the
+    // client, which set explicitEndpointConfig and overrode role resolution —
+    // silently running the harness on the generator's model (e.g. GLM). That was
+    // both the wrong model AND extra load on the generator endpoint. (B4)
+    //
+    // An EXPLICIT harness endpoint (LIMINAL_HARNESS_BASE_URL + _MODEL) still wins;
+    // absent that, loadRoles() populates the role cache so the constructor picks
+    // the harness role's baseUrl over any LLM_BASE_URL fallback.
+    await LLMClient.loadRoles();
+    const explicitHarness =
+      process.env.LIMINAL_HARNESS_BASE_URL && process.env.LIMINAL_HARNESS_MODEL
+        ? getHarnessProviderConfig()
+        : null;
+    if (explicitHarness) {
+      const { temperature: _ignoreTemp, maxTokens: _ignoreTokens, ...providerFields } = explicitHarness;
       this.llmClient = new LLMClient({ ...providerFields, role: 'harness' });
-      Logger.debug('MetaHarnessIntegration', `LLM client configured: ${config.model} @ ${config.baseUrl}`);
+      Logger.debug('MetaHarnessIntegration', `Harness LLM (explicit env): ${explicitHarness.model} @ ${explicitHarness.baseUrl}`);
     } else {
-      Logger.warn('MetaHarnessIntegration', 'No LLM provider configured. Set LIMINAL_LLM_BASE_URL or provider API key.');
+      this.llmClient = new LLMClient({ role: 'harness' });
+      Logger.debug('MetaHarnessIntegration', 'Harness LLM resolved via role:harness (RoleConfig)');
     }
     
     // Load recent failures for pattern detection

@@ -1834,8 +1834,11 @@ export class RalphLoop {
               model: returnBest ? bestModel : lastModel,
             },
           });
-        } catch {
-          // Emergence recording must not affect loop operation
+        } catch (err) {
+          // Emergence recording must not affect loop operation — but a persistent
+          // failure here silently stops all archive/emergence learning while the
+          // loop still looks healthy, so surface it (mirrors the routing handler).
+          Logger.warn('RalphLoop', 'Failed to record emergence outcome:', err instanceof Error ? err.message : err);
         }
         logStageTiming('postloop:emergence-hooks', emergenceStartedAt);
       }

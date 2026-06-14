@@ -1,0 +1,63 @@
+name: Mirror to GitHub (gated)
+
+# Tier 3 public-mirror gate (2026-06-12). Forgejo is the source of truth; the
+# public GitHub copy is only updated by THIS workflow, never by a native push
+# mirror. A commit reaches public GitHub only if:
+#   1. the "Forgejo CI" workflow concluded successfully on main, AND
+#   2. a gitleaks secret scan over the full history finds nothing.
+# Either failure blocks the push (fails safe — public goes stale, never leaks).
+# Pilot repo: liminal. Rolls out org-wide via the .github provisioner once proven.
+
+on:
+  workflow_run:
+    workflows: ["Forgejo CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: liminal-mirror-github
+  cancel-in-progress: false
+
+jobs:
+  gated-mirror:
+    name: gated-mirror
+    # Only run when the upstream CI run actually passed.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: self-hosted
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main (full history)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Secret scan (gitleaks) — hard gate
+        run: |
+          set -euo pipefail
+          GL_VER="8.18.4"
+          if ! command -v gitleaks >/dev/null 2>&1; then
+            echo "installing gitleaks ${GL_VER}"
+            curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GL_VER}/gitleaks_${GL_VER}_linux_x64.tar.gz" \
+              | tar -xz -C /tmp gitleaks
+            export PATH="/tmp:${PATH}"
+          fi
+          # Scans working tree AND full git history; exit 1 on any finding -> blocks push.
+          gitleaks detect --source . --no-banner --redact --exit-code 1
+
+      - name: Push main to GitHub
+        env:
+          GH_MIRROR_TOKEN: ${{ secrets.GH_MIRROR_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_MIRROR_TOKEN:-}" ]; then
+            echo "GH_MIRROR_TOKEN secret is not set; cannot mirror." >&2
+            exit 1
+          fi
+          # main-only, fast-forward; never --mirror (would prune GitHub-side branches).
+          git push "https://x-access-token:${GH_MIRROR_TOKEN}@github.com/KyaniteLabs/liminal.git" HEAD:main
+          echo "mirrored $(git rev-parse --short HEAD) -> github KyaniteLabs/liminal main"

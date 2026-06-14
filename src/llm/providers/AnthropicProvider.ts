@@ -120,7 +120,7 @@ export class AnthropicProvider extends BaseProvider {
         };
       }
 
-      const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
+      const signal = this.withTimeout(req.signal, this.config.timeout || TIMEOUT_DEFAULT_MS);
 
       const response = await fetch(url, {
         method: 'POST',
@@ -227,7 +227,7 @@ export class AnthropicProvider extends BaseProvider {
       };
     }
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
+    const signal = this.withTimeout(req.signal, this.config.timeout || TIMEOUT_DEFAULT_MS);
 
     const response = await fetch(url, {
       method: 'POST',

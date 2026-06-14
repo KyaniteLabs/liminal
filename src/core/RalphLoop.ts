@@ -21,6 +21,7 @@
 
 import { getEvalMode, getRepairMode } from '../config/FeatureFlags.js';
 import type { GenerationEvaluation, ConcreteRepairAdvice } from '../core/types/GenerationEvaluation.js';
+import { isHonestFitnessScore } from './fitnessHonesty.js';
 import { GeneratorHarnessTools } from '../generators/GeneratorHarnessTools.js';
 import { CRAFT_CONTRACT } from '../prompts/CraftContract.js';
 import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
@@ -392,6 +393,10 @@ export class RalphLoop {
     let currentCode = '';
     let previousCode = '';
     let finalScore = 0;
+    // Track the honesty of the score we report, so callers/ledgers can mark a degraded
+    // (evaluator-offline) score as such instead of treating it as real fitness.
+    let finalConfidence = 1;
+    let finalFailureClass: GenerationEvaluation['failureClass'] = 'none';
     let lastThinking: string | undefined;
     // Model provenance: generation uses the generator role, so seed lastModel
     // with its resolved model. Generators that return only a code string drop
@@ -408,6 +413,8 @@ export class RalphLoop {
     // throw away usable work. bestScore < 0 means no valid candidate yet.
     let bestScore = -1;
     let bestCode = '';
+    let bestConfidence = 1;
+    let bestFailureClass: GenerationEvaluation['failureClass'] = 'none';
     let bestThinking: string | undefined;
     let bestModel: string | undefined;
 
@@ -1351,6 +1358,8 @@ export class RalphLoop {
         ContextAccumulation.save(iterationContext);
         normalizedOptions.onIteration?.(iterationContext);
         finalScore = evaluation.score;
+        finalConfidence = evaluation.confidence ?? 1;
+        finalFailureClass = evaluation.failureClass ?? 'none';
         // Remember the highest-scoring candidate that also passes the final
         // validation gate, so a later regression or an invalid last iteration
         // can't discard earlier good work.
@@ -1359,6 +1368,8 @@ export class RalphLoop {
           if (CodeValidator.validate(currentCode, domainForValidation).valid) {
             bestScore = evaluation.score;
             bestCode = currentCode;
+            bestConfidence = evaluation.confidence ?? 1;
+            bestFailureClass = evaluation.failureClass ?? 'none';
             bestThinking = lastThinking;
             bestModel = lastModel;
           }
@@ -1421,9 +1432,22 @@ export class RalphLoop {
         // intermediate iterations. Without this, a gen that achieves the quality
         // threshold on its FIRST iteration (common for tone/ascii/kinetic/textgen)
         // breaks here and never archives, so those domains never accumulate.
-        if (archiveLearning && evaluation.score >= 0.65) {
+        const archiveEvalConfidence = evaluation.confidence ?? 1;
+        const archiveEvalFailureClass = evaluation.failureClass ?? 'none';
+        // Only HONEST scores become few-shot exemplars. A degraded score (LLM scorer/infra
+        // failure → confidence 0, keyword fallback) readily clears 0.65 and would then bias
+        // every future generation toward a fabricated exemplar. 'none'/'render' are real
+        // signals (render = deterministic luminance measure applied); 'scorer'/'infra' are
+        // degraded and must not be persisted as quality exemplars.
+        const isHonestScore = isHonestFitnessScore(evaluation.confidence, evaluation.failureClass);
+        if (archiveLearning && evaluation.score >= 0.65 && isHonestScore) {
           const archiveAddStartedAt = Date.now();
-          const archiveMetadata: Record<string, unknown> = { iteration, domain: normalizedOptions.collabDomain || 'p5' };
+          const archiveMetadata: Record<string, unknown> = {
+            iteration,
+            domain: normalizedOptions.collabDomain || 'p5',
+            evaluationConfidence: archiveEvalConfidence,
+            evaluationFailureClass: archiveEvalFailureClass,
+          };
           if (evaluation.renderMeasure) archiveMetadata.renderMeasure = evaluation.renderMeasure;
           await archiveLearning.addOutput(
             loadedPrompt, currentCode,
@@ -1432,6 +1456,13 @@ export class RalphLoop {
             archiveMetadata,
           );
           logStageTiming(`iter${iteration}:archive:add-output`, archiveAddStartedAt);
+        } else if (archiveLearning && evaluation.score >= 0.65) {
+          Logger.info(
+            'RalphLoop',
+            `archive: skipped degraded exemplar (score ${evaluation.score.toFixed(2)}, ` +
+              `confidence ${archiveEvalConfidence}, failureClass ${archiveEvalFailureClass}) — ` +
+              `not a trustworthy fitness signal`,
+          );
         }
 
         if (gateDecision.shouldBreak) {
@@ -1815,6 +1846,8 @@ export class RalphLoop {
         timestamp: new Date().toISOString(),
         duration,
         finalScore: returnBest ? bestScore : finalScore,
+        evaluationConfidence: returnBest ? bestConfidence : finalConfidence,
+        evaluationFailureClass: returnBest ? bestFailureClass : finalFailureClass,
         project: normalizedOptions.project,
         thinking: returnBest ? bestThinking : lastThinking,
         model: returnBest ? bestModel : lastModel,

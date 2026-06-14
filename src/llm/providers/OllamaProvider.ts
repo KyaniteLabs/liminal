@@ -81,7 +81,7 @@ export class OllamaProvider extends BaseProvider {
         }));
       }
 
-      const signal = req.signal || AbortSignal.timeout(TIMEOUT_OLLAMA_MS);
+      const signal = this.withTimeout(req.signal, TIMEOUT_OLLAMA_MS);
 
       const response = await fetch(`${baseUrl}/api/generate`, {
         method: 'POST',
@@ -193,7 +193,7 @@ export class OllamaProvider extends BaseProvider {
         }
       }
 
-      const signal = req.signal || AbortSignal.timeout(TIMEOUT_DEFAULT_MS);
+      const signal = this.withTimeout(req.signal, TIMEOUT_DEFAULT_MS);
 
       const response = await fetch(url, {
         method: 'POST',
@@ -264,7 +264,7 @@ export class OllamaProvider extends BaseProvider {
       },
     };
 
-    const signal = req.signal || AbortSignal.timeout(TIMEOUT_OLLAMA_MS);
+    const signal = this.withTimeout(req.signal, TIMEOUT_OLLAMA_MS);
 
     const response = await fetch(`${baseUrl}/api/generate`, {
       method: 'POST',
@@ -300,7 +300,7 @@ export class OllamaProvider extends BaseProvider {
       stream: true,
     };
 
-    const signal = req.signal || AbortSignal.timeout(300000);
+    const signal = this.withTimeout(req.signal, 300000);
 
     const response = await fetch(url, {
       method: 'POST',

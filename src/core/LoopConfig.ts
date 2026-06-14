@@ -157,6 +157,10 @@ export interface LoopResult {
   timestamp: string;
   duration: number;
   finalScore: number;
+  /** Confidence of the reported finalScore (0 = degraded/evaluator-offline fallback). */
+  evaluationConfidence?: number;
+  /** Failure class of the scorer; 'scorer'/'infra'/'validator' mean finalScore is not real fitness. */
+  evaluationFailureClass?: 'none' | 'render' | 'validator' | 'scorer' | 'infra';
   project?: string;
   thinking?: string;
   model?: string;

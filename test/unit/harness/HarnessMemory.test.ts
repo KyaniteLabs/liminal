@@ -27,6 +27,13 @@ vi.mock('../../../src/utils/vectors.js', () => ({
   findKNearestNeighbors: vi.fn(),
 }));
 
+// save() persists via writeFileAtomic (node:fs/promises under the hood), not the
+// mocked node:fs — so failure injection targets the atomic-write boundary directly.
+vi.mock('../../../src/utils/atomicWrite.js', () => ({
+  writeFileAtomic: vi.fn().mockResolvedValue(undefined),
+  writeFileAtomicSync: vi.fn(),
+}));
+
 // Helper: create and initialize a fresh HarnessMemory per test.
 // Each test gets its own instance with clean state.
 async function createMemory(): Promise<HarnessMemory> {
@@ -290,8 +297,8 @@ describe('HarnessMemory', () => {
     });
 
     it('returns err and sets hasSaveError on failure', async () => {
-      const { promises: fs } = await import('node:fs');
-      vi.mocked(fs).writeFile.mockRejectedValueOnce(new Error('disk full'));
+      const { writeFileAtomic } = await import('../../../src/utils/atomicWrite.js');
+      vi.mocked(writeFileAtomic).mockRejectedValueOnce(new Error('disk full'));
       const result = await memory.save();
       expect(result.isErr()).toBe(true);
       expect(memory.hasSaveError).toBe(true);

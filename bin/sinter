@@ -156,7 +156,12 @@ function setProviderKey(providerKey, apiKey, { model, baseUrl, activate } = {}) 
     config.roles = { generator: { ...roleBlock } };
   }
   fs.mkdirSync(path.dirname(cfgPath), { recursive: true });
-  fs.writeFileSync(cfgPath, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });
+  // Atomic write (tmp + rename) so a crash never leaves a corrupt config; mode 0o600
+  // because it holds API keys. Mirrors src/utils/atomicWrite.ts (kept inline here to keep
+  // the early --configure bootstrap path free of a dist dependency).
+  const tmpCfg = `${cfgPath}.tmp-${process.pid}`;
+  fs.writeFileSync(tmpCfg, JSON.stringify(config, null, 2) + '\n', { mode: 0o600 });
+  fs.renameSync(tmpCfg, cfgPath);
   return { cfgPath, model: block.model, baseUrl: block.baseUrl, activated: !!activate };
 }
 
@@ -1134,7 +1139,13 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || (flags.prompt && (!cmd
     console.log('📊 Iterations: ' + result.iterations);
     console.log('⏱️ Time: ' + (result.duration / 1000).toFixed(1) + 's');
     console.log('🎯 Reason: ' + result.reason);
-    console.log('⭐ Quality score: ' + result.finalScore.toFixed(2));
+    // Mark a degraded score (evaluator-offline fallback) so it is never read as real
+    // fitness by a human or the self-improve ledger that parses this line.
+    const degraded =
+      (result.evaluationConfidence !== undefined && result.evaluationConfidence <= 0) ||
+      result.evaluationFailureClass === 'scorer' ||
+      result.evaluationFailureClass === 'infra';
+    console.log('⭐ Quality score: ' + result.finalScore.toFixed(2) + (degraded ? ' [degraded: evaluator unavailable, not real fitness]' : ''));
     console.log('🤖 Model: ' + (result.model || 'unknown'));
     // Track in history
     await history.add(prompt);

@@ -149,7 +149,7 @@ export class MiniMaxProvider extends BaseProvider {
       }
     }
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
+    const signal = this.withTimeout(req.signal, this.config.timeout || 300000);
 
     Logger.debug('MiniMaxProvider', `Request to ${url} with model ${this.config.model}`);
 
@@ -327,7 +327,7 @@ export class MiniMaxProvider extends BaseProvider {
       });
     }
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
+    const signal = this.withTimeout(req.signal, this.config.timeout || 300000);
 
     Logger.debug('MiniMaxProvider', `Anthropic-mode request to ${url} with model ${this.config.model}`);
 
@@ -425,7 +425,7 @@ export class MiniMaxProvider extends BaseProvider {
     };
     body[usesMaxCompletionTokens(this.config.model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokensValueStream;
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
+    const signal = this.withTimeout(req.signal, this.config.timeout || 300000);
 
     try {
       const response = await fetch(url, {
@@ -486,7 +486,7 @@ export class MiniMaxProvider extends BaseProvider {
       };
     }
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
+    const signal = this.withTimeout(req.signal, this.config.timeout || 300000);
 
     try {
       const response = await fetch(url, {

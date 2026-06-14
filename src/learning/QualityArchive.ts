@@ -10,6 +10,7 @@
 import { promises as fs } from 'fs';
 import { dirname } from 'path';
 import { Logger } from '../utils/Logger.js';
+import { writeFileAtomic } from '../utils/atomicWrite.js';
 import { safeJsonParse, ArchiveDataSchema } from '../security/JsonSchemas.js';
 
 /**
@@ -166,7 +167,7 @@ export class QualityArchive {
         lastUpdated: new Date().toISOString(),
       };
 
-      await fs.writeFile(this.path, JSON.stringify(data, null, 2), 'utf-8');
+      await writeFileAtomic(this.path, JSON.stringify(data, null, 2));
     } catch (error) {
       Logger.error('QualityArchive', `Error saving archive: ${(error as Error).message}`);
       throw error;

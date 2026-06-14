@@ -43,6 +43,32 @@ export abstract class BaseProvider {
 
   // ── Convenience methods ──
 
+  /**
+   * Combine a caller-supplied abort signal with the provider's own timeout so the
+   * timeout ALWAYS bounds the request. The previous `req.signal || AbortSignal.timeout(...)`
+   * silently dropped the timeout whenever a caller passed any signal — removing the only
+   * time bound on long generations (the structural cause of the multi-minute provider stalls).
+   *
+   * `AbortSignal.any` is Node 20.3+; a manual combiner covers the `engines` floor (Node 18).
+   */
+  protected withTimeout(reqSignal: AbortSignal | undefined, timeoutMs: number): AbortSignal {
+    const timeout = AbortSignal.timeout(timeoutMs);
+    if (!reqSignal) return timeout;
+    if (typeof AbortSignal.any === 'function') {
+      return AbortSignal.any([reqSignal, timeout]);
+    }
+    const controller = new AbortController();
+    if (reqSignal.aborted) {
+      controller.abort(reqSignal.reason);
+    } else if (timeout.aborted) {
+      controller.abort(timeout.reason);
+    } else {
+      reqSignal.addEventListener('abort', () => controller.abort(reqSignal.reason), { once: true });
+      timeout.addEventListener('abort', () => controller.abort(timeout.reason), { once: true });
+    }
+    return controller.signal;
+  }
+
   supportsThinking(): boolean {
     return this.capabilities.thinking;
   }

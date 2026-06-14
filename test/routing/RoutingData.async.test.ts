@@ -24,6 +24,9 @@ vi.mock('node:fs/promises', () => ({
   mkdir: (...args: unknown[]) => mockMkdir(...args),
   writeFile: (...args: unknown[]) => mockWriteFile(...args),
   readFile: (...args: unknown[]) => mockReadFile(...args),
+  // writeFileAtomic (used by recordRoutingOutcome) writes a tmp file then renames it.
+  rename: () => Promise.resolve(),
+  rm: () => Promise.resolve(),
 }));
 
 vi.mock('../../src/routing/GeneratorBanditRouter.js', () => ({

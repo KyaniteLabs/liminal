@@ -1,4 +1,5 @@
-import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { writeFileAtomicSync } from '../utils/atomicWrite.js';
 import { join, dirname } from 'node:path';
 import { ProjectStore } from '../compost/ProjectStore.js';
 import type { SinterObjectRef, WriteArtifactInput, SinterRunRecord } from './types.js';
@@ -68,7 +69,7 @@ export class SinterFS {
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }
-    writeFileSync(path, JSON.stringify(ref, null, 2));
+    writeFileAtomicSync(path, JSON.stringify(ref, null, 2));
 
     const eventStore = this.projectStore.getEventStore();
     eventStore.append('config_change', {
@@ -85,7 +86,13 @@ export class SinterFS {
       return null;
     }
     const content = readFileSync(path, 'utf-8');
-    return JSON.parse(content) as SinterObjectRef;
+    try {
+      return JSON.parse(content) as SinterObjectRef;
+    } catch {
+      // A truncated/corrupt ref (e.g. a pre-atomic-write crash) must not crash the
+      // gallery server or taste-model loader — treat it as absent.
+      return null;
+    }
   }
 
   /**
@@ -147,7 +154,7 @@ export class SinterFS {
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }
-    writeFileSync(path, JSON.stringify(data, null, 2));
+    writeFileAtomicSync(path, JSON.stringify(data, null, 2));
   }
 
   readManifest(name: string): Record<string, unknown> | null {
@@ -157,7 +164,12 @@ export class SinterFS {
       return null;
     }
     const content = readFileSync(path, 'utf-8');
-    return JSON.parse(content) as Record<string, unknown>;
+    try {
+      return JSON.parse(content) as Record<string, unknown>;
+    } catch {
+      // A truncated/corrupt manifest must not crash session resume or enumeration.
+      return null;
+    }
   }
 
   close(): void {

@@ -15,6 +15,7 @@ import { promises as fs } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
 import { Result, ok, err } from 'neverthrow';
+import { writeFileAtomic } from '../utils/atomicWrite.js';
 import { Logger } from '../utils/Logger.js';
 import { Status } from '../types/status.js';
 import type { CalibrationWeights, CalibrationData } from '../calibration/CalibrationSuite.js';
@@ -212,11 +213,7 @@ export class HarnessMemory {
     try {
       this.lastSaveFailed = false;
       this.state.lastUpdated = new Date().toISOString();
-      await fs.writeFile(
-        this.memoryFile,
-        JSON.stringify(this.state, null, 2),
-        'utf-8'
-      );
+      await writeFileAtomic(this.memoryFile, JSON.stringify(this.state, null, 2));
       this.dirty = false;
       return ok(undefined);
     } catch (e) {

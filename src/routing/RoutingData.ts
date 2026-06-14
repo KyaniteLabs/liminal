@@ -15,6 +15,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Logger } from '../utils/Logger.js';
+import { writeFileAtomic } from '../utils/atomicWrite.js';
 import { generatorBanditRouter } from './GeneratorBanditRouter.js';
 
 /**
@@ -51,7 +52,7 @@ export async function recordRoutingOutcome(record: RoutingRecord): Promise<void>
   }
   const filePath = path.join(PERF_DIR, `${record.domain}.json`);
   await fs.mkdir(PERF_DIR, { recursive: true });
-  await fs.writeFile(filePath, JSON.stringify(records), 'utf-8');
+  await writeFileAtomic(filePath, JSON.stringify(records));
 
   // Feed the online bandit
   if (record.qualityScore > 0) {

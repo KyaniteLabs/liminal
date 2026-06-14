@@ -41,6 +41,8 @@ interface ModelAssimilationReport {
   generatedAt: string;
   gitCommit: string | null;
   mode: Mode;
+  /** Where the candidate evidence actually came from. 'fixture' must never be presented as a live proof. */
+  candidatesSource: 'fixture' | 'live';
   status?: 'pass' | 'fail';
   ready?: boolean;
   provider?: string;
@@ -109,17 +111,64 @@ const fixtureCandidates: CandidateEvidence[] = [
   },
 ];
 
-function parseArgs(argv: string[]): { out: string; mode: Mode } {
+function parseArgs(argv: string[]): { out: string; mode: Mode; candidatesPath: string | undefined } {
   let out = path.join(process.cwd(), '.omx', 'proof', 'model-assimilation', new Date().toISOString().replace(/[:.]/g, '-'));
   let mode: Mode = 'fixture';
+  let candidatesPath: string | undefined = process.env.SINTER_MODEL_ASSIMILATION_CANDIDATES?.trim() || undefined;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--') continue;
     if (arg === '--out') out = argv[++i] ?? out;
     if (arg.startsWith('--out=')) out = arg.slice('--out='.length);
     if (arg === '--live') mode = 'live';
+    if (arg === '--candidates') candidatesPath = argv[++i] ?? candidatesPath;
+    if (arg.startsWith('--candidates=')) candidatesPath = arg.slice('--candidates='.length);
   }
-  return { out, mode };
+  return { out, mode, candidatesPath };
+}
+
+/**
+ * Load real candidate evidence supplied for a live audition. Returns the parsed
+ * candidates plus the source label. In live mode this is the ONLY way to earn a
+ * 'live' candidate source — fixtures can never be relabelled as live evidence.
+ */
+function loadRealCandidates(candidatesPath: string | undefined): { candidates: CandidateEvidence[]; source: 'fixture' | 'live'; blockers: string[] } {
+  if (!candidatesPath) {
+    return { candidates: fixtureCandidates, source: 'fixture', blockers: [] };
+  }
+  if (!fs.existsSync(candidatesPath)) {
+    return { candidates: fixtureCandidates, source: 'fixture', blockers: [`Candidate evidence file not found: ${candidatesPath}`] };
+  }
+  try {
+    const parsed = JSON.parse(fs.readFileSync(candidatesPath, 'utf8')) as unknown;
+    const list = Array.isArray(parsed) ? parsed : (parsed as { candidates?: unknown }).candidates;
+    if (!Array.isArray(list) || list.length === 0) {
+      return { candidates: fixtureCandidates, source: 'fixture', blockers: [`Candidate evidence file has no candidates: ${candidatesPath}`] };
+    }
+    const candidates: CandidateEvidence[] = [];
+    for (const entry of list) {
+      const candidate = entry as Partial<CandidateEvidence>;
+      if (typeof candidate.model !== 'string' || candidate.model.trim() === '') {
+        return { candidates: fixtureCandidates, source: 'fixture', blockers: [`Candidate evidence entry missing a model name in ${candidatesPath}`] };
+      }
+      if (typeof candidate.provider !== 'string' || candidate.provider.trim() === '') {
+        return { candidates: fixtureCandidates, source: 'fixture', blockers: [`Candidate ${candidate.model} is missing a provider in ${candidatesPath}`] };
+      }
+      if (!candidate.scores || typeof candidate.scores !== 'object') {
+        return { candidates: fixtureCandidates, source: 'fixture', blockers: [`Candidate ${candidate.model} has no role/domain scores in ${candidatesPath}`] };
+      }
+      candidates.push({
+        model: candidate.model,
+        provider: candidate.provider,
+        notes: Array.isArray(candidate.notes) ? candidate.notes : [],
+        scores: candidate.scores as CandidateEvidence['scores'],
+      });
+    }
+    return { candidates, source: 'live', blockers: [] };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return { candidates: fixtureCandidates, source: 'fixture', blockers: [`Unreadable candidate evidence file ${candidatesPath}: ${reason}`] };
+  }
 }
 
 function decide(score: number, baseline: number): Decision {
@@ -172,11 +221,12 @@ async function readLiveEvidence(): Promise<{ evidence: Array<{ source: string; s
   }
 }
 
-async function buildReport(mode: Mode): Promise<ModelAssimilationReport> {
+async function buildReport(mode: Mode, candidatesPath: string | undefined): Promise<ModelAssimilationReport> {
   const roles: Role[] = ['generator', 'evaluator', 'harness'];
-  const recommendedAssignments = roles.flatMap(role => domains.map(domain => bestCandidate(role, domain, fixtureCandidates)));
+  const { candidates, source: candidatesSource, blockers: candidateBlockers } = loadRealCandidates(candidatesPath);
+  const recommendedAssignments = roles.flatMap(role => domains.map(domain => bestCandidate(role, domain, candidates)));
   const fallbackProvenance = recommendedAssignments.map(item => {
-    const fallback = fixtureCandidates
+    const fallback = candidates
       .filter(candidate => candidate.model !== item.model)
       .sort((a, b) => (b.scores[item.role][item.domain] ?? 0) - (a.scores[item.role][item.domain] ?? 0))
       .map(candidate => candidate.model);
@@ -191,8 +241,16 @@ async function buildReport(mode: Mode): Promise<ModelAssimilationReport> {
     assignmentCount: recommendedAssignments.length,
     fallbackProvenanceCount: fallbackProvenance.length,
   };
+  // Honesty gate: a "live" proof that ranks fixture candidates is not a live
+  // proof. Refuse to report it as passing unless real candidate evidence was
+  // supplied.
+  const fixtureInLive = mode === 'live' && candidatesSource === 'fixture'
+    ? ['Live mode requested but candidate evidence is fixture data; supply real candidates via --candidates <path> or SINTER_MODEL_ASSIMILATION_CANDIDATES']
+    : [];
   const blockers = [
+    ...candidateBlockers,
     ...(mode === 'live' ? live.blockers : []),
+    ...fixtureInLive,
     caseCoverage.complete ? null : 'Model-assimilation case coverage incomplete',
   ].filter(Boolean) as string[];
   const liveProvider = live.evidence[0]?.provider;
@@ -202,6 +260,7 @@ async function buildReport(mode: Mode): Promise<ModelAssimilationReport> {
     generatedAt: new Date().toISOString(),
     gitCommit: readCurrentGitCommit(process.cwd()),
     mode,
+    candidatesSource,
     status: blockers.length === 0 ? 'pass' : 'fail',
     ready: blockers.length === 0,
     provider: mode === 'live' ? liveProvider : undefined,
@@ -210,7 +269,7 @@ async function buildReport(mode: Mode): Promise<ModelAssimilationReport> {
     blockers,
     caseCoverage,
     baselinePolicy,
-    candidates: fixtureCandidates,
+    candidates,
     recommendedAssignments,
     fallbackProvenance,
   };
@@ -221,6 +280,7 @@ function formatMarkdown(report: ModelAssimilationReport): string {
     '# Sinter Model Assimilation Report',
     '',
     `Mode: ${report.mode}`,
+    `Candidate evidence: ${report.candidatesSource}`,
     `Generated: ${report.generatedAt}`,
     '',
     '## Candidates',
@@ -239,20 +299,26 @@ function formatMarkdown(report: ModelAssimilationReport): string {
     '',
     '## Truth Note',
     '',
-    report.mode === 'fixture'
-      ? 'This is deterministic fixture evidence. It proves the assimilation decision contract and report shape, not live provider quality.'
-      : 'Live mode requested; provider execution is expected to populate the same contract with real run evidence.',
+    report.candidatesSource === 'fixture'
+      ? 'This ranks deterministic fixture evidence. It proves the assimilation decision contract and report shape, not live provider quality.'
+      : 'This ranks real candidate evidence supplied for a live audition.',
+    ...(report.mode === 'live' && report.candidatesSource === 'fixture'
+      ? ['', '> WARNING: live mode was requested but only fixture candidates were available; this run is NOT a live proof (status=fail).']
+      : []),
   ];
   return `${lines.join('\n')}\n`;
 }
 
 async function main(): Promise<void> {
-  const { out, mode } = parseArgs(process.argv.slice(2));
-  const report = await buildReport(mode);
+  const { out, mode, candidatesPath } = parseArgs(process.argv.slice(2));
+  const report = await buildReport(mode, candidatesPath);
   await mkdir(out, { recursive: true });
   await writeFile(path.join(out, 'report.json'), JSON.stringify(report, null, 2), 'utf8');
   await writeFile(path.join(out, 'report.md'), formatMarkdown(report), 'utf8');
-  if (mode === 'live') {
+  // Only emit the live receipt downstream gates consume when this is actually a
+  // passing live proof backed by real candidate evidence. A fixture-backed or
+  // failing run must not leave a receipt that masquerades as live proof.
+  if (mode === 'live' && report.status === 'pass' && report.candidatesSource === 'live') {
     const receiptPath = path.join(process.cwd(), '.omx', 'proof', 'model-assimilation-live.json');
     await mkdir(path.dirname(receiptPath), { recursive: true });
     await writeFile(receiptPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');

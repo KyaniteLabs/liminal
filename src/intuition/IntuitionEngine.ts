@@ -38,6 +38,10 @@ import { ProceduralTier } from './ProceduralTier.js';
 import type { ProceduralTierState } from './ProceduralTier.js';
 import { Logger } from '../utils/Logger.js';
 import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
+import { writeFileAtomic } from '../utils/atomicWrite.js';
+import { readFile, mkdir } from 'node:fs/promises';
+import { homedir } from 'node:os';
+import { dirname, join } from 'node:path';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -605,6 +609,34 @@ export class IntuitionEngine {
     this.worldModel.deserialize(state.worldModel);
     this.proceduralTier.deserialize(state.proceduralTier);
     Logger.info('IntuitionEngine', `Loaded engine state from ${state.updatedAt}`);
+  }
+
+  /** Default on-disk path for persisted engine state (alongside routing/archive data). */
+  static defaultStatePath(): string {
+    return join(homedir(), '.sinter', 'intuition', 'engine-state.json');
+  }
+
+  /**
+   * Load persisted engine state from disk so learning accumulates across runs.
+   * A missing file (first run) is not an error. Returns true if state was loaded.
+   */
+  async load(filePath: string = IntuitionEngine.defaultStatePath()): Promise<boolean> {
+    try {
+      const raw = await readFile(filePath, 'utf-8');
+      this.deserialize(JSON.parse(raw) as IntuitionEngineState);
+      return true;
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+        Logger.warn('IntuitionEngine', 'Failed to load persisted state:', err);
+      }
+      return false;
+    }
+  }
+
+  /** Atomically persist engine state to disk so the next run resumes learning. */
+  async save(filePath: string = IntuitionEngine.defaultStatePath()): Promise<void> {
+    await mkdir(dirname(filePath), { recursive: true });
+    await writeFileAtomic(filePath, JSON.stringify(this.serialize()));
   }
 
   /**

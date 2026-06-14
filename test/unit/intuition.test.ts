@@ -1,7 +1,7 @@
 /**
  * Intuition module tests — ThompsonSampler, DomainPrototype, IntuitionStrategy, IntuitionCache
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ThompsonSampler } from '../../src/intuition/ThompsonSampler.js';
 import { DomainPrototype } from '../../src/intuition/DomainPrototype.js';
 import { IntuitionStrategy } from '../../src/intuition/IntuitionStrategy.js';
@@ -22,6 +22,9 @@ import { IntuitionEngine } from '../../src/intuition/IntuitionEngine.js';
 import type { IntuitionAssessment, IntuitionSignal } from '../../src/intuition/IntuitionEngine.js';
 import type { ScoringInput } from '../../src/core/ScoringEngine.js';
 import { MetabolicEntropyEngine } from '../../src/entropy/MetabolicEntropyEngine.js';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 // ---------------------------------------------------------------------------
 // ThompsonSampler
@@ -1949,5 +1952,57 @@ describe('IntuitionEngine', () => {
     const hint = engine.generateHint('p5', 30);
     expect(hint.length).toBeLessThanOrEqual(30);
     expect(hint.endsWith('...')).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// IntuitionEngine persistence — the loop that was never closed
+// ---------------------------------------------------------------------------
+// Before this wiring, RalphLoop built a fresh `new IntuitionEngine()` at each
+// call site, so recordOutcome() updated an instance that was immediately GC'd
+// and generateHint() always ran on an empty engine (returning ''). These tests
+// pin the closed loop: recordOutcome → save → fresh engine → load → non-empty hint.
+describe('IntuitionEngine persistence (loop closure)', () => {
+  let dir: string;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), 'sinter-intuition-'));
+  });
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it('persists recorded outcomes so a fresh engine generates the learned hint', async () => {
+    const statePath = join(dir, 'engine-state.json');
+    const writer = new IntuitionEngine();
+    // 3 pulls makes the model sampler "ready" (minPulls = 3 in the engine config).
+    for (let i = 0; i < 3; i++) {
+      writer.recordOutcome('createCanvas(400, 400);', 'p5', 0.85, 'glm-test');
+    }
+    await writer.save(statePath);
+
+    const reader = new IntuitionEngine();
+    expect(await reader.load(statePath)).toBe(true);
+    expect(reader.generateHint('p5', 200)).toContain('model=glm-test');
+  });
+
+  it('returns an empty hint without loaded state (proving load is what closes the loop)', () => {
+    expect(new IntuitionEngine().generateHint('p5', 200)).toBe('');
+  });
+
+  it('load() returns false for a missing state file (first run is not an error)', async () => {
+    expect(await new IntuitionEngine().load(join(dir, 'does-not-exist.json'))).toBe(false);
+  });
+
+  it('round-trips a recorded quality-cache entry across save/load', async () => {
+    const statePath = join(dir, 'state.json');
+    const writer = new IntuitionEngine();
+    writer.recordOutcome('osc(10).out();', 'hydra', 0.9, 'glm-test');
+    await writer.save(statePath);
+
+    const reader = new IntuitionEngine();
+    await reader.load(statePath);
+    expect(reader.getCache().getStats().size).toBe(1);
   });
 });

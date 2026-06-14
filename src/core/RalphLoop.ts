@@ -506,7 +506,8 @@ export class RalphLoop {
           try {
             const { IntuitionEngine } = await import('../intuition/index.js');
             const intuitionEngine = new IntuitionEngine();
-            intuitionHint = intuitionEngine.generateHint(normalizedOptions.project ?? 'default', 200);
+            await intuitionEngine.load();
+            intuitionHint = intuitionEngine.generateHint(String(normalizedOptions.collabDomain), 200);
           } catch (err) {
             Logger.warn('RalphLoop', 'Intuition hint generation failed:', err);
           }
@@ -1257,8 +1258,11 @@ export class RalphLoop {
           try {
             const { IntuitionEngine } = await import('../intuition/index.js');
             const intuitionEngine = new IntuitionEngine();
-            // Record outcome for future learning (advisory only, no score blending)
-            intuitionEngine.recordOutcome(currentCode, normalizedOptions.project ?? 'default', evaluation.score);
+            await intuitionEngine.load();
+            // Record outcome for future learning (advisory only, no score blending),
+            // then persist so the next run's generateHint can read it back.
+            intuitionEngine.recordOutcome(currentCode, String(normalizedOptions.collabDomain), evaluation.score, lastModel);
+            await intuitionEngine.save();
           } catch (e) {
             normalizedOptions.onThought?.(`Intuition recording skipped: ${e instanceof Error ? e.message : 'unknown error'}`);
           }

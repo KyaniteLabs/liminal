@@ -139,9 +139,17 @@ export class GenerationOrchestrator {
     signal?: AbortSignal,
   ): Promise<GenerationResult> {
     const override = resolveLocalGeneratorOverride(this.options.collabDomain);
-    return runWithGeneratorOverride(override, () =>
+    const result = await runWithGeneratorOverride(override, () =>
       this.generateInner(usedPrompt, _loadedPrompt, bypassCache, signal),
     );
+    // Attribute the run to the local endpoint it actually executed on, so the
+    // reported model + routing telemetry reflect reality. Generators that return
+    // only code otherwise leave the model unset and it defaults to the cloud
+    // generator-role model — making a local generation look like a cloud one.
+    if (override && !result.needsClarification) {
+      result.model = override.model;
+    }
+    return result;
   }
 
   private async generateInner(

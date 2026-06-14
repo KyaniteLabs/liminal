@@ -235,10 +235,13 @@ export class LLMClient {
   }
 
   constructor(rawConfig?: Partial<LLMConfig>) {
-    // Hybrid router: a role:'generator' client with no explicit endpoint may be
-    // redirected to a local (e.g. nucbox) generator for the current generation
-    // (see generatorOverrideContext). No active override → behavior unchanged.
-    const override = rawConfig?.role === 'generator' && !rawConfig?.baseUrl
+    // Hybrid router: a role:'generator' client is redirected to a local (e.g.
+    // nucbox) generator for the current generation when one is active (set only by
+    // GenerationOrchestrator for a local-favored domain). The override wins even
+    // over an explicit baseUrl, because real generators build their client with an
+    // explicit endpoint from getEffectiveConfig — gating on `!baseUrl` would let
+    // them bypass routing entirely. No active override → behavior unchanged.
+    const override = rawConfig?.role === 'generator'
       ? getActiveGeneratorOverride()
       : undefined;
     const config: Partial<LLMConfig> | undefined = override
@@ -882,7 +885,6 @@ export class LLMClient {
     opts?: { jsonMode?: boolean },
   ): Promise<LLMResponse> {
     const llmStartTime = Date.now();
-
     // Auto-detect model on first use (for local endpoints like LM Studio)
     const resolvedModel = await this.resolveModel();
     this.syncResolvedModel(resolvedModel);

@@ -30,10 +30,21 @@ describe('generator endpoint override (hybrid dispatch)', () => {
     });
   });
 
-  it('lets an explicit baseUrl win over the override', () => {
+  it('overrides an explicit baseUrl too — real generators build with an explicit endpoint', () => {
+    // TierBasedGenerator/P5GeneratorLLM construct `new LLMClient({ baseUrl, model,
+    // role:'generator' })` from getEffectiveConfig. The override must still win, or
+    // those generators bypass hybrid routing entirely (the real-execution bug).
     runWithGeneratorOverride(LOCAL, () => {
-      const c = new LLMClient({ role: 'generator', baseUrl: 'http://explicit:1234/v1', model: 'x' });
-      expect(c.getConfig().baseUrl).toBe('http://explicit:1234/v1');
+      const c = new LLMClient({ role: 'generator', baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-5v-turbo', apiKey: 'x' });
+      expect(c.getConfig().baseUrl).toBe(LOCAL.baseUrl);
+      expect(c.getConfig().model).toBe(LOCAL.model);
+    });
+  });
+
+  it('still does not override a non-generator role with explicit config', () => {
+    runWithGeneratorOverride(LOCAL, () => {
+      const c = new LLMClient({ role: 'evaluator', baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-5v-turbo' });
+      expect(c.getConfig().baseUrl).toBe('https://api.z.ai/api/anthropic');
     });
   });
 

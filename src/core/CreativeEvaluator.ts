@@ -46,6 +46,13 @@ export interface AssessmentResult {
   interestingnessScore?: number;
   /** Calibrated score if calibration is available */
   calibratedScore?: number;
+  /**
+   * Dimensions this assessment did NOT compute (e.g. emergence/interestingness
+   * for a shader/SVG/HTML artifact). These are honestly left unscored rather
+   * than fabricated as 0. Consumers must treat listed dimensions as missing,
+   * not as a real low score.
+   */
+  unscoredDimensions?: string[];
 }
 
 interface CodeMetrics {
@@ -62,6 +69,13 @@ interface CodeMetrics {
 }
 
 const MIN_QUALITY_THRESHOLD = 0.7;
+
+/**
+ * Dimensions that the specialized (non-p5) assess branches do not compute.
+ * They are reported as unscored rather than fabricated 0 so that downstream
+ * scoring/calibration omits them instead of averaging in a fake value.
+ */
+const UNSCORED_VISUAL_DIMENSIONS = ['emergence', 'interestingness'] as const;
 
 // Default calibration weights
 const DEFAULT_CALIBRATION_WEIGHTS: CalibrationWeights = {
@@ -302,6 +316,8 @@ export class CreativeEvaluator {
       this.detectsThreeUsage(output) ||
       this.detectsHydraUsage(output) ||
       this.detectsStrudelUsage(output) ||
+      this.detectsSVGUsage(output) ||
+      this.detectsKineticUsage(output) ||
       this.detectsHTMLUsage(output) ||
       this.detectsVideoComponentUsage(output);
     if (!hasCodeStructure && output.length < 500 && !isSpecializedArtifact) {
@@ -346,6 +362,16 @@ export class CreativeEvaluator {
     // Tone.js / Web Audio evaluation
     if (this.detectsToneUsage(output)) {
       return this.assessTone(output, options);
+    }
+
+    // Standalone SVG artwork evaluation (before HTML — a bare <svg> is not a page)
+    if (this.detectsSVGUsage(output)) {
+      return this.assessSVG(output);
+    }
+
+    // CSS-kinetic artwork evaluation (before HTML — kinetic is animation-only HTML)
+    if (this.detectsKineticUsage(output)) {
+      return this.assessKinetic(output);
     }
 
     // HTML/CSS evaluation
@@ -943,6 +969,37 @@ export class CreativeEvaluator {
   }
 
   /**
+   * Detect standalone SVG artwork (a bare <svg> document, not an SVG embedded
+   * inside a full HTML page or a p5.js sketch).
+   */
+  static detectsSVGUsage(code: string): boolean {
+    const codeOnly = code.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    const startsWithSVG = /^<svg\b/i.test(codeOnly) || /^<\?xml[^>]*\?>\s*<svg\b/i.test(codeOnly);
+    const hasSVGTag = /<svg\b/i.test(codeOnly) && /<\/svg>/i.test(codeOnly);
+    const isFullHTMLDoc = /<!DOCTYPE\s+html/i.test(codeOnly) || /<html\b/i.test(codeOnly);
+    const isP5Wrapped = /function\s+setup\s*\(\s*\)/.test(codeOnly) && /createCanvas/.test(codeOnly);
+    // Standalone SVG: opens with <svg> (the artifact IS the SVG), not a page that
+    // merely contains an inline icon.
+    return startsWithSVG && hasSVGTag && !isFullHTMLDoc && !isP5Wrapped;
+  }
+
+  /**
+   * Detect CSS-kinetic artwork: a self-contained HTML document driven purely by
+   * CSS @keyframes animations with no JavaScript (per the kinetic generator
+   * contract). Distinguished from generic HTML by heavy animation + absence of
+   * <script>.
+   */
+  static detectsKineticUsage(code: string): boolean {
+    const codeOnly = code.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    const isHTMLDoc = /<!DOCTYPE\s+html/i.test(codeOnly) || /<html\b/i.test(codeOnly);
+    const hasKeyframes = /@keyframes\b/i.test(codeOnly);
+    const hasAnimation = /\banimation\s*:/i.test(codeOnly) || /\banimation-name\s*:/i.test(codeOnly);
+    const hasScript = /<script\b/i.test(codeOnly);
+    const isP5Wrapped = /function\s+setup\s*\(\s*\)/.test(codeOnly) && /createCanvas/.test(codeOnly);
+    return isHTMLDoc && hasKeyframes && hasAnimation && !hasScript && !isP5Wrapped;
+  }
+
+  /**
    * Detect ASCII art code
    */
   static detectsASCIIUsage(code: string): boolean {
@@ -1014,8 +1071,9 @@ export class CreativeEvaluator {
       technicalScore: Math.max(0, Math.min(1, technicalScore)),
       creativeScore: Math.max(0, Math.min(1, creativeScore)),
       metrics: this.getEmptyMetrics(),
-      emergenceScore: 0,
-      interestingnessScore: 0,
+      emergenceScore: undefined,
+      interestingnessScore: undefined,
+      unscoredDimensions: [...UNSCORED_VISUAL_DIMENSIONS],
       calibratedScore,
     };
   }
@@ -1064,8 +1122,9 @@ export class CreativeEvaluator {
       technicalScore: Math.max(0, Math.min(1, technicalScore)),
       creativeScore: Math.max(0, Math.min(1, creativeScore)),
       metrics: this.getEmptyMetrics(),
-      emergenceScore: 0,
-      interestingnessScore: 0,
+      emergenceScore: undefined,
+      interestingnessScore: undefined,
+      unscoredDimensions: [...UNSCORED_VISUAL_DIMENSIONS],
       calibratedScore,
     };
   }
@@ -1123,8 +1182,9 @@ export class CreativeEvaluator {
       technicalScore: Math.max(0, Math.min(1, technicalScore)),
       creativeScore: Math.max(0, Math.min(1, creativeScore)),
       metrics: this.getEmptyMetrics(),
-      emergenceScore: 0,
-      interestingnessScore: 0,
+      emergenceScore: undefined,
+      interestingnessScore: undefined,
+      unscoredDimensions: [...UNSCORED_VISUAL_DIMENSIONS],
       calibratedScore,
     };
   }
@@ -1176,8 +1236,9 @@ export class CreativeEvaluator {
       technicalScore: Math.max(0, Math.min(1, technicalScore)),
       creativeScore: Math.max(0, Math.min(1, creativeScore)),
       metrics: this.getEmptyMetrics(),
-      emergenceScore: 0,
-      interestingnessScore: 0,
+      emergenceScore: undefined,
+      interestingnessScore: undefined,
+      unscoredDimensions: [...UNSCORED_VISUAL_DIMENSIONS],
       calibratedScore,
     };
   }
@@ -1242,8 +1303,9 @@ export class CreativeEvaluator {
       technicalScore: Math.max(0, Math.min(1, technicalScore)),
       creativeScore: Math.max(0, Math.min(1, creativeScore)),
       metrics: this.getEmptyMetrics(),
-      emergenceScore: 0,
-      interestingnessScore: 0,
+      emergenceScore: undefined,
+      interestingnessScore: undefined,
+      unscoredDimensions: [...UNSCORED_VISUAL_DIMENSIONS],
       calibratedScore,
     };
   }
@@ -1310,8 +1372,9 @@ export class CreativeEvaluator {
       technicalScore: Math.max(0, Math.min(1, technicalScore)),
       creativeScore: Math.max(0, Math.min(1, creativeScore)),
       metrics: this.getEmptyMetrics(),
-      emergenceScore: 0,
-      interestingnessScore: 0,
+      emergenceScore: undefined,
+      interestingnessScore: undefined,
+      unscoredDimensions: [...UNSCORED_VISUAL_DIMENSIONS],
       calibratedScore,
     };
   }
@@ -1389,8 +1452,9 @@ export class CreativeEvaluator {
       technicalScore: Math.max(0, Math.min(1, technicalScore)),
       creativeScore: Math.max(0, Math.min(1, creativeScore)),
       metrics: this.getEmptyMetrics(),
-      emergenceScore: 0,
-      interestingnessScore: 0,
+      emergenceScore: undefined,
+      interestingnessScore: undefined,
+      unscoredDimensions: [...UNSCORED_VISUAL_DIMENSIONS],
     };
   }
 
@@ -1455,8 +1519,125 @@ export class CreativeEvaluator {
       technicalScore: Math.max(0, Math.min(1, technicalScore)),
       creativeScore: Math.max(0, Math.min(1, creativeScore)),
       metrics: this.getEmptyMetrics(),
-      emergenceScore: 0,
-      interestingnessScore: 0,
+      emergenceScore: undefined,
+      interestingnessScore: undefined,
+      unscoredDimensions: [...UNSCORED_VISUAL_DIMENSIONS],
+    };
+  }
+
+  /**
+   * Assess standalone SVG artwork quality.
+   *
+   * Scores on structural domain signals (valid SVG root + viewBox, distinct
+   * drawing primitives, gradients/filters, animation), NOT on raw length or
+   * brace/character count — verbosity is not quality.
+   *
+   * Emergence/interestingness are left unscored (not fabricated to 0) because
+   * this branch does not compute them.
+   */
+  private static assessSVG(output: string): AssessmentResult {
+    const issues: string[] = [];
+    let technicalScore = 0;
+    let creativeScore = 0;
+
+    const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+    // Technical: valid SVG structure
+    if (/<svg\b/i.test(codeOnly) && /<\/svg>/i.test(codeOnly)) technicalScore += 0.3;
+    if (/viewBox\s*=/i.test(codeOnly)) technicalScore += 0.2;
+    if (/\b(?:width|height)\s*=/i.test(codeOnly)) technicalScore += 0.1;
+    if (/xmlns\s*=\s*["']http:\/\/www\.w3\.org\/2000\/svg["']/i.test(codeOnly)) technicalScore += 0.1;
+
+    // Count distinct drawing primitives (variety, not repetition)
+    const primitives = new Set<string>();
+    for (const tag of ['rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'path', 'text', 'g', 'use']) {
+      if (new RegExp(`<${tag}\\b`, 'i').test(codeOnly)) primitives.add(tag);
+    }
+    if (primitives.size >= 1) technicalScore += 0.1;
+    if (primitives.size >= 3) technicalScore += 0.1;
+
+    // Creative: visual richness signals
+    if (primitives.size >= 4) creativeScore += 0.2;
+    else if (primitives.size >= 2) creativeScore += 0.1;
+    if (/<(?:linearGradient|radialGradient)\b/i.test(codeOnly)) creativeScore += 0.2;
+    if (/<filter\b/i.test(codeOnly) || /\bfilter\s*=/i.test(codeOnly)) creativeScore += 0.15;
+    if (/<(?:animate|animateTransform|animateMotion)\b/i.test(codeOnly) || /@keyframes\b/i.test(codeOnly)) creativeScore += 0.2;
+    if (/\btransform\s*=/i.test(codeOnly) || /\btransform\s*:/i.test(codeOnly)) creativeScore += 0.1;
+    if (/<path\b[^>]*\bd\s*=/i.test(codeOnly)) creativeScore += 0.15;
+    // Distinct fill/stroke colors (palette richness, capped — not a count bonus)
+    const colorTokens = new Set((codeOnly.match(/#[0-9a-f]{3,8}\b/gi) || []).map((c) => c.toLowerCase()));
+    if (colorTokens.size >= 3) creativeScore += 0.1;
+
+    if (!/<svg\b/i.test(codeOnly)) issues.push('Missing <svg> root element');
+    if (primitives.size === 0) issues.push('SVG has no drawing primitives');
+    if (!/viewBox\s*=/i.test(codeOnly)) issues.push('Missing viewBox (SVG may not scale)');
+
+    const overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    return {
+      passed: overallScore >= MIN_QUALITY_THRESHOLD,
+      score: Math.max(0, Math.min(1, overallScore)),
+      issues,
+      technicalScore: Math.max(0, Math.min(1, technicalScore)),
+      creativeScore: Math.max(0, Math.min(1, creativeScore)),
+      metrics: this.getEmptyMetrics(),
+      emergenceScore: undefined,
+      interestingnessScore: undefined,
+      unscoredDimensions: [...UNSCORED_VISUAL_DIMENSIONS],
+    };
+  }
+
+  /**
+   * Assess CSS-kinetic artwork quality.
+   *
+   * Scores on the kinetic domain contract (animated CSS @keyframes targeting
+   * visible body elements, no JS), NOT on raw length or brace/character count.
+   *
+   * Emergence/interestingness are left unscored (not fabricated to 0).
+   */
+  private static assessKinetic(output: string): AssessmentResult {
+    const issues: string[] = [];
+    let technicalScore = 0;
+    let creativeScore = 0;
+
+    const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+    // Technical: valid self-contained animated HTML document
+    if (/<!DOCTYPE\s+html/i.test(codeOnly) || /<html\b/i.test(codeOnly)) technicalScore += 0.15;
+    if (/<style\b/i.test(codeOnly)) technicalScore += 0.15;
+    if (/@keyframes\b/i.test(codeOnly)) technicalScore += 0.25;
+    if (/\banimation\s*:/i.test(codeOnly) || /\banimation-name\s*:/i.test(codeOnly)) technicalScore += 0.2;
+    if (/<body\b[\s\S]*?<\/body>/i.test(codeOnly)) technicalScore += 0.1;
+    // Body must contain animatable visual elements (the contract requires this)
+    const hasVisualElements = /<(?:div|svg|span|section|circle|rect|path)\b/i.test(codeOnly);
+    if (hasVisualElements) technicalScore += 0.15;
+
+    // Creative: richness of the animated composition
+    const keyframeBlocks = new Set((codeOnly.match(/@keyframes\s+([\w-]+)/gi) || []));
+    if (keyframeBlocks.size >= 2) creativeScore += 0.2;
+    else if (keyframeBlocks.size >= 1) creativeScore += 0.1;
+    if (/\btransform\s*:/i.test(codeOnly)) creativeScore += 0.15;
+    if (/(?:linear|radial)-gradient\s*\(/i.test(codeOnly)) creativeScore += 0.15;
+    if (/\b(?:opacity|filter|box-shadow|blur)\b/i.test(codeOnly)) creativeScore += 0.15;
+    if (/\banimation[^:]*:[^;]*infinite/i.test(codeOnly)) creativeScore += 0.15;
+    if (/cubic-bezier\s*\(|\bease(?:-in|-out|-in-out)?\b/i.test(codeOnly)) creativeScore += 0.1;
+    const colorTokens = new Set((codeOnly.match(/#[0-9a-f]{3,8}\b/gi) || []).map((c) => c.toLowerCase()));
+    if (colorTokens.size >= 3) creativeScore += 0.1;
+
+    if (/<script\b/i.test(codeOnly)) issues.push('Kinetic artwork must be JavaScript-free (found <script>)');
+    if (!/@keyframes\b/i.test(codeOnly)) issues.push('Missing @keyframes animation');
+    if (!hasVisualElements) issues.push('No visible elements for animations to target');
+
+    const overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    return {
+      passed: overallScore >= MIN_QUALITY_THRESHOLD,
+      score: Math.max(0, Math.min(1, overallScore)),
+      issues,
+      technicalScore: Math.max(0, Math.min(1, technicalScore)),
+      creativeScore: Math.max(0, Math.min(1, creativeScore)),
+      metrics: this.getEmptyMetrics(),
+      emergenceScore: undefined,
+      interestingnessScore: undefined,
+      unscoredDimensions: [...UNSCORED_VISUAL_DIMENSIONS],
     };
   }
 

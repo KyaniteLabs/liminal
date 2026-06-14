@@ -289,4 +289,143 @@ describe('CreativeEvaluator', () => {
       expect(ooResult.creativeScore).toBeGreaterThan(proceduralResult.creativeScore);
     });
   });
+
+  // H3: dishonest fitness — specialized branches must not fabricate emergence /
+  // interestingness as a real 0; they must mark them unscored.
+  describe('H3: honest unscored dimensions (no fabricated 0)', () => {
+    it('shader assessment marks emergence/interestingness unscored, not 0', () => {
+      const shader = `
+        precision highp float;
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        void main() {
+          vec2 uv = gl_FragCoord.xy / u_resolution;
+          vec3 col = vec3(sin(u_time + uv.x), cos(u_time + uv.y), 0.5);
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `;
+      const result = CreativeEvaluator.assess(shader);
+
+      // Honest: dimension is absent (undefined), NOT a fabricated zero.
+      expect(result.emergenceScore).toBeUndefined();
+      expect(result.interestingnessScore).toBeUndefined();
+      expect(result.unscoredDimensions).toEqual(['emergence', 'interestingness']);
+    });
+
+    it('HTML assessment marks emergence/interestingness unscored, not 0', () => {
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head><style>body { background: linear-gradient(red, blue); }</style></head>
+          <body><main><h1>Hello</h1><canvas></canvas></main></body>
+        </html>
+      `;
+      const result = CreativeEvaluator.assess(html);
+
+      expect(result.emergenceScore).toBeUndefined();
+      expect(result.interestingnessScore).toBeUndefined();
+      expect(result.unscoredDimensions).toContain('emergence');
+    });
+
+    it('p5 default path still computes a real (non-undefined) emergence signal', () => {
+      // Particle system with velocity — a genuine emergence signal must be a
+      // real number, proving the unscored marker is not blanket-applied.
+      const p5 = `
+        let particles = [];
+        function setup() {
+          createCanvas(800, 600);
+          for (let i = 0; i < 100; i++) {
+            particles.push({ x: random(width), y: random(height), vx: random(-2, 2), vy: random(-2, 2) });
+          }
+        }
+        function draw() {
+          background(0);
+          for (let p of particles) {
+            p.x += p.vx; p.y += p.vy;
+            ellipse(p.x, p.y, 5, 5);
+          }
+        }
+      `;
+      const result = CreativeEvaluator.assess(p5);
+
+      expect(typeof result.emergenceScore).toBe('number');
+      expect(result.emergenceScore).toBeGreaterThan(0);
+      expect(result.unscoredDimensions).toBeUndefined();
+    });
+  });
+
+  // D5: domain correctness — SVG and kinetic must route to their own branch,
+  // and scoring must not reward brace/verbosity.
+  describe('D5: SVG and kinetic domain routing', () => {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+      <defs><linearGradient id="g"><stop offset="0" stop-color="#ff0000"/><stop offset="1" stop-color="#0000ff"/></linearGradient></defs>
+      <rect x="0" y="0" width="100" height="100" fill="url(#g)"/>
+      <circle cx="50" cy="50" r="30" fill="#00ff00"/>
+      <path d="M10 10 L90 90" stroke="#000000"/>
+    </svg>`;
+
+    const kinetic = `<!DOCTYPE html>
+    <html><head><style>
+      @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes pulse { 0% { opacity: 0.3; } 100% { opacity: 1; } }
+      .a { animation: spin 4s linear infinite; background: radial-gradient(#ff0000, #0000ff); }
+      .b { animation: pulse 2s ease-in-out infinite; filter: blur(2px); }
+    </style></head>
+    <body><div class="a"></div><div class="b"></div></body></html>`;
+
+    it('routes standalone SVG to its own branch (not the p5/HTML default)', () => {
+      expect(CreativeEvaluator.detectsSVGUsage(svg)).toBe(true);
+      const result = CreativeEvaluator.assess(svg);
+      // A real SVG with gradient + 3 primitives scores meaningfully, and the p5
+      // "missing setup/draw" issues must NOT appear (proves it left the default).
+      expect(result.score).toBeGreaterThan(0.5);
+      expect(result.issues).not.toContain('Missing setup() function');
+      expect(result.issues).not.toContain('Missing draw() function');
+    });
+
+    it('routes CSS-kinetic artwork to its own branch (not generic HTML/p5)', () => {
+      expect(CreativeEvaluator.detectsKineticUsage(kinetic)).toBe(true);
+      const result = CreativeEvaluator.assess(kinetic);
+      expect(result.score).toBeGreaterThan(0.5);
+      expect(result.issues).not.toContain('Missing setup() function');
+    });
+
+    it('does not classify a kinetic doc as SVG, and vice versa', () => {
+      expect(CreativeEvaluator.detectsKineticUsage(svg)).toBe(false);
+      expect(CreativeEvaluator.detectsSVGUsage(kinetic)).toBe(false);
+    });
+
+    it('SVG score is unchanged by added braces (no brace/verbosity bonus)', () => {
+      // Same SVG, but with meaningless empty-brace CSS comment padding appended
+      // inside a style attribute — braces increase, real content does not.
+      const padded = svg.replace(
+        '</svg>',
+        '<style> .x{} .y{} .z{} .q{} .w{} .e{} .r{} .t{} </style></svg>',
+      );
+      const base = CreativeEvaluator.assess(svg);
+      const paddedResult = CreativeEvaluator.assess(padded);
+      expect(paddedResult.score).toBe(base.score);
+      expect(paddedResult.technicalScore).toBe(base.technicalScore);
+    });
+
+    it('kinetic score is unchanged by added empty braces (no brace bonus)', () => {
+      const padded = kinetic.replace(
+        '</style>',
+        ' .p1{} .p2{} .p3{} .p4{} .p5{} .p6{} .p7{} .p8{} </style>',
+      );
+      const base = CreativeEvaluator.assess(kinetic);
+      const paddedResult = CreativeEvaluator.assess(padded);
+      expect(paddedResult.score).toBe(base.score);
+      expect(paddedResult.technicalScore).toBe(base.technicalScore);
+    });
+
+    it('SVG/kinetic leave emergence/interestingness unscored (honesty)', () => {
+      const svgResult = CreativeEvaluator.assess(svg);
+      const kineticResult = CreativeEvaluator.assess(kinetic);
+      expect(svgResult.emergenceScore).toBeUndefined();
+      expect(svgResult.interestingnessScore).toBeUndefined();
+      expect(kineticResult.emergenceScore).toBeUndefined();
+      expect(kineticResult.interestingnessScore).toBeUndefined();
+    });
+  });
 });

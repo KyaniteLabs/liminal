@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ConversationManager } from '../../src/chat/ConversationManager.js';
-import type { CreativeBrief } from '../../src/chat/types.js';
+import type { CreativeBrief, Suggestion } from '../../src/chat/types.js';
 import { RalphLoop } from '../../src/core/RalphLoop.js';
 
 // Mock RalphLoop
@@ -264,6 +264,94 @@ describe('ConversationManager - Generation Integration', () => {
       expect(thoughts).toContain('Starting iteration 1...');
       expect(thoughts).toContain('Loading prompt...');
       expect(thoughts).toContain('Generating code...');
+    });
+
+    it('invokes a suggestion action (not just records its display string)', async () => {
+      const brief: CreativeBrief = {
+        intent: 'Create art',
+        context: '',
+        mood: '',
+        constraints: [],
+        references: [],
+        domain: 'p5',
+        techniques: [],
+        complexity: 'simple'
+      };
+
+      // Observable effect of the action firing: it flips this flag. Before the
+      // B10 fix, ConversationManager only recorded the display string and never
+      // invoked the action, so this would stay false.
+      let actionFired = false;
+      const suggestion: Suggestion = {
+        type: 'archive',
+        title: 'Use archive learning',
+        description: '3 high-quality examples available.',
+        priority: 'medium',
+        // eslint-disable-next-line @typescript-eslint/require-await
+        action: async () => { actionFired = true; },
+      };
+
+      vi.mocked(RalphLoop.run).mockImplementation(async (_, options) => {
+        options?.onSuggestion?.(suggestion);
+        return {
+          code: '// code',
+          iterations: 1,
+          completed: true,
+          reason: 'done',
+          timestamp: new Date().toISOString(),
+          duration: 1000,
+          finalScore: 0.7
+        };
+      });
+
+      await manager.generateFromBrief(brief);
+      // Flush the microtask scheduled by the fire-and-await applySuggestion call.
+      await Promise.resolve();
+
+      expect(actionFired).toBe(true);
+      // The display string must still be recorded (no regression).
+      const messages = manager.getCurrentSessionMessages();
+      const suggestionMsg = messages.find(m => m.content.includes('[Suggestion] Use archive learning'));
+      expect(suggestionMsg?.content).toContain('3 high-quality examples available.');
+    });
+
+    it('swallows a throwing suggestion action so generation still completes', async () => {
+      const brief: CreativeBrief = {
+        intent: 'Create art',
+        context: '',
+        mood: '',
+        constraints: [],
+        references: [],
+        domain: 'p5',
+        techniques: [],
+        complexity: 'simple'
+      };
+
+      const throwingSuggestion: Suggestion = {
+        type: 'archive',
+        title: 'Apply learned taste',
+        description: 'favored: restraint.',
+        priority: 'medium',
+        // eslint-disable-next-line @typescript-eslint/require-await
+        action: async () => { throw new Error('action boom'); },
+      };
+
+      vi.mocked(RalphLoop.run).mockImplementation(async (_, options) => {
+        options?.onSuggestion?.(throwingSuggestion);
+        return {
+          code: '// code',
+          iterations: 1,
+          completed: true,
+          reason: 'done',
+          timestamp: new Date().toISOString(),
+          duration: 1000,
+          finalScore: 0.7
+        };
+      });
+
+      await expect(manager.generateFromBrief(brief)).resolves.toBeUndefined();
+      // applySuggestion is exposed and guards a throwing action.
+      await expect(manager.applySuggestion(throwingSuggestion)).resolves.toBeUndefined();
     });
 
     it('should properly set chat mode options', async () => {

@@ -225,6 +225,11 @@ export class ConversationManager {
       onSuggestion: (suggestion: Suggestion) => {
         // Record suggestion as system message for history
         this.recordMessage('system', `[Suggestion] ${suggestion.title}: ${suggestion.description}`);
+        // Apply the suggestion: its action mutates the guidance/prompt state so the
+        // learned signal actually steers the next generation (e.g. records a 'prompt'
+        // adaptation that reaches PromptBuilder <learned_guidance>). Previously the
+        // action was never invoked, so suggestions were display-only.
+        void this.applySuggestion(suggestion);
       },
       guidanceEngine: this.guidance,
 
@@ -242,6 +247,19 @@ export class ConversationManager {
 
     // Record final result
     this.recordMessage('system', `Generation complete: ${result.reason} (${result.iterations} iterations, score: ${result.finalScore.toFixed(2)})`);
+  }
+
+  /**
+   * Invoke a suggestion's action so it mutates the next generation's prompt/guidance
+   * state. Guarded: a failing action must never abort the in-flight generation loop.
+   */
+  async applySuggestion(suggestion: Suggestion): Promise<void> {
+    if (!suggestion.action) return;
+    try {
+      await suggestion.action();
+    } catch {
+      // Suggestion application is best-effort; swallow so generation continues.
+    }
   }
 
   /**

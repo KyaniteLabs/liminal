@@ -262,10 +262,22 @@ export class GuidanceEngine {
       title: 'Use archive learning',
       description: `I have ${highQualityCount} high-quality examples. Archive learning can use them for few-shot improvement.`,
       priority: 'medium',
+      // Wiring the action: record a 'prompt' adaptation so the next generation's
+      // prompt actually leans on the archive's best work. This routes through the
+      // proven feed-forward channel — getSuccessfulAdaptations() ->
+      // TierBasedGenerator.getRecentAdaptations() -> PromptContext.recentAdaptations
+      // -> PromptBuilder <learned_guidance> — so it changes the next prompt, not
+      // just the display string.
+      // eslint-disable-next-line @typescript-eslint/require-await
       action: async () => {
-        // Enable archive learning for next iteration
-        // This would be wired into the generation pipeline via PromptEnhancer
-      }
+        harnessMemory.recordAdaptation({
+          patternName: 'guidance:archive-learning',
+          patternSeverity: 'low',
+          fixType: 'prompt',
+          description: `Lean on the ${highQualityCount} highest-quality archived examples as few-shot references; match their structure and aesthetic strengths.`,
+          success: true,
+        });
+      },
     };
   }
 
@@ -299,8 +311,19 @@ export class GuidanceEngine {
       title: 'Apply learned taste',
       description: `From past sessions you've favored: ${likes.join(', ')}. I'll lean toward these.`,
       priority: 'medium',
+      // Wiring the action: feed the learned likes FORWARD as a 'prompt' adaptation
+      // so the next generation's prompt biases toward them (same proven channel as
+      // the archive suggestion — reaches PromptBuilder <learned_guidance>). Closes
+      // the StudioReflection loop at the point of generation, not just at display.
+      // eslint-disable-next-line @typescript-eslint/require-await
       action: async () => {
-        // Surfaced into generation context via the suggestion pipeline.
+        harnessMemory.recordAdaptation({
+          patternName: 'guidance:session-taste',
+          patternSeverity: 'low',
+          fixType: 'prompt',
+          description: `Bias toward the user's learned preferences from past sessions: ${likes.join(', ')}.`,
+          success: true,
+        });
       },
     };
   }

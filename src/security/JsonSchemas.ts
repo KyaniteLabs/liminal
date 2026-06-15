@@ -95,6 +95,10 @@ const ArchiveEntrySchema = z.object({
   createdAt: z.string(),
   usedCount: z.number().optional(),
   userRating: z.number().optional(),
+  // Evaluator provenance (H1) — preserved across reload so the honesty gate and
+  // few-shot selection can trust every persisted exemplar.
+  confidence: z.number().optional(),
+  failureClass: z.string().optional(),
 });
 
 /** Schema for ArchiveData (as stored in quality_archive.json) */

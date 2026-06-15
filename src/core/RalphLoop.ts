@@ -1886,7 +1886,7 @@ export class RalphLoop {
         const emergenceStartedAt = Date.now();
         try {
           const { EmergenceHooks } = await import('../emergence/EmergenceHooks.js');
-          await new EmergenceHooks(liminalFs).onCreativeRun({
+          const creativeRun = await new EmergenceHooks(liminalFs).onCreativeRun({
             output: returnBest && bestCode ? bestCode : currentCode,
             qualityScore: returnBest ? bestScore : finalScore,
             provenance: 'fresh-generation',
@@ -1898,6 +1898,16 @@ export class RalphLoop {
               model: returnBest ? bestModel : lastModel,
             },
           });
+          // B18: the onCreativeRun result must be CONSUMED, not discarded. The
+          // novelty signal and quality-diversity placement outcome decide what the
+          // archive keeps (incl. the novelty tie-break) — surface it so the
+          // diversity decision is observable and the result is not dead-ended.
+          Logger.info(
+            'RalphLoop',
+            `emergence placement: ${creativeRun.placement.outcome} ` +
+              `(cell ${creativeRun.placement.cellId}, novelty ${creativeRun.signals.novelty.toFixed(2)}, ` +
+              `accepted ${creativeRun.placement.accepted})`,
+          );
         } catch (err) {
           // Emergence recording must not affect loop operation — but a persistent
           // failure here silently stops all archive/emergence learning while the

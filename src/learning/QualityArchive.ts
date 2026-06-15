@@ -49,6 +49,18 @@ export interface ArchiveEntry {
   usedCount?: number;
   /** User rating if provided */
   userRating?: number;
+  /**
+   * Evaluator confidence (0–1) that produced qualityScore. 0 means the LLM
+   * evaluator failed and the score is a keyword/neutral fallback. Optional for
+   * back-compat: legacy entries without provenance are trusted (absence ≠ 0).
+   */
+  confidence?: number;
+  /**
+   * Evaluation failure class. 'none'/'render' are real signals; 'scorer'/'infra'/
+   * 'validator'/'other' mark a degraded (fabricated) score that must NOT be
+   * admitted as a quality exemplar.
+   */
+  failureClass?: string;
 }
 
 /**
@@ -175,10 +187,46 @@ export class QualityArchive {
   }
 
   /**
+   * Whether an entry's own provenance makes it safe to persist as a quality
+   * exemplar. An entry is honest when its evaluator produced a real score:
+   * positive confidence AND a non-degraded failure class ('none'/'render').
+   *
+   * Defense in depth against the offline-evaluator defect (H1): a keyword/regex
+   * fallback readily clears the 0.65 quality bar with confidence 0, and admitting
+   * it biases every future few-shot prompt toward a fabricated exemplar. The
+   * RalphLoop call site already gates on this; this method makes the gate hold for
+   * ANY direct caller (daemon, future code) too.
+   *
+   * Back-compat: when neither provenance field is present the entry is a legacy/
+   * trusted record (absence ≠ confidence 0) and is admitted. The gate only fires
+   * when provenance is supplied and proves the score was fabricated.
+   */
+  static isHonestEntry(entry: Pick<ArchiveEntry, 'confidence' | 'failureClass'>): boolean {
+    if (entry.confidence === undefined && entry.failureClass === undefined) {
+      return true; // legacy entry, no provenance to judge — trust it
+    }
+    const c = entry.confidence ?? 1;
+    const fc = entry.failureClass ?? 'none';
+    return c > 0 && (fc === 'none' || fc === 'render');
+  }
+
+  /**
    * Add an entry to the archive.
    * @param entry - The entry to add
    */
   async add(entry: ArchiveEntry): Promise<void> {
+    // Honesty gate (H1): never persist a fabricated-confidence fallback score as a
+    // real exemplar, even when it clears the quality threshold.
+    if (!QualityArchive.isHonestEntry(entry)) {
+      Logger.info(
+        'QualityArchive',
+        `Rejected dishonest exemplar ${entry.id} (score ${entry.qualityScore.toFixed(2)}, ` +
+          `confidence ${entry.confidence ?? 'n/a'}, failureClass ${entry.failureClass ?? 'n/a'}) — ` +
+          `not a trustworthy fitness signal`,
+      );
+      return;
+    }
+
     const domain = entry.domain;
 
     // Ensure domain exists in cache

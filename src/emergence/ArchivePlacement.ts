@@ -31,6 +31,16 @@ const DEFAULT_BINS = 10;
 const DEFAULT_NEAR_ELITE_CAPACITY = 3;
 const DEFAULT_MIN_QUALITY = 0.3;
 
+/**
+ * Novelty tie-break tuning (B18). The archive is "quality-DIVERSITY": a
+ * novel-but-slightly-lower-quality work can earn a near-elite slot a purely
+ * quality-gated archive would reject, so emergence actually influences what is
+ * kept. A candidate that quality-ties or falls within NOVELTY_QUALITY_MARGIN of
+ * the weakest near-elite, but is at least NOVELTY_MARGIN more novel, displaces it.
+ */
+const NOVELTY_MARGIN = 0.2;
+const NOVELTY_QUALITY_MARGIN = 0.05;
+
 export class ArchivePlacement {
   private readonly binsPerAxis: number;
   private readonly nearEliteCapacity: number;
@@ -110,17 +120,33 @@ export class ArchivePlacement {
       return { accepted: true, cellId, outcome: 'replaced-elite', displaced };
     }
 
-    // Not elite-worthy — try near-elite
-    if (cell.nearElites.length < this.nearEliteCapacity || qualityScore > cell.nearElites[cell.nearElites.length - 1].qualityScore) {
-      const displaced = cell.nearElites.length >= this.nearEliteCapacity
-        ? cell.nearElites.pop()!
-        : undefined;
+    // Not elite-worthy — try near-elite (open slot or beats the weakest on quality)
+    const hasOpenSlot = cell.nearElites.length < this.nearEliteCapacity;
+    const weakest = cell.nearElites[cell.nearElites.length - 1];
+    const beatsOnQuality = !hasOpenSlot && qualityScore > weakest.qualityScore;
+
+    // Quality-diversity tie-break (B18): a full cell normally rejects a candidate
+    // that doesn't beat the weakest near-elite on quality. But if the candidate is
+    // within a small quality margin AND meaningfully more novel, it earns the slot —
+    // so emergence/novelty, not quality alone, decides what diversity is kept.
+    const noveltyTieBreak =
+      !hasOpenSlot &&
+      !beatsOnQuality &&
+      qualityScore >= weakest.qualityScore - NOVELTY_QUALITY_MARGIN &&
+      signals.novelty >= weakest.signals.novelty + NOVELTY_MARGIN;
+
+    if (hasOpenSlot || beatsOnQuality || noveltyTieBreak) {
+      const displaced = !hasOpenSlot ? cell.nearElites.pop()! : undefined;
 
       cell.nearElites.push(entry);
       cell.nearElites.sort((a, b) => b.qualityScore - a.qualityScore);
       this.index.set(entry.id, cellId);
 
-      Logger.info('ArchivePlacement', `Near-elite in ${cellId} — ${entry.id} (q=${qualityScore.toFixed(2)})`);
+      Logger.info(
+        'ArchivePlacement',
+        `Near-elite in ${cellId} — ${entry.id} (q=${qualityScore.toFixed(2)}, ` +
+          `novelty=${signals.novelty.toFixed(2)}${noveltyTieBreak ? ', novelty tie-break' : ''})`,
+      );
       return { accepted: true, cellId, outcome: 'near-elite', displaced };
     }
 

@@ -49,6 +49,10 @@ export interface ArchivedItem {
   usedCount?: number;
   /** User rating if provided */
   userRating?: number;
+  /** Evaluator confidence (0–1) for qualityScore — provenance for the honesty gate */
+  confidence?: number;
+  /** Evaluation failure class — provenance for the honesty gate */
+  failureClass?: string;
   /** Optional mined fragment metadata from swarm sessions */
   fragment?: MinedFragment;
 }
@@ -114,6 +118,16 @@ export class ArchiveLearning {
     const hash = createHash('md5').update(output).digest('hex').substring(0, 8);
     const id = `${domain.substring(0, 3)}_${hash}`;
 
+    // Lift evaluator provenance onto the typed entry so every exemplar carries it
+    // natively (not just buried in metadata) — this is what the QualityArchive
+    // honesty gate reads to reject fabricated-confidence fallback scores (H1).
+    const confidence = typeof metadata?.evaluationConfidence === 'number'
+      ? (metadata.evaluationConfidence as number)
+      : undefined;
+    const failureClass = typeof metadata?.evaluationFailureClass === 'string'
+      ? (metadata.evaluationFailureClass as string)
+      : undefined;
+
     const item: ArchivedItem = {
       id,
       domain,
@@ -123,6 +137,8 @@ export class ArchiveLearning {
       metadata: metadata ?? {},
       createdAt: new Date().toISOString(),
       usedCount: 0,
+      ...(confidence !== undefined ? { confidence } : {}),
+      ...(failureClass !== undefined ? { failureClass } : {}),
     };
 
     // Await persistence so the item is actually flushed to disk before the

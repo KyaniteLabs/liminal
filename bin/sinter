@@ -2758,94 +2758,16 @@ else if (cmd === 'garden' && cmdArgs[0] === 'tend') {
   process.exit(0);
 }
 else if (cmd === 'ship' && cmdArgs[0] === 'garden') {
-  const candidateRef = flags.candidate;
-  const { PolicyChangeManifest } = await import('../dist/release/PolicyChangeManifest.js');
-  const { CreativeRuntimeCandidateBuilder } = await import('../dist/release/CreativeRuntimeCandidateBuilder.js');
-  const { GardenPromotionGate } = await import('../dist/release/GardenPromotionGate.js');
-  const { LaunchSummaryBuilder } = await import('../dist/reporting/index.js');
-  const { GardenHealthMonitor } = await import('../dist/autonomy/GardenHealthMonitor.js');
-  const { CreativeWeaknessEmitter } = await import('../dist/autonomy/CreativeWeaknessEmitter.js');
-
-  // Readiness gate check
-  const { SinterFS } = await import('../dist/fs/index.js');
-  const { EmergenceHooks } = await import('../dist/emergence/index.js');
-  const healthMonitor = new GardenHealthMonitor();
-  const readinessBuilder = new LaunchSummaryBuilder();
-  const sinterFs = SinterFS.open(process.cwd());
-  const hooks = new EmergenceHooks(sinterFs);
-  const archive = hooks.getArchive();
-  const cells = archive.getAllCells();
-  const health = healthMonitor.measure(cells);
-  const preCheckManifest = new PolicyChangeManifest();
-  const preChanges = preCheckManifest.getByStatus('promoted');
-  const emitter = new CreativeWeaknessEmitter();
-  const weaknesses = emitter.getRecent ? [] : [];
-  const readiness = readinessBuilder.assess(health, preChanges, weaknesses);
-
-  if (!readiness.ready && !flags.force) {
-    console.log('');
-    console.log('=== Launch Readiness Gate ===');
-    console.log(`  NOT READY (score: ${(readiness.score * 100).toFixed(0)}%)`);
-    console.log('  Blockers:');
-    for (const b of readiness.blockers) console.log(`    - ${b}`);
-    console.log('');
-    console.log('  Use --force to proceed anyway.');
-    console.log('');
-    process.exit(1);
-  } else if (!readiness.ready && flags.force) {
-    console.log('');
-    console.log(`  WARNING: Launch not ready (score: ${(readiness.score * 100).toFixed(0)}%), but --force was specified.`);
-    console.log('');
-  }
-
-  const manifest = new PolicyChangeManifest();
-  const builder = new CreativeRuntimeCandidateBuilder();
-  const gate = new GardenPromotionGate();
-
-  const changes = manifest.getByStatus('promoted');
-  if (changes.length === 0) {
-    console.log('No promoted changes to ship.');
-    process.exit(0);
-  }
-
-  const candidate = builder.build(changes, candidateRef || 'garden-release');
-  const result = gate.check(candidate);
-
-  console.log('');
-  console.log('=== Ship Garden ===');
-  console.log(`  Candidate: ${candidate.id}`);
-  console.log(`  Changes: ${changes.length}`);
-  console.log(`  Validation: ${(candidate.validationScore * 100).toFixed(0)}%`);
-  console.log(`  Gate: ${result.passed ? 'PASSED' : 'BLOCKED'}`);
-
-  if (result.improvements.length > 0) {
-    console.log('  Improvements:');
-    for (const imp of result.improvements) console.log(`    + ${imp}`);
-  }
-  if (result.regressions.length > 0) {
-    console.log('  Regressions:');
-    for (const reg of result.regressions) console.log(`    - ${reg}`);
-  }
-  console.log('');
-  process.exit(0);
+  // Garden promotion/rollback tier is unimplemented (audit C5): report honestly
+  // instead of silently exiting 0 against an always-empty manifest.
+  console.error('Garden promotion is not yet implemented. No changes have been staged.');
+  process.exit(1);
 }
 else if (cmd === 'ship' && cmdArgs[0] === 'rollback') {
-  const toRef = flags.to;
-  if (!toRef) {
-    console.error('Error: --to <releaseRef> is required');
-    process.exit(1);
-  }
-  const { PolicyChangeManifest } = await import('../dist/release/PolicyChangeManifest.js');
-  const { GardenRollbackController } = await import('../dist/release/GardenRollbackController.js');
-
-  const manifest = new PolicyChangeManifest();
-  const controller = new GardenRollbackController(manifest);
-
-  const rollbackResult = controller.rollback(toRef, 'Manual rollback');
-  console.log('');
-  console.log(`  Rollback ${rollbackResult.rolledBack ? 'succeeded' : 'failed'}: ${rollbackResult.reason}`);
-  console.log('');
-  process.exit(0);
+  // See C5: rollback operates on a fresh in-memory manifest that is never
+  // populated, so it could only ever report 'Change not found'. Report honestly.
+  console.error('Garden rollback is not yet implemented. No promoted changes are tracked.');
+  process.exit(1);
 }
 else if (cmd === 'demo' && cmdArgs[0] === 'creative-codex') {
   const { DemoScenarioRunner } = await import('../dist/product/DemoScenarioRunner.js');

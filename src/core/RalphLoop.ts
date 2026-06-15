@@ -1549,9 +1549,26 @@ export class RalphLoop {
           recentScores.push(evaluation.score);
         }
 
-        // Append aesthetic hints to usedPrompt for next iteration's context
+        // B5: route the aesthetic-model hint through ContextAccumulation so it
+        // survives into iteration N+1. Appending to `usedPrompt` was dead: that
+        // variable is rebuilt from scratch at the top of every iteration and is
+        // computed AFTER generation, so the hint never reached the next prompt.
+        // buildContextForInjection reads `evaluation.issues` from history into the
+        // prompt, so persisting the hint there is what actually feeds it forward.
         if (hints) {
-          usedPrompt += hints;
+          ContextAccumulation.save({
+            iteration: iteration + 0.2,
+            prompt,
+            usedPrompt: '',
+            code: '',
+            evaluation: {
+              score: 0,
+              issues: [hints.trim()],
+              aestheticModelHint: hints.trim(),
+            },
+            timestamp: new Date().toISOString(),
+            maxIterations: normalizedOptions.maxIterations,
+          });
         }
 
         // Auto-compost: feed quality outputs to compost heap
@@ -1583,14 +1600,21 @@ export class RalphLoop {
           }
         }
 
-        // Guidance: check for proactive suggestions
-        if (normalizedOptions.guidanceEngine && normalizedOptions.chatMode) {
+        // Guidance: check for proactive suggestions.
+        // B11: consult the GuidanceEngine on the AUTONOMOUS (non-chat) path too,
+        // not only in chatMode. The MetaHarness→HarnessMemory→GuidanceEngine
+        // feed-forward (e.g. createSessionTasteSuggestion / archive suggestions)
+        // only reached the main learning loop when chatMode was true; the daemon
+        // run() path got none of it. Now updateIteration + suggestNextAction run
+        // whenever a guidanceEngine is present; the onSuggestion CALLBACK stays
+        // chat-only because it is a UI streaming hook.
+        if (normalizedOptions.guidanceEngine) {
           const guidance = normalizedOptions.guidanceEngine;
           // Update iteration tracking for guidance
           if (guidance.updateIteration) {
             guidance.updateIteration(iteration, evaluation.score);
           }
-          // Get and emit suggestions
+          // Get suggestions (consults the forward-read HarnessMemory signals)
           const suggestions = guidance.suggestNextAction({
             prompt: loadedPrompt,
             domain: normalizedOptions.collabDomain as unknown as import('../chat/types.js').Domain,
@@ -1600,8 +1624,10 @@ export class RalphLoop {
             iteration,
             currentScore: evaluation.score,
           });
-          for (const suggestion of suggestions) {
-            normalizedOptions.onSuggestion?.(suggestion);
+          if (normalizedOptions.chatMode) {
+            for (const suggestion of suggestions) {
+              normalizedOptions.onSuggestion?.(suggestion);
+            }
           }
         }
 

@@ -25,6 +25,10 @@ function makeMapElites() {
 function makeNoveltyArchive() {
 	return {
 		noveltyScore: vi.fn(() => 0.75),
+		// add() must exist on the real NoveltyArchive contract: update() scores the
+		// behavior THEN records it so the next iteration is scored against a growing
+		// population (B7). A mock without add() does not match reality.
+		add: vi.fn(),
 	};
 }
 
@@ -51,8 +55,21 @@ describe("EvolutionIntegration", () => {
 		vi.clearAllMocks();
 	});
 
-	it("returns zeroed result when useMapElites is false", () => {
-		const options = makeOptions({ useMapElites: false });
+	it("computes novelty (and skips mapElites hints) when useMapElites is false but archive exists (B7)", () => {
+		// B7: novelty is a real signal on the default path. With useMapElites off
+		// the method still scores + records against the novelty archive and returns
+		// that score; only MAP-Elites coordination (insert/coverage hints) is skipped.
+		const archive = makeNoveltyArchive();
+		const options = makeOptions({ useMapElites: false, _noveltyArchive: archive });
+		const ei = new EvolutionIntegration(options, null);
+		const result = ei.update(1, "code", 0.8, "prompt");
+		expect(result).toEqual({ noveltyScore: 0.75, hints: "" });
+		expect(archive.noveltyScore).toHaveBeenCalledWith([0.1, 0.2, 0.3]);
+		expect(archive.add).toHaveBeenCalledWith([0.1, 0.2, 0.3]);
+	});
+
+	it("returns zeroed novelty when useMapElites is false and no archive exists", () => {
+		const options = makeOptions({ useMapElites: false, _noveltyArchive: undefined });
 		const ei = new EvolutionIntegration(options, null);
 		const result = ei.update(1, "code", 0.8, "prompt");
 		expect(result).toEqual({ noveltyScore: 0, hints: "" });
@@ -64,7 +81,9 @@ describe("EvolutionIntegration", () => {
 		const ei = new EvolutionIntegration(options, null);
 		const result = ei.update(3, "function setup() {}", 0.9, "make circles");
 
-		expect(extractBehavior).toHaveBeenCalledWith("function setup() {}");
+		// extractBehavior now receives the collabDomain so synonym domains
+		// (shader/tone) map to the right feature extractor instead of zeroing out.
+		expect(extractBehavior).toHaveBeenCalledWith("function setup() {}", "p5");
 		expect(archive.noveltyScore).toHaveBeenCalledWith([0.1, 0.2, 0.3]);
 		expect(result.noveltyScore).toBe(0.75);
 	});

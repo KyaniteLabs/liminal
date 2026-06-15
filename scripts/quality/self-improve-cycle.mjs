@@ -141,9 +141,14 @@ for (let i = 0; i < COUNT; i++) {
   // the evaluator role stays config-pinned (GLM) because role config outranks
   // env in the LLMClient constructor.
   const generatorFlags = domain === 'three' ? ' --provider minimax --model MiniMax-M3' : '';
+  // B8: run the dedicated AestheticCritic "soul" critic in the autonomous loop.
+  // Without --aesthetic the critic contributed ZERO to autonomous fitness (the
+  // useAestheticGuardrails default is false). The 'free' preset enables the
+  // critic with permissive constraints so it scores every domain without
+  // over-constraining the diverse RSI prompt pool.
   try {
     const out = execSync(
-      `node bin/sinter --prompt ${JSON.stringify(prompt)} --learn --intuition${generatorFlags} -o ${JSON.stringify(tag)}`,
+      `node bin/sinter --prompt ${JSON.stringify(prompt)} --learn --intuition --aesthetic free${generatorFlags} -o ${JSON.stringify(tag)}`,
       {
         encoding: 'utf-8',
         stdio: ['ignore', 'pipe', 'pipe'],

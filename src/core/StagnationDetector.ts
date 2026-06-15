@@ -98,12 +98,22 @@ export class StagnationDetector {
       if (improvementSpec) {
         // Give the loop one more chance via improvement suggestion
         if (this.iterationsSinceLastImprovement === this.stagnationThreshold) {
+          // B13: feed the FULL corrective spec forward, not just the one-line
+          // description. buildContextForInjection reads `evaluation.issues` into
+          // the next prompt but never reads `usedPrompt` from history — so the
+          // designed `suggestedAction` (carried in improvementSpec) was dropped
+          // and only the terse description leaked through. Put the full spec in
+          // issues so the next generation actually receives the corrective action.
           ContextAccumulation.save({
             iteration: iteration + 0.5,
             prompt,
             usedPrompt: improvementSpec,
             code: '',
-            evaluation: { score: 0, issues: [suggestions[0].description] },
+            evaluation: {
+              score: 0,
+              issues: [suggestions[0].description, improvementSpec],
+              suggestedAction: suggestions[0].suggestedAction,
+            },
             timestamp: new Date().toISOString(),
             maxIterations: undefined,
           });

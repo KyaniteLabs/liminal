@@ -7,6 +7,7 @@
 
 // Core Ralph-Wiggum Loop components
 import { RalphLoop } from './core/RalphLoop.js';
+import { GuidanceEngine } from './chat/GuidanceEngine.js';
 import { ValidationError } from './errors/ValidationError.js';
 import { GenerationError } from './errors/GenerationError.js';
 import { CodeValidator } from './core/CodeValidator.js';
@@ -158,6 +159,10 @@ export async function run(prompt: string, options: {
   archivePath?: string;
   /** Creative domain to route generation + validation to (else defaults to p5). */
   collabDomain?: import('./types/domains.js').Domain;
+  /** Enable the AestheticCritic "soul" guardrails in the quality gate. */
+  useAestheticGuardrails?: boolean;
+  /** Aesthetic critic configuration (preset/strictness/constraints). */
+  aestheticConfig?: { preset?: string; strictness?: 'lenient' | 'moderate' | 'strict'; constraints?: Record<string, unknown> };
 } = {}): Promise<{
   code: string;
   iterations: number;
@@ -215,6 +220,12 @@ export async function run(prompt: string, options: {
     // Create output directory if it doesn't exist
     await fs.mkdir(outputResolved, { recursive: true });
 
+    // B11: construct a GuidanceEngine for the autonomous (non-chat) run() path
+    // too, mirroring ConversationManager's chatMode construction. Without this the
+    // MetaHarness→HarnessMemory→GuidanceEngine feed-forward only reached the chat
+    // loop, so the MAIN learning loop (the daemon's path) got none of it.
+    const guidanceEngine = new GuidanceEngine();
+
     // Run the Ralph-Wiggum Loop with all sophisticated components
     const loopResult = await RalphLoop.run(prompt, {
       maxIterations,
@@ -237,6 +248,13 @@ export async function run(prompt: string, options: {
       useArchiveLearning: options.useArchiveLearning,
       archivePath: options.archivePath,
       collabDomain: options.collabDomain,
+      // B8: forward the AestheticCritic guardrails so --aesthetic actually runs the
+      // "soul" critic in the loop. These were dropped here, so even when bin/sinter
+      // set useAestheticGuardrails the critic never ran in the autonomous path.
+      useAestheticGuardrails: options.useAestheticGuardrails,
+      aestheticConfig: options.aestheticConfig,
+      // B11: wire the autonomous-path guidance engine into the loop.
+      guidanceEngine,
     });
 
     // Initialize Exporter

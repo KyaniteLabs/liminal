@@ -296,7 +296,12 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     lirEnabled: options?.lirEnabled ?? false,
     _disableIterationExtension: options?._disableIterationExtension ?? false,
     _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,
-    _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
+    // B7: a persistent NoveltyArchive on EVERY run (not just MAP-Elites) so the
+    // default path has a real novelty signal. extractBehavior + K-NN distance are
+    // cheap and dependency-free, so this is always-on with negligible cost. Without
+    // it the production novelty score is structurally 0 and stagnation's
+    // novelty-reset can never fire.
+    _noveltyArchive: new NoveltyArchive(),
     debug: normalizeDebugOptions(options?.debug),
     render: normalizeRenderOptions(options?.render),
     numCandidates: Math.max(1, options?.numCandidates ?? 1),

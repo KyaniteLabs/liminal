@@ -44,16 +44,27 @@ export class EvolutionIntegration {
 		let noveltyScore = 0;
 		let hints = "";
 
-		if (!this.options.useMapElites) {
-			return { noveltyScore: 0, hints: "" };
-		}
-
 		const mapElites = this.options._mapElites as MapElites | undefined;
 		const archive = this.options._noveltyArchive as NoveltyArchive | undefined;
 
-		const behavior = extractBehavior(code);
+		const behavior = extractBehavior(code, this.options.collabDomain);
+		// B7: novelty is a real signal on the DEFAULT (non-mapelites) path too.
+		// Previously the whole method early-returned 0 unless useMapElites was set
+		// (and the CLI never sets it), so the production novelty score was
+		// structurally always 0 and the stagnation-reset branch was dead.
+		// Score against the persistent archive, THEN add this behavior so the next
+		// iteration is scored relative to a growing population — without the add()
+		// the archive never accumulates and novelty stays pinned at its first value.
 		if (archive) {
 			noveltyScore = archive.noveltyScore(behavior);
+			archive.add(behavior);
+		}
+
+		// MAP-Elites coordination remains gated on useMapElites; only novelty was
+		// wrongly coupled to it. Without an elites grid there is nothing to insert
+		// or to drive coverage-based diversity hints.
+		if (!this.options.useMapElites) {
+			return { noveltyScore, hints };
 		}
 
 		if (mapElites) {

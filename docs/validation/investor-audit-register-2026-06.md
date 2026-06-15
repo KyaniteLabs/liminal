@@ -68,7 +68,16 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 | F4 sing tests | **IN REVIEW** on Forgejo branch `feat/f4-sing-wiring-test` @ `ce0b2011` (GitHub PR #699 closed unmerged) | forge |
 | F18 composite spec fidelity | **FIXED** (base background contract + transparent ASCII foregrounds; live receipt 2026-06-11: paper-signal lum 0.719, dusk-bloom lum 0.100) | pending |
 | Tier 2/3 remainder (F5 sing ffmpeg, F10 revideo render, F19 p5 contrast, F20 bridge split, F12/#637 render-measurement lane) | open | — |
+| C2 music theory engines (void-suppressed) | **FIXED** (theory engines wired into Strudel/p5 templates: Markov melodies, euclidean patterns, arpeggios replace hardcoded notes) | #132 |
+| C4 model-assimilation live audition | **FIXED** (real candidate audition path wired into gauntlet; `sinter assimilate --live --candidates <file>` runs per-role/domain executions) | #133 |
+| C12 plugin-load honesty | **FIXED** (PluginLoadSummary tracks loaded/total/failed; no longer masks ENOENT on uncompiled plugins) | #131 |
+| C13 composite barrel orphan | **FIXED** (dead `src/composite/index.ts` removed) | #131 |
+| P2 washout-guard stale log | **FIXED** (log now reports actual opacity-capped count, not always-0 blendMode demotion) | #137 |
+| HydraGenerator math-method sanitizing | **FIXED** (strips hallucinated .sin()/.cos()/.tan() chain methods) | #134 |
+| Model-assimilation proof test isolation | **FIXED** (beforeEach cleans stale receipts so fixture-only test isn't polluted by prior live runs) | #136 |
+| Tier 2/3 remainder (F5 sing ffmpeg, F10 revideo render, F19 p5 contrast, F20 bridge split, F12/#637 render-measurement lane) | open | — |
 
 ## Open campaign state
 - Pass 1 complete (this file). Passes 2-3 (clean-pass criterion) tracked in `.omc/ultragoal/goals.json` G010.
-- Fix story G009 executes this register top-down; F11 (#696), F17 (#697), and F7 (#698) are now reflected above, while F4 remains in Forgejo review at `ce0b2011`.
+- G009 fix-by-ROI: all Tier 1/2 F-findings fixed; Tier 3 cures C2/C4/C12/C13 landed (#131-#133); zero-debt campaign Tier 0-2 complete (#91-#130); P2 washout log + HydraGenerator math sanitizing fixed (#134/#137).
+- Remaining open: F4 sing tests (Forgejo review), F5 sing ffmpeg, F10 revideo render, F19 p5 contrast, F20 bridge split, Tier 3 decisions C1/C5/C9/C10/C11 (retire-vs-rehome), G010 clean passes.

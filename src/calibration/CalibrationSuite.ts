@@ -1,4 +1,20 @@
 /**
+ * @deprecated RETIRED — Calibration subsystem is dead code (audit C11).
+ *
+ * `useCalibration && isCalibrated()` can never evaluate to true in
+ * production: no production code path ever populates the calibration
+ * weights (no caller of `setCalibrationWeights`/`calibrate`/the
+ * `calibrationSuite` singleton), so `isCalibrated(domain)` always
+ * returns false and every `calibratedScore` branch is unreachable.
+ *
+ * This module is retained only for type compatibility with
+ * CreativeEvaluator, AestheticCritic and HarnessMemory. It is
+ * explicitly retired: do NOT add new consumers and do NOT extend it.
+ * To be removed once its dependents drop their dead calibration
+ * branches (see audit C11).
+ */
+
+/**
  * CalibrationSuite - System for calibrating scoring to human judgment
  *
  * Workflow:

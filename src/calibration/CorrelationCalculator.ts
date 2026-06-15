@@ -1,4 +1,12 @@
 /**
+ * @deprecated RETIRED — part of the dead calibration subsystem (audit C11).
+ *
+ * No production caller exercises calibration. This statistical helper is
+ * retained only because CreativeEvaluator and AestheticCritic import it
+ * for their own dead `calibrate()` paths. Do NOT add new consumers.
+ */
+
+/**
  * CorrelationCalculator - Statistical correlation functions for calibration
  *
  * Provides:

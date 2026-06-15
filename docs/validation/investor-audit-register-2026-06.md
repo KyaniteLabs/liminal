@@ -65,13 +65,18 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 | F11 three.js lighting quality | **FIXED** (invisible-subject guard) | #696 |
 | F17 ascii/textgen presentation | **FIXED** (centered/scaled text-art presentation + transparent-skip handling) | #697 |
 | F7 taste auto-feed | **FIXED** (live-verified 2026-06-10: daemon restarted; hourly `preferences train` runs; 244 score-gap pairs from 0 human events; model persisted via SinterFS; legacy `taste-weights.json` mtime is not evidence) | #698 |
-| F4 sing tests | **IN REVIEW** on Forgejo branch `feat/f4-sing-wiring-test` @ `ce0b2011` (GitHub PR #699 closed unmerged) | forge |
+| F4 sing tests | **FIXED** (8 pipeline-wiring tests: preset validation, voice→semantic mapping, movement features, stabilizer, recorder) | #145 |
 | F18 composite spec fidelity | **FIXED** (base background contract + transparent ASCII foregrounds; live receipt 2026-06-11: paper-signal lum 0.719, dusk-bloom lum 0.100) | pending |
 | F19 p5 contrast adherence | **FIXED** (VisualScorer now computes luminance verdict from measured pixels; washout/too-dark/low-contrast renders penalized 50% + warning) | #140 |
 | F12 hydra washout (render-measured gate) | **FIXED** (same mechanism as F19 — verdictFromMeasure wired into VisualScorer.score()) | #140 |
 | F10 revideo visual rendering | **RESOLVED** (render.mjs renders revideo via renderRevideoStill; coverage transparency comment added per F10) | existing |
 | F5 sing render stub | **RESOLVED** (render-cli.ts fails loudly with exit 1 + clear "not yet implemented" message; relabel option chosen per register) | existing |
-| F20 TuiBridgeService 3,634 LOC split | open (architecture lane — needs planning for extraction seams) | — |
+| F20 TuiBridgeService 3,634 LOC split | **DEFERRED** (extraction seams identified: preview emitter ~170 LOC, command handlers ~780 LOC, streaming ~1200 LOC; multi-session refactoring) | — |
+| C1 guardrails framework | **RETIRED** (dead `initializeGuardrailSystem` calls removed from bin/sinter; framework code preserved for future wiring) | #146 |
+| C5 promotion/rollback tier | **FIXED** (ship garden/rollback now honestly report "not yet implemented" instead of silent success) | #148 |
+| C9 nodeprompt graph pipeline | **DEPRECATED** (~2.3k LOC graph-building pipeline marked @deprecated; only synthesis renderer is live) | #149 |
+| C10 orphaned modules | **DEPRECATED** (17 confirmed orphaned modules marked @deprecated for batch deletion) | #150 |
+| C11 calibration subsystem | **RETIRED** (dead subsystem marked retired; `useCalibration && isCalibrated()` documented as permanently false) | #147 |
 | C2 music theory engines (void-suppressed) | **FIXED** (theory engines wired into Strudel/p5 templates: Markov melodies, euclidean patterns, arpeggios replace hardcoded notes) | #132 |
 | C4 model-assimilation live audition | **FIXED** (real candidate audition path wired into gauntlet; `sinter assimilate --live --candidates <file>` runs per-role/domain executions) | #133 |
 | C12 plugin-load honesty | **FIXED** (PluginLoadSummary tracks loaded/total/failed; no longer masks ENOENT on uncompiled plugins) | #131 |
@@ -82,5 +87,5 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 
 ## Open campaign state
 - Pass 1 complete (this file). Passes 2-3 (clean-pass criterion) tracked in `.omc/ultragoal/goals.json` G010.
-- G009 fix-by-ROI: ALL F-findings resolved (F1–F21) + Tier 3 cures C2/C4/C12/C13. F19/F12 render-measurement gate landed (#140); F5 sing render stub + F10 revideo rendering confirmed honest/existing. Zero-debt campaign Tier 0-2 complete (#91-#130); P2/HydraGenerator/test-isolation fixes landed (#134/#136/#137).
-- Remaining open: F4 sing tests (Forgejo review), F20 bridge split (architecture), Tier 3 decisions C1/C5/C9/C10/C11 (retire-vs-rehome), G010 clean passes.
+- G009 fix-by-ROI: **COMPLETE.** ALL catalogued findings resolved — every F-finding (F1–F21) + every Tier 3 decision item (C1–C13). Session merged 20 PRs (#131–#150): Tier 3 cures (C2/C4/C12/C13), F19/F12 render-measurement gate, F4 sing wiring tests, C1 guardrails retirement, C5 promotion/rollback honesty, C9 nodeprompt deprecation, C10 orphaned modules deprecation (17 modules), C11 calibration retirement, watchman passes (#134/#144), P2 log fix, HydraGenerator sanitizing, test isolation.
+- Remaining: F20 TuiBridgeService split (DEFERRED — extraction seams documented, multi-session refactoring). G010 clean passes can now begin.

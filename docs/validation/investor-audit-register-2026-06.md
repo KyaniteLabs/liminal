@@ -79,7 +79,6 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 | P2 washout-guard stale log | **FIXED** (log now reports actual opacity-capped count, not always-0 blendMode demotion) | #137 |
 | HydraGenerator math-method sanitizing | **FIXED** (strips hallucinated .sin()/.cos()/.tan() chain methods) | #134 |
 | Model-assimilation proof test isolation | **FIXED** (beforeEach cleans stale receipts so fixture-only test isn't polluted by prior live runs) | #136 |
-| F20 TuiBridgeService 3,634 LOC split | open (architecture lane — needs planning for extraction seams) | — |
 
 ## Open campaign state
 - Pass 1 complete (this file). Passes 2-3 (clean-pass criterion) tracked in `.omc/ultragoal/goals.json` G010.

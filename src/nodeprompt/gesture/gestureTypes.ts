@@ -1,4 +1,8 @@
 /**
+ * @deprecated Audit C9: graph-building pipeline retired 2026-06-15. Dead code — remove after confirming no roadmap dependency.
+ */
+
+/**
  * NODEPROMPT — Spatial Prompt Engineering through Interactive Concept Graphs
  * Copyright (c) 2025-2026 Taewoo Park
  * Licensed under the MIT License — see THIRD_PARTY_NOTICES.md

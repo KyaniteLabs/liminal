@@ -70,6 +70,10 @@ Be concise but evocative. Show, don't tell. Let the code speak.`;
 
 // ── Agent ──
 
+/**
+ * @deprecated Audit C10: orphaned class retired 2026-06-15. Zero importers — safe to delete.
+ * Note: other exports from this file (STUDIO_SYSTEM_PROMPT, types) are actively used.
+ */
 export class StudioAgent {
   private readonly router: IntentRouter | ModeAwareRouter;
   private readonly composer: ResponseComposer;

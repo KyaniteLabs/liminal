@@ -23,7 +23,7 @@ export class HydraGenerator extends TierBasedGenerator {
       'Use visible generated sources: osc(), noise(), shape(), voronoi(), gradient(), or solid().',
       'Do not use camera or screen input: no s0.initCam(), no s0.initScreen(), no src(s0).',
       'Use hydra-synth 1.3 runtime-safe method names: saturate(), brightness(), kaleid().',
-      'Never use saturation(), feedback(), kaleidoscope(), colorShift(), post(), screen(), output(), s0 chains, s0.osc()/s0.noise(), initFBOTriangle(), or chained source methods like .osc().',
+      'Never use saturation(), feedback(), kaleidoscope(), colorShift(), post(), screen(), output(), s0 chains, s0.osc()/s0.noise(), initFBOTriangle(), chained source methods like .osc(), or chained math methods like .sin(), .cos(), .tan() (use Math.sin(time), Math.cos(time), or Math.tan(time) inside numeric callbacks only).',
       'For image-proof visibility, include explicit .color(...) or .colorama(...) on the rendered chain.',
       'Use numeric color values like .color(0.95, 0.61, 0.62); do not pass osc(), noise(), or other sources into color().',
       'Target a MID-range overall exposure with a FULL tonal range: include both bright highlights and clear dark/shadow regions. Do NOT force every channel bright (that washes the frame white) and do NOT let the whole frame go black — aim for balanced mid-tones with real darks and lights.',
@@ -281,6 +281,10 @@ export class HydraGenerator extends TierBasedGenerator {
     clean = clean.replace(/\bs0\.(?!(?:initCam|initScreen)\s*\()([a-zA-Z_$][\w$]*)\s*\(/g, '$1(');
     // Strip bare s0 references used as chain roots (e.g. s0.out(o0))
     clean = clean.replace(/\bs0\s*\.(?!(?:initCam|initScreen)\s*\()/g, '');
+
+    // Models sometimes hallucinate JavaScript math methods as Hydra chain methods.
+    // Hydra has no .sin/.cos/.tan transforms; strip them so the remaining chain stays valid.
+    clean = clean.replace(/\.\s*(sin|cos|tan)\s*\([^)]*\)/g, '');
 
     // Avoid shadowing Hydra source function names with variables, e.g.
     // `const noise = noise(...)` makes later calls crash in the browser.

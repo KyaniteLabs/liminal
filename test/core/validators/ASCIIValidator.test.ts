@@ -166,6 +166,18 @@ void main() {
       expect(ASCIIValidator.detectASCII(code)).toBe(false);
     });
 
+    it('detects art made of near-miss Unicode glyphs before they are sanitized', () => {
+      const code = `
+  ◈   ◈   ◈
+ ◉     ◉
+  ◡◡◡
+   ◆◇
+◈◈◈◈◈◈◈◈◈
+      `;
+
+      expect(ASCIIValidator.detectASCII(code)).toBe(true);
+    });
+
     it('should detect simple text art', () => {
       const code = `
 +---+ +---+ +---+

@@ -907,6 +907,21 @@ function render(){ requestAnimationFrame(render); }
       `;
       expect(CodeValidator.detectDomain(code)).toBe('ascii');
     });
+
+    it('auto-detects and validates Unicode-near-miss ASCII art even without an explicit domain', () => {
+      const code = `
+  ◈   ◈   ◈   ◈
+   ◉     ◉     ◉
+    ◡◡◡◡◡◡◡
+     ◆◇◆◇◆◇
+  ◈◈◈◈◈◈◈◈◈◈◈◈◈
+      `;
+      expect(CodeValidator.detectDomain(code)).toBe('ascii');
+      const result = CodeValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.cleanedCode).not.toContain('◈');
+      expect(result.cleanedCode).not.toContain('◉');
+    });
   });
 
   describe('Edge cases', () => {

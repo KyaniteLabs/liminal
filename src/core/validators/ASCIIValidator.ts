@@ -213,7 +213,7 @@ export class ASCIIValidator {
    */
   static detectASCII(code: string): boolean {
     const trimmed = code.trim();
-    
+
     // Quick heuristics for ASCII art detection
     const lines = trimmed.split('\n');
     if (lines.length < 2) return false;
@@ -224,9 +224,14 @@ export class ASCIIValidator {
 
     const artPatterns = /[|/\\\-+=*_#@$%&~^:;,.<>{}[\]()`"']+/;
     const codePatterns = /(function|const|let|var|if|for|while|class|import|export|return|=|;|\{|\})/;
+    // Near-miss glyphs the sanitizer remaps to allowed art characters can also
+    // dominate a piece; without this, a drawing of only ◈/◉/◡ gets misrouted
+    // to the p5 fallback and dies on a JavaScript syntax error (2026-06-15).
+    const nearMissGlyphs = new Set([...Object.keys(this.SANITIZE_MAP), ...Object.values(this.SANITIZE_MAP)]);
 
     for (const line of lines) {
-      if (artPatterns.test(line)) artChars++;
+      const hasNearMiss = [...line].some((ch) => nearMissGlyphs.has(ch));
+      if (artPatterns.test(line) || hasNearMiss) artChars++;
       if (codePatterns.test(line)) codeChars++;
     }
 

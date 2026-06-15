@@ -131,3 +131,19 @@
 - Archive check: measured the 41 visual archive entries admitted since the previous marker using the production `dist/render/DecodedImageVisibility.js` path. 24 entries measured `ok`, 13 measured `too-dark`, 4 measured `washout`, 0 low-contrast. Strong non-calibration hits: 8 SVG admissions are solid dark frames (`svg_038fc20c`, `svg_574cf593`, `svg_b10b52b4`, `svg_43fc4c09`, `svg_1e81fde2`, `svg_ce0c9987`, `svg_07cd4f2c`, `svg_b63e6b5c`; all q=0.82, lum=0.0322, brightFraction=0, std=0); 5 ASCII admissions are too-dark (`asc_45db1a6c`, `asc_a3e0faa1`, `asc_7e22556f`, `asc_ba67576d`, `asc_04ca00c1`; q=0.78, lum 0.0599–0.0695, brightFraction <0.02); 3 Three.js admissions are washed out (`thr_c56cd5e2`, `thr_cd2fd3a9`, `thr_3a3c14c0`; q=0.82, lum ≥0.85, brightFraction ≥0.98). `tex_3bc97508` q=0.82 washout (lum 0.9412, brightFraction 1) is consistent with intentional dark-background textgen rendered bright. Appended finding `FAB-033`; no archive mutation.
 - Action taken: finding `FAB-033`; no code change.
 - Next watch item: continue monitoring `candidate_pool_empty` for per-candidate `lastError` surfacing; prioritize the SVG admission-path regression now that 13 black-frame entries exist across `FAB-031`/`FAB-032`/`FAB-033`; investigate the new ASCII too-dark and Three.js washout admission classes for deterministic admission-gate fixes or handoffs.
+
+## 2026-06-15T07:24:41Z
+- Cycles seen: 3 complete cycles since the previous marker (`2026-06-14T05:28:04Z`): `2026-06-15T05:19:48.612Z`, `2026-06-15T05:56:44.946Z`, `2026-06-15T06:35:27.680Z`; a fourth cycle (`2026-06-15T07:12:47.554Z`) was in-flight at log time.
+- Completion rate: 3/9 (33.3%); archive 200 → 200 (+0); health 84 → 84; completed-cycle scores [0.82, 0.57, 0.65], mean 0.68.
+- Failures diagnosed: 6 generation failures across the window.
+  - `2026-06-15T05:19` p5 `other` (stderr clipped; broad bucket).
+  - `2026-06-15T05:56` ascii `empty_after_strip` (`Code is empty after stripping LLM reasoning text`). `validators/types.ts` already has the D9 domain-aware skip for ascii/textgen, so this is a single residual; left red pending repeat.
+  - `2026-06-15T05:56` three `other` (broad bucket).
+  - `2026-06-15T06:35` three `brightness_dark` (rendered frame too dark).
+  - `2026-06-15T06:35` textgen `svg_no_raw` (validator hit a non-ASCII middle-dot character in generated text).
+  - `2026-06-15T06:35` kinetic `timeout` (LLM generation aborted).
+  No failure class repeats ≥2× in this window, so no deterministic ≤30-line fix was triggered from the daemon evidence.
+- Render-infra check: no exact `0.68` score clump within a single cycle and no `infra` failureClass. The window mean of 0.68 is an average of three distinct scores, not clumping. No browser-cache reinstall and no daemon restart.
+- Archive check: 0 archive entries admitted in this window, so no F19-style dead/washed measurement was needed. No finding appended.
+- Action taken: implemented the zero-debt campaign item **P2** in `src/composition/CompositionOrchestrator.ts` — the washout-guard log was comparing `blendMode` (which `capLayerBrightness` never changes) and always reported "demoted 0 ... to normal". It now records the actual opacity-capped layer count with the message "capped opacity on N over-budget bright layer(s)". Added a focused regression test in `test/unit/composition/CompositionOrchestrator.test.ts` (test-first). `pnpm vitest run test/unit/composition/` and `pnpm typecheck` are green.
+- Next watch item: monitor the new named failure classes (`brightness_dark`, `svg_no_raw`, `timeout`, `empty_after_strip`) for ≥2× repeats that would justify a deterministic ≤30-line fix; continue watching for `candidate_pool_empty` recurrences and any `0.68` clumps/`infra` symptoms.

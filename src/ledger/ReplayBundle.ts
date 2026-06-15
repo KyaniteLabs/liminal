@@ -1,4 +1,10 @@
 /**
+ * @deprecated Audit C10 (2026-06-15): This module is orphaned — zero external
+ * importers outside barrel re-exports. Marked for batch deletion in a follow-up.
+ * Do not add new consumers. If you need this functionality, re-wire it first.
+ */
+
+/**
  * Phase 10 Lane 10-4: ReplayBundle — Evidence packaging and retry classification.
  *
  * Packages the complete lineage of a task (manifest, attempts, candidates, decision)

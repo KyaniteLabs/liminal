@@ -1,3 +1,9 @@
+/**
+ * @deprecated Audit C10 (2026-06-15): This module is orphaned — zero external
+ * importers outside barrel re-exports. Marked for batch deletion in a follow-up.
+ * Do not add new consumers. If you need this functionality, re-wire it first.
+ */
+
 import type { SinterFS } from '../SinterFS.js';
 import type { SinterObjectRef } from '../types.js';
 

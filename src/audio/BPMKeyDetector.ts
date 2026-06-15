@@ -1,4 +1,10 @@
 /**
+ * @deprecated Audit C10 (2026-06-15): This module is orphaned — zero external
+ * importers outside barrel re-exports. Marked for batch deletion in a follow-up.
+ * Do not add new consumers. If you need this functionality, re-wire it first.
+ */
+
+/**
  * BPMKeyDetector — detect tempo (BPM) and musical key from audio features.
  *
  * BPM detection uses onset-based autocorrelation on RMS energy envelopes.

@@ -9,6 +9,7 @@
  */
 
 import { analyzeDecodedPixels, decodeImagePixels } from './DecodedImageVisibility.js';
+import { verdictFromMeasure, type LuminanceVerdict } from './LuminanceVerdict.js';
 
 export interface VisualScoreResult {
   /** Overall visual quality score (0-1) */
@@ -21,6 +22,8 @@ export interface VisualScoreResult {
   composition: number;
   /** Brightness/contrast score (0-1) */
   contrast: number;
+  /** Render-measured luminance verdict (washout/too-dark/low-contrast/ok). */
+  luminanceVerdict?: LuminanceVerdict;
   /** Detailed metrics */
   metrics: {
     uniqueColors: number;
@@ -78,9 +81,26 @@ export class VisualScorer {
         return this.getEmptyResult('Visual scoring skipped: decoded image data unavailable');
       }
 
+      // Compute luminance verdict from decoded pixels BEFORE the visibility gate,
+      // so washout/too-dark/low-contrast renders are flagged even when they're
+      // uniform color (which analyzeDecodedPixels rejects as "blank or solid").
+      // (F19/F12: render-measured contrast/washout gate)
+      const lum = this.measureLuminance(data);
+      const luminanceVerdict = verdictFromMeasure(lum, { lowContrast: true });
+
       const visibility = analyzeDecodedPixels({ width, height, data });
       if (!visibility.hasVisibleContent) {
-        return this.getEmptyResult(`Visual scoring skipped: ${visibility.reason ?? 'decoded screenshot lacks visible content'}`);
+        // Surface the luminance verdict even for blank/solid images so
+        // callers know WHY the render failed (washout vs too-dark vs blank).
+        const empty = this.getEmptyResult(`Visual scoring skipped: ${visibility.reason ?? 'decoded screenshot lacks visible content'}`);
+        if (luminanceVerdict !== 'ok') {
+          return {
+            ...empty,
+            luminanceVerdict,
+            warnings: [...(empty.warnings ?? []), `luminance verdict: ${luminanceVerdict} (mean ${lum.meanLuminance.toFixed(3)}, bright ${lum.brightFraction.toFixed(3)}, dark ${lum.darkFraction.toFixed(3)})`],
+          };
+        }
+        return empty;
       }
 
       // Calculate metrics
@@ -89,14 +109,28 @@ export class VisualScorer {
       const composition = this.clamp(this.calculateComposition(data, width, height));
       const contrast = this.clamp(this.calculateContrast(data));
 
+      const brightnessMean = lum.meanLuminance * 255;
+      const brightnessStd = this.calculateBrightnessStd(data);
+
       // Calculate weighted final score
-      const rawScore = 
+      const rawScore =
         this.options.colorWeight * colorVariety +
         this.options.edgeWeight * edgeComplexity +
         this.options.compositionWeight * composition +
         this.options.contrastWeight * contrast;
 
-      const score = this.clamp(rawScore);
+      // Penalize non-OK luminance verdicts so washout/too-dark/low-contrast
+      // renders score lower than good renders with similar metric profiles.
+      const score = this.clamp(
+        luminanceVerdict === 'ok'
+          ? rawScore
+          : rawScore * 0.5,
+      );
+
+      const warnings: string[] = [];
+      if (luminanceVerdict !== 'ok') {
+        warnings.push(`luminance verdict: ${luminanceVerdict} (mean ${lum.meanLuminance.toFixed(3)}, bright ${lum.brightFraction.toFixed(3)}, dark ${lum.darkFraction.toFixed(3)}, std ${brightnessStd.toFixed(1)})`);
+      }
 
       return {
         score,
@@ -104,12 +138,14 @@ export class VisualScorer {
         edgeComplexity,
         composition,
         contrast,
+        luminanceVerdict,
         metrics: {
           uniqueColors: this.countUniqueColors(data),
           edgeDensity: edgeComplexity,
-          brightnessMean: this.calculateBrightnessMean(data),
-          brightnessStd: this.calculateBrightnessStd(data),
+          brightnessMean,
+          brightnessStd,
         },
+        warnings: warnings.length > 0 ? warnings : undefined,
       };
     } catch (error) {
       // Return low score on error
@@ -333,6 +369,46 @@ export class VisualScorer {
    */
   private toGrayscale(r: number, g: number, b: number): number {
     return 0.299 * r + 0.587 * g + 0.114 * b;
+  }
+  /**
+   * Measure luminance fractions needed for LuminanceVerdict classification.
+   * Samples up to 10000 pixels for bright/dark fractions and mean luminance.
+   * (F19/F12: render-measured contrast/washout gate)
+   */
+  private measureLuminance(data: Uint8Array): {
+    meanLuminance: number;
+    brightFraction: number;
+    darkFraction: number;
+    brightnessStd?: number;
+  } {
+    const pixelCount = Math.floor(data.length / 4);
+    if (pixelCount === 0) {
+      return { meanLuminance: 0, brightFraction: 0, darkFraction: 0 };
+    }
+    const samples = Math.max(1, Math.min(pixelCount, 10000));
+    const step = Math.max(1, Math.floor(pixelCount / samples));
+
+    let lumSum = 0;
+    let bright = 0;
+    let dark = 0;
+    let count = 0;
+
+    for (let i = 0; i < data.length && count < samples; i += 4 * step) {
+      const r = data[i] || 0;
+      const g = data[i + 1] || 0;
+      const b = data[i + 2] || 0;
+      const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      lumSum += lum;
+      if (lum > 0.5) bright++;
+      if (lum < 0.12) dark++;
+      count++;
+    }
+
+    const meanLuminance = count > 0 ? lumSum / count : 0;
+    const brightFraction = count > 0 ? bright / count : 0;
+    const darkFraction = count > 0 ? dark / count : 0;
+
+    return { meanLuminance, brightFraction, darkFraction };
   }
 }
 

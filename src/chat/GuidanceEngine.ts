@@ -19,6 +19,9 @@ import type { SemanticArtMemory } from '../brain/archive/SemanticArtMemory.js';
 import type { CompostMill } from '../compost/CompostMill.js';
 import { createCreativePreferenceSuggestion } from './CreativePreferenceGuide.js';
 
+/** Max knowledge-graph techniques to surface in a single suggestion. */
+const MAX_ART_BRAIN_TECHNIQUES = 3;
+
 // Score history for trend analysis
 interface ScoreHistory {
   scores: number[];
@@ -41,11 +44,13 @@ export class GuidanceEngine {
   recentScores: number[] = [];
 
   constructor(artBrain?: SemanticArtMemory, compostMill?: CompostMill, swarmOrchestrator?: unknown) {
+    // artBrain is now consumed by getSuggestedTechniques() — the eagerly-constructed,
+    // seeded SemanticArtMemory knowledge graph actually influences technique guidance
+    // instead of being discarded (was: `void this.artBrain`).
     this.artBrain = artBrain;
     this.compostMill = compostMill;
     this.swarmOrchestrator = swarmOrchestrator;
-    // Silence TS unused-parameter warnings while keeping properties for test compatibility
-    void this.artBrain;
+    // swarmOrchestrator is retained as a property for test/back-compat; no consumer yet.
     void this.swarmOrchestrator;
   }
 
@@ -92,7 +97,7 @@ export class GuidanceEngine {
     if (compostSuggestion) suggestions.push(compostSuggestion);
 
     if (this.shouldSuggestTechnique()) {
-      const techniques = this.getSuggestedTechniques(ctx.domain);
+      const techniques = this.getSuggestedTechniques(ctx.domain, ctx.prompt);
       suggestions.push({
         type: 'technique',
         title: 'Try a new technique',
@@ -349,9 +354,19 @@ export class GuidanceEngine {
   }
 
   /**
-   * Get technique suggestions for a domain
+   * Get technique suggestions for a domain.
+   *
+   * Prefers techniques surfaced by the seeded SemanticArtMemory knowledge graph
+   * (queried by the prompt and filtered to the active domain) so the eagerly-built
+   * artBrain actually influences guidance. Falls back to the static per-domain list
+   * when the artBrain is absent or has no domain-relevant match.
    */
-  private getSuggestedTechniques(domain: string): string[] {
+  private getSuggestedTechniques(domain: string, prompt?: string): string[] {
+    const fromArtBrain = this.getArtBrainTechniques(domain, prompt);
+    if (fromArtBrain.length > 0) {
+      return fromArtBrain;
+    }
+
     const domainTechniques: Record<string, string[]> = {
       p5: ['Particle systems', 'Flow fields', 'Noise-based generation'],
       shader: ['Raymarching', 'Domain warping', 'Fractals'],
@@ -362,5 +377,28 @@ export class GuidanceEngine {
     };
 
     return domainTechniques[domain] || ['Procedural generation', 'Algorithmic art'];
+  }
+
+  /**
+   * Query the seeded artBrain knowledge graph for techniques relevant to the prompt,
+   * preferring ones whose inferred domain matches the active domain. Returns up to
+   * MAX_ART_BRAIN_TECHNIQUES technique names, or [] when no artBrain / no match.
+   */
+  private getArtBrainTechniques(domain: string, prompt?: string): string[] {
+    if (!this.artBrain || !prompt) return [];
+
+    const matches = this.artBrain.suggestTechnique(prompt);
+    if (matches.length === 0) return [];
+
+    // Prefer techniques whose domain matches the active domain; if none match the
+    // domain, fall back to the cross-domain matches so the prompt-relevant signal
+    // still reaches the suggestion.
+    const domainMatches = matches.filter(t => t.domain === domain);
+    const chosen = (domainMatches.length > 0 ? domainMatches : matches).slice(
+      0,
+      MAX_ART_BRAIN_TECHNIQUES,
+    );
+
+    return chosen.map(t => t.name);
   }
 }

@@ -10,6 +10,8 @@ const {
   mockLLM,
   mockExecuteTask,
   mockReadFile,
+  mockDetect,
+  mockGetSourceFiles,
 } = vi.hoisted(() => {
   const executeTask = vi.fn();
   const llm = {
@@ -20,6 +22,8 @@ const {
     mockLLM: llm,
     mockExecuteTask: executeTask,
     mockReadFile: { execute: vi.fn() },
+    mockDetect: vi.fn(),
+    mockGetSourceFiles: vi.fn(),
   };
 });
 
@@ -42,6 +46,13 @@ vi.mock('../../../src/harness/agent/index.js', () => ({
 
 vi.mock('../../../src/harness/tools/index.js', () => ({
   readFileTool: mockReadFile,
+}));
+
+vi.mock('../../../src/fix/TestFailureDetector.js', () => ({
+  TestFailureDetector: class {
+    detect = mockDetect;
+    getSourceFiles = mockGetSourceFiles;
+  },
 }));
 
 vi.mock('child_process', () => ({
@@ -273,14 +284,102 @@ describe('AutoFixOrchestrator', () => {
       expect(mockReadFile.execute).toHaveBeenCalledWith({ path: 'src/failing.ts' });
     });
 
-    it('returns error when no target is specified', async () => {
-      const orchestrator = new AutoFixOrchestrator(mockLLM as any);
-      const result = await orchestrator.executeFix({
-        type: 'test-failures',
+    it('runs TestFailureDetector and fixes the mapped source file when no target is given', async () => {
+      // Detector finds a concrete failing test mapped to a source file.
+      mockDetect.mockReturnValue({
+        success: true,
+        failures: [
+          {
+            testFile: 'test/unit/widget.test.ts',
+            failedCount: 2,
+            totalCount: 7,
+            failureMessages: ['expected 3 to be 4'],
+            sourceFile: 'src/widget.ts',
+          },
+        ],
+        failingFileCount: 1,
+        totalFailedTests: 2,
+      });
+      mockGetSourceFiles.mockReturnValue(['src/widget.ts']);
+      mockReadFile.execute.mockResolvedValue({ success: true, data: { content: 'export const x = 3;' } });
+      mockExecuteTask.mockResolvedValue({
+        status: Status.SUCCESS,
+        stepCount: 4,
+        backups: ['/tmp/widget.ts.bak'],
+        messages: [],
       });
 
+      const orchestrator = new AutoFixOrchestrator(mockLLM as any);
+      const result = await orchestrator.executeFix({ type: 'test-failures' });
+
+      // Detector was actually invoked (not the old stub).
+      expect(mockDetect).toHaveBeenCalledTimes(1);
+      // The mapped source file was read and fixed.
+      expect(mockReadFile.execute).toHaveBeenCalledWith({ path: 'src/widget.ts' });
+      expect(result.success).toBe(true);
+      expect(result.changes).toHaveLength(1);
+      expect(result.changes[0].path).toBe('src/widget.ts');
+    });
+
+    it('reports detected failures that cannot be mapped to a source file', async () => {
+      mockDetect.mockReturnValue({
+        success: true,
+        failures: [
+          {
+            testFile: 'test/unit/orphan.test.ts',
+            failedCount: 1,
+            totalCount: 1,
+            failureMessages: ['boom'],
+          },
+        ],
+        failingFileCount: 1,
+        totalFailedTests: 1,
+      });
+      mockGetSourceFiles.mockReturnValue([]);
+
+      const orchestrator = new AutoFixOrchestrator(mockLLM as any);
+      const result = await orchestrator.executeFix({ type: 'test-failures' });
+
+      expect(mockDetect).toHaveBeenCalledTimes(1);
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Test failure fix without target not yet implemented - specify a target file');
+      expect(result.error).toContain('test/unit/orphan.test.ts (1 failed)');
+      expect(result.error).toContain('could not map any failing test to a source file');
+      // The detector ran but no file was read because nothing mapped.
+      expect(mockReadFile.execute).not.toHaveBeenCalled();
+    });
+
+    it('returns success when the detector finds no failing tests', async () => {
+      mockDetect.mockReturnValue({
+        success: true,
+        failures: [],
+        failingFileCount: 0,
+        totalFailedTests: 0,
+      });
+
+      const orchestrator = new AutoFixOrchestrator(mockLLM as any);
+      const result = await orchestrator.executeFix({ type: 'test-failures' });
+
+      expect(mockDetect).toHaveBeenCalledTimes(1);
+      expect(result.success).toBe(true);
+      expect(result.testsPassed).toBe(true);
+      expect(result.changes).toHaveLength(0);
+      expect(mockReadFile.execute).not.toHaveBeenCalled();
+    });
+
+    it('surfaces a detector failure as a fix error', async () => {
+      mockDetect.mockReturnValue({
+        success: false,
+        failures: [],
+        failingFileCount: 0,
+        totalFailedTests: 0,
+        error: 'test runner crashed',
+      });
+
+      const orchestrator = new AutoFixOrchestrator(mockLLM as any);
+      const result = await orchestrator.executeFix({ type: 'test-failures' });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Test failure detection failed: test runner crashed');
     });
   });
 

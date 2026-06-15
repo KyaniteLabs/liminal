@@ -9,9 +9,13 @@ const { mockExecSync } = vi.hoisted(() => ({
   mockExecSync: vi.fn(),
 }));
 
-vi.mock('child_process', () => ({
-  execSync: mockExecSync,
-}));
+vi.mock('child_process', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('child_process')>();
+  return {
+    ...actual,
+    execSync: mockExecSync,
+  };
+});
 
 vi.mock('../../../src/utils/Logger.js', () => ({
   Logger: { info: vi.fn(), error: vi.fn(), debug: vi.fn(), warn: vi.fn() },
@@ -324,6 +328,14 @@ describe('TestFailureDetector', () => {
 
       expect(result.totalFailedTests).toBe(5);
       expect(result.failingFileCount).toBe(2);
+    });
+  });
+
+  // ── Module barrel export ───────────────────────────────────────────
+  describe('fix module barrel', () => {
+    it('exports TestFailureDetector as a first-class member of the fix subsystem', async () => {
+      const fixModule = await import('../../../src/fix/index.js');
+      expect(fixModule.TestFailureDetector).toBe(TestFailureDetector);
     });
   });
 });

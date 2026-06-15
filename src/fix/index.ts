@@ -6,4 +6,6 @@
  */
 
 export { AutoFixOrchestrator } from './AutoFixOrchestrator.js';
+export { TestFailureDetector } from './TestFailureDetector.js';
+export type { TestFailure, DetectionResult, DetectorConfig } from './TestFailureDetector.js';
 export * from './types.js';

@@ -16,6 +16,7 @@ import { FixRequest, FixResult, FileChange } from './types.js';
 import { createLLMModeAgent, LLMTask } from '../harness/agent/index.js';
 import { Status } from '../types/status.js';
 import { readFileTool } from '../harness/tools/index.js';
+import { TestFailureDetector } from './TestFailureDetector.js';
 import { execSync } from 'child_process';
 
 /**
@@ -200,24 +201,85 @@ export class AutoFixOrchestrator {
 
   /**
    * Execute a fix for test failures.
-   * Runs tests to get failure output and creates tasks to fix each failing file.
+   *
+   * When an explicit target is given, the caller already knows the file to
+   * repair, so we delegate straight to the file-error path. Otherwise we run
+   * the {@link TestFailureDetector} to discover failing test files and map them
+   * back to their source files, then drive a file-error fix for the first
+   * detected source file. The detection summary is always surfaced in the
+   * result so callers can see what the run actually found.
    */
   private async executeTestFailureFix(request: FixRequest, taskId: string): Promise<FixResult> {
-    // For now, delegate to file-error fix with the target
-    // Full implementation would parse test output and identify source files
+    // Explicit target: caller already identified the file to repair.
     if (request.target) {
       return this.executeFileErrorFix(request, taskId);
     }
 
-    return {
-      success: false,
+    // No target: detect failures from the live test suite.
+    const detector = new TestFailureDetector();
+    const detection = detector.detect();
+
+    if (!detection.success) {
+      return {
+        success: false,
+        taskId,
+        changes: [],
+        buildPassed: false,
+        testsPassed: false,
+        rolledBack: false,
+        error: `Test failure detection failed: ${detection.error ?? 'unknown error'}`,
+      };
+    }
+
+    // No failing tests — nothing to fix.
+    if (detection.failures.length === 0) {
+      Logger.info('AutoFixOrchestrator', 'TestFailureDetector found no failing tests');
+      return {
+        success: true,
+        taskId,
+        changes: [],
+        buildPassed: true,
+        testsPassed: true,
+        rolledBack: false,
+        error: undefined,
+      };
+    }
+
+    const failureSummary = detection.failures
+      .map((f) => `${f.testFile} (${f.failedCount} failed)`)
+      .join(', ');
+    Logger.info(
+      'AutoFixOrchestrator',
+      `TestFailureDetector found ${detection.failingFileCount} failing test file(s)`,
+      { totalFailedTests: detection.totalFailedTests, failures: failureSummary },
+    );
+
+    // Map failing tests back to source files and fix the first one.
+    const sourceFiles = detector.getSourceFiles(detection);
+    if (sourceFiles.length === 0) {
+      return {
+        success: false,
+        taskId,
+        changes: [],
+        buildPassed: false,
+        testsPassed: false,
+        rolledBack: false,
+        error:
+          `Detected ${detection.totalFailedTests} failing test(s) in ${failureSummary}, ` +
+          `but could not map any failing test to a source file`,
+      };
+    }
+
+    return this.executeFileErrorFix(
+      {
+        ...request,
+        target: sourceFiles[0],
+        errorDescription:
+          request.errorDescription ??
+          `Failing tests detected: ${failureSummary}. Fix the source so these tests pass.`,
+      },
       taskId,
-      changes: [],
-      buildPassed: false,
-      testsPassed: false,
-      rolledBack: false,
-      error: 'Test failure fix without target not yet implemented - specify a target file',
-    };
+    );
   }
 
   /**

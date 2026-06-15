@@ -28,6 +28,7 @@ vi.mock('../../../src/collab/CollaborationEngine.js', () => ({
 
 vi.mock('../../../src/swarm/SwarmOrchestrator.js', () => ({
   SwarmOrchestrator: vi.fn(function(this: any, _config: any, _opts: any) {
+    this.options = _opts;
     this.run = vi.fn(async () => ({
       finalOutput: 'swarm-code',
       results: [],
@@ -135,6 +136,52 @@ describe('GenerationOrchestrator', () => {
       const orchestrator = new GenerationOrchestrator(options, gallery, null);
       const result = await orchestrator.generate('prompt', 'prompt');
       expect(result.code).toBe('swarm-code');
+    });
+
+    it('injects a configured-provider callOllama (not the default Ollama caller)', async () => {
+      const options = makeOptions({ useSwarm: true });
+      const orchestrator = new GenerationOrchestrator(options, gallery, null);
+      await orchestrator.generate('prompt', 'prompt');
+
+      const instance = (SwarmOrchestrator as any).mock.results[0].value;
+      // The wired path injects a real caller so personas run on the configured
+      // provider instead of falling back to the default Ollama caller.
+      expect(typeof instance.options.callOllama).toBe('function');
+    });
+
+    it('routes swarm personas through the configured provider, not Ollama', async () => {
+      const options = makeOptions({ useSwarm: true });
+      const orchestrator = new GenerationOrchestrator(options, gallery, null);
+      await orchestrator.generate('prompt', 'prompt');
+
+      const instance = (SwarmOrchestrator as any).mock.results[0].value;
+      // Invoke the injected caller the same way SwarmOrchestrator would. It must
+      // resolve through the configured generator provider (mocked P5GeneratorLLM
+      // -> 'fallback-code'), proving personas no longer hit the Ollama endpoint.
+      const out = await instance.options.callOllama(
+        'qwen2.5-coder:7b',
+        'persona system prompt',
+        'persona user prompt',
+        {},
+      );
+      expect(out).toBe('fallback-code');
+    });
+
+    it('uses an injected collabConfig.callLLM for swarm personas when provided', async () => {
+      const callLLM = vi.fn(async () => 'configured-provider-code');
+      const options = makeOptions({ useSwarm: true, collabConfig: { callLLM } });
+      const orchestrator = new GenerationOrchestrator(options, gallery, null);
+      await orchestrator.generate('prompt', 'prompt');
+
+      const instance = (SwarmOrchestrator as any).mock.results[0].value;
+      const out = await instance.options.callOllama(
+        'qwen2.5-coder:7b',
+        'persona system prompt',
+        'persona user prompt',
+        {},
+      );
+      expect(out).toBe('configured-provider-code');
+      expect(callLLM).toHaveBeenCalledWith('persona user prompt', 'persona system prompt');
     });
 
     it('mines swarm results when archiveLearning is provided', async () => {

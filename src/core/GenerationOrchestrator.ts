@@ -164,7 +164,7 @@ export class GenerationOrchestrator {
     const dispatched = dispatchForRequestedDomain(this.options.collabDomain) ?? generatorRegistry.dispatch(usedPrompt);
 
     if (this.options.useSwarm) {
-      const result = await this.generateWithSwarm(usedPrompt, signal);
+      const result = await this.generateWithSwarm(usedPrompt, dispatched, signal);
       throwIfAborted(signal);
       return result;
     }
@@ -215,9 +215,22 @@ export class GenerationOrchestrator {
     return normalizeGeneratorResult(result);
   }
 
-  private async generateWithSwarm(prompt: string, signal?: AbortSignal): Promise<GenerationResult> {
+  private async generateWithSwarm(prompt: string, dispatched: DispatchResult, signal?: AbortSignal): Promise<GenerationResult> {
     const orchestrator = new SwarmOrchestrator(this.options.swarmConfig, {
       signal,
+      // Inject a caller backed by the CONFIGURED provider so personas run on the
+      // same provider as the rest of the pipeline. Without this, SwarmOrchestrator
+      // falls back to its default Ollama caller and every persona errors on a
+      // non-Ollama install (MiniMax/GLM), leaving HeuristicScorer to pick among
+      // error strings. Mirrors how CollaborationEngine injects its caller.
+      callOllama: (_model, personaSystemPrompt, userPrompt, callOptions) => {
+        const callerSignal = callOptions?.signal ?? signal;
+        throwIfAborted(callerSignal);
+        return abortable(
+          collabLLMCaller(userPrompt, personaSystemPrompt, this.options, dispatched),
+          callerSignal,
+        );
+      },
       onProgress: (data) => {
         throwIfAborted(signal);
         this.options.onProgress?.({

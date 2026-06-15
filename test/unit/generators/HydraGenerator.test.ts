@@ -486,6 +486,18 @@ describe('HydraGenerator', () => {
     expect(result).not.toContain('.output()');
   });
 
+  it('strips hallucinated chained math methods (.sin/.cos/.tan) during sanitize', () => {
+    const gen = new TestableHydraGenerator();
+    const raw = 'osc(10, 0.1, 1).add(noise(3, 0.2)).sin(2).color(1, 0.2, 0.8).brightness(0.35).out(o0)';
+    const sanitized = (gen as any).sanitizeCode(raw);
+
+    expect(sanitized).not.toContain('.sin(');
+    expect(sanitized).not.toContain('.cos(');
+    expect(sanitized).not.toContain('.tan(');
+    expect(sanitized).toContain('.out(o0)');
+    expect(gen.validateForTest(sanitized).valid).toBe(true);
+  });
+
   it('extracts the final inline hydra snippet from explanatory output', async () => {
     const gen = new HydraGenerator();
     const result = (gen as any).sanitizeCode(

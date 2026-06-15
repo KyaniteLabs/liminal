@@ -331,7 +331,7 @@ const p5Entry: GeneratorEntry = {
   },
 };
 
-let pluginsLoaded = false;
+let pluginSummary: PluginLoadSummary = { loaded: 0, total: 0, failed: 0 };
 
 const staticGeneratorEntries: GeneratorEntry[] = [
   shaderEntry,
@@ -350,12 +350,31 @@ const staticGeneratorEntries: GeneratorEntry[] = [
 ];
 
 /**
- * Try to load plugins from plugins/ directory
+ * Outcome of a plugin-load attempt.
+ *
+ * `total` is how many plugin directories declared a manifest, `loaded` how many
+ * imported successfully, and `failed` how many threw (e.g. a declared
+ * `entry: "index.js"` that was never compiled, so the dynamic import throws
+ * ENOENT). Reporting all three keeps a 0/N load HONEST instead of masking it as
+ * a plain success/failure boolean.
  */
-async function loadPlugins(): Promise<boolean> {
+interface PluginLoadSummary {
+  loaded: number;
+  total: number;
+  failed: number;
+}
+
+/**
+ * Try to load plugins from plugins/ directory.
+ *
+ * Never throws on a missing compiled entry — the loader skips each broken plugin
+ * gracefully (see PluginLoader.loadPlugin) and we surface the real counts so a
+ * 0/N load is visible, not swallowed.
+ */
+async function loadPlugins(): Promise<PluginLoadSummary> {
   try {
     const results = await pluginLoader.loadAll();
-    
+
     // Register loaded plugins with GeneratorRegistry
     for (const plugin of pluginLoader.getAllPlugins()) {
       generatorRegistry.register({
@@ -364,11 +383,12 @@ async function loadPlugins(): Promise<boolean> {
         generate: plugin.generate.bind(plugin),
       });
     }
-    
-    return results.some(r => r.success);
+
+    const loaded = results.filter((r) => r.success).length;
+    return { loaded, total: results.length, failed: results.length - loaded };
   } catch (error) {
     Logger.warn('registerGenerators', 'Failed to load plugins:', error);
-    return false;
+    return { loaded: 0, total: 0, failed: 0 };
   }
 }
 
@@ -415,16 +435,22 @@ export async function registerAllGenerators(): Promise<void> {
   // without the `require-atomic-updates` race of reassigning across an await.
   const pending = (async () => {
     // Try to load plugins first on an empty registry.
-    pluginsLoaded = await loadPlugins();
+    pluginSummary = await loadPlugins();
 
     const missingStaticCount = registerMissingStaticGenerators();
 
-    if (!pluginsLoaded) {
+    if (pluginSummary.total === 0) {
+      // No plugin manifests were found at all — pure static registration.
       Logger.info('registerGenerators', `Registered ${missingStaticCount} static generators`);
     } else {
+      // Plugins were attempted. Report the HONEST outcome — including any that
+      // failed (e.g. a declared compiled entry that does not exist) — instead of
+      // masking a 0/N load as a success.
+      const { loaded, total, failed } = pluginSummary;
+      const failureNote = failed > 0 ? ` (${failed} missing compiled entry)` : '';
       Logger.info(
         'registerGenerators',
-        `Loaded ${pluginLoader.getAllPlugins().length} plugins and registered ${missingStaticCount} missing static generators`,
+        `plugins: ${loaded}/${total} loaded${failureNote}; registered ${missingStaticCount} static generators`,
       );
     }
   })();

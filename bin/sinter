@@ -1023,7 +1023,9 @@ if (hasOutputFlag && !hasPromptFlag && !cmd && !isLiveMusic) {
 // --- live-music mode: generateMusic + optional generateVisuals, write to --output, print paths ---
 if (isLiveMusic) {
   const livePrompt = commandPrompt(flags.prompt, cmdArgs);
-  if (!livePrompt) {
+  // Guard empty AND whitespace-only prompts: a blank prompt silently fabricates
+  // a generic template set (no real generation), so reject it loudly instead.
+  if (!livePrompt || livePrompt.trim().length === 0) {
     console.error('Error: --prompt is required for live-music');
     process.exit(1);
   }
@@ -1047,7 +1049,11 @@ if (isLiveMusic) {
   console.log('');
 
   try {
-    const musicResult = await generateMusic(livePrompt, { musicPlatform: 'strudel' });
+    // generateMusic takes a single GenerateMusicOptions object — passing the
+    // prompt as the first positional arg made `options.prompt` undefined, so the
+    // strudel path ran on an empty prompt and fabricated a generic template.
+    // Mirror the GUI call shape (gui/server.js): { prompt, platform: 'strudel' }.
+    const musicResult = await generateMusic({ prompt: livePrompt, platform: 'strudel' });
     const strudelPath = path.join(liveOutDir, 'strudel.js');
     fs.writeFileSync(strudelPath, musicResult.code, 'utf-8');
     console.log('✅ Music: ' + strudelPath);
@@ -1140,12 +1146,17 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || (flags.prompt && (!cmd
     console.log('⏱️ Time: ' + (result.duration / 1000).toFixed(1) + 's');
     console.log('🎯 Reason: ' + result.reason);
     // Mark a degraded score (evaluator-offline fallback) so it is never read as real
-    // fitness by a human or the self-improve ledger that parses this line.
+    // fitness by a human or the self-improve ledger that parses this line. The
+    // machine-parseable suffix (failureClass=…, confidence=…) lets the ledger
+    // record WHY a score is degraded, not just that it is.
     const degraded =
       (result.evaluationConfidence !== undefined && result.evaluationConfidence <= 0) ||
       result.evaluationFailureClass === 'scorer' ||
       result.evaluationFailureClass === 'infra';
-    console.log('⭐ Quality score: ' + result.finalScore.toFixed(2) + (degraded ? ' [degraded: evaluator unavailable, not real fitness]' : ''));
+    const degradedSuffix = degraded
+      ? ` [degraded: evaluator unavailable, not real fitness] (failureClass=${result.evaluationFailureClass ?? 'unknown'}, confidence=${(result.evaluationConfidence ?? 0).toFixed(2)})`
+      : '';
+    console.log('⭐ Quality score: ' + result.finalScore.toFixed(2) + degradedSuffix);
     console.log('🤖 Model: ' + (result.model || 'unknown'));
     // Track in history
     await history.add(prompt);
@@ -1582,6 +1593,19 @@ else if (cmd === 'consolidate' || flags.consolidate) {
     { successThreshold: 0.7, minEpisodesForPattern: 2, maxPatterns: 200 },
   );
 
+  // Load prior consolidated patterns so each run ACCUMULATES instead of starting
+  // from scratch and discarding everything at process.exit — the patterns the
+  // self-improve loop/daemon can read on the next cycle.
+  const patternStorePath = path.join(process.env.HOME || '/tmp', '.sinter', 'intuition', 'consolidated-patterns.json');
+  try {
+    if (fs.existsSync(patternStorePath)) {
+      consolidator.deserialize(JSON.parse(fs.readFileSync(patternStorePath, 'utf-8')));
+      console.log(`  Loaded prior patterns: ${consolidator.patternCount} from ${patternStorePath}`);
+    }
+  } catch (err) {
+    console.log(`  Prior patterns: load skipped (${err?.message ?? err})`);
+  }
+
   // Convert HarnessMemory episodes to ConsolidationEpisodes
   const rawEpisodes = memory.getRecentEpisodes(500);
   const episodes = rawEpisodes
@@ -1610,6 +1634,16 @@ else if (cmd === 'consolidate' || flags.consolidate) {
     for (const [domain, stats] of Object.entries(result.byDomain)) {
       console.log(`    ${domain}: ${stats.episodes} episodes, ${stats.patterns} patterns, avg quality ${stats.avgQuality.toFixed(3)}`);
     }
+  }
+
+  // Persist the consolidated patterns so they are NOT discarded at exit — the
+  // loop/daemon (and the next consolidate run) read them back from this store.
+  try {
+    fs.mkdirSync(path.dirname(patternStorePath), { recursive: true });
+    fs.writeFileSync(patternStorePath, JSON.stringify(consolidator.serialize(), null, 2), 'utf-8');
+    console.log(`  Persisted ${consolidator.patternCount} patterns → ${patternStorePath}`);
+  } catch (err) {
+    console.log(`  ⚠ Persist FAILED (${err?.message ?? err}) — patterns NOT saved`);
   }
 
   console.log('');
@@ -2562,6 +2596,17 @@ else if (cmd === 'garden' && cmdArgs[0] === 'start') {
   const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
 
   const gardener = new AutonomousGardener({ mode, totalBudget: 100 });
+  // Hydrate the latest taste model so interactive replay bias actually steers
+  // the loop — same block `garden tend` uses. Without it isModelLoaded() is false
+  // and replay silently falls back to fertility ranking (the bug B16).
+  try {
+    const { TasteLearningService } = await import('../dist/learning/TasteLearningService.js');
+    const weights = new TasteLearningService(sinterFs).loadLatestModel();
+    if (weights) { gardener.loadTasteModel(weights); console.log('  taste model: loaded — replay bias ACTIVE'); }
+    else { console.log('  taste model: none persisted yet — replay bias inactive'); }
+  } catch (err) {
+    console.log(`  taste model: hydration unavailable (${err?.message ?? err})`);
+  }
   console.log('');
   console.log(`=== Garden Started (mode: ${mode}) ===`);
   console.log(`  Budget: 100 units  Press Ctrl+C to stop`);

@@ -27,6 +27,7 @@ import {
   dreamThemeFromTask,
   readPerDomainTopQuality,
   classifyFailure,
+  parseScoreLine,
 } from './self-improve-domains.mjs';
 import { DreamQueue } from '../../dist/dreaming/DreamQueue.js';
 
@@ -114,10 +115,18 @@ console.log(`before: archive=${before.archive} health=${before.health}% targets=
 const dreamQueue = new DreamQueue({ persistPath: DREAM_QUEUE_PATH });
 
 const scores = [];
+// Per-gen evaluation evidence so the ledger is HONEST about which scores are real
+// fitness vs degraded evaluator-offline fallbacks. Each entry:
+// { domain, score, degraded, evalFailureClass, evalConfidence }.
+const evals = [];
 // Per-failure {domain, failureClass} so the ledger records WHY gens fail, not
 // just how many (Phase-0 reliability instrumentation). Aggregated into a count
 // map on the ledger record below.
 const failures = [];
+// Full stderr of failed gens, persisted to a sidecar so failure classification is
+// based on the COMPLETE error text — the old 200-char tail dropped the real error
+// line and collapsed everything to 'other'. One file per cycle, names the run.
+const STDERR_LOG = `${OUTROOT}/stderr_${Date.now()}.log`;
 for (let i = 0; i < COUNT; i++) {
   const dreamTask = i === 0 ? dreamQueue.dequeue() ?? null : null;
   const dreamTheme = dreamTask ? dreamThemeFromTask(dreamTask) : null;
@@ -144,36 +153,49 @@ for (let i = 0; i < COUNT; i++) {
         env: { ...process.env, LIMINAL_LOG_LEVEL: process.env.LIMINAL_LOG_LEVEL || 'info' },
       },
     );
-    const m = out.match(/Quality score:\s*([\d.]+)/);
-    const s = m ? parseFloat(m[1]) : null;
-    if (s != null) scores.push(s);
+    // Parse the score AND its degradation status from the same line, so a
+    // degraded evaluator-offline fallback is never silently banked as real fitness.
+    const parsed = parseScoreLine(out);
+    const s = parsed.score;
+    if (s != null) {
+      scores.push(s);
+      evals.push({ domain, score: s, degraded: parsed.degraded, evalFailureClass: parsed.evalFailureClass, evalConfidence: parsed.evalConfidence });
+    }
     if (dreamTask) {
       if (s != null) dreamQueue.complete(dreamTask.id, { candidateDescriptor: [], parentIds: dreamTask.sources.map((src) => src.id) });
       else dreamQueue.fail(dreamTask.id);
     }
-    console.log(`  [${i + 1}/${COUNT}] domain=${domain} score=${s ?? 'n/a'}${dreamTask ? ` dream=${dreamTask.id}` : ''}  "${idea.slice(0, 32)}…"`);
+    const degTag = parsed.degraded ? ` [degraded:${parsed.evalFailureClass ?? '?'}]` : '';
+    console.log(`  [${i + 1}/${COUNT}] domain=${domain} score=${s ?? 'n/a'}${degTag}${dreamTask ? ` dream=${dreamTask.id}` : ''}  "${idea.slice(0, 32)}…"`);
   } catch (e) {
     if (dreamTask) dreamQueue.fail(dreamTask.id);
     // execSync reports a timeout kill as SIGTERM with null status; name it
     // instead of dumping a mid-run stdout tail. Real errors arrive on stderr,
     // which the old logging ignored entirely.
     const timedOut = e.signal === 'SIGTERM' && e.status == null;
-    const errTail = String(e.stderr || '').trim().slice(-200);
-    const outTail = String(e.stdout || '').trim().slice(-200);
+    // Keep the FULL stderr/stdout for classification — the 200-char tail dropped
+    // the real error line and collapsed real failures to 'other'. Persist the
+    // full text to a sidecar log so the classification is auditable after the run.
+    const fullErr = String(e.stderr || '');
+    const fullOut = String(e.stdout || '');
+    try {
+      fs.appendFileSync(STDERR_LOG, `\n=== [${i + 1}/${COUNT}] domain=${domain} ===\n--- stderr ---\n${fullErr}\n--- stdout ---\n${fullOut}\n`);
+    } catch { /* sidecar logging is best-effort */ }
+    const errTail = fullErr.trim().slice(-200);
+    const outTail = fullOut.trim().slice(-200);
     // INFO logs (store registrations etc.) can land on stderr AFTER the real
     // error, so a bare tail hides it — prefer the last error-bearing line.
-    const errLine = String(e.stderr || '').split('\n').reverse()
+    const errLine = fullErr.split('\n').reverse()
       .find((l) => /error|failed|❌|exception/i.test(l))?.trim();
-    const rateLimited = /429|rate.?limit|usage limit/i.test(`${errTail} ${outTail}`);
-    const lastStage = (String(e.stdout || '').match(/\[stage-timing\][^\n]*/g) || []).pop();
+    const rateLimited = /429|rate.?limit|usage limit/i.test(`${fullErr} ${fullOut}`);
+    const lastStage = (fullOut.match(/\[stage-timing\][^\n]*/g) || []).pop();
     const reason = rateLimited
       ? 'RATE-LIMITED — stopping cycle early'
       : timedOut
         ? `TIMEOUT — domain=${domain} exceeded ${GEN_TIMEOUT_MS / 1000}s and was killed${lastStage ? ` (last completed stage: ${lastStage.slice(0, 80)})` : ''}`
         : (errLine || errTail || outTail || String(e.message || '')).slice(0, 120);
-    // Classify from the richest available text so the class is precise even when
-    // `reason` was truncated to 120 chars.
-    const failureClass = classifyFailure(`${reason} ${errLine ?? ''} ${errTail} ${outTail}`);
+    // Classify from the COMPLETE error text (not a tail) so the class is real.
+    const failureClass = classifyFailure(`${reason} ${fullErr} ${fullOut}`);
     failures.push({ domain, failureClass });
     console.log(`  [${i + 1}/${COUNT}] FAILED${dreamTask ? ` (dream=${dreamTask.id})` : ''} [${failureClass}]: ${reason}`);
     if (rateLimited) break;
@@ -192,6 +214,18 @@ if (scores.length >= 4) {
   const a = scores.slice(0, h), b = scores.slice(h);
   trend = (b.reduce((x, y) => x + y, 0) / b.length) - (a.reduce((x, y) => x + y, 0) / a.length);
 }
+// Honest fitness signal = mean of REAL (non-degraded) scores only. A degraded
+// score is an evaluator-offline fallback, NOT measured fitness, so banking it in
+// the mean inflates the trend. Keep `meanScore` for back-compat but surface the
+// real-only mean + degraded count so the ledger is honest about what's real.
+const degradedCount = evals.filter((e) => e.degraded).length;
+const realScores = evals.filter((e) => !e.degraded).map((e) => e.score);
+const meanRealScore = realScores.length
+  ? realScores.reduce((a, b) => a + b, 0) / realScores.length
+  : null;
+// Per-cycle fail-rate as a first-class field: failed gens / requested gens. This
+// is the reliability signal the ledger previously buried inside failureClasses.
+const failRate = COUNT > 0 ? failures.length / COUNT : 0;
 // Aggregate failures into a stable count map (class → n) for the ledger, so a
 // cheap aggregator can trend WHY gens fail over time without re-parsing logs.
 const failureClasses = failures.reduce((acc, f) => {
@@ -208,12 +242,15 @@ const record = {
   targetedDomains: targetDomains,
   beforeDomains, afterDomains,
   scores, meanScore: mean, intraCycleTrend: trend,
-  failureClasses, failures,
+  // Honest fitness: real-only mean + which gens were degraded fallbacks.
+  realScores, meanRealScore, degradedCount, evals,
+  failureClasses, failures, failRate,
 };
 fs.appendFileSync(LEDGER, JSON.stringify(record) + '\n');
 
 console.log(`after:  archive=${after.archive} (Δ+${record.archiveDelta}) admitted=${admitted} health=${after.health}%`);
 console.log(`scores: [${scores.map(s => s.toFixed(2)).join(', ')}]  mean=${mean?.toFixed(3) ?? 'n/a'}  intra-trend=${trend?.toFixed(3) ?? 'n/a'}`);
+console.log(`real:   ${realScores.length}/${scores.length} non-degraded  meanReal=${meanRealScore?.toFixed(3) ?? 'n/a'}  degraded=${degradedCount}  failRate=${(failRate * 100).toFixed(0)}%`);
 if (failures.length) {
   const fc = Object.entries(failureClasses).map(([k, v]) => `${k}×${v}`).join(', ');
   console.log(`failures: ${failures.length} [${fc}]`);

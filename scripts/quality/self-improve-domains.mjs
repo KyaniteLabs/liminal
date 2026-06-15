@@ -282,3 +282,34 @@ export function classifyFailure(text) {
   if (/validation failed|too short|no usable content|LLM returned empty code/i.test(s)) return 'validation_other';
   return 'other';
 }
+
+/**
+ * Parse the `⭐ Quality score: …` line bin/sinter prints into a structured record
+ * so the ledger records WHETHER a score is a degraded evaluator-offline fallback
+ * (and WHY), instead of storing every parsed number as if it were real fitness.
+ *
+ * bin/sinter prints either:
+ *   `⭐ Quality score: 0.82`                                          (real)
+ *   `⭐ Quality score: 0.50 [degraded: …] (failureClass=infra, confidence=0.00)` (degraded)
+ *
+ * Returns { score, degraded, evalFailureClass, evalConfidence }. A missing line
+ * yields { score: null, degraded: false, evalFailureClass: null, evalConfidence: null }.
+ * Pure: safe to unit-test against captured stdout.
+ */
+export function parseScoreLine(stdout) {
+  const text = String(stdout ?? '');
+  const scoreMatch = text.match(/Quality score:\s*([\d.]+)/);
+  const score = scoreMatch ? parseFloat(scoreMatch[1]) : null;
+  // Anchor the degraded check to the score line itself so unrelated occurrences
+  // of the word "degraded" elsewhere in stdout don't flip the flag.
+  const line = (text.split('\n').find((l) => /Quality score:/.test(l)) ?? '');
+  const degraded = /\[degraded[:\]]/i.test(line);
+  const fcMatch = line.match(/failureClass=([a-z_]+)/i);
+  const confMatch = line.match(/confidence=([\d.]+)/i);
+  return {
+    score,
+    degraded,
+    evalFailureClass: degraded ? (fcMatch ? fcMatch[1] : null) : null,
+    evalConfidence: degraded && confMatch ? parseFloat(confMatch[1]) : null,
+  };
+}

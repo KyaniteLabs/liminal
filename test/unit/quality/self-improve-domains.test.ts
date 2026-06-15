@@ -15,6 +15,7 @@ import {
   classifyFailure,
   FAILURE_CLASSES,
   readPerDomainCounts,
+  parseScoreLine,
   // @ts-expect-error — .mjs helper has no type declarations; imported for behavior only.
 } from '../../../scripts/quality/self-improve-domains.mjs';
 
@@ -338,5 +339,67 @@ describe('classifyFailure', () => {
     for (const s of samples) {
       expect(FAILURE_CLASSES).toContain(classifyFailure(s));
     }
+  });
+});
+
+describe('parseScoreLine (degraded-vs-real fitness honesty)', () => {
+  it('parses a real (non-degraded) score line', () => {
+    const stdout = [
+      '✅ Generation complete!',
+      '⭐ Quality score: 0.82',
+      '🤖 Model: glm-4.6',
+    ].join('\n');
+    expect(parseScoreLine(stdout)).toEqual({
+      score: 0.82,
+      degraded: false,
+      evalFailureClass: null,
+      evalConfidence: null,
+    });
+  });
+
+  it('parses a degraded fallback line with failureClass and confidence', () => {
+    const stdout =
+      '⭐ Quality score: 0.50 [degraded: evaluator unavailable, not real fitness] (failureClass=infra, confidence=0.00)';
+    expect(parseScoreLine(stdout)).toEqual({
+      score: 0.5,
+      degraded: true,
+      evalFailureClass: 'infra',
+      evalConfidence: 0,
+    });
+  });
+
+  it('marks degraded even when the suffix omits failureClass/confidence', () => {
+    const stdout = '⭐ Quality score: 0.40 [degraded: evaluator unavailable, not real fitness]';
+    expect(parseScoreLine(stdout)).toEqual({
+      score: 0.4,
+      degraded: true,
+      evalFailureClass: null,
+      evalConfidence: null,
+    });
+  });
+
+  it('returns null score when no score line is present', () => {
+    expect(parseScoreLine('❌ Error: generation failed\nstack trace here')).toEqual({
+      score: null,
+      degraded: false,
+      evalFailureClass: null,
+      evalConfidence: null,
+    });
+  });
+
+  it('does not flip degraded on the word "degraded" appearing on an unrelated line', () => {
+    const stdout = [
+      'INFO: rendered evidence degraded gracefully under load',
+      '⭐ Quality score: 0.91',
+    ].join('\n');
+    const parsed = parseScoreLine(stdout);
+    expect(parsed.score).toBe(0.91);
+    expect(parsed.degraded).toBe(false);
+  });
+
+  it('handles empty / null / undefined input without throwing', () => {
+    expect(parseScoreLine('')).toEqual({ score: null, degraded: false, evalFailureClass: null, evalConfidence: null });
+    expect(parseScoreLine(null)).toEqual({ score: null, degraded: false, evalFailureClass: null, evalConfidence: null });
+    expect(parseScoreLine(undefined)).toEqual({ score: null, degraded: false, evalFailureClass: null, evalConfidence: null });
   });
 });

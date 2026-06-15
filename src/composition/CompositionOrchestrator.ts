@@ -243,12 +243,12 @@ export class CompositionOrchestrator {
     const res = await client.generate(system, `Idea: ${prompt}`);
     const spec = this.parseSpec(res.code ?? '', prompt);
     // Cap cumulative brightening so multiple stacked screen/lighten layers don't wash
-    // the composite out to white (#619 caveat). Excess bright layers demote to normal.
+    // the composite out to white (#619 caveat). Excess bright layers have opacity capped.
     if (exceedsWashoutBudget(spec.layers)) {
-      const before = spec.layers.map((l) => l.blendMode);
+      const before = spec.layers.map((l) => l.opacity);
       spec.layers = capLayerBrightness(spec.layers);
-      const demoted = spec.layers.filter((l, i) => l.blendMode !== before[i]).length;
-      Logger.info('CompositionOrchestrator', `Washout guard: demoted ${demoted} over-budget bright layer(s) to normal`);
+      const capped = spec.layers.filter((l, i) => l.opacity !== before[i]).length;
+      Logger.info('CompositionOrchestrator', `Washout guard: capped opacity on ${capped} over-budget bright layer(s)`);
     }
     Logger.info('CompositionOrchestrator', `Decomposed prompt into ${spec.layers.length} layers: ${spec.layers.map(l => l.domain).join(', ')}`);
     return spec;

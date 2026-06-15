@@ -127,24 +127,27 @@ describe('Strudel template fallback', () => {
     expect(result.code).toContain('stack');
   });
 
-  it('returns percussion template for "beat" keyword', async () => {
+  // Percussion is engine-derived: the kick onsets come from EuclideanRhythm.
+  // E(3,8) (pulses=3, steps=8) is the classic tresillo -> "bd ~ bd ~ ~ bd ~ ~".
+  it('returns engine-derived euclidean rhythm for "beat" keyword', async () => {
     const result = await generateMusic({ prompt: 'beat pattern' });
-    expect(result.code).toContain('bd sd');
+    expect(result.code).toContain('bd ~ bd ~ ~ bd ~ ~');
+    expect(result.code).toContain('euclid E(3,8)');
   });
 
-  it('returns percussion template for "drums" keyword', async () => {
+  it('returns engine-derived euclidean rhythm for "drums" keyword', async () => {
     const result = await generateMusic({ prompt: 'drums loop' });
-    expect(result.code).toContain('bd sd');
+    expect(result.code).toContain('bd ~ bd ~ ~ bd ~ ~');
   });
 
-  it('returns percussion template for "percussion" keyword', async () => {
+  it('returns engine-derived euclidean rhythm for "percussion" keyword', async () => {
     const result = await generateMusic({ prompt: 'percussion rhythm' });
-    expect(result.code).toContain('bd sd');
+    expect(result.code).toContain('bd ~ bd ~ ~ bd ~ ~');
   });
 
-  it('returns percussion template for "kick" keyword', async () => {
+  it('returns engine-derived euclidean rhythm for "kick" keyword', async () => {
     const result = await generateMusic({ prompt: 'kick pattern' });
-    expect(result.code).toContain('bd sd');
+    expect(result.code).toContain('bd ~ bd ~ ~ bd ~ ~');
   });
 
   it('returns default sawtooth template for unrecognized prompt', async () => {
@@ -371,6 +374,60 @@ describe('LLM fallback to template', () => {
     });
 
     expect(result.code).toContain('createOscillator');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Music theory engines genuinely drive the emitted code (Finding C2)
+//
+// These assertions pin the EXACT engine output, not hand-written templates:
+//  - EuclideanRhythm builds the onset pattern,
+//  - TheoryEngine supplies the scale notes,
+//  - Arpeggiator/MarkovChain sequence those notes into the melody/frequencies.
+// Changing the musical intent (prompt) changes the engine-derived output.
+// ---------------------------------------------------------------------------
+
+describe('theory engines drive emitted code', () => {
+  beforeEach(() => {
+    mockIsConfigured.mockReturnValue(false);
+  });
+
+  it('embeds a real Euclidean E(3,8) tresillo in the percussion rhythm', async () => {
+    const result = await generateMusic({ prompt: 'drums groove', platform: 'strudel' });
+    // generateEuclideanPattern(8,3) === [1,0,1,0,0,1,0,0] -> tresillo onset mask.
+    expect(result.code).toContain('bd ~ bd ~ ~ bd ~ ~');
+  });
+
+  it('embeds the requested scale notes as the Strudel melody (ambient => A minor pentatonic)', async () => {
+    const result = await generateMusic({ prompt: 'ambient wash', platform: 'strudel' });
+    // getScaleNotes('A','pentatonicMinor',3,4) arpeggiated up => a3 c4 d4 (real A,C,D scale tones).
+    expect(result.code).toContain('a3 c4 d4');
+    expect(result.code).toContain('A pentatonicMinor');
+  });
+
+  it('changing the musical intent changes the engine-derived melody', async () => {
+    const ambient = await generateMusic({ prompt: 'ambient wash', platform: 'strudel' });
+    const dark = await generateMusic({ prompt: 'dark dread', platform: 'strudel' });
+    // Dark => D minor descending arpeggio: d4 c4 a#3 a3 g3 (engine output, not a template).
+    expect(dark.code).toContain('d4 c4 a#3 a3 g3');
+    expect(dark.code).toContain('D minor');
+    // The two intents produce different note sequences.
+    expect(ambient.code).not.toContain('d4 c4 a#3 a3 g3');
+    expect(dark.code).not.toContain('a3 c4 d4');
+  });
+
+  it('p5-webaudio frequencies are derived from the requested scale (default => C major pentatonic)', async () => {
+    const result = await generateMusic({ prompt: 'beeps melody', platform: 'p5-webaudio' });
+    // getScaleNotes('C','pentatonicMajor',4,5) -> first freq is middle C 261.63 Hz.
+    expect(result.code).toContain('const freqs = [261.63, 293.66, 329.63, 392, 440, 523.25, 587.33, 659.26]');
+    // MarkovChain walks the scale; the emitted melody is a real index sequence.
+    expect(result.code).toContain('const melody = [');
+  });
+
+  it('p5-webaudio frequencies change with intent (ambient => A minor pentatonic starts at A4 440Hz)', async () => {
+    const result = await generateMusic({ prompt: 'ambient beeps', platform: 'p5-webaudio' });
+    expect(result.code).toContain('const freqs = [440, 523.25, 587.33, 659.26, 783.99, 880, 1046.5, 1174.66]');
+    expect(result.code).not.toContain('261.63');
   });
 });
 

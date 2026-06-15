@@ -197,8 +197,28 @@ describe('KineticGenerator', () => {
       const gen = new KineticGenerator();
       const raw = '<!DOCTYPE html><html><body><div style="animation: spin 2s infinite">x</div></body></html>';
       const normalized = (gen as any).normalizeKineticHtml(raw);
-      expect(normalized).toMatch(/<head\b[^>]*>.*?<\/head>/i);
+      expect(normalized).toMatch(/<head\b[^>]*>[\s\S]*?<\/head>/i);
       expect((normalized.match(/<head\b/gi) || []).length).toBe(1);
+    });
+
+    it('rebuilds a single balanced head block when LLM emits duplicate head tags', () => {
+      const gen = new KineticGenerator();
+      const raw = '<!DOCTYPE html><html><head><style>a{}</style></head><head><style>b{}</style></head><body><div style="animation: spin 2s infinite">x</div></body></html>';
+      const normalized = (gen as any).normalizeKineticHtml(raw);
+      expect((normalized.match(/<head\b/gi) || []).length).toBe(1);
+      expect((normalized.match(/<\/head>/gi) || []).length).toBe(1);
+      expect(normalized).toContain('a{}');
+      expect(normalized).toContain('b{}');
+      expect(normalized).toContain('<body>');
+    });
+
+    it('rebuilds a balanced head block when head is open but never closed', () => {
+      const gen = new KineticGenerator();
+      const raw = '<!DOCTYPE html><html><head><style>@keyframes drift { to { transform: translateX(10px); } }</style><body><div style="animation: drift 2s infinite">x</div></body></html>';
+      const normalized = (gen as any).normalizeKineticHtml(raw);
+      expect((normalized.match(/<head\b/gi) || []).length).toBe(1);
+      expect((normalized.match(/<\/head>/gi) || []).length).toBe(1);
+      expect(normalized).toContain('@keyframes drift');
     });
   });
 });

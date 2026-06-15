@@ -249,15 +249,25 @@ Regenerate a complete CSS-kinetic artwork:
       cleaned = `<!DOCTYPE html>\n${cleaned}`;
     }
 
-    // Balance the <head> section: LLMs often omit the closing </head> tag,
-    // which causes HTMLValidator to report mismatched <head> tags.
-    if (!/<head\b/i.test(cleaned)) {
-      cleaned = cleaned.replace(/<html\b[^>]*>/i, '$&\n<head><meta charset="utf-8"></head>');
-    }
-    if (!/<\/head>/i.test(cleaned)) {
-      cleaned = cleaned.replace(/<body\b/i, '</head>\n$&');
-      if (!/<\/head>/i.test(cleaned)) {
-        cleaned = cleaned.replace(/<\/html>/i, '</head>\n</html>');
+    // Ensure exactly one balanced <head> block. LLMs often emit unclosed,
+    // duplicated, or mis-nested head tags, which HTMLValidator counts literally.
+    const headOpenCount = (cleaned.match(/<head\b[^>]*>/gi) || []).length;
+    const headCloseCount = (cleaned.match(/<\/head>/gi) || []).length;
+    if (headOpenCount !== 1 || headCloseCount !== 1) {
+      const htmlMatch = cleaned.match(/<html\b[^>]*>/i);
+      const bodyMatch = cleaned.match(/<body\b[^>]*>/i);
+      if (htmlMatch && bodyMatch) {
+        const afterHtml = cleaned.slice(htmlMatch.index! + htmlMatch[0].length);
+        const bodyIdx = afterHtml.search(/<body\b/i);
+        const headContent = afterHtml.slice(0, bodyIdx).replace(/<\/?head\b[^>]*>/gi, '').trim();
+        const bodyClose = cleaned.match(/<\/body>/i);
+        const bodyEnd = bodyClose ? bodyClose.index! : cleaned.length;
+        const bodyContent = cleaned.slice(bodyMatch.index! + bodyMatch[0].length, bodyEnd)
+          .replace(/<\/?head\b[^>]*>/gi, '')
+          .replace(/<\/body>/gi, '')
+          .replace(/<\/html>/gi, '')
+          .trim();
+        cleaned = `<!DOCTYPE html>\n<html>\n<head>\n<meta charset="utf-8">\n${headContent}\n</head>\n<body>\n${bodyContent}\n</body>\n</html>`;
       }
     }
 

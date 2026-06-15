@@ -829,10 +829,6 @@ const [
 // Initialize Meta-Harness only after cheap help/version fast paths have exited.
 metaHarness.initialize();
 
-// Initialize guardrail system (shadow mode + telemetry)
-const { initializeGuardrailSystem } = await import('../dist/guardrails/index.js');
-const guardrailSystem = initializeGuardrailSystem({ shadowMode: true, telemetry: true });
-
 // Load config and set env vars for LLMClient to pick up
 async function initializeConfig() {
   const config = await getEffectiveConfig(undefined, process.cwd());

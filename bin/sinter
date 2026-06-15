@@ -268,6 +268,10 @@ for (let i = 0; i < args.length; i++) {
     flags.model = args[++i];
   } else if (arg === '--base-url') {
     flags.baseUrl = args[++i];
+  } else if (arg === '--api-key') {
+    flags.apiKey = args[++i];
+  } else if (arg === '--live') {
+    flags.live = true;
   } else if (arg === '--configure') {
     flags.configure = true;
   } else if (arg === '--use' || arg === '--activate') {
@@ -604,14 +608,53 @@ if (cmd === 'domains') {
 if (cmd === 'model') {
   const subCmd = cmdArgs[0] || 'audition';
   if (subCmd === 'audition') {
-    const model = cmdArgs[1] || flags.model || 'dry-run-model';
-    const provider = flags.provider || (flags.dryRun ? 'dry-run' : 'dry-run');
-    const { runModelAssimilationGauntlet } = await import('../dist/runtime-core/ModelAssimilationGauntlet.js');
-    const report = runModelAssimilationGauntlet({ model, provider });
+    const {
+      runModelAssimilationGauntlet,
+      runLiveModelAssimilationAudition,
+    } = await import('../dist/runtime-core/ModelAssimilationGauntlet.js');
+    // --live actually INVOKES the candidate model and derives each gauntlet
+    // check from its real output. Without --live (the CI/default path) the
+    // audition stays a dry-run contract check that is honestly labelled
+    // "unverified" — it is never reported as a real promotion pass.
+    const live = flags.live === true;
+    const model = cmdArgs[1] || flags.model || (live ? undefined : 'dry-run-model');
+
+    let report;
+    if (live) {
+      if (!model) {
+        console.error('Live audition requires a candidate model: sinter model audition <model> --live --provider <name>');
+        process.exit(1);
+      }
+      const providerKey = resolveCliProvider(flags.provider);
+      if (!providerKey) {
+        console.error(`Live audition requires a known --provider (one of: ${CLI_PROVIDER_NAMES.join(', ')}).`);
+        process.exit(1);
+      }
+      const defaults = CLI_PROVIDER_DEFAULTS[providerKey];
+      const baseUrl = flags.baseUrl || defaults.baseUrl;
+      const apiKey = (defaults.apiKeyEnv && process.env[defaults.apiKeyEnv]) || flags.apiKey || undefined;
+      if (defaults.requiresKey && !apiKey) {
+        console.error(`Live audition of ${providerKey} requires an API key (set ${defaults.apiKeyEnv}).`);
+        process.exit(1);
+      }
+      const { LLMClient } = await import('../dist/llm/LLMClient.js');
+      const client = new LLMClient({ provider: providerKey, baseUrl, model, apiKey });
+      const result = await runLiveModelAssimilationAudition(client, { model, provider: providerKey });
+      report = result.report;
+      if (result.error) {
+        console.log('');
+        console.log(`Live audition error: ${result.error}`);
+      }
+    } else {
+      const provider = flags.provider || 'dry-run';
+      report = runModelAssimilationGauntlet({ model, provider });
+    }
+
     console.log('');
     console.log('=== Model assimilation audition ===');
     console.log(`Model: ${report.model}`);
     console.log(`Provider: ${report.provider}`);
+    console.log(`Source: ${report.source}${report.source === 'dry-run' ? ' (UNVERIFIED — not a real promotion pass)' : ''}`);
     console.log(`Ready: ${report.ready ? 'YES' : 'NO'}`);
     for (const check of report.checks) {
       console.log(`${check.status === 'pass' ? 'PASS' : 'FAIL'} ${check.label}: ${check.evidence}`);
@@ -625,7 +668,7 @@ if (cmd === 'model') {
     console.log('');
     process.exit(report.ready ? 0 : 1);
   }
-  console.error('Usage: sinter model audition <model> [--provider name] [--output report.json]');
+  console.error('Usage: sinter model audition <model> [--provider name] [--live] [--output report.json]');
   process.exit(1);
 }
 

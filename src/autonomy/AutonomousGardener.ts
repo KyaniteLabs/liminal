@@ -19,6 +19,7 @@ import { ReplayBiasPolicy } from '../learning/ReplayBiasPolicy.js';
 import type { TasteModelWeights } from '../learning/TasteModelTrainer.js';
 import { DreamPlanner } from '../dreaming/DreamPlanner.js';
 import { RecombinationEngine, type RecombinationResult } from '../dreaming/RecombinationEngine.js';
+import type { DreamQueue, DreamTask } from '../dreaming/DreamQueue.js';
 
 export interface GardenerCycleResult {
   cycle: number;
@@ -60,6 +61,14 @@ export interface AutonomousGardenerConfig {
   replayBiasStrength?: number;
   /** Minimum taste score for priority replay (default: 0.5) */
   minTasteScore?: number;
+  /**
+   * Optional dream queue. When provided, in-cycle recombinations are enqueued
+   * as dream tasks so the cognitive work actually feeds the dream→gen loop
+   * instead of being computed and discarded as a telemetry count. Leave unset
+   * for callers that run their own separate enqueue path (e.g. `garden tend`),
+   * to avoid double-feeding the same pairings.
+   */
+  dreamQueue?: DreamQueue;
 }
 
 export class AutonomousGardener {
@@ -73,6 +82,9 @@ export class AutonomousGardener {
   private readonly replayBiasPolicy: ReplayBiasPolicy;
   private readonly dreamPlanner: DreamPlanner;
   private readonly recombinationEngine: RecombinationEngine;
+  private readonly dreamQueue?: DreamQueue;
+  /** Signatures of recombinations already enqueued this gardener's lifetime. */
+  private readonly enqueuedDreamKeys = new Set<string>();
   private readonly mode: GardenMode;
   private budgetRemaining: number;
   private cycleCount = 0;
@@ -101,6 +113,7 @@ export class AutonomousGardener {
     });
     this.dreamPlanner = new DreamPlanner();
     this.recombinationEngine = new RecombinationEngine();
+    this.dreamQueue = config.dreamQueue;
   }
 
   /**
@@ -174,6 +187,11 @@ export class AutonomousGardener {
               { id: dt.sources[1].id, descriptor: dt.sources[1].descriptor },
             );
             dreamResults.push(result);
+            // Wire the recombination into the dream→gen loop instead of only
+            // counting it. Deduped per gardener lifetime so the same pairing is
+            // not re-enqueued every cycle. Skipped when no queue is injected
+            // (callers with a separate enqueue path opt out to avoid double-feed).
+            this.enqueueDream(dt.strategy, dt.sources, dt.priority);
           }
         }
       } else {
@@ -224,6 +242,26 @@ export class AutonomousGardener {
       tasteAlignedCount,
       tasteSelectedEntryIds: tasteSelectedEntryIds.length > 0 ? tasteSelectedEntryIds : undefined,
     };
+  }
+
+  /**
+   * Persist an in-cycle recombination into the dream queue so it feeds the
+   * dream→gen loop. No-op when no queue is injected. Deduped by
+   * `${strategy}:${sorted source ids}` (the same signature `garden tend` uses)
+   * so a stable archive does not re-enqueue identical pairings each cycle.
+   */
+  private enqueueDream(
+    strategy: DreamTask['strategy'],
+    sources: DreamTask['sources'],
+    priority: number,
+  ): void {
+    if (!this.dreamQueue) return;
+    const key = `${strategy}:${sources.map(s => s.id).sort().join('+')}`;
+    if (this.enqueuedDreamKeys.has(key)) return;
+    const id = this.dreamQueue.enqueue(strategy, sources, priority);
+    // Only mark as enqueued if the queue accepted it (enqueue returns undefined
+    // when full); otherwise leave the key unset so a later cycle can retry.
+    if (id) this.enqueuedDreamKeys.add(key);
   }
 
   /**

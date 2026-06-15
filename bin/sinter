@@ -2588,6 +2588,7 @@ else if (cmd === 'garden' && cmdArgs[0] === 'start') {
     process.exit(1);
   }
   const { AutonomousGardener } = await import('../dist/autonomy/AutonomousGardener.js');
+  const { DreamQueue } = await import('../dist/dreaming/DreamQueue.js');
   const { SinterFS } = await import('../dist/fs/index.js');
   const { EmergenceHooks } = await import('../dist/emergence/index.js');
 
@@ -2595,7 +2596,13 @@ else if (cmd === 'garden' && cmdArgs[0] === 'start') {
   const hooks = new EmergenceHooks(sinterFs);
   const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
 
-  const gardener = new AutonomousGardener({ mode, totalBudget: 100 });
+  // Persist in-cycle recombinations so this long-running gardener actually feeds
+  // the dream→gen loop. Unlike `garden tend` (which runs its own separate
+  // enqueue pass), `garden start` had no queue at all — its dreams were computed
+  // and discarded as a count. Same persist path so the self-improve cycle consumes them.
+  const queuePath = path.join(process.env.HOME || '/tmp', '.sinter', 'dreams', 'queue.json');
+  const dreamQueue = new DreamQueue({ persistPath: queuePath });
+  const gardener = new AutonomousGardener({ mode, totalBudget: 100, dreamQueue });
   // Hydrate the latest taste model so interactive replay bias actually steers
   // the loop — same block `garden tend` uses. Without it isModelLoaded() is false
   // and replay silently falls back to fertility ranking (the bug B16).

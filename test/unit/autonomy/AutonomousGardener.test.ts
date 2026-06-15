@@ -2,9 +2,10 @@
  * Unit tests for AutonomousGardener lifecycle and cycle logic
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { AutonomousGardener } from '../../../src/autonomy/AutonomousGardener.js';
 import type { GardenerCycleResult } from '../../../src/autonomy/AutonomousGardener.js';
+import { DreamQueue } from '../../../src/dreaming/DreamQueue.js';
 import type { ArchiveCell, ArchiveEntry, DescriptorAxis } from '../../../src/emergence/types.js';
 
 function makeEntry(id: string, quality: number, descriptorValue = 0.5): ArchiveEntry {
@@ -148,6 +149,84 @@ describe('AutonomousGardener', () => {
     expect(result).toMatchObject({
       tasteAlignedCount: 1,
       tasteSelectedEntryIds: ['preferred'],
+    });
+  });
+
+  describe('dream queue wiring (B15)', () => {
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it('enqueues an in-cycle recombination into the injected dream queue', () => {
+      // Force ReplayBudgetPolicy.decideNextTask down the dream-recombination
+      // path deterministically: replayRatio 0 (never replay) + Math.random 0.99
+      // (full archive coverage → normal allocation → freshTypes[floor(0.99*2)=1]
+      // = 'dream-recombination').
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+
+      const dreamQueue = new DreamQueue();
+      const gardener = new AutonomousGardener({
+        totalBudget: 100,
+        replayRatio: 0,
+        maxArchiveTasks: 1,
+        dreamQueue,
+      });
+
+      // Two distinct elites so DreamPlanner produces a pair to recombine.
+      const cells = [makeCell('alpha', 0.9, 0.9), makeCell('beta', 0.6, 0.1)];
+      const result = gardener.cycle(cells, axes);
+
+      expect(result!.taskBreakdown!.dream).toBe(1);
+
+      const queued = dreamQueue.getTasks('queued');
+      expect(queued.length).toBeGreaterThanOrEqual(1);
+      // The queued task carries the actual recombination pairing — the two
+      // archive elites — not just an incremented counter.
+      const top = queued[0];
+      expect(top.strategy).toBe('elite-x-elite');
+      const sourceIds = top.sources.map(s => s.id).sort();
+      expect(sourceIds).toEqual(['alpha', 'beta']);
+    });
+
+    it('does not enqueue when no dream queue is injected (back-compat)', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+
+      const dreamQueue = new DreamQueue();
+      const gardener = new AutonomousGardener({
+        totalBudget: 100,
+        replayRatio: 0,
+        maxArchiveTasks: 1,
+        // no dreamQueue injected
+      });
+
+      const cells = [makeCell('alpha', 0.9, 0.9), makeCell('beta', 0.6, 0.1)];
+      const result = gardener.cycle(cells, axes);
+
+      // Dream work still happens (reported), but nothing is enqueued anywhere.
+      expect(result!.taskBreakdown!.dream).toBe(1);
+      expect(dreamQueue.getStatus().queued).toBe(0);
+    });
+
+    it('does not re-enqueue the same pairing across cycles (dedup)', () => {
+      vi.spyOn(Math, 'random').mockReturnValue(0.99);
+
+      const dreamQueue = new DreamQueue();
+      const gardener = new AutonomousGardener({
+        totalBudget: 100,
+        replayRatio: 0,
+        maxArchiveTasks: 1,
+        dreamQueue,
+      });
+
+      const cells = [makeCell('alpha', 0.9, 0.9), makeCell('beta', 0.6, 0.1)];
+      gardener.cycle(cells, axes);
+      const afterFirst = dreamQueue.getStatus().queued;
+      gardener.cycle(cells, axes);
+      const afterSecond = dreamQueue.getStatus().queued;
+
+      // Same archive → same top pairing → deduped, no growth.
+      expect(afterFirst).toBe(1);
+      expect(afterSecond).toBe(1);
     });
   });
 });

@@ -115,14 +115,13 @@ export class P5Validator {
       return { valid: false, errors };
     }
 
-    const isHTMLWrapped = this.isAlreadyWrapped(trimmed);
+    const sanitized = this.sanitizeNonAsciiOperators(trimmed);
+    const isHTMLWrapped = this.isAlreadyWrapped(sanitized);
 
     if (isHTMLWrapped) {
-      // HTML-wrapped p5 validation
-      errors.push(...this.validateHTMLWrapped(trimmed));
+      errors.push(...this.validateHTMLWrapped(sanitized));
     } else {
-      // Raw JS p5 validation
-      errors.push(...this.validateRawJS(trimmed));
+      errors.push(...this.validateRawJS(sanitized));
     }
 
     return {
@@ -199,16 +198,26 @@ export class P5Validator {
    * Browser p5 sketches must be parseable JavaScript before semantic checks matter.
    */
   private static validateJavaScriptSyntax(code: string): string[] {
+    const sanitized = this.sanitizeNonAsciiOperators(code);
     try {
-      parse(code, {
-        sourceType: 'script',
-        allowReturnOutsideFunction: false,
-        plugins: ['jsx'],
-      });
+      parse(sanitized, { sourceType: 'script', allowReturnOutsideFunction: false, plugins: ['jsx'] });
       return [];
     } catch (error) {
       return [`p5.js code has invalid JavaScript syntax: ${this.formatParseError(error)}`];
     }
+  }
+  private static sanitizeNonAsciiOperators(code: string): string {
+    const spaces = (m: string) => ' '.repeat(m.length);
+    const masked = code
+      .replace(/\/\*[\s\S]*?\*\//g, spaces)
+      .replace(/\/\/.*$/gm, spaces)
+      .replace(/(["'`])(?:\\[\s\S]|(?!\1)[\s\S])*\1/g, spaces);
+    let out = '';
+    for (let i = 0; i < code.length; i++) {
+      const ch = code[i];
+      out += (ch.codePointAt(0) ?? 0) > 0x7f && masked[i] === ch ? ' ' : ch;
+    }
+    return out;
   }
 
   /**

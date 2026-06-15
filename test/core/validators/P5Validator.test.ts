@@ -140,6 +140,43 @@ describe('P5Validator', () => {
       expect(result.errors.some(error => error.includes('invalid JavaScript syntax'))).toBe(true);
     });
 
+    it('should sanitize non-ASCII glyphs that break JavaScript parsing', () => {
+      const code = `
+        function setup() {
+          createCanvas(400, 400);
+        }
+
+        function draw() {
+          background(220);
+          // U+00B7 middle dot and U+2554 box drawing leak into code positions
+          let x· = 5;
+          ╔let y = x;
+          circle(x, y, 10);
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should preserve non-ASCII characters inside p5 string literals', () => {
+      const code = `
+        function setup() {
+          createCanvas(400, 400);
+        }
+
+        function draw() {
+          background(220);
+          text('héllo · world', 50, 50);
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
     it('should reject undeclared sketch state references before runtime', () => {
       const code = `
         function setup() {

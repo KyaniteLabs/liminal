@@ -1,10 +1,10 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, unlink, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { promisify } from 'node:util';
 import { execFile } from 'node:child_process';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const execFileAsync = promisify(execFile);
 
@@ -34,6 +34,12 @@ describe('model-assimilation proof script', () => {
 
   afterEach(async () => {
     await Promise.all(tempDirs.map(dir => rm(dir, { recursive: true, force: true })));
+  });
+
+  // Remove any pre-existing live receipt so the fixture-only test isn't
+  // polluted by a valid receipt left from a prior real live audition.
+  beforeEach(async () => {
+    await unlink(join(process.cwd(), '.omx', 'proof', 'model-assimilation-live.json')).catch(() => {});
   });
 
   async function tempRoot(): Promise<string> {

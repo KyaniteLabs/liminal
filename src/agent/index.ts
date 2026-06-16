@@ -60,10 +60,10 @@ export type { AutonomyConfig } from './AutonomyController.js'
 export { AUTONOMY_LEVELS } from './AutonomyController.js'
 
 // Response formatting
-export { ResponseComposer } from './ResponseComposer.js';
+// ResponseComposer retired — sole consumer was deprecated StudioAgent class.
 
-// Core agent (re-exports delegate types too)
-export { StudioAgent, STUDIO_SYSTEM_PROMPT } from './StudioAgent.js';
+// Core agent exports
+export { STUDIO_SYSTEM_PROMPT } from './StudioAgent.js';
 export type {
   CreativeDelegate,
   EngineeringDelegate,

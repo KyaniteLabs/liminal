@@ -47,7 +47,7 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 14. **F17 — ascii/textgen presentation. FIXED (#697).** text-art presentation and skip-transparency handling landed; keep visual grading as the proof surface.
 15. **F19 — p5 contrast adherence**: pale-on-pale scatter despite the bidirectional-contrast mandate; consider render-measured contrast scoring (joins #637 lane).
 16. **F10 — revideo artifacts aren't visually rendered/graded** by quality:render.
-17. **F20 — `TuiBridgeService.ts` 3,634 LOC** — split candidate (architecture lane).
+17. **F20 — `TuiBridgeService.ts` split.** COMPLETED — extracted PreviewService (210 LOC), CommandDispatcher (790 LOC), CreativeIntentHelpers (326 LOC). TuiBridgeService reduced from 3,689 to 2,559 LOC (31% reduction).
 18. **Hygiene** — stale local branch `rescue/local-uncommitted-20260606` (not this agent's; confirm before deleting).
 
 ## G009 progress (fix-by-ROI)
@@ -71,7 +71,7 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 | F12 hydra washout (render-measured gate) | **FIXED** (same mechanism as F19 — verdictFromMeasure wired into VisualScorer.score()) | #140 |
 | F10 revideo visual rendering | **RESOLVED** (render.mjs renders revideo via renderRevideoStill; coverage transparency comment added per F10) | existing |
 | F5 sing render stub | **RESOLVED** (render-cli.ts fails loudly with exit 1 + clear "not yet implemented" message; relabel option chosen per register) | existing |
-| F20 TuiBridgeService 3,634 LOC split | **DEFERRED** (extraction seams identified: preview emitter ~170 LOC, command handlers ~780 LOC, streaming ~1200 LOC; multi-session refactoring) | — |
+| F20 TuiBridgeService split (3,689 LOC) | **COMPLETED** — PreviewService + CommandDispatcher + CreativeIntentHelpers extracted; file reduced to 2,559 LOC (31% reduction) | #154 |
 | C1 guardrails framework | **RETIRED** (dead `initializeGuardrailSystem` calls removed from bin/sinter; framework code preserved for future wiring) | #146 |
 | C5 promotion/rollback tier | **FIXED** (ship garden/rollback now honestly report "not yet implemented" instead of silent success) | #148 |
 | C9 nodeprompt graph pipeline | **DEPRECATED** (~2.3k LOC graph-building pipeline marked @deprecated; only synthesis renderer is live) | #149 |
@@ -88,7 +88,7 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 ## Open campaign state
 - Pass 1 complete (this file). Passes 2-3 (clean-pass criterion) tracked in `.omc/ultragoal/goals.json` G010.
 - G009 fix-by-ROI: **COMPLETE.** ALL catalogued findings resolved — every F-finding (F1–F21) + every Tier 3 decision item (C1–C13). Session merged 20 PRs (#131–#150): Tier 3 cures (C2/C4/C12/C13), F19/F12 render-measurement gate, F4 sing wiring tests, C1 guardrails retirement, C5 promotion/rollback honesty, C9 nodeprompt deprecation, C10 orphaned modules deprecation (17 modules), C11 calibration retirement, watchman passes (#134/#144), P2 log fix, HydraGenerator sanitizing, test isolation.
-- Remaining: F20 TuiBridgeService split (DEFERRED — extraction seams documented, multi-session refactoring). G010 clean passes can now begin.
+- F20 TuiBridgeService split: **COMPLETED.** Three cohesive modules extracted (PreviewService, CommandDispatcher, CreativeIntentHelpers). Zero open loops remaining.
 
 ## G010 (clean passes) — COMPLETE 2026-06-15
 
@@ -195,8 +195,6 @@ that landed:
 - **Test suite:** 761 files, 11,316 tests, all green in 416s
 - **HEAD:** uncommitted on `main` (root worktree) — all C9/C10/C11 deletions + D12 + landing rebrand
 
-### Remaining open loops (non-blocking)
+### All open loops closed
 
-| ID | Plan |
-|----|------|
-| F20 TuiBridgeService split (3,689 LOC) | deferred (multi-session refactoring); extraction seams identified at TuiBridgeService.ts:3291-3457, 1014-1795, 1795-2981 |
+F20 TuiBridgeService split was the last remaining open loop. COMPLETED in PR #154 — PreviewService (210 LOC), CommandDispatcher (790 LOC), CreativeIntentHelpers (326 LOC) extracted. TuiBridgeService reduced from 3,689 to 2,559 LOC (31% reduction). Typecheck, build, lint, and full test suite (759 files / 11,294 tests) all green.

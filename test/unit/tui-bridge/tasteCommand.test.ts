@@ -1,3 +1,4 @@
+import { dispatchCommand } from '../../../src/tui-bridge/CommandDispatcher.js';
 /**
  * Tests for TuiBridgeService /taste <pin|reject> <artifactId> command handling.
  *
@@ -144,7 +145,7 @@ describe('TuiBridgeService /taste command handling', () => {
   it('records a pin preference for any artifactId and emits the canonical event', async () => {
     const svc = makeService();
 
-    const result = await (svc as any).handleReviewCommand(SID, '/taste pin artifact-123');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/taste pin artifact-123');
 
     expect(result.reviewRequired).toBe(false);
     expect(mockRecordPreference).toHaveBeenCalledTimes(1);
@@ -172,7 +173,7 @@ describe('TuiBridgeService /taste command handling', () => {
   it('records a reject preference with the right action and event fields', async () => {
     const svc = makeService();
 
-    const result = await (svc as any).handleReviewCommand(SID, '/taste reject archive-piece-42');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/taste reject archive-piece-42');
 
     expect(result.reviewRequired).toBe(false);
     expect(mockRecordPreference).toHaveBeenCalledWith({
@@ -196,7 +197,7 @@ describe('TuiBridgeService /taste command handling', () => {
   it('rejects /taste with a missing action and does not call the preference service', async () => {
     const svc = makeService();
 
-    const result = await (svc as any).handleReviewCommand(SID, '/taste');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/taste');
 
     expect(result.reviewRequired).toBe(false);
     expect(mockRecordPreference).not.toHaveBeenCalled();
@@ -211,7 +212,7 @@ describe('TuiBridgeService /taste command handling', () => {
   it('rejects /taste with an invalid action', async () => {
     const svc = makeService();
 
-    const result = await (svc as any).handleReviewCommand(SID, '/taste maybe artifact-123');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/taste maybe artifact-123');
 
     expect(result.reviewRequired).toBe(false);
     expect(mockRecordPreference).not.toHaveBeenCalled();
@@ -223,7 +224,7 @@ describe('TuiBridgeService /taste command handling', () => {
   it('rejects /taste pin with a missing artifactId', async () => {
     const svc = makeService();
 
-    const result = await (svc as any).handleReviewCommand(SID, '/taste pin');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/taste pin');
 
     expect(result.reviewRequired).toBe(false);
     expect(mockRecordPreference).not.toHaveBeenCalled();
@@ -235,7 +236,7 @@ describe('TuiBridgeService /taste command handling', () => {
   it('rejects /taste reject with a missing artifactId', async () => {
     const svc = makeService();
 
-    const result = await (svc as any).handleReviewCommand(SID, '/taste reject');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/taste reject');
 
     expect(result.reviewRequired).toBe(false);
     expect(mockRecordPreference).not.toHaveBeenCalled();
@@ -247,7 +248,7 @@ describe('TuiBridgeService /taste command handling', () => {
   it('rejects /taste with a whitespace-only artifactId', async () => {
     const svc = makeService();
 
-    const result = await (svc as any).handleReviewCommand(SID, '/taste pin    ');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/taste pin    ');
 
     expect(result.reviewRequired).toBe(false);
     expect(mockRecordPreference).not.toHaveBeenCalled();
@@ -257,7 +258,7 @@ describe('TuiBridgeService /taste command handling', () => {
     mockRecordPreference.mockRejectedValue(new Error('disk full'));
     const svc = makeService();
 
-    const result = await (svc as any).handleReviewCommand(SID, '/taste pin artifact-123');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/taste pin artifact-123');
 
     expect(result.reviewRequired).toBe(false);
     const events = svc.getEvents(SID);
@@ -277,7 +278,7 @@ describe('TuiBridgeService /taste command handling', () => {
     mockFsOpen.mockImplementation(() => { throw new Error('no project'); });
     const svc = new TuiBridgeService();
 
-    const result = await (svc as any).handleReviewCommand(SID, '/taste pin artifact-123');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/taste pin artifact-123');
 
     expect(result.reviewRequired).toBe(false);
     expect(mockRecordPreference).not.toHaveBeenCalled();

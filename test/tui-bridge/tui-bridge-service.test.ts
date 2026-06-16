@@ -5,6 +5,7 @@ import {
   TuiBridgeService,
 } from '../../src/tui-bridge/TuiBridgeService.js';
 import { BehaviorDescriptorExtractor } from '../../src/emergence/BehaviorDescriptorExtractor.js';
+import { emitCreativePreferenceGuidance } from '../../src/tui-bridge/CreativeIntentHelpers.js';
 import type { LLMSession } from '../../src/harness/agent/index.js';
 
 type BridgeEvent = ReturnType<TuiBridgeService['getEvents']>[number];
@@ -52,7 +53,8 @@ describe('TuiBridgeService', () => {
     const service = new TuiBridgeService();
     const session = service.createSession();
 
-    const emitted = (service as any).emitCreativePreferenceGuidance(
+    const emitted = emitCreativePreferenceGuidance(
+      (service as any).intentCtx,
       session.sessionId,
       'create a slow blue p5 nebula with soft motion',
       'p5',

@@ -1,13 +1,10 @@
 import { Logger } from '../utils/Logger.js';
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import { TuiEventStream, type TuiRunEventReplay } from './TuiEventStream.js';
 import { TuiSessionStore } from './TuiSessionStore.js';
 import { ConversationManager } from '../chat/ConversationManager.js';
 import { RalphLoop } from '../core/RalphLoop.js';
 import type { LLMClient } from '../llm/LLMClient.js';
 import type { TuiBridgeEvent, TuiFailureProvenance, TuiInputRequest, TuiPendingAction, TuiRunExecutor, TuiRunKind, TuiRunLifecycle, TuiRunPhase, TuiSessionStatus } from './types.js';
-import { Domain } from '../types/domains.js';
 import { eventBus, EventTypes, type BusEvent } from '../core/EventBus.js';
 import { createLLMModeAgent, type LLMSession } from '../harness/agent/index.js';
 import { IntentRouter } from '../agent/IntentRouter.js';
@@ -29,7 +26,6 @@ import { SessionGraph } from '../agent/SessionGraph.js';
 import { CortexPerceptionBus } from '../cortex/CortexPerceptionBus.js';
 import { GoalStore } from '../cortex/GoalStore.js';
 import { SinterCortex } from '../cortex/SinterCortex.js';
-import { CortexExplainer } from '../cortex/CortexExplainer.js';
 import type { CortexConfig } from '../cortex/types.js';
 import { AutonomousGardener, type GardenerCycleResult } from '../autonomy/AutonomousGardener.js';
 import { TasteLearningService } from '../learning/TasteLearningService.js';
@@ -38,15 +34,8 @@ import { resolveSinterProjectRoot } from '../fs/projectRoot.js';
 import { EmergenceHooks } from '../emergence/EmergenceHooks.js';
 import { BehaviorDescriptorExtractor } from '../emergence/BehaviorDescriptorExtractor.js';
 import type { DescriptorAxis } from '../emergence/types.js';
-import { HTMLWrapper } from '../utils/htmlWrapper.js';
-import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
-import { buildCreativePreferencePromptHints, createCreativePreferenceSuggestion } from '../chat/CreativePreferenceGuide.js';
-import type { Domain as ChatDomain } from '../chat/types.js';
 import {
   buildCreativeDomainRouteTruth,
-  detectPreviewDomainForCode,
-  previewDomainForCode,
-  validateGeneratedDomainForRequest,
   type CreativeDomainRouteTruth,
 } from './CreativeDomainRouting.js';
 import { summarizeReasoningTrace } from './TraceSummarizer.js';
@@ -54,6 +43,21 @@ import { normalizeOptions } from '../core/LoopConfig.js';
 import { GenerationOrchestrator } from '../core/GenerationOrchestrator.js';
 import { Gallery } from '../gallery/Gallery.js';
 import { PostGenerationCognitiveWriter } from './PostGenerationCognitiveWriter.js';
+import { emitPreviewArtifacts, type PreviewContext } from './PreviewService.js';
+import { dispatchCommand, type CommandContext } from './CommandDispatcher.js';
+import {
+  buildCreativeIntentBrief,
+  emitIntentBrief,
+  emitReasoningTrace,
+  emitCreativeClarification,
+  emitCreativePreferenceGuidance,
+  emitPriorRunReceiptLink,
+  promptForCreativeDomain,
+  describeStrictDomainMismatch,
+  domainCorrectionPrompt,
+  type CreativeIntentBrief,
+  type IntentEmitContext,
+} from './CreativeIntentHelpers.js';
 import { detectProviderLabel } from '../config/ProviderRuntime.js';
 import { compactLLMErrorProvenance, extractLLMErrorProvenance } from '../llm/ErrorProvenance.js';
 import {
@@ -137,14 +141,6 @@ function logBridge(event: string, fields: Record<string, unknown>): void {
   Logger.info('TuiBridgeService', `${event} ${JSON.stringify(fields)}`);
 }
 
-interface CreativeIntentBrief {
-  userRequest: string;
-  requirements: string[];
-  missingDetails: string[];
-  questions: string[];
-  shouldClarify: boolean;
-  reason: string;
-}
 
 export class TuiBridgeService {
   private sessions = new TuiSessionStore();
@@ -535,98 +531,9 @@ export class TuiBridgeService {
     const selfImprovement = isSelfImprovementRequest(input.text);
     const creativeGeneration = isGenerationRequest(input.text);
 
-    // Handle /modes command: list available modes (must check before /mode prefix)
-    if (input.text.trim() === '/modes') {
-      const modes = Object.entries(PRODUCT_MODES).map(([mode, info]) => ({
-        mode,
-        label: info.label,
-        description: info.description,
-      }));
-      this.emit(sessionId, { type: 'mode.list', sessionId, modes });
-      const content = modes.map(m => `  ${m.mode.padEnd(8)} ${m.label} — ${m.description}`).join('\n');
-      this.emitCommandResponse(sessionId, `Available modes:\n${content}`);
-      return { reviewRequired: false };
-    }
-
-    // Handle /mode command: switch product mode for this session
-    if (input.text.startsWith('/mode')) {
-      return this.handleModeCommand(sessionId, input.text);
-    }
-
-    // Handle /skills command: list available skills
-    if (input.text.trim() === '/skills') {
-      const modeConfig = this.modeRegistry.getMode(sessionId);
-      const entries = await this.skillCatalog.list({ mode: modeConfig?.mode });
-      this.emit(sessionId, {
-        type: 'skill.list',
-        sessionId,
-        skills: entries.map(e => ({ name: e.name, description: e.description, mode: e.mode })),
-      });
-      if (entries.length === 0) {
-        this.emitCommandResponse(sessionId, 'No skills available. Add .skills/<name>/SKILL.md files.');
-      } else {
-        const lines = entries.map(e => {
-          const modeTag = e.mode ? ` [${e.mode}]` : '';
-          return `  ${e.name.padEnd(20)} ${e.description}${modeTag}`;
-        });
-        this.emitCommandResponse(sessionId, `Available skills:\n${lines.join('\n')}`);
-      }
-      return { reviewRequired: false };
-    }
-
-    // Handle /skill <name> command: run a skill
-    if (input.text.startsWith('/skill ')) {
-      return this.handleSkillCommand(sessionId, input.text, llm);
-    }
-
-    // Handle review commands: /accept, /reject, /pin, /diff, /candidates, /taste
-    if (input.text.startsWith('/accept') || input.text.startsWith('/reject') ||
-        input.text.startsWith('/pin') || input.text.startsWith('/diff') ||
-        input.text.startsWith('/taste') ||
-        input.text.trim() === '/candidates') {
-      return this.handleReviewCommand(sessionId, input.text);
-    }
-
-    // Handle /setup: run onboarding wizard
-    if (input.text.trim() === '/setup') {
-      return this.handleSetupCommand(sessionId);
-    }
-
-    // Handle /diagnostics: run environment validation
-    if (input.text.trim() === '/diagnostics') {
-      return this.handleDiagnosticsCommand(sessionId);
-    }
-
-    // Handle /sessions: list session history
-    if (input.text.trim() === '/sessions') {
-      return this.handleSessionsCommand(sessionId);
-    }
-
-    // Handle /report [json|markdown]: generate session report
-    if (input.text.trim() === '/report' || input.text.trim() === '/report markdown' || input.text.trim() === '/report json') {
-      return this.handleReportCommand(sessionId, input.text.trim());
-    }
-
-    // Handle /workspace create <name>|switch <name>|list
-    if (input.text.startsWith('/workspace')) {
-      return this.handleWorkspaceCommand(sessionId, input.text.trim());
-    }
-
-    // Handle /autonomy <assist|co-create|autopilot>
-    if (input.text.startsWith('/autonomy')) {
-      return this.handleAutonomyCommand(sessionId, input.text.trim());
-    }
-
-    // Handle /goal add <text>|list|remove <id>|done <id>
-    if (input.text.startsWith('/goal')) {
-      return this.handleGoalCommand(sessionId, input.text.trim());
-    }
-
-    // Handle /cortex [start|stop]
-    if (input.text.trim() === '/cortex' || input.text.trim().startsWith('/cortex ')) {
-      return this.handleCortexCommand(sessionId, input.text.trim());
-    }
-
+    // Slash-command dispatch (extracted to CommandDispatcher)
+    const commandResult = await dispatchCommand(this.commandCtx, sessionId, input.text, llm);
+    if (commandResult) return commandResult;
     // Studio routing: classify intent via IntentRouter with mode biasing
     const modeConfig = this.modeRegistry.getMode(sessionId);
     const classifier = new ModeAwareRouter(this.router, () => modeConfig);
@@ -756,9 +663,9 @@ export class TuiBridgeService {
     // Autonomy gating: check if the action kind requires review at current level
     switch (classification.intent) {
       case 'creative': {
-        const intentBrief = this.buildCreativeIntentBrief(input.text);
-        this.emitIntentBrief(sessionId, intentBrief);
-        this.emitReasoningTrace(sessionId, {
+        const intentBrief = buildCreativeIntentBrief(input.text);
+        emitIntentBrief(this.intentCtx, sessionId, intentBrief);
+        emitReasoningTrace(this.intentCtx, sessionId, {
           phase: 'analysis',
           thought: intentBrief.shouldClarify
             ? 'Prompt is underspecified; asking for missing requirements before generation.'
@@ -767,7 +674,7 @@ export class TuiBridgeService {
           source: 'harness',
         });
         if (intentBrief.shouldClarify) {
-          this.emitCreativeClarification(sessionId, intentBrief, conversation);
+          emitCreativeClarification(this.intentCtx, sessionId, intentBrief, conversation);
           emitSessionTurn('clarification', intentBrief.questions.join('\n'));
           break;
         }
@@ -1007,480 +914,6 @@ export class TuiBridgeService {
     return config;
   }
 
-  /**
-   * Handle /mode <ask|make|remix|improve> command.
-   * Parses the mode name, sets it, and responds with confirmation.
-   */
-  private handleModeCommand(sessionId: string, input: string): { reviewRequired: boolean } {
-    const parts = input.trim().split(/\s+/);
-    const modeName = parts[1]?.toLowerCase();
-
-    if (!modeName || !Object.hasOwn(PRODUCT_MODES, modeName)) {
-      const available = Object.keys(PRODUCT_MODES).join(', ');
-      this.emitCommandResponse(sessionId, `Unknown mode. Available: ${available}`);
-      return { reviewRequired: false };
-    }
-
-    const config = this.setProductMode(sessionId, modeName as ProductMode);
-    const modeInfo = PRODUCT_MODES[config.mode];
-    this.emitCommandResponse(sessionId, `Mode switched to ${modeInfo.label} — ${modeInfo.description}`);
-    return { reviewRequired: false };
-  }
-
-  /**
-   * Handle /skill <name> [args] command.
-   * Resolves the skill template, emits skill.started, delegates to the
-   * appropriate route (creative/engineering/chat), then emits skill.completed.
-   */
-  private async handleSkillCommand(
-    sessionId: string,
-    input: string,
-    llm?: LLMClient,
-  ): Promise<{ reviewRequired: boolean }> {
-    const parts = input.trim().split(/\s+/);
-    const skillName = parts[1];
-
-    if (!skillName) {
-      this.emitCommandResponse(sessionId, 'Usage: /skill <name> [input text]');
-      return { reviewRequired: false };
-    }
-
-    const userInput = parts.slice(2).join(' ');
-    const result = await this.skillRunner.resolve(skillName, { input: userInput });
-
-    if (!result) {
-      this.emitCommandResponse(sessionId, `Unknown skill: ${skillName}. Use /skills to list available skills.`);
-      return { reviewRequired: false };
-    }
-
-    logBridge('skill.started', { sessionId, skillName, target: result.target, durationMs: result.durationMs });
-    this.emit(sessionId, { type: 'skill.started', sessionId, skillName });
-
-    // Get conversation for this session
-    let conversation = this.conversations.get(sessionId);
-    if (!conversation) {
-      conversation = new ConversationManager();
-      conversation.startNewSession();
-      this.conversations.set(sessionId, conversation);
-    }
-    conversation.appendMessage('user', input);
-
-    if (!llm) {
-      this.emitCommandResponse(sessionId, result.prompt);
-      this.emit(sessionId, { type: 'skill.completed', sessionId, skillName, durationMs: result.durationMs });
-      return { reviewRequired: false };
-    }
-
-    // Route the expanded skill prompt through the existing delegation paths
-    const routeStart = Date.now();
-    const handleError = (err: unknown) => {
-      this.emit(sessionId, { type: 'error', sessionId, message: err instanceof Error ? err.message : String(err) });
-    };
-
-    const emitCompletion = () => {
-      this.emit(sessionId, {
-        type: 'skill.completed',
-        sessionId,
-        skillName,
-        durationMs: Date.now() - routeStart,
-      });
-    };
-
-    // Autonomy gating: check if the skill's action kind requires review
-    // Chat skills bypass gating (matching direct-chat behavior)
-    if (result.target !== 'chat') {
-      const skillActionKind = result.target === 'creative' ? 'creative' as const : 'engineering' as const;
-      if (this.autonomyController.requiresReview(skillActionKind, sessionId)) {
-      const pendingAction: TuiPendingAction = {
-        id: `skill-${skillName}-${Date.now()}`,
-        title: `Skill: ${skillName}`,
-        description: result.prompt.slice(0, 100),
-        prompt: result.prompt,
-        route: result.target === 'creative' ? 'creative' : result.target === 'engineering' ? 'engineering' : 'hybrid',
-        kind: 'llm',
-        requiresConfirmation: true,
-        createdAt: new Date().toISOString(),
-      };
-      const status = this.sessions.update(sessionId, {
-        mode: 'action',
-        trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig(sessionId).label} — skill "${skillName}" needs review` },
-        pendingAction,
-      });
-      this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
-      this.emit(sessionId, { type: 'status.updated', sessionId, status });
-      return { reviewRequired: true };
-      }
-    }
-
-    switch (result.target) {
-      case 'creative':
-        this.streamRalphGeneration(sessionId, result.prompt, conversation, llm)
-          .then(() => emitCompletion())
-          .catch(handleError);
-        break;
-      case 'engineering':
-        this.streamEngineeringTask(sessionId, result.prompt, conversation, llm)
-          .then(() => emitCompletion())
-          .catch(handleError);
-        break;
-      default:
-        this.streamChatResponse(sessionId, result.prompt, conversation, llm, STUDIO_SYSTEM_PROMPT)
-          .then(() => emitCompletion())
-          .catch(handleError);
-        break;
-    }
-
-    return { reviewRequired: false };
-  }
-
-  /**
-   * Handle review commands: /accept <id>, /reject <id>, /pin <id>,
-   * /taste <pin|reject> <artifactId>, /diff <idA> <idB>, /candidates
-   */
-  private async handleReviewCommand(sessionId: string, input: string): Promise<{ reviewRequired: boolean }> {
-    const parts = input.trim().split(/\s+/);
-    const cmd = parts[0];
-
-    if (cmd === '/candidates') {
-      const candidates = this.reviewManager.list({ sessionId });
-      if (candidates.length === 0) {
-        this.emitCommandResponse(sessionId, 'No review candidates for this session.');
-      } else {
-        const lines = candidates.map(c => {
-          const statusTag = c.status === 'accepted' ? ' ✓' : c.status === 'rejected' ? ' ✗' : ' …';
-          return `  ${c.id.slice(0, 20).padEnd(22)} ${c.score.toFixed(2)}  ${c.label}${statusTag}`;
-        });
-        this.emitCommandResponse(sessionId, `Review candidates:\n${lines.join('\n')}`);
-      }
-      return { reviewRequired: false };
-    }
-
-    if (cmd === '/accept') {
-      const candidateId = parts[1];
-      if (!candidateId) {
-        this.emitCommandResponse(sessionId, 'Usage: /accept <candidate-id>');
-        return { reviewRequired: false };
-      }
-      const candidate = this.reviewManager.accept(candidateId);
-      if (!candidate) {
-        this.emitCommandResponse(sessionId, `Candidate ${candidateId} not found.`);
-      } else {
-        this.emit(sessionId, { type: 'review.candidate_accepted', sessionId, candidateId });
-        this.emitCommandResponse(sessionId, `Accepted: ${candidate.label} (score: ${candidate.score.toFixed(2)})`);
-      }
-      return { reviewRequired: false };
-    }
-
-    if (cmd === '/reject') {
-      const candidateId = parts[1];
-      if (!candidateId) {
-        this.emitCommandResponse(sessionId, 'Usage: /reject <candidate-id>');
-        return { reviewRequired: false };
-      }
-      const candidate = this.reviewManager.reject(candidateId);
-      if (!candidate) {
-        this.emitCommandResponse(sessionId, `Candidate ${candidateId} not found.`);
-      } else {
-        const saved = await this.recordReviewPreference(sessionId, 'reject', candidateId);
-        this.emit(sessionId, { type: 'review.candidate_rejected', sessionId, candidateId });
-        this.emitCommandResponse(sessionId, `Rejected: ${candidate.label}${saved ? '\nPreference saved.' : '\nPreference storage unavailable.'}`);
-      }
-      return { reviewRequired: false };
-    }
-
-    if (cmd === '/pin') {
-      const candidateId = parts[1];
-      if (!candidateId) {
-        this.emitCommandResponse(sessionId, 'Usage: /pin <candidate-id>');
-        return { reviewRequired: false };
-      }
-      const ok = this.reviewManager.pin(candidateId);
-      if (!ok) {
-        this.emitCommandResponse(sessionId, `Candidate ${candidateId} not found.`);
-      } else {
-        const saved = await this.recordReviewPreference(sessionId, 'pin', candidateId);
-        this.emit(sessionId, { type: 'review.favorite_pinned', sessionId, candidateId });
-        this.emitCommandResponse(sessionId, `Pinned: ${candidateId}${saved ? '\nPreference saved.' : '\nPreference storage unavailable.'}`);
-      }
-      return { reviewRequired: false };
-    }
-
-    if (cmd === '/taste') {
-      const action = parts[1];
-      const artifactId = parts[2];
-      if (action !== 'pin' && action !== 'reject') {
-        this.emitCommandResponse(sessionId, 'Usage: /taste <pin|reject> <artifact-id>');
-        return { reviewRequired: false };
-      }
-      if (!artifactId || artifactId.trim() === '') {
-        this.emitCommandResponse(sessionId, 'Usage: /taste <pin|reject> <artifact-id>');
-        return { reviewRequired: false };
-      }
-      // GUI / Showcase parity: ungated — accepts ANY artifactId (archive/showcase
-      // entries are not reviewManager candidates), so no ReviewManager lookup.
-      const saved = await this.recordReviewPreference(sessionId, action, artifactId);
-      // Cast: the `review.preference_recorded` event shape is new for the
-      // GUI parity contract; this file is the only producer and the type
-      // union lives in a sibling types file we are not allowed to edit.
-      this.emit(sessionId, {
-        type: 'review.preference_recorded',
-        sessionId,
-        action,
-        artifactId,
-        saved,
-      } as unknown as TuiBridgeEvent);
-      const label = action === 'pin' ? 'Pinned' : 'Rejected';
-      this.emitCommandResponse(
-        sessionId,
-        `${label}: ${artifactId}${saved ? '\nPreference saved.' : '\nPreference storage unavailable.'}`,
-      );
-      return { reviewRequired: false };
-    }
-
-    if (cmd === '/diff') {
-      const idA = parts[1];
-      const idB = parts[2];
-      if (!idA || !idB) {
-        this.emitCommandResponse(sessionId, 'Usage: /diff <candidateA-id> <candidateB-id>');
-        return { reviewRequired: false };
-      }
-      const candA = this.reviewManager.get(idA);
-      const candB = this.reviewManager.get(idB);
-      if (!candA || !candB) {
-        this.emitCommandResponse(sessionId, 'One or both candidates not found.');
-        return { reviewRequired: false };
-      }
-      const result = this.diffRenderer.diff(candA.content, candB.content);
-      const rendered = this.diffRenderer.render(result);
-      this.emit(sessionId, { type: 'review.diff_ready', sessionId, candidateA: idA, candidateB: idB, diff: rendered });
-      this.emitCommandResponse(sessionId, `Diff (${idA} vs ${idB}):\n${rendered}`);
-      return { reviewRequired: false };
-    }
-
-    return { reviewRequired: false };
-  }
-
-  /**
-   * Handle /setup: run the onboarding wizard with step-by-step events.
-   */
-  private async handleSetupCommand(sessionId: string): Promise<{ reviewRequired: boolean }> {
-    this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Running setup wizard...' });
-
-    // Emit each step as an onboarding.step event for TUI rendering
-    const onStep = (step: { id: string; title: string; status: string; value?: string }) => {
-      this.emit(sessionId, {
-        type: 'onboarding.step',
-        sessionId,
-        stepId: step.id,
-        title: step.title,
-        stepStatus: step.status,
-        value: step.value,
-      });
-    };
-
-    const wizard = this.onboardingWizard;
-    const result = await wizard.run();
-
-    // Emit step events for each completed/failed step
-    for (const step of result.steps) {
-      onStep(step);
-    }
-
-    // Emit completion event
-    this.emit(sessionId, {
-      type: 'onboarding.complete',
-      sessionId,
-      configWritten: result.configWritten,
-      configPath: result.configPath,
-    });
-
-    if (result.configWritten) {
-      this.emitCommandResponse(sessionId, `Setup complete. Config written to ${result.configPath}`);
-    } else {
-      const failed = result.steps.filter(s => s.status === 'failed').map(s => s.title);
-      this.emitCommandResponse(sessionId, `Setup incomplete. Issues: ${failed.join(', ')}`);
-    }
-
-    return { reviewRequired: false };
-  }
-
-  /**
-   * Handle /diagnostics: run environment validation checks.
-   */
-  private async handleDiagnosticsCommand(sessionId: string): Promise<{ reviewRequired: boolean }> {
-    this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Running diagnostics...' });
-
-    const validator = this.envValidator;
-    const report = await validator.validate();
-
-    this.emit(sessionId, {
-      type: 'diagnostics.result',
-      sessionId,
-      checks: report.checks.map(c => ({ name: c.name, status: c.status, message: c.message })),
-      allPassed: report.allPassed,
-    });
-
-    const statusIcons: Record<string, string> = { pass: '✓', fail: '✗', warn: '⚠' };
-    const lines = report.checks.map(c => `  ${statusIcons[c.status] || '?'} ${c.name}: ${c.message}`);
-    const summary = report.allPassed ? 'All checks passed.' : 'Some checks failed or need attention.';
-    this.emitCommandResponse(sessionId, `Diagnostics:\n${lines.join('\n')}\n\n${summary}`);
-
-    return { reviewRequired: false };
-  }
-
-  /**
-   * Handle /sessions: list resumable sessions.
-   */
-  private handleSessionsCommand(sessionId: string): { reviewRequired: boolean } {
-    this.ensureSessionsHydrated();
-    const sessions = this.sessionResumer.listSessions();
-
-    this.emit(sessionId, {
-      type: 'session.list',
-      sessionId,
-      sessions: sessions.map(s => ({
-        sessionId: s.sessionId,
-        turnCount: s.turnCount,
-        lastIntent: s.lastIntent,
-        updatedAt: s.updatedAt,
-      })),
-    });
-
-    if (sessions.length === 0) {
-      this.emitCommandResponse(sessionId, 'No sessions recorded yet.');
-    } else {
-      const lines = sessions.map(s => {
-        const turns = `${s.turnCount} turns`;
-        const intent = s.lastIntent ? ` — ${s.lastIntent.slice(0, 40)}` : '';
-        return `  ${s.sessionId.slice(0, 24).padEnd(26)} ${turns.padEnd(10)} ${s.updatedAt.slice(0, 19)}${intent}`;
-      });
-      this.emitCommandResponse(sessionId, `Sessions:\n${lines.join('\n')}`);
-    }
-
-    return { reviewRequired: false };
-  }
-
-  /**
-   * Handle /report [json|markdown]: generate a session report.
-   */
-  private handleReportCommand(sessionId: string, input: string): { reviewRequired: boolean } {
-    const graph = this.sessionGraphs.get(sessionId);
-    if (!graph) {
-      this.emitCommandResponse(sessionId, 'No session data available for this session.');
-      return { reviewRequired: false };
-    }
-
-    const format = input.endsWith('json') ? 'json' as const : 'markdown' as const;
-    const report = this.reportGenerator.generate(graph, format);
-    const manifest = report.manifest;
-
-    this.emit(sessionId, {
-      type: 'report.generated',
-      sessionId,
-      format: report.format,
-      content: report.content,
-      turns: manifest.turnCount,
-      durationMs: report.totalDurationMs,
-    });
-
-    this.emitCommandResponse(sessionId, report.content);
-    return { reviewRequired: false };
-  }
-
-  /**
-   * Handle /workspace create <name>|switch <name>|list
-   */
-  private handleWorkspaceCommand(sessionId: string, input: string): { reviewRequired: boolean } {
-    const parts = input.split(/\s+/);
-    const subcmd = parts[1]?.toLowerCase();
-
-    if (subcmd === 'create') {
-      const name = parts[2];
-      if (!name) {
-        this.emitCommandResponse(sessionId, 'Usage: /workspace create <name>');
-        return { reviewRequired: false };
-      }
-      const config = this.workspaceManager.create(name);
-      if (!config) {
-        this.emitCommandResponse(sessionId, `Workspace "${name}" already exists.`);
-        return { reviewRequired: false };
-      }
-      // Auto-switch to the new workspace
-      this.workspaceManager.switchTo(name);
-      this.emit(sessionId, { type: 'workspace.created', sessionId, workspaceName: name });
-      this.emit(sessionId, { type: 'workspace.switched', sessionId, workspaceName: name });
-      this.emitCommandResponse(sessionId, `Workspace "${name}" created and activated.`);
-      return { reviewRequired: false };
-    }
-
-    if (subcmd === 'switch') {
-      const name = parts[2];
-      if (!name) {
-        this.emitCommandResponse(sessionId, 'Usage: /workspace switch <name>');
-        return { reviewRequired: false };
-      }
-      const config = this.workspaceManager.switchTo(name);
-      if (!config) {
-        this.emitCommandResponse(sessionId, `Workspace "${name}" not found.`);
-        return { reviewRequired: false };
-      }
-      this.emit(sessionId, { type: 'workspace.switched', sessionId, workspaceName: name });
-      this.emitCommandResponse(sessionId, `Switched to workspace "${name}".`);
-      return { reviewRequired: false };
-    }
-
-    // Default: list workspaces
-    const names = this.workspaceManager.list();
-    this.emit(sessionId, { type: 'workspace.list', sessionId, workspaces: names });
-    if (names.length === 0) {
-      this.emitCommandResponse(sessionId, 'No workspaces. Use /workspace create <name>.');
-    } else {
-      const active = this.workspaceManager.activeName;
-      const lines = names.map(n => {
-        const marker = n === active ? ' *' : '';
-        return `  ${n}${marker}`;
-      });
-      this.emitCommandResponse(sessionId, `Workspaces:\n${lines.join('\n')}`);
-    }
-    return { reviewRequired: false };
-  }
-
-  /**
-   * Handle /autonomy <assist|co-create|autopilot>
-   */
-  private handleAutonomyCommand(sessionId: string, input: string): { reviewRequired: boolean } {
-    const parts = input.split(/\s+/);
-    const level = parts[1]?.toLowerCase();
-
-    if (!level) {
-      // Show current level and available options
-      const current = this.autonomyController.getConfig(sessionId);
-      const all = this.autonomyController.listLevels();
-      const lines = all.map(l => {
-        const marker = l.level === current.level ? ' ← current' : '';
-        return `  ${l.level.padEnd(12)} ${l.label} — ${l.description}${marker}`;
-      });
-      this.emitCommandResponse(sessionId, `Autonomy levels:\n${lines.join('\n')}`);
-      return { reviewRequired: false };
-    }
-
-    const config = this.autonomyController.setLevel(level, sessionId);
-    if (!config) {
-      const available = this.autonomyController.listLevels().map(l => l.level).join(', ');
-      this.emitCommandResponse(sessionId, `Unknown autonomy level. Available: ${available}`);
-      return { reviewRequired: false };
-    }
-
-    this.emit(sessionId, {
-      type: 'autonomy.changed',
-      sessionId,
-      level: config.level,
-      label: config.label,
-      description: config.description,
-    });
-    this.emitCommandResponse(sessionId, `Autonomy set to ${config.label} — ${config.description}`);
-    return { reviewRequired: false };
-  }
 
   /**
    * Lazy-initialize the GoalStore with SinterFS.
@@ -1614,178 +1047,6 @@ export class TuiBridgeService {
     }
   }
 
-  /**
-   * Handle /goal add <text>|list|remove <id>|done <id>
-   */
-  private handleGoalCommand(sessionId: string, input: string): { reviewRequired: boolean } {
-    const parts = input.split(/\s+/);
-    const subcmd = parts[1]?.toLowerCase();
-
-    if (subcmd === 'add') {
-      const text = parts.slice(2).join(' ').trim();
-      if (!text) {
-        this.emitCommandResponse(sessionId, 'Usage: /goal add <text>');
-        return { reviewRequired: false };
-      }
-      const store = this.getGoalStore();
-      if (!store) {
-        this.emitCommandResponse(sessionId, 'Goal store unavailable. Run from a project directory.');
-        return { reviewRequired: false };
-      }
-
-      // Parse optional priority and category from text: /goal add [priority:high] [category:coverage] Fix tests
-      let priority: import('../cortex/types.js').GoalPriority = 'normal';
-      let category: import('../cortex/types.js').GoalCategory = 'maintenance';
-      let goalText = text;
-
-      const priorityMatch = goalText.match(/\[priority:(critical|high|normal|low)\]\s*/i);
-      if (priorityMatch) {
-        priority = priorityMatch[1].toLowerCase() as import('../cortex/types.js').GoalPriority;
-        goalText = goalText.replace(priorityMatch[0], '').trim();
-      }
-
-      const categoryMatch = goalText.match(/\[category:(coverage|performance|reliability|feature|maintenance)\]\s*/i);
-      if (categoryMatch) {
-        category = categoryMatch[1].toLowerCase() as import('../cortex/types.js').GoalCategory;
-        goalText = goalText.replace(categoryMatch[0], '').trim();
-      }
-
-      // Reject if goal text is empty after stripping optional tags
-      if (!goalText) {
-        this.emitCommandResponse(sessionId, 'Goal text is required. Usage: /goal add [priority:X] [category:Y] <text>');
-        return { reviewRequired: false };
-      }
-
-      const goal = store.addGoal({ text: goalText, priority, category });
-      this.emit(sessionId, { type: 'cortex.goal_added', sessionId, goal });
-      this.emitCommandResponse(sessionId, `Goal added: "${goal.text}" [${goal.priority}/${goal.category}]`);
-      return { reviewRequired: false };
-    }
-
-    if (subcmd === 'list') {
-      const store = this.getGoalStore();
-      if (!store) {
-        this.emitCommandResponse(sessionId, 'Goal store unavailable. Run from a project directory.');
-        return { reviewRequired: false };
-      }
-
-      const goals = store.getActiveGoals();
-      this.emit(sessionId, { type: 'cortex.goal_list', sessionId, goals });
-      if (goals.length === 0) {
-        this.emitCommandResponse(sessionId, 'No active goals. Use /goal add <text>.');
-      } else {
-        const lines = goals.map(g => {
-          const marker = g.priority === 'critical' ? '!!' : g.priority === 'high' ? ' !' : '  ';
-          return ` ${marker} ${g.id} ${g.text}`;
-        });
-        this.emitCommandResponse(sessionId, `Cortex Goals (${goals.length}):\n${lines.join('\n')}`);
-      }
-      return { reviewRequired: false };
-    }
-
-    if (subcmd === 'remove') {
-      const goalId = parts[2];
-      if (!goalId) {
-        this.emitCommandResponse(sessionId, 'Usage: /goal remove <id>');
-        return { reviewRequired: false };
-      }
-      const store = this.getGoalStore();
-      if (!store) {
-        this.emitCommandResponse(sessionId, 'Goal store unavailable.');
-        return { reviewRequired: false };
-      }
-
-      const removed = store.removeGoal(goalId);
-      if (!removed) {
-        this.emitCommandResponse(sessionId, `Goal "${goalId}" not found.`);
-      } else {
-        this.emit(sessionId, { type: 'cortex.goal_removed', sessionId, goalId });
-        this.emitCommandResponse(sessionId, `Goal "${goalId}" removed.`);
-      }
-      return { reviewRequired: false };
-    }
-
-    if (subcmd === 'done') {
-      const goalId = parts[2];
-      if (!goalId) {
-        this.emitCommandResponse(sessionId, 'Usage: /goal done <id>');
-        return { reviewRequired: false };
-      }
-      const store = this.getGoalStore();
-      if (!store) {
-        this.emitCommandResponse(sessionId, 'Goal store unavailable.');
-        return { reviewRequired: false };
-      }
-
-      const completed = store.completeGoal(goalId);
-      if (!completed) {
-        this.emitCommandResponse(sessionId, `Goal "${goalId}" not found.`);
-      } else {
-        this.emit(sessionId, { type: 'cortex.goal_completed', sessionId, goalId });
-        this.emitCommandResponse(sessionId, `Goal completed: "${completed.text}"`);
-      }
-      return { reviewRequired: false };
-    }
-
-    // Default: show usage
-    this.emitCommandResponse(sessionId, 'Usage: /goal add <text> | list | remove <id> | done <id>\nOptions: [priority:high] [category:coverage] before text');
-    return { reviewRequired: false };
-  }
-
-  /**
-   * Handle /cortex [start|stop]
-   * Shows the Cortex dashboard, or starts/stops the background loop.
-   */
-  private handleCortexCommand(sessionId: string, input: string): { reviewRequired: boolean } {
-    const parts = input.split(/\s+/);
-    const subcmd = parts[1]?.toLowerCase();
-
-    if (subcmd === 'start') {
-      if (this.cortexLoop && !this.cortexLoop.isRunning()) {
-        this.cortexLoop.start();
-        this.emitCommandResponse(sessionId, 'Cortex loop started.');
-      } else if (this.cortexLoop?.isRunning()) {
-        this.emitCommandResponse(sessionId, 'Cortex loop is already running.');
-      } else {
-        this.emitCommandResponse(sessionId, 'Cortex loop not available.');
-      }
-      return { reviewRequired: false };
-    }
-
-    if (subcmd === 'stop') {
-      if (this.cortexLoop?.isRunning()) {
-        this.cortexLoop.stop();
-        this.emitCommandResponse(sessionId, 'Cortex loop stopped.');
-      } else {
-        this.emitCommandResponse(sessionId, 'Cortex loop is not running.');
-      }
-      return { reviewRequired: false };
-    }
-
-    // Default: show dashboard
-    const snapshot = this.cortexBus.getSnapshot();
-    const goals = this.getGoalStore()?.getActiveGoals() ?? [];
-    const budget = this.cortexLoop?.getBudgetUsage() ?? { actionsTaken: 0, actionsLimit: 0, tokenEstimate: 0, tokenLimit: 0 };
-    const cortexState = this.cortexLoop?.getState() ?? { tickNumber: 0, decisions: [], stuckWorkers: [] };
-    const explainer = new CortexExplainer();
-    const dashboard = explainer.formatDashboard({
-      snapshot,
-      goals,
-      budget,
-      stuckWorkers: cortexState.stuckWorkers ?? [],
-      latestDecisions: cortexState.decisions ?? [],
-      tickNumber: cortexState.tickNumber ?? 0,
-      autonomyLevel: TuiBridgeService.CORTEX_CONFIG.autonomyLevel,
-    });
-
-    this.emit(sessionId, {
-      type: 'cortex.dashboard',
-      sessionId,
-      content: dashboard,
-    });
-    this.emitCommandResponse(sessionId, dashboard);
-    return { reviewRequired: false };
-  }
 
   /**
    * Stream a direct chat response from the LLM.
@@ -1892,7 +1153,7 @@ export class TuiBridgeService {
     const candidateCount = Math.min(3, Math.max(1, Number(options.candidateCount) || 1));
     const maxIterations = Math.min(10, Math.max(1, Number(options.maxIterations) || 5));
     const generationStartedAt = Date.now();
-    const intentBrief = this.buildCreativeIntentBrief(userText);
+    const intentBrief = buildCreativeIntentBrief(userText);
     logBridge('generation.started', {
       sessionId,
       harnessModel: harnessModelName,
@@ -1916,8 +1177,8 @@ export class TuiBridgeService {
         sessionId,
         message: 'Reading prompt and extracting requirements...',
       });
-      this.emitIntentBrief(sessionId, intentBrief);
-      this.emitReasoningTrace(sessionId, {
+      emitIntentBrief(this.intentCtx, sessionId, intentBrief);
+      emitReasoningTrace(this.intentCtx, sessionId, {
         phase: 'analysis',
         thought: 'Extracted concrete requirements and missing details before spending model time.',
         detail: intentBrief.requirements.join(' | '),
@@ -1931,14 +1192,14 @@ export class TuiBridgeService {
       });
 
       if (intentBrief.shouldClarify) {
-        this.emitCreativeClarification(sessionId, intentBrief, conversation);
+        emitCreativeClarification(this.intentCtx, sessionId, intentBrief, conversation);
         logBridge('generation.clarification_needed', { sessionId, reason: intentBrief.reason });
         return;
       }
 
       const routeTruth = buildCreativeDomainRouteTruth(userText);
       const domainPlan = routeTruth.domains;
-      this.emitCreativePreferenceGuidance(sessionId, userText, routeTruth.selectedDomain);
+      emitCreativePreferenceGuidance(this.intentCtx, sessionId, userText, routeTruth.selectedDomain);
       this.emit(sessionId, {
         type: 'generation.route.selected',
         sessionId,
@@ -1954,7 +1215,7 @@ export class TuiBridgeService {
         executionMode: 'prove',
       });
       this.emitDomainTruth(sessionId, routeTruth);
-      this.emitPriorRunReceiptLink(sessionId, options);
+      emitPriorRunReceiptLink(this.intentCtx, sessionId, options);
       const memoryReceiptsPromise = this.cognitiveWriter.prepareGeneration({
         sessionId,
         userText,
@@ -1968,7 +1229,7 @@ export class TuiBridgeService {
           receipts: memoryReceipts,
         });
       });
-      this.emitReasoningTrace(sessionId, {
+      emitReasoningTrace(this.intentCtx, sessionId, {
         phase: 'domain-routing',
         thought: `Routing through ${domainPlan.length} possible domain path(s): ${domainPlan.join(' -> ')}.`,
         detail: `Fast preview defaults: ${candidateCount} candidate(s), ${maxIterations} max iteration(s), ${timeoutMinutes}m per attempt.`,
@@ -2025,7 +1286,7 @@ export class TuiBridgeService {
         const attemptStartedAt = Date.now();
         const domain = domainPlan[attempt];
         activeDomain = domain;
-        const attemptPrompt = this.promptForCreativeDomain(userText, domain, attempt > 0, intentBrief, options);
+        const attemptPrompt = promptForCreativeDomain(userText, domain, attempt > 0, intentBrief, options);
         const attemptLabel = `${attempt + 1}/${domainPlan.length}: ${domain}`;
         this.emit(sessionId, {
           type: 'generation.attempt.started',
@@ -2048,7 +1309,7 @@ export class TuiBridgeService {
           sessionId,
           message: `Calling generator for attempt ${attemptLabel}; waiting for up to ${timeoutMinutes}m.`,
         });
-        this.emitReasoningTrace(sessionId, {
+        emitReasoningTrace(this.intentCtx, sessionId, {
           phase: 'generation',
           thought: `Calling ${generatorModelName} to produce ${candidateCount} ${domain} candidate(s).`,
           detail: `Attempt ${attempt + 1}/${domainPlan.length}; explicit requirements remain in the prompt.`,
@@ -2101,7 +1362,7 @@ export class TuiBridgeService {
                 code: iterationContext.code,
                 stageTimings: iterationContext.stageTimings,
               });
-              this.emitReasoningTrace(sessionId, {
+              emitReasoningTrace(this.intentCtx, sessionId, {
                 source: 'evaluator',
                 phase: 'evaluation',
                 thought: `Evaluator scored iteration ${iterationContext.iteration} at ${iterationContext.evaluation.score.toFixed(2)}.`,
@@ -2112,7 +1373,7 @@ export class TuiBridgeService {
               });
               if (iterationContext.generatorThinking) {
                 const summary = summarizeReasoningTrace(iterationContext.generatorThinking, 'generator');
-                this.emitReasoningTrace(sessionId, {
+                emitReasoningTrace(this.intentCtx, sessionId, {
                   source: 'generator',
                   phase: 'generator-thinking',
                   thought: summary.summary,
@@ -2135,7 +1396,7 @@ export class TuiBridgeService {
             this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
             return;
           }
-          const mismatch = this.describeStrictDomainMismatch(attemptResult.code, domain, domainPlan);
+          const mismatch = describeStrictDomainMismatch(attemptResult.code, domain, domainPlan);
           if (mismatch) throw new Error(mismatch);
           this.emit(sessionId, {
             type: 'tool.completed',
@@ -2257,7 +1518,7 @@ export class TuiBridgeService {
           model: result.model || generatorModelName,
           provider,
         });
-        await this.emitPreviewArtifacts(sessionId, result.code, activeDomain, routeTruth);
+        await emitPreviewArtifacts(this.previewCtx, sessionId, result.code, activeDomain, routeTruth);
 
         // Record in conversation
         conversation.appendMessage('assistant', `Generated code (${result.iterations} iterations, score: ${result.finalScore.toFixed(2)}):\n\n${result.code}`);
@@ -2352,7 +1613,7 @@ export class TuiBridgeService {
     const timeoutMinutes = Math.min(30, Math.max(1, Number(options.timeoutMinutes) || 1));
     const candidateCount = 1;
     const generationStartedAt = Date.now();
-    const intentBrief = this.buildCreativeIntentBrief(userText);
+    const intentBrief = buildCreativeIntentBrief(userText);
     this.beginRun(sessionId, {
       kind: 'creative',
       label: 'Creative draft queued',
@@ -2368,8 +1629,8 @@ export class TuiBridgeService {
         sessionId,
         message: 'Generating a first artifact before quality scoring.',
       });
-      this.emitIntentBrief(sessionId, intentBrief);
-      this.emitReasoningTrace(sessionId, {
+      emitIntentBrief(this.intentCtx, sessionId, intentBrief);
+      emitReasoningTrace(this.intentCtx, sessionId, {
         phase: 'analysis',
         thought: 'Fast generation is prioritizing the first visible artifact before quality scoring.',
         detail: intentBrief.requirements.join(' | '),
@@ -2378,13 +1639,13 @@ export class TuiBridgeService {
       });
 
       if (intentBrief.shouldClarify) {
-        this.emitCreativeClarification(sessionId, intentBrief, conversation);
+        emitCreativeClarification(this.intentCtx, sessionId, intentBrief, conversation);
         return;
       }
 
       const routeTruth = buildCreativeDomainRouteTruth(userText);
       const domainPlan = routeTruth.domains;
-      this.emitCreativePreferenceGuidance(sessionId, userText, routeTruth.selectedDomain);
+      emitCreativePreferenceGuidance(this.intentCtx, sessionId, userText, routeTruth.selectedDomain);
       this.emit(sessionId, {
         type: 'generation.route.selected',
         sessionId,
@@ -2400,7 +1661,7 @@ export class TuiBridgeService {
         executionMode: 'draft',
       });
       this.emitDomainTruth(sessionId, routeTruth);
-      this.emitPriorRunReceiptLink(sessionId, options);
+      emitPriorRunReceiptLink(this.intentCtx, sessionId, options);
       const memoryReceiptsPromise = this.cognitiveWriter.prepareGeneration({
         sessionId,
         userText,
@@ -2441,7 +1702,7 @@ export class TuiBridgeService {
         const attemptStartedAt = Date.now();
         const domain = domainPlan[attempt];
         activeDomain = domain;
-        const attemptPrompt = this.promptForCreativeDomain(userText, domain, attempt > 0, intentBrief, options);
+        const attemptPrompt = promptForCreativeDomain(userText, domain, attempt > 0, intentBrief, options);
 
         this.emit(sessionId, {
           type: 'generation.attempt.started',
@@ -2459,7 +1720,7 @@ export class TuiBridgeService {
           model: generatorModelName,
           provider,
         });
-        this.emitReasoningTrace(sessionId, {
+        emitReasoningTrace(this.intentCtx, sessionId, {
           phase: 'generation',
           thought: `Calling ${generatorModelName} for a fast ${domain} generation.`,
           detail: 'Fast generation skips evaluator scoring and repair so preview can appear immediately.',
@@ -2501,7 +1762,7 @@ export class TuiBridgeService {
               shouldClarify: true,
               reason: `Generation needs clarification for ${domain}.`,
             };
-            this.emitCreativeClarification(sessionId, clarificationBrief, conversation);
+            emitCreativeClarification(this.intentCtx, sessionId, clarificationBrief, conversation);
             return;
           }
           if (!attemptResult.code?.trim()) {
@@ -2511,7 +1772,7 @@ export class TuiBridgeService {
             this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
             return;
           }
-          const mismatch = this.describeStrictDomainMismatch(attemptResult.code, domain, domainPlan);
+          const mismatch = describeStrictDomainMismatch(attemptResult.code, domain, domainPlan);
           if (mismatch) {
             this.emit(sessionId, {
               type: 'activity.updated',
@@ -2523,7 +1784,7 @@ export class TuiBridgeService {
               model: generatorModelName,
               provider,
             });
-            const correctionPrompt = this.domainCorrectionPrompt(attemptPrompt, domain, mismatch);
+            const correctionPrompt = domainCorrectionPrompt(attemptPrompt, domain, mismatch);
             const retryController = new AbortController();
             const unlinkRetryAbort = this.linkDraftAttemptToRun(controller.signal, retryController);
             const retryPromise = orchestrator.generate(correctionPrompt, correctionPrompt, true, retryController.signal);
@@ -2558,14 +1819,14 @@ export class TuiBridgeService {
               shouldClarify: true,
               reason: `Generation needs clarification for ${domain}.`,
             };
-            this.emitCreativeClarification(sessionId, clarificationBrief, conversation);
+            emitCreativeClarification(this.intentCtx, sessionId, clarificationBrief, conversation);
             return;
           }
-          const retryMismatch = this.describeStrictDomainMismatch(attemptResult.code, domain, domainPlan);
+          const retryMismatch = describeStrictDomainMismatch(attemptResult.code, domain, domainPlan);
           if (retryMismatch) throw new Error(retryMismatch);
           if (attemptResult.thinking) {
             const summary = summarizeReasoningTrace(attemptResult.thinking, 'generator');
-            this.emitReasoningTrace(sessionId, {
+            emitReasoningTrace(this.intentCtx, sessionId, {
               source: 'generator',
               phase: 'generator-thinking',
               thought: summary.summary,
@@ -2674,7 +1935,7 @@ export class TuiBridgeService {
         model: result.model || generatorModelName,
         provider,
       });
-      await this.emitPreviewArtifacts(sessionId, result.code, activeDomain, routeTruth);
+      await emitPreviewArtifacts(this.previewCtx, sessionId, result.code, activeDomain, routeTruth);
       this.completeRun(sessionId, {
         label: 'Creative draft complete',
         model: result.model || generatorModelName,
@@ -3009,452 +2270,6 @@ export class TuiBridgeService {
     return label === 'llm' ? 'unknown' : label;
   }
 
-  private buildCreativeIntentBrief(userText: string): CreativeIntentBrief {
-    const userRequest = this.extractUserPrompt(userText);
-    const detector = new AmbiguityDetector();
-    const issues = detector.detect(userRequest);
-    const words = userRequest.split(/\s+/).filter(Boolean);
-    const lower = userRequest.toLowerCase();
-    const hasColor = /\b(red|orange|yellow|green|blue|purple|violet|pink|white|black|gold|silver|cyan|magenta|monochrome|neon|pastel)\b/.test(lower);
-    const hasMotion = /\b(dance|dancing|move|moving|rotate|spinning|pulse|breath|breathes|breathing|flow|grow|morph|animate|animated|kinetic)\b/.test(lower);
-    const hasStyle = /\b(glass|metal|organic|alien|soft|hard|minimal|detailed|surreal|realistic|abstract|luminous|dark|bright|noir|retro|cyberpunk)\b/.test(lower);
-    const subjectStopWords = new Set([
-      'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'create', 'draw', 'for', 'from', 'generate',
-      'in', 'into', 'make', 'of', 'on', 'or', 'sketch', 'the', 'to', 'with',
-    ]);
-    const vagueSubjectWords = new Set(['better', 'cooler', 'interesting', 'it', 'nice', 'nicer', 'something', 'stuff', 'that', 'things', 'this']);
-    const hasNamedVisualObject = /\b(aurora|bird|boat|building|butterfly|castle|city|cloud|comet|creature|crystal|diagram|dragon|fish|flower|forest|galaxy|iceberg|icebergs|icon|island|landscape|logo|machine|moon|mountain|ocean|organism|pattern|planet|portrait|river|robot|scene|shader|ship|sky|star|stars|storm|tree|wave|waves)\b/.test(lower);
-    const hasConcreteNounHint = words.some((word) => {
-      const cleaned = word.replace(/[^a-zA-Z]/g, '').toLowerCase();
-      return cleaned.length >= 4 && !subjectStopWords.has(cleaned) && !vagueSubjectWords.has(cleaned);
-    });
-    const hasSubject = hasNamedVisualObject || hasConcreteNounHint;
-    const highIssues = issues.filter((issue) => (
-      issue.severity === 'high' &&
-      !(issue.type === 'missing_context' && (words.length >= 10 || hasSubject))
-    ));
-    const requirements = [
-      `Primary request: ${userRequest}`,
-      hasSubject ? 'Preserve the named subject and objects from the prompt.' : 'User has not named a concrete subject yet.',
-      hasColor ? 'Preserve explicit color and palette cues.' : 'No explicit palette was provided.',
-      hasMotion ? 'Preserve explicit motion or behavior cues.' : 'No explicit motion/behavior was provided.',
-      hasStyle ? 'Preserve explicit style/material/mood cues.' : 'No explicit style/material/mood was provided.',
-    ];
-    const missingDetails = [
-      !hasSubject ? 'subject' : '',
-      !hasColor ? 'palette' : '',
-      !hasMotion ? 'motion' : '',
-      !hasStyle ? 'style/material' : '',
-    ].filter(Boolean);
-    const questions = [
-      ...highIssues.map((issue) => issue.suggestedQuestion),
-      !hasSubject ? 'What is the main subject or object that must be recognizable?' : '',
-      !hasColor ? 'What palette or color mood should dominate?' : '',
-      !hasMotion ? 'Should it be still, looping, breathing, dancing, morphing, or interactive?' : '',
-      !hasStyle ? 'What material or aesthetic should it feel like?' : '',
-    ].filter(Boolean).slice(0, 4);
-    const shouldClarify = highIssues.length > 0 || (!hasSubject && (words.length < 3 || (!hasColor && !hasMotion && !hasStyle)));
-    const reason = highIssues[0]?.description || (words.length < 3 ? 'Prompt is too short to preserve intent reliably.' : 'Prompt is missing a concrete subject.');
-
-    return {
-      userRequest,
-      requirements,
-      missingDetails,
-      questions,
-      shouldClarify,
-      reason,
-    };
-  }
-
-  private emitIntentBrief(sessionId: string, intentBrief: CreativeIntentBrief): void {
-    this.emit(sessionId, {
-      type: 'generation.intent_brief',
-      sessionId,
-      userRequest: intentBrief.userRequest,
-      requirements: intentBrief.requirements,
-      missingDetails: intentBrief.missingDetails,
-      questions: intentBrief.questions,
-      willClarify: intentBrief.shouldClarify,
-    });
-  }
-
-  private emitReasoningTrace(
-    sessionId: string,
-    trace: { phase: string; thought: string; model?: string; detail?: string; source?: 'harness' | 'generator' | 'evaluator' },
-  ): void {
-    this.emit(sessionId, {
-      type: 'generation.reasoning_trace',
-      sessionId,
-      ...trace,
-    });
-  }
-
-  private emitCreativeClarification(
-    sessionId: string,
-    intentBrief: CreativeIntentBrief,
-    conversation: ConversationManager,
-  ): void {
-    const content = [
-      'I need to clarify this before generating so I do not guess wrong.',
-      '',
-      ...intentBrief.questions.map((question, index) => `${index + 1}. ${question}`),
-    ].join('\n');
-    this.emit(sessionId, {
-      type: 'generation.clarification_needed',
-      sessionId,
-      questions: intentBrief.questions,
-      reason: intentBrief.reason,
-    });
-    this.emit(sessionId, { type: 'response.delta', sessionId, delta: content });
-    this.emit(sessionId, { type: 'response.completed', sessionId, content });
-    this.emit(sessionId, { type: 'response.committed', sessionId, content });
-    conversation.appendMessage('assistant', content);
-    this.emit(sessionId, {
-      type: 'status.updated',
-      sessionId,
-      status: this.sessions.update(sessionId, {
-        mode: 'chat',
-        activeTask: 'Clarifying generation intent',
-      }),
-    });
-  }
-
-  private extractUserPrompt(userText: string): string {
-    const match = userText.match(/(?:^|\n)User prompt:\s*([\s\S]+)$/i);
-    return (match?.[1] ?? userText).trim();
-  }
-
-  private emitCreativePreferenceGuidance(sessionId: string, userText: string, domain: Domain | string): boolean {
-    const prompt = this.extractUserPrompt(userText);
-    const suggestion = createCreativePreferenceSuggestion({
-      prompt,
-      domain: this.toChatDomain(domain),
-      techniques: [],
-      constraints: [],
-      references: [],
-      iteration: 0,
-      currentScore: 0,
-    });
-    if (!suggestion) return false;
-
-    const questions = suggestion.description
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.startsWith('- '))
-      .map(line => line.slice(2).trim())
-      .filter(Boolean);
-
-    this.emit(sessionId, {
-      type: 'guidance.suggestion',
-      sessionId,
-      category: 'creative-preferences',
-      title: suggestion.title,
-      description: suggestion.description,
-      priority: suggestion.priority,
-      optional: true,
-      questions,
-    });
-    return true;
-  }
-
-  private toChatDomain(domain: Domain | string): ChatDomain {
-    const value = String(domain);
-    if (value === Domain.GLSL || value === Domain.WEBGL) return 'shader';
-    if (value === Domain.TONE) return 'music';
-    if (value === Domain.REVIDEO || value === Domain.HYPERFRAMES) return 'revideo';
-    if (['p5', 'shader', 'three', 'music', 'hydra', 'strudel', 'revideo'].includes(value)) {
-      return value as ChatDomain;
-    }
-    return 'p5';
-  }
-
-  private emitPriorRunReceiptLink(
-    sessionId: string,
-    options: Pick<TuiInputRequest, 'creativePreferences'>,
-  ): void {
-    const preferences = options.creativePreferences;
-    if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) return;
-    const prior = preferences.priorRunReceipt;
-    if (!prior || typeof prior !== 'object' || Array.isArray(prior)) return;
-    const priorRecord = prior as {
-      phase?: unknown;
-      creativeDomain?: unknown;
-      artifact?: { label?: unknown; path?: unknown };
-      preview?: { type?: unknown };
-    };
-    const revisionKindValue = String(preferences.revisionKind || 'revision');
-    const revisionKind = ['revise', 'variation', 'polish', 'revision'].includes(revisionKindValue)
-      ? revisionKindValue as 'revise' | 'variation' | 'polish' | 'revision'
-      : 'revision';
-    const artifact = priorRecord.artifact && typeof priorRecord.artifact === 'object'
-      ? priorRecord.artifact
-      : undefined;
-    const previewType = priorRecord.preview?.type;
-    this.emit(sessionId, {
-      type: 'generation.receipt.linked',
-      sessionId,
-      revisionKind,
-      priorPhase: typeof priorRecord.phase === 'string' ? priorRecord.phase : undefined,
-      priorDomain: typeof priorRecord.creativeDomain === 'string' ? priorRecord.creativeDomain : undefined,
-      priorArtifactLabel: typeof artifact?.label === 'string' ? artifact.label : undefined,
-      priorArtifactPath: typeof artifact?.path === 'string' ? artifact.path : undefined,
-      priorPreviewType: typeof previewType === 'string' && ['code', 'image', 'html', 'music'].includes(previewType)
-        ? previewType as 'code' | 'image' | 'html' | 'music'
-        : undefined,
-    });
-  }
-
-  private promptForCreativeDomain(
-    userText: string,
-    domain: Domain,
-    fallback: boolean,
-    intentBrief?: CreativeIntentBrief,
-    options: Pick<TuiInputRequest, 'creativePreferences' | 'guidanceAnswers'> = {},
-  ): string {
-    const prefix = fallback
-      ? `Previous generation route failed. Retry the original request as ${domain}.`
-      : `Target creative domain: ${domain}.`;
-    const domainInstruction = domain === Domain.THREE
-      ? 'Return raw Three.js scene code only. Do not return SVG, p5, prose, or markdown. Expose an audio-reactive object by reading window.__liminalAudio each animation frame; map rms/energy to scale/brightness and centroid/brightness to hue/material intensity.'
-      : domain === Domain.P5
-        ? 'Return raw p5.js sketch code only. Do not return any other framework, markup, prose, or markdown. Read window.__liminalAudio inside draw(); map rms/energy to scale/brightness and centroid/brightness to hue/motion.'
-        : domain === Domain.GLSL || domain === Domain.SHADER || domain === Domain.WEBGL
-          ? 'Return raw GLSL fragment shader code only. Do not return SVG, p5, prose, or markdown.'
-          : domain === Domain.HYDRA
-            ? 'Return raw Hydra video-synth code only. Do not return SVG, p5, prose, or markdown.'
-            : domain === Domain.KINETIC
-              ? 'Return a complete raw HTML/CSS kinetic typography artifact only. Include visible animated text or letter elements and CSS @keyframes. Do not return p5, SVG-only output, prose, or markdown.'
-              : `Return raw ${domain} artifact code only. Do not return SVG unless the target domain is SVG.`;
-    const briefLines = intentBrief
-      ? [
-          'Intent brief:',
-          `- User request: ${intentBrief.userRequest}`,
-          ...intentBrief.requirements.map((requirement) => `- ${requirement}`),
-          intentBrief.missingDetails.length > 0
-            ? `- Unknown details: ${intentBrief.missingDetails.join(', ')}. Make conservative choices, but do not ignore explicit requirements.`
-            : '- Unknown details: none significant.',
-        ]
-      : [];
-    const preferenceHints = this.buildCreativePreferenceLines(userText, domain, options);
-    return [userText, '', ...briefLines, ...preferenceHints, '', prefix, domainInstruction].join('\n');
-  }
-
-  private buildCreativePreferenceLines(
-    userText: string,
-    domain: Domain | string,
-    options: Pick<TuiInputRequest, 'creativePreferences' | 'guidanceAnswers'>,
-  ): string[] {
-    const answers = {
-      ...this.cleanPreferenceAnswers(options.creativePreferences),
-      ...this.cleanPreferenceAnswers(options.guidanceAnswers),
-    };
-    if (Object.keys(answers).length === 0) return [];
-
-    const hints = buildCreativePreferencePromptHints({
-      domain: this.toChatDomain(domain),
-      prompt: this.extractUserPrompt(userText),
-      answers,
-    });
-    if (hints.length === 0) return [];
-
-    return [
-      '',
-      'Creative preferences (user-confirmed, optional):',
-      ...hints.map(hint => `- ${hint}`),
-    ];
-  }
-
-  private cleanPreferenceAnswers(answers: Record<string, unknown> | undefined): Record<string, unknown> {
-    if (!answers || typeof answers !== 'object' || Array.isArray(answers)) return {};
-    return Object.fromEntries(
-      Object.entries(answers)
-        .filter(([key, value]) => key !== 'priorRunReceipt' && key !== 'revisionKind' && value != null && String(value).trim() !== ''),
-    );
-  }
-
-  private describeStrictDomainMismatch(code: string, requestedDomain: Domain, domainPlan: Domain[]): string | null {
-    if (domainPlan.length !== 1) return null;
-    const validation = validateGeneratedDomainForRequest(code, requestedDomain);
-    return validation.ok ? null : validation.message ?? 'Generated artifact did not match the requested domain';
-  }
-
-  private domainCorrectionPrompt(originalPrompt: string, requestedDomain: Domain, mismatch: string): string {
-    return [
-      originalPrompt,
-      '',
-      `Reject the previous answer: ${mismatch}.`,
-      `The requested creative domain is locked to ${requestedDomain}; do not switch frameworks or languages.`,
-      `Return only valid ${requestedDomain} artifact code with no prose or markdown.`,
-    ].join('\n');
-  }
-
-  private inlinePreviewType(previewDomain: import('../utils/htmlWrapper.js').Domain): 'html' | 'music' | null {
-    if (previewDomain === 'tone' || previewDomain === 'strudel') return 'music';
-    if (previewDomain === 'hydra' || previewDomain === 'html') return 'html';
-    return null;
-  }
-
-  private async emitPreviewArtifacts(
-    sessionId: string,
-    code: string,
-    requestedDomain: Domain,
-    routeTruth?: CreativeDomainRouteTruth,
-  ): Promise<void> {
-    const safeSessionId = sessionId.replace(/[^a-zA-Z0-9_-]/g, '-');
-    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const dir = path.join(process.cwd(), '.omx', 'proof', 'live-previews');
-    const generatedDomain = detectPreviewDomainForCode(code);
-    const previewDomain = previewDomainForCode(code, requestedDomain);
-    const htmlPath = path.join(dir, `${previewDomain}-${safeSessionId}-${stamp}.html`);
-    const pngPath = path.join(dir, `${previewDomain}-${safeSessionId}-${stamp}.png`);
-    const truth = routeTruth ?? {
-      requestedDomain,
-      selectedDomain: requestedDomain,
-      domains: [requestedDomain],
-      promptDomainLocked: false,
-      source: 'inferred' as const,
-    };
-
-    await fs.mkdir(dir, { recursive: true });
-    const html = this.toPreviewHtml(code, previewDomain);
-    await fs.writeFile(htmlPath, html, 'utf8');
-    this.emitDomainTruth(sessionId, truth, {
-      generatedDomain,
-      previewDomain,
-      artifactPath: htmlPath,
-    });
-    this.transitionRun(sessionId, 'rendering', {
-      label: `Rendering ${previewDomain} preview`,
-      artifactPath: htmlPath,
-      previewType: this.inlinePreviewType(previewDomain) ?? 'image',
-    });
-    this.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: `${previewDomain} HTML preview`, artifactPath: htmlPath });
-    this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Preview artifact: ${htmlPath}` });
-
-    const inlinePreviewType = this.inlinePreviewType(previewDomain);
-    if (inlinePreviewType) {
-      this.emit(sessionId, { type: 'preview.started', sessionId, previewType: inlinePreviewType });
-      this.emit(sessionId, { type: 'preview.content', sessionId, content: html, previewType: inlinePreviewType });
-      this.emit(sessionId, {
-        type: 'preview.completed',
-        sessionId,
-        content: html,
-        previewType: inlinePreviewType,
-        artifactPath: htmlPath,
-        requestedDomain,
-        generatedDomain,
-        previewDomain,
-      });
-      this.emit(sessionId, {
-        type: 'preview.verified',
-        sessionId,
-        previewType: inlinePreviewType,
-        artifactPath: htmlPath,
-        checks: ['html artifact written', 'inline preview mounted without popup'],
-        requestedDomain,
-        generatedDomain,
-        previewDomain,
-      });
-      this.transitionRun(sessionId, 'rendering', {
-        label: `Rendered ${inlinePreviewType} preview`,
-        artifactPath: htmlPath,
-        previewType: inlinePreviewType,
-      });
-      this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Inline ${inlinePreviewType} preview mounted: ${htmlPath}` });
-      return;
-    }
-
-    try {
-      await this.renderHtmlScreenshot(htmlPath, pngPath, previewDomain);
-      const png = await fs.readFile(pngPath);
-      const b64 = png.toString('base64');
-      this.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: `${previewDomain} preview image`, artifactPath: pngPath });
-      this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'image' });
-      this.emit(sessionId, { type: 'preview.content', sessionId, content: b64, previewType: 'image' });
-      this.emit(sessionId, {
-        type: 'preview.completed',
-        sessionId,
-        content: b64,
-        previewType: 'image',
-        imageUrl: pngPath,
-        artifactPath: pngPath,
-        requestedDomain,
-        generatedDomain,
-        previewDomain,
-      });
-      this.emit(sessionId, {
-        type: 'preview.verified',
-        sessionId,
-        previewType: 'image',
-        artifactPath: pngPath,
-        imageUrl: pngPath,
-        checks: ['html artifact written', 'screenshot rendered'],
-        requestedDomain,
-        generatedDomain,
-        previewDomain,
-      });
-      this.transitionRun(sessionId, 'rendering', {
-        label: 'Rendered image preview',
-        artifactPath: pngPath,
-        previewType: 'image',
-      });
-      this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Inline preview image: ${pngPath}` });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      this.emit(sessionId, {
-        type: 'preview.missing',
-        sessionId,
-        previewType: 'image',
-        artifactPath: htmlPath,
-        reason: message,
-        requestedDomain,
-        generatedDomain,
-        previewDomain,
-      });
-      this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Preview render failed: ${message}` });
-      this.emit(sessionId, { type: 'error', sessionId, message: `Preview render failed: ${message}` });
-    }
-  }
-
-  private toPreviewHtml(code: string, previewDomain: import('../utils/htmlWrapper.js').Domain): string {
-    const trimmed = code.trim();
-    if (/^(?:<!DOCTYPE\s+html|<html\b)/i.test(trimmed)) {
-      if (previewDomain === 'tone') {
-        return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Sinter ${previewDomain} Preview` });
-      }
-      return trimmed;
-    }
-    return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Sinter ${previewDomain} Preview` });
-  }
-
-  private async renderHtmlScreenshot(htmlPath: string, pngPath: string, previewDomain: string): Promise<void> {
-    const { default: puppeteer } = await import('puppeteer');
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-    let page: Awaited<ReturnType<typeof browser.newPage>> | null = null;
-    try {
-      page = await browser.newPage();
-      const pageErrors: string[] = [];
-      page.on('pageerror', (error: unknown) => {
-        pageErrors.push(error instanceof Error ? error.message : String(error));
-      });
-      await page.setViewport({ width: 960, height: 640 });
-      await page.goto(`file://${htmlPath}`, { waitUntil: 'load', timeout: 30000 });
-      if (['p5', 'three', 'shader', 'hydra'].includes(previewDomain)) {
-        await page.waitForSelector('canvas', { timeout: 10000 });
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      if (pageErrors.length > 0) {
-        throw new Error(`Preview runtime error: ${pageErrors.join(' | ')}`);
-      }
-      await page.screenshot({ path: pngPath, type: 'png' });
-    } finally {
-      if (page) await page.close().catch(() => undefined);
-      await browser.close().catch(() => undefined);
-    }
-  }
 
   private emitOperatorProgress(sessionId: string, event: BusEvent): void {
     const current = typeof event.data.current === 'number' ? event.data.current : undefined;
@@ -3645,6 +2460,61 @@ export class TuiBridgeService {
     return chunks;
   }
 
+  /** Context adapter for PreviewService (F20 extraction). */
+  private get previewCtx(): PreviewContext {
+    return {
+      emit: (sid: string, ev: TuiBridgeEvent) => this.emit(sid, ev),
+      emitDomainTruth: (sid: string, route: CreativeDomainRouteTruth, patch: { generatedDomain?: string; previewDomain?: string; artifactPath?: string }) =>
+        this.emitDomainTruth(sid, route, patch),
+      transitionRun: (sid: string, phase: TuiRunPhase, patch?: Partial<Omit<TuiRunLifecycle, 'runId' | 'kind' | 'startedAt'>>) =>
+        this.transitionRun(sid, phase, patch),
+    };
+  }
+
+  /** Context adapter for CommandDispatcher (F20 extraction). */
+  private get commandCtx(): CommandContext {
+    return {
+      emit: (sid: string, ev: TuiBridgeEvent) => this.emit(sid, ev),
+      emitCommandResponse: (sid: string, content: string) => this.emitCommandResponse(sid, content),
+      skillRunner: this.skillRunner,
+      skillCatalog: this.skillCatalog,
+      reviewManager: this.reviewManager,
+      diffRenderer: this.diffRenderer,
+      onboardingWizard: this.onboardingWizard,
+      envValidator: this.envValidator,
+      sessionResumer: this.sessionResumer,
+      reportGenerator: this.reportGenerator,
+      workspaceManager: this.workspaceManager,
+      autonomyController: this.autonomyController,
+      modeRegistry: this.modeRegistry,
+      conversations: this.conversations,
+      sessionGraphs: this.sessionGraphs,
+      sessions: this.sessions,
+      cortexLoop: this.cortexLoop,
+      cortexBus: this.cortexBus,
+      setProductMode: (sid: string, mode: ProductMode) => this.setProductMode(sid, mode),
+      ensureSessionsHydrated: () => this.ensureSessionsHydrated(),
+      recordReviewPreference: (sid: string, action: 'pin' | 'reject', artifactId: string) =>
+        this.recordReviewPreference(sid, action, artifactId),
+      getGoalStore: () => this.getGoalStore(),
+      streamRalphGeneration: (sid: string, text: string, conv: ConversationManager, llm: LLMClient, opts?: Pick<TuiInputRequest, 'maxIterations' | 'candidateCount' | 'timeoutMinutes' | 'creativePreferences' | 'guidanceAnswers'>) =>
+        this.streamRalphGeneration(sid, text, conv, llm, opts),
+      streamEngineeringTask: (sid: string, text: string, conv: ConversationManager, llm: LLMClient) =>
+        this.streamEngineeringTask(sid, text, conv, llm),
+      streamChatResponse: (sid: string, text: string, conv: ConversationManager, llm: LLMClient, sp?: string) =>
+        this.streamChatResponse(sid, text, conv, llm, sp),
+      cortexConfig: TuiBridgeService.CORTEX_CONFIG,
+    };
+  }
+
+  /** Context adapter for CreativeIntentHelpers (F20 extraction). */
+  private get intentCtx(): IntentEmitContext {
+    return {
+      emit: (sid: string, ev: TuiBridgeEvent) => this.emit(sid, ev),
+      updateSession: (sid: string, patch: Partial<TuiSessionStatus>) =>
+        this.sessions.update(sid, patch),
+    };
+  }
   private emit(sessionId: string, event: TuiBridgeEvent): void {
     this.stream.publish(sessionId, event);
   }

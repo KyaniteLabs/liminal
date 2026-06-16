@@ -1,3 +1,4 @@
+import { renderHtmlScreenshot } from '../../src/tui-bridge/PreviewService.js';
 import { describe, expect, it, vi } from 'vitest';
 import { TuiBridgeService } from '../../src/tui-bridge/TuiBridgeService.js';
 
@@ -31,7 +32,7 @@ describe('TuiBridgeService preview runtime verification', () => {
   it('rejects preview screenshots when the generated page throws a runtime error', async () => {
     const service = new TuiBridgeService();
 
-    await expect((service as any).renderHtmlScreenshot('/tmp/bad-p5.html', '/tmp/bad-p5.png', 'p5'))
+    await expect(renderHtmlScreenshot('/tmp/bad-p5.html', '/tmp/bad-p5.png', 'p5'))
       .rejects.toThrow('p5 runtime failed');
     expect(closePage).toHaveBeenCalled();
     expect(closeBrowser).toHaveBeenCalled();

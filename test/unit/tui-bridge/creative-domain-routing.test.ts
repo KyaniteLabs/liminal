@@ -20,7 +20,7 @@ describe('TuiBridgeService creative domain routing', () => {
   });
 
   it('keeps the p5 generation instruction from accidentally retriggering Three dispatch', () => {
-    const source = fs.readFileSync('src/tui-bridge/TuiBridgeService.ts', 'utf8');
+    const source = fs.readFileSync('src/tui-bridge/CreativeIntentHelpers.ts', 'utf8');
     const p5Instruction = source.match(/Return raw p5\.js sketch code only\.[^']+/)?.[0] ?? '';
 
     expect(p5Instruction).toContain('p5.js sketch code only');

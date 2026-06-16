@@ -1,3 +1,4 @@
+import { dispatchCommand } from '../../../src/tui-bridge/CommandDispatcher.js';
 /**
  * Tests for TuiBridgeService /goal command handling.
  *
@@ -146,140 +147,140 @@ describe('TuiBridgeService /goal command handling', () => {
 
   // ── /goal add ──────────────────────────────────────────────────
 
-  it('adds a goal with plain text', () => {
+  it('adds a goal with plain text', async () => {
     const svc = makeService();
     mockAddGoal.mockReturnValue(FAKE_GOAL);
 
-    const result = (svc as any).handleGoalCommand(SID, '/goal add Fix tests');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal add Fix tests');
     expect(result.reviewRequired).toBe(false);
     expect(mockAddGoal).toHaveBeenCalledWith({ text: 'Fix tests', priority: 'normal', category: 'maintenance' });
   });
 
-  it('adds a goal with priority and category tags', () => {
+  it('adds a goal with priority and category tags', async () => {
     const svc = makeService();
     mockAddGoal.mockReturnValue({ ...FAKE_GOAL, priority: 'high', category: 'coverage' });
 
-    const result = (svc as any).handleGoalCommand(SID, '/goal add [priority:high] [category:coverage] 80% coverage');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal add [priority:high] [category:coverage] 80% coverage');
     expect(result.reviewRequired).toBe(false);
     expect(mockAddGoal).toHaveBeenCalledWith({ text: '80% coverage', priority: 'high', category: 'coverage' });
   });
 
-  it('rejects /goal add with no text', () => {
+  it('rejects /goal add with no text', async () => {
     const svc = makeService();
-    const result = (svc as any).handleGoalCommand(SID, '/goal add');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal add');
     expect(result.reviewRequired).toBe(false);
     expect(mockAddGoal).not.toHaveBeenCalled();
   });
 
-  it('rejects /goal add with only tags and no text after stripping', () => {
+  it('rejects /goal add with only tags and no text after stripping', async () => {
     const svc = makeService();
-    const result = (svc as any).handleGoalCommand(SID, '/goal add [priority:critical] [category:reliability]');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal add [priority:critical] [category:reliability]');
     expect(result.reviewRequired).toBe(false);
     expect(mockAddGoal).not.toHaveBeenCalled();
   });
 
   // ── /goal list ─────────────────────────────────────────────────
 
-  it('lists active goals', () => {
+  it('lists active goals', async () => {
     const svc = makeService();
     mockListGoals.mockReturnValue([FAKE_GOAL]);
 
-    const result = (svc as any).handleGoalCommand(SID, '/goal list');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal list');
     expect(result.reviewRequired).toBe(false);
     expect(mockListGoals).toHaveBeenCalled();
   });
 
-  it('shows empty message when no active goals', () => {
+  it('shows empty message when no active goals', async () => {
     const svc = makeService();
     mockListGoals.mockReturnValue([]);
 
-    const result = (svc as any).handleGoalCommand(SID, '/goal list');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal list');
     expect(result.reviewRequired).toBe(false);
     expect(mockListGoals).toHaveBeenCalled();
   });
 
   // ── /goal remove ───────────────────────────────────────────────
 
-  it('removes an existing goal', () => {
+  it('removes an existing goal', async () => {
     const svc = makeService();
     mockRemoveGoal.mockReturnValue(true);
 
-    const result = (svc as any).handleGoalCommand(SID, '/goal remove goal-123');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal remove goal-123');
     expect(result.reviewRequired).toBe(false);
     expect(mockRemoveGoal).toHaveBeenCalledWith('goal-123');
   });
 
-  it('reports when goal not found for remove', () => {
+  it('reports when goal not found for remove', async () => {
     const svc = makeService();
     mockRemoveGoal.mockReturnValue(false);
 
-    const result = (svc as any).handleGoalCommand(SID, '/goal remove nonexistent');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal remove nonexistent');
     expect(result.reviewRequired).toBe(false);
   });
 
-  it('rejects /goal remove with no id', () => {
+  it('rejects /goal remove with no id', async () => {
     const svc = makeService();
-    const result = (svc as any).handleGoalCommand(SID, '/goal remove');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal remove');
     expect(result.reviewRequired).toBe(false);
     expect(mockRemoveGoal).not.toHaveBeenCalled();
   });
 
   // ── /goal done ─────────────────────────────────────────────────
 
-  it('completes an existing goal', () => {
+  it('completes an existing goal', async () => {
     const svc = makeService();
     mockCompleteGoal.mockReturnValue({ ...FAKE_GOAL, status: 'completed' });
 
-    const result = (svc as any).handleGoalCommand(SID, '/goal done goal-123');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal done goal-123');
     expect(result.reviewRequired).toBe(false);
     expect(mockCompleteGoal).toHaveBeenCalledWith('goal-123');
   });
 
-  it('reports when goal not found for done', () => {
+  it('reports when goal not found for done', async () => {
     const svc = makeService();
     mockCompleteGoal.mockReturnValue(null);
 
-    const result = (svc as any).handleGoalCommand(SID, '/goal done nonexistent');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal done nonexistent');
     expect(result.reviewRequired).toBe(false);
   });
 
-  it('rejects /goal done with no id', () => {
+  it('rejects /goal done with no id', async () => {
     const svc = makeService();
-    const result = (svc as any).handleGoalCommand(SID, '/goal done');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal done');
     expect(result.reviewRequired).toBe(false);
     expect(mockCompleteGoal).not.toHaveBeenCalled();
   });
 
   // ── default / usage ────────────────────────────────────────────
 
-  it('shows usage for unknown subcommand', () => {
+  it('shows usage for unknown subcommand', async () => {
     const svc = makeService();
-    const result = (svc as any).handleGoalCommand(SID, '/goal foo');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal foo');
     expect(result.reviewRequired).toBe(false);
   });
 
-  it('shows usage for bare /goal', () => {
+  it('shows usage for bare /goal', async () => {
     const svc = makeService();
-    const result = (svc as any).handleGoalCommand(SID, '/goal');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal');
     expect(result.reviewRequired).toBe(false);
   });
 
   // ── goal store unavailable ─────────────────────────────────────
 
-  it('reports unavailable for /goal add when SinterFS.open fails', () => {
+  it('reports unavailable for /goal add when SinterFS.open fails', async () => {
     mockFsOpen.mockImplementation(() => { throw new Error('no project'); });
     const svc = new TuiBridgeService();
 
-    const result = (svc as any).handleGoalCommand(SID, '/goal add Test');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal add Test');
     expect(result.reviewRequired).toBe(false);
     expect(mockAddGoal).not.toHaveBeenCalled();
   });
 
-  it('reports unavailable for /goal list when SinterFS.open fails', () => {
+  it('reports unavailable for /goal list when SinterFS.open fails', async () => {
     mockFsOpen.mockImplementation(() => { throw new Error('no project'); });
     const svc = new TuiBridgeService();
 
-    const result = (svc as any).handleGoalCommand(SID, '/goal list');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/goal list');
     expect(result.reviewRequired).toBe(false);
     expect(mockListGoals).not.toHaveBeenCalled();
   });

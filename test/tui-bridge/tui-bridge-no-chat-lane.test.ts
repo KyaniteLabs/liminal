@@ -101,6 +101,18 @@ const { draftGenerate } = vi.hoisted(() => ({
   })),
 }));
 
+const { mockEmitPreviewArtifacts } = vi.hoisted(() => ({
+  mockEmitPreviewArtifacts: vi.fn(async (ctx: any, sessionId: string, _code: string, domain: string) => {
+    ctx.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: `${domain} HTML preview`, artifactPath: `.omx/proof/live-previews/${sessionId}.html` });
+    ctx.emit(sessionId, { type: 'preview.completed', sessionId, previewType: 'html', content: '<html></html>', artifactPath: `.omx/proof/live-previews/${sessionId}.html` });
+    ctx.emit(sessionId, { type: 'preview.verified', sessionId, previewType: 'html', artifactPath: `.omx/proof/live-previews/${sessionId}.html`, checks: ['mock preview rendered'] });
+    ctx.emit(sessionId, { type: 'generation.domain_truth', sessionId, requestedDomain: domain, selectedDomain: domain, domains: [domain], promptDomainLocked: true, source: 'prompt', generatedDomain: domain, previewDomain: domain, artifactPath: `.omx/proof/live-previews/${sessionId}.html` });
+  }),
+}));
+
+vi.mock('../../src/tui-bridge/PreviewService.js', () => ({
+  emitPreviewArtifacts: mockEmitPreviewArtifacts,
+}));
 vi.mock('../../src/harness/agent/index.js', () => ({
   createLLMModeAgent: () => ({ executeTask }),
 }));
@@ -156,41 +168,7 @@ describe('Bubble Tea operator routing', () => {
     executeTask.mockClear();
     ralphRun.mockClear();
     draftGenerate.mockClear();
-    vi.spyOn(TuiBridgeService.prototype as any, 'emitPreviewArtifacts').mockImplementation(async function (
-      this: InstanceType<typeof TuiBridgeService>,
-      sessionId: string,
-      _code: string,
-      domain: string,
-    ) {
-      this.publishEvent(sessionId, {
-        type: 'artifact.found',
-        artifactLabel: `${domain} HTML preview`,
-        artifactPath: `.omx/proof/live-previews/${sessionId}.html`,
-      });
-      this.publishEvent(sessionId, {
-        type: 'preview.completed',
-        previewType: 'html',
-        content: '<html></html>',
-        artifactPath: `.omx/proof/live-previews/${sessionId}.html`,
-      });
-      this.publishEvent(sessionId, {
-        type: 'preview.verified',
-        previewType: 'html',
-        artifactPath: `.omx/proof/live-previews/${sessionId}.html`,
-        checks: ['mock preview rendered'],
-      });
-      this.publishEvent(sessionId, {
-        type: 'generation.domain_truth',
-        requestedDomain: domain,
-        selectedDomain: domain,
-        domains: [domain],
-        promptDomainLocked: true,
-        source: 'prompt',
-        generatedDomain: domain,
-        previewDomain: domain,
-        artifactPath: `.omx/proof/live-previews/${sessionId}.html`,
-      });
-    });
+    mockEmitPreviewArtifacts.mockClear();
   });
 
   afterEach(() => {

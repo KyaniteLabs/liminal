@@ -1,3 +1,4 @@
+import { dispatchCommand } from '../../../src/tui-bridge/CommandDispatcher.js';
 /**
  * End-to-end proof: the GUI /taste command path actually persists preference
  * events through the real bridge handler + real TasteLearningService +
@@ -127,7 +128,7 @@ describe('TuiBridgeService /taste end-to-end preference-event proof', () => {
   it('round-trips a /taste pin through the bridge handler, persists a preference event, and trainFromProject() reports it', async () => {
     const svc = new TuiBridgeService();
 
-    const result = await (svc as any).handleReviewCommand(SID, '/taste pin archive-piece-99');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/taste pin archive-piece-99');
 
     // The command succeeded end-to-end.
     expect(result.reviewRequired).toBe(false);
@@ -158,7 +159,7 @@ describe('TuiBridgeService /taste end-to-end preference-event proof', () => {
   it('round-trips a /taste reject and emits a saved=true preference event', async () => {
     const svc = new TuiBridgeService();
 
-    const result = await (svc as any).handleReviewCommand(SID, '/taste reject archive-piece-7');
+    const result = await dispatchCommand((svc as any).commandCtx, SID, '/taste reject archive-piece-7');
 
     expect(result.reviewRequired).toBe(false);
 

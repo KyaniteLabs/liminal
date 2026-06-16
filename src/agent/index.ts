@@ -72,9 +72,6 @@ export type {
   EngineeringResult,
 } from './StudioAgent.js';
 
-// Engineering delegation
-export { TaskDelegator } from './TaskDelegator.js';
-export type { TaskExecutor, TaskExecutorResult, TaskDelegatorOptions } from './TaskDelegator.js';
 
 // Session persistence
 export { SessionGraph } from './SessionGraph.js';

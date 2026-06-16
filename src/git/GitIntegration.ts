@@ -22,20 +22,17 @@ import { GitError } from '../errors/GitError.js';
 import { AsyncLock } from '../utils/AsyncLock.js';
 import type { GitConfig, IterationCommitContext, CommitInfo } from './types.js';
 import { DEFAULT_GIT_CONFIG } from './types.js';
-import type { CompostBridge } from './CompostBridge.js';
 
 export class GitIntegration {
   private git: GitService;
   private config: GitConfig;
-  private compostBridge?: CompostBridge;
   private originalBranch: string | null = null;
   private runBranch: string | null = null;
   private stashedBeforeRun = false;
   private lock = new AsyncLock();
 
-  constructor(config: Partial<GitConfig>, compostBridge?: CompostBridge) {
+  constructor(config: Partial<GitConfig>) {
     this.config = { ...DEFAULT_GIT_CONFIG, ...config };
-    this.compostBridge = compostBridge;
     this.git = new GitService();
   }
 
@@ -53,7 +50,6 @@ export class GitIntegration {
    * Start a RalphLoop run:
    * 1. Stash any uncommitted changes (namespaced to session)
    * 2. Reuse existing session branch or create a new one
-   * 3. Record branch creation via CompostBridge
    */
   async startRun(name: string, sessionId?: string): Promise<Result<string, GitError>> {
     if (!this.config.enabled) return ok('');
@@ -116,19 +112,6 @@ export class GitIntegration {
     this.runBranch = branchName;
 
     Logger.info('GitIntegration', `Started run on branch: ${branchName}`);
-
-    // Bridge to compost
-    if (this.config.bridgeToCompost && this.compostBridge) {
-      const bridgeResult = this.compostBridge.onBranch({
-        name: branchName,
-        current: true,
-        commit: (await this.git.getLastCommit())?.hash ?? '',
-      });
-      if (bridgeResult.isErr()) {
-        Logger.warn('GitIntegration', `Compost bridge failed to record branch: ${bridgeResult.error.message}`);
-      }
-    }
-
     return ok(branchName);
     });
   }
@@ -170,15 +153,6 @@ export class GitIntegration {
     }
 
     Logger.info('GitIntegration', `Committed iteration ${ctx.iteration} (${commit.hash.slice(0, 7)})`);
-
-    // Bridge to compost
-    if (this.config.bridgeToCompost && this.compostBridge) {
-      const bridgeResult = this.compostBridge.onCommit(commit);
-      if (bridgeResult.isErr()) {
-        Logger.warn('GitIntegration', `Compost bridge failed to record commit: ${bridgeResult.error.message}`);
-      }
-    }
-
     // Auto-push if configured — failure is an error, not a warning
     // (unpushed commits on a cleaned-up worktree = lost work per CLAUDE.md)
     if (this.config.autoPush) {

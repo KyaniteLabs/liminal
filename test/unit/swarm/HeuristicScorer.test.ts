@@ -87,3 +87,87 @@ describe('HeuristicScorer — honest degraded marker (D12)', () => {
     expect(result.degraded).toBe(true);
   });
 });
+
+describe('HeuristicScorer — render-signal routing (D12 honesty)', () => {
+  it('produces a render-grounded (non-degraded) score when output.metadata.renderSignals.passesRenderGate is set', () => {
+    const outputs = new Map<string, SwarmOutput>([
+      ['a', {
+        ...output('a', 'function draw() { background(0); }'),
+        metadata: { renderSignals: { passesRenderGate: true, luminance: 0.7, renderScore: 0.8 } },
+      }],
+    ]);
+    const result = HeuristicScorer.score(outputs, [persona('a')], 'make a dark canvas', []);
+
+    expect(result.degraded).toBe(false);
+    expect(result.degradedReason).toContain('render-signals');
+  });
+
+  it('marks the vote reasoning as render-grounded (no [degraded] tag) when signals are present', () => {
+    const outputs = new Map<string, SwarmOutput>([
+      ['a', {
+        ...output('a', 'function setup() { createCanvas(100, 100); }'),
+        metadata: { renderSignals: { passesRenderGate: true, luminance: 0.6 } },
+      }],
+    ]);
+    const result = HeuristicScorer.score(outputs, [persona('a')], 'make a canvas', []);
+    const vote = result.votes.get('a');
+    expect(vote?.reasoning).toContain('render-grounded');
+    expect(vote?.reasoning).not.toContain('[degraded');
+  });
+
+  it('falls through to the legacy degraded path when no render signals are present (backward compat)', () => {
+    const outputs = new Map<string, SwarmOutput>([
+      ['a', output('a', 'function draw() { circle(50, 50, 25); }')],
+    ]);
+    const result = HeuristicScorer.score(outputs, [persona('a')], 'draw a circle', []);
+    expect(result.degraded).toBe(true);
+    expect(result.degradedReason).toContain('token-overlap');
+  });
+
+  it('mixed batch: at least one render-grounded → batch is not degraded (the grounded path wins)', () => {
+    // The aggregate `degraded` flag tracks "is the WHOLE BATCH on the proxy?".
+    // If even one output has real render signals, the batch can be
+    // meaningfully grounded and the result is no longer a degraded proxy.
+    const outputs = new Map<string, SwarmOutput>([
+      ['a', {
+        ...output('a', 'function draw() { background(0); }'),
+        metadata: { renderSignals: { passesRenderGate: true } },
+      }],
+      ['b', output('b', 'no signals here')],
+    ]);
+    const personas = [persona('a'), persona('b')];
+    const result = HeuristicScorer.score(outputs, personas, 'draw something', []);
+
+    expect(result.degraded).toBe(false);
+    expect(result.degradedReason).toContain('render-signals');
+  });
+
+  it('all-degraded batch stays degraded even when reason is annotated with availability', () => {
+    // When no output had render signals (all 0/0), the legacy proxy is the
+    // only signal — the batch is degraded with the legacy reason.
+    const outputs = new Map<string, SwarmOutput>([
+      ['a', output('a', 'a')],
+      ['b', output('b', 'b')],
+    ]);
+    const personas = [persona('a'), persona('b')];
+    const result = HeuristicScorer.score(outputs, personas, 'constraint', []);
+    expect(result.degraded).toBe(true);
+    expect(result.degradedReason).toContain('token-overlap');
+  });
+
+  it('treats passesRenderGate=false as a real measured fail and surfaces it in the breakdown', () => {
+    const outputs = new Map<string, SwarmOutput>([
+      ['a', {
+        ...output('a', 'function draw() { /* fail */ }'),
+        metadata: { renderSignals: { passesRenderGate: false, luminance: 0.05, renderScore: 0.1 } },
+      }],
+    ]);
+    const result = HeuristicScorer.score(outputs, [persona('a')], 'draw anything', []);
+
+    // Render signals were present, so the result is grounded (not degraded).
+    expect(result.degraded).toBe(false);
+    // The vote reasoning surfaces the measured fail (passesRenderGate=0).
+    const vote = result.votes.get('a');
+    expect(vote?.reasoning).toContain('gate=0');
+  });
+});

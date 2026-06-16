@@ -239,56 +239,6 @@ describe('HarnessMemory', () => {
     });
   });
 
-  describe('calibration operations', () => {
-    it('records calibration for a new domain', () => {
-      memory.recordCalibration('hydra', { depth: 0.8, composition: 0.6, novelty: 0.9 }, 0.85, 50);
-      expect(memory.isCalibrated('hydra')).toBe(true);
-      expect(memory.getStats().totalCalibrations).toBe(1);
-    });
-
-    it('updates existing calibration', () => {
-      memory.recordCalibration('hydra', { depth: 0.8, composition: 0.6, novelty: 0.9 }, 0.85, 50);
-      memory.recordCalibration('hydra', { depth: 0.9, composition: 0.7, novelty: 0.8 }, 0.90, 100);
-      expect(memory.getAllCalibrations()).toHaveLength(1);
-      expect(memory.getStats().totalCalibrations).toBe(1);
-      expect(memory.getCalibration('hydra')?.sampleCount).toBe(100);
-    });
-
-    it('getCalibrationWeights returns weights for domain', () => {
-      memory.recordCalibration('p5', { depth: 0.5, composition: 0.5, novelty: 0.5 }, 0.7, 20);
-      const weights = memory.getCalibrationWeights('p5');
-      expect(weights).toEqual({ depth: 0.5, composition: 0.5, novelty: 0.5 });
-    });
-
-    it('getCalibrationWeights returns undefined for unknown domain', () => {
-      expect(memory.getCalibrationWeights('unknown')).toBeUndefined();
-    });
-
-    it('clearCalibration removes specific domain', () => {
-      memory.recordCalibration('hydra', { depth: 0.8, composition: 0.6, novelty: 0.9 }, 0.85, 50);
-      memory.recordCalibration('p5', { depth: 0.5, composition: 0.5, novelty: 0.5 }, 0.7, 20);
-      memory.clearCalibration('hydra');
-      expect(memory.isCalibrated('hydra')).toBe(false);
-      expect(memory.isCalibrated('p5')).toBe(true);
-    });
-
-    it('clearCalibration without domain clears all', () => {
-      memory.recordCalibration('hydra', { depth: 0.8, composition: 0.6, novelty: 0.9 }, 0.85, 50);
-      memory.recordCalibration('p5', { depth: 0.5, composition: 0.5, novelty: 0.5 }, 0.7, 20);
-      memory.clearCalibration();
-      expect(memory.getCalibratedDomains()).toEqual([]);
-      expect(memory.getStats().totalCalibrations).toBe(0);
-    });
-
-    it('serializeCalibration returns expected shape', () => {
-      memory.recordCalibration('hydra', { depth: 0.8, composition: 0.6, novelty: 0.9 }, 0.85, 50);
-      const serialized = memory.serializeCalibration();
-      expect(serialized.version).toBe(1);
-      expect(serialized.currentWeights).toHaveProperty('hydra');
-      expect(serialized.lastCalibrated).toHaveProperty('hydra');
-    });
-  });
-
   describe('save and error handling', () => {
     it('returns ok on successful save', async () => {
       const result = await memory.save();

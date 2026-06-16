@@ -52,7 +52,7 @@ import { extractBehavior, detectDomain } from './evolution/BehaviorVectors.js';
 import { AestheticModel } from './evolution/AestheticModel.js';
 import { MetaMode } from './evolution/MetaMode.js';
 import { SafetyGuardrails } from './core/SafetyGuardrails.js';
-import { FeedbackQueue } from './gallery/FeedbackQueue.js';
+
 import { metaHarness } from './harness/MetaHarnessIntegration.js';
 import { validateLLMConfig } from './config/schema.js';
 import { generateVisuals } from './generateVisuals.js';
@@ -532,10 +532,6 @@ export { crossoverReasoning, combineReasoning } from './evolution/CrossDomainCro
 export { SafetyGuardrails } from './core/SafetyGuardrails.js';
 export type { SafetyConfig } from './core/SafetyGuardrails.js';
 
-// Feedback Queue
-export { FeedbackQueue } from './gallery/FeedbackQueue.js';
-export type { Feedback } from './gallery/FeedbackQueue.js';
-
 // Music generation API
 export { generateMusic };
 export type { GenerateMusicOptions, GenerateMusicResult } from './music/generateMusic.js';
@@ -604,7 +600,6 @@ export default {
   AestheticModel,
   MetaMode,
   SafetyGuardrails,
-  FeedbackQueue,
 
   // generateVisuals API
   generateVisuals,
@@ -697,8 +692,6 @@ export type { SwarmPersona, SwarmConfig, SwarmOutput, Vote, RoundResult, SwarmRe
 export type { SwarmOrchestratorOptions } from './swarm/SwarmOrchestrator.js';
 
 // Scavenger
-/** @library Public API — not wired into RalphLoop */
-export { DNAExtractor } from './scavenger/DNAExtractor.js';
 export type { ProjectDNA, ScavengerConfig } from './scavenger/types.js';
 
 // Routing

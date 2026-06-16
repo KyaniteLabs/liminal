@@ -35,5 +35,5 @@ export { TaskVerifier } from './TaskVerifier.js';
 // @architecture Phase 10 conveyor modules
 export { TaskIntake } from './TaskIntake.js';
 export { ConveyorRunner } from './ConveyorRunner.js';
-export { ReplayBundle } from './ReplayBundle.js';
+
 export { ConveyorMonitor } from './ConveyorMonitor.js';

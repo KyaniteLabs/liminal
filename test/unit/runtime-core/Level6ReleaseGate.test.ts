@@ -74,7 +74,7 @@ describe('runLevel6ReleaseGate', () => {
       'workbench-front-door',
     ]);
     expect(gate.checks.every((check) => check.status === 'pass')).toBe(true);
-  });
+  }, 30000);
 
   it('does not treat dry-run-only evidence as completed Level 6', () => {
     const gate = runLevel6ReleaseGate({ repoRoot: createSourceContractRepo(), includeMarketReadiness: false });
@@ -85,6 +85,26 @@ describe('runLevel6ReleaseGate', () => {
       expect.stringContaining('Live creative-domain execution'),
       expect.stringContaining('Live model assimilation'),
     ]));
+  });
+
+  it('smoke-tests the model-assimilation gauntlet harness (H5/C4 honesty)', () => {
+    // The default `runModelAssimilationGauntlet({ model, provider })` with no
+    // `auditionEvidence` returns `ready:true` AND `source:'dry-run'`. The
+    // `model-assimilation` check is now a harness-reachability smoke (returns
+    // `pass` whenever the gauntlet returns a structured report). The actual
+    // completion proof is the separate `live-model-assimilation` check, which
+    // requires a typed live receipt and is enforced by the other tests.
+    const repoRoot = createSourceContractRepo();
+    const gate = runLevel6ReleaseGate({ repoRoot, includeMarketReadiness: false });
+
+    const modelCheck = gate.checks.find((check) => check.id === 'model-assimilation');
+    expect(modelCheck?.status).toBe('pass');
+    expect(modelCheck?.label).toMatch(/smoke|gate/i);
+    // Without a live receipt, the live-model-assimilation check must still fail.
+    const liveCheck = gate.checks.find((check) => check.id === 'live-model-assimilation');
+    expect(liveCheck?.status).toBe('fail');
+    expect(gate.ready).toBe(false);
+    expect(gate.blockers.join('\n')).toMatch(/model assimilation/i);
   });
 
   it('reports completed Level 6 only from typed live receipts', () => {

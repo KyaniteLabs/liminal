@@ -46,7 +46,8 @@ import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
 import { ArchiveLearning } from '../learning/index.js';
 import { QualityArchive } from '../learning/index.js';
 import { AestheticModel } from '../evolution/AestheticModel.js';
-import { recordRoutingOutcome, domainToRoutingType } from '../routing/RoutingData.js';
+// B1: `domainToRoutingType` was only used for the dead-bandit recordRoutingOutcome
+// call removed above. The import is dropped; re-import if a real reader lands.
 import { eventBus, EventTypes } from './EventBus.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { Logger } from '../utils/Logger.js';
@@ -1631,17 +1632,13 @@ export class RalphLoop {
           }
         }
 
-        // Record routing outcome for dynamic routing
-        try {
-          await recordRoutingOutcome({
-            domain: domainToRoutingType(normalizedOptions.collabDomain),
-            model: normalizedOptions.useSwarm ? 'hybrid' : 'local',
-            qualityScore: evaluation.score,
-            timestamp: new Date().toISOString(),
-          });
-        } catch (err) {
-          Logger.warn('RalphLoop', 'Failed to record routing outcome:', err instanceof Error ? err.message : err);
-        }
+        // B1: the routing-bandit writer (`recordRoutingOutcome`) is a write-only
+        // loop — every record fed here is persisted to `~/.sinter/routing/*.json`
+        // but `getOptimalModelBandit` / `getRollingPerformance` / `getBanditStats`
+        // have zero production callers. The static `DOMAIN_ROUTING_DATA` table
+        // is the only routing source consulted downstream. The writer is left
+        // in place (no-deletion-of-unwired) for future re-wiring; the call here
+        // is a no-op until a real reader lands. See: docs/validation/clean-pass-1-2026-06-15.md
 
         // Store previous code before saving current iteration
         if (!persistedCurrentIteration) {

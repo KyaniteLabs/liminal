@@ -32,6 +32,4 @@ export { EvaluationFabric } from './EvaluationFabric.js';
 // Emergence scorecard
 export { EmergenceScorecard } from './EmergenceScorecard.js';
 
-// Phase 15 — Holdout Critic Bus
-export { HoldoutCriticBus } from './HoldoutCriticBus.js';
-export type { CriticVote, HoldoutResult, CriticFn, HoldoutCriticBusConfig } from './HoldoutCriticBus.js';
+

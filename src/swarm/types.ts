@@ -55,6 +55,23 @@ export interface SwarmOutput {
   tokensUsed: number;
   latencyMs: number;
   roundNum: number;
+  /**
+   * Optional render-signal metadata. When present, the heuristic scorer
+   * (D12) is bypassed in favor of the actual measured render verdict.
+   */
+  metadata?: SwarmOutputMetadata;
+}
+export interface SwarmOutputMetadata {
+  renderSignals?: SwarmRenderSignals;
+  domain?: string;
+  variant?: string;
+}
+
+export interface SwarmRenderSignals {
+  passesRenderGate?: boolean;
+  luminance?: number;
+  renderScore?: number;
+  measuredAt?: string;
 }
 
 export interface Vote {

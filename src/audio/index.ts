@@ -22,9 +22,7 @@ export { detectPitch } from './PitchExtractor.js';
 export { extractTimbre } from './TimbreExtractor.js';
 export { frequencyToMidi, frequencyToNoteName, midiToFrequency, clampFrequency } from './PitchUtils.js';
 
-// Voice + Audio Pipeline (Phase 2)
-export { mapVoiceToShape, mapVoiceToShapeSequence } from './VoiceToShapeMapper.js';
-export type { ShapeParams, LatheProfile } from './VoiceToShapeMapper.js';
+
 export {
   frequencyToColor,
   frequencyToScaleColor,

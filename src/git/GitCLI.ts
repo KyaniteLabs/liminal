@@ -197,8 +197,7 @@ async function handleCommit(git: GitService, args: string[]): Promise<void> {
 }
 
 async function handleTimeline(git: GitService, _args: string[]): Promise<void> {
-  // Timeline requires CompostBridge which needs EventStore — optional feature
-  // For now, show git log in a timeline format
+  // Full compost+git timeline is a future feature — for now, show git log
   const commits = await git.log({ maxCount: 20 });
 
   if (commits.length === 0) {
@@ -214,5 +213,5 @@ async function handleTimeline(git: GitService, _args: string[]): Promise<void> {
     Logger.info('GitCLI', `  ${date}  ${short}  ${c.message}`);
   }
   Logger.info('GitCLI', '');
-  Logger.info('GitCLI', '(Full compost+git timeline requires compost integration — use CompostBridge)');
+  Logger.info('GitCLI', '(Full compost+git timeline integration is a future feature)');
 }

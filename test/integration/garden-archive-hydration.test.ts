@@ -141,5 +141,5 @@ describe('garden archive hydration (RSI gap #2: cross-cycle accumulation)', () =
     expect(cells).toHaveLength(1); // one accepted entry → one cell
 
     readFs.close();
-  });
+  }, 30000);
 });

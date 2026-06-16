@@ -42,6 +42,12 @@ const PERF_DIR = `${process.env.HOME}/.sinter/routing`;
 /**
  * Record a generation outcome for dynamic routing.
  * Also feeds the online Thompson Sampling bandit for continuous learning.
+ *
+ * @deprecated Audit B1: the read side (`getOptimalModelBandit`,
+ * `getRollingPerformance`, `getBanditStats`) has zero production callers.
+ * Records accumulate in `~/.sinter/routing/*.json` and the in-memory bandit
+ * but are never consulted downstream. The static `DOMAIN_ROUTING_DATA` table
+ * is the only routing source consulted today.
  */
 export async function recordRoutingOutcome(record: RoutingRecord): Promise<void> {
   const records = await loadRoutingRecords(record.domain);
@@ -77,6 +83,8 @@ async function loadRoutingRecords(domain: DomainType): Promise<RoutingRecord[]> 
 /**
  * Get rolling performance averages for a domain based on actual generation outcomes.
  * Falls back to static AB_TEST_RESULTS if no dynamic data exists.
+ *
+ * @deprecated Audit B1: zero production callers. See `recordRoutingOutcome`.
  */
 export async function getRollingPerformance(domain: DomainType): Promise<RollingPerformance | null> {
   const records = await loadRoutingRecords(domain);
@@ -103,6 +111,8 @@ export async function getRollingPerformance(domain: DomainType): Promise<Rolling
  * Get the optimal model for a domain using Thompson Sampling bandit.
  * Returns null if the bandit hasn't collected enough data yet
  * (caller should fall back to static DOMAIN_ROUTING_DATA).
+ *
+ * @deprecated Audit B1: zero production callers. See `recordRoutingOutcome`.
  */
 export function getOptimalModelBandit(domain: DomainType): ModelChoice | null {
   if (!generatorBanditRouter.isReady(domain)) {
@@ -113,6 +123,8 @@ export function getOptimalModelBandit(domain: DomainType): ModelChoice | null {
 
 /**
  * Get bandit statistics for monitoring/debugging.
+ *
+ * @deprecated Audit B1: zero production callers. See `recordRoutingOutcome`.
  */
 export function getBanditStats(domain: DomainType) {
   return generatorBanditRouter.getDomainStats(domain);

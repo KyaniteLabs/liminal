@@ -77,8 +77,17 @@ export function runLevel6ReleaseGate(input: Level6ReleaseGateInput = {}): Level6
     },
     {
       id: 'model-assimilation',
-      label: 'Model assimilation dry-run',
-      status: model.ready ? 'pass' : 'fail',
+      label: candidate ? 'Model assimilation dry-run (H5 smoke)' : 'Model assimilation gate (H5 — see live-model-assimilation below)',
+      // H5/C4 honesty: the gauntlet's default `DRY_RUN_EVIDENCE` is a contract
+      // smoke-test (every boolean defaults to `true`), NOT proof of a live
+      // audition. In candidate mode the dry-run pass IS the contract check.
+      // In completion mode the live audition is enforced separately by the
+      // `live-model-assimilation` check (added below); the gauntlet here only
+      // confirms the harness is reachable (i.e. the contract evaluator runs
+      // and returns a structured report).
+      status: candidate
+        ? (model.ready ? 'pass' : 'fail')
+        : (typeof model.source === 'string' && typeof model.recommendation === 'string' ? 'pass' : 'fail'),
       evidence: model.recommendation,
     },
     {

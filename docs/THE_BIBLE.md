@@ -1017,30 +1017,12 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 
 **THE BIBLE is the source of truth. When in doubt, consult this document.**
 
-### 22. Calibration System
+### 22. Calibration System (RETIRED — audit C11)
 
-**Location:** `src/calibration/`
-
-**Purpose:** Model calibration and performance measurement infrastructure.
-
-**Key Components:**
-- `CalibrationSuite.ts` - Orchestrates calibration workflows
-- `AccuracyMeasurer.ts` - Measures model accuracy against benchmarks
-- `LatencyProfiler.ts` - Profiles inference latency
-- `QualityAssessor.ts` - Assesses output quality metrics
-
-**Usage:**
-```typescript
-import { CalibrationSuite } from './src/calibration/CalibrationSuite.js';
-
-const suite = new CalibrationSuite({
-  models: ['qwen2.5-coder-7b', 'minimax-m1-7b'],
-  domains: ['p5', 'glsl', 'three']
-});
-await suite.run();
-```
-
-**Status:** Active - Used for model comparison and selection.
+**Status:** Deleted 2026-06-15. The calibration subsystem (`CalibrationSuite`, `CorrelationCalculator`)
+was permanently dead code — `useCalibration && isCalibrated()` could never evaluate to true in
+production (no caller ever populated calibration weights). All calibration branches in
+`CreativeEvaluator`, `AestheticCritic`, and `HarnessMemory` were removed.
 
 ---
 

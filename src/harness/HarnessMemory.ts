@@ -6,7 +6,6 @@
  * - Adaptations applied (what was fixed, when, outcome)
  * - Conversations and episodes (user interactions, generations)
  * - Pattern history (detected patterns, their frequency)
- * - Calibration data (scoring weights per domain)
  * 
  * Location: ~/.sinter/memory/
  */
@@ -18,7 +17,6 @@ import { Result, ok, err } from 'neverthrow';
 import { writeFileAtomic } from '../utils/atomicWrite.js';
 import { Logger } from '../utils/Logger.js';
 import { Status } from '../types/status.js';
-import type { CalibrationWeights, CalibrationData } from '../calibration/CalibrationSuite.js';
 import { getGlobalEmbeddingService } from '../embeddings/EmbeddingService.js';
 import { findKNearestNeighbors } from '../utils/vectors.js';
 import { PersistenceError } from '../errors/PersistenceError.js';
@@ -75,16 +73,6 @@ export interface PatternHistory {
   resolution?: string;
 }
 
-// Calibration data storage
-export interface CalibrationRecord {
-  domain: string;
-  weights: CalibrationWeights;
-  correlation: number;
-  sampleCount: number;
-  calibratedAt: string;
-  version: number;
-}
-
 // Complete memory state
 export interface HarnessMemoryState {
   version: number;
@@ -93,17 +81,15 @@ export interface HarnessMemoryState {
   adaptations: AdaptationRecord[];
   episodes: MemoryEpisode[];
   patterns: PatternHistory[];
-  calibration: CalibrationRecord[];
   stats: {
     totalGenerations: number;
     totalConversations: number;
     totalFailures: number;
     totalAdaptations: number;
-    totalCalibrations: number;
   };
 }
 
-const MEMORY_VERSION = 2; // Incremented for calibration support
+const MEMORY_VERSION = 2;
 
 /** Factory — returns a fresh state object each call so arrays are never shared. */
 function createDefaultState(): HarnessMemoryState {
@@ -114,13 +100,11 @@ function createDefaultState(): HarnessMemoryState {
     adaptations: [],
     episodes: [],
     patterns: [],
-    calibration: [],
     stats: {
       totalGenerations: 0,
       totalConversations: 0,
       totalFailures: 0,
       totalAdaptations: 0,
-      totalCalibrations: 0,
     },
   };
 }
@@ -129,7 +113,6 @@ export class HarnessMemory {
   private state: HarnessMemoryState;
   private memoryDir: string;
   private memoryFile: string;
-  // private calibrationFile: string; // Reserved for future use
   private dirty = false;
   private lastSaveFailed = false;
   private saveInterval?: NodeJS.Timeout;
@@ -137,7 +120,6 @@ export class HarnessMemory {
   constructor() {
     this.memoryDir = join(homedir(), '.sinter', 'memory');
     this.memoryFile = join(this.memoryDir, 'harness-memory.json');
-    // this.calibrationFile = join(this.memoryDir, 'calibration-data.json'); // Reserved for future use
     this.state = createDefaultState();
   }
 
@@ -157,7 +139,7 @@ export class HarnessMemory {
         
         // Migrate if needed
         this.state = this.migrate(loaded);
-        Logger.debug('HarnessMemory', `Loaded ${this.state.tasks.length} tasks, ${this.state.adaptations.length} adaptations, ${this.state.episodes.length} episodes, ${this.state.calibration.length} calibrations`);
+        Logger.debug('HarnessMemory', `Loaded ${this.state.tasks.length} tasks, ${this.state.adaptations.length} adaptations, ${this.state.episodes.length} episodes`);
       } catch (err: unknown) {
         const code = err instanceof Error ? (err as NodeJS.ErrnoException).code : undefined;
         if (code === 'ENOENT') {
@@ -236,19 +218,6 @@ export class HarnessMemory {
     if (!data.version || data.version < MEMORY_VERSION) {
       // Migration logic for future versions
       data.version = MEMORY_VERSION;
-
-      // Ensure calibration array exists
-      if (!data.calibration) {
-        data.calibration = [];
-      }
-
-      // Ensure totalCalibrations stat exists
-      if (!data.stats) {
-        data.stats = createDefaultState().stats;
-      }
-      if (data.stats.totalCalibrations === undefined) {
-        data.stats.totalCalibrations = 0;
-      }
     }
     return {
       ...createDefaultState(),
@@ -571,106 +540,6 @@ export class HarnessMemory {
       .sort((a, b) => b.occurrences - a.occurrences);
   }
 
-  // ==================== Calibration Operations ====================
-
-  /**
-   * Store calibration data for a domain
-   */
-  recordCalibration(
-    domain: string,
-    weights: CalibrationWeights,
-    correlation: number,
-    sampleCount: number,
-  ): void {
-    const existingIndex = this.state.calibration.findIndex(c => c.domain === domain);
-    const record: CalibrationRecord = {
-      domain,
-      weights,
-      correlation,
-      sampleCount,
-      calibratedAt: new Date().toISOString(),
-      version: 1,
-    };
-
-    if (existingIndex >= 0) {
-      this.state.calibration[existingIndex] = record;
-    } else {
-      this.state.calibration.push(record);
-      this.state.stats.totalCalibrations++;
-    }
-
-    this.dirty = true;
-  }
-
-  /**
-   * Get calibration data for a domain
-   */
-  getCalibration(domain: string): CalibrationRecord | undefined {
-    return this.state.calibration.find(c => c.domain === domain);
-  }
-
-  /**
-   * Get all calibration data
-   */
-  getAllCalibrations(): CalibrationRecord[] {
-    return [...this.state.calibration];
-  }
-
-  /**
-   * Get calibrated domains
-   */
-  getCalibratedDomains(): string[] {
-    return this.state.calibration.map(c => c.domain);
-  }
-
-  /**
-   * Check if a domain has been calibrated
-   */
-  isCalibrated(domain: string): boolean {
-    return this.state.calibration.some(c => c.domain === domain);
-  }
-
-  /**
-   * Get calibration weights for a domain
-   */
-  getCalibrationWeights(domain: string): CalibrationWeights | undefined {
-    const record = this.state.calibration.find(c => c.domain === domain);
-    return record?.weights;
-  }
-
-  /**
-   * Clear calibration for a domain (or all domains)
-   */
-  clearCalibration(domain?: string): void {
-    if (domain) {
-      this.state.calibration = this.state.calibration.filter(c => c.domain !== domain);
-    } else {
-      this.state.calibration = [];
-      this.state.stats.totalCalibrations = 0;
-    }
-    this.dirty = true;
-  }
-
-  /**
-   * Serialize calibration data for external storage
-   */
-  serializeCalibration(): CalibrationData {
-    const weights: Record<string, CalibrationWeights> = {};
-    const lastCalibrated: Record<string, number> = {};
-
-    for (const record of this.state.calibration) {
-      weights[record.domain] = record.weights;
-      lastCalibrated[record.domain] = new Date(record.calibratedAt).getTime();
-    }
-
-    return {
-      version: 1,
-      sessions: [], // Sessions are stored separately
-      currentWeights: weights,
-      lastCalibrated,
-    };
-  }
-
   // ==================== Stats & Status ====================
 
   /**
@@ -693,8 +562,6 @@ export class HarnessMemory {
     adaptationsSuccessful: number;
     episodesTotal: number;
     patternsTracked: number;
-    calibrationsTotal: number;
-    calibratedDomains: number;
     lastUpdated: string;
   } {
     return {
@@ -707,8 +574,6 @@ export class HarnessMemory {
       adaptationsSuccessful: this.state.adaptations.filter(a => a.success).length,
       episodesTotal: this.state.episodes.length,
       patternsTracked: this.state.patterns.length,
-      calibrationsTotal: this.state.stats.totalCalibrations,
-      calibratedDomains: this.state.calibration.length,
       lastUpdated: this.state.lastUpdated,
     };
   }

@@ -20,8 +20,6 @@ export interface GitConfig {
   autoPush: boolean;
   /** Commit message template. Variables: {prompt}, {n}, {score}, {model} */
   commitMessageTemplate: string;
-  /** Bridge git events to compost EventStore (default: true) */
-  bridgeToCompost: boolean;
 }
 
 /** Default git configuration — opt-in so creative runs never mutate the caller's branch */
@@ -32,7 +30,6 @@ export const DEFAULT_GIT_CONFIG: GitConfig = {
   branchPrefix: 'liminal/',
   autoPush: false,
   commitMessageTemplate: 'sinter: {prompt} iteration {n} (score: {score})',
-  bridgeToCompost: true,
 };
 
 /** Information about a single git commit */

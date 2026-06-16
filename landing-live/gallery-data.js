@@ -1,5 +1,5 @@
 /**
- * Liminal Dogfood Gallery — Card Data
+ * Sinter (s1ntr.com) Dogfood Gallery — Card Data
  * Only outputs generated on April 6, 2026
  * Sorted by generation time, most recent first
  * All timestamps in Pacific Daylight Time (UTC-7)

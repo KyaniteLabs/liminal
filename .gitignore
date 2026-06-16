@@ -175,3 +175,4 @@ test-gallery-temp/
 
 # Weekly read-only re-score reports (ops output written by the rescore cadence; Phase 4.G2)
 /docs/validation/rescore/
+.gjc/

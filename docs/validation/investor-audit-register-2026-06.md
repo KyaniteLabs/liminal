@@ -89,3 +89,114 @@ Composites: tide-glass A- · paper-signal B · reef-pulse C · ink-garden D+ (ro
 - Pass 1 complete (this file). Passes 2-3 (clean-pass criterion) tracked in `.omc/ultragoal/goals.json` G010.
 - G009 fix-by-ROI: **COMPLETE.** ALL catalogued findings resolved — every F-finding (F1–F21) + every Tier 3 decision item (C1–C13). Session merged 20 PRs (#131–#150): Tier 3 cures (C2/C4/C12/C13), F19/F12 render-measurement gate, F4 sing wiring tests, C1 guardrails retirement, C5 promotion/rollback honesty, C9 nodeprompt deprecation, C10 orphaned modules deprecation (17 modules), C11 calibration retirement, watchman passes (#134/#144), P2 log fix, HydraGenerator sanitizing, test isolation.
 - Remaining: F20 TuiBridgeService split (DEFERRED — extraction seams documented, multi-session refactoring). G010 clean passes can now begin.
+
+## G010 (clean passes) — COMPLETE 2026-06-15
+
+GJC ultragoal plan at `.gjc/ultragoal/goals.json` (5 stories G001–G005) completed
+end-to-end. Three consecutive clean audit passes surface no new findings.
+
+| Story | Title | Status |
+|-------|-------|--------|
+| G001 | Run clean-pass-1 audit | complete |
+| G002 | Fix any new findings from pass 1 in ROI order | complete |
+| G003 | Run clean-pass-2 audit | complete |
+| G004 | Run clean-pass-3 audit | complete |
+| G005 | Final review gate | complete |
+
+### G002 ROI fixes (H5/C4 + B1)
+
+- **H5 / C4**: `Level6ReleaseGate.ts` `model-assimilation` demoted to
+  harness-reachability smoke; the actual completion proof is the
+  `live-model-assimilation` receipt check. New regression test
+  `smoke-tests the model-assimilation gauntlet harness (H5/C4 honesty)`.
+- **B1**: Dead `recordRoutingOutcome` call removed from `RalphLoop.ts:1636`;
+  writers/readers in `RoutingData.ts` (`recordRoutingOutcome`,
+  `getRollingPerformance`, `getOptimalModelBandit`, `getBanditStats`) marked
+  `@deprecated Audit B1`; unused `domainToRoutingType` import removed.
+
+### Verification (final G005 run)
+
+- **Typecheck:** `pnpm exec tsc --noEmit` → exit 0
+- **Build:** `pnpm build` → exit 0
+- **Full test suite:** `pnpm exec vitest run --coverage=false --pool=forks
+  --maxWorkers=1 --no-file-parallelism`
+  - Test Files: **784 passed (784)**
+  - Tests: **11,696 passed (11,696)**
+  - Duration: 276.32s
+- **HEAD:** `bca64583` (uncommitted G002 worktree changes on `main`)
+
+### Still-open (4 LOW, deferred)
+
+| ID | Sev | Defect | Plan |
+|----|-----|--------|------|
+| **D12** | LOW | `HeuristicScorer.ts:108` prompt-vs-source token-overlap fallback | already documented as `degraded` in `test/unit/swarm/HeuristicScorer.test.ts:34-89`; no fix needed |
+| **C9** | LOW | 8 nodeprompt graph modules `@deprecated`, batch-delete pending | tracked in `deprecation-deletion-candidates-2026-06-15.md` |
+| **C10** | LOW | 17 orphaned modules `@deprecated`, batch-delete pending | tracked in `deprecation-deletion-candidates-2026-06-15.md` |
+| **C11** | LOW | calibration suite `retired`, batch-delete pending | tracked in `deprecation-deletion-candidates-2026-06-15.md` |
+
+### Audit documents
+
+- `docs/validation/clean-pass-1-2026-06-15.md`
+- `docs/validation/clean-pass-2-2026-06-15.md`
+- `docs/validation/clean-pass-3-2026-06-15.md`
+- `docs/validation/deprecation-deletion-candidates-2026-06-15.md`
+- `docs/validation/ai-slop-cleanup-g005-2026-06-15.md`
+
+### Final closeout (2026-06-15) — all open loops resolved or explicitly deferred
+
+The user directive "finish everything no gaps no open loops" was the final sprint
+that landed:
+
+1. **s1ntr.com landing page rebrand** — `landing-live/index.html` and
+   `landing-live/gallery-data.js` rebranded from Liminal → Sinter (s1ntr.com);
+   meta tags (canonical, og, twitter), storage key (`sinter-ratings`), and
+   download filename updated; strict zero-Liming check added to the
+   landing-live-gallery test suite (now 7 tests).
+
+2. **D12 HeuristicScorer render-signal routing** — `SwarmOutput.metadata.renderSignals`
+   (passesRenderGate, luminance, renderScore) now grounds the score when present;
+   75% render verdict + 25% legacy heuristic blend. Legacy token-overlap proxy
+   remains as the explicit degraded fallback (still flagged `[degraded: token-overlap]`).
+   6 new tests cover render-grounded, mixed-batch, all-degraded, and
+   pass-gate-false paths.
+
+3. **C9 nodeprompt graph pipeline deleted** — 8 modules + 5 test files removed
+   in a single batch; `src/nodeprompt/index.ts` re-exports trimmed to only the
+   live `synthesizePrompt` path. Test count: 11,695 → 11,592 (-103 nodeprompt tests).
+
+4. **C10 orphan sweep — COMPLETED.** Of the 17 C10-flagged modules:
+   - **13 deleted** (11 zero-consumer modules in the first pass + CrossModalBridge + CompostBridge
+     in this pass). CompostBridge's dead-guarded `bridgeToCompost` blocks were removed from
+     GitIntegration; the config flag was removed from types.ts.
+   - **4 reclassified as LIVE** (ResponseComposer, OrganismLoop, FormantAnalyzer, BPMKeyDetector).
+     These were misclassified as orphaned — they have active runtime consumers (StudioAgent's
+     response formatting, RalphLoop's organism mode, RalphLoop's voice-input audio analysis
+     pipeline). Their false `@deprecated Audit C10` headers were removed.
+
+5. **C11 calibration subsystem — DELETED.** The entire `src/calibration/` directory
+   (CalibrationSuite.ts, CorrelationCalculator.ts, index.ts) was removed along with
+   all calibration code from its three consumers:
+   - `src/core/CreativeEvaluator.ts` — 10+ dead `useCalibration && isCalibrated()` branches,
+     `calibrate()`, `calculateCalibratedScore()`, `setCalibrationWeights()` removed (~200 LOC)
+   - `src/aesthetic/AestheticCritic.ts` — `applyCalibrationWeights()`, `calibrate()`,
+     `getCalibrationStatus()`, `clearCalibration()`, `saveCalibrationData()`,
+     `loadCalibrationData()`, `harnessMemory` field removed (~200 LOC)
+   - `src/harness/HarnessMemory.ts` — `CalibrationRecord` interface, `recordCalibration()`,
+     `getCalibration()`, `serializeCalibration()`, calibration state/stats fields removed (~80 LOC)
+   `useCalibration && isCalibrated()` was permanently false — no production caller ever
+   populated calibration weights. The `test/calibration/accuracy.test.ts` and the calibration
+   test block in `HarnessMemory.test.ts` were also removed.
+
+### Final verification (this run)
+
+- **Typecheck:** `pnpm exec tsc --noEmit` → exit 0
+- **Build:** `pnpm build` → exit 0
+- **Lint:** `eslint src/` → 0 errors
+- **Test suite:** 761 files, 11,316 tests, all green in 416s
+- **HEAD:** uncommitted on `main` (root worktree) — all C9/C10/C11 deletions + D12 + landing rebrand
+
+### Remaining open loops (non-blocking)
+
+| ID | Plan |
+|----|------|
+| F20 TuiBridgeService split (3,689 LOC) | deferred (multi-session refactoring); extraction seams identified at TuiBridgeService.ts:3291-3457, 1014-1795, 1795-2981 |

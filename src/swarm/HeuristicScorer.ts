@@ -1,17 +1,16 @@
-import type { SwarmPersona, SwarmOutput, Vote } from './types.js';
+import type { SwarmOutput, SwarmPersona, Vote } from './types.js';
 
 interface HeuristicScoreResult {
   scores: Map<string, number>;
   winnerId: string;
   votes: Map<string, Vote>;
   /**
-   * True because this scorer is a deterministic PROXY, not a quality judge. Its
-   * constraint dimension is naive token-overlap (presence of constraint keywords
-   * in the output), which says nothing about whether the constraint is *honored*
-   * well — only that the words appear. Consumers must treat these scores as a
-   * cheap ranking heuristic for non-final rounds, never as a quality measure.
+   * True when the score is the historical token-overlap PROXY (no render
+   * signal was available). When false, the score is grounded in a measured
+   * render verdict and the result is no longer a "degraded proxy" — it is
+   * the actual creative outcome.
    */
-  degraded: true;
+  degraded: boolean;
   /** What makes the score degraded — surfaced so it is never mistaken for a real grade. */
   degradedReason: string;
 }
@@ -19,6 +18,10 @@ interface HeuristicScoreResult {
 /** Why the heuristic score is a proxy, not a quality measure. */
 const DEGRADED_REASON =
   'token-overlap proxy: constraint scored by keyword presence, not adherence quality';
+
+/** Reason for a render-signal-grounded score (D12 honesty). */
+const DEGRADED_RENDER_SIGNAL =
+  'render-signals available: scored from measured render verdict';
 
 interface DimensionScores {
   constraint: number;
@@ -28,13 +31,32 @@ interface DimensionScores {
   codeStructure: number;
 }
 
-/** Weights for each heuristic dimension. */
+/** Render-signal-grounded score, used when the output has real measurements. */
+interface RenderSignalScores {
+  /** 0-1 render verdict (passes render gate + luminance + render score). */
+  overall: number;
+  /** 0-1 weighted components. */
+  components: {
+    passesRenderGate: number;
+    luminance: number;
+    renderScore: number;
+  };
+}
+
+/** Weights for the legacy heuristic dimension blend. */
 const WEIGHTS = {
   constraint: 0.25,
   novelty: 0.20,
   length: 0.20,
   vocabulary: 0.20,
   codeStructure: 0.15,
+};
+
+/** Weights for the render-signal blend. The render verdict is the primary
+ *  signal; the legacy heuristic dimensions become a 25% tiebreaker blend. */
+const RENDER_WEIGHTS = {
+  renderVerdict: 0.75,
+  legacyBlend: 0.25,
 };
 
 /** Code structural patterns to detect. */
@@ -45,12 +67,156 @@ const CODE_PATTERNS = [
 ];
 
 /**
+ * Render-signal type alias (mirrors SwarmRenderSignals).
+ * Defined locally to avoid an import cycle with ./types.
+ */
+type RenderSignals = {
+  passesRenderGate?: boolean;
+  luminance?: number;
+  renderScore?: number;
+  measuredAt?: string;
+};
+
+/**
  * Deterministic heuristic scorer for swarm outputs.
  * Used in non-final rounds to avoid expensive LLM voting calls.
+ *
+ * D12 honesty: when the calling code supplies measured render signals
+ * (`output.metadata.renderSignals`), the score is grounded in those
+ * measurements rather than the legacy token-overlap proxy. The legacy
+ * path remains as a documented degraded fallback and is still the only
+ * path when no render signals are present.
  */
 export class HeuristicScorer {
   /**
-   * Score a single output across all 5 dimensions.
+   * Score all outputs and produce a VotingResult-compatible result.
+   * Routes to render-signal scoring when available, falls back to the
+   * legacy token-overlap proxy and flags `degraded: true` otherwise.
+   */
+  static score(
+    outputs: Map<string, SwarmOutput>,
+    personas: SwarmPersona[],
+    constraint: string,
+    prevWinnerOutputs: string[]
+  ): HeuristicScoreResult {
+    const dimensionScores = new Map<string, DimensionScores>();
+    const finalScores = new Map<string, number>();
+    const votes = new Map<string, Vote>();
+    const perOutputDegraded = new Map<string, boolean>();
+
+    for (const [personaId, output] of outputs) {
+      const persona = personas.find(p => p.id === personaId);
+      if (!persona) continue;
+
+      const renderSignals = output.metadata?.renderSignals;
+      const hasRenderSignals = this.hasUsableRenderSignals(renderSignals);
+
+      const dims = this.scoreOutput(output.content, persona, constraint, prevWinnerOutputs);
+      dimensionScores.set(personaId, dims);
+
+      let score: number;
+      if (hasRenderSignals) {
+        const rs = this.scoreFromRenderSignals(renderSignals!);
+        // Blend the render verdict (ground truth) with the legacy heuristic
+        // blend (cheap tiebreaker). The render verdict carries 75% of the
+        // weight, the heuristic dimensions 25%.
+        const legacyScore =
+          WEIGHTS.constraint * dims.constraint +
+          WEIGHTS.novelty * dims.novelty +
+          WEIGHTS.length * dims.length +
+          WEIGHTS.vocabulary * dims.vocabulary +
+          WEIGHTS.codeStructure * dims.codeStructure;
+        score = RENDER_WEIGHTS.renderVerdict * rs.overall +
+                RENDER_WEIGHTS.legacyBlend * legacyScore;
+        perOutputDegraded.set(personaId, false);
+      } else {
+        score = WEIGHTS.constraint * dims.constraint +
+                WEIGHTS.novelty * dims.novelty +
+                WEIGHTS.length * dims.length +
+                WEIGHTS.vocabulary * dims.vocabulary +
+                WEIGHTS.codeStructure * dims.codeStructure;
+        perOutputDegraded.set(personaId, true);
+      }
+
+      finalScores.set(personaId, score);
+
+      const verdictLabel = hasRenderSignals
+        ? 'render-grounded'
+        : `[degraded: ${DEGRADED_REASON}]`;
+      const scoreBreakdown = hasRenderSignals
+        ? `gate=${renderSignals?.passesRenderGate ? 1 : 0} lum=${(renderSignals?.luminance ?? 0).toFixed(2)} rend=${(renderSignals?.renderScore ?? 0).toFixed(2)}`
+        : `con=${dims.constraint.toFixed(2)} nov=${dims.novelty.toFixed(2)} len=${dims.length.toFixed(2)} voc=${dims.vocabulary.toFixed(2)} code=${dims.codeStructure.toFixed(2)}`;
+
+      votes.set(personaId, {
+        voterId: personaId,
+        firstChoice: personaId,
+        secondChoice: '',
+        reasoning: `Heuristic ${verdictLabel}: score=${score.toFixed(2)} (${scoreBreakdown})`,
+      });
+    }
+
+    // Find winner with tiebreaker logic
+    const winnerId = this.breakTie(finalScores, dimensionScores, outputs);
+
+    // Apply voting power (all = 2) to scores for consistency with LLM voting
+    const weightedScores = new Map<string, number>();
+    for (const [personaId, score] of finalScores) {
+      const power = personas.find(p => p.id === personaId)?.votingPower ?? 2;
+      weightedScores.set(personaId, score * power);
+    }
+
+    // Aggregate degraded flag: degraded iff ALL outputs lacked render signals.
+    const allDegraded = perOutputDegraded.size > 0
+      && [...perOutputDegraded.values()].every(v => v);
+    const reason = allDegraded
+      ? DEGRADED_REASON
+      : (perOutputDegraded.size === 0 ? DEGRADED_REASON : DEGRADED_RENDER_SIGNAL);
+
+    return {
+      scores: weightedScores,
+      winnerId,
+      votes,
+      degraded: allDegraded,
+      degradedReason: reason,
+    };
+  }
+
+  /**
+   * True when the output's render signals are usable for scoring.
+   * Requires `passesRenderGate` to be set; the other fields are optional
+   * defaults (luminance=0.5 mid, renderScore=0 if absent).
+   */
+  private static hasUsableRenderSignals(
+    rs: RenderSignals | undefined,
+  ): rs is RenderSignals {
+    return rs !== undefined && rs !== null && typeof rs.passesRenderGate === 'boolean';
+  }
+
+  /**
+   * Compute a 0-1 render verdict from the measured render signals. The
+   * render gate is binary; luminance is averaged with the render score
+   * to give a continuous verdict.
+   */
+  private static scoreFromRenderSignals(rs: RenderSignals): RenderSignalScores {
+    const passesRenderGate = rs.passesRenderGate ? 1 : 0;
+    const luminance = this.clamp01(rs.luminance ?? 0.5);
+    const renderScore = this.clamp01(rs.renderScore ?? (rs.passesRenderGate ? 0.7 : 0.3));
+    // Gate carries 60% of the verdict (binary measure of creative viability);
+    // continuous signals (luminance + render score) carry the remaining 40%.
+    const continuous = (luminance + renderScore) / 2;
+    const overall = 0.6 * passesRenderGate + 0.4 * continuous;
+    return { overall, components: { passesRenderGate, luminance, renderScore } };
+  }
+
+  private static clamp01(v: number): number {
+    if (Number.isNaN(v)) return 0;
+    if (v < 0) return 0;
+    if (v > 1) return 1;
+    return v;
+  }
+
+  /**
+   * Score a single output across all 5 dimensions (legacy heuristic).
    */
   static scoreOutput(
     output: string,
@@ -65,57 +231,6 @@ export class HeuristicScorer {
       vocabulary: this.scoreVocabulary(output),
       codeStructure: this.scoreCodeStructure(output),
     };
-  }
-
-  /**
-   * Score all outputs and produce a VotingResult-compatible result.
-   */
-  static score(
-    outputs: Map<string, SwarmOutput>,
-    personas: SwarmPersona[],
-    constraint: string,
-    prevWinnerOutputs: string[]
-  ): HeuristicScoreResult {
-    const dimensionScores = new Map<string, DimensionScores>();
-    const finalScores = new Map<string, number>();
-    const votes = new Map<string, Vote>();
-
-    for (const [personaId, output] of outputs) {
-      const persona = personas.find(p => p.id === personaId);
-      if (!persona) continue;
-
-      const dims = this.scoreOutput(output.content, persona, constraint, prevWinnerOutputs);
-      dimensionScores.set(personaId, dims);
-
-      const score = WEIGHTS.constraint * dims.constraint
-        + WEIGHTS.novelty * dims.novelty
-        + WEIGHTS.length * dims.length
-        + WEIGHTS.vocabulary * dims.vocabulary
-        + WEIGHTS.codeStructure * dims.codeStructure;
-
-      finalScores.set(personaId, score);
-
-      votes.set(personaId, {
-        voterId: personaId,
-        firstChoice: personaId,
-        secondChoice: '',
-        // Marked [degraded] so the reasoning never reads as a quality verdict —
-        // the constraint dimension is token-overlap, a presence proxy only.
-        reasoning: `Heuristic [degraded: ${DEGRADED_REASON}]: score=${score.toFixed(2)} (con=${dims.constraint.toFixed(2)} nov=${dims.novelty.toFixed(2)} len=${dims.length.toFixed(2)} voc=${dims.vocabulary.toFixed(2)} code=${dims.codeStructure.toFixed(2)})`,
-      });
-    }
-
-    // Find winner with tiebreaker logic
-    const winnerId = this.breakTie(finalScores, dimensionScores, outputs);
-
-    // Apply voting power (all = 2) to scores for consistency with LLM voting
-    const weightedScores = new Map<string, number>();
-    for (const [personaId, score] of finalScores) {
-      const power = personas.find(p => p.id === personaId)?.votingPower ?? 2;
-      weightedScores.set(personaId, score * power);
-    }
-
-    return { scores: weightedScores, winnerId, votes, degraded: true, degradedReason: DEGRADED_REASON };
   }
 
   /**

@@ -4,6 +4,7 @@
 
 [![CI](https://github.com/KyaniteLabs/liminal/actions/workflows/ci.yml/badge.svg)](https://github.com/KyaniteLabs/liminal/actions/workflows/ci.yml)
 Primary development now happens on Forgejo; this CI badge reflects the GitHub mirror.
+Forgejo main is the semantic authority. This shared README documents the common surface across the Forgejo mainline and the GitHub mirror; branch-specific additions remain part of the roadmap until they are mirrored.
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](./LICENSE)
 
 [Public landing page](https://kyanitelabs.github.io/liminal/) | [GitHub repository](https://github.com/KyaniteLabs/liminal) | [AI discovery file](llms.txt)
@@ -46,10 +47,7 @@ export LLM_BASE_URL=https://api.minimax.io/anthropic
 # Generate
 sinter --prompt "Create a calming blue particle system"
 
-# Chat-driven creative session
-sinter chat
-
-# Studio — chat-first GUI workbench with same-screen preview
+# Studio — the active chat-first GUI workbench with same-screen preview
 pnpm gui
 # or: sinter studio
 
@@ -65,7 +63,7 @@ sinter improve scan
 
 ## Ready-to-show market path
 
-Use this path when you want to try Sinter as a product instead of asking an agent to babysit a proof run. It keeps the full creative surface in scope: p5, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, and TextGen.
+Use this path when you want to try Sinter as a product instead of asking an agent to babysit a proof run. It keeps the shared creative surface in scope: p5, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, and TextGen.
 
 ```bash
 # 1. Install and build
@@ -109,7 +107,8 @@ Each iteration, Sinter:
 
 **Key capabilities:**
 
-- **12 creative domains** — p5.js, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, TextGen
+- **Shared creative domains** — p5.js, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, TextGen
+  Forgejo main may expose additional domains or generators ahead of the GitHub mirror; this shared README avoids branch-specific totals.
 - **CreativeBoard critique** — 3-agent board (Minimalist / Expressionist / Technician) deliberates on output
 - **Swarm generation** — 5 default runtime personas (Kai / Nova / Rex / Sam / Max) generate in parallel and vote on best
 - **Compost Mill** — Digests past work into reusable creative seeds that improve every generation
@@ -151,8 +150,7 @@ sinter -p "idea" --use-swarm --swarm-mode hybrid  # Swarm generation
 sinter -p "ambient glitch set" --mode live-music  # Live AV mode
 
 # Interactive
-pnpm gui                                            # GUI workbench
-sinter chat                                        # Conversational creative session
+pnpm gui                                            # Active chat-first GUI workbench
 sinter improve scan                                # Read-only repair/hardening/optimization proposals
 sinter improve run <proposal-id>                   # Run one proposal from an isolated worktree
 
@@ -241,7 +239,7 @@ src/
 ├── chat/           Interview-driven creative sessions
 ├── collab/         Multi-agent board, swarm, deep collaboration
 ├── config/         Configuration loading, role-based model selection
-├── agent/          StudioAgent — intent routing, autonomy modes, response composition
+├── agent/          Intent routing, autonomy modes, and response composition
 ├── cortex/         LiminalCortex — background executive, perception bus, goal management
 ├── emergence/      Emergence evaluation — novelty, temporal structure, perturbation probes
 ├── learning/       Taste learning — preference dataset, model training, runtime scoring

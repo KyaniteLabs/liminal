@@ -8,9 +8,11 @@ This directory documents the unique, innovative features of Sinter.
 
 ### 1. [Thinking-Trace Feedback Loop](./thinking-trace-feedback-loop.md) ⭐ PRIMARY INNOVATION
 
-**What it does**: Captures LLM reasoning traces, analyzes them with two questions ("WHERE DID IT GO WRONG?" / "HOW CAN I COMMUNICATE BETTER?"), and adapts the system.
+**What it does**: Captures LLM reasoning traces, analyzes them with two questions ("WHERE DID IT GO WRONG?" / "HOW CAN I COMMUNICATE BETTER?"), and records improvement insights for future prompt and routing work.
 
-**Status**: ✅ **FULLY IMPLEMENTED** - All 11 generators use this
+**Status**: ✅ **WIRED THROUGH THE ACTIVE GENERATOR PIPELINE**
+
+Generator coverage follows the active default branch. Forgejo main and the GitHub mirror are different code generations, so this document states the shared invariant instead of a branch-specific generator total.
 
 **Unique Aspects**:
 - Generator thinking and harness thinking are **kept separate**
@@ -22,7 +24,7 @@ This directory documents the unique, innovative features of Sinter.
 
 ---
 
-### 2. [Compost Mill](./compost-mill.md)
+### 2. [Compost Mill](../plans/2026-03-20-compost-mill-design.md)
 
 **What it does**: Digests previous generations into nutrient-rich seeds for evolutionary search.
 
@@ -55,13 +57,13 @@ Both features embody:
 
 | Component | Status |
 |-----------|--------|
-| All 11 generators | ✅ Wired |
+| Generator pipeline | ✅ Wired through the active generator registry |
 | Thinking extraction | ✅ `LLMClient.ts` |
 | Code recovery | ✅ `TierBasedGenerator.ts` |
 | Generator thinking storage | ✅ `ThinkingSeparation.ts` |
 | Harness thinking storage | ✅ `ThinkingSeparation.ts` |
 | Harness analysis | ✅ `MetaHarnessIntegration.ts` |
-| Emergent patterns | ✅ `ModelBehaviorPatterns.ts` |
+| Pattern detection | ✅ `PatternDetector.ts` |
 | "Where wrong?" analysis | ✅ Implemented |
 | "How communicate?" analysis | ✅ Implemented |
 
@@ -91,15 +93,15 @@ Both features embody:
 
 ## Other Features
 
-- [Model Tiers](../architecture/model-tiers.md) - Automatic prompt adaptation
-- [Meta-Harness](../architecture/meta-harness.md) - Self-improving outer loop
-- [Runtime Validation](../architecture/runtime-validation.md) - Headless browser testing
+- [Generator architecture](../GENERATOR_ARCHITECTURE_V2.md) - Model-aware prompting and routing
+- [Meta-Harness self-evaluation](../META_HARNESS_SELF_EVALUATION.md) - Improvement insights and outer-loop evaluation
+- [Runtime validation](../launch/launch-candidate-2026-04-30.md) - Headless browser launch evidence
 
 ---
 
 ## For Developers
 
-These features are **production-ready** and **always active**:
+These features are integrated into the runtime; provider-backed analysis requires a configured LLM:
 
 ```typescript
 // Thinking-Trace automatically captures from all generators
@@ -110,4 +112,4 @@ const response = await llm.generate(prompt);
 await compostMill.digest('./gallery');
 ```
 
-No configuration needed. The system learns continuously.
+No additional feature flag is needed; analysis and persistence require a configured LLM provider.

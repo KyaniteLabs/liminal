@@ -40,7 +40,7 @@
 |----------|---------|
 | [EMERGENT_LANGUAGE_ARCHITECTURE.md](./EMERGENT_LANGUAGE_ARCHITECTURE.md) | Emergent creative vocabulary |
 | [MODEL_ROLES_FRAMEWORK.md](./MODEL_ROLES_FRAMEWORK.md) | Generator/Evaluator/Harness roles |
-| [COMPOSITION_IMPLEMENTATION_PLAN.md](./internal/COMPOSITION_IMPLEMENTATION_PLAN.md) | Composition API |
+| [composition-api.md](./composition-api.md) | Composition API |
 | [WORKTREE_SYSTEM.md](./WORKTREE_SYSTEM.md) | Multi-agent worktree guide |
 
 ### System Planning

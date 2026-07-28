@@ -63,7 +63,7 @@ sinter improve scan
 
 ## Ready-to-show market path
 
-Use this path when you want to try Sinter as a product instead of asking an agent to babysit a proof run. It keeps the shared creative surface in scope: p5, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, and TextGen.
+Use this path when you want to try Sinter as a product instead of asking an agent to babysit a proof run. It keeps the shared creative surface in scope: p5, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, and TextGen. Individual host lineages may expose additional generators (for example HTML or DataViz) ahead of the other mirror.
 
 ```bash
 # 1. Install and build
@@ -80,17 +80,20 @@ sinter "a luminous blue-green particle garden"
 # 4. Launch Studio for chat, same-screen preview, revision, and optional details
 pnpm gui
 
-# 5. Refresh the live provider receipt used by the market gate
+# 5. Studio smoke (same-screen preview path)
+pnpm proof:studio-smoke
+
+# 6. Refresh the live provider receipt used by the market gate
 pnpm run proof:live-provider-smoke -- --provider=glm --timeout-ms=120000
 
-# 6. Sweep every creative domain with the active live provider
-pnpm exec tsx scripts/proof/creative-copilot-proof.ts --provider=glm --all --timeout-ms=120000 --max-tokens=4096 --out=.omx/proof/market-all-domain-sweep
+# 7. Sweep every launch creative domain with the active live provider
+pnpm proof:live-creative-domains -- --provider=glm --all --timeout-ms=120000 --out=.omx/proof/live-creative-domains
 
-# 7. Ask the app for the plain answer
+# 8. Ask the app for the plain answer
 sinter market status
 ```
 
-Expected current result: `sinter market status` prints `Market readiness: READY` after the live smoke receipt exists. The current launch-candidate proof also includes Studio p5 generation, same-screen preview, revision, microphone preview smoke, and permission-denied UX receipts summarized in `docs/launch/launch-candidate-2026-04-30.md`. Strudel patterns are saved with an external playback link, Tone.js saves playable HTML, HyperFrames saves HTML/GSAP composition artifacts, and Revideo code artifacts are generated; native rendered video/still capture is a separate follow-up.
+Expected current result: `sinter market status` prints `Market readiness: READY` after the live smoke receipt exists. The current launch-candidate proof also includes Studio p5 generation, same-screen preview, revision, microphone preview smoke, and permission-denied UX receipts summarized in `docs/launch/launch-candidate-2026-04-30.md`. Strudel patterns are saved with an external playback link, Tone.js saves playable HTML, HyperFrames saves HTML/GSAP composition artifacts, and Revideo saves composition source/HTML; mp4 export is attempted as a non-blocking video artifact and should be checked explicitly when a rendered file is required.
 
 ---
 
@@ -108,7 +111,7 @@ Each iteration, Sinter:
 **Key capabilities:**
 
 - **Shared creative domains** — p5.js, SVG, GLSL, Three.js, Hydra, Strudel, Tone.js, Revideo, HyperFrames, ASCII, Kinetic, TextGen
-  Forgejo main may expose additional domains or generators ahead of the GitHub mirror; this shared README avoids branch-specific totals.
+  Keep this shared list aligned with generators present on both mirrors. Host-specific domains (for example HTML or DataViz on one lineage) stay documented in that host's architecture surface rather than as universal totals.
 - **CreativeBoard critique** — 3-agent board (Minimalist / Expressionist / Technician) deliberates on output
 - **Swarm generation** — 5 default runtime personas (Kai / Nova / Rex / Sam / Max) generate in parallel and vote on best
 - **Compost Mill** — Digests past work into reusable creative seeds that improve every generation

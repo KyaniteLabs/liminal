@@ -3,22 +3,8 @@
 *To sinter:* to fire many separate particles into one solid, durable form — the way a kiln fuses grains of clay into a single vessel. That's the idea: generate across many creative-coding domains, then fuse them into one layered work.
 
 [![CI](https://github.com/KyaniteLabs/liminal/actions/workflows/ci.yml/badge.svg)](https://github.com/KyaniteLabs/liminal/actions/workflows/ci.yml)
-Primary development now happens on Forgejo; this CI badge reflects the GitHub mirror.
-Forgejo main is the semantic authority. This shared README documents the common surface across the Forgejo mainline and the GitHub mirror; branch-specific additions remain part of the roadmap until they are mirrored.
-[![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](./LICENSE)
-
-[Public landing page](https://kyanitelabs.github.io/liminal/) | [GitHub repository](https://github.com/KyaniteLabs/liminal) | [AI discovery file](llms.txt)
-
-> Codex for creative coding: a chat-first Studio that helps you turn natural language, sound, and iteration into sketches, shaders, music, video compositions, and other creative-code artifacts.
->
-> **Finish-line contract:** Sinter is a creative cognitive system, not a narrowed proof wedge. See [docs/FINISH_LINE.md](docs/FINISH_LINE.md) for the domain, cognitive-organ, self-improvement, and model-assimilation contract.
-
-Sinter is a model-agnostic creative coding system. You describe what you want — "a quiet moonlit garden with blue-green fireflies" or "glitch techno beats with feedback loops" — and Sinter helps choose a medium, generates the artifact, shows an inline/side-panel preview, and keeps the conversation open for revision. It works with any OpenAI-compatible API, Ollama, LM Studio, Anthropic-style providers, and GLM.
-
-Sinter Studio is the artist-facing workbench: clean chat on the left, live preview on the right, and advanced receipts hidden until you ask for them.
 
 ---
-
 
 ## Public Discovery
 
